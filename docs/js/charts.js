@@ -115,7 +115,7 @@ const Charts = {
     },
 
     // ---- CONVERGENCE GAUGE (SVG Ring) ----
-    createGaugeRing(count, total, ticker) {
+    createGaugeRing(count, total, ticker, tooltip = '') {
         const circumference = 2 * Math.PI * 22; // radius = 22
         const progress = count / total;
         const dashOffset = circumference * (1 - progress);
@@ -131,8 +131,10 @@ const Charts = {
         else if (count >= total - 1) countColor = 'var(--red)';
         else countColor = 'var(--text-secondary)';
 
+        const ttAttr = tooltip ? `data-tooltip="${tooltip}"` : '';
+
         return `
-            <div class="convergence-gauge">
+            <div class="convergence-gauge" ${ttAttr}>
                 <div class="gauge-ticker" style="color: ${countColor}">${ticker}</div>
                 <div class="gauge-ring">
                     <svg viewBox="0 0 50 50">
@@ -147,6 +149,121 @@ const Charts = {
                 <div class="gauge-label">windows in alert</div>
             </div>
         `;
+    },
+
+    // ---- FORWARD RETURN CURVE ----
+    // Bar chart showing median return at each forward window (5d→252d)
+    // Green bars = positive median, red = negative; edge window highlighted brighter
+    // Small dots show win rate deviation from 50%
+    drawForwardReturnCurve(canvas, echoes) {
+        if (!canvas || !echoes || !echoes.forward_returns) return;
+        const fwd = echoes.forward_returns;
+        const windows = ['5d', '10d', '21d', '42d', '63d', '126d', '252d'];
+        const edgeWin = echoes.signal_edge_window;
+
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width = canvas.parentElement ? canvas.parentElement.clientWidth : 200;
+        const h = canvas.height = 80;
+        ctx.clearRect(0, 0, w, h);
+
+        const data = windows
+            .map(k => ({
+                key: k,
+                median:   fwd[k]?.median   ?? null,
+                win_rate: fwd[k]?.win_rate ?? null,
+                isEdge:   k === edgeWin
+            }))
+            .filter(d => d.median !== null);
+
+        if (data.length === 0) return;
+
+        const medians = data.map(d => d.median);
+        const maxAbs  = Math.max(Math.max(...medians.map(Math.abs)), 5); // minimum ±5% scale
+
+        const padL = 10, padR = 4, padT = 14, padB = 18;
+        const chartW = w - padL - padR;
+        const chartH = h - padT - padB;
+
+        const barGap = 3;
+        const barW   = Math.max(4, Math.floor(chartW / data.length) - barGap);
+        const scale  = chartH / (2 * maxAbs);
+        const zeroY  = padT + chartH / 2;
+
+        // -- Zero axis --
+        ctx.beginPath();
+        ctx.moveTo(padL, zeroY);
+        ctx.lineTo(w - padR, zeroY);
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // -- dashed divider at 63d boundary (beyond = decay-dominated) --
+        const idx63 = data.findIndex(d => d.key === '63d');
+        if (idx63 >= 0 && idx63 < data.length - 1) {
+            const divX = padL + (idx63 + 1) * (barW + barGap) - barGap / 2;
+            ctx.setLineDash([2, 3]);
+            ctx.beginPath();
+            ctx.moveTo(divX, padT);
+            ctx.lineTo(divX, padT + chartH);
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        data.forEach((d, i) => {
+            const x      = padL + i * (barW + barGap);
+            const bh     = Math.max(1, Math.abs(d.median) * scale);
+            const y      = d.median >= 0 ? zeroY - bh : zeroY;
+            const isEdge = d.isEdge;
+            const isLong = d.median > 0;
+
+            // Bar fill — edge window is fully opaque, others dimmer
+            ctx.fillStyle = isLong
+                ? (isEdge ? 'rgba(0,230,118,0.9)' : 'rgba(0,230,118,0.45)')
+                : (isEdge ? 'rgba(255,23,68,0.9)'  : 'rgba(255,23,68,0.45)');
+            ctx.fillRect(x, y, barW, bh);
+
+            // Edge window outline glow
+            if (isEdge) {
+                ctx.strokeStyle = isLong ? '#00e676' : '#ff1744';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(x - 0.5, y - 0.5, barW + 1, bh + 1);
+            }
+
+            // Win-rate dot — offset above/below bar proportional to edge from 50%
+            if (d.win_rate != null) {
+                const wrDev = d.win_rate - 50; // +ve = bullish edge
+                const dotY  = zeroY - wrDev * scale * 0.7;
+                const dotX  = x + barW / 2;
+                ctx.beginPath();
+                ctx.arc(dotX, dotY, 2, 0, Math.PI * 2);
+                ctx.fillStyle = wrDev > 0 ? 'rgba(0,230,118,0.9)' : 'rgba(255,23,68,0.9)';
+                ctx.fill();
+            }
+
+            // Value annotation on taller bars (≥5%)
+            if (Math.abs(d.median) >= 5) {
+                ctx.font = 'bold 7px monospace';
+                ctx.fillStyle = isLong ? '#00e676' : '#ff1744';
+                ctx.textAlign = 'center';
+                const txt   = `${d.median >= 0 ? '+' : ''}${d.median.toFixed(0)}%`;
+                const lblY  = d.median >= 0 ? y - 2 : y + bh + 7;
+                ctx.fillText(txt, x + barW / 2, lblY);
+            }
+
+            // Window label on x-axis
+            ctx.font = `${isEdge ? 'bold ' : ''}7px monospace`;
+            ctx.fillStyle = isEdge ? '#ffffff' : 'rgba(255,255,255,0.4)';
+            ctx.textAlign = 'center';
+            ctx.fillText(d.key, x + barW / 2, h - 3);
+        });
+
+        // Legend: small dot + "win rate" label top-left
+        ctx.font = '6px monospace';
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.textAlign = 'left';
+        ctx.fillText('● win rate  ▌ median return', padL, 9);
     },
 
     // ---- CORRELATION BAR ----

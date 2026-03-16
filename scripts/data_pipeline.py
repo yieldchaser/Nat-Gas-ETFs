@@ -368,7 +368,9 @@ def compute_etf_metrics(df: pd.DataFrame) -> dict:
     # --- Vol Regime Percentile ---
     # Where does the current 21d HV sit relative to its own 252-day history?
     # 0th = historically quiet, 100th = historically extreme
-    vol_regime_pct = _safe_float(_percentile_rank(hv_series[21], VOL_REGIME_WINDOW).iloc[-1])
+    # Keep full series for historical echoes computation.
+    vol_regime_full_series = _percentile_rank(hv_series[21], VOL_REGIME_WINDOW)
+    vol_regime_pct = _safe_float(vol_regime_full_series.iloc[-1])
 
     # --- HV Term Structure (HV10 / HV63) ---
     # < 0.7 = calming / storm passed   |   > 1.3 = accelerating / building storm
@@ -400,6 +402,21 @@ def compute_etf_metrics(df: pd.DataFrame) -> dict:
             vcvi[f"{w}d"] = _safe_float(max(0.0, cvi_val * multiplier))
         else:
             vcvi[f"{w}d"] = cvi_val  # Fallback to raw CVI
+
+    # --- Historical Echoes ---
+    # Reconstruct rolling VCVI-21 series from already-computed intermediates
+    # cvi_21_rolling = vol_pct_21 * (1 - price_pct_21 / 100) vectorised over full history
+    cvi_21_rolling = vol_pct_series[21] * (1.0 - price_pct_series[21] / 100.0)
+    vcvi_21_rolling = (cvi_21_rolling * (1.5 - vol_regime_full_series / 100.0)).clip(lower=0)
+
+    historical_echoes = _compute_historical_echoes(
+        close=close,
+        vcvi_21_series=vcvi_21_rolling,
+        vol_regime_series=vol_regime_full_series,
+        vcvi_threshold=VCVI_WARNING,     # 55 — same as alert threshold
+        vol_regime_max=60.0,             # only count signals in non-turbulent regimes
+        fwd_windows=[5, 10, 21, 42, 63, 126, 252],
+    )
 
     # =========================================================================
     # END VOLATILITY BLOCK
@@ -594,6 +611,7 @@ def compute_etf_metrics(df: pd.DataFrame) -> dict:
             "atr14_pct": atr14_pct,
             "vov21": vov21,
         },
+        "historical_echoes": historical_echoes,
         "vps": vps,
         "mwca": mwca,
         "rolling_correlation": rolling_corr,
@@ -601,6 +619,151 @@ def compute_etf_metrics(df: pd.DataFrame) -> dict:
         "history": history,
         "alerts": alerts,
         "_rvol_21_last": _safe_float(rvol_21_series.iloc[-1]),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Historical Echoes — pattern matching + forward-return study
+# ---------------------------------------------------------------------------
+def _compute_historical_echoes(
+    close: pd.Series,
+    vcvi_21_series: pd.Series,
+    vol_regime_series: pd.Series,
+    vcvi_threshold: float = 55.0,
+    vol_regime_max: float = 60.0,
+    fwd_windows: list = None,
+    min_gap_days: int = 10,
+    max_display: int = 8,
+) -> dict:
+    """
+    Scan the full history for dates where:
+      - VCVI-21d >= vcvi_threshold  (capitulation signal active)
+      - vol_regime_pct <= vol_regime_max  (not in extreme-turbulence regime)
+
+    For each qualifying date, compute forward returns at each window.
+    Return aggregated stats + the most recent individual instances.
+
+    min_gap_days ensures we count distinct events, not consecutive days
+    of the same signal episode.
+    """
+    if fwd_windows is None:
+        fwd_windows = [5, 10, 21, 42, 63, 126, 252]
+
+    # Align series to common index
+    df_work = pd.DataFrame({
+        "close": close,
+        "vcvi_21": vcvi_21_series,
+        "vol_regime": vol_regime_series,
+    }).dropna(subset=["close", "vcvi_21", "vol_regime"])
+
+    if df_work.empty:
+        return {"count": 0, "threshold_vcvi": vcvi_threshold,
+                "threshold_vol_regime": vol_regime_max,
+                "forward_returns": {}, "occurrences": []}
+
+    # Exclude the most recent 21 days — need full forward windows
+    cutoff = df_work.index[-1] - pd.Timedelta(days=max(fwd_windows) * 2)
+    df_hist = df_work[df_work.index <= cutoff]
+
+    if df_hist.empty:
+        return {"count": 0, "threshold_vcvi": vcvi_threshold,
+                "threshold_vol_regime": vol_regime_max,
+                "forward_returns": {}, "occurrences": []}
+
+    signal_mask = (df_hist["vcvi_21"] >= vcvi_threshold) & \
+                  (df_hist["vol_regime"] <= vol_regime_max)
+
+    signal_idx = df_hist.index[signal_mask].tolist()
+
+    # Deduplicate: enforce min_gap_days between recorded instances
+    deduplicated: list = []
+    last_date = None
+    for dt in signal_idx:
+        if last_date is None or (dt - last_date).days >= min_gap_days:
+            deduplicated.append(dt)
+            last_date = dt
+
+    if not deduplicated:
+        return {"count": 0, "threshold_vcvi": vcvi_threshold,
+                "threshold_vol_regime": vol_regime_max,
+                "forward_returns": {}, "occurrences": []}
+
+    # Compute forward returns for each qualifying date
+    close_arr = df_work["close"]
+    occurrences = []
+    for dt in deduplicated:
+        entry_pos = df_work.index.get_loc(dt)
+        entry_price = close_arr.iloc[entry_pos]
+        if entry_price <= 0:
+            continue
+
+        fwd_rets: Dict[str, Optional[float]] = {}
+        for w in fwd_windows:
+            exit_pos = entry_pos + w
+            if exit_pos < len(close_arr):
+                exit_price = close_arr.iloc[exit_pos]
+                fwd_rets[f"{w}d"] = _safe_float((exit_price / entry_price - 1) * 100)
+            else:
+                fwd_rets[f"{w}d"] = None
+
+        occurrences.append({
+            "date": dt.strftime("%Y-%m-%d"),
+            "vcvi": _safe_float(df_hist.loc[dt, "vcvi_21"]),
+            "vol_regime_pct": _safe_float(df_hist.loc[dt, "vol_regime"]),
+            "price": _safe_float(entry_price),
+            "fwd": fwd_rets,
+        })
+
+    if not occurrences:
+        return {"count": 0, "threshold_vcvi": vcvi_threshold,
+                "threshold_vol_regime": vol_regime_max,
+                "forward_returns": {}, "occurrences": []}
+
+    # Aggregate forward return statistics
+    # Clip at ±200% before computing mean/best/worst — anything beyond is a data artifact
+    # (reverse splits etc.) that would distort statistics. Median is unaffected by clipping.
+    CLIP_PCT = 200.0
+    forward_stats: Dict[str, dict] = {}
+    for w in fwd_windows:
+        key = f"{w}d"
+        rets = [o["fwd"][key] for o in occurrences if o["fwd"].get(key) is not None]
+        if rets:
+            rets_arr = np.array(rets)
+            rets_clipped = np.clip(rets_arr, -CLIP_PCT, CLIP_PCT)
+            forward_stats[key] = {
+                "median":   _safe_float(float(np.median(rets_arr))),   # robust, no clip needed
+                "mean":     _safe_float(float(np.mean(rets_clipped))),  # clipped mean
+                "win_rate": _safe_float(float(np.mean(rets_arr > 0) * 100)),
+                "best":     _safe_float(float(np.max(rets_clipped))),
+                "worst":    _safe_float(float(np.min(rets_clipped))),
+                "count":    len(rets),
+            }
+
+    # Return most recent instances for display (most recent first)
+    recent = list(reversed(occurrences))[:max_display]
+
+    # Signal edge: find the most ACTIONABLE window (capped at 63d).
+    # Beyond 63d, leveraged ETF decay dominates the signal — not a tradeable edge.
+    # Score = |median| × |win_rate − 50|² (squaring win_rate deviation rewards consistency).
+    best_edge_window = None
+    best_edge_score = 0.0
+    for key, stats in forward_stats.items():
+        w_days = int(key.rstrip("d"))
+        if w_days > 63 or stats["count"] < 10:
+            continue
+        wr_dev = abs((stats["win_rate"] or 50) - 50)
+        score = abs(stats["median"] or 0) * (wr_dev ** 2)
+        if score > best_edge_score:
+            best_edge_score = score
+            best_edge_window = key
+
+    return {
+        "count": len(occurrences),
+        "threshold_vcvi": vcvi_threshold,
+        "threshold_vol_regime": vol_regime_max,
+        "forward_returns": forward_stats,
+        "signal_edge_window": best_edge_window,
+        "occurrences": recent,
     }
 
 
@@ -707,6 +870,7 @@ def run_pipeline() -> None:
             "cvi": m["cvi"],
             "vcvi": m["vcvi"],
             "volatility": m["volatility"],
+            "historical_echoes": m["historical_echoes"],
             "vps": m["vps"],
             "mwca": m["mwca"],
             "rolling_correlation": m["rolling_correlation"],
