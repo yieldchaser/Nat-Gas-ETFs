@@ -214,6 +214,18 @@ const Signals = {
         }).join('');
 
         container.innerHTML = rows || '<div class="echoes-loading">No historical echo data available.</div>';
+
+        // Draw forward return curves once DOM is ready
+        requestAnimationFrame(() => {
+            CONFIG.pairs.forEach(pair => {
+                [pair.long, pair.short].forEach(ticker => {
+                    const echoes = allMetrics[ticker]?.historical_echoes || null;
+                    if (!echoes) return;
+                    const canvas = container.querySelector(`canvas[data-ticker="${ticker}"]`);
+                    if (canvas) Charts.drawForwardReturnCurve(canvas, echoes);
+                });
+            });
+        });
     },
 
     _echoCard(ticker, echoes, side) {
@@ -226,7 +238,10 @@ const Signals = {
         }
 
         const fwd = echoes.forward_returns;
-        const rows = ['5d', '10d', '21d'].map(w => {
+
+        // Landmark windows only — compact but covers full horizon
+        const landmarkWindows = ['5d', '21d', '63d', '252d'];
+        const rows = landmarkWindows.map(w => {
             const s = fwd[w];
             if (!s) return '';
             const medColor = s.median > 2  ? 'var(--green)'
@@ -236,31 +251,35 @@ const Signals = {
                            : s.win_rate < 45  ? 'var(--red)'
                            : 'var(--text-secondary)';
             const sign = s.median >= 0 ? '+' : '';
+            const isEdgeRow = w === echoes.signal_edge_window;
             return `
-                <tr>
-                    <td class="echo-window" data-tooltip="Forward return statistics over ${w} trading sessions (n=${s.count})">${w}</td>
+                <tr${isEdgeRow ? ' class="echo-edge-row"' : ''}>
+                    <td class="echo-window" data-tooltip="Forward return statistics over ${w} trading sessions (n=${s.count})${isEdgeRow ? ' ★ Best signal edge window' : ''}">${w}${isEdgeRow ? ' ★' : ''}</td>
                     <td class="echo-median" style="color:${medColor}" data-tooltip="Median return — robust central tendency over ${s.count} instances">${sign}${s.median.toFixed(1)}%</td>
                     <td class="echo-winrate" style="color:${wrColor}" data-tooltip="${s.win_rate.toFixed(0)}% of ${s.count} past instances ended positive after ${w}">${s.win_rate.toFixed(0)}%</td>
                     <td class="echo-range" data-tooltip="Clipped best/worst (±200% cap to exclude data artifacts)">${s.best >= 0 ? '+' : ''}${s.best.toFixed(0)} / ${s.worst.toFixed(0)}</td>
                 </tr>`;
         }).join('');
 
-        // Determine directional bias
-        const med21 = fwd['21d']?.median ?? 0;
-        const wr21  = fwd['21d']?.win_rate ?? 50;
+        // Bias from the signal_edge_window (capped at 63d), fallback to 21d
+        const edgeW    = echoes.signal_edge_window || '21d';
+        const edgeFwd  = fwd[edgeW] || fwd['21d'] || {};
+        const edgeMed  = edgeFwd.median  ?? 0;
+        const edgeWr   = edgeFwd.win_rate ?? 50;
+        const edgeLabel = `${edgeW} edge window`;
         let bias, biasClass;
-        if (med21 > 3 && wr21 > 55)       { bias = '↑ Historically bullish after signal'; biasClass = 'bias-bull'; }
-        else if (med21 < -3 && wr21 < 45) { bias = '↓ Historically bearish after signal'; biasClass = 'bias-bear'; }
-        else                               { bias = '→ Mixed historical outcome';            biasClass = 'bias-neutral'; }
+        if (edgeMed > 3 && edgeWr > 55)       { bias = `↑ Bullish edge @ ${edgeLabel}`;  biasClass = 'bias-bull'; }
+        else if (edgeMed < -3 && edgeWr < 45) { bias = `↓ Bearish edge @ ${edgeLabel}`;  biasClass = 'bias-bear'; }
+        else                                   { bias = `→ Mixed outcome @ ${edgeLabel}`; biasClass = 'bias-neutral'; }
 
-        // Recent occurrences — last 5
+        // Recent occurrences — last 5 with edge-window return if available
         const recent = (echoes.occurrences || []).slice(0, 5);
         const recentHtml = recent.map(o => {
-            const ret21 = o.fwd?.['21d'];
-            const retColor = ret21 == null ? 'var(--text-muted)'
-                : ret21 > 0 ? 'var(--green)' : 'var(--red)';
-            const retLabel = ret21 != null
-                ? `${ret21 >= 0 ? '+' : ''}${ret21.toFixed(1)}% over 21d`
+            const retEdge = o.fwd?.[edgeW] ?? o.fwd?.['21d'];
+            const retColor = retEdge == null ? 'var(--text-muted)'
+                : retEdge > 0 ? 'var(--green)' : 'var(--red)';
+            const retLabel = retEdge != null
+                ? `${retEdge >= 0 ? '+' : ''}${retEdge.toFixed(1)}% over ${edgeW}`
                 : 'no fwd data';
             return `<span class="echo-past-date" style="color:${retColor}"
                 data-tooltip="VCVI=${o.vcvi?.toFixed(0)} VolReg=${o.vol_regime_pct?.toFixed(0)}th @ $${o.price?.toFixed(2)} → ${retLabel}">${o.date.slice(0,7)}</span>`;
@@ -271,12 +290,15 @@ const Signals = {
             <div class="echo-card echo-${side}">
                 <div class="echo-card-header">
                     <span class="echo-ticker" style="color:${tickerColor}">${ticker}</span>
-                    <span class="echo-count" data-tooltip="Total distinct signal instances found in full history (VCVI≥${echoes.threshold_vcvi}, VolRegime≤${echoes.threshold_vol_regime}th)">${echoes.count} instances</span>
+                    <span class="echo-count" data-tooltip="Total distinct signal instances found in full history (VCVI≥${echoes.threshold_vcvi}, VolRegime≤${echoes.threshold_vol_regime}th). Dashed line separates signal-reliable (&lt;63d) from decay-dominated (&gt;63d) zone.">${echoes.count} instances</span>
+                </div>
+                <div class="echo-curve-container">
+                    <canvas class="echo-curve-canvas" data-ticker="${ticker}"></canvas>
                 </div>
                 <table class="echo-table">
                     <thead>
                         <tr>
-                            <th data-tooltip="Forward window">FWD</th>
+                            <th data-tooltip="Forward window (★ = best signal edge)">FWD</th>
                             <th data-tooltip="Median return (robust)">MED%</th>
                             <th data-tooltip="Win rate — % positive outcomes">WIN%</th>
                             <th data-tooltip="Best / Worst clipped at ±200%">B/W</th>
@@ -284,7 +306,7 @@ const Signals = {
                     </thead>
                     <tbody>${rows}</tbody>
                 </table>
-                <div class="echo-bias ${biasClass}" data-tooltip="Based on 21-day median return and win rate across all historical instances">${bias}</div>
+                <div class="echo-bias ${biasClass}" data-tooltip="Scored by |median|×(win_rate−50)² across ≤63d windows — beyond 63d leveraged ETF decay dominates">${bias}</div>
                 <div class="echo-recent">
                     <span class="echo-recent-label">Recent:</span>
                     ${recentHtml || '<span style="color:var(--text-muted)">—</span>'}
