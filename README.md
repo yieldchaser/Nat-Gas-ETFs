@@ -20,14 +20,14 @@ This project implements a multi-timeframe volume analysis engine that:
 ### ETF Cards (6 instruments tracked)
 
 **LONG SIDE** (Bull):
-- **BOIL** – ProShares 3x Leveraged Natural Gas (US)
-- **HNU.TO** – Horizons 3x Leveraged Natural Gas (Canada)
-- **3NGL.L** – 3x Leveraged Natural Gas (UK)
+- **BOIL** – ProShares Ultra Bloomberg NG (2x leveraged, US)
+- **HNU.TO** – BetaPro Natural Gas 2x Bull (2x leveraged, Canada)
+- **3NGL.L** – WisdomTree NG 3x Daily Long (3x leveraged, UK)
 
 **SHORT SIDE** (Bear):
-- **KOLD** – Inverse Natural Gas ETF
-- **HND.TO** – Horizons -1x Natural Gas (Canada)
-- **3NGS.L** – 3x Short Natural Gas (UK)
+- **KOLD** – ProShares UltraShort Bloomberg NG (2x inverse, US)
+- **HND.TO** – BetaPro Natural Gas 2x Bear (2x inverse, Canada)
+- **3NGS.L** – WisdomTree NG 3x Daily Short (3x inverse, UK)
 
 ### Each Card Shows
 
