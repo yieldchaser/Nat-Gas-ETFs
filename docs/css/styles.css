@@ -450,3 +450,96 @@ footer {
 .extreme-active {
     animation: extreme-pulse 1.5s infinite;
 }
+
+/* ============================================
+   Universal Tooltip System
+   Usage: add data-tooltip="text" to any element
+   Optional: data-tooltip-pos="right|left|bottom"
+   ============================================ */
+
+[data-tooltip] {
+    position: relative;
+    cursor: help;
+}
+
+[data-tooltip]::before,
+[data-tooltip]::after {
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    position: absolute;
+    z-index: 9999;
+    left: 50%;
+    transform: translateX(-50%) translateY(-4px);
+}
+
+/* Arrow */
+[data-tooltip]::before {
+    content: '';
+    bottom: calc(100% + 3px);
+    border: 5px solid transparent;
+    border-top-color: #2a2a42;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+}
+
+/* Bubble */
+[data-tooltip]::after {
+    content: attr(data-tooltip);
+    bottom: calc(100% + 13px);
+    background: #1a1a2e;
+    border: 1px solid #3a3a5a;
+    color: #e8e8f0;
+    font-size: 0.65rem;
+    line-height: 1.45;
+    font-weight: 400;
+    letter-spacing: 0;
+    padding: 6px 10px;
+    border-radius: 5px;
+    white-space: normal;
+    width: max-content;
+    max-width: 220px;
+    text-align: left;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+}
+
+[data-tooltip]:hover::before,
+[data-tooltip]:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+/* Arrow doesn't translate Y */
+[data-tooltip]:hover::before {
+    transform: translateX(-50%);
+}
+
+/* Right-aligned variant: data-tooltip-pos="right" */
+[data-tooltip][data-tt-pos="right"]::before,
+[data-tooltip][data-tt-pos="right"]::after {
+    left: auto;
+    right: 0;
+    transform: translateX(0) translateY(-4px);
+}
+[data-tooltip][data-tt-pos="right"]:hover::before,
+[data-tooltip][data-tt-pos="right"]:hover::after {
+    transform: translateX(0) translateY(0);
+}
+[data-tooltip][data-tt-pos="right"]:hover::before {
+    transform: translateX(0);
+}
+
+/* Left-aligned variant: data-tooltip-pos="left" */
+[data-tooltip][data-tt-pos="left"]::before,
+[data-tooltip][data-tt-pos="left"]::after {
+    left: 0;
+    right: auto;
+    transform: translateX(0) translateY(-4px);
+}
+[data-tooltip][data-tt-pos="left"]:hover::before,
+[data-tooltip][data-tt-pos="left"]:hover::after {
+    transform: translateX(0) translateY(0);
+}
+[data-tooltip][data-tt-pos="left"]:hover::before {
+    transform: translateX(0);
+}

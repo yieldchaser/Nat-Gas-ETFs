@@ -73,14 +73,15 @@ const Signals = {
             const vcviColor  = displayVcvi != null ? Metrics.getValueColor(displayVcvi, CONFIG.thresholds.vcvi) : 'var(--text-muted)';
             const ipsiColor  = ipsi != null ? Metrics.getValueColor(ipsi, CONFIG.thresholds.ipsi) : 'var(--text-muted)';
 
+            const ipsiTip = ipsi != null ? `IPSI ${ipsi.toFixed(2)}x — short RVOL ÷ long RVOL for this pair` : 'IPSI unavailable';
             return `
                 <tr>
                     <td class="pair-name">${pair.label}</td>
-                    <td style="color:${rvolColor(longRvol)}">${longRvol != null ? longRvol.toFixed(1) + 'x' : '--'}</td>
-                    <td style="color:${rvolColor(shortRvol)}">${shortRvol != null ? shortRvol.toFixed(1) + 'x' : '--'}</td>
-                    <td style="color:${vcviColor}">${displayVcvi != null ? displayVcvi.toFixed(0) : '--'}</td>
-                    <td style="color:${ipsiColor}">${ipsi != null ? ipsi.toFixed(1) + 'x' : '--'}</td>
-                    <td><span class="vol-regime-badge ${regInfo.cls}" style="font-size:0.6rem">${regInfo.label}</span></td>
+                    <td style="color:${rvolColor(longRvol)}" data-tooltip="Long ETF 21d RVOL — volume relative to its own 21-day average">${longRvol != null ? longRvol.toFixed(1) + 'x' : '--'}</td>
+                    <td style="color:${rvolColor(shortRvol)}" data-tooltip="Short/Inverse ETF 21d RVOL — elevated short-side RVOL signals directional capitulation">${shortRvol != null ? shortRvol.toFixed(1) + 'x' : '--'}</td>
+                    <td style="color:${vcviColor}" data-tooltip="Highest VCVI-63d across long/short pair — vol-adjusted capitulation index. Threshold: 55 warning, 72 critical.">${displayVcvi != null ? displayVcvi.toFixed(0) : '--'}</td>
+                    <td style="color:${ipsiColor}" data-tooltip="${ipsiTip}">${ipsi != null ? ipsi.toFixed(1) + 'x' : '--'}</td>
+                    <td data-tooltip="Volatility regime — where current HV21 sits vs 252-day history. LOW/QUIET = signals more reliable in this environment."><span class="vol-regime-badge ${regInfo.cls}" style="font-size:0.6rem">${regInfo.label}</span></td>
                     <td><span class="stress-status ${status}">${status.toUpperCase()}</span></td>
                 </tr>`;
         }).join('');
@@ -142,7 +143,8 @@ const Signals = {
         container.innerHTML = tickers.map(t => {
             const m = allMetrics[t];
             const count = m ? m.mwcaCount : 0;
-            return Charts.createGaugeRing(count, total, t);
+            const tip = `MWCA: ${count}/${total} windows above 90th vol pct. ${count === total ? 'ALARM — all windows converging!' : count >= total - 1 ? 'Near-alarm — one window short.' : 'No alarm.'}`;
+            return Charts.createGaugeRing(count, total, t, tip);
         }).join('');
     },
 
@@ -187,9 +189,113 @@ const Signals = {
         }).join('');
     },
 
+    // ---- HISTORICAL ECHOES ----
+    renderHistoricalEchoes(allMetrics) {
+        const container = document.getElementById('echoes-container');
+        if (!container) return;
+
+        // Build one card per pair
+        const rows = CONFIG.pairs.map(pair => {
+            const longM  = allMetrics[pair.long];
+            const shortM = allMetrics[pair.short];
+            const longE  = longM?.historical_echoes  || null;
+            const shortE = shortM?.historical_echoes || null;
+
+            if (!longE && !shortE) return '';
+
+            return `
+                <div class="echoes-pair-group">
+                    <div class="echoes-pair-label">${pair.label}</div>
+                    <div class="echoes-pair-cards">
+                        ${longE  ? this._echoCard(pair.long,  longE,  'long')  : ''}
+                        ${shortE ? this._echoCard(pair.short, shortE, 'short') : ''}
+                    </div>
+                </div>`;
+        }).join('');
+
+        container.innerHTML = rows || '<div class="echoes-loading">No historical echo data available.</div>';
+    },
+
+    _echoCard(ticker, echoes, side) {
+        if (!echoes || echoes.count === 0) {
+            return `
+                <div class="echo-card echo-${side}">
+                    <div class="echo-ticker" style="color:${side==='long'?'var(--green)':'var(--red)'}">${ticker}</div>
+                    <div class="echo-empty">No matching historical instances</div>
+                </div>`;
+        }
+
+        const fwd = echoes.forward_returns;
+        const rows = ['5d', '10d', '21d'].map(w => {
+            const s = fwd[w];
+            if (!s) return '';
+            const medColor = s.median > 2  ? 'var(--green)'
+                           : s.median < -2 ? 'var(--red)'
+                           : 'var(--text-secondary)';
+            const wrColor  = s.win_rate > 55 ? 'var(--green)'
+                           : s.win_rate < 45  ? 'var(--red)'
+                           : 'var(--text-secondary)';
+            const sign = s.median >= 0 ? '+' : '';
+            return `
+                <tr>
+                    <td class="echo-window" data-tooltip="Forward return statistics over ${w} trading sessions (n=${s.count})">${w}</td>
+                    <td class="echo-median" style="color:${medColor}" data-tooltip="Median return — robust central tendency over ${s.count} instances">${sign}${s.median.toFixed(1)}%</td>
+                    <td class="echo-winrate" style="color:${wrColor}" data-tooltip="${s.win_rate.toFixed(0)}% of ${s.count} past instances ended positive after ${w}">${s.win_rate.toFixed(0)}%</td>
+                    <td class="echo-range" data-tooltip="Clipped best/worst (±200% cap to exclude data artifacts)">${s.best >= 0 ? '+' : ''}${s.best.toFixed(0)} / ${s.worst.toFixed(0)}</td>
+                </tr>`;
+        }).join('');
+
+        // Determine directional bias
+        const med21 = fwd['21d']?.median ?? 0;
+        const wr21  = fwd['21d']?.win_rate ?? 50;
+        let bias, biasClass;
+        if (med21 > 3 && wr21 > 55)       { bias = '↑ Historically bullish after signal'; biasClass = 'bias-bull'; }
+        else if (med21 < -3 && wr21 < 45) { bias = '↓ Historically bearish after signal'; biasClass = 'bias-bear'; }
+        else                               { bias = '→ Mixed historical outcome';            biasClass = 'bias-neutral'; }
+
+        // Recent occurrences — last 5
+        const recent = (echoes.occurrences || []).slice(0, 5);
+        const recentHtml = recent.map(o => {
+            const ret21 = o.fwd?.['21d'];
+            const retColor = ret21 == null ? 'var(--text-muted)'
+                : ret21 > 0 ? 'var(--green)' : 'var(--red)';
+            const retLabel = ret21 != null
+                ? `${ret21 >= 0 ? '+' : ''}${ret21.toFixed(1)}% over 21d`
+                : 'no fwd data';
+            return `<span class="echo-past-date" style="color:${retColor}"
+                data-tooltip="VCVI=${o.vcvi?.toFixed(0)} VolReg=${o.vol_regime_pct?.toFixed(0)}th @ $${o.price?.toFixed(2)} → ${retLabel}">${o.date.slice(0,7)}</span>`;
+        }).join('');
+
+        const tickerColor = side === 'long' ? 'var(--green)' : 'var(--red)';
+        return `
+            <div class="echo-card echo-${side}">
+                <div class="echo-card-header">
+                    <span class="echo-ticker" style="color:${tickerColor}">${ticker}</span>
+                    <span class="echo-count" data-tooltip="Total distinct signal instances found in full history (VCVI≥${echoes.threshold_vcvi}, VolRegime≤${echoes.threshold_vol_regime}th)">${echoes.count} instances</span>
+                </div>
+                <table class="echo-table">
+                    <thead>
+                        <tr>
+                            <th data-tooltip="Forward window">FWD</th>
+                            <th data-tooltip="Median return (robust)">MED%</th>
+                            <th data-tooltip="Win rate — % positive outcomes">WIN%</th>
+                            <th data-tooltip="Best / Worst clipped at ±200%">B/W</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <div class="echo-bias ${biasClass}" data-tooltip="Based on 21-day median return and win rate across all historical instances">${bias}</div>
+                <div class="echo-recent">
+                    <span class="echo-recent-label">Recent:</span>
+                    ${recentHtml || '<span style="color:var(--text-muted)">—</span>'}
+                </div>
+            </div>`;
+    },
+
     renderAll(allMetrics) {
         this.renderAlertFeed(allMetrics);
         this.renderStressMatrix(allMetrics);
+        this.renderHistoricalEchoes(allMetrics);
         this.renderHeatCalendar(allMetrics);
         this.renderConvergenceGauges(allMetrics);
         this.renderCorrelationBars(allMetrics);
