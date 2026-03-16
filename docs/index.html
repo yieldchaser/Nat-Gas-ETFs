@@ -74,11 +74,11 @@
                     <thead>
                         <tr>
                             <th>PAIR</th>
-                            <th>LONG RVOL</th>
-                            <th>SHORT RVOL</th>
-                            <th>VCVI-63</th>
-                            <th>IPSI</th>
-                            <th>VOL REGIME</th>
+                            <th data-tooltip="Long ETF 21-day Relative Volume">LONG RVOL</th>
+                            <th data-tooltip="Short/Inverse ETF 21-day Relative Volume">SHORT RVOL</th>
+                            <th data-tooltip="Highest Vol-Adjusted CVI (63d window) across the pair. Primary capitulation signal, regime-adjusted.">VCVI-63</th>
+                            <th data-tooltip="Inverse Pair Stress Index — short ETF RVOL ÷ long ETF RVOL. &gt;2x indicates abnormal directional capitulation pressure.">IPSI</th>
+                            <th data-tooltip="Current volatility regime — where HV21 sits in its own 252-day history. Signals in LOW/QUIET regimes are most reliable.">VOL REGIME</th>
                             <th>STATUS</th>
                         </tr>
                     </thead>
@@ -86,6 +86,14 @@
                         <!-- Filled dynamically -->
                     </tbody>
                 </table>
+            </div>
+
+            <!-- HISTORICAL ECHOES -->
+            <div class="signal-panel" id="echoes-panel">
+                <h3 data-tooltip="When the same VCVI signal conditions existed in the past (VCVI≥55, VolRegime≤60th), what happened to prices over the next 5, 10, and 21 sessions? Base-rate statistics from full available history.">HISTORICAL ECHOES <span class="panel-subtitle">— past VCVI signals &amp; outcomes</span></h3>
+                <div id="echoes-container">
+                    <div class="echoes-loading">Loading historical data…</div>
+                </div>
             </div>
 
             <!-- VOLUME HEAT CALENDAR -->

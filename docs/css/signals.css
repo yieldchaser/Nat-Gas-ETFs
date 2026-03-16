@@ -307,3 +307,149 @@
     margin-top: 8px;
     line-height: 1.5;
 }
+
+/* ============================================
+   Historical Echoes Panel
+   ============================================ */
+.panel-subtitle {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0.3px;
+}
+
+.echoes-loading {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 12px 0;
+}
+
+.echoes-pair-group {
+    margin-bottom: 12px;
+}
+
+.echoes-pair-label {
+    font-size: 0.55rem;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.echoes-pair-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+/* Individual echo card */
+.echo-card {
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+    padding: 8px;
+    border-left: 2px solid transparent;
+}
+
+.echo-card.echo-long  { border-left-color: var(--long-accent); }
+.echo-card.echo-short { border-left-color: var(--short-accent); }
+
+.echo-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+}
+
+.echo-ticker {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.echo-count {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    cursor: help;
+}
+
+/* Forward return table */
+.echo-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 6px;
+    font-size: 0.62rem;
+}
+
+.echo-table th {
+    color: var(--text-muted);
+    font-weight: 500;
+    text-align: right;
+    padding: 1px 3px;
+    letter-spacing: 0.3px;
+    font-size: 0.55rem;
+}
+
+.echo-table th:first-child,
+.echo-table td:first-child { text-align: left; }
+
+.echo-table td {
+    text-align: right;
+    padding: 2px 3px;
+    font-weight: 600;
+}
+
+.echo-window { color: var(--text-muted); font-weight: 500 !important; }
+.echo-range  { color: var(--text-muted); font-size: 0.58rem !important; font-weight: 400 !important; }
+
+/* Directional bias line */
+.echo-bias {
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 3px 6px;
+    border-radius: 3px;
+    margin: 4px 0;
+    text-align: center;
+}
+
+.bias-bull    { background: rgba(0,230,118,0.12); color: var(--green); }
+.bias-bear    { background: rgba(255,23,68,0.12);  color: var(--red); }
+.bias-neutral { background: rgba(255,255,255,0.05); color: var(--text-secondary); }
+
+/* Recent past occurrences */
+.echo-recent {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.echo-recent-label {
+    font-size: 0.52rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.echo-past-date {
+    font-size: 0.58rem;
+    font-weight: 600;
+    cursor: help;
+    padding: 1px 4px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 2px;
+    transition: background 0.15s;
+}
+
+.echo-past-date:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.echo-empty {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    padding: 8px 0;
+    text-align: center;
+}

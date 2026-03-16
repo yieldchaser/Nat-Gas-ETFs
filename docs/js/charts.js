@@ -115,7 +115,7 @@ const Charts = {
     },
 
     // ---- CONVERGENCE GAUGE (SVG Ring) ----
-    createGaugeRing(count, total, ticker) {
+    createGaugeRing(count, total, ticker, tooltip = '') {
         const circumference = 2 * Math.PI * 22; // radius = 22
         const progress = count / total;
         const dashOffset = circumference * (1 - progress);
@@ -131,8 +131,10 @@ const Charts = {
         else if (count >= total - 1) countColor = 'var(--red)';
         else countColor = 'var(--text-secondary)';
 
+        const ttAttr = tooltip ? `data-tooltip="${tooltip}"` : '';
+
         return `
-            <div class="convergence-gauge">
+            <div class="convergence-gauge" ${ttAttr}>
                 <div class="gauge-ticker" style="color: ${countColor}">${ticker}</div>
                 <div class="gauge-ring">
                     <svg viewBox="0 0 50 50">
