@@ -8,11 +8,11 @@ const App = {
     isLoading: false,
 
     async init() {
-        console.log('[RADAR] Initializing...');
+        console.log('[MONITOR] Initializing...');
         this.bindEvents();
         await this.refresh();
         this.startAutoRefresh();
-        console.log('[RADAR] Dashboard ready.');
+        console.log('[MONITOR] Dashboard ready.');
     },
 
     bindEvents() {
@@ -30,16 +30,16 @@ const App = {
             let precomputed = await DataService.fetchPrecomputed();
 
             if (precomputed && precomputed.etfs) {
-                console.log('[RADAR] Using pre-computed data');
+                console.log('[MONITOR] Using pre-computed data');
                 this.processPrecomputed(precomputed);
             } else {
                 // Fall back to live Yahoo Finance fetch
-                console.log('[RADAR] Fetching live data from Yahoo Finance...');
+                console.log('[MONITOR] Fetching live data from Yahoo Finance...');
                 const raw = await DataService.fetchAll();
                 this.processLiveData(raw);
             }
         } catch (err) {
-            console.error('[RADAR] Refresh failed:', err);
+            console.error('[MONITOR] Refresh failed:', err);
             this.showError('Failed to fetch data. Will retry...');
         } finally {
             this.isLoading = false;
@@ -219,7 +219,7 @@ const App = {
     },
 
     showError(msg) {
-        console.warn('[RADAR]', msg);
+        console.warn('[MONITOR]', msg);
         // Could show a toast notification here
     },
 
@@ -228,7 +228,7 @@ const App = {
         // Check market status and set appropriate interval
         const interval = CONFIG.refreshInterval;
         this.refreshTimer = setInterval(() => this.refresh(), interval);
-        console.log(`[RADAR] Auto-refresh every ${interval / 1000}s`);
+        console.log(`[MONITOR] Auto-refresh every ${interval / 1000}s`);
     },
 
     handleResize() {
