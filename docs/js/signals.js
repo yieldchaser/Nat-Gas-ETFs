@@ -372,6 +372,37 @@ const Signals = {
                 </tr>`;
         }).join('');
 
+        // Forward return stats
+        const fwd = ce.forward_returns || {};
+        const fwdKeys = ['5d', '10d', '21d', '42d', '63d'];
+        const fwdLabels = ['5d', '10d', '21d', '42d', '63d'];
+        const hasFwd = fwdKeys.some(k => fwd[k]);
+
+        const fwdHtml = hasFwd ? `
+            <div class="ce-fwd-returns">
+                <div class="ce-fwd-label">Forward returns after event</div>
+                <table class="ce-fwd-table">
+                    <thead><tr>${fwdLabels.map(l => `<th>${l}</th>`).join('')}</tr></thead>
+                    <tbody>
+                        <tr class="ce-fwd-row">${fwdKeys.map(k => {
+                            const s = fwd[k];
+                            if (!s) return '<td>—</td>';
+                            const v = s.median;
+                            const c = v > 0 ? 'var(--green)' : v < 0 ? 'var(--red)' : '';
+                            const sign = v >= 0 ? '+' : '';
+                            return `<td style="color:${c}" data-tooltip="Median fwd return (${s.count} samples)">${sign}${v.toFixed(1)}%</td>`;
+                        }).join('')}</tr>
+                        <tr class="ce-fwd-wr">${fwdKeys.map(k => {
+                            const s = fwd[k];
+                            if (!s) return '<td>—</td>';
+                            const wr = s.win_rate;
+                            const c = wr >= 55 ? 'var(--green)' : wr <= 45 ? 'var(--red)' : 'var(--text-dim)';
+                            return `<td style="color:${c}" data-tooltip="Win rate: % of events with positive return">${wr.toFixed(0)}% win</td>`;
+                        }).join('')}</tr>
+                    </tbody>
+                </table>
+            </div>` : '';
+
         return `
             <div class="conviction-card conviction-${side}">
                 <div class="conviction-header">
@@ -393,6 +424,7 @@ const Signals = {
                     </thead>
                     <tbody>${eventRows}</tbody>
                 </table>
+                ${fwdHtml}
             </div>`;
     },
 
