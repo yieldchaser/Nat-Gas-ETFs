@@ -130,6 +130,11 @@ CONVICTION_ATR_MULT = 1.5       # Gate 3: |daily move| > N × ATR-14
 CONVICTION_VOL_REGIME_MAX = 70  # Gate 4: vol regime must be ≤ this (non-turbulent)
 CONVICTION_MIN_GAP_DAYS = 15    # Dedup: min calendar days between distinct events
 
+# Side-Wide Volume Convergence (SWVC) — rolling tri-ETF same-side detection
+SWVC_RVOL_THRESHOLD = 2.0   # Min RVOL-21d to qualify as a "spike" for one ETF
+SWVC_LOOKBACK_DAYS  = 15    # How many trading days back to search for spikes
+SWVC_WINDOW_DAYS    = 10    # All 3 spikes must fall within this window to "converge"
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -943,6 +948,119 @@ def compute_pairs(
 
 
 # ---------------------------------------------------------------------------
+# Side-Wide Volume Convergence (SWVC)
+# ---------------------------------------------------------------------------
+def _compute_side_convergence(
+    frames: Dict[str, pd.DataFrame],
+    lookback_days: int = SWVC_LOOKBACK_DAYS,
+    window_days: int = SWVC_WINDOW_DAYS,
+    rvol_threshold: float = SWVC_RVOL_THRESHOLD,
+    rvol_period: int = 21,
+) -> dict:
+    """
+    For each side (long / short), scan the last `lookback_days` trading days
+    of each of the 3 ETFs' RVOL-21d series and find the most recent session
+    where RVOL >= rvol_threshold.
+
+    If all 3 ETFs on a side had a qualifying spike within `window_days` of each
+    other, the side is considered "converged" — a rare, cross-market signal
+    indicating that independent investor bases in the US, Canada and UK are all
+    acting simultaneously.
+
+    Returns a dict with 'long' and 'short' keys.
+    """
+    sides: Dict[str, list] = {"long": [], "short": []}
+    for ticker, cfg in ETF_CONFIG.items():
+        sides[cfg["side"]].append(ticker)
+
+    out: Dict[str, dict] = {}
+
+    for side_name, tickers in sides.items():
+        etf_results: Dict[str, dict] = {}
+
+        for ticker in tickers:
+            df = frames.get(ticker)
+            if df is None or len(df) < rvol_period + 1:
+                etf_results[ticker] = {
+                    "spiked": False, "date": None,
+                    "days_ago": None, "peak_rvol": None,
+                }
+                continue
+
+            vol = df["volume"].astype(float)
+            # Compute rolling 21d RVOL for the tail (lookback + period for warm-up)
+            tail_len = lookback_days + rvol_period + 5
+            vol_tail = vol.iloc[-tail_len:]
+            avg21 = vol_tail.rolling(rvol_period, min_periods=max(2, rvol_period // 2)).mean()
+            rvol_tail = (vol_tail / avg21).iloc[-lookback_days:]
+
+            # Find days that exceeded threshold
+            spike_mask = rvol_tail >= rvol_threshold
+            if not spike_mask.any():
+                etf_results[ticker] = {
+                    "spiked": False, "date": None,
+                    "days_ago": None, "peak_rvol": None,
+                }
+                continue
+
+            # Most recent spike date + its RVOL value
+            last_spike_dt = rvol_tail[spike_mask].index[-1]
+            last_spike_rvol = _safe_float(rvol_tail[spike_mask].iloc[-1])
+            trading_days_ago = int(spike_mask[::-1].values.argmax())  # reverse argmax gives offset from end
+
+            etf_results[ticker] = {
+                "spiked": True,
+                "date": last_spike_dt.strftime("%Y-%m-%d"),
+                "days_ago": trading_days_ago,
+                "peak_rvol": last_spike_rvol,
+            }
+
+        # Determine convergence across this side's 3 ETFs
+        spiked = {t: r for t, r in etf_results.items() if r["spiked"]}
+        score = len(spiked)
+
+        # Calculate calendar-day spread between the earliest and latest spike
+        window_spread = None
+        all_3_within_window = False
+        if score >= 2:
+            # Map ticker -> spike date
+            spike_dates_map = {}
+            for t, r in spiked.items():
+                if r["date"]:
+                    spike_dates_map[t] = pd.Timestamp(r["date"])
+            if len(spike_dates_map) >= 2:
+                dates_list = sorted(spike_dates_map.values())
+                span = (dates_list[-1] - dates_list[0]).days
+                window_spread = span
+                if score == 3 and span <= window_days:
+                    all_3_within_window = True
+
+        if all_3_within_window:
+            status = "converged"
+        elif score == 3:
+            status = "partial"   # all 3 spiked but outside the window
+        elif score == 2:
+            status = "partial"
+        elif score == 1:
+            status = "single"
+        else:
+            status = "quiet"
+
+        out[side_name] = {
+            "status": status,
+            "score": score,
+            "total": len(tickers),
+            "window_days": window_days,
+            "window_spread_days": window_spread,
+            "threshold_rvol": rvol_threshold,
+            "lookback_days": lookback_days,
+            "etfs": etf_results,
+        }
+
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Pipeline orchestration
 # ---------------------------------------------------------------------------
 def run_pipeline() -> None:
@@ -973,6 +1091,9 @@ def run_pipeline() -> None:
 
     # ---- 3. Cross-instrument metrics ----
     pairs_data = compute_pairs(all_metrics)
+
+    # ---- 3b. Side-Wide Volume Convergence ----
+    side_convergence = _compute_side_convergence(frames)
 
     # ---- 4. Aggregate signals ----
     all_signals: List[dict] = []
@@ -1018,11 +1139,27 @@ def run_pipeline() -> None:
         }
         etfs_out[ticker] = _safe_dict(entry)
 
+    # Add SWVC-level alerts to signals
+    for side_name, sc in side_convergence.items():
+        if sc.get("status") == "converged":
+            tickers_str = ", ".join(sc.get("etfs", {}).keys())
+            span = sc.get("window_spread_days")
+            all_signals.append({
+                "type": "swvc_converged",
+                "ticker": f"{side_name}_side",
+                "message": (
+                    f"All 3 {side_name} ETFs ({tickers_str}) spiked within "
+                    f"{span} calendar days — cross-market side-wide convergence"
+                ),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+
     dashboard = {
         "last_updated": datetime.now(timezone.utc).isoformat(),
         "market_status": _market_status(),
         "etfs": etfs_out,
         "pairs": _safe_dict(pairs_data),
+        "side_convergence": _safe_dict(side_convergence),
         "signals": all_signals,
     }
 

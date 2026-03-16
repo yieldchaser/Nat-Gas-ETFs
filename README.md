@@ -57,6 +57,31 @@ This project implements a multi-timeframe volume analysis engine that:
 - Color-coded by severity (quiet/elevated/high/critical/extreme)
 - Convergence gauges showing how many ETFs hit thresholds
 
+### Side-Wide Volume Convergence (SWVC)
+
+Tracks whether all 3 ETFs **on the same side** independently showed elevated volume within a rolling 10-trading-day window — even if the spikes did not occur on the same day.
+
+**The signal:** BOIL + HNU.TO + 3NGL.L are listed on NYSE, TSX, and LSE respectively, trading in different time zones and held by different investor bases. When all three independently spike within ~2 weeks, it means separate market participant cohorts in the US, Canada, and UK are all acting — independent evidence pointing in the same direction.
+
+**Why not just look at the same day?** Your Excel model confirmed the real behavior: the short-side spikes often show up in sequence (US first, Canada confirms a day or two later, UK catches up by the end of the week), not in perfect synchrony. Requiring exact same-day alignment would miss most genuine convergence events.
+
+| Status | Meaning |
+|--------|---------|
+| **CONVERGED** | All 3 ETFs on same side spiked within 10 trading days |
+| **PARTIAL** | 2 of 3 ETFs active, or all 3 but spread > 10 days |
+| **SINGLE** | Only 1 ETF elevated |
+| **QUIET** | No spikes in last 15 days |
+
+The panel shows:
+- A **timeline strip** (15-day window) with colored markers where each ETF spiked
+- **ETF pills** showing ticker, days-since-spike, and peak RVOL on hover
+- A **convergence banner** when CONVERGED — rare event indicating broad-based pressure
+
+**Parameters** (tunable in `config.js` / pipeline constants):
+- Spike threshold: RVOL-21d ≥ 2.0×
+- Lookback: 15 trading days
+- Convergence window: 10 trading days (all 3 must fall within this)
+
 ### Conviction Events — Strict Multi-Gate Anomaly Filter
 
 Inspired by the Excel model's strict filtering criteria that flagged only **1–2 meaningful events per ETF per year**, this is a multi-gate filter designed to isolate true anomalies from routine large moves. **ALL 4 gates must fire simultaneously:**
@@ -160,11 +185,12 @@ docs/data/              # Synced by GitHub Actions for GitHub Pages serving
    - Volume: RVOL, Z-Score, VROC, percentiles across 5 windows
    - Volatility: HV, vol regime, ATR, VoV
    - Volume Signals: CVI, VCVI per window, VPS composite
-4. **Detect Conviction Events** – Strict multi-gate anomaly filter (VCVI + breadth + ATR + regime)
-5. **Generate Historical Echoes** – Pattern study of post-capitulation returns
-6. **Write JSON** to `data/` and sync to `docs/data/` for GitHub Pages
-7. **Dashboard loads JSON** first, falls back to live Yahoo fetch if unavailable
-8. **Browser computes live metrics** (if no pre-computed data) using `metrics.js`
+4. **Compute SWVC** – Scan last 15 days per ETF for volume spikes; check cross-market convergence
+5. **Detect Conviction Events** – Strict multi-gate anomaly filter (VCVI + breadth + ATR + regime)
+6. **Generate Historical Echoes** – Pattern study of post-capitulation returns
+7. **Write JSON** to `data/` and sync to `docs/data/` for GitHub Pages
+8. **Dashboard loads JSON** first, falls back to live Yahoo fetch if unavailable
+9. **Browser computes live metrics** (if no pre-computed data) using `metrics.js`
 
 ## Tech Stack
 

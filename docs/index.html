@@ -88,6 +88,14 @@
                 </table>
             </div>
 
+            <!-- SIDE-WIDE VOLUME CONVERGENCE -->
+            <div class="signal-panel" id="swvc-panel">
+                <h3 data-tooltip="Tracks whether all 3 ETFs on the same side (e.g., KOLD + HND.TO + 3NGS.L) each had a volume spike ≥2× average within a rolling 10-day window — even if the spikes occurred on different days. Independent spiking across US/CA/UK markets is a stronger signal than a single-market event.">SIDE-WIDE CONVERGENCE <span class="panel-subtitle">— tri-ETF rolling window</span></h3>
+                <div id="swvc-container">
+                    <div class="swvc-loading">Scanning cross-market activity…</div>
+                </div>
+            </div>
+
             <!-- CONVICTION EVENTS — strict multi-gate anomaly filter -->
             <div class="signal-panel" id="conviction-panel">
                 <h3 data-tooltip="Strict multi-gate filter requiring ALL conditions simultaneously: VCVI≥72, ≥3/5 vol windows≥85th pct, daily move>1.5×ATR, vol regime≤70th. Designed to flag only ~1-2 true anomalies per ETF per year.">CONVICTION EVENTS <span class="panel-subtitle">— multi-gate anomaly filter</span></h3>
