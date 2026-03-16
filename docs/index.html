@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAT GAS ETF VOLUME ANOMALY RADAR</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/signals.css">
+</head>
+<body>
+    <!-- TOP BAR -->
+    <header id="top-bar">
+        <div class="top-bar-left">
+            <h1>NAT GAS ETF VOLUME ANOMALY RADAR</h1>
+            <span class="subtitle">Live Volume Intelligence Dashboard</span>
+        </div>
+        <div class="top-bar-right">
+            <div class="market-status" id="market-status">
+                <span class="status-dot"></span>
+                <span class="status-text">LOADING...</span>
+            </div>
+            <div class="last-updated" id="last-updated">--</div>
+            <button class="refresh-btn" id="refresh-btn" title="Refresh Data">&#x21bb;</button>
+        </div>
+    </header>
+
+    <!-- HYPOTHESIS VALIDATION BANNER -->
+    <div id="hypothesis-banner" class="hypothesis-banner collapsed">
+        <div class="banner-toggle" onclick="toggleBanner()">
+            <span class="banner-title">HYPOTHESIS VALIDATION: Price-Volume Inverse Relationship</span>
+            <span class="banner-arrow">&#x25BC;</span>
+        </div>
+        <div class="banner-content" id="banner-content">
+            <div class="validation-grid" id="validation-grid">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN 3-SECTION LAYOUT -->
+    <main id="dashboard">
+        <!-- SECTION A: LONG SIDE -->
+        <section class="dashboard-section section-long" id="section-long">
+            <div class="section-header">
+                <h2>LONG SIDE</h2>
+                <span class="section-label">Bull Exposure</span>
+            </div>
+            <div class="etf-cards" id="long-cards">
+                <!-- BOIL, HNU, 3NGL cards inserted here -->
+            </div>
+        </section>
+
+        <!-- SECTION C: SIGNAL COMMAND CENTER -->
+        <section class="dashboard-section section-signals" id="section-signals">
+            <div class="section-header">
+                <h2>SIGNAL COMMAND CENTER</h2>
+                <span class="section-label">Volume Intelligence</span>
+            </div>
+
+            <!-- ALERT FEED -->
+            <div class="signal-panel" id="alert-panel">
+                <h3>ACTIVE ALERTS</h3>
+                <div class="alert-feed" id="alert-feed">
+                    <div class="no-alerts">No active alerts</div>
+                </div>
+            </div>
+
+            <!-- INVERSE PAIR STRESS MATRIX -->
+            <div class="signal-panel" id="stress-matrix-panel">
+                <h3>INVERSE PAIR STRESS MATRIX</h3>
+                <table class="stress-matrix" id="stress-matrix">
+                    <thead>
+                        <tr>
+                            <th>PAIR</th>
+                            <th>LONG RVOL</th>
+                            <th>SHORT RVOL</th>
+                            <th>CVI-63</th>
+                            <th>IPSI</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stress-matrix-body">
+                        <!-- Filled dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- VOLUME HEAT CALENDAR -->
+            <div class="signal-panel" id="heat-calendar-panel">
+                <h3>VOLUME HEAT MAP (90 Days)</h3>
+                <div class="heat-calendar" id="heat-calendar">
+                    <!-- Filled dynamically -->
+                </div>
+                <div class="heat-legend">
+                    <span class="heat-label">Quiet</span>
+                    <span class="heat-swatch" style="background:#1a1a2e"></span>
+                    <span class="heat-swatch" style="background:#16213e"></span>
+                    <span class="heat-swatch" style="background:#0f3460"></span>
+                    <span class="heat-swatch" style="background:#e94560"></span>
+                    <span class="heat-swatch" style="background:#ff006e"></span>
+                    <span class="heat-label">Extreme</span>
+                </div>
+            </div>
+
+            <!-- MULTI-WINDOW CONVERGENCE -->
+            <div class="signal-panel" id="convergence-panel">
+                <h3>MULTI-WINDOW CONVERGENCE</h3>
+                <div class="convergence-gauges" id="convergence-gauges">
+                    <!-- Filled dynamically -->
+                </div>
+            </div>
+
+            <!-- ROLLING CORRELATION MONITOR -->
+            <div class="signal-panel" id="correlation-panel">
+                <h3>PRICE-VOLUME CORRELATION MONITOR</h3>
+                <div class="correlation-bars" id="correlation-bars">
+                    <!-- Filled dynamically -->
+                </div>
+                <div class="correlation-note">30-day rolling Spearman correlation. Negative = price drops coincide with volume spikes (hypothesis confirmed).</div>
+            </div>
+        </section>
+
+        <!-- SECTION B: SHORT SIDE -->
+        <section class="dashboard-section section-short" id="section-short">
+            <div class="section-header">
+                <h2>SHORT SIDE</h2>
+                <span class="section-label">Bear / Inverse Exposure</span>
+            </div>
+            <div class="etf-cards" id="short-cards">
+                <!-- KOLD, HND, 3NGS cards inserted here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-content">
+            <span>NAT GAS ETF Volume Anomaly Radar | Data via Yahoo Finance</span>
+            <span>CVI + IPSI + MWCA are proprietary indicators</span>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/metrics.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/cards.js"></script>
+    <script src="js/signals.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
