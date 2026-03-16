@@ -174,8 +174,9 @@ const Signals = {
             const m = allMetrics[t];
             const corr = m ? m.rollingCorr : null;
             const side = CONFIG.etfs[t].side;
+            // Negative correlation confirms hypothesis (price-volume inverse) → green; positive contradicts → red
             const color = corr != null
-                ? (corr < -0.1 ? 'var(--red)' : corr > 0.1 ? 'var(--green)' : 'var(--text-muted)')
+                ? (corr < -0.2 ? 'var(--green)' : corr < -0.1 ? 'var(--text-secondary)' : corr > 0.1 ? 'var(--red)' : 'var(--text-muted)')
                 : 'var(--text-muted)';
             const tickerColor = side === 'long' ? 'var(--green)' : 'var(--red)';
 
@@ -184,7 +185,7 @@ const Signals = {
                     <div class="ticker" style="color:${tickerColor}">${t}</div>
                     <div class="corr-value" style="color:${color}">${corr != null ? corr.toFixed(3) : '--'}</div>
                     <div class="corr-label">30d Spearman</div>
-                    <div class="pvalue">${corr != null && corr < -0.2 ? 'CONFIRMED' : corr != null && corr < 0 ? 'Weak' : '--'}</div>
+                    <div class="pvalue ${corr != null && corr < -0.2 ? 'pv-confirmed' : corr != null && corr < 0 ? 'pv-weak' : 'pv-none'}">${corr != null && corr < -0.2 ? 'CONFIRMED' : corr != null && corr < 0 ? 'Weak' : '--'}</div>
                 </div>`;
         }).join('');
     },
