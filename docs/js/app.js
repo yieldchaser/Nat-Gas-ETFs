@@ -248,3 +248,59 @@ function toggleBanner() {
 
 // Boot
 document.addEventListener('DOMContentLoaded', () => App.init());
+
+// ============================================================
+// Universal JS Tooltip Singleton
+// Uses position:fixed + viewport clamping — never overflows
+// panels regardless of parent overflow or layout constraints.
+// ============================================================
+(function () {
+    const tt = document.createElement('div');
+    tt.id = 'tt';
+    document.body.appendChild(tt);
+
+    let active = null;
+
+    function show(el) {
+        if (el === active) return;
+        active = el;
+        tt.textContent = el.getAttribute('data-tooltip');
+        tt.style.display = 'block';
+        tt.style.opacity = '0';
+
+        // Position after paint so offsetWidth/Height are correct
+        requestAnimationFrame(function () {
+            const r   = el.getBoundingClientRect();
+            const tw  = tt.offsetWidth;
+            const th  = tt.offsetHeight;
+            const pad = 8;
+
+            // Default: above element, horizontally centred
+            let x = r.left + r.width / 2 - tw / 2;
+            let y = r.top - th - 8;
+
+            // Flip below if no room above
+            if (y < pad) y = r.bottom + 8;
+
+            // Clamp horizontally to viewport
+            x = Math.max(pad, Math.min(x, window.innerWidth - tw - pad));
+
+            tt.style.left = x + 'px';
+            tt.style.top  = y + 'px';
+            tt.style.opacity = '1';
+        });
+    }
+
+    function hide() {
+        tt.style.opacity = '0';
+        tt.style.display = 'none';
+        active = null;
+    }
+
+    document.addEventListener('mouseover', function (e) {
+        const el = e.target.closest('[data-tooltip]');
+        if (el) show(el); else hide();
+    });
+
+    document.addEventListener('mouseleave', function () { hide(); }, true);
+}());
