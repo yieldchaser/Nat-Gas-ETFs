@@ -28,7 +28,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install yfinance pandas numpy scipy
+          pip install pandas numpy scipy
 
       - name: Run data pipeline
         run: |

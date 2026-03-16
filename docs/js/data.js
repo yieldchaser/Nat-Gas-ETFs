@@ -8,28 +8,33 @@ const DataService = {
     lastFetch: null,
 
     // Yahoo Finance v8 chart API (public, no auth needed)
-    // We use allorigins as a CORS proxy
-    buildUrl(ticker, range = '2y', interval = '1d') {
-        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=${range}&interval=${interval}&includePrePost=false`;
+    // Uses period1/period2 for full daily history
+    // CORS proxy required for client-side fetching
+    buildUrl(ticker) {
+        // Request 2 years of daily data for the dashboard (sufficient for all metrics)
+        const period2 = Math.floor(Date.now() / 1000);
+        const period1 = period2 - (2 * 365 * 86400); // 2 years back
+        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${period1}&period2=${period2}&interval=1d&includePrePost=false`;
         return `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
     },
 
-    async fetchETF(ticker, range = '2y', interval = '1d') {
-        const url = this.buildUrl(ticker, range, interval);
+    async fetchETF(ticker) {
+        const url = this.buildUrl(ticker);
         try {
             const resp = await fetch(url);
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const json = await resp.json();
             return this.parseYahooResponse(ticker, json);
         } catch (err) {
-            console.error(`Failed to fetch ${ticker}:`, err);
-            // Try alternative proxy
-            return this.fetchWithFallback(ticker, range, interval);
+            console.error(`Failed to fetch ${ticker} via allorigins:`, err);
+            return this.fetchWithFallback(ticker);
         }
     },
 
-    async fetchWithFallback(ticker, range, interval) {
-        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=${range}&interval=${interval}`;
+    async fetchWithFallback(ticker) {
+        const period2 = Math.floor(Date.now() / 1000);
+        const period1 = period2 - (2 * 365 * 86400);
+        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${period1}&period2=${period2}&interval=1d`;
         const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`;
         try {
             const resp = await fetch(proxyUrl);
@@ -106,7 +111,7 @@ const DataService = {
 
     async fetchAll() {
         const tickers = Object.keys(CONFIG.etfs);
-        const promises = tickers.map(t => this.fetchETF(CONFIG.etfs[t].yahoo));
+        const promises = tickers.map(t => this.fetchETF(CONFIG.etfs[t].yahoo, t));
         const results = await Promise.allSettled(promises);
 
         const output = {};

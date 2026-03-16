@@ -2,18 +2,21 @@
 """
 Natural Gas ETF Data Pipeline
 ==============================
-Fetches historical price/volume data for 6 Natural Gas ETFs, computes a full
-suite of volume and price metrics, and writes structured JSON for the dashboard.
+Fetches historical price/volume data for 6 Natural Gas ETFs via the Yahoo
+Finance v8 chart API (no external dependencies beyond stdlib + numpy/pandas).
+Computes a full suite of volume and price metrics and writes structured JSON
+for the dashboard.
 
-Designed to be run by GitHub Actions on a schedule.  Falls back to mock data
-when yfinance is unavailable or when MOCK_DATA=1 is set.
+Designed to be run by GitHub Actions on a schedule, or locally.
 """
 
 import json
 import logging
 import math
 import os
+import ssl
 import sys
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -36,9 +39,13 @@ logger = logging.getLogger("data_pipeline")
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
-EXCEL_PATH = PROJECT_ROOT / "Natural Gas ETFs.xlsx"
 DASHBOARD_JSON = DATA_DIR / "dashboard_data.json"
 SIGNALS_JSON = DATA_DIR / "latest_signals.json"
+
+YAHOO_BASE_URL = "https://query1.finance.yahoo.com/v8/finance/chart/"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+MAX_RETRIES = 3
+RETRY_DELAY_SECS = 2
 
 ETF_CONFIG: Dict[str, Dict[str, str]] = {
     "BOIL": {
@@ -162,131 +169,75 @@ def _market_status() -> str:
 
 
 # ---------------------------------------------------------------------------
-# Data fetching – live (yfinance)
+# Data fetching – Yahoo Finance v8 chart API (no yfinance dependency)
 # ---------------------------------------------------------------------------
-def _fetch_live() -> Dict[str, pd.DataFrame]:
-    """Download OHLCV history for all ETFs via yfinance."""
-    import yfinance as yf  # imported here so failure is caught
+def _yahoo_fetch_one(ticker: str) -> Optional[pd.DataFrame]:
+    """Fetch full daily OHLCV history for a single ticker via Yahoo Finance v8 chart API.
 
+    Uses period1/period2 parameters to request the complete daily history
+    (period1 set to 2007-01-01 to capture all available data for every ETF).
+    """
+    period1 = int(datetime(2007, 1, 1).timestamp())
+    period2 = int(datetime.now().timestamp())
+    url = (
+        f"{YAHOO_BASE_URL}{urllib.request.quote(ticker)}"
+        f"?period1={period1}&period2={period2}&interval=1d&includePrePost=false"
+    )
+
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+            resp = urllib.request.urlopen(req, context=ctx, timeout=30)
+            raw = json.loads(resp.read())
+
+            result = raw["chart"]["result"][0]
+            timestamps = result["timestamp"]
+            quote = result["indicators"]["quote"][0]
+
+            dates = [datetime.utcfromtimestamp(ts) for ts in timestamps]
+            df = pd.DataFrame({
+                "open": quote.get("open"),
+                "high": quote.get("high"),
+                "low": quote.get("low"),
+                "close": quote.get("close"),
+                "volume": quote.get("volume"),
+            }, index=pd.DatetimeIndex(dates))
+
+            # Drop rows with missing close or volume
+            df = df.dropna(subset=["close", "volume"])
+            df["volume"] = df["volume"].astype(float)
+            df.sort_index(inplace=True)
+
+            return df
+
+        except Exception as e:
+            logger.warning("Attempt %d/%d for %s failed: %s", attempt, MAX_RETRIES, ticker, e)
+            if attempt < MAX_RETRIES:
+                import time
+                time.sleep(RETRY_DELAY_SECS * attempt)
+
+    return None
+
+
+def _fetch_all() -> Dict[str, pd.DataFrame]:
+    """Download full daily OHLCV history for all 6 ETFs via Yahoo Finance v8 API."""
     frames: Dict[str, pd.DataFrame] = {}
-    start_date = "2015-01-01"
 
     for ticker in ETF_CONFIG:
-        logger.info("Fetching %s …", ticker)
-        try:
-            obj = yf.Ticker(ticker)
-            df = obj.history(start=start_date, auto_adjust=True)
-            if df.empty:
-                logger.warning("No data returned for %s – trying max period", ticker)
-                df = obj.history(period="max", auto_adjust=True)
-            if not df.empty:
-                # Normalise column names
-                df.columns = [c.lower().replace(" ", "_") for c in df.columns]
-                for col in ("open", "high", "low", "close", "volume"):
-                    if col not in df.columns:
-                        df[col] = np.nan
-                df = df[["open", "high", "low", "close", "volume"]].copy()
-                df.index = pd.to_datetime(df.index).tz_localize(None)
-                df.sort_index(inplace=True)
-                frames[ticker] = df
-                logger.info("  → %d rows for %s", len(df), ticker)
-            else:
-                logger.error("No data at all for %s", ticker)
-        except Exception:
-            logger.exception("Failed to fetch %s", ticker)
+        logger.info("Fetching %s from Yahoo Finance …", ticker)
+        df = _yahoo_fetch_one(ticker)
 
-    return frames
-
-
-# ---------------------------------------------------------------------------
-# Data fetching – mock / fallback
-# ---------------------------------------------------------------------------
-def _generate_mock_data() -> Dict[str, pd.DataFrame]:
-    """
-    Generate synthetic OHLCV data.  Attempts to read monthly returns from the
-    Excel workbook to calibrate realistic price levels; otherwise uses purely
-    synthetic random walks.
-    """
-    logger.info("Generating MOCK data …")
-    rng = np.random.default_rng(42)
-    end = pd.Timestamp.now().normalize()
-    start = pd.Timestamp("2015-01-02")
-    dates = pd.bdate_range(start, end)
-
-    # Try to pull annual return data from the Excel for calibration
-    annual_returns: Dict[str, float] = {}
-    if EXCEL_PATH.exists():
-        try:
-            xl = pd.read_excel(EXCEL_PATH, sheet_name="Data ETFs", header=0)
-            # The columns Year, HNU, BOIL, 3NGL, KOLD, HND, 3NGS hold annual returns
-            # Map spreadsheet names → tickers
-            name_map = {
-                "HNU": "HNU.TO",
-                "BOIL": "BOIL",
-                "3NGL": "3NGL.L",
-                "KOLD": "KOLD",
-                "HND": "HND.TO",
-                "3NGS": "3NGS.L",
-            }
-            for col, ticker in name_map.items():
-                if col in xl.columns:
-                    vals = pd.to_numeric(xl[col], errors="coerce").dropna()
-                    if len(vals):
-                        annual_returns[ticker] = float(vals.mean())
-            logger.info("Loaded annual-return calibration from Excel for %s", list(annual_returns.keys()))
-        except Exception:
-            logger.warning("Could not read Excel calibration data – using defaults")
-
-    # Base prices and volumes (realistic starting points)
-    base_config = {
-        "BOIL":   {"price": 30.0,  "vol": 8_000_000},
-        "HNU.TO": {"price": 5.0,   "vol": 2_000_000},
-        "3NGL.L": {"price": 1.50,  "vol": 500_000},
-        "KOLD":   {"price": 40.0,  "vol": 5_000_000},
-        "HND.TO": {"price": 8.0,   "vol": 1_500_000},
-        "3NGS.L": {"price": 20.0,  "vol": 300_000},
-    }
-
-    frames: Dict[str, pd.DataFrame] = {}
-
-    for ticker, cfg in base_config.items():
-        n = len(dates)
-        # Daily drift from annual return
-        ann_ret = annual_returns.get(ticker, -0.15 if ETF_CONFIG[ticker]["side"] == "long" else 0.05)
-        daily_drift = ann_ret / 252
-        daily_vol = 0.04  # daily volatility ~4 %
-
-        # Random walk for log-prices
-        log_returns = rng.normal(daily_drift, daily_vol, n)
-        log_prices = np.log(cfg["price"]) + np.cumsum(log_returns)
-        close = np.exp(log_prices)
-        close = np.maximum(close, 0.01)  # floor
-
-        high = close * (1 + rng.uniform(0, 0.03, n))
-        low = close * (1 - rng.uniform(0, 0.03, n))
-        opn = low + rng.uniform(0, 1, n) * (high - low)
-
-        # Volume with mean-reversion + occasional spikes
-        base_vol = cfg["vol"]
-        vol = np.zeros(n)
-        vol[0] = base_vol
-        for i in range(1, n):
-            spike = rng.exponential(1)
-            if spike > 4:
-                spike_mult = rng.uniform(3, 8)
-            else:
-                spike_mult = 1.0
-            vol[i] = max(
-                1000,
-                vol[i - 1] * 0.7 + base_vol * 0.3 + rng.normal(0, base_vol * 0.2),
-            ) * spike_mult
-
-        df = pd.DataFrame(
-            {"open": opn, "high": high, "low": low, "close": close, "volume": vol.astype(int)},
-            index=dates[:n],
-        )
-        frames[ticker] = df
-        logger.info("  → %d mock rows for %s", len(df), ticker)
+        if df is not None and not df.empty:
+            frames[ticker] = df
+            first = df.index[0].strftime("%Y-%m-%d")
+            last = df.index[-1].strftime("%Y-%m-%d")
+            logger.info("  → %d daily rows for %s (%s to %s)", len(df), ticker, first, last)
+        else:
+            logger.error("No data for %s after %d retries", ticker, MAX_RETRIES)
 
     return frames
 
@@ -552,18 +503,8 @@ def run_pipeline() -> None:
     # Ensure output directory exists
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    # ---- 1. Fetch data ----
-    use_mock = os.environ.get("MOCK_DATA", "0") == "1"
-
-    if use_mock:
-        logger.info("MOCK_DATA=1 → using mock data")
-        frames = _generate_mock_data()
-    else:
-        try:
-            frames = _fetch_live()
-        except Exception:
-            logger.warning("yfinance import or fetch failed – falling back to mock data")
-            frames = _generate_mock_data()
+    # ---- 1. Fetch live data from Yahoo Finance ----
+    frames = _fetch_all()
 
     if not frames:
         logger.error("No data frames available – aborting")
