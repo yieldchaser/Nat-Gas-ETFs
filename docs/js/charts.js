@@ -32,7 +32,15 @@ const Charts = {
         }
         ctx.lineTo(padding + (closes.length - 1) * xStep, h - padding);
         ctx.closePath();
-        ctx.fillStyle = color.replace(')', `, ${fillAlpha})`).replace('rgb', 'rgba');
+        // Support both hex (#rrggbb) and rgb() color formats
+        if (color.startsWith('#')) {
+            const r = parseInt(color.slice(1,3), 16);
+            const g = parseInt(color.slice(3,5), 16);
+            const b = parseInt(color.slice(5,7), 16);
+            ctx.fillStyle = `rgba(${r},${g},${b},${fillAlpha})`;
+        } else {
+            ctx.fillStyle = color.replace(')', `, ${fillAlpha})`).replace('rgb', 'rgba');
+        }
         ctx.fill();
 
         // Line
