@@ -72,7 +72,7 @@ const Cards = {
             const color = val != null ? Metrics.getValueColor(val, CONFIG.thresholds.vcvi) : 'var(--text-muted)';
             return `
                 <div class="indicator-block">
-                    <span class="indicator-label" data-tooltip="Vol-Adjusted Capitulation Volume Index (${w} window). CVI × (1.5 − VolRegime/100). Signals in quiet regimes boosted ×1.5, turbulent regimes discounted ×0.5. Primary signal. Scale 0–100.">VCVI-${w}</span>
+                    <span class="indicator-label" data-tooltip="Vol-Adjusted Capitulation Index (${w}). Quiet regimes ×1.5, turbulent ×0.5. Scale 0–100.">VCVI-${w}</span>
                     <span class="indicator-value" style="color:${color}">${val != null ? val.toFixed(0) : '--'}</span>
                 </div>`;
         }).join('');
