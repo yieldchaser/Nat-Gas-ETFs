@@ -45,13 +45,20 @@ const Cards = {
 
         // Percentile bars
         const percentileWindows = ['10d', '21d', '63d', '126d', '252d'];
+        const pctTips = {
+            '10d': 'Volume percentile vs 10-day history — short-term context',
+            '21d': 'Volume percentile vs 21-day history — monthly context',
+            '63d': 'Volume percentile vs 63-day history — quarterly context',
+            '126d': 'Volume percentile vs 126-day history — semi-annual context',
+            '252d': 'Volume percentile vs 252-day history — full-year context'
+        };
         const pctBarsHtml = percentileWindows.map(w => {
             const val = metrics.volPercentile[w];
             const pctClass = Metrics.getPercentileClass(val);
             const width = val != null ? Math.max(2, val) : 0;
             return `
                 <div class="percentile-row ${pctClass}">
-                    <span class="percentile-label">${w}</span>
+                    <span class="percentile-label" data-tooltip="${pctTips[w]}">${w}</span>
                     <div class="percentile-bar-bg">
                         <div class="percentile-bar-fill" style="width:${width}%"></div>
                     </div>
@@ -65,7 +72,7 @@ const Cards = {
             const color = val != null ? Metrics.getValueColor(val, CONFIG.thresholds.vcvi) : 'var(--text-muted)';
             return `
                 <div class="indicator-block">
-                    <span class="indicator-label">VCVI-${w}</span>
+                    <span class="indicator-label" data-tooltip="Vol-Adjusted Capitulation Volume Index (${w} window). CVI × (1.5 − VolRegime/100). Signals in quiet regimes boosted ×1.5, turbulent regimes discounted ×0.5. Primary signal. Scale 0–100.">VCVI-${w}</span>
                     <span class="indicator-value" style="color:${color}">${val != null ? val.toFixed(0) : '--'}</span>
                 </div>`;
         }).join('');
@@ -94,7 +101,7 @@ const Cards = {
                 : 'hv-bar-low';
             return `
                 <div class="hv-row">
-                    <span class="hv-label">HV-${w}</span>
+                    <span class="hv-label" data-tooltip="${w === '10d' ? 'HV-10d: 10-day realized vol (annualized %). Most sensitive to recent moves.' : w === '21d' ? 'HV-21d: 21-day realized vol (annualized %). Used for vol regime classification.' : 'HV-63d: 63-day (quarterly) realized vol. Medium-term volatility trend.'}" data-tt-pos="right">HV-${w}</span>
                     <div class="hv-bar-bg">
                         <div class="hv-bar-fill ${barClass}" style="width:${fill}%"></div>
                     </div>
@@ -114,21 +121,21 @@ const Cards = {
             <div class="card-volatility">
                 <div class="vol-panel-header">
                     <span class="vol-panel-title">VOLATILITY</span>
-                    <span class="vol-regime-badge ${regimeInfo.cls}">${regimeInfo.label}${volRegimePct != null ? ' ' + volRegimePct.toFixed(0) + 'th' : ''}</span>
+                    <span class="vol-regime-badge ${regimeInfo.cls}" data-tooltip="Vol Regime Percentile — where today's HV21 sits within its own 252-day history. 0th = historically quiet (signals stronger). 100th = historically extreme (signals discounted). Current: ${volRegimePct != null ? volRegimePct.toFixed(0) + 'th pct' : '--'}">${regimeInfo.label}${volRegimePct != null ? ' ' + volRegimePct.toFixed(0) + 'th' : ''}</span>
                 </div>
                 <div class="hv-bars">${hvBarRows}</div>
                 <div class="vol-panel-row">
                     <div class="vol-stat">
-                        <span class="vol-stat-label">ATR-14</span>
+                        <span class="vol-stat-label" data-tooltip="Average True Range (14-day) as % of current price — the expected daily trading range. Today's ATR: ${atr14Pct != null ? atr14Pct.toFixed(1) + '% of price' : '--'}. Use to judge if today's move is anomalous.">ATR-14</span>
                         <span class="vol-stat-value">${atr14Pct != null ? atr14Pct.toFixed(1) + '%' : '--'}</span>
                     </div>
                     <div class="vol-stat">
-                        <span class="vol-stat-label">TERM STR</span>
+                        <span class="vol-stat-label" data-tooltip="HV Term Structure — ratio of HV10 ÷ HV63. Below 0.65: short-term vol calming (storm passed). Above 1.35: short-term vol surging (storm building). Current: ${hvTermStructure != null ? hvTermStructure.toFixed(2) + 'x' : '--'}">TERM STR</span>
                         <span class="vol-stat-value ${tsInfo.cls}">${tsInfo.arrow} ${tsInfo.label}</span>
                     </div>
                     <div class="vol-stat">
-                        <span class="vol-stat-label">VoV-21</span>
-                        <span class="vol-stat-value" style="color:${vovColor}">${vov21 != null ? vov21.toFixed(0) + '%' : '--'}</span>
+                        <span class="vol-stat-label" data-tooltip="Vol-of-Vol (21d) — std dev of the 10d HV series over 21 days, in percentage points. Measures regime instability: how much the short-term realized vol is itself fluctuating. High VoV = unstable regime, potential for sudden vol spike.">VoV-21</span>
+                        <span class="vol-stat-value" style="color:${vovColor}">${vov21 != null ? vov21.toFixed(0) + 'pp' : '--'}</span>
                     </div>
                 </div>
             </div>`;
@@ -164,19 +171,19 @@ const Cards = {
 
                 <div class="card-metrics">
                     <div class="metric-item">
-                        <span class="metric-label">VOL</span>
+                        <span class="metric-label" data-tooltip="Today's raw share volume traded">VOL</span>
                         <span class="metric-value">${this.formatNumber(c.volume, 0)}</span>
                     </div>
                     <div class="metric-item">
-                        <span class="metric-label">RVOL-21d</span>
+                        <span class="metric-label" data-tooltip="Relative Volume — today's volume ÷ 21-day average. 2x = twice normal. The primary raw volume signal." data-tt-pos="right">RVOL-21d</span>
                         <span class="metric-value" style="color:${Metrics.getValueColor(metrics.rvol['21d'], CONFIG.thresholds.rvol)}">${metrics.rvol['21d'] != null ? metrics.rvol['21d'].toFixed(1) + 'x' : '--'}</span>
                     </div>
                     <div class="metric-item">
-                        <span class="metric-label">Z-SCORE</span>
+                        <span class="metric-label" data-tooltip="Z-Score — standard deviations above/below the 21-day mean volume. &gt;2σ is statistically unusual (top ~2.5% of observations).">Z-SCORE</span>
                         <span class="metric-value" style="color:${Metrics.getValueColor(metrics.zScore['21d'], CONFIG.thresholds.zScore)}">${metrics.zScore['21d'] != null ? (metrics.zScore['21d'] > 0 ? '+' : '') + metrics.zScore['21d'].toFixed(1) + '\u03C3' : '--'}</span>
                     </div>
                     <div class="metric-item">
-                        <span class="metric-label">VROC-10d</span>
+                        <span class="metric-label" data-tooltip="Volume Rate of Change — % change in volume vs 10 sessions ago. Captures sudden acceleration in participation." data-tt-pos="right">VROC-10d</span>
                         <span class="metric-value">${metrics.vroc['10d'] != null ? (metrics.vroc['10d'] > 0 ? '+' : '') + metrics.vroc['10d'].toFixed(0) + '%' : '--'}</span>
                     </div>
                 </div>
@@ -190,11 +197,11 @@ const Cards = {
                 <div class="card-indicators">
                     ${vcviEntries}
                     <div class="indicator-block">
-                        <span class="indicator-label">VPS</span>
+                        <span class="indicator-label" data-tooltip="Volume Pressure Score — 5-component composite: RVOL (25%) + Z-Score (20%) + Vol Percentile (25%) + VROC (10%) + Inv. Vol Regime (20%). Synthesises all signals into 0–100. Higher = stronger pressure." data-tt-pos="right">VPS</span>
                         <span class="indicator-value" style="color:${vpsColor}">${metrics.vps != null ? metrics.vps.toFixed(0) : '--'}</span>
                     </div>
                     <div class="indicator-block">
-                        <span class="indicator-label">MWCA</span>
+                        <span class="indicator-label" data-tooltip="Multi-Window Convergence Alarm — fires when volume exceeds the 90th percentile simultaneously across ALL 5 time windows (10/21/63/126/252d). Extremely rare multi-timeframe confirmation of a volume anomaly." data-tt-pos="right">MWCA</span>
                         ${mwcaHtml}
                     </div>
                 </div>
