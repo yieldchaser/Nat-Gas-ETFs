@@ -110,14 +110,13 @@ docs/
 │   ├── cards.css       # ETF card styling
 │   └── signals.css     # Signal panel styling
 └── js/
-    ├── app.js          # App controller, data loading
+    ├── app.js          # App controller, data loading, hypothesis validation
     ├── data.js         # Yahoo Finance API wrapper
     ├── cards.js        # Card rendering engine
     ├── charts.js       # Canvas rendering (sparklines, volume bars, gauges, echoes)
     ├── signals.js      # Stress matrix & convergence display
     ├── metrics.js      # All calculations (RVOL, Z-Score, CVI, VCVI, VoV, HV, etc.)
-    ├── config.js       # Thresholds, windows, ETF metadata
-    └── validation.js   # Hypothesis validation display
+    └── config.js       # Thresholds, windows, ETF metadata
 ```
 
 ### Backend (Scripts & Data)
@@ -226,8 +225,10 @@ Check browser console → App will log which data source loaded.
 
 - **Dashboard load:** <2s (pre-computed JSON)
 - **Card rendering:** 60 FPS (Canvas sparklines/gauges)
-- **Data refresh:** On-demand (manual refresh button) or auto every 5 min if in-focus
-- **Mobile-friendly:** Responsive grid layout, tooltips on tap
+- **Data refresh:** On-demand (manual refresh button) or auto:
+  - 1 minute when market is open
+  - 5 minutes when market is closed
+- **Mobile-friendly:** Responsive grid layout, tooltips on hover/tap
 
 ## Credits
 
