@@ -80,17 +80,25 @@ const CONFIG = {
 
     // Alert thresholds
     thresholds: {
-        cvi: { elevated: 60, high: 75, critical: 90, extreme: 95 },
-        vps: { elevated: 50, high: 70, critical: 85, extreme: 95 },
+        cvi:  { elevated: 60, high: 75, critical: 90, extreme: 95 },
+        vcvi: { elevated: 55, high: 72, critical: 88, extreme: 95 },  // vol-adjusted CVI
+        vps:  { elevated: 50, high: 70, critical: 85, extreme: 95 },
         rvol: { elevated: 1.5, high: 2.5, critical: 3.5, extreme: 5.0 },
         zScore: { elevated: 1.5, high: 2.0, critical: 2.5, extreme: 3.0 },
         percentile: { elevated: 50, high: 75, critical: 90, extreme: 95 },
         ipsi: { elevated: 1.5, high: 2.0, stress: 2.5, critical: 3.5 },
-        mwca_threshold: 90  // Percentile threshold for each window to trigger MWCA
+        mwca_threshold: 90,  // Percentile threshold for each window to trigger MWCA
+        // Volatility modelling thresholds
+        volRegime: { low: 30, normal: 60, high: 80, extreme: 92 },
+        // HV term structure: HV10 / HV63
+        // < 0.65 = calming strongly  |  > 1.35 = accelerating strongly
+        hvTermStructure: { calming: 0.65, stable_low: 0.85, stable_high: 1.15, accelerating: 1.35 },
+        vov: { elevated: 40, high: 60, critical: 80, extreme: 100 },   // vol-of-vol (%)
+        atrBreakout: { elevated: 1.2, high: 1.5, critical: 2.0, extreme: 3.0 }  // × ATR
     },
 
-    // VPS weights
-    vpsWeights: { rvol: 0.30, zScore: 0.25, percentile: 0.30, vroc: 0.15 },
+    // VPS weights — 5-component including inverse vol regime
+    vpsWeights: { rvol: 0.25, zScore: 0.20, percentile: 0.25, vroc: 0.10, volRegime: 0.20 },
 
     // Data source
     dataUrl: 'data/dashboard_data.json',

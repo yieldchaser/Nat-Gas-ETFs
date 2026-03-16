@@ -94,17 +94,33 @@ VROC_WINDOWS = [5, 10, 21]
 MA_WINDOWS = [10, 21, 50, 200]
 ROLLING_CORR_WINDOW = 30
 
-# VPS weights
-VPS_W_RVOL = 0.30
-VPS_W_ZSCORE = 0.25
-VPS_W_PCT = 0.30
-VPS_W_VROC = 0.15
+# Volatility modelling windows
+HV_WINDOWS = [10, 21, 63, 252]  # Realized historical volatility windows
+ATR_WINDOW = 14                  # ATR lookback
+VOV_WINDOW = 21                  # Vol-of-vol: std of 10d HV over this many periods
+VOL_REGIME_WINDOW = 252          # Window for vol regime percentile ranking
 
-# CVI alert thresholds
+# VPS weights — now 5-component; vol regime inverse adds context-sensitivity
+VPS_W_RVOL = 0.25       # was 0.30
+VPS_W_ZSCORE = 0.20     # was 0.25
+VPS_W_PCT = 0.25        # was 0.30
+VPS_W_VROC = 0.10       # was 0.15
+VPS_W_VOLREGIME = 0.20  # NEW: inverted vol regime (high when vol is quiet → signals stronger)
+
+# CVI / VCVI alert thresholds
 CVI_WARNING = 60
 CVI_CRITICAL = 80
+VCVI_WARNING = 55   # VCVI thresholds slightly lower since it's already vol-adjusted
+VCVI_CRITICAL = 72
 VPS_ELEVATED = 60
 VPS_CRITICAL = 80
+
+# Volatility alert thresholds
+VOV_WARNING = 60          # Vol-of-vol: regime becoming unstable
+VOV_CRITICAL = 90         # Vol-of-vol: extreme regime instability
+ATR_BREAKOUT_MULT = 2.0   # Alert when daily move > N × ATR-14
+ATR_BREAKOUT_RVOL = 1.5   # ...and RVOL exceeds this
+VOL_REGIME_HIGH = 80      # Alert when vol regime is in top 20th pct of own history
 
 
 # ---------------------------------------------------------------------------
@@ -321,7 +337,75 @@ def compute_etf_metrics(df: pd.DataFrame) -> dict:
         else:
             cvi[f"{w}d"] = None
 
-    # --- VPS (Volume Pressure Score) ---
+    # =========================================================================
+    # VOLATILITY MODELLING BLOCK
+    # =========================================================================
+
+    # --- Realized Historical Volatility (annualized %) ---
+    # HV = rolling std of log returns × √252 × 100
+    log_ret = np.log(close / close.shift(1))
+    hv_series: Dict[int, pd.Series] = {}
+    hv: Dict[str, Optional[float]] = {}
+    for w in HV_WINDOWS:
+        s = log_ret.rolling(w, min_periods=max(2, w // 2)).std() * np.sqrt(252) * 100
+        hv_series[w] = s
+        hv[f"{w}d"] = _safe_float(s.iloc[-1])
+
+    # --- ATR-14 (Average True Range as % of current price) ---
+    high_s = df["high"]
+    low_s = df["low"]
+    true_range = pd.concat([
+        high_s - low_s,
+        (high_s - close.shift(1)).abs(),
+        (low_s - close.shift(1)).abs(),
+    ], axis=1).max(axis=1)
+    atr14_series = true_range.rolling(ATR_WINDOW, min_periods=max(2, ATR_WINDOW // 2)).mean()
+    atr14_raw = atr14_series.iloc[-1]
+    atr14_pct = _safe_float(
+        (atr14_raw / close.iloc[-1] * 100) if (close.iloc[-1] > 0 and not np.isnan(atr14_raw)) else np.nan
+    )
+
+    # --- Vol Regime Percentile ---
+    # Where does the current 21d HV sit relative to its own 252-day history?
+    # 0th = historically quiet, 100th = historically extreme
+    vol_regime_pct = _safe_float(_percentile_rank(hv_series[21], VOL_REGIME_WINDOW).iloc[-1])
+
+    # --- HV Term Structure (HV10 / HV63) ---
+    # < 0.7 = calming / storm passed   |   > 1.3 = accelerating / building storm
+    hv10_val = hv.get("10d")
+    hv63_val = hv.get("63d")
+    if hv10_val is not None and hv63_val is not None and hv63_val > 0:
+        hv_term_structure = _safe_float(hv10_val / hv63_val)
+    else:
+        hv_term_structure = None
+
+    # --- Vol-of-Vol (VoV-21) ---
+    # 21-period std of the 10d HV series (already in % annualized).
+    # Units: percentage points — how much the annualized short-term vol swings day-to-day.
+    # High VoV means the volatility itself is rapidly changing — unstable regime.
+    vov21 = _safe_float(
+        hv_series[10].rolling(VOV_WINDOW, min_periods=max(2, VOV_WINDOW // 2)).std().iloc[-1]
+    )
+
+    # --- VCVI (Vol-Adjusted Capitulation Volume Index) ---
+    # VCVI = CVI × (1.5 − vol_regime_pct / 100)
+    #   vol_regime=0th  → ×1.5  (quiet vol env → volume spike is MORE remarkable)
+    #   vol_regime=50th → ×1.0  (neutral)
+    #   vol_regime=100th → ×0.5 (turbulent env → volume spikes expected, discount signal)
+    vcvi: Dict[str, Optional[float]] = {}
+    for w in VOL_PCT_WINDOWS:
+        cvi_val = cvi.get(f"{w}d")
+        if cvi_val is not None and vol_regime_pct is not None:
+            multiplier = 1.5 - vol_regime_pct / 100.0
+            vcvi[f"{w}d"] = _safe_float(max(0.0, cvi_val * multiplier))
+        else:
+            vcvi[f"{w}d"] = cvi_val  # Fallback to raw CVI
+
+    # =========================================================================
+    # END VOLATILITY BLOCK
+    # =========================================================================
+
+    # --- VPS (Volume Pressure Score) — now 5-component with vol regime ---
     # Normalise components to 0-100 then weighted sum
     def _norm_0_100(val, lo, hi):
         if val is None or lo is None or hi is None or hi == lo:
@@ -338,12 +422,15 @@ def compute_etf_metrics(df: pd.DataFrame) -> dict:
     zscore_norm = _norm_0_100(zscore_val, -2.0, 4.0)
     pct_norm = pct_val if pct_val is not None else 50.0
     vroc_norm = _norm_0_100(vroc_val, -80, 200)
+    # InvVolRegime: 100 when vol is quiet → signals more significant; 0 when turbulent
+    inv_vol_regime_norm = (100.0 - vol_regime_pct) if vol_regime_pct is not None else 50.0
 
     vps = _safe_float(
         VPS_W_RVOL * rvol_norm
         + VPS_W_ZSCORE * zscore_norm
         + VPS_W_PCT * pct_norm
         + VPS_W_VROC * vroc_norm
+        + VPS_W_VOLREGIME * inv_vol_regime_norm
     )
 
     # --- MWCA (Multi-Window Convergence Alarm) ---
@@ -376,6 +463,22 @@ def compute_etf_metrics(df: pd.DataFrame) -> dict:
     alerts: List[dict] = []
     now_iso = datetime.now(timezone.utc).isoformat()
 
+    # VCVI alerts (preferred over raw CVI — vol-regime-adjusted signal)
+    for w_key, vcvi_val in vcvi.items():
+        if vcvi_val is not None and vcvi_val >= VCVI_CRITICAL:
+            alerts.append({
+                "type": "vcvi_critical",
+                "message": f"VCVI ({w_key}) = {vcvi_val:.1f} — vol-adjusted extreme capitulation",
+                "timestamp": now_iso,
+            })
+        elif vcvi_val is not None and vcvi_val >= VCVI_WARNING:
+            alerts.append({
+                "type": "vcvi_warning",
+                "message": f"VCVI ({w_key}) = {vcvi_val:.1f} — vol-adjusted capitulation signal",
+                "timestamp": now_iso,
+            })
+
+    # Legacy CVI alerts (retained for compatibility)
     for w_key, cvi_val in cvi.items():
         if cvi_val is not None and cvi_val >= CVI_CRITICAL:
             alerts.append({
@@ -407,6 +510,46 @@ def compute_etf_metrics(df: pd.DataFrame) -> dict:
         alerts.append({
             "type": "mwca_alarm",
             "message": "Volume percentile > 90th across ALL windows simultaneously",
+            "timestamp": now_iso,
+        })
+
+    # ATR breakout alert: today's move > N × ATR-14 AND elevated RVOL
+    today_move_pct = abs(float(pct_change.iloc[-1])) if not np.isnan(pct_change.iloc[-1]) else 0.0
+    if (atr14_pct is not None and atr14_pct > 0
+            and today_move_pct > ATR_BREAKOUT_MULT * atr14_pct
+            and rvol_val is not None and rvol_val > ATR_BREAKOUT_RVOL):
+        ratio = today_move_pct / atr14_pct
+        alerts.append({
+            "type": "atr_breakout",
+            "message": (
+                f"ATR breakout: {today_move_pct:.1f}% move = {ratio:.1f}× ATR-14 "
+                f"({atr14_pct:.1f}%), RVOL {rvol_val:.1f}x"
+            ),
+            "timestamp": now_iso,
+        })
+
+    # VoV spike: regime instability warning
+    if vov21 is not None and vov21 >= VOV_CRITICAL:
+        alerts.append({
+            "type": "vov_extreme",
+            "message": f"VoV-21 = {vov21:.0f}% — extreme volatility regime instability",
+            "timestamp": now_iso,
+        })
+    elif vov21 is not None and vov21 >= VOV_WARNING:
+        alerts.append({
+            "type": "vov_elevated",
+            "message": f"VoV-21 = {vov21:.0f}% — volatility regime becoming unstable",
+            "timestamp": now_iso,
+        })
+
+    # High vol regime warning: volume signals should be discounted
+    if vol_regime_pct is not None and vol_regime_pct >= VOL_REGIME_HIGH:
+        alerts.append({
+            "type": "high_vol_regime",
+            "message": (
+                f"Vol regime {vol_regime_pct:.0f}th pct — high-volatility environment; "
+                "volume spikes are less anomalous"
+            ),
             "timestamp": now_iso,
         })
 
@@ -443,6 +586,14 @@ def compute_etf_metrics(df: pd.DataFrame) -> dict:
         "vol_percentile": vol_pct,
         "price_percentile": price_pct,
         "cvi": cvi,
+        "vcvi": vcvi,
+        "volatility": {
+            "hv": hv,
+            "vol_regime_pct": vol_regime_pct,
+            "hv_term_structure": hv_term_structure,
+            "atr14_pct": atr14_pct,
+            "vov21": vov21,
+        },
         "vps": vps,
         "mwca": mwca,
         "rolling_correlation": rolling_corr,
@@ -554,6 +705,8 @@ def run_pipeline() -> None:
             "vol_percentile": m["vol_percentile"],
             "price_percentile": m["price_percentile"],
             "cvi": m["cvi"],
+            "vcvi": m["vcvi"],
+            "volatility": m["volatility"],
             "vps": m["vps"],
             "mwca": m["mwca"],
             "rolling_correlation": m["rolling_correlation"],
@@ -588,6 +741,8 @@ def run_pipeline() -> None:
                 "change_pct": etfs_out[ticker]["current"]["change_pct"],
                 "vps": etfs_out[ticker]["vps"],
                 "mwca": etfs_out[ticker]["mwca"],
+                "vol_regime_pct": (etfs_out[ticker].get("volatility") or {}).get("vol_regime_pct"),
+                "hv_term_structure": (etfs_out[ticker].get("volatility") or {}).get("hv_term_structure"),
             }
             for ticker in etfs_out
         },
