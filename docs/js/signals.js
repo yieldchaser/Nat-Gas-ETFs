@@ -396,9 +396,126 @@ const Signals = {
             </div>`;
     },
 
-    renderAll(allMetrics) {
+    // ---- SIDE-WIDE VOLUME CONVERGENCE (SWVC) ----
+    renderSideConvergence(sideConvergence) {
+        const container = document.getElementById('swvc-container');
+        if (!container) return;
+
+        if (!sideConvergence) {
+            container.innerHTML = '<div class="swvc-empty">No convergence data available.</div>';
+            return;
+        }
+
+        const sides = [
+            { key: 'long',  label: 'LONG SIDE',  tickers: ['BOIL', 'HNU.TO', '3NGL.L'] },
+            { key: 'short', label: 'SHORT SIDE', tickers: ['KOLD', 'HND.TO', '3NGS.L'] },
+        ];
+
+        const html = sides.map(({ key, label, tickers }) => {
+            const sc = sideConvergence[key];
+            if (!sc) return '';
+
+            const status     = sc.status || 'quiet';
+            const score      = sc.score  || 0;
+            const total      = sc.total  || 3;
+            const lookback   = sc.lookback_days  || 15;
+            const windowDays = sc.window_days || 10;
+            const spread     = sc.window_spread_days;
+            const threshold  = sc.threshold_rvol  || 2.0;
+
+            const statusColors = {
+                converged: 'var(--red)',
+                partial:   'var(--orange)',
+                single:    'var(--yellow)',
+                quiet:     'var(--text-muted)',
+            };
+            const statusLabels = {
+                converged: 'CONVERGED',
+                partial:   'PARTIAL',
+                single:    'SINGLE',
+                quiet:     'QUIET',
+            };
+            const statusColor = statusColors[status] || 'var(--text-muted)';
+            const statusLabel = statusLabels[status] || 'QUIET';
+
+            // Score pills: one circle per ETF
+            const pills = tickers.map(t => {
+                const etf = (sc.etfs || {})[t] || {};
+                const spiked = etf.spiked;
+                const daysAgo = etf.days_ago != null ? etf.days_ago : null;
+                const rvol = etf.peak_rvol;
+                const date = etf.date || '—';
+                const pillColor = spiked ? (key === 'long' ? 'var(--green)' : 'var(--red)') : 'var(--bg-panel)';
+                const pillBorder = spiked ? (key === 'long' ? 'var(--long-accent)' : 'var(--short-accent)') : 'var(--border-primary)';
+                const tip = spiked
+                    ? `${t}: RVOL ${rvol?.toFixed(1)}× on ${date} (${daysAgo}d ago)`
+                    : `${t}: no spike ≥${threshold}× in last ${lookback} trading days`;
+                return `<div class="swvc-pill ${spiked ? 'spiked' : ''}"
+                             style="background:${pillColor};border-color:${pillBorder}"
+                             data-tooltip="${tip}">
+                    <span class="swvc-pill-ticker">${t}</span>
+                    ${spiked ? `<span class="swvc-pill-days">${daysAgo}d</span>` : '<span class="swvc-pill-days">—</span>'}
+                </div>`;
+            }).join('');
+
+            // Timeline strip: last `lookback` trading days, mark spike positions
+            const timelineCells = Array.from({ length: lookback }, (_, i) => {
+                const dayOffset = lookback - 1 - i;  // 0 = today, lookback-1 = oldest
+                const spikeTickers = tickers.filter(t => {
+                    const etf = (sc.etfs || {})[t] || {};
+                    return etf.spiked && etf.days_ago === dayOffset;
+                });
+                const hasSpike = spikeTickers.length > 0;
+                const isToday  = dayOffset === 0;
+                const cellColor = hasSpike
+                    ? (key === 'short' ? 'var(--red)' : 'var(--green)')
+                    : isToday ? 'rgba(255,255,255,0.06)' : 'transparent';
+                const tip = hasSpike
+                    ? `Day −${dayOffset}: ${spikeTickers.join(', ')} spiked`
+                    : isToday ? 'Today' : `−${dayOffset}d`;
+                return `<div class="swvc-cell ${hasSpike ? 'spike' : ''} ${isToday ? 'today' : ''}"
+                             style="background:${cellColor}"
+                             data-tooltip="${tip}"></div>`;
+            }).join('');
+
+            const spreadTxt = spread != null
+                ? `${score}/3 ETFs within ${spread}d spread`
+                : score === 0
+                    ? `No spikes in last ${lookback} trading days`
+                    : `${score}/3 ETFs active`;
+
+            return `
+                <div class="swvc-side swvc-${key}">
+                    <div class="swvc-side-header">
+                        <span class="swvc-side-label">${label}</span>
+                        <span class="swvc-status-badge" style="color:${statusColor}">${statusLabel}</span>
+                        <span class="swvc-spread-txt">${spreadTxt}</span>
+                    </div>
+                    <div class="swvc-pills">${pills}</div>
+                    <div class="swvc-timeline-wrap">
+                        <div class="swvc-timeline">${timelineCells}</div>
+                        <div class="swvc-timeline-labels">
+                            <span>−${lookback - 1}d</span>
+                            <span>−7d</span>
+                            <span>today</span>
+                        </div>
+                    </div>
+                    ${status === 'converged' ? `
+                    <div class="swvc-alert-banner" style="border-color:${statusColor}">
+                        All 3 ${key}-side ETFs (US / CA / UK) spiked within ${spread} calendar days
+                        — independent cross-market capitulation signal
+                    </div>` : ''}
+                </div>`;
+        }).join('');
+
+        container.innerHTML = html ||
+            '<div class="swvc-empty">No data available.</div>';
+    },
+
+    renderAll(allMetrics, sideConvergence) {
         this.renderAlertFeed(allMetrics);
         this.renderStressMatrix(allMetrics);
+        this.renderSideConvergence(sideConvergence);
         this.renderConvictionEvents(allMetrics);
         this.renderHistoricalEchoes(allMetrics);
         this.renderHeatCalendar(allMetrics);
