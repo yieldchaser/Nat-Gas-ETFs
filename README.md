@@ -1,6 +1,6 @@
-# Nat Gas ETF Volume Anomaly Radar 📊⚡
+# Nat Gas ETF Volume Monitor
 
-A real-time dashboard for detecting volume anomalies and price-volume patterns across natural gas ETFs. Combines live data from Yahoo Finance with a comprehensive volatility modelling engine to identify capitulation signals and potential reversals.
+A real-time dashboard for tracking volume flow and price-volume dynamics across natural gas ETFs. Combines live data from Yahoo Finance with a multi-timeframe volatility engine to surface statistically significant volume events.
 
 **Live Dashboard:** [https://yieldchaser.github.io/Nat-Gas-ETFs/](https://yieldchaser.github.io/Nat-Gas-ETFs/)
 
@@ -13,7 +13,7 @@ This project implements a multi-timeframe volume analysis engine that:
 - **Synthesizes signals** via the **Volume Pressure Score (VPS)** — a 5-component composite metric
 - **Tracks historical echoes** — patterns showing price action following capitulation signals
 - **Monitors capitulation** with the **VCVI (Vol-Adjusted Capitulation Volume Index)** — CVI adjusted for volatility regime
-- **Validates the hypothesis** that natural gas price-volume moves are inverse (high volume on down days, low volume on up days)
+- **Measures price-volume correlation** across instruments — tracking the inverse relationship between volume spikes and price direction
 
 ## Dashboard Features
 
@@ -150,7 +150,7 @@ docs/
 │   ├── cards.css       # ETF card styling
 │   └── signals.css     # Signal panel styling
 └── js/
-    ├── app.js          # App controller, data loading, hypothesis validation
+    ├── app.js          # App controller, data loading, correlation analysis
     ├── data.js         # Yahoo Finance API wrapper
     ├── cards.js        # Card rendering engine
     ├── charts.js       # Canvas rendering (sparklines, volume bars, gauges, echoes)
@@ -169,7 +169,7 @@ scripts/
 data/
 ├── dashboard_data.json      # Pre-computed metrics for all ETFs & history
 ├── latest_signals.json      # Current signal state
-└── validation_results.json  # Hypothesis validation stats
+└── validation_results.json  # Correlation analysis stats
 
 docs/data/              # Synced by GitHub Actions for GitHub Pages serving
 ├── dashboard_data.json
@@ -274,7 +274,7 @@ Check browser console → App will log which data source loaded.
 
 ## Credits
 
-Built with a focus on **thesis-driven analysis** — testing the hypothesis that natural gas exhibits inverse price-volume relationships, and that volume capitulation precedes reversals.
+Built around systematic volume flow analysis — tracking the empirical relationship between volume spikes and price direction across US, Canadian, and UK-listed natural gas ETFs.
 
 ## License
 
