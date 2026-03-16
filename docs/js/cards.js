@@ -227,7 +227,7 @@ const Cards = {
                 const volContainer = document.getElementById(`volbar-${safeTicker}`);
                 if (sparkContainer) {
                     const canvas = sparkContainer.querySelector('canvas');
-                    const color = CONFIG.etfs[t].side === 'long' ? '#00e676' : '#ff1744';
+                    const color = CONFIG.etfs[t].side === 'long' ? '#3db87a' : '#c04040';
                     Charts.drawSparkline(canvas, allMetrics[t].sparkData, color);
                 }
                 if (volContainer) {
