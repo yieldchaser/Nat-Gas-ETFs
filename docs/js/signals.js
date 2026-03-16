@@ -4,6 +4,15 @@
 
 const Signals = {
 
+    // Icon/prefix for each alert type
+    _alertIcon(type) {
+        const icons = {
+            vcvi: '⚡', cvi: '🔥', mwca: '💥', rvol: '📈', vps: '📊',
+            atr_breakout: '📐', vov: '🌀', vol_regime: '🌡', ipsi_stress: '⚠'
+        };
+        return icons[type] || '●';
+    },
+
     renderAlertFeed(allMetrics) {
         const feed = document.getElementById('alert-feed');
         if (!feed) return;
@@ -27,10 +36,12 @@ const Signals = {
 
         feed.innerHTML = allAlerts.slice(0, 15).map(a => {
             const tickerColor = CONFIG.etfs[a.ticker]?.side === 'long' ? 'var(--green)' : 'var(--red)';
+            const icon = this._alertIcon(a.type);
             return `
-                <div class="alert-item alert-${a.type}">
+                <div class="alert-item alert-${a.type} alert-level-${a.level}">
                     <span class="alert-time">${a.time}</span>
                     <span class="alert-ticker" style="color:${tickerColor}">${a.ticker}</span>
+                    <span class="alert-icon">${icon}</span>
                     <span class="alert-message">${a.message}</span>
                 </div>`;
         }).join('');
@@ -41,29 +52,35 @@ const Signals = {
         if (!tbody) return;
 
         tbody.innerHTML = CONFIG.pairs.map(pair => {
-            const longM = allMetrics[pair.long];
+            const longM  = allMetrics[pair.long];
             const shortM = allMetrics[pair.short];
-            const ipsi = Metrics.computeIPSI(longM, shortM);
+            const ipsi   = Metrics.computeIPSI(longM, shortM);
             const status = Metrics.computePairStatus(ipsi);
 
-            const longRvol = longM?.rvol?.['21d'];
+            const longRvol  = longM?.rvol?.['21d'];
             const shortRvol = shortM?.rvol?.['21d'];
-            const shortCvi = shortM?.cvi?.['63d'];
-            const longCvi = longM?.cvi?.['63d'];
-            // Show whichever CVI is higher between long and short
-            const displayCvi = Math.max(shortCvi || 0, longCvi || 0);
 
-            const rvolColor = (v) => v != null ? Metrics.getValueColor(v, CONFIG.thresholds.rvol) : 'var(--text-muted)';
-            const cviColor = displayCvi != null ? Metrics.getValueColor(displayCvi, CONFIG.thresholds.cvi) : 'var(--text-muted)';
-            const ipsiColor = ipsi != null ? Metrics.getValueColor(ipsi, CONFIG.thresholds.ipsi) : 'var(--text-muted)';
+            // Use VCVI as the primary capitulation signal in the stress matrix
+            const shortVcvi = shortM?.vcvi?.['63d'] ?? shortM?.cvi?.['63d'];
+            const longVcvi  = longM?.vcvi?.['63d']  ?? longM?.cvi?.['63d'];
+            const displayVcvi = Math.max(shortVcvi || 0, longVcvi || 0);
+
+            // Vol regime: show the pair's long side vol regime (both should be similar)
+            const volReg = longM?.volatility?.volRegimePct ?? shortM?.volatility?.volRegimePct;
+            const regInfo = Metrics.getVolRegimeLabel(volReg);
+
+            const rvolColor  = v => v != null ? Metrics.getValueColor(v, CONFIG.thresholds.rvol) : 'var(--text-muted)';
+            const vcviColor  = displayVcvi != null ? Metrics.getValueColor(displayVcvi, CONFIG.thresholds.vcvi) : 'var(--text-muted)';
+            const ipsiColor  = ipsi != null ? Metrics.getValueColor(ipsi, CONFIG.thresholds.ipsi) : 'var(--text-muted)';
 
             return `
                 <tr>
                     <td class="pair-name">${pair.label}</td>
                     <td style="color:${rvolColor(longRvol)}">${longRvol != null ? longRvol.toFixed(1) + 'x' : '--'}</td>
                     <td style="color:${rvolColor(shortRvol)}">${shortRvol != null ? shortRvol.toFixed(1) + 'x' : '--'}</td>
-                    <td style="color:${cviColor}">${displayCvi != null ? displayCvi.toFixed(0) : '--'}</td>
+                    <td style="color:${vcviColor}">${displayVcvi != null ? displayVcvi.toFixed(0) : '--'}</td>
                     <td style="color:${ipsiColor}">${ipsi != null ? ipsi.toFixed(1) + 'x' : '--'}</td>
+                    <td><span class="vol-regime-badge ${regInfo.cls}" style="font-size:0.6rem">${regInfo.label}</span></td>
                     <td><span class="stress-status ${status}">${status.toUpperCase()}</span></td>
                 </tr>`;
         }).join('');

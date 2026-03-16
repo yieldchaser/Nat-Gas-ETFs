@@ -239,6 +239,132 @@
     color: var(--text-muted);
 }
 
+/* ============================================
+   Volatility Panel
+   ============================================ */
+.card-volatility {
+    margin: 8px 0;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    border: 1px solid var(--border-primary);
+}
+
+.vol-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.vol-panel-title {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+/* Vol Regime Badge */
+.vol-regime-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+.vr-low     { background: rgba(0,230,118,0.15); color: var(--green); }
+.vr-quiet   { background: rgba(33,150,243,0.15); color: var(--blue); }
+.vr-normal  { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.vr-high    { background: rgba(255,152,0,0.15); color: var(--orange); }
+.vr-extreme { background: rgba(255,23,68,0.18); color: var(--red); }
+.vr-unknown { background: transparent; color: var(--text-muted); }
+
+/* HV Bars */
+.hv-bars {
+    margin-bottom: 6px;
+}
+
+.hv-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+}
+
+.hv-label {
+    font-size: 0.58rem;
+    color: var(--text-muted);
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.hv-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-primary);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.hv-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+}
+.hv-bar-low     { background: var(--green); }
+.hv-bar-quiet   { background: var(--blue); }
+.hv-bar-normal  { background: #546e7a; }
+.hv-bar-high    { background: var(--orange); }
+.hv-bar-extreme { background: var(--red); }
+
+.hv-value {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* Vol stat row */
+.vol-panel-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    border-top: 1px solid var(--border-primary);
+    padding-top: 5px;
+    margin-top: 2px;
+}
+
+.vol-stat {
+    text-align: center;
+    flex: 1;
+}
+
+.vol-stat-label {
+    font-size: 0.52rem;
+    color: var(--text-muted);
+    display: block;
+    letter-spacing: 0.3px;
+}
+
+.vol-stat-value {
+    font-size: 0.72rem;
+    font-weight: 600;
+    display: block;
+    margin-top: 1px;
+    color: var(--text-secondary);
+}
+
+/* HV Term Structure arrow colours */
+.ts-calm    { color: var(--green); }
+.ts-easing  { color: var(--blue); }
+.ts-neutral { color: var(--text-secondary); }
+.ts-building { color: var(--yellow); }
+.ts-accel   { color: var(--red); }
+
 /* Dollar Volume */
 .card-dollar-volume {
     display: flex;

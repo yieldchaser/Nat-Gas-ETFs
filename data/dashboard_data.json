@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-03-16T11:05:23.316565+00:00",
+  "last_updated": "2026-03-16T11:50:54.728823+00:00",
   "market_status": "pre_market",
   "etfs": {
     "BOIL": {
@@ -52,7 +52,26 @@
         "126d": 47.1808,
         "252d": 71.500453
       },
-      "vps": 17.053367,
+      "vcvi": {
+        "10d": 0.0,
+        "21d": 3.555777,
+        "63d": 18.870408,
+        "126d": 55.921466,
+        "252d": 84.746553
+      },
+      "volatility": {
+        "hv": {
+          "10d": 107.477034,
+          "21d": 88.557171,
+          "63d": 197.647229,
+          "252d": 128.389649
+        },
+        "vol_regime_pct": 31.474104,
+        "hv_term_structure": 0.543782,
+        "atr14_pct": 8.646419,
+        "vov21": 63.386635
+      },
+      "vps": 27.419088,
       "mwca": false,
       "rolling_correlation": 0.05783,
       "moving_averages": {
@@ -2089,9 +2108,24 @@
       ],
       "alerts": [
         {
+          "type": "vcvi_warning",
+          "message": "VCVI (126d) = 55.9 \u2014 vol-adjusted capitulation signal",
+          "timestamp": "2026-03-16T11:50:53.687455+00:00"
+        },
+        {
+          "type": "vcvi_critical",
+          "message": "VCVI (252d) = 84.7 \u2014 vol-adjusted extreme capitulation",
+          "timestamp": "2026-03-16T11:50:53.687455+00:00"
+        },
+        {
           "type": "cvi_warning",
           "message": "CVI (252d) = 71.5 \u2014 elevated capitulation signal",
-          "timestamp": "2026-03-16T11:05:22.662732+00:00"
+          "timestamp": "2026-03-16T11:50:53.687455+00:00"
+        },
+        {
+          "type": "vov_elevated",
+          "message": "VoV-21 = 63% \u2014 volatility regime becoming unstable",
+          "timestamp": "2026-03-16T11:50:53.687455+00:00"
         }
       ]
     },
@@ -2145,7 +2179,26 @@
         "126d": 57.024,
         "252d": 77.141633
       },
-      "vps": 27.434044,
+      "vcvi": {
+        "10d": 18.149624,
+        "21d": 8.575697,
+        "63d": 33.272736,
+        "126d": 69.86008,
+        "252d": 94.506184
+      },
+      "volatility": {
+        "hv": {
+          "10d": 106.487174,
+          "21d": 88.993063,
+          "63d": 195.099493,
+          "252d": 128.458294
+        },
+        "vol_regime_pct": 27.49004,
+        "hv_term_structure": 0.54581,
+        "atr14_pct": 8.753649,
+        "vov21": 63.685047
+      },
+      "vps": 36.513104,
       "mwca": false,
       "rolling_correlation": -0.022571,
       "moving_averages": {
@@ -4182,9 +4235,24 @@
       ],
       "alerts": [
         {
+          "type": "vcvi_warning",
+          "message": "VCVI (126d) = 69.9 \u2014 vol-adjusted capitulation signal",
+          "timestamp": "2026-03-16T11:50:53.926230+00:00"
+        },
+        {
+          "type": "vcvi_critical",
+          "message": "VCVI (252d) = 94.5 \u2014 vol-adjusted extreme capitulation",
+          "timestamp": "2026-03-16T11:50:53.926230+00:00"
+        },
+        {
           "type": "cvi_warning",
           "message": "CVI (252d) = 77.1 \u2014 elevated capitulation signal",
-          "timestamp": "2026-03-16T11:05:22.814734+00:00"
+          "timestamp": "2026-03-16T11:50:53.926230+00:00"
+        },
+        {
+          "type": "vov_elevated",
+          "message": "VoV-21 = 64% \u2014 volatility regime becoming unstable",
+          "timestamp": "2026-03-16T11:50:53.926230+00:00"
         }
       ]
     },
@@ -4193,36 +4261,36 @@
       "pair": "3NGS.L",
       "name": "WisdomTree Natural Gas 3x Daily Long",
       "current": {
-        "price": 1.809,
-        "volume": 99714,
-        "change_pct": -4.714246,
-        "dollar_volume": 180382.627522
+        "price": 1.823,
+        "volume": 127657,
+        "change_pct": -3.976824,
+        "dollar_volume": 232718.705156
       },
       "rvol": {
-        "10d": 0.194769,
-        "21d": 0.278232,
-        "63d": 0.277555,
-        "126d": 0.415945,
-        "252d": 0.67557
+        "10d": 0.247995,
+        "21d": 0.354884,
+        "63d": 0.354896,
+        "126d": 0.532014,
+        "252d": 0.864237
       },
       "z_score": {
-        "10d": -1.330509,
-        "21d": -0.949803,
-        "63d": -0.954398,
-        "126d": -0.610293,
-        "252d": -0.253079
+        "10d": -1.265812,
+        "21d": -0.856052,
+        "63d": -0.854558,
+        "126d": -0.489725,
+        "252d": -0.105996
       },
       "vroc": {
-        "5d": -91.455747,
-        "10d": -81.822358,
-        "21d": -32.740653
+        "5d": -89.061378,
+        "10d": -76.728411,
+        "21d": -13.892468
       },
       "vol_percentile": {
         "10d": 0.0,
-        "21d": 5.0,
-        "63d": 9.677419,
-        "126d": 24.8,
-        "252d": 52.191235
+        "21d": 10.0,
+        "63d": 12.903226,
+        "126d": 37.6,
+        "252d": 64.940239
       },
       "price_percentile": {
         "10d": 33.333333,
@@ -4233,26 +4301,45 @@
       },
       "cvi": {
         "10d": 0.0,
-        "21d": 1.5,
-        "63d": 7.492195,
-        "126d": 22.0224,
-        "252d": 49.28017
+        "21d": 3.0,
+        "63d": 9.989594,
+        "126d": 33.3888,
+        "252d": 61.318074
       },
-      "vps": 5.875821,
+      "vcvi": {
+        "10d": 0.0,
+        "21d": 2.86255,
+        "63d": 9.531903,
+        "126d": 31.859034,
+        "252d": 58.50868
+      },
+      "volatility": {
+        "hv": {
+          "10d": 188.746942,
+          "21d": 155.887624,
+          "63d": 237.791657,
+          "252d": 167.271192
+        },
+        "vol_regime_pct": 54.581673,
+        "hv_term_structure": 0.793749,
+        "atr14_pct": 13.410979,
+        "vov21": 36.204998
+      },
+      "vps": 16.021853,
       "mwca": false,
-      "rolling_correlation": 0.029489,
+      "rolling_correlation": 0.027298,
       "moving_averages": {
         "price": {
-          "10d": 1.83315,
-          "21d": 1.72956,
-          "50d": 2.36489,
-          "200d": 6.048872
+          "10d": 1.83455,
+          "21d": 1.730226,
+          "50d": 2.36517,
+          "200d": 6.048942
         },
         "volume": {
-          "10d": 511961.6,
-          "21d": 358384.380952,
-          "50d": 389987.26,
-          "200d": 180448.21
+          "10d": 514755.9,
+          "21d": 359715.0,
+          "50d": 390546.12,
+          "200d": 180587.925
         }
       },
       "history": [
@@ -6268,12 +6355,23 @@
           "date": "2026-03-16",
           "open": 1.82,
           "high": 1.842,
-          "low": 1.7965,
-          "close": 1.809,
-          "volume": 99714
+          "low": 1.785,
+          "close": 1.823,
+          "volume": 127657
         }
       ],
-      "alerts": []
+      "alerts": [
+        {
+          "type": "vcvi_warning",
+          "message": "VCVI (252d) = 58.5 \u2014 vol-adjusted capitulation signal",
+          "timestamp": "2026-03-16T11:50:54.102494+00:00"
+        },
+        {
+          "type": "cvi_warning",
+          "message": "CVI (252d) = 61.3 \u2014 elevated capitulation signal",
+          "timestamp": "2026-03-16T11:50:54.102494+00:00"
+        }
+      ]
     },
     "KOLD": {
       "side": "short",
@@ -6325,7 +6423,26 @@
         "126d": 65.504,
         "252d": 73.141696
       },
-      "vps": 41.854091,
+      "vcvi": {
+        "10d": 34.292459,
+        "21d": 63.944721,
+        "63d": 59.494385,
+        "126d": 75.812399,
+        "252d": 84.652043
+      },
+      "volatility": {
+        "hv": {
+          "10d": 109.280414,
+          "21d": 89.059934,
+          "63d": 180.003652,
+          "252d": 121.937844
+        },
+        "vol_regime_pct": 34.262948,
+        "hv_term_structure": 0.607101,
+        "atr14_pct": 9.852346,
+        "vov21": 36.162064
+      },
+      "vps": 46.953745,
       "mwca": false,
       "rolling_correlation": -0.395588,
       "moving_averages": {
@@ -8362,14 +8479,34 @@
       ],
       "alerts": [
         {
+          "type": "vcvi_warning",
+          "message": "VCVI (21d) = 63.9 \u2014 vol-adjusted capitulation signal",
+          "timestamp": "2026-03-16T11:50:54.294069+00:00"
+        },
+        {
+          "type": "vcvi_warning",
+          "message": "VCVI (63d) = 59.5 \u2014 vol-adjusted capitulation signal",
+          "timestamp": "2026-03-16T11:50:54.294069+00:00"
+        },
+        {
+          "type": "vcvi_critical",
+          "message": "VCVI (126d) = 75.8 \u2014 vol-adjusted extreme capitulation",
+          "timestamp": "2026-03-16T11:50:54.294069+00:00"
+        },
+        {
+          "type": "vcvi_critical",
+          "message": "VCVI (252d) = 84.7 \u2014 vol-adjusted extreme capitulation",
+          "timestamp": "2026-03-16T11:50:54.294069+00:00"
+        },
+        {
           "type": "cvi_warning",
           "message": "CVI (126d) = 65.5 \u2014 elevated capitulation signal",
-          "timestamp": "2026-03-16T11:05:23.044540+00:00"
+          "timestamp": "2026-03-16T11:50:54.294069+00:00"
         },
         {
           "type": "cvi_warning",
           "message": "CVI (252d) = 73.1 \u2014 elevated capitulation signal",
-          "timestamp": "2026-03-16T11:05:23.044540+00:00"
+          "timestamp": "2026-03-16T11:50:54.294069+00:00"
         }
       ]
     },
@@ -8423,7 +8560,26 @@
         "126d": 63.104,
         "252d": 74.903573
       },
-      "vps": 28.375378,
+      "vcvi": {
+        "10d": 34.056366,
+        "21d": 39.079681,
+        "63d": 50.712446,
+        "126d": 72.531888,
+        "252d": 86.094346
+      },
+      "volatility": {
+        "hv": {
+          "10d": 112.777851,
+          "21d": 92.852424,
+          "63d": 170.782061,
+          "252d": 119.5568
+        },
+        "vol_regime_pct": 35.059761,
+        "hv_term_structure": 0.660361,
+        "atr14_pct": 9.996221,
+        "vov21": 35.661994
+      },
+      "vps": 35.737801,
       "mwca": false,
       "rolling_correlation": -0.260033,
       "moving_averages": {
@@ -10460,14 +10616,24 @@
       ],
       "alerts": [
         {
+          "type": "vcvi_critical",
+          "message": "VCVI (126d) = 72.5 \u2014 vol-adjusted extreme capitulation",
+          "timestamp": "2026-03-16T11:50:54.528276+00:00"
+        },
+        {
+          "type": "vcvi_critical",
+          "message": "VCVI (252d) = 86.1 \u2014 vol-adjusted extreme capitulation",
+          "timestamp": "2026-03-16T11:50:54.528276+00:00"
+        },
+        {
           "type": "cvi_warning",
           "message": "CVI (126d) = 63.1 \u2014 elevated capitulation signal",
-          "timestamp": "2026-03-16T11:05:23.192124+00:00"
+          "timestamp": "2026-03-16T11:50:54.528276+00:00"
         },
         {
           "type": "cvi_warning",
           "message": "CVI (252d) = 74.9 \u2014 elevated capitulation signal",
-          "timestamp": "2026-03-16T11:05:23.192124+00:00"
+          "timestamp": "2026-03-16T11:50:54.528276+00:00"
         }
       ]
     },
@@ -10476,36 +10642,36 @@
       "pair": "3NGL.L",
       "name": "WisdomTree Natural Gas 3x Daily Short",
       "current": {
-        "price": 11.0,
-        "volume": 8536,
-        "change_pct": 5.363989,
-        "dollar_volume": 93896.0
+        "price": 11.06,
+        "volume": 11852,
+        "change_pct": 5.938706,
+        "dollar_volume": 131083.124973
       },
       "rvol": {
-        "10d": 0.182588,
-        "21d": 0.169894,
-        "63d": 0.101827,
-        "126d": 0.144745,
-        "252d": 0.185643
+        "10d": 0.251733,
+        "21d": 0.235154,
+        "63d": 0.141295,
+        "126d": 0.200885,
+        "252d": 0.257686
       },
       "z_score": {
-        "10d": -1.147539,
-        "21d": -1.053432,
-        "63d": -0.79642,
-        "126d": -0.691243,
-        "252d": -0.682509
+        "10d": -1.071069,
+        "21d": -0.977824,
+        "63d": -0.762237,
+        "126d": -0.646315,
+        "252d": -0.622406
       },
       "vroc": {
-        "5d": -92.636873,
-        "10d": -90.356764,
-        "21d": -76.270433
+        "5d": -89.776501,
+        "10d": -86.610633,
+        "21d": -67.052152
       },
       "vol_percentile": {
         "10d": 0.0,
         "21d": 0.0,
-        "63d": 3.225806,
-        "126d": 3.2,
-        "252d": 2.390438
+        "63d": 4.83871,
+        "126d": 6.4,
+        "252d": 5.577689
       },
       "price_percentile": {
         "10d": 55.555556,
@@ -10517,25 +10683,44 @@
       "cvi": {
         "10d": 0.0,
         "21d": 0.0,
-        "63d": 2.39334,
-        "126d": 2.7648,
-        "252d": 2.219012
+        "63d": 3.590011,
+        "126d": 5.5296,
+        "252d": 5.177695
       },
-      "vps": 3.944033,
+      "vcvi": {
+        "10d": 0.0,
+        "21d": 0.0,
+        "63d": 3.039352,
+        "126d": 4.681434,
+        "252d": 4.383507
+      },
+      "volatility": {
+        "hv": {
+          "10d": 209.470529,
+          "21d": 166.252864,
+          "63d": 220.286934,
+          "252d": 160.896246
+        },
+        "vol_regime_pct": 65.338645,
+        "hv_term_structure": 0.950899,
+        "atr14_pct": 15.95518,
+        "vov21": 45.703424
+      },
+      "vps": 10.339524,
       "mwca": false,
-      "rolling_correlation": -0.095878,
+      "rolling_correlation": -0.099879,
       "moving_averages": {
         "price": {
-          "10d": 11.393,
-          "21d": 12.71381,
-          "50d": 16.01005,
-          "200d": 19.866134
+          "10d": 11.399,
+          "21d": 12.716667,
+          "50d": 16.01125,
+          "200d": 19.866434
         },
         "volume": {
-          "10d": 46750.0,
-          "21d": 50243.142857,
-          "50d": 96530.5,
-          "200d": 48311.64
+          "10d": 47081.6,
+          "21d": 50401.047619,
+          "50d": 96596.82,
+          "200d": 48328.22
         }
       },
       "history": [
@@ -12550,10 +12735,10 @@
         {
           "date": "2026-03-16",
           "open": 11.0,
-          "high": 11.03,
+          "high": 11.12,
           "low": 10.72,
-          "close": 11.0,
-          "volume": 8536
+          "close": 11.06,
+          "volume": 11852
         }
       ],
       "alerts": []
@@ -12573,47 +12758,131 @@
       "status": "quiet"
     },
     "3NGL.L_3NGS.L": {
-      "ipsi": 0.61062,
-      "long_rvol": 0.278232,
-      "short_rvol": 0.169894,
+      "ipsi": 0.662622,
+      "long_rvol": 0.354884,
+      "short_rvol": 0.235154,
       "status": "quiet"
     }
   },
   "signals": [
     {
-      "type": "cvi_warning",
-      "message": "CVI (252d) = 71.5 \u2014 elevated capitulation signal",
-      "timestamp": "2026-03-16T11:05:22.662732+00:00",
+      "type": "vcvi_warning",
+      "message": "VCVI (126d) = 55.9 \u2014 vol-adjusted capitulation signal",
+      "timestamp": "2026-03-16T11:50:53.687455+00:00",
+      "ticker": "BOIL"
+    },
+    {
+      "type": "vcvi_critical",
+      "message": "VCVI (252d) = 84.7 \u2014 vol-adjusted extreme capitulation",
+      "timestamp": "2026-03-16T11:50:53.687455+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_warning",
-      "message": "CVI (252d) = 77.1 \u2014 elevated capitulation signal",
-      "timestamp": "2026-03-16T11:05:22.814734+00:00",
+      "message": "CVI (252d) = 71.5 \u2014 elevated capitulation signal",
+      "timestamp": "2026-03-16T11:50:53.687455+00:00",
+      "ticker": "BOIL"
+    },
+    {
+      "type": "vov_elevated",
+      "message": "VoV-21 = 63% \u2014 volatility regime becoming unstable",
+      "timestamp": "2026-03-16T11:50:53.687455+00:00",
+      "ticker": "BOIL"
+    },
+    {
+      "type": "vcvi_warning",
+      "message": "VCVI (126d) = 69.9 \u2014 vol-adjusted capitulation signal",
+      "timestamp": "2026-03-16T11:50:53.926230+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
+      "type": "vcvi_critical",
+      "message": "VCVI (252d) = 94.5 \u2014 vol-adjusted extreme capitulation",
+      "timestamp": "2026-03-16T11:50:53.926230+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_warning",
+      "message": "CVI (252d) = 77.1 \u2014 elevated capitulation signal",
+      "timestamp": "2026-03-16T11:50:53.926230+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
+      "type": "vov_elevated",
+      "message": "VoV-21 = 64% \u2014 volatility regime becoming unstable",
+      "timestamp": "2026-03-16T11:50:53.926230+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
+      "type": "vcvi_warning",
+      "message": "VCVI (252d) = 58.5 \u2014 vol-adjusted capitulation signal",
+      "timestamp": "2026-03-16T11:50:54.102494+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "cvi_warning",
+      "message": "CVI (252d) = 61.3 \u2014 elevated capitulation signal",
+      "timestamp": "2026-03-16T11:50:54.102494+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "vcvi_warning",
+      "message": "VCVI (21d) = 63.9 \u2014 vol-adjusted capitulation signal",
+      "timestamp": "2026-03-16T11:50:54.294069+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "vcvi_warning",
+      "message": "VCVI (63d) = 59.5 \u2014 vol-adjusted capitulation signal",
+      "timestamp": "2026-03-16T11:50:54.294069+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "vcvi_critical",
+      "message": "VCVI (126d) = 75.8 \u2014 vol-adjusted extreme capitulation",
+      "timestamp": "2026-03-16T11:50:54.294069+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "vcvi_critical",
+      "message": "VCVI (252d) = 84.7 \u2014 vol-adjusted extreme capitulation",
+      "timestamp": "2026-03-16T11:50:54.294069+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "cvi_warning",
       "message": "CVI (126d) = 65.5 \u2014 elevated capitulation signal",
-      "timestamp": "2026-03-16T11:05:23.044540+00:00",
+      "timestamp": "2026-03-16T11:50:54.294069+00:00",
       "ticker": "KOLD"
     },
     {
       "type": "cvi_warning",
       "message": "CVI (252d) = 73.1 \u2014 elevated capitulation signal",
-      "timestamp": "2026-03-16T11:05:23.044540+00:00",
+      "timestamp": "2026-03-16T11:50:54.294069+00:00",
       "ticker": "KOLD"
+    },
+    {
+      "type": "vcvi_critical",
+      "message": "VCVI (126d) = 72.5 \u2014 vol-adjusted extreme capitulation",
+      "timestamp": "2026-03-16T11:50:54.528276+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "vcvi_critical",
+      "message": "VCVI (252d) = 86.1 \u2014 vol-adjusted extreme capitulation",
+      "timestamp": "2026-03-16T11:50:54.528276+00:00",
+      "ticker": "HND.TO"
     },
     {
       "type": "cvi_warning",
       "message": "CVI (126d) = 63.1 \u2014 elevated capitulation signal",
-      "timestamp": "2026-03-16T11:05:23.192124+00:00",
+      "timestamp": "2026-03-16T11:50:54.528276+00:00",
       "ticker": "HND.TO"
     },
     {
       "type": "cvi_warning",
       "message": "CVI (252d) = 74.9 \u2014 elevated capitulation signal",
-      "timestamp": "2026-03-16T11:05:23.192124+00:00",
+      "timestamp": "2026-03-16T11:50:54.528276+00:00",
       "ticker": "HND.TO"
     }
   ]

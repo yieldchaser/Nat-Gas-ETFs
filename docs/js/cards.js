@@ -59,16 +59,79 @@ const Cards = {
                 </div>`;
         }).join('');
 
-        // CVI values
-        const cviEntries = ['21d', '63d', '252d'].map(w => {
-            const val = metrics.cvi[w];
-            const color = val != null ? Metrics.getValueColor(val, CONFIG.thresholds.cvi) : 'var(--text-muted)';
+        // VCVI values (primary — vol-adjusted capitulation index)
+        const vcviEntries = ['21d', '63d', '252d'].map(w => {
+            const val = (metrics.vcvi || {})[w];
+            const color = val != null ? Metrics.getValueColor(val, CONFIG.thresholds.vcvi) : 'var(--text-muted)';
             return `
                 <div class="indicator-block">
-                    <span class="indicator-label">CVI-${w}</span>
+                    <span class="indicator-label">VCVI-${w}</span>
                     <span class="indicator-value" style="color:${color}">${val != null ? val.toFixed(0) : '--'}</span>
                 </div>`;
         }).join('');
+
+        // Build Volatility Panel
+        const vol = metrics.volatility || {};
+        const volRegimePct    = vol.volRegimePct    ?? null;
+        const hvTermStructure = vol.hvTermStructure ?? null;
+        const atr14Pct        = vol.atr14Pct        ?? null;
+        const vov21           = vol.vov21           ?? null;
+        const hv              = vol.hv              || {};
+
+        const regimeInfo = Metrics.getVolRegimeLabel(volRegimePct);
+        const tsInfo     = Metrics.getTermStructureLabel(hvTermStructure);
+
+        // HV bars — show HV10d and HV21d; bar fill capped at 300% HV as max width
+        const HV_BAR_MAX = 300; // 300% annualized HV = 100% bar width
+        const hvBarRows = ['10d', '21d', '63d'].map(w => {
+            const v = hv[w];
+            const fill = v != null ? Math.min(100, (v / HV_BAR_MAX) * 100) : 0;
+            // Colour by regime percentile, not by absolute level (since leveraged ETFs are always "high")
+            const barClass = volRegimePct == null ? 'hv-bar-quiet'
+                : volRegimePct >= 80 ? 'hv-bar-extreme'
+                : volRegimePct >= 60 ? 'hv-bar-high'
+                : volRegimePct >= 30 ? 'hv-bar-normal'
+                : 'hv-bar-low';
+            return `
+                <div class="hv-row">
+                    <span class="hv-label">HV-${w}</span>
+                    <div class="hv-bar-bg">
+                        <div class="hv-bar-fill ${barClass}" style="width:${fill}%"></div>
+                    </div>
+                    <span class="hv-value">${v != null ? v.toFixed(0) + '%' : '--'}</span>
+                </div>`;
+        }).join('');
+
+        // VoV colour
+        const vovColor = vov21 == null ? 'var(--text-muted)'
+            : vov21 >= CONFIG.thresholds.vov.extreme  ? 'var(--purple)'
+            : vov21 >= CONFIG.thresholds.vov.critical ? 'var(--red)'
+            : vov21 >= CONFIG.thresholds.vov.high     ? 'var(--orange)'
+            : vov21 >= CONFIG.thresholds.vov.elevated ? 'var(--yellow)'
+            : 'var(--blue)';
+
+        const volatilityPanelHtml = `
+            <div class="card-volatility">
+                <div class="vol-panel-header">
+                    <span class="vol-panel-title">VOLATILITY</span>
+                    <span class="vol-regime-badge ${regimeInfo.cls}">${regimeInfo.label}${volRegimePct != null ? ' ' + volRegimePct.toFixed(0) + 'th' : ''}</span>
+                </div>
+                <div class="hv-bars">${hvBarRows}</div>
+                <div class="vol-panel-row">
+                    <div class="vol-stat">
+                        <span class="vol-stat-label">ATR-14</span>
+                        <span class="vol-stat-value">${atr14Pct != null ? atr14Pct.toFixed(1) + '%' : '--'}</span>
+                    </div>
+                    <div class="vol-stat">
+                        <span class="vol-stat-label">TERM STR</span>
+                        <span class="vol-stat-value ${tsInfo.cls}">${tsInfo.arrow} ${tsInfo.label}</span>
+                    </div>
+                    <div class="vol-stat">
+                        <span class="vol-stat-label">VoV-21</span>
+                        <span class="vol-stat-value" style="color:${vovColor}">${vov21 != null ? vov21.toFixed(0) + '%' : '--'}</span>
+                    </div>
+                </div>
+            </div>`;
 
         // VPS
         const vpsColor = Metrics.getValueColor(metrics.vps, CONFIG.thresholds.vps);
@@ -122,8 +185,10 @@ const Cards = {
                     ${pctBarsHtml}
                 </div>
 
+                ${volatilityPanelHtml}
+
                 <div class="card-indicators">
-                    ${cviEntries}
+                    ${vcviEntries}
                     <div class="indicator-block">
                         <span class="indicator-label">VPS</span>
                         <span class="indicator-value" style="color:${vpsColor}">${metrics.vps != null ? metrics.vps.toFixed(0) : '--'}</span>

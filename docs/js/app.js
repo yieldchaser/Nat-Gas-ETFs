@@ -84,16 +84,15 @@ const App = {
             }
 
             // Build metrics object from pre-computed data
-            const maxCvi = Math.max(
-                ...Object.values(etfData.cvi || {}).filter(v => v != null && !isNaN(v)),
-                0
-            );
+            // Alert level uses VCVI when available (vol-adjusted is primary signal)
+            const vcviData  = etfData.vcvi  || etfData.cvi || {};
+            const maxVcvi = Math.max(...Object.values(vcviData).filter(v => v != null && !isNaN(v)), 0);
             let alertLevel = 'none';
-            const t = CONFIG.thresholds.cvi;
-            if (maxCvi >= t.extreme) alertLevel = 'extreme';
-            else if (maxCvi >= t.critical) alertLevel = 'critical';
-            else if (maxCvi >= t.high) alertLevel = 'high';
-            else if (maxCvi >= t.elevated) alertLevel = 'elevated';
+            const tv = CONFIG.thresholds.vcvi;
+            if (maxVcvi >= tv.extreme) alertLevel = 'extreme';
+            else if (maxVcvi >= tv.critical) alertLevel = 'critical';
+            else if (maxVcvi >= tv.high)     alertLevel = 'high';
+            else if (maxVcvi >= tv.elevated) alertLevel = 'elevated';
 
             // Count MWCA windows
             const mwcaThreshold = CONFIG.thresholds.mwca_threshold;
@@ -106,13 +105,36 @@ const App = {
             // Map alerts from signals
             const alerts = (data.signals || [])
                 .filter(s => s.ticker === ticker)
-                .map(s => ({
-                    type: s.type.includes('cvi') ? 'cvi' : s.type.includes('mwca') ? 'mwca' : 'rvol',
-                    level: s.type.includes('extreme') ? 'extreme' : s.type.includes('critical') ? 'critical' : 'elevated',
-                    ticker: ticker,
-                    time: new Date(s.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-                    message: s.message
-                }));
+                .map(s => {
+                    const tp = s.type;
+                    let type = 'rvol';
+                    if (tp.includes('vcvi'))       type = 'vcvi';
+                    else if (tp.includes('cvi'))   type = 'cvi';
+                    else if (tp.includes('mwca'))  type = 'mwca';
+                    else if (tp.includes('vov'))   type = 'vov';
+                    else if (tp.includes('atr'))   type = 'atr_breakout';
+                    else if (tp.includes('vol_regime')) type = 'vol_regime';
+                    const level = tp.includes('critical') ? 'critical'
+                        : tp.includes('extreme') ? 'extreme'
+                        : tp.includes('warning') ? 'elevated'
+                        : 'elevated';
+                    return {
+                        type, level,
+                        ticker,
+                        time: new Date(s.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+                        message: s.message
+                    };
+                });
+
+            // Normalise volatility block (pipeline uses snake_case)
+            const vol = etfData.volatility || {};
+            const volatility = {
+                hv:             vol.hv             || {},
+                volRegimePct:   vol.vol_regime_pct  != null ? vol.vol_regime_pct  : (vol.volRegimePct   ?? null),
+                hvTermStructure: vol.hv_term_structure != null ? vol.hv_term_structure : (vol.hvTermStructure ?? null),
+                atr14Pct:       vol.atr14_pct       != null ? vol.atr14_pct       : (vol.atr14Pct       ?? null),
+                vov21:          vol.vov21           ?? null,
+            };
 
             this.allMetrics[ticker] = {
                 ticker: ticker,
@@ -122,7 +144,9 @@ const App = {
                 vroc: etfData.vroc || {},
                 volPercentile: etfData.vol_percentile || etfData.volPercentile || {},
                 pricePercentile: etfData.price_percentile || etfData.pricePercentile || {},
-                cvi: etfData.cvi || {},
+                cvi:  etfData.cvi  || {},
+                vcvi: etfData.vcvi || etfData.cvi || {},
+                volatility,
                 vps: etfData.vps || 0,
                 mwca: etfData.mwca || false,
                 mwcaCount: mwcaCount,
