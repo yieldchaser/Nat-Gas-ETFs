@@ -479,3 +479,108 @@
     color: var(--text-primary) !important;
     font-weight: 700 !important;
 }
+
+/* ============================================
+   Conviction Events Panel
+   ============================================ */
+.conviction-loading,
+.conviction-empty {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 12px 0;
+}
+
+.conviction-pair-group {
+    margin-bottom: 12px;
+}
+
+.conviction-pair-label {
+    font-size: 0.55rem;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.conviction-pair-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.conviction-card {
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+    padding: 8px;
+    border-left: 2px solid transparent;
+}
+
+.conviction-card.conviction-long  { border-left-color: var(--long-accent); }
+.conviction-card.conviction-short { border-left-color: var(--short-accent); }
+
+.conviction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+    gap: 8px;
+}
+
+.conviction-ticker {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.conviction-count {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+}
+
+.conviction-rate {
+    font-size: 0.55rem;
+    color: var(--text-secondary);
+    cursor: help;
+    margin-left: auto;
+}
+
+.conviction-gates {
+    font-size: 0.5rem;
+    color: var(--text-muted);
+    padding: 3px 5px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 3px;
+    margin-bottom: 6px;
+    line-height: 1.5;
+    cursor: help;
+}
+
+.conviction-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.6rem;
+}
+
+.conviction-table th {
+    color: var(--text-muted);
+    font-weight: 500;
+    text-align: right;
+    padding: 1px 3px;
+    letter-spacing: 0.3px;
+    font-size: 0.52rem;
+}
+
+.conviction-table th:first-child,
+.conviction-table td:first-child { text-align: left; }
+
+.conviction-table td {
+    text-align: right;
+    padding: 2px 3px;
+    font-weight: 600;
+}
+
+.ce-date { color: var(--text-muted); font-weight: 500 !important; text-align: left !important; }
+.ce-breadth { color: var(--text-secondary); }

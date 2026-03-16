@@ -122,6 +122,14 @@ ATR_BREAKOUT_MULT = 2.0   # Alert when daily move > N × ATR-14
 ATR_BREAKOUT_RVOL = 1.5   # ...and RVOL exceeds this
 VOL_REGIME_HIGH = 80      # Alert when vol regime is in top 20th pct of own history
 
+# Conviction Event thresholds — strict multi-gate filter for true anomalies (~1-2/yr)
+CONVICTION_VCVI_MIN = 72        # Gate 1: VCVI-21 must reach "critical" level
+CONVICTION_BREADTH_MIN = 3      # Gate 2: min N of 5 vol pct windows ≥ 85th pct
+CONVICTION_BREADTH_PCT = 85     # Gate 2: percentile threshold per window
+CONVICTION_ATR_MULT = 1.5       # Gate 3: |daily move| > N × ATR-14
+CONVICTION_VOL_REGIME_MAX = 70  # Gate 4: vol regime must be ≤ this (non-turbulent)
+CONVICTION_MIN_GAP_DAYS = 15    # Dedup: min calendar days between distinct events
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -418,6 +426,17 @@ def compute_etf_metrics(df: pd.DataFrame) -> dict:
         fwd_windows=[5, 10, 21, 42, 63, 126, 252],
     )
 
+    # --- Conviction Events (strict multi-gate anomaly filter) ---
+    conviction_events = _detect_conviction_events(
+        close=close,
+        pct_change=pct_change,
+        vcvi_21_series=vcvi_21_rolling,
+        vol_regime_series=vol_regime_full_series,
+        vol_pct_series_dict=vol_pct_series,
+        atr14_series=atr14_series,
+        windows=VOL_PCT_WINDOWS,
+    )
+
     # =========================================================================
     # END VOLATILITY BLOCK
     # =========================================================================
@@ -612,6 +631,7 @@ def compute_etf_metrics(df: pd.DataFrame) -> dict:
             "vov21": vov21,
         },
         "historical_echoes": historical_echoes,
+        "conviction_events": conviction_events,
         "vps": vps,
         "mwca": mwca,
         "rolling_correlation": rolling_corr,
@@ -768,6 +788,123 @@ def _compute_historical_echoes(
 
 
 # ---------------------------------------------------------------------------
+# Conviction Events — strict multi-gate anomaly filter
+# ---------------------------------------------------------------------------
+def _detect_conviction_events(
+    close: pd.Series,
+    pct_change: pd.Series,
+    vcvi_21_series: pd.Series,
+    vol_regime_series: pd.Series,
+    vol_pct_series_dict: Dict[int, pd.Series],
+    atr14_series: pd.Series,
+    windows: list,
+    min_gap_days: int = CONVICTION_MIN_GAP_DAYS,
+    max_display: int = 10,
+) -> dict:
+    """
+    Scan full history for Conviction Events — dates where ALL 4 gates fire:
+      Gate 1: VCVI-21 >= 72  (critical vol-adjusted capitulation)
+      Gate 2: >= 3 of 5 vol-pct windows >= 85th percentile  (broad breadth)
+      Gate 3: |daily move| > 1.5 × ATR-14  (price dislocation)
+      Gate 4: vol regime <= 70th percentile  (non-turbulent context)
+
+    Designed to flag only ~1-2 genuine anomalies per ETF per year.
+    """
+    # Build aligned dataframe
+    df_work = pd.DataFrame({
+        "close": close,
+        "pct_change": pct_change,
+        "vcvi_21": vcvi_21_series,
+        "vol_regime": vol_regime_series,
+        "atr14": atr14_series,
+    })
+
+    # Add vol percentile windows
+    for w in windows:
+        col = f"vol_pct_{w}d"
+        if w in vol_pct_series_dict:
+            df_work[col] = vol_pct_series_dict[w]
+
+    df_work = df_work.dropna(subset=["close", "vcvi_21", "vol_regime", "atr14", "pct_change"])
+    if df_work.empty:
+        return {"count": 0, "events": [], "annual_rate": None, "gates": _conviction_gate_spec()}
+
+    # Gate 1: VCVI-21 >= critical
+    g1 = df_work["vcvi_21"] >= CONVICTION_VCVI_MIN
+
+    # Gate 2: breadth — count windows above threshold
+    breadth_cols = [f"vol_pct_{w}d" for w in windows if f"vol_pct_{w}d" in df_work.columns]
+    if breadth_cols:
+        breadth_count = (df_work[breadth_cols] >= CONVICTION_BREADTH_PCT).sum(axis=1)
+        g2 = breadth_count >= CONVICTION_BREADTH_MIN
+    else:
+        g2 = pd.Series(False, index=df_work.index)
+
+    # Gate 3: price dislocation — |daily move %| > N × ATR-14 as % of price
+    atr_pct = df_work["atr14"] / df_work["close"] * 100
+    daily_move_pct = df_work["pct_change"].abs()
+    g3 = daily_move_pct > (CONVICTION_ATR_MULT * atr_pct)
+
+    # Gate 4: vol regime context — must be non-turbulent
+    g4 = df_work["vol_regime"] <= CONVICTION_VOL_REGIME_MAX
+
+    # ALL gates must fire
+    all_pass = g1 & g2 & g3 & g4
+    signal_dates = df_work.index[all_pass].tolist()
+
+    # Deduplicate with min gap
+    deduplicated: list = []
+    last_date = None
+    for dt in signal_dates:
+        if last_date is None or (dt - last_date).days >= min_gap_days:
+            deduplicated.append(dt)
+            last_date = dt
+
+    if not deduplicated:
+        return {"count": 0, "events": [], "annual_rate": None, "gates": _conviction_gate_spec()}
+
+    # Build event records
+    events = []
+    for dt in deduplicated:
+        row = df_work.loc[dt]
+        bc = int((pd.Series({c: row[c] for c in breadth_cols}) >= CONVICTION_BREADTH_PCT).sum()) if breadth_cols else 0
+        events.append({
+            "date": dt.strftime("%Y-%m-%d"),
+            "vcvi": _safe_float(row["vcvi_21"]),
+            "vol_regime_pct": _safe_float(row["vol_regime"]),
+            "daily_move_pct": _safe_float(row["pct_change"]),
+            "atr_ratio": _safe_float(abs(row["pct_change"]) / (row["atr14"] / row["close"] * 100)) if row["atr14"] > 0 else None,
+            "breadth_count": bc,
+            "price": _safe_float(row["close"]),
+        })
+
+    # Annual rate
+    total_days = (df_work.index[-1] - df_work.index[0]).days
+    annual_rate = _safe_float(len(events) / (total_days / 365.25)) if total_days > 90 else None
+
+    # Return most recent first
+    events_display = list(reversed(events))[:max_display]
+
+    return {
+        "count": len(events),
+        "events": events_display,
+        "annual_rate": annual_rate,
+        "gates": _conviction_gate_spec(),
+    }
+
+
+def _conviction_gate_spec() -> dict:
+    """Return the gate thresholds used, for frontend display."""
+    return {
+        "vcvi_min": CONVICTION_VCVI_MIN,
+        "breadth_min": CONVICTION_BREADTH_MIN,
+        "breadth_pct": CONVICTION_BREADTH_PCT,
+        "atr_mult": CONVICTION_ATR_MULT,
+        "vol_regime_max": CONVICTION_VOL_REGIME_MAX,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Cross-instrument metrics
 # ---------------------------------------------------------------------------
 def compute_pairs(
@@ -871,6 +1008,7 @@ def run_pipeline() -> None:
             "vcvi": m["vcvi"],
             "volatility": m["volatility"],
             "historical_echoes": m["historical_echoes"],
+            "conviction_events": m["conviction_events"],
             "vps": m["vps"],
             "mwca": m["mwca"],
             "rolling_correlation": m["rolling_correlation"],

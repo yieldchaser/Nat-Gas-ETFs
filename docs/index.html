@@ -88,6 +88,14 @@
                 </table>
             </div>
 
+            <!-- CONVICTION EVENTS — strict multi-gate anomaly filter -->
+            <div class="signal-panel" id="conviction-panel">
+                <h3 data-tooltip="Strict multi-gate filter requiring ALL conditions simultaneously: VCVI≥72, ≥3/5 vol windows≥85th pct, daily move>1.5×ATR, vol regime≤70th. Designed to flag only ~1-2 true anomalies per ETF per year.">CONVICTION EVENTS <span class="panel-subtitle">— multi-gate anomaly filter</span></h3>
+                <div id="conviction-container">
+                    <div class="conviction-loading">Scanning historical data…</div>
+                </div>
+            </div>
+
             <!-- HISTORICAL ECHOES -->
             <div class="signal-panel" id="echoes-panel">
                 <h3 data-tooltip="When the same VCVI signal conditions existed in the past (VCVI≥55, VolRegime≤60th), what happened to prices over the next 5, 10, and 21 sessions? Base-rate statistics from full available history.">HISTORICAL ECHOES <span class="panel-subtitle">— past VCVI signals &amp; outcomes</span></h3>
