@@ -314,9 +314,92 @@ const Signals = {
             </div>`;
     },
 
+    // ---- CONVICTION EVENTS ----
+    renderConvictionEvents(allMetrics) {
+        const container = document.getElementById('conviction-container');
+        if (!container) return;
+
+        const tickers = Object.keys(CONFIG.etfs);
+        const hasAny = tickers.some(t => allMetrics[t]?.conviction_events?.count > 0);
+
+        if (!hasAny) {
+            container.innerHTML = '<div class="conviction-empty">No conviction events detected in available history — filters are working as intended.</div>';
+            return;
+        }
+
+        // Build per-pair display
+        const rows = CONFIG.pairs.map(pair => {
+            const longM  = allMetrics[pair.long];
+            const shortM = allMetrics[pair.short];
+            const longCE  = longM?.conviction_events;
+            const shortCE = shortM?.conviction_events;
+
+            if ((!longCE || longCE.count === 0) && (!shortCE || shortCE.count === 0)) return '';
+
+            return `
+                <div class="conviction-pair-group">
+                    <div class="conviction-pair-label">${pair.label}</div>
+                    <div class="conviction-pair-cards">
+                        ${longCE && longCE.count > 0  ? this._convictionCard(pair.long,  longCE,  'long')  : ''}
+                        ${shortCE && shortCE.count > 0 ? this._convictionCard(pair.short, shortCE, 'short') : ''}
+                    </div>
+                </div>`;
+        }).join('');
+
+        container.innerHTML = rows || '<div class="conviction-empty">No conviction events in history.</div>';
+    },
+
+    _convictionCard(ticker, ce, side) {
+        const gates = ce.gates || {};
+        const tickerColor = side === 'long' ? 'var(--green)' : 'var(--red)';
+        const rateStr = ce.annual_rate != null ? ce.annual_rate.toFixed(1) : '—';
+
+        // Gate spec display
+        const gateSpec = `VCVI≥${gates.vcvi_min || 72} · ${gates.breadth_min || 3}/5 windows≥${gates.breadth_pct || 85}th · Move>${gates.atr_mult || 1.5}×ATR · VolReg≤${gates.vol_regime_max || 70}th`;
+
+        // Event rows (most recent first)
+        const eventRows = (ce.events || []).slice(0, 6).map(e => {
+            const moveColor = e.daily_move_pct > 0 ? 'var(--green)' : 'var(--red)';
+            const sign = e.daily_move_pct >= 0 ? '+' : '';
+            return `
+                <tr>
+                    <td class="ce-date">${e.date}</td>
+                    <td class="ce-vcvi" data-tooltip="VCVI-21 on signal date">${e.vcvi?.toFixed(0) || '—'}</td>
+                    <td class="ce-move" style="color:${moveColor}" data-tooltip="Daily price move">${sign}${e.daily_move_pct?.toFixed(1) || '—'}%</td>
+                    <td class="ce-atr" data-tooltip="Multiple of ATR-14">${e.atr_ratio?.toFixed(1) || '—'}×</td>
+                    <td class="ce-breadth" data-tooltip="Vol pct windows ≥ 85th">${e.breadth_count}/5</td>
+                    <td class="ce-price" data-tooltip="Price at signal">$${e.price?.toFixed(2) || '—'}</td>
+                </tr>`;
+        }).join('');
+
+        return `
+            <div class="conviction-card conviction-${side}">
+                <div class="conviction-header">
+                    <span class="conviction-ticker" style="color:${tickerColor}">${ticker}</span>
+                    <span class="conviction-count">${ce.count} events</span>
+                    <span class="conviction-rate" data-tooltip="Average events per year across full history">${rateStr}/yr</span>
+                </div>
+                <div class="conviction-gates" data-tooltip="All 4 gates must fire simultaneously">${gateSpec}</div>
+                <table class="conviction-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th data-tooltip="VCVI-21d level">VCVI</th>
+                            <th data-tooltip="Daily price move %">Move</th>
+                            <th data-tooltip="Move as multiple of ATR-14">ATR×</th>
+                            <th data-tooltip="Vol pct windows above 85th">Breadth</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>${eventRows}</tbody>
+                </table>
+            </div>`;
+    },
+
     renderAll(allMetrics) {
         this.renderAlertFeed(allMetrics);
         this.renderStressMatrix(allMetrics);
+        this.renderConvictionEvents(allMetrics);
         this.renderHistoricalEchoes(allMetrics);
         this.renderHeatCalendar(allMetrics);
         this.renderConvergenceGauges(allMetrics);

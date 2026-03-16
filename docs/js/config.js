@@ -94,7 +94,16 @@ const CONFIG = {
         // < 0.65 = calming strongly  |  > 1.35 = accelerating strongly
         hvTermStructure: { calming: 0.65, stable_low: 0.85, stable_high: 1.15, accelerating: 1.35 },
         vov: { elevated: 40, high: 60, critical: 80, extreme: 100 },   // vol-of-vol (%)
-        atrBreakout: { elevated: 1.2, high: 1.5, critical: 2.0, extreme: 3.0 }  // × ATR
+        atrBreakout: { elevated: 1.2, high: 1.5, critical: 2.0, extreme: 3.0 },  // × ATR
+
+        // Conviction Event gates — strict multi-gate filter (~1-2 events/ETF/year)
+        conviction: {
+            vcviMin: 72,          // Gate 1: VCVI-21 ≥ critical
+            breadthMin: 3,        // Gate 2: ≥ N of 5 vol-pct windows above threshold
+            breadthPct: 85,       // Gate 2: percentile threshold per window
+            atrMult: 1.5,         // Gate 3: |daily move| > N × ATR-14
+            volRegimeMax: 70      // Gate 4: vol regime ≤ this (non-turbulent)
+        }
     },
 
     // VPS weights — 5-component including inverse vol regime
