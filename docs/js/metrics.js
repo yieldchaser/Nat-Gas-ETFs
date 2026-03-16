@@ -117,6 +117,111 @@ const Metrics = {
         return this.mean(values.slice(-window));
     },
 
+    // ---- VOLATILITY MODELLING ----
+
+    // Realized historical volatility (annualized %)
+    // Returns std of log-returns × √252 × 100
+    computeHV(closes, window) {
+        if (closes.length < window + 1) return null;
+        const slice = closes.slice(-(window + 1));
+        const logRets = [];
+        for (let i = 1; i < slice.length; i++) {
+            if (slice[i - 1] > 0 && slice[i] > 0) logRets.push(Math.log(slice[i] / slice[i - 1]));
+        }
+        if (logRets.length < 2) return null;
+        return this.std(logRets) * Math.sqrt(252) * 100;
+    },
+
+    // ATR-14 as % of current price (uses OHLC)
+    computeATR14pct(highs, lows, closes) {
+        const n = Math.min(highs.length, lows.length, closes.length);
+        if (n < 15) return null;
+        const trs = [];
+        for (let i = n - 14; i < n; i++) {
+            const h = highs[i], l = lows[i], prevC = closes[i - 1];
+            if (h == null || l == null || prevC == null) continue;
+            trs.push(Math.max(h - l, Math.abs(h - prevC), Math.abs(l - prevC)));
+        }
+        if (trs.length < 7) return null;
+        const atr = this.mean(trs);
+        const price = closes[n - 1];
+        return price > 0 ? (atr / price) * 100 : null;
+    },
+
+    // Vol regime percentile: where does current HV21 sit vs its trailing 252-day history?
+    // Returns 0–100 (0=historically quiet, 100=historically extreme)
+    computeVolRegimePct(closes) {
+        const needed = 252 + 21 + 1;
+        if (closes.length < needed) return null;
+        const slice = closes.slice(-needed);
+        // Build a series of HV21 values (one per day over the 252-day window)
+        const hvSeries = [];
+        for (let i = 21; i < slice.length; i++) {
+            const hv = this.computeHV(slice.slice(0, i + 1), 21);
+            if (hv != null) hvSeries.push(hv);
+        }
+        if (hvSeries.length < 2) return null;
+        const current = hvSeries[hvSeries.length - 1];
+        return this.percentileRank(current, hvSeries);
+    },
+
+    // HV term structure: HV10 / HV63
+    // < 0.65 = calming  |  ~1.0 = stable  |  > 1.35 = accelerating
+    computeHVTermStructure(closes) {
+        const hv10 = this.computeHV(closes, 10);
+        const hv63 = this.computeHV(closes, 63);
+        if (hv10 == null || hv63 == null || hv63 === 0) return null;
+        return hv10 / hv63;
+    },
+
+    // Vol-of-Vol (VoV-21): 21-period std of the 10d HV series.
+    // Units: percentage points (how much annualized HV10 swings over 21 days).
+    // High VoV → vol itself is rapidly changing → unstable regime.
+    computeVoV21(closes) {
+        const needed = 21 + 10 + 1; // 32 closes for 21 HV10 values
+        if (closes.length < needed) return null;
+        const slice = closes.slice(-needed);
+        const hv10Series = [];
+        for (let i = 10; i < slice.length; i++) {
+            const hv = this.computeHV(slice.slice(0, i + 1), 10);
+            if (hv != null) hv10Series.push(hv);
+        }
+        if (hv10Series.length < 10) return null;
+        // hv10Series values are already annualized % — no re-annualization needed
+        return this.std(hv10Series);
+    },
+
+    // VCVI: Vol-adjusted CVI
+    // Boosts signal when vol is quiet (0th pct → ×1.5), discounts in turbulent regimes (100th → ×0.5)
+    computeVCVI(cvi, volRegimePct) {
+        if (cvi == null) return null;
+        if (volRegimePct == null) return cvi;
+        const multiplier = 1.5 - volRegimePct / 100.0;
+        return Math.max(0, cvi * multiplier);
+    },
+
+    // Human-readable vol regime label
+    getVolRegimeLabel(volRegimePct) {
+        if (volRegimePct == null) return { label: '--', cls: 'vr-unknown' };
+        const t = CONFIG.thresholds.volRegime;
+        if (volRegimePct >= t.extreme)  return { label: 'EXTREME', cls: 'vr-extreme' };
+        if (volRegimePct >= t.high)     return { label: 'HIGH',    cls: 'vr-high' };
+        if (volRegimePct >= t.normal)   return { label: 'NORMAL',  cls: 'vr-normal' };
+        if (volRegimePct >= t.low)      return { label: 'QUIET',   cls: 'vr-quiet' };
+        return { label: 'LOW',  cls: 'vr-low' };
+    },
+
+    // HV term structure label + arrow
+    getTermStructureLabel(ratio) {
+        if (ratio == null) return { label: '--', arrow: '', cls: 'ts-neutral' };
+        const t = CONFIG.thresholds.hvTermStructure;
+        if (ratio >= t.accelerating)   return { label: ratio.toFixed(2) + 'x', arrow: '↑↑', cls: 'ts-accel' };
+        if (ratio >= t.stable_high)    return { label: ratio.toFixed(2) + 'x', arrow: '↑',  cls: 'ts-building' };
+        if (ratio >= t.stable_low)     return { label: ratio.toFixed(2) + 'x', arrow: '→',  cls: 'ts-neutral' };
+        if (ratio >= t.calming)        return { label: ratio.toFixed(2) + 'x', arrow: '↓',  cls: 'ts-easing' };
+        return { label: ratio.toFixed(2) + 'x', arrow: '↓↓', cls: 'ts-calm' };
+    },
+
     // ---- FULL ETF METRIC SUITE ----
 
     computeAllMetrics(etfData) {
@@ -124,6 +229,8 @@ const Metrics = {
 
         const d = etfData.data;
         const closes = d.map(x => x.close);
+        const highs  = d.map(x => x.high);
+        const lows   = d.map(x => x.low);
         const volumes = d.map(x => x.volume);
         const currentPrice = closes[closes.length - 1];
         const currentVol = volumes[volumes.length - 1];
@@ -167,13 +274,35 @@ const Metrics = {
             cvi[`${w}d`] = this.computeCVI(volPercentile[`${w}d`], pricePercentile[`${w}d`]);
         }
 
-        // VPS using 63d window as primary
-        const vps = this.computeVPS(
-            rvol['63d'],
-            zScore['63d'],
-            volPercentile['63d'],
-            vroc['10d']
-        );
+        // ---- Volatility modelling ----
+        const hv = {
+            '10d': this.computeHV(closes, 10),
+            '21d': this.computeHV(closes, 21),
+            '63d': this.computeHV(closes, 63),
+            '252d': this.computeHV(closes, 252),
+        };
+        const atr14Pct       = this.computeATR14pct(highs, lows, closes);
+        const volRegimePct   = this.computeVolRegimePct(closes);
+        const hvTermStructure = this.computeHVTermStructure(closes);
+        const vov21          = this.computeVoV21(closes);
+
+        // VCVI per window
+        const vcvi = {};
+        for (const w of CONFIG.windows.percentile) {
+            vcvi[`${w}d`] = this.computeVCVI(cvi[`${w}d`], volRegimePct);
+        }
+
+        // VPS using 21d window as primary + inverted vol regime as 5th component
+        const w = CONFIG.vpsWeights;
+        const rvolNorm   = rvol['21d']         != null ? Math.min(100, Math.max(0, (Math.log2(Math.max(0.5, rvol['21d'])) + 1) * 33.3)) : 0;
+        const zNorm      = zScore['21d']        != null ? Math.min(100, Math.max(0, (zScore['21d'] + 2) * 12.5)) : 0;
+        const pctNorm    = volPercentile['21d'] != null ? volPercentile['21d'] : 0;
+        const vrocNorm   = vroc['10d']          != null ? Math.min(100, Math.max(0, (vroc['10d'] + 100) / 5)) : 0;
+        const invVolReg  = volRegimePct         != null ? (100 - volRegimePct) : 50;
+        const vps = w.rvol * rvolNorm + w.zScore * zNorm + w.percentile * pctNorm
+                  + w.vroc * vrocNorm + w.volRegime * invVolReg;
+
+        // ---- end volatility block ----
 
         // Moving averages
         const priceMAs = {};
@@ -205,16 +334,18 @@ const Metrics = {
 
         // Generate alerts
         const alerts = this.generateAlerts(etfData.ticker, {
-            cvi, vps, rvol, zScore, volPercentile, mwca
+            cvi, vcvi, vps, rvol, zScore, volPercentile, mwca,
+            volRegimePct, vov21, atr14Pct, changePct
         });
 
-        // Get alert level for card styling
-        const maxCvi = Math.max(...Object.values(cvi).filter(v => v != null));
+        // Get alert level for card styling — use VCVI (vol-adjusted) as primary signal
+        const maxVcvi = Math.max(...Object.values(vcvi).filter(v => v != null), 0);
+        const tv = CONFIG.thresholds.vcvi;
         let alertLevel = 'none';
-        if (maxCvi >= CONFIG.thresholds.cvi.extreme || mwca) alertLevel = 'extreme';
-        else if (maxCvi >= CONFIG.thresholds.cvi.critical) alertLevel = 'critical';
-        else if (maxCvi >= CONFIG.thresholds.cvi.high) alertLevel = 'high';
-        else if (maxCvi >= CONFIG.thresholds.cvi.elevated) alertLevel = 'elevated';
+        if (maxVcvi >= tv.extreme || mwca) alertLevel = 'extreme';
+        else if (maxVcvi >= tv.critical)   alertLevel = 'critical';
+        else if (maxVcvi >= tv.high)       alertLevel = 'high';
+        else if (maxVcvi >= tv.elevated)   alertLevel = 'elevated';
 
         // Sparkline data (last N days)
         const sparkData = d.slice(-CONFIG.sparklineDays);
@@ -230,7 +361,8 @@ const Metrics = {
             },
             rvol, zScore, vroc,
             volPercentile, pricePercentile,
-            cvi, vps, mwca, mwcaCount,
+            cvi, vcvi, vps, mwca, mwcaCount,
+            volatility: { hv, atr14Pct, volRegimePct, hvTermStructure, vov21 },
             priceMAs, volumeMAs,
             rollingCorr,
             alerts, alertLevel,
@@ -244,7 +376,19 @@ const Metrics = {
         const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         const t = CONFIG.thresholds;
 
-        // CVI alerts
+        // VCVI alerts — vol-adjusted CVI (primary capitulation signal)
+        for (const [window, value] of Object.entries(metrics.vcvi || {})) {
+            if (value == null) continue;
+            if (value >= t.vcvi.extreme) {
+                alerts.push({ type: 'vcvi', level: 'extreme', ticker, time: now,
+                    message: `VCVI-${window} at ${value.toFixed(0)} — EXTREME vol-adj capitulation` });
+            } else if (value >= t.vcvi.critical) {
+                alerts.push({ type: 'vcvi', level: 'critical', ticker, time: now,
+                    message: `VCVI-${window} at ${value.toFixed(0)} — vol-adj capitulation watch` });
+            }
+        }
+
+        // CVI alerts (retained for reference)
         for (const [window, value] of Object.entries(metrics.cvi)) {
             if (value == null) continue;
             if (value >= t.cvi.extreme) {
@@ -259,7 +403,7 @@ const Metrics = {
         // MWCA
         if (metrics.mwca) {
             alerts.push({ type: 'mwca', level: 'extreme', ticker, time: now,
-                message: `MWCA triggered — top ${CONFIG.thresholds.mwca_threshold}th pct across ALL windows` });
+                message: `MWCA triggered — top ${t.mwca_threshold}th pct across ALL windows` });
         }
 
         // RVOL
@@ -274,6 +418,35 @@ const Metrics = {
         if (metrics.vps >= t.vps.extreme) {
             alerts.push({ type: 'vps', level: 'extreme', ticker, time: now,
                 message: `VPS at ${metrics.vps.toFixed(0)}/100 — Volume pressure extreme` });
+        }
+
+        // ATR breakout: today's move > 2× ATR-14 with elevated volume
+        if (metrics.atr14Pct != null && metrics.atr14Pct > 0) {
+            const absMoveP = Math.abs(metrics.changePct || 0);
+            const ratio = absMoveP / metrics.atr14Pct;
+            if (ratio >= t.atrBreakout.critical && (metrics.rvol['21d'] || 0) > 1.5) {
+                const level = ratio >= t.atrBreakout.extreme ? 'extreme' : 'critical';
+                alerts.push({ type: 'atr_breakout', level, ticker, time: now,
+                    message: `ATR breakout: ${absMoveP.toFixed(1)}% move = ${ratio.toFixed(1)}× ATR-14` });
+            }
+        }
+
+        // Vol-of-vol spike
+        if (metrics.vov21 != null) {
+            if (metrics.vov21 >= t.vov.extreme) {
+                alerts.push({ type: 'vov', level: 'extreme', ticker, time: now,
+                    message: `VoV-21 at ${metrics.vov21.toFixed(0)}% — extreme vol regime instability` });
+            } else if (metrics.vov21 >= t.vov.critical) {
+                alerts.push({ type: 'vov', level: 'critical', ticker, time: now,
+                    message: `VoV-21 at ${metrics.vov21.toFixed(0)}% — vol regime destabilising` });
+            }
+        }
+
+        // High vol regime warning
+        if (metrics.volRegimePct != null && metrics.volRegimePct >= t.volRegime.high) {
+            const level = metrics.volRegimePct >= t.volRegime.extreme ? 'critical' : 'elevated';
+            alerts.push({ type: 'vol_regime', level, ticker, time: now,
+                message: `Vol regime ${metrics.volRegimePct.toFixed(0)}th pct — volume signals discounted` });
         }
 
         return alerts;
