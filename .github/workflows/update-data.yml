@@ -1,0 +1,56 @@
+name: Update Dashboard Data
+
+on:
+  schedule:
+    # Run every 15 minutes during NYSE market hours (Mon-Fri, 9:30 AM - 4:15 PM ET)
+    # UTC is ET + 5 (EST) or ET + 4 (EDT)
+    # Using conservative window: 13:30 - 20:15 UTC (covers both EST and EDT)
+    - cron: '*/15 13-20 * * 1-5'
+    # Run once at 21:00 UTC for end-of-day snapshot
+    - cron: '0 21 * * 1-5'
+  workflow_dispatch: # Allow manual triggers
+
+permissions:
+  contents: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install yfinance pandas numpy scipy
+
+      - name: Run data pipeline
+        run: |
+          python scripts/data_pipeline.py
+        env:
+          PYTHONUNBUFFERED: '1'
+
+      - name: Copy data to docs folder
+        run: |
+          mkdir -p docs/data
+          cp data/dashboard_data.json docs/data/ 2>/dev/null || true
+          cp data/latest_signals.json docs/data/ 2>/dev/null || true
+          cp data/validation_results.json docs/data/ 2>/dev/null || true
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data/ data/
+          if git diff --staged --quiet; then
+            echo "No data changes to commit"
+          else
+            git commit -m "Update dashboard data $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
