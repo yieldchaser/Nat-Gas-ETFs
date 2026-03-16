@@ -162,6 +162,7 @@ const App = {
             };
         }
 
+        this.sideConvergence = data.side_convergence || null;
         this.updateMarketStatus(data.market_status || 'unknown');
         this.render();
         this.updateTimestamp(data.last_updated);
@@ -175,7 +176,7 @@ const App = {
         Cards.renderAllCards(this.allMetrics, document.getElementById('short-cards'), 'short');
 
         // Section C: Signal Command Center
-        Signals.renderAll(this.allMetrics);
+        Signals.renderAll(this.allMetrics, this.sideConvergence || null);
     },
 
     updateMarketStatus(state) {

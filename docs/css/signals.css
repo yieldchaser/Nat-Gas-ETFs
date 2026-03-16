@@ -584,3 +584,138 @@
 
 .ce-date { color: var(--text-muted); font-weight: 500 !important; text-align: left !important; }
 .ce-breadth { color: var(--text-secondary); }
+
+/* ============================================
+   Side-Wide Volume Convergence (SWVC)
+   ============================================ */
+.swvc-loading,
+.swvc-empty {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 12px 0;
+}
+
+.swvc-side {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.swvc-side:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.swvc-side-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.swvc-side-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+}
+
+.swvc-status-badge {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.swvc-spread-txt {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+/* ETF pills */
+.swvc-pills {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.swvc-pill {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5px 4px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    cursor: help;
+    transition: transform 0.15s;
+}
+
+.swvc-pill:hover { transform: scale(1.04); }
+
+.swvc-pill-ticker {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.swvc-pill-days {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.swvc-pill.spiked .swvc-pill-days {
+    color: inherit;
+    font-weight: 600;
+}
+
+/* Timeline strip */
+.swvc-timeline-wrap {
+    margin-bottom: 6px;
+}
+
+.swvc-timeline {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 2px;
+    height: 18px;
+    margin-bottom: 2px;
+}
+
+.swvc-cell {
+    border-radius: 2px;
+    transition: transform 0.1s;
+    cursor: help;
+    border: 1px solid rgba(255,255,255,0.04);
+}
+
+.swvc-cell:hover { transform: scale(1.3); z-index: 5; }
+
+.swvc-cell.spike {
+    border-color: rgba(255,255,255,0.15);
+}
+
+.swvc-cell.today {
+    border-color: rgba(255,255,255,0.2);
+}
+
+.swvc-timeline-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.48rem;
+    color: var(--text-muted);
+    padding: 0 1px;
+}
+
+/* Full convergence alert banner */
+.swvc-alert-banner {
+    margin-top: 6px;
+    padding: 6px 8px;
+    border-left: 2px solid;
+    background: rgba(255,255,255,0.03);
+    border-radius: 0 3px 3px 0;
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
