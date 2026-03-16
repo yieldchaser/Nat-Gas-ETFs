@@ -868,11 +868,26 @@ def _detect_conviction_events(
     if not deduplicated:
         return {"count": 0, "events": [], "annual_rate": None, "gates": _conviction_gate_spec()}
 
-    # Build event records
+    # Forward return windows
+    fwd_windows = [5, 10, 21, 42, 63]
+    close_arr = df_work["close"]
+
+    # Build event records with forward returns
     events = []
     for dt in deduplicated:
         row = df_work.loc[dt]
         bc = int((pd.Series({c: row[c] for c in breadth_cols}) >= CONVICTION_BREADTH_PCT).sum()) if breadth_cols else 0
+        entry_pos = df_work.index.get_loc(dt)
+        entry_price = close_arr.iloc[entry_pos]
+
+        fwd_rets: Dict[str, Optional[float]] = {}
+        for w in fwd_windows:
+            exit_pos = entry_pos + w
+            if exit_pos < len(close_arr) and entry_price > 0:
+                fwd_rets[f"{w}d"] = _safe_float((close_arr.iloc[exit_pos] / entry_price - 1) * 100)
+            else:
+                fwd_rets[f"{w}d"] = None
+
         events.append({
             "date": dt.strftime("%Y-%m-%d"),
             "vcvi": _safe_float(row["vcvi_21"]),
@@ -881,7 +896,26 @@ def _detect_conviction_events(
             "atr_ratio": _safe_float(abs(row["pct_change"]) / (row["atr14"] / row["close"] * 100)) if row["atr14"] > 0 else None,
             "breadth_count": bc,
             "price": _safe_float(row["close"]),
+            "fwd": fwd_rets,
         })
+
+    # Aggregate forward return statistics
+    CLIP_PCT = 200.0
+    forward_stats: Dict[str, dict] = {}
+    for w in fwd_windows:
+        key = f"{w}d"
+        rets = [e["fwd"][key] for e in events if e["fwd"].get(key) is not None]
+        if rets:
+            rets_arr = np.array(rets)
+            rets_clipped = np.clip(rets_arr, -CLIP_PCT, CLIP_PCT)
+            forward_stats[key] = {
+                "median":   _safe_float(float(np.median(rets_arr))),
+                "mean":     _safe_float(float(np.mean(rets_clipped))),
+                "win_rate": _safe_float(float(np.mean(rets_arr > 0) * 100)),
+                "best":     _safe_float(float(np.max(rets_clipped))),
+                "worst":    _safe_float(float(np.min(rets_clipped))),
+                "count":    len(rets),
+            }
 
     # Annual rate
     total_days = (df_work.index[-1] - df_work.index[0]).days
@@ -895,6 +929,7 @@ def _detect_conviction_events(
         "events": events_display,
         "annual_rate": annual_rate,
         "gates": _conviction_gate_spec(),
+        "forward_returns": forward_stats,
     }
 
 
