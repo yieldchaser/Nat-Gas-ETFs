@@ -415,7 +415,7 @@ def compute_etf_metrics(df: pd.DataFrame) -> dict:
         vol_regime_series=vol_regime_full_series,
         vcvi_threshold=VCVI_WARNING,     # 55 — same as alert threshold
         vol_regime_max=60.0,             # only count signals in non-turbulent regimes
-        fwd_windows=[5, 10, 21],
+        fwd_windows=[5, 10, 21, 42, 63, 126, 252],
     )
 
     # =========================================================================
@@ -647,7 +647,7 @@ def _compute_historical_echoes(
     of the same signal episode.
     """
     if fwd_windows is None:
-        fwd_windows = [5, 10, 21]
+        fwd_windows = [5, 10, 21, 42, 63, 126, 252]
 
     # Align series to common index
     df_work = pd.DataFrame({
@@ -742,11 +742,27 @@ def _compute_historical_echoes(
     # Return most recent instances for display (most recent first)
     recent = list(reversed(occurrences))[:max_display]
 
+    # Signal edge: find the most ACTIONABLE window (capped at 63d).
+    # Beyond 63d, leveraged ETF decay dominates the signal — not a tradeable edge.
+    # Score = |median| × |win_rate − 50|² (squaring win_rate deviation rewards consistency).
+    best_edge_window = None
+    best_edge_score = 0.0
+    for key, stats in forward_stats.items():
+        w_days = int(key.rstrip("d"))
+        if w_days > 63 or stats["count"] < 10:
+            continue
+        wr_dev = abs((stats["win_rate"] or 50) - 50)
+        score = abs(stats["median"] or 0) * (wr_dev ** 2)
+        if score > best_edge_score:
+            best_edge_score = score
+            best_edge_window = key
+
     return {
         "count": len(occurrences),
         "threshold_vcvi": vcvi_threshold,
         "threshold_vol_regime": vol_regime_max,
         "forward_returns": forward_stats,
+        "signal_edge_window": best_edge_window,
         "occurrences": recent,
     }
 
