@@ -96,22 +96,22 @@
 }
 
 .stress-status.quiet {
-    background: rgba(0, 230, 118, 0.15);
+    background: rgba(61, 184, 122, 0.12);
     color: var(--green);
 }
 
 .stress-status.elevated {
-    background: rgba(255, 234, 0, 0.15);
+    background: rgba(212, 168, 48, 0.12);
     color: var(--yellow);
 }
 
 .stress-status.stress {
-    background: rgba(255, 145, 0, 0.15);
+    background: rgba(192, 120, 40, 0.12);
     color: var(--orange);
 }
 
 .stress-status.critical {
-    background: rgba(255, 23, 68, 0.15);
+    background: rgba(192, 64, 64, 0.12);
     color: var(--red);
 }
 
@@ -414,8 +414,8 @@
     text-align: center;
 }
 
-.bias-bull    { background: rgba(0,230,118,0.12); color: var(--green); }
-.bias-bear    { background: rgba(255,23,68,0.12);  color: var(--red); }
+.bias-bull    { background: rgba(61,184,122,0.10); color: var(--green); }
+.bias-bear    { background: rgba(192,64,64,0.10);  color: var(--red); }
 .bias-neutral { background: rgba(255,255,255,0.05); color: var(--text-secondary); }
 
 /* Recent past occurrences */
