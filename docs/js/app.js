@@ -67,8 +67,14 @@ const App = {
         for (const [ticker, etfData] of Object.entries(data.etfs)) {
             if (!etfData || !etfData.current) continue;
 
-            // Build sparkData from history array if available
-            let sparkData = [];
+            // Normalise current snapshot: pipeline uses snake_case, renderer expects camelCase
+            const raw = etfData.current || {};
+            const current = {
+                price:        raw.price       ?? null,
+                volume:       raw.volume      ?? 0,
+                changePct:    raw.change_pct  ?? raw.changePct    ?? 0,
+                dollarVolume: raw.dollar_volume ?? raw.dollarVolume ?? 0,
+            };
             if (etfData.history && etfData.history.length > 0) {
                 sparkData = etfData.history.slice(-CONFIG.sparklineDays).map(h => ({
                     date: h.date || h[0],
@@ -110,7 +116,7 @@ const App = {
 
             this.allMetrics[ticker] = {
                 ticker: ticker,
-                current: etfData.current,
+                current: current,
                 rvol: etfData.rvol || {},
                 zScore: etfData.z_score || etfData.zScore || {},
                 vroc: etfData.vroc || {},
