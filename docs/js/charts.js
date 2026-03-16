@@ -6,7 +6,7 @@
 const Charts = {
 
     // ---- SPARKLINE (Price) ----
-    drawSparkline(canvas, data, color = '#2979ff', fillAlpha = 0.1) {
+    drawSparkline(canvas, data, color = '#4a80b8', fillAlpha = 0.1) {
         if (!data || data.length < 2) return;
         const ctx = canvas.getContext('2d');
         const w = canvas.width = canvas.parentElement.clientWidth;
@@ -32,7 +32,15 @@ const Charts = {
         }
         ctx.lineTo(padding + (closes.length - 1) * xStep, h - padding);
         ctx.closePath();
-        ctx.fillStyle = color.replace(')', `, ${fillAlpha})`).replace('rgb', 'rgba');
+        // Support both hex (#rrggbb) and rgb() color formats
+        if (color.startsWith('#')) {
+            const r = parseInt(color.slice(1,3), 16);
+            const g = parseInt(color.slice(3,5), 16);
+            const b = parseInt(color.slice(5,7), 16);
+            ctx.fillStyle = `rgba(${r},${g},${b},${fillAlpha})`;
+        } else {
+            ctx.fillStyle = color.replace(')', `, ${fillAlpha})`).replace('rgb', 'rgba');
+        }
         ctx.fill();
 
         // Line
@@ -75,11 +83,11 @@ const Charts = {
             // Color by relative magnitude
             const ratio = volumes[i] / max;
             let color;
-            if (ratio > 0.9) color = '#d500f9';
-            else if (ratio > 0.75) color = '#ff1744';
-            else if (ratio > 0.5) color = '#ff9100';
-            else if (ratio > 0.3) color = '#1565c0';
-            else color = '#1a1a3e';
+            if (ratio > 0.9) color = '#8855bb';
+            else if (ratio > 0.75) color = '#c04040';
+            else if (ratio > 0.5) color = '#c07828';
+            else if (ratio > 0.3) color = '#385e88';
+            else color = '#181828';
 
             ctx.fillStyle = color;
             ctx.fillRect(x, h - barH, barW, barH);
@@ -92,9 +100,9 @@ const Charts = {
         if (!dailyScores || !dailyScores.length) return;
 
         const colors = [
-            '#1a1a2e', '#16213e', '#1a3060', '#1e4080',
-            '#2a5090', '#4060a0', '#6080b0',
-            '#d04040', '#e94560', '#ff006e', '#d500f9'
+            '#14141e', '#1a1a28', '#202838', '#283848',
+            '#385060', '#4a6878', '#d4a830',
+            '#c07828', '#c04040', '#a03838', '#8855bb'
         ];
 
         for (const day of dailyScores) {
@@ -220,13 +228,13 @@ const Charts = {
 
             // Bar fill — edge window is fully opaque, others dimmer
             ctx.fillStyle = isLong
-                ? (isEdge ? 'rgba(0,230,118,0.9)' : 'rgba(0,230,118,0.45)')
-                : (isEdge ? 'rgba(255,23,68,0.9)'  : 'rgba(255,23,68,0.45)');
+                ? (isEdge ? 'rgba(61,184,122,0.9)' : 'rgba(61,184,122,0.4)')
+                : (isEdge ? 'rgba(192,64,64,0.9)'  : 'rgba(192,64,64,0.4)');
             ctx.fillRect(x, y, barW, bh);
 
             // Edge window outline glow
             if (isEdge) {
-                ctx.strokeStyle = isLong ? '#00e676' : '#ff1744';
+                ctx.strokeStyle = isLong ? '#3db87a' : '#c04040';
                 ctx.lineWidth = 1.5;
                 ctx.strokeRect(x - 0.5, y - 0.5, barW + 1, bh + 1);
             }
@@ -238,14 +246,14 @@ const Charts = {
                 const dotX  = x + barW / 2;
                 ctx.beginPath();
                 ctx.arc(dotX, dotY, 2, 0, Math.PI * 2);
-                ctx.fillStyle = wrDev > 0 ? 'rgba(0,230,118,0.9)' : 'rgba(255,23,68,0.9)';
+                ctx.fillStyle = wrDev > 0 ? 'rgba(61,184,122,0.9)' : 'rgba(192,64,64,0.9)';
                 ctx.fill();
             }
 
             // Value annotation on taller bars (≥5%)
             if (Math.abs(d.median) >= 5) {
                 ctx.font = 'bold 7px monospace';
-                ctx.fillStyle = isLong ? '#00e676' : '#ff1744';
+                ctx.fillStyle = isLong ? '#3db87a' : '#c04040';
                 ctx.textAlign = 'center';
                 const txt   = `${d.median >= 0 ? '+' : ''}${d.median.toFixed(0)}%`;
                 const lblY  = d.median >= 0 ? y - 2 : y + bh + 7;
