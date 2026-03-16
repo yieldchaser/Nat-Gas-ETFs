@@ -1,97 +1,103 @@
 {
-  "last_updated": "2026-03-16T14:23:21.203652+00:00",
+  "last_updated": "2026-03-16T15:41:55.845687+00:00",
   "market_status": "open",
   "signals": [
     {
       "type": "vov_elevated",
       "message": "VoV-21 = 63% \u2014 volatility regime becoming unstable",
-      "timestamp": "2026-03-16T14:23:20.052466+00:00",
+      "timestamp": "2026-03-16T15:41:54.684627+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vov_elevated",
       "message": "VoV-21 = 64% \u2014 volatility regime becoming unstable",
-      "timestamp": "2026-03-16T14:23:20.322215+00:00",
+      "timestamp": "2026-03-16T15:41:54.955450+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_warning",
-      "message": "VCVI (126d) = 66.3 \u2014 vol-adjusted capitulation signal",
-      "timestamp": "2026-03-16T14:23:20.516689+00:00",
+      "message": "VCVI (126d) = 70.2 \u2014 vol-adjusted capitulation signal",
+      "timestamp": "2026-03-16T15:41:55.153429+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_critical",
-      "message": "VCVI (252d) = 80.4 \u2014 vol-adjusted extreme capitulation",
-      "timestamp": "2026-03-16T14:23:20.516689+00:00",
+      "message": "VCVI (252d) = 82.5 \u2014 vol-adjusted extreme capitulation",
+      "timestamp": "2026-03-16T15:41:55.153429+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "cvi_warning",
-      "message": "CVI (126d) = 69.5 \u2014 elevated capitulation signal",
-      "timestamp": "2026-03-16T14:23:20.516689+00:00",
+      "message": "CVI (126d) = 73.6 \u2014 elevated capitulation signal",
+      "timestamp": "2026-03-16T15:41:55.153429+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "cvi_critical",
-      "message": "CVI (252d) = 84.2 \u2014 extreme capitulation signal",
-      "timestamp": "2026-03-16T14:23:20.516689+00:00",
+      "message": "CVI (252d) = 86.5 \u2014 extreme capitulation signal",
+      "timestamp": "2026-03-16T15:41:55.153429+00:00",
       "ticker": "3NGL.L"
+    },
+    {
+      "type": "cvi_warning",
+      "message": "CVI (252d) = 65.0 \u2014 elevated capitulation signal",
+      "timestamp": "2026-03-16T15:41:55.824949+00:00",
+      "ticker": "3NGS.L"
     }
   ],
   "pair_status": {
     "BOIL_KOLD": "elevated",
-    "HNU.TO_HND.TO": "elevated",
+    "HNU.TO_HND.TO": "quiet",
     "3NGL.L_3NGS.L": "quiet"
   },
   "etf_summary": {
     "BOIL": {
-      "price": 18.4699,
-      "change_pct": -3.04514,
-      "vps": 13.712551,
+      "price": 17.625,
+      "change_pct": -7.480311,
+      "vps": 16.458314,
       "mwca": false,
-      "vol_regime_pct": 31.87251,
-      "hv_term_structure": 0.552059
+      "vol_regime_pct": 35.856574,
+      "hv_term_structure": 0.58367
     },
     "HNU.TO": {
-      "price": 13.73,
-      "change_pct": -3.24172,
-      "vps": 14.183267,
+      "price": 13.13,
+      "change_pct": -7.470046,
+      "vps": 15.048893,
       "mwca": false,
-      "vol_regime_pct": 29.083665,
-      "hv_term_structure": 0.555365
+      "vol_regime_pct": 39.442231,
+      "hv_term_structure": 0.586806
     },
     "3NGL.L": {
-      "price": 1.7975,
-      "change_pct": -5.319987,
-      "vps": 37.094966,
+      "price": 1.7,
+      "change_pct": -10.455619,
+      "vps": 39.373118,
       "mwca": false,
       "vol_regime_pct": 54.581673,
-      "hv_term_structure": 0.798464
+      "hv_term_structure": 0.826194
     },
     "KOLD": {
-      "price": 19.669901,
-      "change_pct": 3.199903,
-      "vps": 16.655608,
+      "price": 20.5,
+      "change_pct": 7.555092,
+      "vps": 27.403541,
       "mwca": false,
-      "vol_regime_pct": 36.25498,
-      "hv_term_structure": 0.618245
+      "vol_regime_pct": 39.442231,
+      "hv_term_structure": 0.649486
     },
     "HND.TO": {
-      "price": 3.91,
-      "change_pct": 3.439156,
-      "vps": 12.669323,
+      "price": 4.07,
+      "change_pct": 7.671963,
+      "vps": 13.944693,
       "mwca": false,
-      "vol_regime_pct": 36.653386,
-      "hv_term_structure": 0.673193
+      "vol_regime_pct": 43.824701,
+      "hv_term_structure": 0.70487
     },
     "3NGS.L": {
-      "price": 11.03,
-      "change_pct": 5.651343,
-      "vps": 29.712487,
+      "price": 11.66,
+      "change_pct": 11.685827,
+      "vps": 33.172506,
       "mwca": false,
-      "vol_regime_pct": 64.541833,
-      "hv_term_structure": 0.949775
+      "vol_regime_pct": 68.12749,
+      "hv_term_structure": 0.978939
     }
   }
 }
