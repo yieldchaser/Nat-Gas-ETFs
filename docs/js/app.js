@@ -148,6 +148,7 @@ const App = {
                 vcvi: etfData.vcvi || etfData.cvi || {},
                 volatility,
                 historical_echoes: etfData.historical_echoes || null,
+                conviction_events: etfData.conviction_events || null,
                 vps: etfData.vps || 0,
                 mwca: etfData.mwca || false,
                 mwcaCount: mwcaCount,

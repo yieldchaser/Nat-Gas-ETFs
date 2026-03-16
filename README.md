@@ -57,6 +57,21 @@ This project implements a multi-timeframe volume analysis engine that:
 - Color-coded by severity (quiet/elevated/high/critical/extreme)
 - Convergence gauges showing how many ETFs hit thresholds
 
+### Conviction Events — Strict Multi-Gate Anomaly Filter
+
+Inspired by the Excel model's strict filtering criteria that flagged only **1–2 meaningful events per ETF per year**, this is a multi-gate filter designed to isolate true anomalies from routine large moves. **ALL 4 gates must fire simultaneously:**
+
+| Gate | Condition | Rationale |
+|------|-----------|-----------|
+| **Volume Capitulation** | VCVI-21d ≥ 72 | Must reach "critical" vol-adjusted level |
+| **Multi-Window Breadth** | ≥ 3 of 5 vol-pct windows ≥ 85th | Broad-based surge, not single-window noise |
+| **Price Dislocation** | \|Daily move\| > 1.5× ATR-14 | Actual price shock, not just volume |
+| **Regime Context** | Vol regime ≤ 70th percentile | Signals meaningful (not during chronic turbulence) |
+
+**Why it works:** A 7–10% move with high RVOL might look dramatic, but if only one window is elevated and vol regime is already in the 90th percentile, it's noise in a turbulent market. The conviction filter requires convergence across volume intensity, breadth, price action, AND regime context — eliminating false positives.
+
+Each conviction event displays: date, VCVI level, daily move %, ATR multiple, breadth count, and price at signal. The panel also shows the annualized event rate to confirm the filter's selectivity.
+
 ### Historical Echoes
 
 Pattern study showing forward returns after **volume capitulation signals** (VCVI ≥ 55):
@@ -110,14 +125,13 @@ docs/
 │   ├── cards.css       # ETF card styling
 │   └── signals.css     # Signal panel styling
 └── js/
-    ├── app.js          # App controller, data loading
+    ├── app.js          # App controller, data loading, hypothesis validation
     ├── data.js         # Yahoo Finance API wrapper
     ├── cards.js        # Card rendering engine
     ├── charts.js       # Canvas rendering (sparklines, volume bars, gauges, echoes)
     ├── signals.js      # Stress matrix & convergence display
     ├── metrics.js      # All calculations (RVOL, Z-Score, CVI, VCVI, VoV, HV, etc.)
-    ├── config.js       # Thresholds, windows, ETF metadata
-    └── validation.js   # Hypothesis validation display
+    └── config.js       # Thresholds, windows, ETF metadata
 ```
 
 ### Backend (Scripts & Data)
@@ -146,10 +160,11 @@ docs/data/              # Synced by GitHub Actions for GitHub Pages serving
    - Volume: RVOL, Z-Score, VROC, percentiles across 5 windows
    - Volatility: HV, vol regime, ATR, VoV
    - Volume Signals: CVI, VCVI per window, VPS composite
-4. **Generate Historical Echoes** – Pattern study of post-capitulation returns
-5. **Write JSON** to `data/` and sync to `docs/data/` for GitHub Pages
-6. **Dashboard loads JSON** first, falls back to live Yahoo fetch if unavailable
-7. **Browser computes live metrics** (if no pre-computed data) using `metrics.js`
+4. **Detect Conviction Events** – Strict multi-gate anomaly filter (VCVI + breadth + ATR + regime)
+5. **Generate Historical Echoes** – Pattern study of post-capitulation returns
+6. **Write JSON** to `data/` and sync to `docs/data/` for GitHub Pages
+7. **Dashboard loads JSON** first, falls back to live Yahoo fetch if unavailable
+8. **Browser computes live metrics** (if no pre-computed data) using `metrics.js`
 
 ## Tech Stack
 
@@ -226,8 +241,10 @@ Check browser console → App will log which data source loaded.
 
 - **Dashboard load:** <2s (pre-computed JSON)
 - **Card rendering:** 60 FPS (Canvas sparklines/gauges)
-- **Data refresh:** On-demand (manual refresh button) or auto every 5 min if in-focus
-- **Mobile-friendly:** Responsive grid layout, tooltips on tap
+- **Data refresh:** On-demand (manual refresh button) or auto:
+  - 1 minute when market is open
+  - 5 minutes when market is closed
+- **Mobile-friendly:** Responsive grid layout, tooltips on hover/tap
 
 ## Credits
 
