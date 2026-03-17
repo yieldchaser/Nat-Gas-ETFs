@@ -148,6 +148,17 @@ CONVICTION_NG_Z_SHORT =  1.0   # Short-side fires only when gas z-score ≥ +1.0
 # Momentum guard — raises VCVI bar for short-side when NG=F is in uptrend
 MOMENTUM_GUARD_VCVI_BOOST = 13  # Add to CONVICTION_VCVI_MIN when gas seasonal_z > 0
 
+# NG=F Volatility Regime Detection — 3-tier classification
+# Natural gas can enter "ultra-volatile" outlier regimes where typical signal
+# patterns may not hold (e.g., 2022 bull run at ~$9/MMBtu, Jan 2026 >$7/MMBtu).
+# Each historical signal is tagged with its ambient regime for stratified analysis.
+NG_REGIME_EXTREME_PRICE   = 7.0   # > $7/MMBtu → extreme outlier (Jan 2026 analog)
+NG_REGIME_HIGH_PRICE      = 4.5   # > $4.5/MMBtu → elevated
+NG_REGIME_EXTREME_Z       = 2.5   # |seasonal z| ≥ 2.5σ → extreme (2022 analog)
+NG_REGIME_ELEVATED_Z      = 1.5   # |seasonal z| ≥ 1.5σ → elevated
+NG_REGIME_EXTREME_HV_PCT  = 90    # NG=F 21d HV at 90th pct of its own 2yr history → extreme
+NG_REGIME_ELEVATED_HV_PCT = 70    # NG=F 21d HV at 70th pct → elevated
+
 # Fast-window spike detection (Feature 1)
 FAST_VCVI_THRESHOLD = 45        # 5d VCVI threshold for weather-spike flag
 SHARP_SPIKE_ATR_MULT = 2.0      # |daily move| > N × ATR to qualify as sharp spike
@@ -299,6 +310,47 @@ def _compute_ng_seasonal_z_series(ng_close: pd.Series) -> pd.Series:
     return result
 
 
+def _compute_ng_regime_series(ng_close: pd.Series, ng_z_series: pd.Series) -> pd.Series:
+    """
+    Classify each NG=F date into a volatility regime (no lookahead bias).
+
+      extreme : price > $7  OR  |z| >= 2.5σ  OR  21d HV at 90th pct of own 2yr rolling history
+      elevated: price > $4.5 OR |z| >= 1.5σ  OR  21d HV at 70th pct
+      normal  : everything else
+
+    Anchored to known outlier regimes:
+      2022 ultra-bull run (gas ~$9, z ~+3 to +4)  → extreme
+      Jan 2026 cold snap (gas >$7, z elevated)     → extreme
+    """
+    # NG=F realized vol (21d, annualized %)
+    log_ret = np.log(ng_close / ng_close.shift(1))
+    hv21 = log_ret.rolling(21, min_periods=11).std() * np.sqrt(252) * 100
+    # Rolling 2yr HV percentile (prior 504 bars only — no lookahead)
+    hv_pct = _percentile_rank(hv21, 504)
+
+    z_abs = ng_z_series.reindex(ng_close.index).abs()
+
+    result = pd.Series('normal', index=ng_close.index, dtype=object)
+
+    # Elevated (set first, then extreme overwrites)
+    elevated_mask = (
+        (ng_close > NG_REGIME_HIGH_PRICE) |
+        (z_abs >= NG_REGIME_ELEVATED_Z) |
+        (hv_pct >= NG_REGIME_ELEVATED_HV_PCT)
+    ).fillna(False)
+    result[elevated_mask] = 'elevated'
+
+    # Extreme (overrides elevated)
+    extreme_mask = (
+        (ng_close > NG_REGIME_EXTREME_PRICE) |
+        (z_abs >= NG_REGIME_EXTREME_Z) |
+        (hv_pct >= NG_REGIME_EXTREME_HV_PCT)
+    ).fillna(False)
+    result[extreme_mask] = 'extreme'
+
+    return result
+
+
 def _fetch_ng_price_context() -> dict:
     """
     Fetch NG=F (NYMEX natural gas futures) and compute a seasonally-adjusted
@@ -366,6 +418,34 @@ def _fetch_ng_price_context() -> dict:
     else:
         tier = "seasonal_mid"
 
+    # ---- NG=F own realized volatility (21d annualized) and HV percentile ----
+    log_ret_ng = np.log(close / close.shift(1))
+    ng_hv21_series = log_ret_ng.rolling(21, min_periods=11).std() * np.sqrt(252) * 100
+    ng_hv21_current = _safe_float(ng_hv21_series.iloc[-1])
+    recent_hvs = ng_hv21_series.dropna().iloc[-NG_PRICE_WINDOW_DAYS:]
+    ng_hv_pct = (
+        round(float((recent_hvs < ng_hv21_current).sum() / len(recent_hvs) * 100), 1)
+        if ng_hv21_current is not None and len(recent_hvs) > 10
+        else None
+    )
+
+    # ---- Current volatility regime classification ----
+    z_abs_current = abs(seasonal_z) if seasonal_z is not None else 0.0
+    if (current > NG_REGIME_EXTREME_PRICE
+            or z_abs_current >= NG_REGIME_EXTREME_Z
+            or (ng_hv_pct is not None and ng_hv_pct >= NG_REGIME_EXTREME_HV_PCT)):
+        regime = "extreme"
+    elif (current > NG_REGIME_HIGH_PRICE
+            or z_abs_current >= NG_REGIME_ELEVATED_Z
+            or (ng_hv_pct is not None and ng_hv_pct >= NG_REGIME_ELEVATED_HV_PCT)):
+        regime = "elevated"
+    else:
+        regime = "normal"
+
+    # ---- Precompute full series for historical event tagging (internal only) ----
+    ng_z_full_series = _compute_ng_seasonal_z_series(close)
+    ng_regime_full_series = _compute_ng_regime_series(close, ng_z_full_series)
+
     return {
         "price":           round(current, 3),
         "seasonal_zscore": seasonal_z,
@@ -375,7 +455,12 @@ def _fetch_ng_price_context() -> dict:
         "gate_long":       gate_long,    # True = gas anomalously LOW for season → long credible
         "history_days":    len(window_close),
         "seasonal_note":   seasonal_note,
-        "_close_series":   close,        # Internal: full close series for z-score computation
+        "ng_hv_21d":       ng_hv21_current,
+        "ng_hv_pct":       ng_hv_pct,
+        "regime":          regime,       # 'normal' | 'elevated' | 'extreme'
+        "_close_series":   close,
+        "_z_series":       ng_z_full_series,
+        "_regime_series":  ng_regime_full_series,
     }
 
 
@@ -493,7 +578,8 @@ def _percentile_rank(series: pd.Series, window: int) -> pd.Series:
 
 def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
                         ng_close: "Optional[pd.Series]" = None,
-                        ng_seasonal_z_series: "Optional[pd.Series]" = None) -> dict:
+                        ng_seasonal_z_series: "Optional[pd.Series]" = None,
+                        ng_regime_series: "Optional[pd.Series]" = None) -> dict:
     """
     Given a DataFrame with columns [open, high, low, close, volume],
     compute the full metric suite and return a dict.
@@ -637,6 +723,7 @@ def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
         vcvi_threshold=VCVI_WARNING,     # 55 — same as alert threshold
         vol_regime_max=60.0,             # only count signals in non-turbulent regimes
         fwd_windows=[5, 10, 21, 42, 63, 126, 252],
+        ng_regime_series=ng_regime_series,
     )
 
     # --- Conviction Events (strict multi-gate anomaly filter) ---
@@ -651,6 +738,7 @@ def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
         ng_close=ng_close,
         etf_side=side,
         ng_seasonal_z_series=ng_seasonal_z_series,
+        ng_regime_series=ng_regime_series,
     )
 
     # --- Elevated Watch Events (3-gate softer filter, Feature 5) ---
@@ -966,6 +1054,7 @@ def _compute_historical_echoes(
     fwd_windows: list = None,
     min_gap_days: int = 10,
     max_display: int = 8,
+    ng_regime_series: "Optional[pd.Series]" = None,
 ) -> dict:
     """
     Scan the full history for dates where:
@@ -987,6 +1076,14 @@ def _compute_historical_echoes(
         "vcvi_21": vcvi_21_series,
         "vol_regime": vol_regime_series,
     }).dropna(subset=["close", "vcvi_21", "vol_regime"])
+
+    # Attach NG regime (forward-fill to align NG=F dates → ETF dates)
+    if ng_regime_series is not None and not ng_regime_series.empty:
+        df_work["ng_regime"] = ng_regime_series.reindex(
+            df_work.index.union(ng_regime_series.index)
+        ).ffill().reindex(df_work.index)
+    else:
+        df_work["ng_regime"] = "unknown"
 
     if df_work.empty:
         return {"count": 0, "threshold_vcvi": vcvi_threshold,
@@ -1054,6 +1151,7 @@ def _compute_historical_echoes(
             days_to_peak = best_day
 
         occ_month = dt.month
+        ng_reg = df_hist.loc[dt, "ng_regime"] if "ng_regime" in df_hist.columns else "unknown"
         occurrences.append({
             "date": dt.strftime("%Y-%m-%d"),
             "vcvi": _safe_float(df_hist.loc[dt, "vcvi_21"]),
@@ -1063,6 +1161,7 @@ def _compute_historical_echoes(
             "days_to_peak": days_to_peak,
             "season": _season_label(occ_month),
             "seasonality_weight": _seasonal_weight(occ_month),
+            "ng_regime": ng_reg,
         })
 
     if not occurrences:
@@ -1074,21 +1173,35 @@ def _compute_historical_echoes(
     # Clip at ±200% before computing mean/best/worst — anything beyond is a data artifact
     # (reverse splits etc.) that would distort statistics. Median is unaffected by clipping.
     CLIP_PCT = 200.0
-    forward_stats: Dict[str, dict] = {}
-    for w in fwd_windows:
-        key = f"{w}d"
-        rets = [o["fwd"][key] for o in occurrences if o["fwd"].get(key) is not None]
-        if rets:
-            rets_arr = np.array(rets)
-            rets_clipped = np.clip(rets_arr, -CLIP_PCT, CLIP_PCT)
-            forward_stats[key] = {
-                "median":   _safe_float(float(np.median(rets_arr))),   # robust, no clip needed
-                "mean":     _safe_float(float(np.mean(rets_clipped))),  # clipped mean
-                "win_rate": _safe_float(float(np.mean(rets_arr > 0) * 100)),
-                "best":     _safe_float(float(np.max(rets_clipped))),
-                "worst":    _safe_float(float(np.min(rets_clipped))),
-                "count":    len(rets),
-            }
+
+    def _agg_fwd_stats(occ_list, fwd_windows):
+        stats = {}
+        for w in fwd_windows:
+            key = f"{w}d"
+            rets = [o["fwd"][key] for o in occ_list if o["fwd"].get(key) is not None]
+            if rets:
+                rets_arr = np.array(rets)
+                rets_clipped = np.clip(rets_arr, -CLIP_PCT, CLIP_PCT)
+                stats[key] = {
+                    "median":   _safe_float(float(np.median(rets_arr))),
+                    "mean":     _safe_float(float(np.mean(rets_clipped))),
+                    "win_rate": _safe_float(float(np.mean(rets_arr > 0) * 100)),
+                    "best":     _safe_float(float(np.max(rets_clipped))),
+                    "worst":    _safe_float(float(np.min(rets_clipped))),
+                    "count":    len(rets),
+                }
+        return stats
+
+    forward_stats = _agg_fwd_stats(occurrences, fwd_windows)
+
+    # Regime-stratified forward return stats
+    regime_fwd_stats: Dict[str, dict] = {}
+    for regime_name in ("normal", "elevated", "extreme"):
+        regime_occs = [o for o in occurrences if o.get("ng_regime") == regime_name]
+        if regime_occs:
+            r_stats = _agg_fwd_stats(regime_occs, fwd_windows)
+            if r_stats:
+                regime_fwd_stats[regime_name] = {"count": len(regime_occs), "forward_returns": r_stats}
 
     # Return most recent instances for display (most recent first)
     recent = list(reversed(occurrences))[:max_display]
@@ -1125,6 +1238,7 @@ def _compute_historical_echoes(
         "threshold_vcvi": vcvi_threshold,
         "threshold_vol_regime": vol_regime_max,
         "forward_returns": forward_stats,
+        "forward_returns_by_regime": regime_fwd_stats,   # regime-stratified stats
         "signal_edge_window": best_edge_window,
         "lead_time": lead_time_stats,
         "occurrences": recent,
@@ -1147,6 +1261,7 @@ def _detect_conviction_events(
     ng_close: "Optional[pd.Series]" = None,
     etf_side: str = "long",
     ng_seasonal_z_series: "Optional[pd.Series]" = None,
+    ng_regime_series: "Optional[pd.Series]" = None,
 ) -> dict:
     """
     Scan full history for Conviction Events — dates where ALL gates fire:
@@ -1184,6 +1299,14 @@ def _detect_conviction_events(
         ).ffill().reindex(df_work.index)
     else:
         df_work["ng_seasonal_z"] = np.nan
+
+    # Add NG=F regime series (forward-fill to align NG=F dates → ETF dates)
+    if ng_regime_series is not None and not ng_regime_series.empty:
+        df_work["ng_regime"] = ng_regime_series.reindex(
+            df_work.index.union(ng_regime_series.index)
+        ).ffill().reindex(df_work.index).fillna("unknown")
+    else:
+        df_work["ng_regime"] = "unknown"
 
     df_work = df_work.dropna(subset=["close", "vcvi_21", "vol_regime", "atr14", "pct_change"])
     if df_work.empty:
@@ -1278,6 +1401,7 @@ def _detect_conviction_events(
         is_extreme_override = bool(extreme_override.loc[dt]) if dt in extreme_override.index else False
         is_momentum_guard = bool(momentum_guard_active.loc[dt]) if dt in momentum_guard_active.index else False
         ng_z_val = _safe_float(row.get("ng_seasonal_z")) if "ng_seasonal_z" in row.index else None
+        ng_reg = row.get("ng_regime", "unknown") if "ng_regime" in row.index else "unknown"
         events.append({
             "date": dt.strftime("%Y-%m-%d"),
             "vcvi": _safe_float(row["vcvi_21"]),
@@ -1292,6 +1416,7 @@ def _detect_conviction_events(
             "extreme_override":      is_extreme_override,
             "momentum_guard_active": is_momentum_guard,
             "ng_seasonal_z":         ng_z_val,
+            "ng_regime":             ng_reg,
         })
 
     # Aggregate forward return statistics
@@ -1661,13 +1786,10 @@ def run_pipeline() -> None:
 
     # ---- 1b. Fetch NG=F gas price context (Feature 2) ----
     ng_price_context = _fetch_ng_price_context()
-    # Extract internal close series (not JSON-serialised) and precompute z-score series once
-    ng_close_series: "Optional[pd.Series]" = ng_price_context.pop("_close_series", None)
-    ng_z_series: "Optional[pd.Series]" = (
-        _compute_ng_seasonal_z_series(ng_close_series)
-        if ng_close_series is not None and not ng_close_series.empty
-        else None
-    )
+    # Extract internal series (not JSON-serialised) — precomputed in _fetch_ng_price_context
+    ng_close_series:  "Optional[pd.Series]" = ng_price_context.pop("_close_series",  None)
+    ng_z_series:      "Optional[pd.Series]" = ng_price_context.pop("_z_series",      None)
+    ng_regime_series: "Optional[pd.Series]" = ng_price_context.pop("_regime_series", None)
 
     if not frames:
         logger.error("No data frames available – aborting")
@@ -1684,6 +1806,7 @@ def run_pipeline() -> None:
                 ticker=ticker,
                 ng_close=ng_close_series,
                 ng_seasonal_z_series=ng_z_series,
+                ng_regime_series=ng_regime_series,
             )
             all_metrics[ticker] = m
         except Exception:
