@@ -121,7 +121,21 @@ const CONFIG = {
         // Gas price level gate — uses seasonal z-score (not raw percentile)
         // Because nat gas is so volatile, "high vs 2yr" is meaningless.
         // Gate fires when gas is ≥1.5σ above/below its own seasonal monthly norm.
-        ngPriceGate: { zThreshold: 1.5 }
+        ngPriceGate: { zThreshold: 1.5 },
+
+        // NG=F Volatility Regime — 3-tier classification
+        // Natural gas can enter "ultra-volatile" outlier regimes where typical
+        // signal patterns may not hold (2022 ~$9/MMBtu; Jan 2026 >$7/MMBtu).
+        ngRegime: {
+            extreme:  { priceMin: 7.0, zMin: 2.5, hvPctMin: 90,
+                         color: 'var(--purple)', label: 'EXTREME REGIME',
+                         note: 'Ultra-volatile outlier — signal patterns may not behave as expected' },
+            elevated: { priceMin: 4.5, zMin: 1.5, hvPctMin: 70,
+                         color: 'var(--red)',    label: 'ELEVATED STRESS',
+                         note: 'Heightened conditions — interpret signals with added caution' },
+            normal:   { color: 'var(--text-dim)', label: 'NORMAL',
+                         note: 'Typical conditions — signals behave as expected' },
+        }
     },
 
     // VPS weights — 5-component including inverse vol regime

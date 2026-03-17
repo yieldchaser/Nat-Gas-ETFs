@@ -365,6 +365,43 @@ const Signals = {
                     <span class="echo-recent-label">Recent:</span>
                     ${recentHtml || '<span style="color:var(--text-muted)">—</span>'}
                 </div>
+                ${this._echoRegimeBlock(echoes)}
+            </div>`;
+    },
+
+    // Regime-stratified forward return summary for echo card
+    _echoRegimeBlock(echoes) {
+        const byRegime = echoes.forward_returns_by_regime;
+        if (!byRegime || Object.keys(byRegime).length === 0) return '';
+
+        const regimeCfg = CONFIG.thresholds?.ngRegime || {};
+        const REGIME_ORDER = ['normal', 'elevated', 'extreme'];
+        const displayWindow = echoes.signal_edge_window || '21d';
+
+        const rows = REGIME_ORDER.filter(r => byRegime[r]).map(r => {
+            const rd = byRegime[r];
+            const s  = rd.forward_returns?.[displayWindow];
+            if (!s) return '';
+            const cfg = regimeCfg[r] || {};
+            const color = cfg.color || 'var(--text-dim)';
+            const icon  = r === 'extreme' ? '🚨' : r === 'elevated' ? '⚠' : '●';
+            const med   = s.median;
+            const medColor = med > 2 ? 'var(--green)' : med < -2 ? 'var(--red)' : 'var(--text-secondary)';
+            const wrColor  = s.win_rate > 55 ? 'var(--green)' : s.win_rate < 45 ? 'var(--red)' : 'var(--text-secondary)';
+            const tip = `${cfg.label || r}: n=${rd.count} instances, median ${med >= 0 ? '+' : ''}${med?.toFixed(1)}% over ${displayWindow}, ${s.win_rate?.toFixed(0)}% win rate`;
+            return `<tr data-tooltip="${tip}">
+                <td style="color:${color}">${icon} ${(cfg.label || r).toLowerCase()}</td>
+                <td class="echo-regime-n" style="color:var(--text-dim)">n=${rd.count}</td>
+                <td style="color:${medColor}">${med >= 0 ? '+' : ''}${med?.toFixed(1)}%</td>
+                <td style="color:${wrColor}">${s.win_rate?.toFixed(0)}% win</td>
+            </tr>`;
+        }).join('');
+
+        if (!rows) return '';
+        return `
+            <div class="echo-regime-block">
+                <div class="echo-regime-label">Returns by NG regime (${displayWindow})</div>
+                <table class="echo-regime-table">${rows}</table>
             </div>`;
     },
 
@@ -432,6 +469,13 @@ const Signals = {
             const ngZColor = e.ng_seasonal_z != null
                 ? (e.ng_seasonal_z <= -1 ? 'var(--green)' : e.ng_seasonal_z >= 1 ? 'var(--red)' : 'var(--text-dim)')
                 : '';
+            const evRegime = e.ng_regime || 'unknown';
+            const evRegimeCfg = (CONFIG.thresholds?.ngRegime || {})[evRegime] || {};
+            const evRegimeColor = evRegimeCfg.color || 'var(--text-dim)';
+            const evRegimeTip = evRegimeCfg.note || evRegime;
+            const evRegimeBadge = evRegime !== 'unknown'
+                ? `<span class="ce-regime-badge ce-regime-${evRegime}" style="color:${evRegimeColor}" data-tooltip="NG regime on signal date: ${evRegimeTip}">${evRegime === 'extreme' ? '🚨' : evRegime === 'elevated' ? '⚠' : '●'}</span>`
+                : '';
             return `
                 <tr>
                     <td class="ce-date">${e.date} ${seasonTag}${overrideBadge}${guardBadge}</td>
@@ -441,6 +485,7 @@ const Signals = {
                     <td class="ce-breadth" data-tooltip="Vol pct windows ≥ 85th">${e.breadth_count}/5</td>
                     <td class="ce-price" data-tooltip="Price at signal">$${e.price?.toFixed(2) || '—'}</td>
                     <td class="ce-ngz" style="color:${ngZColor}" data-tooltip="NG=F seasonal z-score on signal date">${ngZStr}</td>
+                    <td class="ce-regime" data-tooltip="NG=F volatility regime on signal date">${evRegimeBadge}</td>
                 </tr>`;
         }).join('');
 
@@ -494,6 +539,7 @@ const Signals = {
                             <th data-tooltip="Vol pct windows above 85th">Breadth</th>
                             <th>Price</th>
                             <th data-tooltip="NG=F seasonal z-score (Gate 5)">NG-z</th>
+                            <th data-tooltip="NG=F volatility regime on signal date (normal/elevated/extreme)">Rgm</th>
                         </tr>
                     </thead>
                     <tbody>${eventRows}</tbody>
@@ -664,6 +710,23 @@ const Signals = {
                             : gateLong  === false ? `<span class="ng-gate inactive" data-tooltip="${longGateNote}">LONG ✗</span>`
                             : '<span class="ng-gate unknown">LONG ?</span>';
 
+        // Regime badge
+        const regime = ngPriceContext.regime || 'normal';
+        const regimeCfg = (CONFIG.thresholds.ngRegime || {})[regime] || CONFIG.thresholds.ngRegime?.normal || {};
+        const regimeColor = regimeCfg.color || 'var(--text-dim)';
+        const regimeLabel = regimeCfg.label || regime.toUpperCase();
+        const regimeNote  = regimeCfg.note  || '';
+        const hvPct = ngPriceContext.ng_hv_pct;
+        const hvStr = hvPct != null ? `NG vol at ${hvPct.toFixed(0)}th pct of own 2yr history` : '';
+        const regimeTip = `Regime: ${regimeLabel}. ${regimeNote}. ${hvStr ? hvStr + '. ' : ''}Anchored to known outlier periods: 2022 bull run ($9/MMBtu, z~+3σ) and Jan 2026 cold snap (>$7/MMBtu).`;
+        const regimeBadge = `<span class="ng-regime-badge ng-regime-${regime}" style="color:${regimeColor};border-color:${regimeColor}" data-tooltip="${regimeTip}">${regime === 'extreme' ? '🚨 ' : regime === 'elevated' ? '⚠ ' : ''}${regimeLabel}</span>`;
+        // Extreme regime warning strip
+        const regimeWarning = regime === 'extreme'
+            ? `<div class="ng-regime-warning" style="color:${regimeColor}">⚠ EXTREME REGIME — ${regimeNote}. Historical signal outcomes may not reflect behavior in this environment.</div>`
+            : regime === 'elevated'
+            ? `<div class="ng-regime-warning ng-regime-warning-dim" style="color:${regimeColor}">⚠ ${regimeNote}</div>`
+            : '';
+
         const fullTip = `NG=F Henry Hub futures — $${p.toFixed(3)}, seasonal z-score ${zLabel} (${tierLabel}). ${note}. 2yr pct: ${pct!=null?pct.toFixed(0):'—'}th (for reference only — seasonal z-score drives the gates).`;
 
         bar.innerHTML = `
@@ -676,7 +739,9 @@ const Signals = {
                 <div class="ng-bar-z-pos15" style="left:75%"></div>
             </div>
             <span class="ng-bar-pct" style="color:${tierColor}">${zLabel}</span>
-            <span class="ng-gates">${longGateHtml}${shortGateHtml}</span>`;
+            <span class="ng-gates">${longGateHtml}${shortGateHtml}</span>
+            ${regimeBadge}
+            ${regimeWarning}`;
     },
 
     // ---- ELEVATED WATCH (Feature 5) ----
