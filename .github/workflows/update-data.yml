@@ -36,6 +36,12 @@ jobs:
         env:
           PYTHONUNBUFFERED: '1'
 
+      - name: Run trough-peak history builder
+        run: |
+          python scripts/trough_peak_data.py
+        env:
+          PYTHONUNBUFFERED: '1'
+
       - name: Copy data to docs folder
         run: |
           mkdir -p docs/data
