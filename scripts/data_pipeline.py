@@ -142,8 +142,8 @@ EXTREME_OVERRIDE_VCVI_MIN = 90  # Must be >= 90 (exceptional capitulation)
 EXTREME_OVERRIDE_ATR_MULT = 2.0 # AND move > 2× ATR-14 (severe price dislocation)
 
 # NG=F seasonal z-score thresholds for Gate 5 directional confirmation
-CONVICTION_NG_Z_LONG  = -1.0   # Long-side fires only when gas z-score ≤ -1.0 (seasonally low)
-CONVICTION_NG_Z_SHORT =  1.0   # Short-side fires only when gas z-score ≥ +1.0 (seasonally high)
+CONVICTION_NG_Z_LONG  = -0.5   # Long-side fires only when gas z-score ≤ -0.5 (seasonally low)
+CONVICTION_NG_Z_SHORT =  0.2   # Short-side fires only when gas z-score ≥ +0.2 (early move sufficient)
 
 # Momentum guard — raises VCVI bar for short-side when NG=F is in uptrend
 MOMENTUM_GUARD_VCVI_BOOST = 13  # Add to CONVICTION_VCVI_MIN when gas seasonal_z > 0

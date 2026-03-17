@@ -115,7 +115,7 @@ A strict multi-gate filter designed to isolate true anomalies. **ALL gates must 
 | **2 — Multi-Window Breadth** | ≥ 3 of 5 windows ≥ 85th pct | Broad-based surge, not single-window noise |
 | **3 — Price Dislocation** | \|Daily move\| > 1.5× ATR-14 | Actual price shock, not just volume |
 | **4 — Regime Context** | Vol regime ≤ 70th percentile | Non-turbulent env required (signals meaningful) |
-| **5 — NG Directional** | Long: seasonal z ≤ −1.0σ  \|  Short: seasonal z ≥ +1.0σ | Gas price must confirm the trade direction |
+| **5 — NG Directional** | Long: seasonal z ≤ −0.5σ  \|  Short: seasonal z ≥ +0.2σ | Gas price must confirm the trade direction (asymmetric — short-side fires on early moves) |
 
 **Extreme Override** — Bypasses Gate 1's VCVI minimum if VCVI ≥ 90 AND \|move\| > 2× ATR. Captures severe capitulation events (Aug 2022, Jan 2026 analog) that pass the spirit of the filter even at unusual VCVI levels. Marked with ⚡ badge.
 
@@ -311,8 +311,8 @@ EXTREME_OVERRIDE_VCVI_MIN = 90   # VCVI ≥ 90 (exceptional capitulation)
 EXTREME_OVERRIDE_ATR_MULT = 2.0  # AND |move| > 2× ATR-14
 
 # Gate 5 — NG=F directional confirmation thresholds
-CONVICTION_NG_Z_LONG  = -1.0  # Long-side: seasonal z must be ≤ −1.0 (gas low for season)
-CONVICTION_NG_Z_SHORT =  1.0  # Short-side: seasonal z must be ≥ +1.0 (gas high for season)
+CONVICTION_NG_Z_LONG  = -0.5  # Long-side: seasonal z must be ≤ −0.5 (gas low for season)
+CONVICTION_NG_Z_SHORT =  0.2  # Short-side: seasonal z must be ≥ +0.2 (early move sufficient)
 
 # Momentum guard — raises short-side VCVI bar when gas is in seasonal uptrend
 MOMENTUM_GUARD_VCVI_BOOST = 13   # Added to CONVICTION_VCVI_MIN when seasonal z > 0
