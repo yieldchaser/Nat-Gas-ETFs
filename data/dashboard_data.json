@@ -1,6 +1,14 @@
 {
-  "last_updated": "2026-03-16T22:52:32.919537+00:00",
-  "market_status": "after_hours",
+  "last_updated": "2026-03-17T05:36:10.324412+00:00",
+  "market_status": "closed",
+  "ng_price_context": {
+    "price": 3.027,
+    "percentile_2yr": 43.7,
+    "tier": "mid",
+    "gate_short": false,
+    "gate_long": false,
+    "history_days": 504
+  },
   "etfs": {
     "BOIL": {
       "side": "long",
@@ -13,6 +21,7 @@
         "dollar_volume": 215628501.182976
       },
       "rvol": {
+        "5d": 1.004155,
         "10d": 0.728656,
         "21d": 0.857746,
         "63d": 0.835271,
@@ -20,6 +29,7 @@
         "252d": 1.639486
       },
       "z_score": {
+        "5d": 0.030313,
         "10d": -0.842254,
         "21d": -0.411816,
         "63d": -0.360297,
@@ -32,6 +42,7 @@
         "21d": 53.995788
       },
       "vol_percentile": {
+        "5d": 75.0,
         "10d": 33.333333,
         "21d": 50.0,
         "63d": 51.612903,
@@ -39,6 +50,7 @@
         "252d": 87.649402
       },
       "price_percentile": {
+        "5d": 0.0,
         "10d": 11.111111,
         "21d": 45.0,
         "63d": 20.967742,
@@ -46,6 +58,7 @@
         "252d": 5.179283
       },
       "cvi": {
+        "5d": 75.0,
         "10d": 29.629629,
         "21d": 27.5,
         "63d": 40.790843,
@@ -53,6 +66,7 @@
         "252d": 83.109791
       },
       "vcvi": {
+        "5d": 86.205179,
         "10d": 34.056366,
         "21d": 31.608566,
         "63d": 46.885092,
@@ -134,6 +148,12 @@
           }
         },
         "signal_edge_window": "42d",
+        "lead_time": {
+          "median_days": 63,
+          "p25_days": 42,
+          "p75_days": 63,
+          "count": 151
+        },
         "occurrences": [
           {
             "date": "2024-10-24",
@@ -148,7 +168,10 @@
               "63d": 13.476853,
               "126d": 20.495157,
               "252d": -42.19591
-            }
+            },
+            "days_to_peak": 10,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-10-14",
@@ -163,7 +186,10 @@
               "63d": 66.467205,
               "126d": 29.298042,
               "252d": -43.037976
-            }
+            },
+            "days_to_peak": 63,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-09-03",
@@ -178,7 +204,10 @@
               "63d": -6.835719,
               "126d": 113.098132,
               "252d": -34.068356
-            }
+            },
+            "days_to_peak": 21,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-08-22",
@@ -193,7 +222,10 @@
               "63d": 4.034159,
               "126d": 89.967989,
               "252d": -42.326571
-            }
+            },
+            "days_to_peak": 21,
+            "season": "summer",
+            "seasonality_weight": 0.85
           },
           {
             "date": "2024-07-25",
@@ -208,7 +240,10 @@
               "63d": -9.815957,
               "126d": 19.509196,
               "252d": -23.353787
-            }
+            },
+            "days_to_peak": 42,
+            "season": "summer",
+            "seasonality_weight": 0.85
           },
           {
             "date": "2024-07-10",
@@ -223,7 +258,10 @@
               "63d": -19.504398,
               "126d": -8.34532,
               "252d": -26.586733
-            }
+            },
+            "days_to_peak": 42,
+            "season": "summer",
+            "seasonality_weight": 0.85
           },
           {
             "date": "2024-04-30",
@@ -238,7 +276,10 @@
               "63d": -29.341319,
               "126d": -38.023953,
               "252d": -1.362281
-            }
+            },
+            "days_to_peak": 63,
+            "season": "spring",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-04-11",
@@ -253,12 +294,15 @@
               "63d": -9.370426,
               "126d": -29.282581,
               "252d": -16.29576
-            }
+            },
+            "days_to_peak": 42,
+            "season": "spring",
+            "seasonality_weight": 1.0
           }
         ]
       },
       "conviction_events": {
-        "count": 13,
+        "count": 15,
         "events": [
           {
             "date": "2025-07-21",
@@ -266,8 +310,10 @@
             "vol_regime_pct": 47.808765,
             "daily_move_pct": -14.804305,
             "atr_ratio": 1.728952,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 42.009998,
+            "season": "summer",
+            "seasonality_weight": 0.85,
             "fwd": {
               "5d": -13.830035,
               "10d": -22.970717,
@@ -282,8 +328,10 @@
             "vol_regime_pct": 52.988048,
             "daily_move_pct": -14.349438,
             "atr_ratio": 1.523052,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 46.080002,
+            "season": "summer",
+            "seasonality_weight": 0.85,
             "fwd": {
               "5d": -5.750871,
               "10d": 3.146695,
@@ -298,8 +346,10 @@
             "vol_regime_pct": 18.326693,
             "daily_move_pct": -13.107824,
             "atr_ratio": 1.924041,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 41.099998,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -4.501213,
               "10d": 1.192218,
@@ -314,8 +364,10 @@
             "vol_regime_pct": 45.418327,
             "daily_move_pct": -16.86747,
             "atr_ratio": 1.689562,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 2829.0,
+            "season": "winter",
+            "seasonality_weight": 1.3,
             "fwd": {
               "5d": -2.368328,
               "10d": 1.272534,
@@ -330,8 +382,10 @@
             "vol_regime_pct": 52.589641,
             "daily_move_pct": -13.519637,
             "atr_ratio": 1.647433,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 2290.0,
+            "season": "summer",
+            "seasonality_weight": 0.85,
             "fwd": {
               "5d": 20.655022,
               "10d": 30.873362,
@@ -346,8 +400,10 @@
             "vol_regime_pct": 52.988048,
             "daily_move_pct": -5.983827,
             "atr_ratio": 1.529855,
-            "breadth_count": 3,
+            "breadth_count": 4,
             "price": 17440.0,
+            "season": "spring",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -0.573394,
               "10d": -17.488532,
@@ -362,8 +418,10 @@
             "vol_regime_pct": 49.800797,
             "daily_move_pct": -8.79567,
             "atr_ratio": 1.580875,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 33700.0,
+            "season": "winter",
+            "seasonality_weight": 1.3,
             "fwd": {
               "5d": 8.902077,
               "10d": -10.830861,
@@ -378,8 +436,10 @@
             "vol_regime_pct": 33.864542,
             "daily_move_pct": -7.740586,
             "atr_ratio": 1.593013,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 44100.0,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": 0.340136,
               "10d": -7.936508,
@@ -396,6 +456,8 @@
             "atr_ratio": 1.670421,
             "breadth_count": 4,
             "price": 41850.0,
+            "season": "summer",
+            "seasonality_weight": 0.85,
             "fwd": {
               "5d": -1.194743,
               "10d": 8.960573,
@@ -412,6 +474,8 @@
             "atr_ratio": 1.529575,
             "breadth_count": 4,
             "price": 53950.0,
+            "season": "spring",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -6.672845,
               "10d": -12.696942,
@@ -421,7 +485,7 @@
             }
           }
         ],
-        "annual_rate": 0.935063,
+        "annual_rate": 1.078919,
         "gates": {
           "vcvi_min": 72,
           "breadth_min": 3,
@@ -431,47 +495,285 @@
         },
         "forward_returns": {
           "5d": {
-            "median": -2.368328,
-            "mean": -2.037177,
-            "win_rate": 30.769231,
+            "median": -3.440554,
+            "mean": -2.405541,
+            "win_rate": 26.666667,
             "best": 20.655022,
             "worst": -14.877102,
-            "count": 13
+            "count": 15
           },
           "10d": {
             "median": -6.896552,
-            "mean": -4.142408,
-            "win_rate": 46.153846,
+            "mean": -4.573357,
+            "win_rate": 40.0,
             "best": 30.873362,
             "worst": -29.624838,
-            "count": 13
+            "count": 15
           },
           "21d": {
-            "median": -6.858202,
-            "mean": -5.53867,
-            "win_rate": 38.461538,
+            "median": -6.00907,
+            "mean": -5.03388,
+            "win_rate": 40.0,
             "best": 22.846724,
             "worst": -33.158769,
-            "count": 13
+            "count": 15
           },
           "42d": {
-            "median": 5.734767,
-            "mean": 5.364807,
-            "win_rate": 53.846154,
+            "median": -12.131519,
+            "mean": 1.934989,
+            "win_rate": 46.666667,
             "best": 95.414847,
             "worst": -36.870662,
-            "count": 13
+            "count": 15
           },
           "63d": {
-            "median": -8.482676,
-            "mean": 4.867168,
-            "win_rate": 38.461538,
+            "median": -16.960148,
+            "mean": 0.015028,
+            "win_rate": 33.333333,
             "best": 102.06252,
             "worst": -39.909297,
-            "count": 13
+            "count": 15
           }
         }
       },
+      "elevated_watch": {
+        "count": 64,
+        "events": [
+          {
+            "date": "2025-10-28",
+            "vcvi": 85.383466,
+            "daily_move_pct": -7.12556,
+            "atr_ratio": 1.209254,
+            "breadth_count": 6,
+            "price": 26.85,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 22.085655,
+              "10d": 30.726249,
+              "21d": 24.245811,
+              "42d": -3.873374,
+              "63d": 21.489752
+            }
+          },
+          {
+            "date": "2025-07-21",
+            "vcvi": 87.373506,
+            "daily_move_pct": -14.804305,
+            "atr_ratio": 1.728952,
+            "breadth_count": 6,
+            "price": 42.009998,
+            "season": "summer",
+            "seasonality_weight": 0.85,
+            "fwd": {
+              "5d": -13.830035,
+              "10d": -22.970717,
+              "21d": -33.158769,
+              "42d": -32.777908,
+              "63d": -38.038558
+            }
+          },
+          {
+            "date": "2025-06-30",
+            "vcvi": 97.011952,
+            "daily_move_pct": -14.349438,
+            "atr_ratio": 1.523052,
+            "breadth_count": 6,
+            "price": 46.080002,
+            "season": "summer",
+            "seasonality_weight": 0.85,
+            "fwd": {
+              "5d": -5.750871,
+              "10d": 3.146695,
+              "21d": -25.195313,
+              "42d": -36.870662,
+              "63d": -37.413197
+            }
+          },
+          {
+            "date": "2025-05-19",
+            "vcvi": 81.224104,
+            "daily_move_pct": -12.651891,
+            "atr_ratio": 1.216687,
+            "breadth_count": 6,
+            "price": 48.880001,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 18.064644,
+              "10d": 15.302781,
+              "21d": 29.705401,
+              "42d": -14.054833,
+              "63d": -42.553193
+            }
+          },
+          {
+            "date": "2025-04-04",
+            "vcvi": 81.932271,
+            "daily_move_pct": -14.173329,
+            "atr_ratio": 1.466579,
+            "breadth_count": 3,
+            "price": 73.089996,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -13.353393,
+              "10d": -31.344913,
+              "21d": -16.855926,
+              "42d": -25.324936,
+              "63d": -40.580103
+            }
+          },
+          {
+            "date": "2024-10-28",
+            "vcvi": 125.089641,
+            "daily_move_pct": -13.107824,
+            "atr_ratio": 1.924041,
+            "breadth_count": 6,
+            "price": 41.099998,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -4.501213,
+              "10d": 1.192218,
+              "21d": 22.846724,
+              "42d": 24.087596,
+              "63d": 25.571782
+            }
+          },
+          {
+            "date": "2024-07-15",
+            "vcvi": 108.964143,
+            "daily_move_pct": -11.712439,
+            "atr_ratio": 1.274707,
+            "breadth_count": 6,
+            "price": 54.650002,
+            "season": "summer",
+            "seasonality_weight": 0.85,
+            "fwd": {
+              "5d": 7.227808,
+              "10d": -12.625803,
+              "21d": -5.855445,
+              "42d": -12.076857,
+              "63d": -14.730106
+            }
+          },
+          {
+            "date": "2023-11-06",
+            "vcvi": 111.558765,
+            "daily_move_pct": -10.075531,
+            "atr_ratio": 1.400925,
+            "breadth_count": 5,
+            "price": 297.649994,
+            "season": "winter",
+            "seasonality_weight": 1.3,
+            "fwd": {
+              "5d": -8.399127,
+              "10d": -27.918694,
+              "21d": -49.286074,
+              "42d": -41.474886,
+              "63d": -66.621871
+            }
+          },
+          {
+            "date": "2022-10-25",
+            "vcvi": 100.071713,
+            "daily_move_pct": 14.253648,
+            "atr_ratio": 1.282266,
+            "breadth_count": 6,
+            "price": 4072.0,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -10.019646,
+              "10d": 0.933202,
+              "21d": 34.086444,
+              "42d": -47.102161,
+              "63d": -80.058939
+            }
+          },
+          {
+            "date": "2022-09-15",
+            "vcvi": 79.513944,
+            "daily_move_pct": -17.362019,
+            "atr_ratio": 1.396241,
+            "breadth_count": 3,
+            "price": 8220.0,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -24.124088,
+              "10d": -32.931873,
+              "21d": -39.744526,
+              "42d": -53.905109,
+              "63d": -57.761557
+            }
+          }
+        ],
+        "annual_rate": 4.603387,
+        "gates": {
+          "vcvi_min": 60,
+          "breadth_min": 2,
+          "breadth_pct": 75,
+          "atr_mult": 1.2
+        },
+        "forward_returns": {
+          "5d": {
+            "median": -0.5819,
+            "mean": -0.275304,
+            "win_rate": 46.875,
+            "best": 28.493151,
+            "worst": -24.124088,
+            "count": 64
+          },
+          "10d": {
+            "median": -2.562459,
+            "mean": -2.438912,
+            "win_rate": 43.75,
+            "best": 30.873362,
+            "worst": -32.931873,
+            "count": 64
+          },
+          "21d": {
+            "median": -5.246977,
+            "mean": -1.190633,
+            "win_rate": 43.75,
+            "best": 74.540441,
+            "worst": -49.286074,
+            "count": 64
+          },
+          "42d": {
+            "median": -13.307609,
+            "mean": -7.120625,
+            "win_rate": 32.8125,
+            "best": 95.414847,
+            "worst": -53.905109,
+            "count": 64
+          },
+          "63d": {
+            "median": -16.5629,
+            "mean": -7.677172,
+            "win_rate": 31.25,
+            "best": 102.06252,
+            "worst": -80.058939,
+            "count": 64
+          }
+        }
+      },
+      "decay": {
+        "annual_rate": 0.35,
+        "adj_price_pct": 4.365079,
+        "adj_vcvi_21d": 54.961503,
+        "correction_active": true
+      },
+      "seasonality": {
+        "month": 3,
+        "season": "spring",
+        "weight": 1.0,
+        "adj_vcvi_21d": 31.608566
+      },
+      "sharp_spike": false,
+      "fast_signal": null,
       "vps": 37.451309,
       "mwca": false,
       "rolling_correlation": 0.067289,
@@ -2510,28 +2812,44 @@
       "alerts": [
         {
           "type": "vcvi_critical",
-          "message": "VCVI (126d) = 77.4 \u2014 vol-adjusted extreme capitulation",
-          "timestamp": "2026-03-16T22:52:31.300148+00:00"
+          "side": "long",
+          "message": "VCVI (5d) = 86.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:08.638222+00:00"
         },
         {
           "type": "vcvi_critical",
-          "message": "VCVI (252d) = 95.5 \u2014 vol-adjusted extreme capitulation",
-          "timestamp": "2026-03-16T22:52:31.300148+00:00"
+          "side": "long",
+          "message": "VCVI (126d) = 77.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:08.638222+00:00"
+        },
+        {
+          "type": "vcvi_critical",
+          "side": "long",
+          "message": "VCVI (252d) = 95.5 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:08.638222+00:00"
         },
         {
           "type": "cvi_warning",
-          "message": "CVI (126d) = 67.4 \u2014 elevated capitulation signal",
-          "timestamp": "2026-03-16T22:52:31.300148+00:00"
+          "side": "long",
+          "message": "CVI (5d) = 75.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:08.638222+00:00"
+        },
+        {
+          "type": "cvi_warning",
+          "side": "long",
+          "message": "CVI (126d) = 67.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:08.638222+00:00"
         },
         {
           "type": "cvi_critical",
-          "message": "CVI (252d) = 83.1 \u2014 extreme capitulation signal",
-          "timestamp": "2026-03-16T22:52:31.300148+00:00"
+          "side": "long",
+          "message": "CVI (252d) = 83.1 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:08.638222+00:00"
         },
         {
           "type": "vov_elevated",
           "message": "VoV-21 = 63% \u2014 volatility regime becoming unstable",
-          "timestamp": "2026-03-16T22:52:31.300148+00:00"
+          "timestamp": "2026-03-17T05:36:08.638222+00:00"
         }
       ]
     },
@@ -2546,6 +2864,7 @@
         "dollar_volume": 35348734.458481
       },
       "rvol": {
+        "5d": 1.114083,
         "10d": 0.921554,
         "21d": 0.958129,
         "63d": 0.911553,
@@ -2553,6 +2872,7 @@
         "252d": 1.819661
       },
       "z_score": {
+        "5d": 0.519782,
         "10d": -0.313056,
         "21d": -0.154162,
         "63d": -0.205806,
@@ -2565,6 +2885,7 @@
         "21d": 27.181241
       },
       "vol_percentile": {
+        "5d": 75.0,
         "10d": 33.333333,
         "21d": 35.0,
         "63d": 53.225806,
@@ -2572,6 +2893,7 @@
         "252d": 87.649402
       },
       "price_percentile": {
+        "5d": 0.0,
         "10d": 11.111111,
         "21d": 45.0,
         "63d": 20.967742,
@@ -2579,6 +2901,7 @@
         "252d": 5.179283
       },
       "cvi": {
+        "5d": 75.0,
         "10d": 29.629629,
         "21d": 19.25,
         "63d": 42.065556,
@@ -2586,6 +2909,7 @@
         "252d": 83.109791
       },
       "vcvi": {
+        "5d": 83.814741,
         "10d": 33.111996,
         "21d": 21.51245,
         "63d": 47.009516,
@@ -2667,6 +2991,12 @@
           }
         },
         "signal_edge_window": "63d",
+        "lead_time": {
+          "median_days": 63,
+          "p25_days": 42,
+          "p75_days": 63,
+          "count": 202
+        },
         "occurrences": [
           {
             "date": "2024-10-22",
@@ -2681,7 +3011,10 @@
               "63d": 61.27659,
               "126d": 6.985813,
               "252d": -32.19858
-            }
+            },
+            "days_to_peak": 63,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-10-09",
@@ -2696,7 +3029,10 @@
               "63d": 30.952392,
               "126d": 24.420026,
               "252d": -46.703297
-            }
+            },
+            "days_to_peak": 63,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-09-05",
@@ -2711,7 +3047,10 @@
               "63d": -19.349751,
               "126d": 111.04798,
               "252d": -38.289144
-            }
+            },
+            "days_to_peak": 42,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-08-22",
@@ -2726,7 +3065,10 @@
               "63d": 12.69842,
               "126d": 88.459002,
               "252d": -46.197088
-            }
+            },
+            "days_to_peak": 21,
+            "season": "summer",
+            "seasonality_weight": 0.85
           },
           {
             "date": "2024-08-01",
@@ -2741,7 +3083,10 @@
               "63d": -15.744682,
               "126d": 43.404247,
               "252d": -29.14894
-            }
+            },
+            "days_to_peak": 42,
+            "season": "summer",
+            "seasonality_weight": 0.85
           },
           {
             "date": "2024-07-22",
@@ -2756,7 +3101,10 @@
               "63d": -24.920129,
               "126d": 21.086256,
               "252d": -42.092654
-            }
+            },
+            "days_to_peak": 63,
+            "season": "summer",
+            "seasonality_weight": 0.85
           },
           {
             "date": "2024-07-11",
@@ -2771,7 +3119,10 @@
               "63d": -14.596272,
               "126d": 13.250515,
               "252d": -29.166663
-            }
+            },
+            "days_to_peak": 10,
+            "season": "summer",
+            "seasonality_weight": 0.85
           },
           {
             "date": "2024-04-24",
@@ -2786,12 +3137,15 @@
               "63d": -16.272194,
               "126d": -21.893493,
               "252d": -26.035505
-            }
+            },
+            "days_to_peak": 42,
+            "season": "spring",
+            "seasonality_weight": 1.0
           }
         ]
       },
       "conviction_events": {
-        "count": 23,
+        "count": 24,
         "events": [
           {
             "date": "2025-07-21",
@@ -2799,8 +3153,10 @@
             "vol_regime_pct": 53.784861,
             "daily_move_pct": -14.704877,
             "atr_ratio": 1.836798,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 25.0,
+            "season": "summer",
+            "seasonality_weight": 0.85,
             "fwd": {
               "5d": -13.919998,
               "10d": -20.080002,
@@ -2817,6 +3173,8 @@
             "atr_ratio": 2.076847,
             "breadth_count": 4,
             "price": 34.189999,
+            "season": "summer",
+            "seasonality_weight": 0.85,
             "fwd": {
               "5d": -3.685283,
               "10d": 1.257679,
@@ -2831,8 +3189,10 @@
             "vol_regime_pct": 49.40239,
             "daily_move_pct": -15.355805,
             "atr_ratio": 1.905324,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 27.120001,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -4.424781,
               "10d": 1.76991,
@@ -2847,8 +3207,10 @@
             "vol_regime_pct": 48.605578,
             "daily_move_pct": -14.213193,
             "atr_ratio": 1.769917,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 40.560001,
+            "season": "spring",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -3.254437,
               "10d": 23.076914,
@@ -2858,13 +3220,33 @@
             }
           },
           {
+            "date": "2021-04-05",
+            "vcvi": 130.697211,
+            "vol_regime_pct": 4.780876,
+            "daily_move_pct": -9.090905,
+            "atr_ratio": 1.676136,
+            "breadth_count": 3,
+            "price": 1062.0,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 3.559327,
+              "10d": 17.118649,
+              "21d": 30.677971,
+              "42d": 32.542371,
+              "63d": 96.779666
+            }
+          },
+          {
             "date": "2020-12-03",
             "vcvi": 87.051793,
             "vol_regime_pct": 62.948207,
             "daily_move_pct": -17.362925,
             "atr_ratio": 1.54955,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 1139.400024,
+            "season": "winter",
+            "seasonality_weight": 1.3,
             "fwd": {
               "5d": 3.159558,
               "10d": 8.846755,
@@ -2879,8 +3261,10 @@
             "vol_regime_pct": 43.824701,
             "daily_move_pct": -16.916915,
             "atr_ratio": 1.60077,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 1494.0,
+            "season": "winter",
+            "seasonality_weight": 1.3,
             "fwd": {
               "5d": -2.289153,
               "10d": 5.180725,
@@ -2895,8 +3279,10 @@
             "vol_regime_pct": 55.776892,
             "daily_move_pct": -15.410573,
             "atr_ratio": 1.697097,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 1353.599976,
+            "season": "summer",
+            "seasonality_weight": 0.85,
             "fwd": {
               "5d": 28.989364,
               "10d": 36.303194,
@@ -2913,6 +3299,8 @@
             "atr_ratio": 1.650759,
             "breadth_count": 5,
             "price": 10098.0,
+            "season": "spring",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -9.625668,
               "10d": -5.97148,
@@ -2927,8 +3315,10 @@
             "vol_regime_pct": 47.808765,
             "daily_move_pct": -6.766917,
             "atr_ratio": 2.123018,
-            "breadth_count": 4,
+            "breadth_count": 5,
             "price": 16740.0,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": 0.0,
               "10d": 3.763441,
@@ -2936,25 +3326,9 @@
               "42d": 29.032258,
               "63d": 99.193548
             }
-          },
-          {
-            "date": "2017-09-21",
-            "vcvi": 93.974104,
-            "vol_regime_pct": 39.442231,
-            "daily_move_pct": -7.765452,
-            "atr_ratio": 1.543241,
-            "breadth_count": 5,
-            "price": 26190.0,
-            "fwd": {
-              "5d": 0.0,
-              "10d": -8.075601,
-              "21d": -5.154639,
-              "42d": -13.402062,
-              "63d": -39.5189
-            }
           }
         ],
-        "annual_rate": 1.304667,
+        "annual_rate": 1.361392,
         "gates": {
           "vcvi_min": 72,
           "breadth_min": 3,
@@ -2964,47 +3338,285 @@
         },
         "forward_returns": {
           "5d": {
-            "median": -3.254437,
-            "mean": -1.82997,
-            "win_rate": 21.73913,
+            "median": -2.771795,
+            "mean": -1.605416,
+            "win_rate": 25.0,
             "best": 28.989364,
             "worst": -16.25222,
-            "count": 23
+            "count": 24
           },
           "10d": {
-            "median": 1.257679,
-            "mean": 1.240089,
-            "win_rate": 52.173913,
+            "median": 1.513794,
+            "mean": 1.901695,
+            "win_rate": 54.166667,
             "best": 36.303194,
             "worst": -31.172291,
-            "count": 23
+            "count": 24
           },
           "21d": {
-            "median": -4.553415,
-            "mean": 1.547926,
-            "win_rate": 47.826087,
+            "median": -1.189751,
+            "mean": 2.761678,
+            "win_rate": 50.0,
             "best": 55.917159,
             "worst": -32.760002,
-            "count": 23
+            "count": 24
           },
           "42d": {
-            "median": 4.512635,
-            "mean": 6.633399,
-            "win_rate": 60.869565,
+            "median": 5.128989,
+            "mean": 7.71294,
+            "win_rate": 62.5,
             "best": 109.308511,
             "worst": -41.295337,
-            "count": 23
+            "count": 24
           },
           "63d": {
-            "median": -4.028021,
-            "mean": 3.051974,
-            "win_rate": 47.826087,
+            "median": -1.082333,
+            "mean": 6.957294,
+            "win_rate": 50.0,
             "best": 99.193548,
             "worst": -49.263502,
-            "count": 23
+            "count": 24
           }
         }
       },
+      "elevated_watch": {
+        "count": 79,
+        "events": [
+          {
+            "date": "2025-08-12",
+            "vcvi": 120.517928,
+            "daily_move_pct": -11.583804,
+            "atr_ratio": 1.307849,
+            "breadth_count": 6,
+            "price": 17.25,
+            "season": "summer",
+            "seasonality_weight": 0.85,
+            "fwd": {
+              "5d": -2.08696,
+              "10d": -5.449278,
+              "21d": 3.362318,
+              "42d": 1.217386,
+              "63d": 37.855076
+            }
+          },
+          {
+            "date": "2025-07-21",
+            "vcvi": 86.834163,
+            "daily_move_pct": -14.704877,
+            "atr_ratio": 1.836798,
+            "breadth_count": 6,
+            "price": 25.0,
+            "season": "summer",
+            "seasonality_weight": 0.85,
+            "fwd": {
+              "5d": -13.919998,
+              "10d": -20.080002,
+              "21d": -32.760002,
+              "42d": -29.120003,
+              "63d": -20.839996
+            }
+          },
+          {
+            "date": "2025-06-30",
+            "vcvi": 88.247012,
+            "daily_move_pct": -15.223422,
+            "atr_ratio": 1.474264,
+            "breadth_count": 6,
+            "price": 27.51,
+            "season": "summer",
+            "seasonality_weight": 0.85,
+            "fwd": {
+              "5d": -5.779717,
+              "10d": 2.871679,
+              "21d": -25.481644,
+              "42d": -32.024716,
+              "63d": -30.679755
+            }
+          },
+          {
+            "date": "2025-05-28",
+            "vcvi": 128.884462,
+            "daily_move_pct": -10.865875,
+            "atr_ratio": 1.367537,
+            "breadth_count": 6,
+            "price": 31.5,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 8.761899,
+              "10d": -2.190478,
+              "21d": -7.142857,
+              "42d": -31.682538,
+              "63d": -46.349208
+            }
+          },
+          {
+            "date": "2025-04-04",
+            "vcvi": 94.432271,
+            "daily_move_pct": -14.255541,
+            "atr_ratio": 1.484718,
+            "breadth_count": 3,
+            "price": 48.720001,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -14.573075,
+              "10d": -35.940069,
+              "21d": -25.513136,
+              "42d": -31.44499,
+              "63d": -44.766012
+            }
+          },
+          {
+            "date": "2024-10-28",
+            "vcvi": 95.567729,
+            "daily_move_pct": -15.355805,
+            "atr_ratio": 1.905324,
+            "breadth_count": 6,
+            "price": 27.120001,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -4.424781,
+              "10d": 1.76991,
+              "21d": 23.893796,
+              "42d": 26.917393,
+              "63d": 28.392325
+            }
+          },
+          {
+            "date": "2024-07-22",
+            "vcvi": 63.705179,
+            "daily_move_pct": 10.600714,
+            "atr_ratio": 1.354295,
+            "breadth_count": 3,
+            "price": 37.560001,
+            "season": "summer",
+            "seasonality_weight": 0.85,
+            "fwd": {
+              "5d": -18.530353,
+              "10d": -22.36422,
+              "21d": -9.904156,
+              "42d": -6.38978,
+              "63d": -24.920129
+            }
+          },
+          {
+            "date": "2024-04-24",
+            "vcvi": 81.875996,
+            "daily_move_pct": -14.213193,
+            "atr_ratio": 1.769917,
+            "breadth_count": 6,
+            "price": 40.560001,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -3.254437,
+              "10d": 23.076914,
+              "21d": 55.917159,
+              "42d": 62.130177,
+              "63d": -16.272194
+            }
+          },
+          {
+            "date": "2024-04-15",
+            "vcvi": 103.109064,
+            "daily_move_pct": -10.054345,
+            "atr_ratio": 1.252469,
+            "breadth_count": 6,
+            "price": 39.720001,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 13.293048,
+              "10d": 10.271898,
+              "21d": 37.160115,
+              "42d": 74.018128,
+              "63d": -11.782478
+            }
+          },
+          {
+            "date": "2023-11-06",
+            "vcvi": 127.689243,
+            "daily_move_pct": -12.350602,
+            "atr_ratio": 1.46872,
+            "breadth_count": 6,
+            "price": 158.399994,
+            "season": "winter",
+            "seasonality_weight": 1.3,
+            "fwd": {
+              "5d": -8.863632,
+              "10d": -28.333333,
+              "21d": -43.560603,
+              "42d": -31.969693,
+              "63d": -58.787878
+            }
+          }
+        ],
+        "annual_rate": 4.481247,
+        "gates": {
+          "vcvi_min": 60,
+          "breadth_min": 2,
+          "breadth_pct": 75,
+          "atr_mult": 1.2
+        },
+        "forward_returns": {
+          "5d": {
+            "median": -2.1875,
+            "mean": -1.649802,
+            "win_rate": 36.708861,
+            "best": 38.071066,
+            "worst": -24.332864,
+            "count": 79
+          },
+          "10d": {
+            "median": -3.938356,
+            "mean": -3.564304,
+            "win_rate": 39.240506,
+            "best": 42.335025,
+            "worst": -36.59181,
+            "count": 79
+          },
+          "21d": {
+            "median": -6.25,
+            "mean": -3.143301,
+            "win_rate": 39.240506,
+            "best": 67.309645,
+            "worst": -47.261233,
+            "count": 79
+          },
+          "42d": {
+            "median": -13.153961,
+            "mean": -7.082474,
+            "win_rate": 37.974684,
+            "best": 109.308511,
+            "worst": -56.460673,
+            "count": 79
+          },
+          "63d": {
+            "median": -16.272194,
+            "mean": -13.242476,
+            "win_rate": 29.113924,
+            "best": 99.193548,
+            "worst": -80.673499,
+            "count": 79
+          }
+        }
+      },
+      "decay": {
+        "annual_rate": 0.4,
+        "adj_price_pct": 3.968254,
+        "adj_vcvi_21d": 37.561421,
+        "correction_active": true
+      },
+      "seasonality": {
+        "month": 3,
+        "season": "spring",
+        "weight": 1.0,
+        "adj_vcvi_21d": 21.51245
+      },
+      "sharp_spike": false,
+      "fast_signal": null,
       "vps": 36.134725,
       "mwca": false,
       "rolling_correlation": -0.021958,
@@ -5043,28 +5655,44 @@
       "alerts": [
         {
           "type": "vcvi_critical",
-          "message": "VCVI (126d) = 75.3 \u2014 vol-adjusted extreme capitulation",
-          "timestamp": "2026-03-16T22:52:31.673237+00:00"
+          "side": "long",
+          "message": "VCVI (5d) = 83.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:09.031482+00:00"
         },
         {
           "type": "vcvi_critical",
-          "message": "VCVI (252d) = 92.9 \u2014 vol-adjusted extreme capitulation",
-          "timestamp": "2026-03-16T22:52:31.673237+00:00"
+          "side": "long",
+          "message": "VCVI (126d) = 75.3 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:09.031482+00:00"
+        },
+        {
+          "type": "vcvi_critical",
+          "side": "long",
+          "message": "VCVI (252d) = 92.9 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:09.031482+00:00"
         },
         {
           "type": "cvi_warning",
-          "message": "CVI (126d) = 67.4 \u2014 elevated capitulation signal",
-          "timestamp": "2026-03-16T22:52:31.673237+00:00"
+          "side": "long",
+          "message": "CVI (5d) = 75.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:09.031482+00:00"
+        },
+        {
+          "type": "cvi_warning",
+          "side": "long",
+          "message": "CVI (126d) = 67.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:09.031482+00:00"
         },
         {
           "type": "cvi_critical",
-          "message": "CVI (252d) = 83.1 \u2014 extreme capitulation signal",
-          "timestamp": "2026-03-16T22:52:31.673237+00:00"
+          "side": "long",
+          "message": "CVI (252d) = 83.1 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:09.031482+00:00"
         },
         {
           "type": "vov_elevated",
           "message": "VoV-21 = 64% \u2014 volatility regime becoming unstable",
-          "timestamp": "2026-03-16T22:52:31.673237+00:00"
+          "timestamp": "2026-03-17T05:36:09.031482+00:00"
         }
       ]
     },
@@ -5079,6 +5707,7 @@
         "dollar_volume": 602198.851203
       },
       "rvol": {
+        "5d": 1.031785,
         "10d": 0.672072,
         "21d": 0.975252,
         "63d": 0.995222,
@@ -5086,6 +5715,7 @@
         "252d": 2.433279
       },
       "z_score": {
+        "5d": 0.094869,
         "10d": -0.628412,
         "21d": -0.034527,
         "63d": -0.006433,
@@ -5098,6 +5728,7 @@
         "21d": 143.962011
       },
       "vol_percentile": {
+        "5d": 75.0,
         "10d": 33.333333,
         "21d": 65.0,
         "63d": 59.677419,
@@ -5105,6 +5736,7 @@
         "252d": 90.039841
       },
       "price_percentile": {
+        "5d": 0.0,
         "10d": 22.222222,
         "21d": 45.0,
         "63d": 14.516129,
@@ -5112,6 +5744,7 @@
         "252d": 3.585657
       },
       "cvi": {
+        "5d": 75.0,
         "10d": 25.925926,
         "21d": 35.75,
         "63d": 51.014568,
@@ -5119,6 +5752,7 @@
         "252d": 86.811321
       },
       "vcvi": {
+        "5d": 69.173307,
         "10d": 23.911761,
         "21d": 32.97261,
         "63d": 47.051285,
@@ -5200,6 +5834,12 @@
           }
         },
         "signal_edge_window": "63d",
+        "lead_time": {
+          "median_days": 63,
+          "p25_days": 42,
+          "p75_days": 63,
+          "count": 108
+        },
         "occurrences": [
           {
             "date": "2024-10-21",
@@ -5214,7 +5854,10 @@
               "63d": 58.682022,
               "126d": -9.379381,
               "252d": -60.726144
-            }
+            },
+            "days_to_peak": 63,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-10-11",
@@ -5229,7 +5872,10 @@
               "63d": 37.422559,
               "126d": 14.763911,
               "252d": -69.792482
-            }
+            },
+            "days_to_peak": 63,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-09-18",
@@ -5244,7 +5890,10 @@
               "63d": -27.205884,
               "126d": 100.681265,
               "252d": -65.570227
-            }
+            },
+            "days_to_peak": 42,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-08-27",
@@ -5259,7 +5908,10 @@
               "63d": -9.023205,
               "126d": 103.66298,
               "252d": -70.338171
-            }
+            },
+            "days_to_peak": 21,
+            "season": "summer",
+            "seasonality_weight": 0.85
           },
           {
             "date": "2024-07-19",
@@ -5274,7 +5926,10 @@
               "63d": 27796.44779,
               "126d": 50947.718057,
               "252d": 23473.603735
-            }
+            },
+            "days_to_peak": 21,
+            "season": "summer",
+            "seasonality_weight": 0.85
           },
           {
             "date": "2024-07-09",
@@ -5289,7 +5944,10 @@
               "63d": 27641.639011,
               "126d": 24714.948846,
               "252d": 14334.16479
-            }
+            },
+            "days_to_peak": 10,
+            "season": "summer",
+            "seasonality_weight": 0.85
           },
           {
             "date": "2024-06-27",
@@ -5304,7 +5962,10 @@
               "63d": 19471.980433,
               "126d": 14527.535747,
               "252d": 10624.637932
-            }
+            },
+            "days_to_peak": 63,
+            "season": "summer",
+            "seasonality_weight": 0.85
           },
           {
             "date": "2024-04-24",
@@ -5319,12 +5980,15 @@
               "63d": 26952.308121,
               "126d": 17239.692972,
               "252d": 15789.231164
-            }
+            },
+            "days_to_peak": 63,
+            "season": "spring",
+            "seasonality_weight": 1.0
           }
         ]
       },
       "conviction_events": {
-        "count": 8,
+        "count": 9,
         "events": [
           {
             "date": "2020-11-03",
@@ -5332,8 +5996,10 @@
             "vol_regime_pct": 2.788845,
             "daily_move_pct": -13.333332,
             "atr_ratio": 1.733333,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 242.410675,
+            "season": "winter",
+            "seasonality_weight": 1.3,
             "fwd": {
               "5d": -40.784374,
               "10d": -56.64795,
@@ -5348,8 +6014,10 @@
             "vol_regime_pct": 37.051793,
             "daily_move_pct": -12.318845,
             "atr_ratio": 1.827331,
-            "breadth_count": 4,
+            "breadth_count": 5,
             "price": 1353.770386,
+            "season": "winter",
+            "seasonality_weight": 1.3,
             "fwd": {
               "5d": -24.517905,
               "10d": -29.476581,
@@ -5359,13 +6027,33 @@
             }
           },
           {
+            "date": "2019-04-08",
+            "vcvi": 77.49502,
+            "vol_regime_pct": 33.466135,
+            "daily_move_pct": 6.77966,
+            "atr_ratio": 1.510015,
+            "breadth_count": 3,
+            "price": 5873.797363,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -10.158728,
+              "10d": -24.761909,
+              "21d": -14.603172,
+              "42d": -41.269843,
+              "63d": -33.650796
+            }
+          },
+          {
             "date": "2018-08-31",
             "vcvi": 87.400398,
             "vol_regime_pct": 15.537849,
             "daily_move_pct": 4.719763,
             "atr_ratio": 1.61774,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 13239.352539,
+            "season": "summer",
+            "seasonality_weight": 0.85,
             "fwd": {
               "5d": -15.211265,
               "10d": -18.028166,
@@ -5380,8 +6068,10 @@
             "vol_regime_pct": 51.792829,
             "daily_move_pct": -13.054501,
             "atr_ratio": 2.548281,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 25583.650391,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": 0.145769,
               "10d": -9.475221,
@@ -5396,8 +6086,10 @@
             "vol_regime_pct": 39.043825,
             "daily_move_pct": -14.418603,
             "atr_ratio": 1.994218,
-            "breadth_count": 4,
+            "breadth_count": 5,
             "price": 27448.347656,
+            "season": "summer",
+            "seasonality_weight": 0.85,
             "fwd": {
               "5d": 11.684781,
               "10d": 11.684781,
@@ -5412,8 +6104,10 @@
             "vol_regime_pct": 6.374502,
             "daily_move_pct": 12.73408,
             "atr_ratio": 2.656178,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 44901.917969,
+            "season": "spring",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -4.817279,
               "10d": 8.803981,
@@ -5428,8 +6122,10 @@
             "vol_regime_pct": 65.737052,
             "daily_move_pct": -19.970058,
             "atr_ratio": 2.458692,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 199373.46875,
+            "season": "winter",
+            "seasonality_weight": 1.3,
             "fwd": {
               "5d": -14.534234,
               "10d": -18.256645,
@@ -5444,8 +6140,10 @@
             "vol_regime_pct": 35.856574,
             "daily_move_pct": -15.352281,
             "atr_ratio": 1.737603,
-            "breadth_count": 4,
+            "breadth_count": 5,
             "price": 277802.625,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -16.431731,
               "10d": -15.089271,
@@ -5455,7 +6153,7 @@
             }
           }
         ],
-        "annual_rate": 0.630557,
+        "annual_rate": 0.709376,
         "gates": {
           "vcvi_min": 72,
           "breadth_min": 3,
@@ -5465,47 +6163,285 @@
         },
         "forward_returns": {
           "5d": {
-            "median": -14.872749,
-            "mean": -13.05828,
-            "win_rate": 25.0,
+            "median": -14.534234,
+            "mean": -12.736107,
+            "win_rate": 22.222222,
             "best": 11.684781,
             "worst": -40.784374,
-            "count": 8
+            "count": 9
           },
           "10d": {
-            "median": -16.558718,
-            "mean": -15.810634,
-            "win_rate": 25.0,
+            "median": -18.028166,
+            "mean": -16.80522,
+            "win_rate": 22.222222,
             "best": 11.684781,
             "worst": -56.64795,
-            "count": 8
+            "count": 9
           },
           "21d": {
-            "median": -22.736501,
-            "mean": -20.670578,
-            "win_rate": 25.0,
+            "median": -14.603172,
+            "mean": -19.996422,
+            "win_rate": 22.222222,
             "best": 14.084505,
             "worst": -55.109238,
-            "count": 8
+            "count": 9
           },
           "42d": {
-            "median": -34.633312,
-            "mean": -31.222828,
-            "win_rate": 12.5,
+            "median": -38.701837,
+            "mean": -32.339163,
+            "win_rate": 11.111111,
             "best": 14.647885,
             "worst": -66.806331,
-            "count": 8
+            "count": 9
           },
           "63d": {
-            "median": -54.297404,
-            "mean": -29.159004,
-            "win_rate": 12.5,
+            "median": -51.311953,
+            "mean": -29.658092,
+            "win_rate": 11.111111,
             "best": 115.774646,
             "worst": -66.573141,
-            "count": 8
+            "count": 9
           }
         }
       },
+      "elevated_watch": {
+        "count": 43,
+        "events": [
+          {
+            "date": "2026-03-04",
+            "vcvi": 62.300797,
+            "daily_move_pct": -18.416396,
+            "atr_ratio": 1.374244,
+            "breadth_count": 6,
+            "price": 1.6125,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 18.511632,
+              "10d": null,
+              "21d": null,
+              "42d": null,
+              "63d": null
+            }
+          },
+          {
+            "date": "2025-07-21",
+            "vcvi": 63.737052,
+            "daily_move_pct": -18.776911,
+            "atr_ratio": 1.66371,
+            "breadth_count": 5,
+            "price": 9.43,
+            "season": "summer",
+            "seasonality_weight": 0.85,
+            "fwd": {
+              "5d": -23.488866,
+              "10d": -34.464479,
+              "21d": -48.303289,
+              "42d": -44.188761,
+              "63d": -52.120894
+            }
+          },
+          {
+            "date": "2025-06-27",
+            "vcvi": 60.986056,
+            "daily_move_pct": 21.171165,
+            "atr_ratio": 1.465887,
+            "breadth_count": 5,
+            "price": 13.45,
+            "season": "summer",
+            "seasonality_weight": 0.85,
+            "fwd": {
+              "5d": -24.312264,
+              "10d": -23.420072,
+              "21d": -46.356875,
+              "42d": -63.58736,
+              "63d": -61.680298
+            }
+          },
+          {
+            "date": "2025-06-02",
+            "vcvi": 64.138446,
+            "daily_move_pct": 19.868094,
+            "atr_ratio": 1.463744,
+            "breadth_count": 4,
+            "price": 14.54,
+            "season": "summer",
+            "seasonality_weight": 0.85,
+            "fwd": {
+              "5d": -3.920218,
+              "10d": -0.068777,
+              "21d": -30.949106,
+              "42d": -53.129298,
+              "63d": -63.411278
+            }
+          },
+          {
+            "date": "2025-04-04",
+            "vcvi": 88.386454,
+            "daily_move_pct": -16.604183,
+            "atr_ratio": 1.38076,
+            "breadth_count": 3,
+            "price": 26.3585,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -33.531875,
+              "10d": -53.411613,
+              "21d": -30.155357,
+              "42d": -47.000017,
+              "63d": -61.530434
+            }
+          },
+          {
+            "date": "2024-10-28",
+            "vcvi": 117.898406,
+            "daily_move_pct": -17.074331,
+            "atr_ratio": 1.351406,
+            "breadth_count": 4,
+            "price": 13.0695,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -4.877767,
+              "10d": 1.488197,
+              "21d": 23.107238,
+              "42d": 19.143807,
+              "63d": 35.047245
+            }
+          },
+          {
+            "date": "2024-05-01",
+            "vcvi": 143.227092,
+            "daily_move_pct": -13.35312,
+            "atr_ratio": 1.321861,
+            "breadth_count": 6,
+            "price": 0.073,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 37.671238,
+              "10d": 62.328772,
+              "21d": 44.520547,
+              "42d": 1.712327,
+              "63d": 24977.396918
+            }
+          },
+          {
+            "date": "2023-11-06",
+            "vcvi": 99.39243,
+            "daily_move_pct": -18.536126,
+            "atr_ratio": 1.400861,
+            "breadth_count": 6,
+            "price": 0.857,
+            "season": "winter",
+            "seasonality_weight": 1.3,
+            "fwd": {
+              "5d": -18.319721,
+              "10d": -36.52275,
+              "21d": -56.592764,
+              "42d": -62.427071,
+              "63d": -80.221704
+            }
+          },
+          {
+            "date": "2023-04-17",
+            "vcvi": 94.716135,
+            "daily_move_pct": 20.166487,
+            "atr_ratio": 1.279528,
+            "breadth_count": 6,
+            "price": 1.588,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -1.574313,
+              "10d": -25.37784,
+              "21d": -7.241814,
+              "42d": -11.114614,
+              "63d": -29.376576
+            }
+          },
+          {
+            "date": "2023-03-06",
+            "vcvi": 73.785857,
+            "daily_move_pct": -26.031434,
+            "atr_ratio": 1.219984,
+            "breadth_count": 6,
+            "price": 3.765,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -9.973445,
+              "10d": -40.358565,
+              "21d": -60.079682,
+              "42d": -70.106243,
+              "63d": -73.944224
+            }
+          }
+        ],
+        "annual_rate": 3.389243,
+        "gates": {
+          "vcvi_min": 60,
+          "breadth_min": 2,
+          "breadth_pct": 75,
+          "atr_mult": 1.2
+        },
+        "forward_returns": {
+          "5d": {
+            "median": -1.574313,
+            "mean": -3.59843,
+            "win_rate": 44.186047,
+            "best": 37.671238,
+            "worst": -40.784374,
+            "count": 43
+          },
+          "10d": {
+            "median": -3.061533,
+            "mean": -5.15601,
+            "win_rate": 42.857143,
+            "best": 62.328772,
+            "worst": -56.64795,
+            "count": 42
+          },
+          "21d": {
+            "median": -12.217032,
+            "mean": -13.408148,
+            "win_rate": 28.571429,
+            "best": 44.520547,
+            "worst": -60.079682,
+            "count": 42
+          },
+          "42d": {
+            "median": -21.694714,
+            "mean": -20.547821,
+            "win_rate": 23.809524,
+            "best": 98.360653,
+            "worst": -70.106243,
+            "count": 42
+          },
+          "63d": {
+            "median": -33.5163,
+            "mean": -17.817369,
+            "win_rate": 23.809524,
+            "best": 200.0,
+            "worst": -80.221704,
+            "count": 42
+          }
+        }
+      },
+      "decay": {
+        "annual_rate": 0.55,
+        "adj_price_pct": 2.380952,
+        "adj_vcvi_21d": 58.522814,
+        "correction_active": true
+      },
+      "seasonality": {
+        "month": 3,
+        "season": "spring",
+        "weight": 1.0,
+        "adj_vcvi_21d": 32.97261
+      },
+      "sharp_spike": false,
+      "fast_signal": null,
       "vps": 39.140613,
       "mwca": false,
       "rolling_correlation": 0.022487,
@@ -7544,23 +8480,39 @@
       "alerts": [
         {
           "type": "vcvi_warning",
-          "message": "VCVI (126d) = 68.5 \u2014 vol-adjusted capitulation signal",
-          "timestamp": "2026-03-16T22:52:31.943226+00:00"
+          "side": "long",
+          "message": "VCVI (5d) = 69.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:09.317337+00:00"
+        },
+        {
+          "type": "vcvi_warning",
+          "side": "long",
+          "message": "VCVI (126d) = 68.5 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:09.317337+00:00"
         },
         {
           "type": "vcvi_critical",
-          "message": "VCVI (252d) = 80.1 \u2014 vol-adjusted extreme capitulation",
-          "timestamp": "2026-03-16T22:52:31.943226+00:00"
+          "side": "long",
+          "message": "VCVI (252d) = 80.1 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:09.317337+00:00"
         },
         {
           "type": "cvi_warning",
-          "message": "CVI (126d) = 74.2 \u2014 elevated capitulation signal",
-          "timestamp": "2026-03-16T22:52:31.943226+00:00"
+          "side": "long",
+          "message": "CVI (5d) = 75.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:09.317337+00:00"
+        },
+        {
+          "type": "cvi_warning",
+          "side": "long",
+          "message": "CVI (126d) = 74.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:09.317337+00:00"
         },
         {
           "type": "cvi_critical",
-          "message": "CVI (252d) = 86.8 \u2014 extreme capitulation signal",
-          "timestamp": "2026-03-16T22:52:31.943226+00:00"
+          "side": "long",
+          "message": "CVI (252d) = 86.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-03-17T05:36:09.317337+00:00"
         }
       ]
     },
@@ -7575,6 +8527,7 @@
         "dollar_volume": 158545376.414124
       },
       "rvol": {
+        "5d": 0.975314,
         "10d": 0.904388,
         "21d": 1.068999,
         "63d": 0.748329,
@@ -7582,6 +8535,7 @@
         "252d": 1.122179
       },
       "z_score": {
+        "5d": -0.13971,
         "10d": -0.271716,
         "21d": 0.179844,
         "63d": -0.25233,
@@ -7594,6 +8548,7 @@
         "21d": -28.278891
       },
       "vol_percentile": {
+        "5d": 50.0,
         "10d": 44.444444,
         "21d": 65.0,
         "63d": 61.290323,
@@ -7601,6 +8556,7 @@
         "252d": 75.697211
       },
       "price_percentile": {
+        "5d": 100.0,
         "10d": 66.666667,
         "21d": 30.0,
         "63d": 25.806452,
@@ -7608,6 +8564,7 @@
         "252d": 9.561753
       },
       "cvi": {
+        "5d": 0.0,
         "10d": 14.814815,
         "21d": 45.5,
         "63d": 45.473465,
@@ -7615,6 +8572,7 @@
         "252d": 68.459231
       },
       "vcvi": {
+        "5d": 0.0,
         "10d": 16.555998,
         "21d": 50.84761,
         "63d": 50.817956,
@@ -7696,6 +8654,12 @@
           }
         },
         "signal_edge_window": "10d",
+        "lead_time": {
+          "median_days": 63,
+          "p25_days": 42,
+          "p75_days": 63,
+          "count": 135
+        },
         "occurrences": [
           {
             "date": "2024-10-03",
@@ -7710,7 +8674,10 @@
               "63d": -9.603336,
               "126d": -53.596505,
               "252d": -41.658758
-            }
+            },
+            "days_to_peak": 21,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-09-23",
@@ -7725,7 +8692,10 @@
               "63d": -11.203895,
               "126d": -60.664578,
               "252d": -34.672931
-            }
+            },
+            "days_to_peak": 21,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-09-12",
@@ -7740,7 +8710,10 @@
               "63d": -15.155464,
               "126d": -69.99277,
               "252d": -50.383224
-            }
+            },
+            "days_to_peak": 63,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-08-14",
@@ -7755,7 +8728,10 @@
               "63d": 9.856971,
               "126d": -58.877486,
               "252d": -44.434077
-            }
+            },
+            "days_to_peak": 10,
+            "season": "summer",
+            "seasonality_weight": 0.85
           },
           {
             "date": "2024-05-20",
@@ -7770,7 +8746,10 @@
               "63d": 50.192515,
               "126d": 54.02038,
               "252d": -45.662517
-            }
+            },
+            "days_to_peak": 63,
+            "season": "spring",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-05-09",
@@ -7785,7 +8764,10 @@
               "63d": 11.856561,
               "126d": 38.383671,
               "252d": -62.937541
-            }
+            },
+            "days_to_peak": 21,
+            "season": "spring",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-04-29",
@@ -7800,7 +8782,10 @@
               "63d": 2.7371,
               "126d": 9.705586,
               "252d": -64.388222
-            }
+            },
+            "days_to_peak": 42,
+            "season": "spring",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-04-01",
@@ -7815,12 +8800,15 @@
               "63d": -23.497819,
               "126d": -20.905251,
               "252d": -70.693979
-            }
+            },
+            "days_to_peak": 63,
+            "season": "spring",
+            "seasonality_weight": 1.0
           }
         ]
       },
       "conviction_events": {
-        "count": 20,
+        "count": 21,
         "events": [
           {
             "date": "2025-12-08",
@@ -7830,6 +8818,8 @@
             "atr_ratio": 1.779854,
             "breadth_count": 5,
             "price": 24.26,
+            "season": "winter",
+            "seasonality_weight": 1.3,
             "fwd": {
               "5d": 35.490514,
               "10d": 58.862327,
@@ -7844,8 +8834,10 @@
             "vol_regime_pct": 66.135458,
             "daily_move_pct": -18.563359,
             "atr_ratio": 1.541826,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 40.360001,
+            "season": "winter",
+            "seasonality_weight": 1.3,
             "fwd": {
               "5d": 10.158569,
               "10d": -23.19128,
@@ -7860,8 +8852,10 @@
             "vol_regime_pct": 28.685259,
             "daily_move_pct": -14.323911,
             "atr_ratio": 2.127717,
-            "breadth_count": 4,
+            "breadth_count": 5,
             "price": 22.43,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": 18.61346,
               "10d": 32.010701,
@@ -7876,8 +8870,10 @@
             "vol_regime_pct": 7.968127,
             "daily_move_pct": -12.448489,
             "atr_ratio": 1.533473,
-            "breadth_count": 4,
+            "breadth_count": 5,
             "price": 25.495001,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -11.335561,
               "10d": 3.294757,
@@ -7892,8 +8888,10 @@
             "vol_regime_pct": 4.780876,
             "daily_move_pct": -12.606978,
             "atr_ratio": 1.625113,
-            "breadth_count": 4,
+            "breadth_count": 5,
             "price": 26.549999,
+            "season": "summer",
+            "seasonality_weight": 0.85,
             "fwd": {
               "5d": -9.529186,
               "10d": 0.979285,
@@ -7908,8 +8906,10 @@
             "vol_regime_pct": 56.972112,
             "daily_move_pct": -12.563952,
             "atr_ratio": 1.782128,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 153.800003,
+            "season": "summer",
+            "seasonality_weight": 0.85,
             "fwd": {
               "5d": -18.855656,
               "10d": -30.559167,
@@ -7924,8 +8924,10 @@
             "vol_regime_pct": 3.585657,
             "daily_move_pct": -9.98445,
             "atr_ratio": 2.088436,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 289.399994,
+            "season": "spring",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": 14.720113,
               "10d": 3.420869,
@@ -7940,8 +8942,10 @@
             "vol_regime_pct": 44.621514,
             "daily_move_pct": -7.118,
             "atr_ratio": 1.506582,
-            "breadth_count": 4,
+            "breadth_count": 5,
             "price": 293.600006,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -16.587197,
               "10d": -6.880113,
@@ -7956,8 +8960,10 @@
             "vol_regime_pct": 19.521912,
             "daily_move_pct": -4.716767,
             "atr_ratio": 1.587692,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 422.200012,
+            "season": "spring",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -3.884421,
               "10d": -10.208433,
@@ -7972,8 +8978,10 @@
             "vol_regime_pct": 14.741036,
             "daily_move_pct": -7.448202,
             "atr_ratio": 1.824422,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 352.899994,
+            "season": "winter",
+            "seasonality_weight": 1.3,
             "fwd": {
               "5d": -2.040233,
               "10d": 4.335511,
@@ -7983,7 +8991,7 @@
             }
           }
         ],
-        "annual_rate": 1.438558,
+        "annual_rate": 1.510486,
         "gates": {
           "vcvi_min": 72,
           "breadth_min": 3,
@@ -7993,47 +9001,285 @@
         },
         "forward_returns": {
           "5d": {
-            "median": -0.991247,
-            "mean": 0.545698,
-            "win_rate": 40.0,
+            "median": -1.018256,
+            "mean": -0.238847,
+            "win_rate": 38.095238,
             "best": 35.490514,
             "worst": -18.855656,
-            "count": 20
+            "count": 21
           },
           "10d": {
-            "median": 1.647421,
-            "mean": 1.272675,
-            "win_rate": 55.0,
+            "median": 0.979285,
+            "mean": 0.156968,
+            "win_rate": 52.380952,
             "best": 58.862327,
             "worst": -30.559167,
-            "count": 20
+            "count": 21
           },
           "21d": {
-            "median": 6.082426,
-            "mean": 10.206542,
-            "win_rate": 60.0,
+            "median": 5.931886,
+            "mean": 8.125998,
+            "win_rate": 57.142857,
             "best": 80.428001,
             "worst": -53.05592,
-            "count": 20
+            "count": 21
           },
           "42d": {
-            "median": -1.740461,
-            "mean": 3.706076,
-            "win_rate": 40.0,
+            "median": -1.823783,
+            "mean": 1.781765,
+            "win_rate": 38.095238,
             "best": 104.123938,
             "worst": -59.102731,
-            "count": 20
+            "count": 21
           },
           "63d": {
-            "median": 10.223147,
-            "mean": 11.96138,
-            "win_rate": 55.0,
+            "median": 2.66489,
+            "mean": 9.724916,
+            "win_rate": 52.380952,
             "best": 156.353095,
             "worst": -49.349805,
-            "count": 20
+            "count": 21
           }
         }
       },
+      "elevated_watch": {
+        "count": 68,
+        "events": [
+          {
+            "date": "2026-03-06",
+            "vcvi": 91.810757,
+            "daily_move_pct": -11.681581,
+            "atr_ratio": 1.204878,
+            "breadth_count": 6,
+            "price": 18.75,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 1.65333,
+              "10d": null,
+              "21d": null,
+              "42d": null,
+              "63d": null
+            }
+          },
+          {
+            "date": "2025-12-08",
+            "vcvi": 87.023406,
+            "daily_move_pct": 16.690713,
+            "atr_ratio": 1.779854,
+            "breadth_count": 6,
+            "price": 24.26,
+            "season": "winter",
+            "seasonality_weight": 1.3,
+            "fwd": {
+              "5d": 35.490514,
+              "10d": 58.862327,
+              "21d": 78.647979,
+              "42d": -13.107998,
+              "63d": -24.402308
+            }
+          },
+          {
+            "date": "2025-10-20",
+            "vcvi": 63.290837,
+            "daily_move_pct": -12.766511,
+            "atr_ratio": 1.699669,
+            "breadth_count": 2,
+            "price": 33.549999,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 1.460512,
+              "10d": -9.895677,
+              "21d": -15.230995,
+              "42d": 6.557379,
+              "63d": -33.233979
+            }
+          },
+          {
+            "date": "2025-10-01",
+            "vcvi": 142.031873,
+            "daily_move_pct": -8.651912,
+            "atr_ratio": 1.271692,
+            "breadth_count": 6,
+            "price": 31.780001,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 5.663943,
+              "10d": 24.701071,
+              "21d": 8.779103,
+              "42d": -23.568281,
+              "63d": 10.981749
+            }
+          },
+          {
+            "date": "2025-03-03",
+            "vcvi": 60.642928,
+            "daily_move_pct": -14.945422,
+            "atr_ratio": 1.306757,
+            "breadth_count": 5,
+            "price": 20.26,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -16.238899,
+              "10d": 2.418558,
+              "21d": 4.837115,
+              "42d": 18.805525,
+              "63d": 12.438304
+            }
+          },
+          {
+            "date": "2024-12-30",
+            "vcvi": 83.864542,
+            "daily_move_pct": -18.563359,
+            "atr_ratio": 1.541826,
+            "breadth_count": 6,
+            "price": 40.360001,
+            "season": "winter",
+            "seasonality_weight": 1.3,
+            "fwd": {
+              "5d": 10.158569,
+              "10d": -23.19128,
+              "21d": -0.346877,
+              "42d": -55.153617,
+              "63d": -49.306247
+            }
+          },
+          {
+            "date": "2024-11-11",
+            "vcvi": 70.682271,
+            "daily_move_pct": -15.263857,
+            "atr_ratio": 1.736526,
+            "breadth_count": 4,
+            "price": 70.169998,
+            "season": "winter",
+            "seasonality_weight": 1.3,
+            "fwd": {
+              "5d": -3.092487,
+              "10d": -18.512182,
+              "21d": -16.388771,
+              "42d": -51.717255,
+              "63d": -60.41043
+            }
+          },
+          {
+            "date": "2024-09-27",
+            "vcvi": 105.378486,
+            "daily_move_pct": -11.548387,
+            "atr_ratio": 1.24826,
+            "breadth_count": 6,
+            "price": 54.84,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 5.014588,
+              "10d": 22.975934,
+              "21d": 35.211527,
+              "42d": 0.583515,
+              "63d": -9.628007
+            }
+          },
+          {
+            "date": "2024-09-20",
+            "vcvi": 135.657371,
+            "daily_move_pct": -10.227435,
+            "atr_ratio": 1.22931,
+            "breadth_count": 5,
+            "price": 63.549999,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -13.705742,
+              "10d": -9.378441,
+              "21d": 18.835559,
+              "42d": 5.035406,
+              "63d": -15.924467
+            }
+          },
+          {
+            "date": "2024-04-29",
+            "vcvi": 72.914343,
+            "daily_move_pct": -8.228113,
+            "atr_ratio": 1.276173,
+            "breadth_count": 2,
+            "price": 67.589996,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -7.619467,
+              "10d": -16.037871,
+              "21d": -25.625088,
+              "42d": -27.22296,
+              "63d": 2.7371
+            }
+          }
+        ],
+        "annual_rate": 4.891099,
+        "gates": {
+          "vcvi_min": 60,
+          "breadth_min": 2,
+          "breadth_pct": 75,
+          "atr_mult": 1.2
+        },
+        "forward_returns": {
+          "5d": {
+            "median": 0.577348,
+            "mean": 0.693125,
+            "win_rate": 51.470588,
+            "best": 35.490514,
+            "worst": -33.511059,
+            "count": 68
+          },
+          "10d": {
+            "median": -0.932718,
+            "mean": 3.247346,
+            "win_rate": 49.253731,
+            "best": 69.105225,
+            "worst": -30.559167,
+            "count": 67
+          },
+          "21d": {
+            "median": 1.204816,
+            "mean": 3.670868,
+            "win_rate": 50.746269,
+            "best": 80.428001,
+            "worst": -53.05592,
+            "count": 67
+          },
+          "42d": {
+            "median": 0.583515,
+            "mean": -0.360973,
+            "win_rate": 50.746269,
+            "best": 104.123938,
+            "worst": -59.102731,
+            "count": 67
+          },
+          "63d": {
+            "median": -1.969,
+            "mean": 1.059183,
+            "win_rate": 46.268657,
+            "best": 156.353095,
+            "worst": -75.500619,
+            "count": 67
+          }
+        }
+      },
+      "decay": {
+        "annual_rate": 0.35,
+        "adj_price_pct": 5.952381,
+        "adj_vcvi_21d": 68.315666,
+        "correction_active": true
+      },
+      "seasonality": {
+        "month": 3,
+        "season": "spring",
+        "weight": 1.0,
+        "adj_vcvi_21d": 50.84761
+      },
+      "sharp_spike": false,
+      "fast_signal": null,
       "vps": 46.035459,
       "mwca": false,
       "rolling_correlation": -0.407889,
@@ -10072,23 +11318,27 @@
       "alerts": [
         {
           "type": "vcvi_warning",
-          "message": "VCVI (126d) = 68.6 \u2014 vol-adjusted capitulation signal",
-          "timestamp": "2026-03-16T22:52:32.243937+00:00"
+          "side": "short",
+          "message": "VCVI (126d) = 68.6 \u2014 potential gas top \u2014 short/inverse setup",
+          "timestamp": "2026-03-17T05:36:09.631760+00:00"
         },
         {
           "type": "vcvi_critical",
-          "message": "VCVI (252d) = 76.5 \u2014 vol-adjusted extreme capitulation",
-          "timestamp": "2026-03-16T22:52:32.243937+00:00"
+          "side": "short",
+          "message": "VCVI (252d) = 76.5 \u2014 potential gas top \u2014 short/inverse setup",
+          "timestamp": "2026-03-17T05:36:09.631760+00:00"
         },
         {
           "type": "cvi_warning",
-          "message": "CVI (126d) = 61.4 \u2014 elevated capitulation signal",
-          "timestamp": "2026-03-16T22:52:32.243937+00:00"
+          "side": "short",
+          "message": "CVI (126d) = 61.4 \u2014 potential gas top \u2014 short/inverse setup",
+          "timestamp": "2026-03-17T05:36:09.631760+00:00"
         },
         {
           "type": "cvi_warning",
-          "message": "CVI (252d) = 68.5 \u2014 elevated capitulation signal",
-          "timestamp": "2026-03-16T22:52:32.243937+00:00"
+          "side": "short",
+          "message": "CVI (252d) = 68.5 \u2014 potential gas top \u2014 short/inverse setup",
+          "timestamp": "2026-03-17T05:36:09.631760+00:00"
         }
       ]
     },
@@ -10103,6 +11353,7 @@
         "dollar_volume": 17134457.306948
       },
       "rvol": {
+        "5d": 0.810462,
         "10d": 0.71146,
         "21d": 0.709837,
         "63d": 0.584778,
@@ -10110,6 +11361,7 @@
         "252d": 0.9496
       },
       "z_score": {
+        "5d": -0.829577,
         "10d": -0.836728,
         "21d": -0.923001,
         "63d": -0.513593,
@@ -10122,6 +11374,7 @@
         "21d": -45.032611
       },
       "vol_percentile": {
+        "5d": 0.0,
         "10d": 0.0,
         "21d": 0.0,
         "63d": 32.258065,
@@ -10129,6 +11382,7 @@
         "252d": 64.940239
       },
       "price_percentile": {
+        "5d": 100.0,
         "10d": 66.666667,
         "21d": 30.0,
         "63d": 24.193548,
@@ -10136,6 +11390,7 @@
         "252d": 5.976096
       },
       "cvi": {
+        "5d": 0.0,
         "10d": 0.0,
         "21d": 0.0,
         "63d": 24.453695,
@@ -10143,6 +11398,7 @@
         "252d": 61.059348
       },
       "vcvi": {
+        "5d": 0.0,
         "10d": 0.0,
         "21d": 0.0,
         "63d": 26.158634,
@@ -10224,6 +11480,12 @@
           }
         },
         "signal_edge_window": "21d",
+        "lead_time": {
+          "median_days": 52,
+          "p25_days": 21,
+          "p75_days": 63,
+          "count": 178
+        },
         "occurrences": [
           {
             "date": "2024-09-27",
@@ -10238,7 +11500,10 @@
               "63d": -39.62485,
               "126d": -70.691676,
               "252d": -47.420864
-            }
+            },
+            "days_to_peak": 63,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-09-16",
@@ -10253,7 +11518,10 @@
               "63d": -15.001751,
               "126d": -75.521623,
               "252d": -57.897193
-            }
+            },
+            "days_to_peak": 10,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-09-05",
@@ -10268,7 +11536,10 @@
               "63d": -6.093904,
               "126d": -79.575979,
               "252d": -59.995557
-            }
+            },
+            "days_to_peak": 21,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-08-19",
@@ -10283,7 +11554,10 @@
               "63d": -2.445271,
               "126d": -76.245924,
               "252d": -50.209595
-            }
+            },
+            "days_to_peak": 5,
+            "season": "summer",
+            "seasonality_weight": 0.85
           },
           {
             "date": "2024-08-08",
@@ -10298,7 +11572,10 @@
               "63d": 9.967313,
               "126d": -61.87364,
               "252d": -58.997823
-            }
+            },
+            "days_to_peak": 42,
+            "season": "summer",
+            "seasonality_weight": 0.85
           },
           {
             "date": "2024-05-15",
@@ -10313,7 +11590,10 @@
               "63d": 19.081085,
               "126d": 24.054058,
               "252d": -63.675677
-            }
+            },
+            "days_to_peak": 21,
+            "season": "spring",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-04-22",
@@ -10328,7 +11608,10 @@
               "63d": -16.428221,
               "126d": -8.534782,
               "252d": -67.67637
-            }
+            },
+            "days_to_peak": 21,
+            "season": "spring",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-04-01",
@@ -10343,12 +11626,15 @@
               "63d": -35.05471,
               "126d": -34.15243,
               "252d": -79.151469
-            }
+            },
+            "days_to_peak": 63,
+            "season": "spring",
+            "seasonality_weight": 1.0
           }
         ]
       },
       "conviction_events": {
-        "count": 19,
+        "count": 22,
         "events": [
           {
             "date": "2025-12-08",
@@ -10358,6 +11644,8 @@
             "atr_ratio": 1.96621,
             "breadth_count": 5,
             "price": 5.76,
+            "season": "winter",
+            "seasonality_weight": 1.3,
             "fwd": {
               "5d": 35.763886,
               "10d": 47.569439,
@@ -10372,8 +11660,10 @@
             "vol_regime_pct": 38.247012,
             "daily_move_pct": -15.548778,
             "atr_ratio": 1.900152,
-            "breadth_count": 3,
+            "breadth_count": 4,
             "price": 8.31,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": 0.842355,
               "10d": -13.116734,
@@ -10388,8 +11678,10 @@
             "vol_regime_pct": 21.513944,
             "daily_move_pct": -15.467012,
             "atr_ratio": 2.055472,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 9.865,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": 25.696907,
               "10d": 38.596046,
@@ -10404,8 +11696,10 @@
             "vol_regime_pct": 1.992032,
             "daily_move_pct": -12.421013,
             "atr_ratio": 1.542133,
-            "breadth_count": 4,
+            "breadth_count": 5,
             "price": 11.0875,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -6.110483,
               "10d": 10.980841,
@@ -10420,8 +11714,10 @@
             "vol_regime_pct": 4.780876,
             "daily_move_pct": -15.569939,
             "atr_ratio": 1.906911,
-            "breadth_count": 4,
+            "breadth_count": 5,
             "price": 11.74,
+            "season": "summer",
+            "seasonality_weight": 0.85,
             "fwd": {
               "5d": 4.152472,
               "10d": 14.182283,
@@ -10436,8 +11732,10 @@
             "vol_regime_pct": 27.888446,
             "daily_move_pct": -17.160584,
             "atr_ratio": 1.615634,
-            "breadth_count": 4,
+            "breadth_count": 5,
             "price": 15.025,
+            "season": "summer",
+            "seasonality_weight": 0.85,
             "fwd": {
               "5d": -6.173044,
               "10d": -7.653908,
@@ -10452,8 +11750,10 @@
             "vol_regime_pct": 23.904382,
             "daily_move_pct": -17.069365,
             "atr_ratio": 1.511684,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 2.66,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": 31.484956,
               "10d": 60.52631,
@@ -10468,8 +11768,10 @@
             "vol_regime_pct": 54.98008,
             "daily_move_pct": -14.150943,
             "atr_ratio": 1.897716,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 91.0,
+            "season": "summer",
+            "seasonality_weight": 0.85,
             "fwd": {
               "5d": -18.681319,
               "10d": -30.769231,
@@ -10484,8 +11786,10 @@
             "vol_regime_pct": 3.585657,
             "daily_move_pct": -9.94898,
             "atr_ratio": 2.03173,
-            "breadth_count": 3,
+            "breadth_count": 4,
             "price": 176.5,
+            "season": "spring",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": 11.898017,
               "10d": 3.116147,
@@ -10500,8 +11804,10 @@
             "vol_regime_pct": 53.386454,
             "daily_move_pct": -19.891989,
             "atr_ratio": 1.841413,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 222.5,
+            "season": "winter",
+            "seasonality_weight": 1.3,
             "fwd": {
               "5d": -6.516854,
               "10d": -13.483146,
@@ -10511,7 +11817,7 @@
             }
           }
         ],
-        "annual_rate": 1.077768,
+        "annual_rate": 1.247942,
         "gates": {
           "vcvi_min": 72,
           "breadth_min": 3,
@@ -10521,47 +11827,285 @@
         },
         "forward_returns": {
           "5d": {
-            "median": 0.85796,
-            "mean": 5.296846,
-            "win_rate": 63.157895,
+            "median": 0.850157,
+            "mean": 3.381912,
+            "win_rate": 59.090909,
             "best": 35.763886,
             "worst": -18.681319,
-            "count": 19
+            "count": 22
           },
           "10d": {
-            "median": 4.191617,
-            "mean": 6.346013,
-            "win_rate": 57.894737,
+            "median": 2.445647,
+            "mean": 3.754761,
+            "win_rate": 54.545455,
             "best": 60.52631,
             "worst": -30.769231,
-            "count": 19
+            "count": 22
           },
           "21d": {
-            "median": 5.714286,
-            "mean": 11.674742,
-            "win_rate": 63.157895,
+            "median": 5.460512,
+            "mean": 9.032495,
+            "win_rate": 63.636364,
             "best": 90.572729,
             "worst": -53.296703,
-            "count": 19
+            "count": 22
           },
           "42d": {
-            "median": 2.28013,
-            "mean": 7.331862,
-            "win_rate": 52.631579,
+            "median": 0.252491,
+            "mean": 7.48771,
+            "win_rate": 50.0,
             "best": 102.432841,
             "worst": -60.714286,
-            "count": 19
+            "count": 22
           },
           "63d": {
-            "median": -1.045556,
-            "mean": 3.477091,
-            "win_rate": 47.368421,
+            "median": 1.18732,
+            "mean": 6.03009,
+            "win_rate": 50.0,
             "best": 101.748612,
             "worst": -50.71048,
-            "count": 19
+            "count": 22
           }
         }
       },
+      "elevated_watch": {
+        "count": 80,
+        "events": [
+          {
+            "date": "2025-12-08",
+            "vcvi": 82.812749,
+            "daily_move_pct": 17.311617,
+            "atr_ratio": 1.96621,
+            "breadth_count": 6,
+            "price": 5.76,
+            "season": "winter",
+            "seasonality_weight": 1.3,
+            "fwd": {
+              "5d": 35.763886,
+              "10d": 47.569439,
+              "21d": 72.743045,
+              "42d": -26.736118,
+              "63d": -36.979167
+            }
+          },
+          {
+            "date": "2025-10-30",
+            "vcvi": 69.790837,
+            "daily_move_pct": -9.892474,
+            "atr_ratio": 1.341717,
+            "breadth_count": 6,
+            "price": 8.38,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -19.331741,
+              "10d": -26.014323,
+              "21d": -28.878282,
+              "42d": -10.143197,
+              "63d": -67.422435
+            }
+          },
+          {
+            "date": "2025-10-20",
+            "vcvi": 85.491036,
+            "daily_move_pct": -15.548778,
+            "atr_ratio": 1.900152,
+            "breadth_count": 4,
+            "price": 8.31,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 0.842355,
+              "10d": -13.116734,
+              "21d": -19.614928,
+              "42d": -9.747297,
+              "63d": -32.009629
+            }
+          },
+          {
+            "date": "2025-10-01",
+            "vcvi": 144.422311,
+            "daily_move_pct": -8.69566,
+            "atr_ratio": 1.286509,
+            "breadth_count": 5,
+            "price": 8.19,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 5.738709,
+              "10d": 27.228335,
+              "21d": -4.517698,
+              "42d": -30.280826,
+              "63d": -5.250298
+            }
+          },
+          {
+            "date": "2025-06-02",
+            "vcvi": 64.900398,
+            "daily_move_pct": -14.304815,
+            "atr_ratio": 1.945021,
+            "breadth_count": 6,
+            "price": 6.41,
+            "season": "summer",
+            "seasonality_weight": 0.85,
+            "fwd": {
+              "5d": 2.496105,
+              "10d": -3.900156,
+              "21d": 11.076444,
+              "42d": 36.193444,
+              "63d": 48.517951
+            }
+          },
+          {
+            "date": "2024-11-11",
+            "vcvi": 64.173307,
+            "daily_move_pct": -16.262436,
+            "atr_ratio": 1.58667,
+            "breadth_count": 6,
+            "price": 21.665001,
+            "season": "winter",
+            "seasonality_weight": 1.3,
+            "fwd": {
+              "5d": -3.323338,
+              "10d": -18.751442,
+              "21d": -8.746828,
+              "42d": -58.042927,
+              "63d": -64.412648
+            }
+          },
+          {
+            "date": "2024-09-27",
+            "vcvi": 98.207171,
+            "daily_move_pct": -11.674869,
+            "atr_ratio": 1.218185,
+            "breadth_count": 6,
+            "price": 17.059999,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 4.601406,
+              "10d": 22.787227,
+              "21d": 35.111371,
+              "42d": 16.559208,
+              "63d": -39.62485
+            }
+          },
+          {
+            "date": "2024-04-29",
+            "vcvi": 86.593625,
+            "daily_move_pct": -12.043892,
+            "atr_ratio": 1.448874,
+            "breadth_count": 5,
+            "price": 25.25,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -15.346535,
+              "10d": -23.564359,
+              "21d": -32.138613,
+              "42d": -36.950495,
+              "63d": 1.72277
+            }
+          },
+          {
+            "date": "2024-04-01",
+            "vcvi": 74.419821,
+            "daily_move_pct": -10.957265,
+            "atr_ratio": 1.488718,
+            "breadth_count": 3,
+            "price": 26.045,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 0.422348,
+              "10d": 10.923399,
+              "21d": 3.474758,
+              "42d": -29.449031,
+              "63d": -35.05471
+            }
+          },
+          {
+            "date": "2023-10-31",
+            "vcvi": 115.63745,
+            "daily_move_pct": -15.467012,
+            "atr_ratio": 2.055472,
+            "breadth_count": 6,
+            "price": 9.865,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 25.696907,
+              "10d": 38.596046,
+              "21d": 90.572729,
+              "42d": 102.432841,
+              "63d": 101.748612
+            }
+          }
+        ],
+        "annual_rate": 4.537972,
+        "gates": {
+          "vcvi_min": 60,
+          "breadth_min": 2,
+          "breadth_pct": 75,
+          "atr_mult": 1.2
+        },
+        "forward_returns": {
+          "5d": {
+            "median": 0.632351,
+            "mean": 0.730565,
+            "win_rate": 53.75,
+            "best": 35.763886,
+            "worst": -27.061649,
+            "count": 80
+          },
+          "10d": {
+            "median": 2.107086,
+            "mean": 2.314471,
+            "win_rate": 53.75,
+            "best": 74.736846,
+            "worst": -30.769231,
+            "count": 80
+          },
+          "21d": {
+            "median": -0.569733,
+            "mean": 4.2694,
+            "win_rate": 48.75,
+            "best": 128.421061,
+            "worst": -53.296703,
+            "count": 80
+          },
+          "42d": {
+            "median": -4.472548,
+            "mean": -1.71765,
+            "win_rate": 43.75,
+            "best": 102.432841,
+            "worst": -67.837627,
+            "count": 80
+          },
+          "63d": {
+            "median": -3.41706,
+            "mean": -0.147806,
+            "win_rate": 40.0,
+            "best": 111.111111,
+            "worst": -72.994351,
+            "count": 80
+          }
+        }
+      },
+      "decay": {
+        "annual_rate": 0.4,
+        "adj_price_pct": 4.761905,
+        "adj_vcvi_21d": 0.0,
+        "correction_active": true
+      },
+      "seasonality": {
+        "month": 3,
+        "season": "spring",
+        "weight": 1.0,
+        "adj_vcvi_21d": 0.0
+      },
+      "sharp_spike": false,
+      "fast_signal": null,
       "vps": 20.969804,
       "mwca": false,
       "rolling_correlation": -0.274753,
@@ -12600,13 +14144,15 @@
       "alerts": [
         {
           "type": "vcvi_warning",
-          "message": "VCVI (252d) = 65.3 \u2014 vol-adjusted capitulation signal",
-          "timestamp": "2026-03-16T22:52:32.617609+00:00"
+          "side": "short",
+          "message": "VCVI (252d) = 65.3 \u2014 potential gas top \u2014 short/inverse setup",
+          "timestamp": "2026-03-17T05:36:10.024591+00:00"
         },
         {
           "type": "cvi_warning",
-          "message": "CVI (252d) = 61.1 \u2014 elevated capitulation signal",
-          "timestamp": "2026-03-16T22:52:32.617609+00:00"
+          "side": "short",
+          "message": "CVI (252d) = 61.1 \u2014 potential gas top \u2014 short/inverse setup",
+          "timestamp": "2026-03-17T05:36:10.024591+00:00"
         }
       ]
     },
@@ -12621,6 +14167,7 @@
         "dollar_volume": 579153.015658
       },
       "rvol": {
+        "5d": 1.334829,
         "10d": 0.964226,
         "21d": 0.938816,
         "63d": 0.579811,
@@ -12628,6 +14175,7 @@
         "252d": 1.061458
       },
       "z_score": {
+        "5d": 1.583492,
         "10d": -0.059615,
         "21d": -0.083062,
         "63d": -0.376966,
@@ -12640,6 +14188,7 @@
         "21d": 36.153119
       },
       "vol_percentile": {
+        "5d": 100.0,
         "10d": 66.666667,
         "21d": 65.0,
         "63d": 46.774194,
@@ -12647,6 +14196,7 @@
         "252d": 74.900398
       },
       "price_percentile": {
+        "5d": 75.0,
         "10d": 66.666667,
         "21d": 30.0,
         "63d": 27.419355,
@@ -12654,6 +14204,7 @@
         "252d": 8.366534
       },
       "cvi": {
+        "5d": 25.0,
         "10d": 22.222222,
         "21d": 45.5,
         "63d": 33.949012,
@@ -12661,6 +14212,7 @@
         "252d": 68.633831
       },
       "vcvi": {
+        "5d": 20.468128,
         "10d": 18.193891,
         "21d": 37.251992,
         "63d": 27.794908,
@@ -12742,6 +14294,12 @@
           }
         },
         "signal_edge_window": "63d",
+        "lead_time": {
+          "median_days": 42,
+          "p25_days": 21,
+          "p75_days": 63,
+          "count": 83
+        },
         "occurrences": [
           {
             "date": "2024-10-25",
@@ -12756,7 +14314,10 @@
               "63d": -63.546851,
               "126d": -78.125209,
               "252d": -75.483062
-            }
+            },
+            "days_to_peak": 63,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-10-07",
@@ -12771,7 +14332,10 @@
               "63d": -43.693321,
               "126d": -81.569666,
               "252d": -70.914486
-            }
+            },
+            "days_to_peak": 21,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-09-27",
@@ -12786,7 +14350,10 @@
               "63d": -19.598319,
               "126d": -80.418436,
               "252d": -64.146729
-            }
+            },
+            "days_to_peak": 21,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-09-17",
@@ -12801,7 +14368,10 @@
               "63d": -18.852337,
               "126d": -86.304027,
               "252d": -73.45274
-            }
+            },
+            "days_to_peak": 10,
+            "season": "fall",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-05-14",
@@ -12816,7 +14386,10 @@
               "63d": -93.470944,
               "126d": -90.738661,
               "252d": -98.891761
-            }
+            },
+            "days_to_peak": 63,
+            "season": "spring",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-05-02",
@@ -12831,7 +14404,10 @@
               "63d": -94.209994,
               "126d": -94.082819,
               "252d": -99.040328
-            }
+            },
+            "days_to_peak": 63,
+            "season": "spring",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-04-22",
@@ -12846,7 +14422,10 @@
               "63d": -95.310249,
               "126d": -93.455736,
               "252d": -98.956093
-            }
+            },
+            "days_to_peak": 63,
+            "season": "spring",
+            "seasonality_weight": 1.0
           },
           {
             "date": "2024-01-08",
@@ -12861,12 +14440,15 @@
               "63d": 97.254588,
               "126d": 43.876578,
               "252d": -95.07982
-            }
+            },
+            "days_to_peak": 63,
+            "season": "winter",
+            "seasonality_weight": 1.3
           }
         ]
       },
       "conviction_events": {
-        "count": 10,
+        "count": 11,
         "events": [
           {
             "date": "2025-10-20",
@@ -12874,8 +14456,10 @@
             "vol_regime_pct": 27.888446,
             "daily_move_pct": -16.596932,
             "atr_ratio": 1.571827,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 23.92,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -2.801004,
               "10d": -14.715721,
@@ -12890,8 +14474,10 @@
             "vol_regime_pct": 10.756972,
             "daily_move_pct": -18.567425,
             "atr_ratio": 1.84861,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 20.35,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": 18.230953,
               "10d": 43.243239,
@@ -12906,8 +14492,10 @@
             "vol_regime_pct": 54.581673,
             "daily_move_pct": -19.84292,
             "atr_ratio": 1.584623,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 95.789551,
+            "season": "winter",
+            "seasonality_weight": 1.3,
             "fwd": {
               "5d": 0.726018,
               "10d": -30.920443,
@@ -12922,8 +14510,10 @@
             "vol_regime_pct": 20.717131,
             "daily_move_pct": -18.8291,
             "atr_ratio": 1.684104,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 76.470497,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -6.105362,
               "10d": 4.532731,
@@ -12933,13 +14523,33 @@
             }
           },
           {
+            "date": "2023-05-22",
+            "vcvi": 82.519422,
+            "vol_regime_pct": 47.808765,
+            "daily_move_pct": 30.877043,
+            "atr_ratio": 1.629892,
+            "breadth_count": 3,
+            "price": 652.590088,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 26.011491,
+              "10d": 23.921665,
+              "21d": -12.262043,
+              "42d": -30.413707,
+              "63d": -34.587659
+            }
+          },
+          {
             "date": "2021-05-17",
             "vcvi": 136.85259,
             "vol_regime_pct": 13.14741,
             "daily_move_pct": -16.596116,
             "atr_ratio": 2.215753,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 81226.0,
+            "season": "spring",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": 25.601716,
               "10d": 5.692758,
@@ -12956,6 +14566,8 @@
             "atr_ratio": 1.552338,
             "breadth_count": 3,
             "price": 136892.5,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -20.506054,
               "10d": 1.24185,
@@ -12970,8 +14582,10 @@
             "vol_regime_pct": 21.912351,
             "daily_move_pct": -5.94927,
             "atr_ratio": 1.75808,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 520030.0,
+            "season": "spring",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -1.111474,
               "10d": 1.291272,
@@ -12988,6 +14602,8 @@
             "atr_ratio": 2.295765,
             "breadth_count": 3,
             "price": 628150.0,
+            "season": "spring",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": 10.879567,
               "10d": -0.906631,
@@ -13002,8 +14618,10 @@
             "vol_regime_pct": 3.585657,
             "daily_move_pct": 5.832502,
             "atr_ratio": 1.670074,
-            "breadth_count": 5,
+            "breadth_count": 6,
             "price": 541365.0,
+            "season": "fall",
+            "seasonality_weight": 1.0,
             "fwd": {
               "5d": -6.437431,
               "10d": -14.17805,
@@ -13011,25 +14629,9 @@
               "42d": 24.964673,
               "63d": 12.293924
             }
-          },
-          {
-            "date": "2015-09-16",
-            "vcvi": 74.800797,
-            "vol_regime_pct": 0.398406,
-            "daily_move_pct": 6.912691,
-            "atr_ratio": 2.22949,
-            "breadth_count": 4,
-            "price": 504815.0,
-            "fwd": {
-              "5d": 11.60128,
-              "10d": 26.48594,
-              "21d": 33.15373,
-              "42d": 90.318235,
-              "63d": 319.90234
-            }
           }
         ],
-        "annual_rate": 0.788196,
+        "annual_rate": 0.867016,
         "gates": {
           "vcvi_min": 72,
           "breadth_min": 3,
@@ -13039,47 +14641,285 @@
         },
         "forward_returns": {
           "5d": {
-            "median": -0.192728,
-            "mean": 3.007821,
-            "win_rate": 50.0,
-            "best": 25.601716,
+            "median": 0.726018,
+            "mean": 5.099064,
+            "win_rate": 54.545455,
+            "best": 26.011491,
             "worst": -20.506054,
-            "count": 10
+            "count": 11
           },
           "10d": {
-            "median": 1.266561,
-            "mean": 2.176694,
-            "win_rate": 60.0,
+            "median": 1.291272,
+            "mean": 4.15351,
+            "win_rate": 63.636364,
             "best": 43.243239,
             "worst": -30.920443,
-            "count": 10
+            "count": 11
           },
           "21d": {
-            "median": 4.386191,
-            "mean": 7.381243,
-            "win_rate": 60.0,
+            "median": 3.0729,
+            "mean": 5.59549,
+            "win_rate": 54.545455,
             "best": 39.76063,
             "worst": -21.82274,
-            "count": 10
+            "count": 11
           },
           "42d": {
-            "median": -4.342183,
-            "mean": 4.051116,
-            "win_rate": 50.0,
+            "median": -10.367891,
+            "mean": 0.91795,
+            "win_rate": 45.454545,
             "best": 90.318235,
             "worst": -65.831136,
-            "count": 10
+            "count": 11
           },
           "63d": {
-            "median": -4.470851,
-            "mean": 20.763436,
-            "win_rate": 40.0,
+            "median": -4.937125,
+            "mean": 15.731519,
+            "win_rate": 36.363636,
             "best": 200.0,
             "worst": -74.808683,
-            "count": 10
+            "count": 11
           }
         }
       },
+      "elevated_watch": {
+        "count": 29,
+        "events": [
+          {
+            "date": "2025-11-18",
+            "vcvi": 81.427291,
+            "daily_move_pct": 12.752498,
+            "atr_ratio": 1.240302,
+            "breadth_count": 6,
+            "price": 18.700001,
+            "season": "winter",
+            "seasonality_weight": 1.3,
+            "fwd": {
+              "5d": 3.796786,
+              "10d": -20.05348,
+              "21d": 14.652405,
+              "42d": -0.37434,
+              "63d": -23.663107
+            }
+          },
+          {
+            "date": "2025-10-20",
+            "vcvi": 87.004482,
+            "daily_move_pct": -16.596932,
+            "atr_ratio": 1.571827,
+            "breadth_count": 6,
+            "price": 23.92,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -2.801004,
+              "10d": -14.715721,
+              "21d": -21.82274,
+              "42d": -10.367891,
+              "63d": -22.115388
+            }
+          },
+          {
+            "date": "2025-10-02",
+            "vcvi": 139.243028,
+            "daily_move_pct": -18.567425,
+            "atr_ratio": 1.84861,
+            "breadth_count": 6,
+            "price": 20.35,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 18.230953,
+              "10d": 43.243239,
+              "21d": 8.501226,
+              "42d": -24.103197,
+              "63d": 22.260436
+            }
+          },
+          {
+            "date": "2025-06-23",
+            "vcvi": 87.171315,
+            "daily_move_pct": 15.490535,
+            "atr_ratio": 1.458828,
+            "breadth_count": 6,
+            "price": 13.42,
+            "season": "summer",
+            "seasonality_weight": 0.85,
+            "fwd": {
+              "5d": 21.236962,
+              "10d": 23.248888,
+              "21d": 40.014909,
+              "42d": 120.752607,
+              "63d": 100.372573
+            }
+          },
+          {
+            "date": "2025-06-02",
+            "vcvi": 67.679283,
+            "daily_move_pct": -20.379409,
+            "atr_ratio": 1.333088,
+            "breadth_count": 6,
+            "price": 14.69,
+            "season": "summer",
+            "seasonality_weight": 0.85,
+            "fwd": {
+              "5d": 0.612663,
+              "10d": -3.53982,
+              "21d": 20.966651,
+              "42d": 55.207623,
+              "63d": 83.11777
+            }
+          },
+          {
+            "date": "2024-12-30",
+            "vcvi": 75.099602,
+            "daily_move_pct": -27.912762,
+            "atr_ratio": 1.223128,
+            "breadth_count": 6,
+            "price": 44.100052,
+            "season": "winter",
+            "seasonality_weight": 1.3,
+            "fwd": {
+              "5d": 2.062693,
+              "10d": -22.361997,
+              "21d": -17.53411,
+              "42d": -65.249474,
+              "63d": -67.753779
+            }
+          },
+          {
+            "date": "2024-11-11",
+            "vcvi": 86.11504,
+            "daily_move_pct": -19.84292,
+            "atr_ratio": 1.584623,
+            "breadth_count": 6,
+            "price": 95.789551,
+            "season": "winter",
+            "seasonality_weight": 1.3,
+            "fwd": {
+              "5d": 0.726018,
+              "10d": -30.920443,
+              "21d": -2.705616,
+              "42d": -65.831136,
+              "63d": -74.808683
+            }
+          },
+          {
+            "date": "2024-09-23",
+            "vcvi": 129.282869,
+            "daily_move_pct": -18.8291,
+            "atr_ratio": 1.684104,
+            "breadth_count": 6,
+            "price": 76.470497,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -6.105362,
+              "10d": 4.532731,
+              "21d": 39.76063,
+              "42d": 1.683524,
+              "63d": -4.937125
+            }
+          },
+          {
+            "date": "2023-10-31",
+            "vcvi": 105.239044,
+            "daily_move_pct": -17.512691,
+            "atr_ratio": 1.367152,
+            "breadth_count": 6,
+            "price": 395.605011,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 25.454678,
+              "10d": 39.768197,
+              "21d": 126.812099,
+              "42d": 182.110947,
+              "63d": 208.211477
+            }
+          },
+          {
+            "date": "2023-10-05",
+            "vcvi": 133.565737,
+            "daily_move_pct": -11.638461,
+            "atr_ratio": 1.231708,
+            "breadth_count": 6,
+            "price": 458.502655,
+            "season": "fall",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": -14.898762,
+              "10d": -0.157612,
+              "21d": -14.434518,
+              "42d": 124.316039,
+              "63d": 99.725124
+            }
+          }
+        ],
+        "annual_rate": 2.285768,
+        "gates": {
+          "vcvi_min": 60,
+          "breadth_min": 2,
+          "breadth_pct": 75,
+          "atr_mult": 1.2
+        },
+        "forward_returns": {
+          "5d": {
+            "median": -0.6189,
+            "mean": -0.534446,
+            "win_rate": 48.275862,
+            "best": 26.011491,
+            "worst": -35.413777,
+            "count": 29
+          },
+          "10d": {
+            "median": -0.906631,
+            "mean": 0.105281,
+            "win_rate": 44.827586,
+            "best": 43.243239,
+            "worst": -30.920443,
+            "count": 29
+          },
+          "21d": {
+            "median": 1.912676,
+            "mean": 7.527747,
+            "win_rate": 51.724138,
+            "best": 126.812099,
+            "worst": -27.667898,
+            "count": 29
+          },
+          "42d": {
+            "median": -0.37434,
+            "mean": 13.89193,
+            "win_rate": 48.275862,
+            "best": 182.110947,
+            "worst": -81.404428,
+            "count": 29
+          },
+          "63d": {
+            "median": -11.591329,
+            "mean": 18.492049,
+            "win_rate": 34.482759,
+            "best": 200.0,
+            "worst": -74.808683,
+            "count": 29
+          }
+        }
+      },
+      "decay": {
+        "annual_rate": 0.55,
+        "adj_price_pct": 6.349206,
+        "adj_vcvi_21d": 49.838266,
+        "correction_active": true
+      },
+      "seasonality": {
+        "month": 3,
+        "season": "spring",
+        "weight": 1.0,
+        "adj_vcvi_21d": 37.251992
+      },
+      "sharp_spike": false,
+      "fast_signal": null,
       "vps": 36.191044,
       "mwca": false,
       "rolling_correlation": -0.131263,
@@ -15118,13 +16958,15 @@
       "alerts": [
         {
           "type": "vcvi_warning",
-          "message": "VCVI (252d) = 56.2 \u2014 vol-adjusted capitulation signal",
-          "timestamp": "2026-03-16T22:52:32.886543+00:00"
+          "side": "short",
+          "message": "VCVI (252d) = 56.2 \u2014 potential gas top \u2014 short/inverse setup",
+          "timestamp": "2026-03-17T05:36:10.300360+00:00"
         },
         {
           "type": "cvi_warning",
-          "message": "CVI (252d) = 68.6 \u2014 elevated capitulation signal",
-          "timestamp": "2026-03-16T22:52:32.886543+00:00"
+          "side": "short",
+          "message": "CVI (252d) = 68.6 \u2014 potential gas top \u2014 short/inverse setup",
+          "timestamp": "2026-03-17T05:36:10.300360+00:00"
         }
       ]
     }
@@ -15212,134 +17054,196 @@
   "signals": [
     {
       "type": "vcvi_critical",
-      "message": "VCVI (126d) = 77.4 \u2014 vol-adjusted extreme capitulation",
-      "timestamp": "2026-03-16T22:52:31.300148+00:00",
+      "side": "long",
+      "message": "VCVI (5d) = 86.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:08.638222+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vcvi_critical",
-      "message": "VCVI (252d) = 95.5 \u2014 vol-adjusted extreme capitulation",
-      "timestamp": "2026-03-16T22:52:31.300148+00:00",
+      "side": "long",
+      "message": "VCVI (126d) = 77.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:08.638222+00:00",
+      "ticker": "BOIL"
+    },
+    {
+      "type": "vcvi_critical",
+      "side": "long",
+      "message": "VCVI (252d) = 95.5 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:08.638222+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_warning",
-      "message": "CVI (126d) = 67.4 \u2014 elevated capitulation signal",
-      "timestamp": "2026-03-16T22:52:31.300148+00:00",
+      "side": "long",
+      "message": "CVI (5d) = 75.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:08.638222+00:00",
+      "ticker": "BOIL"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "long",
+      "message": "CVI (126d) = 67.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:08.638222+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_critical",
-      "message": "CVI (252d) = 83.1 \u2014 extreme capitulation signal",
-      "timestamp": "2026-03-16T22:52:31.300148+00:00",
+      "side": "long",
+      "message": "CVI (252d) = 83.1 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:08.638222+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vov_elevated",
       "message": "VoV-21 = 63% \u2014 volatility regime becoming unstable",
-      "timestamp": "2026-03-16T22:52:31.300148+00:00",
+      "timestamp": "2026-03-17T05:36:08.638222+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vcvi_critical",
-      "message": "VCVI (126d) = 75.3 \u2014 vol-adjusted extreme capitulation",
-      "timestamp": "2026-03-16T22:52:31.673237+00:00",
+      "side": "long",
+      "message": "VCVI (5d) = 83.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:09.031482+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_critical",
-      "message": "VCVI (252d) = 92.9 \u2014 vol-adjusted extreme capitulation",
-      "timestamp": "2026-03-16T22:52:31.673237+00:00",
+      "side": "long",
+      "message": "VCVI (126d) = 75.3 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:09.031482+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
+      "type": "vcvi_critical",
+      "side": "long",
+      "message": "VCVI (252d) = 92.9 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:09.031482+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_warning",
-      "message": "CVI (126d) = 67.4 \u2014 elevated capitulation signal",
-      "timestamp": "2026-03-16T22:52:31.673237+00:00",
+      "side": "long",
+      "message": "CVI (5d) = 75.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:09.031482+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "long",
+      "message": "CVI (126d) = 67.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:09.031482+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_critical",
-      "message": "CVI (252d) = 83.1 \u2014 extreme capitulation signal",
-      "timestamp": "2026-03-16T22:52:31.673237+00:00",
+      "side": "long",
+      "message": "CVI (252d) = 83.1 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:09.031482+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vov_elevated",
       "message": "VoV-21 = 64% \u2014 volatility regime becoming unstable",
-      "timestamp": "2026-03-16T22:52:31.673237+00:00",
+      "timestamp": "2026-03-17T05:36:09.031482+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_warning",
-      "message": "VCVI (126d) = 68.5 \u2014 vol-adjusted capitulation signal",
-      "timestamp": "2026-03-16T22:52:31.943226+00:00",
+      "side": "long",
+      "message": "VCVI (5d) = 69.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:09.317337+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "long",
+      "message": "VCVI (126d) = 68.5 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:09.317337+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_critical",
-      "message": "VCVI (252d) = 80.1 \u2014 vol-adjusted extreme capitulation",
-      "timestamp": "2026-03-16T22:52:31.943226+00:00",
+      "side": "long",
+      "message": "VCVI (252d) = 80.1 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:09.317337+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "cvi_warning",
-      "message": "CVI (126d) = 74.2 \u2014 elevated capitulation signal",
-      "timestamp": "2026-03-16T22:52:31.943226+00:00",
+      "side": "long",
+      "message": "CVI (5d) = 75.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:09.317337+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "long",
+      "message": "CVI (126d) = 74.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:09.317337+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "cvi_critical",
-      "message": "CVI (252d) = 86.8 \u2014 extreme capitulation signal",
-      "timestamp": "2026-03-16T22:52:31.943226+00:00",
+      "side": "long",
+      "message": "CVI (252d) = 86.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-03-17T05:36:09.317337+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_warning",
-      "message": "VCVI (126d) = 68.6 \u2014 vol-adjusted capitulation signal",
-      "timestamp": "2026-03-16T22:52:32.243937+00:00",
+      "side": "short",
+      "message": "VCVI (126d) = 68.6 \u2014 potential gas top \u2014 short/inverse setup",
+      "timestamp": "2026-03-17T05:36:09.631760+00:00",
       "ticker": "KOLD"
     },
     {
       "type": "vcvi_critical",
-      "message": "VCVI (252d) = 76.5 \u2014 vol-adjusted extreme capitulation",
-      "timestamp": "2026-03-16T22:52:32.243937+00:00",
+      "side": "short",
+      "message": "VCVI (252d) = 76.5 \u2014 potential gas top \u2014 short/inverse setup",
+      "timestamp": "2026-03-17T05:36:09.631760+00:00",
       "ticker": "KOLD"
     },
     {
       "type": "cvi_warning",
-      "message": "CVI (126d) = 61.4 \u2014 elevated capitulation signal",
-      "timestamp": "2026-03-16T22:52:32.243937+00:00",
+      "side": "short",
+      "message": "CVI (126d) = 61.4 \u2014 potential gas top \u2014 short/inverse setup",
+      "timestamp": "2026-03-17T05:36:09.631760+00:00",
       "ticker": "KOLD"
     },
     {
       "type": "cvi_warning",
-      "message": "CVI (252d) = 68.5 \u2014 elevated capitulation signal",
-      "timestamp": "2026-03-16T22:52:32.243937+00:00",
+      "side": "short",
+      "message": "CVI (252d) = 68.5 \u2014 potential gas top \u2014 short/inverse setup",
+      "timestamp": "2026-03-17T05:36:09.631760+00:00",
       "ticker": "KOLD"
     },
     {
       "type": "vcvi_warning",
-      "message": "VCVI (252d) = 65.3 \u2014 vol-adjusted capitulation signal",
-      "timestamp": "2026-03-16T22:52:32.617609+00:00",
+      "side": "short",
+      "message": "VCVI (252d) = 65.3 \u2014 potential gas top \u2014 short/inverse setup",
+      "timestamp": "2026-03-17T05:36:10.024591+00:00",
       "ticker": "HND.TO"
     },
     {
       "type": "cvi_warning",
-      "message": "CVI (252d) = 61.1 \u2014 elevated capitulation signal",
-      "timestamp": "2026-03-16T22:52:32.617609+00:00",
+      "side": "short",
+      "message": "CVI (252d) = 61.1 \u2014 potential gas top \u2014 short/inverse setup",
+      "timestamp": "2026-03-17T05:36:10.024591+00:00",
       "ticker": "HND.TO"
     },
     {
       "type": "vcvi_warning",
-      "message": "VCVI (252d) = 56.2 \u2014 vol-adjusted capitulation signal",
-      "timestamp": "2026-03-16T22:52:32.886543+00:00",
+      "side": "short",
+      "message": "VCVI (252d) = 56.2 \u2014 potential gas top \u2014 short/inverse setup",
+      "timestamp": "2026-03-17T05:36:10.300360+00:00",
       "ticker": "3NGS.L"
     },
     {
       "type": "cvi_warning",
-      "message": "CVI (252d) = 68.6 \u2014 elevated capitulation signal",
-      "timestamp": "2026-03-16T22:52:32.886543+00:00",
+      "side": "short",
+      "message": "CVI (252d) = 68.6 \u2014 potential gas top \u2014 short/inverse setup",
+      "timestamp": "2026-03-17T05:36:10.300360+00:00",
       "ticker": "3NGS.L"
     }
   ]
