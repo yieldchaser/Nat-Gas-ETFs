@@ -68,11 +68,11 @@ const CONFIG = {
         { long: '3NGL.L', short: '3NGS.L', label: '3NGL / 3NGS' }
     ],
 
-    // Lookback windows (trading days)
+    // Lookback windows (trading days) — 5d added for fast-window layer
     windows: {
-        percentile: [10, 21, 63, 126, 252],
-        rvol: [10, 21, 63, 126, 252],
-        zScore: [10, 21, 63, 126, 252],
+        percentile: [5, 10, 21, 63, 126, 252],
+        rvol: [5, 10, 21, 63, 126, 252],
+        zScore: [5, 10, 21, 63, 126, 252],
         vroc: [5, 10, 21],
         ma: [10, 21, 50, 200],
         correlation: 30
@@ -103,11 +103,37 @@ const CONFIG = {
             breadthPct: 85,       // Gate 2: percentile threshold per window
             atrMult: 1.5,         // Gate 3: |daily move| > N × ATR-14
             volRegimeMax: 70      // Gate 4: vol regime ≤ this (non-turbulent)
-        }
+        },
+        // Elevated Watch gates — 3-gate softer filter (~4-8 events/ETF/year)
+        elevatedWatch: {
+            vcviMin: 60,          // Gate 1: VCVI-21 warning level
+            breadthMin: 2,        // Gate 2: 2 of N windows
+            breadthPct: 75,       // Gate 2: 75th pct (softer)
+            atrMult: 1.2,         // Gate 3: 1.2× ATR (softer)
+        },
+        // Fast spike detection (5d VCVI window)
+        fastVcvi: { threshold: 45, atrMult: 2.0 },
+        // Gas price level gate thresholds (NG=F percentile)
+        ngPriceGate: { highQuartile: 75, lowQuartile: 25 }
     },
 
     // VPS weights — 5-component including inverse vol regime
     vpsWeights: { rvol: 0.25, zScore: 0.20, percentile: 0.25, vroc: 0.10, volRegime: 0.20 },
+
+    // Leveraged ETF annual decay rates for decay-correction display
+    etfDecayRates: {
+        'BOIL': 0.35, 'KOLD': 0.35,
+        'HNU.TO': 0.40, 'HND.TO': 0.40,
+        '3NGL.L': 0.55, '3NGS.L': 0.55
+    },
+
+    // Season display config
+    seasonDisplay: {
+        winter: { emoji: '❄', label: 'WINTER', color: '#60a8f8' },
+        spring: { emoji: '✿', label: 'SPRING', color: '#6ddc8b' },
+        summer: { emoji: '☀', label: 'SUMMER', color: '#f5c542' },
+        fall:   { emoji: '◈', label: 'FALL',   color: '#f5a742' }
+    },
 
     // Data source
     dataUrl: 'data/dashboard_data.json',

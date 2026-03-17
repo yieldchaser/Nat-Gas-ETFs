@@ -267,6 +267,41 @@ const Charts = {
             ctx.fillText(d.key, x + barW / 2, h - 3);
         });
 
+        // Lead-time peak marker (Feature 4) — vertical dashed line at median peak day
+        const leadTime = echoes.lead_time;
+        if (leadTime && leadTime.median_days != null) {
+            const medDay = leadTime.median_days;
+            // Find which bar index corresponds to this day (interpolate between windows)
+            const windowDays = data.map(d => parseInt(d.key));
+            let ltBarIdx = null;
+            for (let i = 0; i < windowDays.length - 1; i++) {
+                if (medDay >= windowDays[i] && medDay <= windowDays[i + 1]) {
+                    const frac = (medDay - windowDays[i]) / (windowDays[i + 1] - windowDays[i]);
+                    ltBarIdx = i + frac;
+                    break;
+                }
+            }
+            if (ltBarIdx === null && medDay <= windowDays[0]) ltBarIdx = 0;
+            if (ltBarIdx === null && medDay >= windowDays[windowDays.length - 1]) ltBarIdx = windowDays.length - 1;
+
+            if (ltBarIdx !== null) {
+                const ltX = padL + ltBarIdx * (barW + barGap) + barW / 2;
+                ctx.setLineDash([2, 2]);
+                ctx.beginPath();
+                ctx.moveTo(ltX, padT);
+                ctx.lineTo(ltX, padT + chartH);
+                ctx.strokeStyle = 'rgba(255,220,80,0.7)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.setLineDash([]);
+                // Label
+                ctx.font = '6px monospace';
+                ctx.fillStyle = 'rgba(255,220,80,0.9)';
+                ctx.textAlign = 'center';
+                ctx.fillText(`~${medDay}d`, ltX, padT + 6);
+            }
+        }
+
         // Legend: small dot + "win rate" label top-left
         ctx.font = '6px monospace';
         ctx.fillStyle = 'rgba(255,255,255,0.3)';

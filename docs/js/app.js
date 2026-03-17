@@ -4,6 +4,7 @@
 
 const App = {
     allMetrics: {},
+    ngPriceContext: null,
     refreshTimer: null,
     isLoading: false,
 
@@ -136,6 +137,9 @@ const App = {
                 vov21:          vol.vov21           ?? null,
             };
 
+            // Normalise alert level to also consider sharp_spike
+            if (etfData.sharp_spike && alertLevel === 'none') alertLevel = 'elevated';
+
             this.allMetrics[ticker] = {
                 ticker: ticker,
                 current: current,
@@ -149,6 +153,11 @@ const App = {
                 volatility,
                 historical_echoes: etfData.historical_echoes || null,
                 conviction_events: etfData.conviction_events || null,
+                elevated_watch:    etfData.elevated_watch    || null,   // Feature 5
+                decay:             etfData.decay             || null,   // Feature 6
+                seasonality:       etfData.seasonality       || null,   // Feature 3
+                sharpSpike:        etfData.sharp_spike       || false,  // Feature 1
+                fastSignal:        etfData.fast_signal       || null,   // Feature 1
                 vps: etfData.vps || 0,
                 mwca: etfData.mwca || false,
                 mwcaCount: mwcaCount,
@@ -162,6 +171,7 @@ const App = {
             };
         }
 
+        this.ngPriceContext = data.ng_price_context || null;   // Feature 2
         this.sideConvergence = data.side_convergence || null;
         this.updateMarketStatus(data.market_status || 'unknown');
         this.render();
@@ -176,7 +186,7 @@ const App = {
         Cards.renderAllCards(this.allMetrics, document.getElementById('short-cards'), 'short');
 
         // Section C: Signal Command Center
-        Signals.renderAll(this.allMetrics, this.sideConvergence || null);
+        Signals.renderAll(this.allMetrics, this.sideConvergence || null, this.ngPriceContext || null);
     },
 
     updateMarketStatus(state) {
