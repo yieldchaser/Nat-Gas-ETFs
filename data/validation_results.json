@@ -1,0 +1,356 @@
+{
+  "BOIL": {
+    "etf_name": "BOIL",
+    "etf_type": "long",
+    "n_observations": 1521,
+    "date_range": {
+      "start": "2020-02-25",
+      "end": "2026-03-13"
+    },
+    "price_stats": {
+      "min": 15.73,
+      "max": 13179.0,
+      "mean": 2276.211,
+      "median": 579.0
+    },
+    "volume_stats": {
+      "min": 159.0,
+      "max": 33500140.0,
+      "mean": 1864173.7738,
+      "median": 472015.0
+    },
+    "spearman_correlation": {
+      "rho": -0.876524,
+      "p_value": 0.0,
+      "n": 1521,
+      "significant": "True"
+    },
+    "mann_whitney_u": {
+      "U_statistic": 208360.0,
+      "p_value": 7.11e-89,
+      "significant": "True",
+      "price_threshold_pct": 10,
+      "price_threshold_value": 36.45,
+      "n_low_price_days": 154,
+      "n_other_days": 1367,
+      "median_volume_low_price": 8290436.5,
+      "median_volume_other": 64777.0,
+      "volume_ratio": 127.9843
+    },
+    "rolling_spearman_90d": {
+      "window_days": 90,
+      "n_windows": 1432,
+      "mean_rho": -0.340739,
+      "median_rho": -0.375633,
+      "std_rho": 0.341337,
+      "min_rho": -0.941528,
+      "max_rho": 0.65357,
+      "pct_windows_negative": 81.15,
+      "pct_windows_positive": 18.85
+    },
+    "event_study_60d_lows": {
+      "lookback_days": 60,
+      "window_around_days": 5,
+      "n_low_events": 159,
+      "mean_volume_at_lows": 2032093.83,
+      "median_volume_at_lows": 948544.18,
+      "baseline_median_volume": 472015.0,
+      "volume_uplift_ratio": 2.0096
+    }
+  },
+  "HNU": {
+    "etf_name": "HNU",
+    "etf_type": "long",
+    "n_observations": 1518,
+    "date_range": {
+      "start": "2020-02-25",
+      "end": "2026-03-13"
+    },
+    "price_stats": {
+      "min": 11.72,
+      "max": 7992.0,
+      "mean": 1342.5814,
+      "median": 311.46
+    },
+    "volume_stats": {
+      "min": 1102.0,
+      "max": 6486726.0,
+      "mean": 388097.747,
+      "median": 90904.0
+    },
+    "spearman_correlation": {
+      "rho": -0.923189,
+      "p_value": 0.0,
+      "n": 1518,
+      "significant": "True"
+    },
+    "mann_whitney_u": {
+      "U_statistic": 203951.0,
+      "p_value": 2.93e-85,
+      "significant": "True",
+      "price_threshold_pct": 10,
+      "price_threshold_value": 23.887,
+      "n_low_price_days": 152,
+      "n_other_days": 1366,
+      "median_volume_low_price": 1586097.5,
+      "median_volume_other": 19251.5,
+      "volume_ratio": 82.3883
+    },
+    "rolling_spearman_90d": {
+      "window_days": 90,
+      "n_windows": 1429,
+      "mean_rho": -0.413668,
+      "median_rho": -0.431157,
+      "std_rho": 0.318708,
+      "min_rho": -0.941712,
+      "max_rho": 0.366106,
+      "pct_windows_negative": 86.63,
+      "pct_windows_positive": 13.37
+    },
+    "event_study_60d_lows": {
+      "lookback_days": 60,
+      "window_around_days": 5,
+      "n_low_events": 146,
+      "mean_volume_at_lows": 424722.64,
+      "median_volume_at_lows": 220535.36,
+      "baseline_median_volume": 90904.0,
+      "volume_uplift_ratio": 2.426
+    }
+  },
+  "KOLD": {
+    "etf_name": "KOLD",
+    "etf_type": "short",
+    "n_observations": 1521,
+    "date_range": {
+      "start": "2020-02-25",
+      "end": "2026-03-13"
+    },
+    "price_stats": {
+      "min": 4.715,
+      "max": 862.9,
+      "mean": 132.9287,
+      "median": 45.24
+    },
+    "volume_stats": {
+      "min": 1491.0,
+      "max": 97627146.0,
+      "mean": 4911250.9218,
+      "median": 2353640.0
+    },
+    "spearman_correlation": {
+      "rho": -0.954987,
+      "p_value": 0.0,
+      "n": 1521,
+      "significant": "True"
+    },
+    "mann_whitney_u": {
+      "U_statistic": 205011.0,
+      "p_value": 8.41e-85,
+      "significant": "True",
+      "price_threshold_pct": 10,
+      "price_threshold_value": 14.955,
+      "n_low_price_days": 153,
+      "n_other_days": 1368,
+      "median_volume_low_price": 17963838.0,
+      "median_volume_other": 1836583.0,
+      "volume_ratio": 9.7811
+    },
+    "rolling_spearman_90d": {
+      "window_days": 90,
+      "n_windows": 1432,
+      "mean_rho": -0.654012,
+      "median_rho": -0.714994,
+      "std_rho": 0.21927,
+      "min_rho": -0.93658,
+      "max_rho": 0.333335,
+      "pct_windows_negative": 97.97,
+      "pct_windows_positive": 2.03
+    },
+    "event_study_60d_lows": {
+      "lookback_days": 60,
+      "window_around_days": 5,
+      "n_low_events": 135,
+      "mean_volume_at_lows": 6083178.07,
+      "median_volume_at_lows": 3162601.82,
+      "baseline_median_volume": 2353640.0,
+      "volume_uplift_ratio": 1.3437
+    }
+  },
+  "HND": {
+    "etf_name": "HND",
+    "etf_type": "short",
+    "n_observations": 1518,
+    "date_range": {
+      "start": "2020-02-25",
+      "end": "2026-03-13"
+    },
+    "price_stats": {
+      "min": 2.5,
+      "max": 80.75,
+      "mean": 17.8781,
+      "median": 15.3112
+    },
+    "volume_stats": {
+      "min": 13488.0,
+      "max": 26722821.0,
+      "mean": 2073959.1173,
+      "median": 1350489.0
+    },
+    "spearman_correlation": {
+      "rho": -0.84085,
+      "p_value": 0.0,
+      "n": 1518,
+      "significant": "True"
+    },
+    "mann_whitney_u": {
+      "U_statistic": 186748.0,
+      "p_value": 3.69e-59,
+      "significant": "True",
+      "price_threshold_pct": 10,
+      "price_threshold_value": 4.7735,
+      "n_low_price_days": 152,
+      "n_other_days": 1366,
+      "median_volume_low_price": 4619337.0,
+      "median_volume_other": 1128411.0,
+      "volume_ratio": 4.0937
+    },
+    "rolling_spearman_90d": {
+      "window_days": 90,
+      "n_windows": 1429,
+      "mean_rho": -0.587994,
+      "median_rho": -0.636383,
+      "std_rho": 0.223771,
+      "min_rho": -0.922813,
+      "max_rho": 0.097539,
+      "pct_windows_negative": 96.85,
+      "pct_windows_positive": 3.15
+    },
+    "event_study_60d_lows": {
+      "lookback_days": 60,
+      "window_around_days": 5,
+      "n_low_events": 136,
+      "mean_volume_at_lows": 2544843.01,
+      "median_volume_at_lows": 1691846.0,
+      "baseline_median_volume": 1350489.0,
+      "volume_uplift_ratio": 1.2528
+    }
+  },
+  "3NGL": {
+    "etf_name": "3NGL",
+    "etf_type": "long",
+    "n_observations": 1413,
+    "date_range": {
+      "start": "2020-02-25",
+      "end": "2026-03-13"
+    },
+    "price_stats": {
+      "min": 1.4345,
+      "max": 304239.6,
+      "mean": 37889.3357,
+      "median": 536.55
+    },
+    "volume_stats": {
+      "min": 1.0,
+      "max": 1464959.0,
+      "mean": 31880.6285,
+      "median": 1334.0
+    },
+    "spearman_correlation": {
+      "rho": -0.914685,
+      "p_value": 0.0,
+      "n": 1413,
+      "significant": "True"
+    },
+    "mann_whitney_u": {
+      "U_statistic": 177733.0,
+      "p_value": 1.33e-80,
+      "significant": "True",
+      "price_threshold_pct": 10,
+      "price_threshold_value": 6.846,
+      "n_low_price_days": 142,
+      "n_other_days": 1271,
+      "median_volume_low_price": 147935.5,
+      "median_volume_other": 387.0,
+      "volume_ratio": 382.2623
+    },
+    "rolling_spearman_90d": {
+      "window_days": 90,
+      "n_windows": 1324,
+      "mean_rho": -0.328977,
+      "median_rho": -0.286149,
+      "std_rho": 0.304814,
+      "min_rho": -0.948454,
+      "max_rho": 0.339346,
+      "pct_windows_negative": 85.05,
+      "pct_windows_positive": 14.95
+    },
+    "event_study_60d_lows": {
+      "lookback_days": 60,
+      "window_around_days": 5,
+      "n_low_events": 166,
+      "mean_volume_at_lows": 45072.48,
+      "median_volume_at_lows": 4960.86,
+      "baseline_median_volume": 1334.0,
+      "volume_uplift_ratio": 3.7188
+    }
+  },
+  "3NGS": {
+    "etf_name": "3NGS",
+    "etf_type": "short",
+    "n_observations": 1499,
+    "date_range": {
+      "start": "2020-02-25",
+      "end": "2026-03-13"
+    },
+    "price_stats": {
+      "min": 3.9498,
+      "max": 36132.8319,
+      "mean": 2521.7096,
+      "median": 58.2624
+    },
+    "volume_stats": {
+      "min": 1.0,
+      "max": 4022577.0,
+      "mean": 25626.3843,
+      "median": 6982.0
+    },
+    "spearman_correlation": {
+      "rho": -0.910846,
+      "p_value": 0.0,
+      "n": 1499,
+      "significant": "True"
+    },
+    "mann_whitney_u": {
+      "U_statistic": 185340.5,
+      "p_value": 3.64e-63,
+      "significant": "True",
+      "price_threshold_pct": 10,
+      "price_threshold_value": 13.0521,
+      "n_low_price_days": 150,
+      "n_other_days": 1349,
+      "median_volume_low_price": 61000.0,
+      "median_volume_other": 4716.0,
+      "volume_ratio": 12.9347
+    },
+    "rolling_spearman_90d": {
+      "window_days": 90,
+      "n_windows": 1410,
+      "mean_rho": -0.398714,
+      "median_rho": -0.427301,
+      "std_rho": 0.262616,
+      "min_rho": -0.87241,
+      "max_rho": 0.419352,
+      "pct_windows_negative": 90.99,
+      "pct_windows_positive": 9.01
+    },
+    "event_study_60d_lows": {
+      "lookback_days": 60,
+      "window_around_days": 5,
+      "n_low_events": 147,
+      "mean_volume_at_lows": 18526.62,
+      "median_volume_at_lows": 4586.64,
+      "baseline_median_volume": 6982.0,
+      "volume_uplift_ratio": 0.6569
+    }
+  }
+}

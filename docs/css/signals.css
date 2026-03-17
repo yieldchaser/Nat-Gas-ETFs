@@ -1,0 +1,956 @@
+/* ============================================
+   Signal Command Center Styles
+   ============================================ */
+
+/* ---- ALERT FEED ---- */
+.alert-feed {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 10px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    background: var(--bg-panel);
+    border-left: 3px solid var(--border-primary);
+    font-size: 0.72rem;
+    transition: background 0.2s;
+}
+
+.alert-item:hover {
+    background: var(--bg-hover);
+}
+
+.alert-item.alert-cvi { border-left-color: var(--red); }
+.alert-item.alert-mwca { border-left-color: var(--purple); }
+.alert-item.alert-rvol { border-left-color: var(--orange); }
+.alert-item.alert-ipsi { border-left-color: var(--yellow); }
+.alert-item.alert-rbc { border-left-color: var(--cyan); }
+
+.alert-time {
+    color: var(--text-muted);
+    font-size: 0.65rem;
+    white-space: nowrap;
+    min-width: 40px;
+}
+
+.alert-ticker {
+    font-weight: 700;
+    min-width: 40px;
+}
+
+.alert-message {
+    color: var(--text-secondary);
+    flex: 1;
+}
+
+.no-alerts {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    padding: 20px;
+}
+
+/* ---- STRESS MATRIX ---- */
+.stress-matrix {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.72rem;
+}
+
+.stress-matrix th {
+    text-align: left;
+    padding: 6px 8px;
+    color: var(--text-muted);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.stress-matrix td {
+    padding: 8px 8px;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.stress-matrix tr:last-child td {
+    border-bottom: none;
+}
+
+.stress-matrix .pair-name {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stress-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.stress-status.quiet {
+    background: rgba(61, 184, 122, 0.12);
+    color: var(--green);
+}
+
+.stress-status.elevated {
+    background: rgba(212, 168, 48, 0.12);
+    color: var(--yellow);
+}
+
+.stress-status.stress {
+    background: rgba(192, 120, 40, 0.12);
+    color: var(--orange);
+}
+
+.stress-status.critical {
+    background: rgba(192, 64, 64, 0.12);
+    color: var(--red);
+}
+
+/* ---- HEAT CALENDAR ---- */
+.heat-calendar {
+    display: grid;
+    grid-template-columns: repeat(18, 1fr);
+    gap: 2px;
+    margin: 8px 0;
+}
+
+.heat-cell {
+    aspect-ratio: 1;
+    border-radius: 2px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.heat-cell:hover {
+    transform: scale(1.3);
+    z-index: 5;
+}
+
+.heat-cell .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-accent);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    white-space: nowrap;
+    z-index: 10;
+    color: var(--text-primary);
+}
+
+.heat-cell:hover .tooltip {
+    display: block;
+}
+
+.heat-legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.heat-label {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    margin: 0 4px;
+}
+
+.heat-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+/* ---- CONVERGENCE GAUGES ---- */
+.convergence-gauges {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.convergence-gauge {
+    text-align: center;
+    padding: 10px;
+    background: var(--bg-panel);
+    border-radius: var(--panel-radius);
+    border: 1px solid var(--border-primary);
+}
+
+.gauge-ticker {
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.gauge-ring {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 6px;
+    position: relative;
+}
+
+.gauge-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.gauge-ring .ring-bg {
+    fill: none;
+    stroke: var(--bg-primary);
+    stroke-width: 5;
+}
+
+.gauge-ring .ring-fill {
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.8s ease, stroke 0.3s;
+}
+
+.gauge-count {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.gauge-label {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+}
+
+/* ---- CORRELATION BARS ---- */
+.correlation-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.corr-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.corr-ticker {
+    font-size: 0.7rem;
+    font-weight: 700;
+    width: 40px;
+    flex-shrink: 0;
+}
+
+.corr-bar-container {
+    flex: 1;
+    height: 14px;
+    background: var(--bg-primary);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+}
+
+.corr-bar-center {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: var(--text-muted);
+}
+
+.corr-bar-fill {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    border-radius: 2px;
+    transition: width 0.5s ease, left 0.5s ease;
+}
+
+.corr-bar-fill.negative {
+    background: var(--red);
+    right: 50%;
+}
+
+.corr-bar-fill.positive {
+    background: var(--green);
+    left: 50%;
+}
+
+.corr-value {
+    font-size: 0.7rem;
+    font-weight: 600;
+    width: 44px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.correlation-note {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    line-height: 1.5;
+}
+
+/* ============================================
+   Historical Echoes Panel
+   ============================================ */
+.panel-subtitle {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0.3px;
+}
+
+.echoes-loading {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 12px 0;
+}
+
+.echoes-pair-group {
+    margin-bottom: 12px;
+}
+
+.echoes-pair-label {
+    font-size: 0.55rem;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.echoes-pair-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+/* Individual echo card */
+.echo-card {
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+    padding: 8px;
+    border-left: 2px solid transparent;
+}
+
+.echo-card.echo-long  { border-left-color: var(--long-accent); }
+.echo-card.echo-short { border-left-color: var(--short-accent); }
+
+.echo-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+}
+
+.echo-ticker {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.echo-count {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    cursor: help;
+}
+
+/* Forward return table */
+.echo-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 6px;
+    font-size: 0.62rem;
+}
+
+.echo-table th {
+    color: var(--text-muted);
+    font-weight: 500;
+    text-align: right;
+    padding: 1px 3px;
+    letter-spacing: 0.3px;
+    font-size: 0.55rem;
+}
+
+.echo-table th:first-child,
+.echo-table td:first-child { text-align: left; }
+
+.echo-table td {
+    text-align: right;
+    padding: 2px 3px;
+    font-weight: 600;
+}
+
+.echo-window { color: var(--text-muted); font-weight: 500 !important; }
+.echo-range  { color: var(--text-muted); font-size: 0.58rem !important; font-weight: 400 !important; }
+
+/* Directional bias line */
+.echo-bias {
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 3px 6px;
+    border-radius: 3px;
+    margin: 4px 0;
+    text-align: center;
+}
+
+.bias-bull    { background: rgba(61,184,122,0.10); color: var(--green); }
+.bias-bear    { background: rgba(192,64,64,0.10);  color: var(--red); }
+.bias-neutral { background: rgba(255,255,255,0.05); color: var(--text-secondary); }
+
+/* Recent past occurrences */
+.echo-recent {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.echo-recent-label {
+    font-size: 0.52rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.echo-past-date {
+    font-size: 0.58rem;
+    font-weight: 600;
+    cursor: help;
+    padding: 1px 4px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 2px;
+    transition: background 0.15s;
+}
+
+.echo-past-date:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.echo-empty {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    padding: 8px 0;
+    text-align: center;
+}
+
+/* Forward return curve canvas */
+.echo-curve-container {
+    width: 100%;
+    height: 80px;
+    margin-bottom: 6px;
+    background: rgba(0,0,0,0.18);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.echo-curve-container canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Edge-window highlighted table row */
+.echo-edge-row td {
+    background: rgba(255,255,255,0.03);
+}
+
+.echo-edge-row .echo-window {
+    color: var(--text-primary) !important;
+    font-weight: 700 !important;
+}
+
+/* ============================================
+   Conviction Events Panel
+   ============================================ */
+.conviction-loading,
+.conviction-empty {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 12px 0;
+}
+
+.conviction-pair-group {
+    margin-bottom: 12px;
+}
+
+.conviction-pair-label {
+    font-size: 0.55rem;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.conviction-pair-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.conviction-card {
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+    padding: 8px;
+    border-left: 2px solid transparent;
+}
+
+.conviction-card.conviction-long  { border-left-color: var(--long-accent); }
+.conviction-card.conviction-short { border-left-color: var(--short-accent); }
+
+.conviction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+    gap: 8px;
+}
+
+.conviction-ticker {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.conviction-count {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+}
+
+.conviction-rate {
+    font-size: 0.55rem;
+    color: var(--text-secondary);
+    cursor: help;
+    margin-left: auto;
+}
+
+.conviction-gates {
+    font-size: 0.5rem;
+    color: var(--text-muted);
+    padding: 3px 5px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 3px;
+    margin-bottom: 6px;
+    line-height: 1.5;
+    cursor: help;
+}
+
+.conviction-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.6rem;
+}
+
+.conviction-table th {
+    color: var(--text-muted);
+    font-weight: 500;
+    text-align: right;
+    padding: 1px 3px;
+    letter-spacing: 0.3px;
+    font-size: 0.52rem;
+}
+
+.conviction-table th:first-child,
+.conviction-table td:first-child { text-align: left; }
+
+.conviction-table td {
+    text-align: right;
+    padding: 2px 3px;
+    font-weight: 600;
+}
+
+.ce-date { color: var(--text-muted); font-weight: 500 !important; text-align: left !important; }
+.ce-breadth { color: var(--text-secondary); }
+
+/* Forward returns summary below conviction table */
+.ce-fwd-returns {
+    margin-top: 6px;
+    padding-top: 5px;
+    border-top: 1px solid var(--border-primary);
+}
+.ce-fwd-label {
+    font-size: 0.5rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+}
+.ce-fwd-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.6rem;
+}
+.ce-fwd-table th {
+    color: var(--text-muted);
+    font-weight: 500;
+    text-align: center;
+    padding: 1px 3px;
+    font-size: 0.55rem;
+}
+.ce-fwd-table td {
+    text-align: center;
+    padding: 2px 3px;
+    font-weight: 700;
+}
+.ce-fwd-wr td {
+    font-weight: 500;
+    font-size: 0.5rem;
+    opacity: 0.8;
+}
+
+/* ============================================
+   Side-Wide Volume Convergence (SWVC)
+   ============================================ */
+.swvc-loading,
+.swvc-empty {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 12px 0;
+}
+
+.swvc-side {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.swvc-side:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.swvc-side-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.swvc-side-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+}
+
+.swvc-status-badge {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.swvc-spread-txt {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+/* ETF pills */
+.swvc-pills {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.swvc-pill {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5px 4px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    cursor: help;
+    transition: transform 0.15s;
+}
+
+.swvc-pill:hover { transform: scale(1.04); }
+
+.swvc-pill-ticker {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.swvc-pill-days {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.swvc-pill.spiked .swvc-pill-days {
+    color: inherit;
+    font-weight: 600;
+}
+
+/* Timeline strip */
+.swvc-timeline-wrap {
+    margin-bottom: 6px;
+}
+
+.swvc-timeline {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 2px;
+    height: 18px;
+    margin-bottom: 2px;
+}
+
+.swvc-cell {
+    border-radius: 2px;
+    transition: transform 0.1s;
+    cursor: help;
+    border: 1px solid rgba(255,255,255,0.04);
+}
+
+.swvc-cell:hover { transform: scale(1.3); z-index: 5; }
+
+.swvc-cell.spike {
+    border-color: rgba(255,255,255,0.15);
+}
+
+.swvc-cell.today {
+    border-color: rgba(255,255,255,0.2);
+}
+
+.swvc-timeline-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.48rem;
+    color: var(--text-muted);
+    padding: 0 1px;
+}
+
+/* Full convergence alert banner */
+.swvc-alert-banner {
+    margin-top: 6px;
+    padding: 6px 8px;
+    border-left: 2px solid;
+    background: rgba(255,255,255,0.03);
+    border-radius: 0 3px 3px 0;
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* ---- SETUP DIRECTION BADGES ---- */
+/* Used in alert feed, echo cards, and conviction cards to make trade direction explicit */
+.setup-badge {
+    display: inline-block;
+    font-size: 0.5rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 1px 5px;
+    border-radius: 3px;
+    vertical-align: middle;
+    margin: 0 3px;
+}
+.setup-bottom {
+    color: var(--green);
+    background: rgba(61,184,122,0.12);
+    border: 1px solid rgba(61,184,122,0.3);
+}
+.setup-top {
+    color: var(--red);
+    background: rgba(192,64,64,0.12);
+    border: 1px solid rgba(192,64,64,0.3);
+}
+
+/* ============================================================
+   FEATURE ADDITIONS: NG Price Bar, Fast-Spike, Season, Elevated Watch
+   ============================================================ */
+
+/* ---- NG=F Gas Price Context Bar (Feature 2) ---- */
+.ng-price-bar-panel {
+    padding: 4px 10px 6px;
+    border-bottom: 1px solid var(--border-primary);
+    background: rgba(0,0,0,0.2);
+}
+.ng-price-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.62rem;
+    font-family: monospace;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+}
+.ng-bar-label {
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    font-size: 0.58rem;
+}
+.ng-bar-price {
+    font-weight: 700;
+    font-size: 0.7rem;
+    cursor: default;
+}
+.ng-bar-pct {
+    font-weight: 600;
+    font-size: 0.65rem;
+}
+.ng-bar-na {
+    color: var(--text-muted);
+    font-size: 0.58rem;
+}
+.ng-bar-track {
+    position: relative;
+    width: 90px;
+    height: 6px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-primary);
+    border-radius: 3px;
+    overflow: visible;
+    cursor: default;
+}
+.ng-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+.ng-bar-q25, .ng-bar-q75 {
+    position: absolute;
+    top: -3px;
+    width: 1px;
+    height: 12px;
+    background: rgba(255,255,255,0.25);
+}
+.ng-gates { display: flex; gap: 5px; }
+.ng-gate {
+    font-size: 0.55rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.03em;
+}
+.ng-gate.active   { color: #3db87a; background: rgba(61,184,122,0.12); border: 1px solid rgba(61,184,122,0.3); }
+.ng-gate.inactive { color: var(--text-muted); background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary); text-decoration: line-through; opacity: 0.7; }
+.ng-gate.unknown  { color: var(--text-muted); opacity: 0.5; }
+
+/* ---- Sharp Spike Badge ---- */
+.spike-badge {
+    display: inline-block;
+    font-size: 0.5rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #f5c542;
+    background: rgba(245,197,66,0.12);
+    border: 1px solid rgba(245,197,66,0.35);
+    animation: spike-pulse 1.5s ease-in-out infinite;
+    cursor: default;
+}
+.spike-badge-sm {
+    font-size: 0.7rem;
+    cursor: default;
+}
+@keyframes spike-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+}
+
+/* ---- Season Badge (card header) ---- */
+.season-badge {
+    font-size: 0.55rem;
+    font-weight: 600;
+    cursor: default;
+    opacity: 0.85;
+    margin-left: 2px;
+}
+
+/* ---- Matrix Season Tag ---- */
+.matrix-season {
+    font-size: 0.65rem;
+    margin-left: 3px;
+    cursor: default;
+    opacity: 0.8;
+}
+
+/* ---- Elevated Watch Panel ---- */
+.watch-pair-group {
+    margin-bottom: 10px;
+}
+.watch-pair-label {
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    padding: 2px 4px;
+    border-left: 2px solid var(--yellow);
+}
+.watch-pair-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.watch-card {
+    border-left-color: var(--yellow) !important;
+    opacity: 0.92;
+}
+.watch-gates {
+    color: var(--yellow) !important;
+    opacity: 0.75;
+}
+.watch-empty {
+    color: var(--text-muted);
+    font-size: 0.6rem;
+    padding: 8px 4px;
+}
+
+/* ---- Echo Lead-Time Indicator ---- */
+.echo-lead-time {
+    font-size: 0.58rem;
+    color: rgba(255,220,80,0.9);
+    padding: 2px 4px;
+    margin: 3px 0 2px;
+    border-left: 2px solid rgba(255,220,80,0.4);
+    background: rgba(255,220,80,0.04);
+    border-radius: 0 3px 3px 0;
+    cursor: default;
+}
+
+/* Z-score bar variant for NG price bar */
+.ng-bar-zscore {
+    overflow: visible;
+}
+.ng-bar-center-mark {
+    position: absolute;
+    left: 50%;
+    top: -2px;
+    width: 1px;
+    height: 10px;
+    background: rgba(255,255,255,0.5);
+}
+.ng-bar-z-neg15, .ng-bar-z-pos15 {
+    position: absolute;
+    top: -1px;
+    width: 1px;
+    height: 8px;
+    background: rgba(255,255,255,0.2);
+}

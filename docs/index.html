@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAT GAS ETF VOLUME MONITOR</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/signals.css">
+</head>
+<body>
+    <!-- TOP BAR -->
+    <header id="top-bar">
+        <div class="top-bar-left">
+            <h1>NAT GAS ETF VOLUME MONITOR</h1>
+            <span class="subtitle">Volume Flow Analytics</span>
+        </div>
+        <div class="top-bar-right">
+            <nav class="page-nav">
+                <a href="index.html" class="nav-link active">Volume Monitor</a>
+                <a href="trough-peak.html" class="nav-link">Trough-to-Peak</a>
+            </nav>
+            <div class="market-status" id="market-status">
+                <span class="status-dot"></span>
+                <span class="status-text">LOADING...</span>
+            </div>
+            <div class="last-updated" id="last-updated">--</div>
+            <button class="refresh-btn" id="refresh-btn" title="Refresh Data">&#x21bb;</button>
+        </div>
+    </header>
+
+    <!-- PRICE-VOLUME CORRELATION BANNER -->
+    <div id="hypothesis-banner" class="hypothesis-banner collapsed">
+        <div class="banner-toggle" onclick="toggleBanner()">
+            <span class="banner-title">PRICE-VOLUME CORRELATION — 30-Day Spearman</span>
+            <span class="banner-arrow">&#x25BC;</span>
+        </div>
+        <div class="banner-content" id="banner-content">
+            <div class="validation-grid" id="validation-grid">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN 3-SECTION LAYOUT -->
+    <main id="dashboard">
+        <!-- SECTION A: LONG SIDE -->
+        <section class="dashboard-section section-long" id="section-long">
+            <div class="section-header">
+                <h2>LONG SIDE</h2>
+                <span class="section-label">2x / 3x Leveraged Long</span>
+            </div>
+            <div class="etf-cards" id="long-cards">
+                <!-- BOIL, HNU, 3NGL cards inserted here -->
+            </div>
+        </section>
+
+        <!-- SECTION C: SIGNAL COMMAND CENTER -->
+        <section class="dashboard-section section-signals" id="section-signals">
+            <div class="section-header">
+                <h2>SIGNAL COMMAND CENTER</h2>
+                <span class="section-label">Volume Intelligence</span>
+            </div>
+
+            <!-- NG=F GAS PRICE CONTEXT BAR (Feature 2) -->
+            <div class="ng-price-bar-panel" id="ng-price-bar-panel">
+                <div id="ng-price-bar" class="ng-price-bar">
+                    <span class="ng-bar-label">NG=F</span>
+                    <span class="ng-bar-na">Loading gas price context…</span>
+                </div>
+            </div>
+
+            <!-- ALERT FEED -->
+            <div class="signal-panel" id="alert-panel">
+                <h3>ACTIVE ALERTS</h3>
+                <div class="alert-feed" id="alert-feed">
+                    <div class="no-alerts">No active alerts</div>
+                </div>
+            </div>
+
+            <!-- INVERSE PAIR STRESS MATRIX -->
+            <div class="signal-panel" id="stress-matrix-panel">
+                <h3>INVERSE PAIR STRESS MATRIX</h3>
+                <table class="stress-matrix" id="stress-matrix">
+                    <thead>
+                        <tr>
+                            <th>PAIR</th>
+                            <th data-tooltip="Long ETF 21-day Relative Volume">LONG RVOL</th>
+                            <th data-tooltip="Short/Inverse ETF 21-day Relative Volume">SHORT RVOL</th>
+                            <th data-tooltip="Long-side VCVI-63d — spikes when long ETF has high volume AND low price. Gas is near a BOTTOM. Favors long/leveraged setup.">L-CAP</th>
+                            <th data-tooltip="Short-side VCVI-63d — spikes when short ETF has high volume AND low price (gas is HIGH). Gas is near a TOP. Favors short/inverse setup.">S-CAP</th>
+                            <th data-tooltip="5d fast-window VCVI (Long/Short) — catches weather event spikes before longer windows. Threshold: 45. Format: L/S">FAST-5d</th>
+                            <th data-tooltip="Sharp Spike flag — fires when 5d VCVI>45 AND move>2×ATR on the same day. Weather event candidate.">SPIKE</th>
+                            <th data-tooltip="Inverse Pair Stress Index — short ETF RVOL ÷ long ETF RVOL. &gt;2x indicates abnormal directional pressure.">IPSI</th>
+                            <th data-tooltip="Current volatility regime — where HV21 sits in its own 252-day history. Signals in LOW/QUIET regimes are most reliable.">VOL REGIME</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stress-matrix-body">
+                        <!-- Filled dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- SIDE-WIDE VOLUME CONVERGENCE -->
+            <div class="signal-panel" id="swvc-panel">
+                <h3 data-tooltip="Tracks whether all 3 ETFs on the same side (e.g., KOLD + HND.TO + 3NGS.L) each had a volume spike ≥2× average within a rolling 10-day window — even if the spikes occurred on different days. Independent spiking across US/CA/UK markets is a stronger signal than a single-market event.">SIDE-WIDE CONVERGENCE <span class="panel-subtitle">— tri-ETF rolling window</span></h3>
+                <div id="swvc-container">
+                    <div class="swvc-loading">Scanning cross-market activity…</div>
+                </div>
+            </div>
+
+            <!-- CONVICTION EVENTS — strict multi-gate anomaly filter -->
+            <div class="signal-panel" id="conviction-panel">
+                <h3 data-tooltip="Strict multi-gate filter requiring ALL conditions simultaneously: VCVI≥72, ≥3/5 vol windows≥85th pct, daily move>1.5×ATR, vol regime≤70th. Designed to flag only ~1-2 events per ETF per year.">CONVICTION EVENTS <span class="panel-subtitle">— multi-gate signal filter</span></h3>
+                <div id="conviction-container">
+                    <div class="conviction-loading">Scanning historical data…</div>
+                </div>
+            </div>
+
+            <!-- ELEVATED WATCH — 3-gate softer filter (Feature 5) -->
+            <div class="signal-panel" id="elevated-watch-panel">
+                <h3 data-tooltip="3-gate softer filter: VCVI≥60, ≥2/N windows≥75th pct, move>1.2×ATR. No vol-regime gate — catches slow-building peaks. Designed for ~4-8 events per year. Excludes dates already flagged by full Conviction Events.">ELEVATED WATCH <span class="panel-subtitle">— 3-gate pre-conviction filter</span></h3>
+                <div id="elevated-watch-container">
+                    <div class="conviction-loading">Scanning watch events…</div>
+                </div>
+            </div>
+
+            <!-- HISTORICAL ECHOES -->
+            <div class="signal-panel" id="echoes-panel">
+                <h3 data-tooltip="When the same VCVI signal conditions existed in the past (VCVI≥55, VolRegime≤60th), what happened to prices over the next 5, 10, and 21 sessions? Base-rate statistics from full available history. Lead-time marker shows median days to peak.">HISTORICAL ECHOES <span class="panel-subtitle">— past VCVI signals &amp; outcomes</span></h3>
+                <div id="echoes-container">
+                    <div class="echoes-loading">Loading historical data…</div>
+                </div>
+            </div>
+
+            <!-- VOLUME HEAT CALENDAR -->
+            <div class="signal-panel" id="heat-calendar-panel">
+                <h3>VOLUME HEAT MAP (90 Days)</h3>
+                <div class="heat-calendar" id="heat-calendar">
+                    <!-- Filled dynamically -->
+                </div>
+                <div class="heat-legend">
+                    <span class="heat-label">Quiet</span>
+                    <span class="heat-swatch" style="background:#1a1a28"></span>
+                    <span class="heat-swatch" style="background:#283848"></span>
+                    <span class="heat-swatch" style="background:#4a6878"></span>
+                    <span class="heat-swatch" style="background:#d4a830"></span>
+                    <span class="heat-swatch" style="background:#c04040"></span>
+                    <span class="heat-label">Extreme</span>
+                </div>
+            </div>
+
+            <!-- MULTI-WINDOW CONVERGENCE -->
+            <div class="signal-panel" id="convergence-panel">
+                <h3>MULTI-WINDOW CONVERGENCE</h3>
+                <div class="convergence-gauges" id="convergence-gauges">
+                    <!-- Filled dynamically -->
+                </div>
+            </div>
+
+            <!-- ROLLING CORRELATION MONITOR -->
+            <div class="signal-panel" id="correlation-panel">
+                <h3>PRICE-VOLUME CORRELATION MONITOR</h3>
+                <div class="correlation-bars" id="correlation-bars">
+                    <!-- Filled dynamically -->
+                </div>
+                <div class="correlation-note">30-day rolling Spearman correlation. Negative = price drops coincide with volume spikes (inverse relationship active).</div>
+            </div>
+        </section>
+
+        <!-- SECTION B: SHORT SIDE -->
+        <section class="dashboard-section section-short" id="section-short">
+            <div class="section-header">
+                <h2>SHORT SIDE</h2>
+                <span class="section-label">2x / 3x Leveraged Short</span>
+            </div>
+            <div class="etf-cards" id="short-cards">
+                <!-- KOLD, HND, 3NGS cards inserted here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-content">
+            <span>NAT GAS ETF Volume Anomaly Radar | Data via Yahoo Finance</span>
+            <span>CVI + IPSI + MWCA are proprietary indicators</span>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/metrics.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/cards.js"></script>
+    <script src="js/signals.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

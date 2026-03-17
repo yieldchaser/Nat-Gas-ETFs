@@ -1,0 +1,382 @@
+/* ============================================
+   ETF Card Styles
+   ============================================ */
+
+.etf-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--card-radius);
+    padding: 14px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.etf-card:hover {
+    border-color: var(--border-accent);
+}
+
+.etf-card.alert-elevated {
+    border-left: 3px solid var(--yellow);
+}
+
+.etf-card.alert-high {
+    border-left: 3px solid var(--orange);
+}
+
+.etf-card.alert-critical {
+    border-left: 3px solid var(--red);
+    animation: alert-pulse 2s infinite;
+}
+
+.etf-card.alert-extreme {
+    border-left: 3px solid var(--purple);
+    animation: extreme-pulse 1.5s infinite;
+}
+
+/* Card Header */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.card-ticker-group {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.card-ticker {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.section-long .card-ticker { color: var(--long-accent); }
+.section-short .card-ticker { color: var(--short-accent); }
+
+.card-name {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    max-width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-price-group {
+    text-align: right;
+}
+
+.card-price {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-bright);
+}
+
+.card-change {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.card-change.positive { color: var(--green); }
+.card-change.negative { color: var(--red); }
+
+/* Sparkline */
+.card-sparkline {
+    height: 50px;
+    margin: 8px 0;
+    position: relative;
+}
+
+.card-sparkline canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Volume Bar */
+.card-volume-bar {
+    height: 24px;
+    margin: 6px 0;
+    position: relative;
+}
+
+.card-volume-bar canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Metrics Row */
+.card-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+    margin: 8px 0;
+    padding: 8px 0;
+    border-top: 1px solid var(--border-primary);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.metric-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.metric-value {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Percentile Bands */
+.card-percentiles {
+    margin: 8px 0;
+}
+
+.percentile-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.percentile-label {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    width: 32px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.percentile-bar-bg {
+    flex: 1;
+    height: 10px;
+    background: var(--bg-primary);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+.percentile-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease, background 0.3s;
+}
+
+.percentile-value {
+    font-size: 0.65rem;
+    font-weight: 600;
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* Percentile color classes */
+.pct-quiet .percentile-bar-fill { background: var(--blue-dim); }
+.pct-elevated .percentile-bar-fill { background: var(--yellow); }
+.pct-high .percentile-bar-fill { background: var(--orange); }
+.pct-critical .percentile-bar-fill { background: var(--red); }
+.pct-extreme .percentile-bar-fill { background: var(--purple); }
+
+.pct-quiet .percentile-value { color: var(--blue); }
+.pct-elevated .percentile-value { color: var(--yellow); }
+.pct-high .percentile-value { color: var(--orange); }
+.pct-critical .percentile-value { color: var(--red); }
+.pct-extreme .percentile-value { color: var(--purple); }
+
+/* CVI / VPS Row */
+.card-indicators {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-primary);
+}
+
+.indicator-block {
+    text-align: center;
+}
+
+.indicator-label {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    display: block;
+}
+
+.indicator-value {
+    font-size: 0.9rem;
+    font-weight: 700;
+    display: block;
+    margin-top: 2px;
+}
+
+/* MWCA Badge */
+.mwca-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.mwca-badge.active {
+    background: var(--purple);
+    color: white;
+    animation: extreme-pulse 1.5s infinite;
+}
+
+.mwca-badge.inactive {
+    background: var(--bg-primary);
+    color: var(--text-muted);
+}
+
+/* ============================================
+   Volatility Panel
+   ============================================ */
+.card-volatility {
+    margin: 8px 0;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    border: 1px solid var(--border-primary);
+}
+
+.vol-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.vol-panel-title {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+/* Vol Regime Badge */
+.vol-regime-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+.vr-low     { background: rgba(61,184,122,0.12); color: var(--green); }
+.vr-quiet   { background: rgba(74,128,184,0.12); color: var(--blue); }
+.vr-normal  { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+.vr-high    { background: rgba(192,120,40,0.12); color: var(--orange); }
+.vr-extreme { background: rgba(192,64,64,0.12); color: var(--red); }
+.vr-unknown { background: transparent; color: var(--text-muted); }
+
+/* HV Bars */
+.hv-bars {
+    margin-bottom: 6px;
+}
+
+.hv-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+}
+
+.hv-label {
+    font-size: 0.58rem;
+    color: var(--text-muted);
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.hv-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-primary);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.hv-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+}
+.hv-bar-low     { background: var(--green); }
+.hv-bar-quiet   { background: var(--blue); }
+.hv-bar-normal  { background: #4a5a68; }
+.hv-bar-high    { background: var(--orange); }
+.hv-bar-extreme { background: var(--red); }
+
+.hv-value {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* Vol stat row */
+.vol-panel-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    border-top: 1px solid var(--border-primary);
+    padding-top: 5px;
+    margin-top: 2px;
+}
+
+.vol-stat {
+    text-align: center;
+    flex: 1;
+}
+
+.vol-stat-label {
+    font-size: 0.52rem;
+    color: var(--text-muted);
+    display: block;
+    letter-spacing: 0.3px;
+}
+
+.vol-stat-value {
+    font-size: 0.72rem;
+    font-weight: 600;
+    display: block;
+    margin-top: 1px;
+    color: var(--text-secondary);
+}
+
+/* HV Term Structure arrow colours */
+.ts-calm    { color: var(--green); }
+.ts-easing  { color: var(--blue); }
+.ts-neutral { color: var(--text-secondary); }
+.ts-building { color: var(--yellow); }
+.ts-accel   { color: var(--red); }
+
+/* Dollar Volume */
+.card-dollar-volume {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 0.65rem;
+}
+
+.card-dollar-volume .dv-label {
+    color: var(--text-muted);
+}
+
+.card-dollar-volume .dv-value {
+    font-weight: 600;
+}
