@@ -126,65 +126,84 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
 .legend-line { width: 16px; height: 2px; }
 
 /* ---- RANGE SLIDER (BRUSH) ---- */
+.range-slider-container { margin: 10px 0 20px; }
 .range-slider-wrap {
     position: relative;
-    height: 40px;
-    margin: 10px 0 20px;
-    background: #1a1a28;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-primary);
-    border-radius: 6px;
-    padding: 0 10px;
+    border-radius: 8px;
+    padding: 0 12px;
 }
 .range-slider-track {
     position: absolute;
-    top: 18px;
-    left: 10px;
-    right: 10px;
-    height: 4px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 2px;
+    top: 22px;
+    left: 12px;
+    right: 12px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+    z-index: 1;
 }
 .range-slider-highlight {
     position: absolute;
-    top: 18px;
-    height: 4px;
+    top: 22px;
+    height: 6px;
     background: var(--cyan);
-    border-radius: 2px;
+    border-radius: 3px;
+    z-index: 2;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
 }
 .range-inputs {
     position: relative;
-    height: 40px;
+    width: 100%;
 }
 .range-inputs input[type=range] {
     position: absolute;
     width: 100%;
-    top: 10px;
+    top: 8px;
     left: 0;
     pointer-events: none;
     -webkit-appearance: none;
+    appearance: none;
     background: none;
+    height: 32px;
+    margin: 0;
+    z-index: 3;
 }
 .range-inputs input[type=range]::-webkit-slider-thumb {
     pointer-events: auto;
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
     background: #fff;
     cursor: pointer;
     -webkit-appearance: none;
-    border: none;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    appearance: none;
+    border: 2px solid var(--cyan);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
-.range-inputs input[type=range]:hover::-webkit-slider-thumb {
-    background: var(--cyan);
+.range-inputs input[type=range]::-moz-range-thumb {
+    pointer-events: auto;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    background: #fff;
+    cursor: pointer;
+    border: 2px solid var(--cyan);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
+.range-inputs input[type=range]::-webkit-slider-runnable-track { background: none; border: none; }
+.range-inputs input[type=range]::-moz-range-track { background: none; border: none; }
+
 .range-labels {
     display: flex;
     justify-content: space-between;
-    font-size: 0.6rem;
+    font-size: 0.65rem;
     color: var(--text-dim);
     font-weight: 700;
-    margin-top: 5px;
+    margin-top: 8px;
+    letter-spacing: 0.5px;
 }
 .download-btn {
     font-size: 0.65rem;
@@ -830,6 +849,7 @@ function updateRangeUI() {
     const highlight = document.getElementById('range-highlight');
     const lblStart = document.getElementById('range-start-label');
     const lblEnd = document.getElementById('range-end-label');
+    const lblStatus = document.getElementById('range-active-label');
 
     const v1 = parseInt(sStart.value);
     const v2 = parseInt(sEnd.value);
@@ -843,6 +863,7 @@ function updateRangeUI() {
 
     lblStart.textContent = data.dates[v1] || '--';
     lblEnd.textContent = data.dates[v2] || '--';
+    lblStatus.textContent = state.timeRange === 'custom' ? 'CUSTOM SELECTION' : `PRESET: ${state.timeRange.toUpperCase()}`;
 }
 
 function downloadCSV() {
@@ -1134,19 +1155,6 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         ctx.lineWidth = 1.5;
         ctx.stroke();
     }
-
-    // -- Zoom Brush Slider (Simplified) --
-    drawRangeBrush(document.getElementById('range-slider-container'), data);
-}
-
-function drawRangeBrush(container, data) {
-    if (!container) return;
-    container.innerHTML = `<div style="width:100%; height:8px; background:#1a1a28; border-radius:4px; margin-top:15px; border:1px solid var(--border-primary)"></div>
-    <div style="font-size:0.55rem; color:var(--text-dim); display:flex; justify-content:space-between; margin-top:5px;">
-        <span>${data.dates[0]}</span>
-        <span>BRUSH REGION: ${state.timeRange.toUpperCase()}</span>
-        <span>${data.dates[data.dates.length-1]}</span>
-    </div>`;
 }
 
 (async () => {
