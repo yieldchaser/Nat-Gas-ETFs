@@ -1,15 +1,18 @@
 {
-  "last_updated": "2026-03-17T10:06:39.092443+00:00",
+  "last_updated": "2026-03-17T10:18:30.464018+00:00",
   "market_status": "pre_market",
   "ng_price_context": {
-    "price": 3.016,
+    "price": 3.025,
     "seasonal_zscore": -0.35,
-    "percentile_2yr": 42.7,
+    "percentile_2yr": 43.7,
     "tier": "seasonal_mid",
     "gate_short": false,
     "gate_long": false,
     "history_days": 504,
-    "seasonal_note": "vs 426 spring-month obs (\u03bc=$3.67, \u03c3=$1.87)"
+    "seasonal_note": "vs 426 spring-month obs (\u03bc=$3.67, \u03c3=$1.87)",
+    "ng_hv_21d": 55.761893,
+    "ng_hv_pct": 15.7,
+    "regime": "normal"
   },
   "etfs": {
     "BOIL": {
@@ -149,6 +152,191 @@
             "count": 152
           }
         },
+        "forward_returns_by_regime": {
+          "normal": {
+            "count": 143,
+            "forward_returns": {
+              "5d": {
+                "median": -0.56,
+                "mean": -0.037943,
+                "win_rate": 46.153846,
+                "best": 30.314961,
+                "worst": -29.598604,
+                "count": 143
+              },
+              "10d": {
+                "median": -0.119261,
+                "mean": 0.164418,
+                "win_rate": 49.295775,
+                "best": 45.767717,
+                "worst": -32.366908,
+                "count": 142
+              },
+              "21d": {
+                "median": -3.838481,
+                "mean": -0.994736,
+                "win_rate": 41.549296,
+                "best": 66.846361,
+                "worst": -49.286074,
+                "count": 142
+              },
+              "42d": {
+                "median": -8.876264,
+                "mean": -4.513777,
+                "win_rate": 35.915493,
+                "best": 103.176471,
+                "worst": -59.043928,
+                "count": 142
+              },
+              "63d": {
+                "median": -9.655341,
+                "mean": -5.353725,
+                "win_rate": 39.43662,
+                "best": 105.976931,
+                "worst": -71.620503,
+                "count": 142
+              },
+              "126d": {
+                "median": -28.605335,
+                "mean": -13.698399,
+                "win_rate": 23.913043,
+                "best": 200.0,
+                "worst": -76.019745,
+                "count": 138
+              },
+              "252d": {
+                "median": -43.037976,
+                "mean": -28.889504,
+                "win_rate": 22.834646,
+                "best": 200.0,
+                "worst": -88.14335,
+                "count": 127
+              }
+            }
+          },
+          "elevated": {
+            "count": 24,
+            "forward_returns": {
+              "5d": {
+                "median": -5.348744,
+                "mean": -5.917846,
+                "win_rate": 29.166667,
+                "best": 14.820349,
+                "worst": -32.152842,
+                "count": 24
+              },
+              "10d": {
+                "median": -5.7492,
+                "mean": -6.931938,
+                "win_rate": 33.333333,
+                "best": 22.904184,
+                "worst": -41.472507,
+                "count": 24
+              },
+              "21d": {
+                "median": -6.895202,
+                "mean": -8.011983,
+                "win_rate": 37.5,
+                "best": 39.888535,
+                "worst": -57.468997,
+                "count": 24
+              },
+              "42d": {
+                "median": -28.248571,
+                "mean": -18.992937,
+                "win_rate": 29.166667,
+                "best": 42.135268,
+                "worst": -83.624577,
+                "count": 24
+              },
+              "63d": {
+                "median": -42.302555,
+                "mean": -32.990368,
+                "win_rate": 25.0,
+                "best": 59.847138,
+                "worst": -82.553551,
+                "count": 24
+              },
+              "126d": {
+                "median": -49.878049,
+                "mean": -43.829538,
+                "win_rate": 13.043478,
+                "best": 64.611467,
+                "worst": -93.92313,
+                "count": 23
+              },
+              "252d": {
+                "median": -71.428571,
+                "mean": -53.811598,
+                "win_rate": 8.695652,
+                "best": 15.171949,
+                "worst": -95.463123,
+                "count": 23
+              }
+            }
+          },
+          "extreme": {
+            "count": 2,
+            "forward_returns": {
+              "5d": {
+                "median": -19.615859,
+                "mean": -19.615859,
+                "win_rate": 0.0,
+                "best": -11.836524,
+                "worst": -27.395195,
+                "count": 2
+              },
+              "10d": {
+                "median": -32.961923,
+                "mean": -32.961923,
+                "win_rate": 0.0,
+                "best": -23.20745,
+                "worst": -42.716397,
+                "count": 2
+              },
+              "21d": {
+                "median": -46.451758,
+                "mean": -46.451758,
+                "win_rate": 0.0,
+                "best": -44.36627,
+                "worst": -48.537247,
+                "count": 2
+              },
+              "42d": {
+                "median": -60.761884,
+                "mean": -60.761884,
+                "win_rate": 0.0,
+                "best": -58.499741,
+                "worst": -63.024027,
+                "count": 2
+              },
+              "63d": {
+                "median": -60.744337,
+                "mean": -60.744337,
+                "win_rate": 0.0,
+                "best": -58.198452,
+                "worst": -63.290222,
+                "count": 2
+              },
+              "126d": {
+                "median": -94.113497,
+                "mean": -94.113497,
+                "win_rate": 0.0,
+                "best": -93.595447,
+                "worst": -94.631547,
+                "count": 2
+              },
+              "252d": {
+                "median": -97.205289,
+                "mean": -97.205289,
+                "win_rate": 0.0,
+                "best": -97.152612,
+                "worst": -97.257967,
+                "count": 2
+              }
+            }
+          }
+        },
         "signal_edge_window": "42d",
         "lead_time": {
           "median_days": 63,
@@ -173,7 +361,8 @@
             },
             "days_to_peak": null,
             "season": "spring",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-12-09",
@@ -191,7 +380,8 @@
             },
             "days_to_peak": 21,
             "season": "winter",
-            "seasonality_weight": 1.3
+            "seasonality_weight": 1.3,
+            "ng_regime": "elevated"
           },
           {
             "date": "2025-11-25",
@@ -209,7 +399,8 @@
             },
             "days_to_peak": 63,
             "season": "winter",
-            "seasonality_weight": 1.3
+            "seasonality_weight": 1.3,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-10-28",
@@ -227,7 +418,8 @@
             },
             "days_to_peak": 10,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-10-10",
@@ -245,7 +437,8 @@
             },
             "days_to_peak": 63,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-09-22",
@@ -263,7 +456,8 @@
             },
             "days_to_peak": 42,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-09-11",
@@ -281,7 +475,8 @@
             },
             "days_to_peak": 42,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-08-22",
@@ -299,7 +494,8 @@
             },
             "days_to_peak": 63,
             "season": "summer",
-            "seasonality_weight": 0.85
+            "seasonality_weight": 0.85,
+            "ng_regime": "normal"
           }
         ]
       },
@@ -325,7 +521,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": false,
-            "ng_seasonal_z": -1.109396
+            "ng_seasonal_z": -1.109396,
+            "ng_regime": "normal"
           },
           {
             "date": "2020-06-25",
@@ -346,7 +543,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": false,
-            "ng_seasonal_z": -1.025027
+            "ng_seasonal_z": -1.025027,
+            "ng_regime": "normal"
           },
           {
             "date": "2016-10-25",
@@ -367,7 +565,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": false,
-            "ng_seasonal_z": -1.003413
+            "ng_seasonal_z": -1.003413,
+            "ng_regime": "normal"
           }
         ],
         "annual_rate": 0.215784,
@@ -2789,37 +2988,37 @@
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (5d) = 85.9 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-03-17T10:06:36.364592+00:00"
+          "timestamp": "2026-03-17T10:18:27.695316+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (126d) = 76.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-03-17T10:06:36.364592+00:00"
+          "timestamp": "2026-03-17T10:18:27.695316+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (252d) = 94.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-03-17T10:06:36.364592+00:00"
+          "timestamp": "2026-03-17T10:18:27.695316+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
           "message": "CVI (5d) = 75.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-03-17T10:06:36.364592+00:00"
+          "timestamp": "2026-03-17T10:18:27.695316+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
           "message": "CVI (126d) = 66.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-03-17T10:06:36.364592+00:00"
+          "timestamp": "2026-03-17T10:18:27.695316+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (252d) = 82.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-03-17T10:06:36.364592+00:00"
+          "timestamp": "2026-03-17T10:18:27.695316+00:00"
         }
       ]
     },
@@ -2960,6 +3159,191 @@
             "count": 203
           }
         },
+        "forward_returns_by_regime": {
+          "normal": {
+            "count": 173,
+            "forward_returns": {
+              "5d": {
+                "median": -2.179837,
+                "mean": -0.844555,
+                "win_rate": 40.462428,
+                "best": 37.857737,
+                "worst": -23.107056,
+                "count": 173
+              },
+              "10d": {
+                "median": -1.682795,
+                "mean": -1.339553,
+                "win_rate": 44.186047,
+                "best": 43.109241,
+                "worst": -35.940069,
+                "count": 172
+              },
+              "21d": {
+                "median": -4.667558,
+                "mean": -1.480833,
+                "win_rate": 41.860465,
+                "best": 69.565212,
+                "worst": -43.560603,
+                "count": 172
+              },
+              "42d": {
+                "median": -11.47853,
+                "mean": -4.939534,
+                "win_rate": 36.627907,
+                "best": 89.291448,
+                "worst": -58.969957,
+                "count": 172
+              },
+              "63d": {
+                "median": -12.811395,
+                "mean": -8.016407,
+                "win_rate": 33.139535,
+                "best": 122.279793,
+                "worst": -65.135894,
+                "count": 172
+              },
+              "126d": {
+                "median": -28.535443,
+                "mean": -19.378635,
+                "win_rate": 20.833333,
+                "best": 200.0,
+                "worst": -83.687107,
+                "count": 168
+              },
+              "252d": {
+                "median": -51.335013,
+                "mean": -34.937188,
+                "win_rate": 20.382166,
+                "best": 200.0,
+                "worst": -88.791423,
+                "count": 157
+              }
+            }
+          },
+          "elevated": {
+            "count": 43,
+            "forward_returns": {
+              "5d": {
+                "median": -6.165228,
+                "mean": -5.647813,
+                "win_rate": 30.232558,
+                "best": 19.930676,
+                "worst": -26.594981,
+                "count": 43
+              },
+              "10d": {
+                "median": -7.188498,
+                "mean": -5.758158,
+                "win_rate": 32.55814,
+                "best": 38.016529,
+                "worst": -42.744891,
+                "count": 43
+              },
+              "21d": {
+                "median": -15.780347,
+                "mean": -11.167737,
+                "win_rate": 32.55814,
+                "best": 42.662116,
+                "worst": -66.37401,
+                "count": 43
+              },
+              "42d": {
+                "median": -32.006633,
+                "mean": -25.898904,
+                "win_rate": 18.604651,
+                "best": 35.942756,
+                "worst": -84.196663,
+                "count": 43
+              },
+              "63d": {
+                "median": -41.886121,
+                "mean": -35.740542,
+                "win_rate": 13.953488,
+                "best": 70.202013,
+                "worst": -83.067017,
+                "count": 43
+              },
+              "126d": {
+                "median": -49.266524,
+                "mean": -44.222737,
+                "win_rate": 7.142857,
+                "best": 103.303291,
+                "worst": -94.529915,
+                "count": 42
+              },
+              "252d": {
+                "median": -66.649378,
+                "mean": -59.413578,
+                "win_rate": 7.317073,
+                "best": 59.609605,
+                "worst": -95.793531,
+                "count": 41
+              }
+            }
+          },
+          "extreme": {
+            "count": 5,
+            "forward_returns": {
+              "5d": {
+                "median": -12.042819,
+                "mean": -4.86912,
+                "win_rate": 20.0,
+                "best": 38.181818,
+                "worst": -27.631203,
+                "count": 5
+              },
+              "10d": {
+                "median": -20.933735,
+                "mean": -2.891193,
+                "win_rate": 20.0,
+                "best": 83.272727,
+                "worst": -42.968977,
+                "count": 5
+              },
+              "21d": {
+                "median": -31.325301,
+                "mean": -4.649428,
+                "win_rate": 20.0,
+                "best": 109.090909,
+                "worst": -50.739347,
+                "count": 5
+              },
+              "42d": {
+                "median": -1.731928,
+                "mean": -16.039885,
+                "win_rate": 40.0,
+                "best": 30.909091,
+                "worst": -64.71441,
+                "count": 5
+              },
+              "63d": {
+                "median": -17.921687,
+                "mean": -28.866974,
+                "win_rate": 20.0,
+                "best": 5.206287,
+                "worst": -66.131431,
+                "count": 5
+              },
+              "126d": {
+                "median": -53.840361,
+                "mean": -59.420115,
+                "win_rate": 0.0,
+                "best": -8.606061,
+                "worst": -95.202474,
+                "count": 5
+              },
+              "252d": {
+                "median": -78.539157,
+                "mean": -77.956626,
+                "win_rate": 0.0,
+                "best": -49.939394,
+                "worst": -97.571613,
+                "count": 5
+              }
+            }
+          }
+        },
         "signal_edge_window": "63d",
         "lead_time": {
           "median_days": 63,
@@ -2984,7 +3368,8 @@
             },
             "days_to_peak": null,
             "season": "spring",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-12-09",
@@ -3002,7 +3387,8 @@
             },
             "days_to_peak": 21,
             "season": "winter",
-            "seasonality_weight": 1.3
+            "seasonality_weight": 1.3,
+            "ng_regime": "elevated"
           },
           {
             "date": "2025-11-25",
@@ -3020,7 +3406,8 @@
             },
             "days_to_peak": 63,
             "season": "winter",
-            "seasonality_weight": 1.3
+            "seasonality_weight": 1.3,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-10-28",
@@ -3038,7 +3425,8 @@
             },
             "days_to_peak": 10,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-10-10",
@@ -3056,7 +3444,8 @@
             },
             "days_to_peak": 21,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-09-22",
@@ -3074,7 +3463,8 @@
             },
             "days_to_peak": 42,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-09-11",
@@ -3092,7 +3482,8 @@
             },
             "days_to_peak": 42,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-08-22",
@@ -3110,7 +3501,8 @@
             },
             "days_to_peak": 63,
             "season": "summer",
-            "seasonality_weight": 0.85
+            "seasonality_weight": 0.85,
+            "ng_regime": "normal"
           }
         ]
       },
@@ -3136,7 +3528,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": false,
-            "ng_seasonal_z": -1.109396
+            "ng_seasonal_z": -1.109396,
+            "ng_regime": "normal"
           },
           {
             "date": "2020-12-03",
@@ -3157,7 +3550,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": false,
-            "ng_seasonal_z": -1.040206
+            "ng_seasonal_z": -1.040206,
+            "ng_regime": "normal"
           },
           {
             "date": "2020-06-25",
@@ -3178,7 +3572,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": false,
-            "ng_seasonal_z": -1.025027
+            "ng_seasonal_z": -1.025027,
+            "ng_regime": "normal"
           },
           {
             "date": "2016-10-25",
@@ -3199,7 +3594,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": false,
-            "ng_seasonal_z": -1.003413
+            "ng_seasonal_z": -1.003413,
+            "ng_regime": "normal"
           },
           {
             "date": "2015-10-26",
@@ -3220,7 +3616,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": false,
-            "ng_seasonal_z": -1.568761
+            "ng_seasonal_z": -1.568761,
+            "ng_regime": "elevated"
           },
           {
             "date": "2010-11-01",
@@ -3241,7 +3638,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": false,
-            "ng_seasonal_z": -1.873763
+            "ng_seasonal_z": -1.873763,
+            "ng_regime": "elevated"
           },
           {
             "date": "2010-10-07",
@@ -3262,7 +3660,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": false,
-            "ng_seasonal_z": -2.060066
+            "ng_seasonal_z": -2.060066,
+            "ng_regime": "elevated"
           },
           {
             "date": "2010-04-01",
@@ -3283,7 +3682,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": false,
-            "ng_seasonal_z": -1.098602
+            "ng_seasonal_z": -1.098602,
+            "ng_regime": "normal"
           }
         ],
         "annual_rate": 0.453797,
@@ -5705,31 +6105,31 @@
           "type": "vcvi_warning",
           "side": "long",
           "message": "VCVI (5d) = 55.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-03-17T10:06:37.001674+00:00"
+          "timestamp": "2026-03-17T10:18:28.353319+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (126d) = 74.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-03-17T10:06:37.001674+00:00"
+          "timestamp": "2026-03-17T10:18:28.353319+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (252d) = 92.1 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-03-17T10:06:37.001674+00:00"
+          "timestamp": "2026-03-17T10:18:28.353319+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
           "message": "CVI (126d) = 66.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-03-17T10:06:37.001674+00:00"
+          "timestamp": "2026-03-17T10:18:28.353319+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (252d) = 82.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-03-17T10:06:37.001674+00:00"
+          "timestamp": "2026-03-17T10:18:28.353319+00:00"
         }
       ]
     },
@@ -5870,6 +6270,191 @@
             "count": 110
           }
         },
+        "forward_returns_by_regime": {
+          "normal": {
+            "count": 94,
+            "forward_returns": {
+              "5d": {
+                "median": -3.228233,
+                "mean": -1.715658,
+                "win_rate": 41.489362,
+                "best": 200.0,
+                "worst": -52.249628,
+                "count": 94
+              },
+              "10d": {
+                "median": -1.717198,
+                "mean": 1.861364,
+                "win_rate": 44.680851,
+                "best": 200.0,
+                "worst": -57.775097,
+                "count": 94
+              },
+              "21d": {
+                "median": -7.614058,
+                "mean": 1.767351,
+                "win_rate": 40.425532,
+                "best": 200.0,
+                "worst": -67.714286,
+                "count": 94
+              },
+              "42d": {
+                "median": -10.91425,
+                "mean": -3.169239,
+                "win_rate": 31.914894,
+                "best": 200.0,
+                "worst": -75.162025,
+                "count": 94
+              },
+              "63d": {
+                "median": -23.770688,
+                "mean": -7.930782,
+                "win_rate": 28.723404,
+                "best": 200.0,
+                "worst": -84.714285,
+                "count": 94
+              },
+              "126d": {
+                "median": -46.342241,
+                "mean": -15.392497,
+                "win_rate": 20.652174,
+                "best": 200.0,
+                "worst": -92.366413,
+                "count": 92
+              },
+              "252d": {
+                "median": -60.726144,
+                "mean": 4.786501,
+                "win_rate": 31.764706,
+                "best": 200.0,
+                "worst": -94.723265,
+                "count": 85
+              }
+            }
+          },
+          "elevated": {
+            "count": 23,
+            "forward_returns": {
+              "5d": {
+                "median": -4.355441,
+                "mean": -2.152587,
+                "win_rate": 43.478261,
+                "best": 49.919892,
+                "worst": -29.644734,
+                "count": 23
+              },
+              "10d": {
+                "median": -8.044689,
+                "mean": -6.192404,
+                "win_rate": 43.478261,
+                "best": 66.0708,
+                "worst": -47.824974,
+                "count": 23
+              },
+              "21d": {
+                "median": -15.495737,
+                "mean": -11.25507,
+                "win_rate": 39.130435,
+                "best": 72.927886,
+                "worst": -65.61482,
+                "count": 23
+              },
+              "42d": {
+                "median": -41.728394,
+                "mean": -28.971255,
+                "win_rate": 17.391304,
+                "best": 109.377484,
+                "worst": -70.99968,
+                "count": 23
+              },
+              "63d": {
+                "median": -59.624897,
+                "mean": -42.210912,
+                "win_rate": 17.391304,
+                "best": 101.786387,
+                "worst": -90.881282,
+                "count": 23
+              },
+              "126d": {
+                "median": -66.081247,
+                "mean": -51.912867,
+                "win_rate": 13.636364,
+                "best": 70.771506,
+                "worst": -98.322035,
+                "count": 22
+              },
+              "252d": {
+                "median": -94.900043,
+                "mean": -76.174888,
+                "win_rate": 0.0,
+                "best": -23.48405,
+                "worst": -99.184733,
+                "count": 20
+              }
+            }
+          },
+          "extreme": {
+            "count": 5,
+            "forward_returns": {
+              "5d": {
+                "median": -19.008266,
+                "mean": -14.93273,
+                "win_rate": 20.0,
+                "best": 32.246466,
+                "worst": -59.167228,
+                "count": 5
+              },
+              "10d": {
+                "median": -19.129,
+                "mean": -29.316435,
+                "win_rate": 20.0,
+                "best": 5.79711,
+                "worst": -66.676248,
+                "count": 5
+              },
+              "21d": {
+                "median": -40.169588,
+                "mean": -40.385228,
+                "win_rate": 20.0,
+                "best": 14.492764,
+                "worst": -75.755263,
+                "count": 5
+              },
+              "42d": {
+                "median": -50.0,
+                "mean": -51.201255,
+                "win_rate": 0.0,
+                "best": -46.605763,
+                "worst": -57.43763,
+                "count": 5
+              },
+              "63d": {
+                "median": -77.297479,
+                "mean": -70.424743,
+                "win_rate": 0.0,
+                "best": -56.611571,
+                "worst": -81.121532,
+                "count": 5
+              },
+              "126d": {
+                "median": -89.979384,
+                "mean": -32.164284,
+                "win_rate": 20.0,
+                "best": 200.0,
+                "worst": -98.666784,
+                "count": 5
+              },
+              "252d": {
+                "median": -99.507826,
+                "mean": -6.662829,
+                "win_rate": 40.0,
+                "best": 200.0,
+                "worst": -99.80385,
+                "count": 5
+              }
+            }
+          }
+        },
         "signal_edge_window": "63d",
         "lead_time": {
           "median_days": 63,
@@ -5894,7 +6479,8 @@
             },
             "days_to_peak": 42,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "elevated"
           },
           {
             "date": "2025-10-10",
@@ -5912,7 +6498,8 @@
             },
             "days_to_peak": 63,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-09-25",
@@ -5930,7 +6517,8 @@
             },
             "days_to_peak": 63,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-09-02",
@@ -5948,7 +6536,8 @@
             },
             "days_to_peak": 63,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-08-19",
@@ -5966,7 +6555,8 @@
             },
             "days_to_peak": 63,
             "season": "summer",
-            "seasonality_weight": 0.85
+            "seasonality_weight": 0.85,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-08-07",
@@ -5984,7 +6574,8 @@
             },
             "days_to_peak": 10,
             "season": "summer",
-            "seasonality_weight": 0.85
+            "seasonality_weight": 0.85,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-07-28",
@@ -6002,7 +6593,8 @@
             },
             "days_to_peak": 21,
             "season": "summer",
-            "seasonality_weight": 0.85
+            "seasonality_weight": 0.85,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-06-24",
@@ -6020,7 +6612,8 @@
             },
             "days_to_peak": 63,
             "season": "summer",
-            "seasonality_weight": 0.85
+            "seasonality_weight": 0.85,
+            "ng_regime": "normal"
           }
         ]
       },
@@ -6046,7 +6639,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": false,
-            "ng_seasonal_z": -1.220654
+            "ng_seasonal_z": -1.220654,
+            "ng_regime": "normal"
           },
           {
             "date": "2015-11-20",
@@ -6067,7 +6661,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": false,
-            "ng_seasonal_z": -1.527108
+            "ng_seasonal_z": -1.527108,
+            "ng_regime": "elevated"
           },
           {
             "date": "2015-10-26",
@@ -6088,7 +6683,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": false,
-            "ng_seasonal_z": -1.568761
+            "ng_seasonal_z": -1.568761,
+            "ng_regime": "elevated"
           }
         ],
         "annual_rate": 0.236408,
@@ -8644,6 +9240,191 @@
             "count": 135
           }
         },
+        "forward_returns_by_regime": {
+          "normal": {
+            "count": 122,
+            "forward_returns": {
+              "5d": {
+                "median": 1.591487,
+                "mean": 1.514148,
+                "win_rate": 54.098361,
+                "best": 40.546967,
+                "worst": -24.148102,
+                "count": 122
+              },
+              "10d": {
+                "median": 2.266121,
+                "mean": 2.745501,
+                "win_rate": 58.677686,
+                "best": 46.349589,
+                "worst": -30.559167,
+                "count": 121
+              },
+              "21d": {
+                "median": 2.85593,
+                "mean": 3.041259,
+                "win_rate": 53.719008,
+                "best": 83.947681,
+                "worst": -53.05592,
+                "count": 121
+              },
+              "42d": {
+                "median": 1.26249,
+                "mean": 2.210514,
+                "win_rate": 53.719008,
+                "best": 112.053275,
+                "worst": -59.102731,
+                "count": 121
+              },
+              "63d": {
+                "median": -2.495309,
+                "mean": 3.230173,
+                "win_rate": 46.280992,
+                "best": 141.51643,
+                "worst": -77.414722,
+                "count": 121
+              },
+              "126d": {
+                "median": -2.377108,
+                "mean": 6.686576,
+                "win_rate": 48.305085,
+                "best": 200.0,
+                "worst": -86.561939,
+                "count": 118
+              },
+              "252d": {
+                "median": -12.047727,
+                "mean": 1.892804,
+                "win_rate": 43.75,
+                "best": 198.962793,
+                "worst": -96.609233,
+                "count": 112
+              }
+            }
+          },
+          "elevated": {
+            "count": 21,
+            "forward_returns": {
+              "5d": {
+                "median": -2.234045,
+                "mean": -0.49832,
+                "win_rate": 38.095238,
+                "best": 61.338583,
+                "worst": -26.401299,
+                "count": 21
+              },
+              "10d": {
+                "median": -1.030658,
+                "mean": -2.412057,
+                "win_rate": 42.857143,
+                "best": 35.323169,
+                "worst": -34.689132,
+                "count": 21
+              },
+              "21d": {
+                "median": -4.348815,
+                "mean": 1.494918,
+                "win_rate": 47.619048,
+                "best": 99.606305,
+                "worst": -63.11628,
+                "count": 21
+              },
+              "42d": {
+                "median": 2.024879,
+                "mean": 9.073521,
+                "win_rate": 57.142857,
+                "best": 200.0,
+                "worst": -71.953487,
+                "count": 21
+              },
+              "63d": {
+                "median": 2.7371,
+                "mean": 14.297398,
+                "win_rate": 52.380952,
+                "best": 200.0,
+                "worst": -70.034883,
+                "count": 21
+              },
+              "126d": {
+                "median": 15.659273,
+                "mean": 13.487053,
+                "win_rate": 61.111111,
+                "best": 200.0,
+                "worst": -84.523255,
+                "count": 18
+              },
+              "252d": {
+                "median": 5.087139,
+                "mean": 24.604134,
+                "win_rate": 55.555556,
+                "best": 200.0,
+                "worst": -80.126288,
+                "count": 18
+              }
+            }
+          },
+          "extreme": {
+            "count": 5,
+            "forward_returns": {
+              "5d": {
+                "median": 10.816537,
+                "mean": 10.124691,
+                "win_rate": 60.0,
+                "best": 31.003943,
+                "worst": -11.046511,
+                "count": 5
+              },
+              "10d": {
+                "median": 2.143765,
+                "mean": 15.486097,
+                "win_rate": 60.0,
+                "best": 59.84252,
+                "worst": -15.199335,
+                "count": 5
+              },
+              "21d": {
+                "median": 2.15947,
+                "mean": 16.310489,
+                "win_rate": 60.0,
+                "best": 69.586612,
+                "worst": -23.959643,
+                "count": 5
+              },
+              "42d": {
+                "median": 66.304933,
+                "mean": 63.856345,
+                "win_rate": 80.0,
+                "best": 148.992564,
+                "worst": -18.757878,
+                "count": 5
+              },
+              "63d": {
+                "median": 51.99335,
+                "mean": 62.102505,
+                "win_rate": 80.0,
+                "best": 200.0,
+                "worst": -36.664563,
+                "count": 5
+              },
+              "126d": {
+                "median": 370.348848,
+                "mean": 152.42749,
+                "win_rate": 80.0,
+                "best": 200.0,
+                "worst": -37.862549,
+                "count": 5
+              },
+              "252d": {
+                "median": 299.003331,
+                "mean": 174.248423,
+                "win_rate": 100.0,
+                "best": 200.0,
+                "worst": 118.284992,
+                "count": 5
+              }
+            }
+          }
+        },
         "signal_edge_window": "10d",
         "lead_time": {
           "median_days": 63,
@@ -8668,7 +9449,8 @@
             },
             "days_to_peak": null,
             "season": "spring",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-12-01",
@@ -8686,7 +9468,8 @@
             },
             "days_to_peak": 21,
             "season": "winter",
-            "seasonality_weight": 1.3
+            "seasonality_weight": 1.3,
+            "ng_regime": "elevated"
           },
           {
             "date": "2025-11-20",
@@ -8704,7 +9487,8 @@
             },
             "days_to_peak": 21,
             "season": "winter",
-            "seasonality_weight": 1.3
+            "seasonality_weight": 1.3,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-11-10",
@@ -8722,7 +9506,8 @@
             },
             "days_to_peak": 42,
             "season": "winter",
-            "seasonality_weight": 1.3
+            "seasonality_weight": 1.3,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-10-30",
@@ -8740,7 +9525,8 @@
             },
             "days_to_peak": 63,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "elevated"
           },
           {
             "date": "2025-10-20",
@@ -8758,7 +9544,8 @@
             },
             "days_to_peak": 63,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "elevated"
           },
           {
             "date": "2025-09-30",
@@ -8776,7 +9563,8 @@
             },
             "days_to_peak": 42,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-09-08",
@@ -8794,7 +9582,8 @@
             },
             "days_to_peak": 63,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           }
         ]
       },
@@ -11178,25 +11967,25 @@
           "type": "vcvi_warning",
           "side": "short",
           "message": "VCVI (126d) = 67.8 \u2014 potential gas top \u2014 short/inverse setup",
-          "timestamp": "2026-03-17T10:06:37.981289+00:00"
+          "timestamp": "2026-03-17T10:18:29.339510+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "short",
           "message": "VCVI (252d) = 76.8 \u2014 potential gas top \u2014 short/inverse setup",
-          "timestamp": "2026-03-17T10:06:37.981289+00:00"
+          "timestamp": "2026-03-17T10:18:29.339510+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "short",
           "message": "CVI (126d) = 60.7 \u2014 potential gas top \u2014 short/inverse setup",
-          "timestamp": "2026-03-17T10:06:37.981289+00:00"
+          "timestamp": "2026-03-17T10:18:29.339510+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "short",
           "message": "CVI (252d) = 68.8 \u2014 potential gas top \u2014 short/inverse setup",
-          "timestamp": "2026-03-17T10:06:37.981289+00:00"
+          "timestamp": "2026-03-17T10:18:29.339510+00:00"
         }
       ]
     },
@@ -11337,6 +12126,191 @@
             "count": 178
           }
         },
+        "forward_returns_by_regime": {
+          "normal": {
+            "count": 141,
+            "forward_returns": {
+              "5d": {
+                "median": 0.487016,
+                "mean": 0.43111,
+                "win_rate": 53.191489,
+                "best": 34.793767,
+                "worst": -34.051074,
+                "count": 141
+              },
+              "10d": {
+                "median": 1.896594,
+                "mean": 1.710241,
+                "win_rate": 55.714286,
+                "best": 48.313492,
+                "worst": -39.587153,
+                "count": 140
+              },
+              "21d": {
+                "median": 0.570804,
+                "mean": 1.761196,
+                "win_rate": 51.428571,
+                "best": 107.91934,
+                "worst": -53.296703,
+                "count": 140
+              },
+              "42d": {
+                "median": -2.511601,
+                "mean": 0.73773,
+                "win_rate": 47.857143,
+                "best": 127.367349,
+                "worst": -67.837627,
+                "count": 140
+              },
+              "63d": {
+                "median": -4.010271,
+                "mean": 0.000894,
+                "win_rate": 45.0,
+                "best": 149.509804,
+                "worst": -79.450465,
+                "count": 140
+              },
+              "126d": {
+                "median": -4.415584,
+                "mean": 4.810548,
+                "win_rate": 45.323741,
+                "best": 200.0,
+                "worst": -86.919505,
+                "count": 139
+              },
+              "252d": {
+                "median": -9.069085,
+                "mean": 2.798223,
+                "win_rate": 44.776119,
+                "best": 200.0,
+                "worst": -96.950549,
+                "count": 134
+              }
+            }
+          },
+          "elevated": {
+            "count": 41,
+            "forward_returns": {
+              "5d": {
+                "median": 0.842355,
+                "mean": -0.66342,
+                "win_rate": 51.219512,
+                "best": 24.297753,
+                "worst": -36.900368,
+                "count": 41
+              },
+              "10d": {
+                "median": 2.857143,
+                "mean": 1.449414,
+                "win_rate": 51.219512,
+                "best": 36.952717,
+                "worst": -39.416986,
+                "count": 41
+              },
+              "21d": {
+                "median": 7.894737,
+                "mean": 6.522752,
+                "win_rate": 60.97561,
+                "best": 68.128655,
+                "worst": -63.186222,
+                "count": 41
+              },
+              "42d": {
+                "median": 13.781513,
+                "mean": 12.389168,
+                "win_rate": 60.97561,
+                "best": 88.050314,
+                "worst": -72.335845,
+                "count": 41
+              },
+              "63d": {
+                "median": 17.481203,
+                "mean": 20.725589,
+                "win_rate": 65.853659,
+                "best": 132.216299,
+                "worst": -70.613564,
+                "count": 41
+              },
+              "126d": {
+                "median": 9.878665,
+                "mean": 15.989261,
+                "win_rate": 55.555556,
+                "best": 200.0,
+                "worst": -84.930033,
+                "count": 36
+              },
+              "252d": {
+                "median": 39.120879,
+                "mean": 44.604081,
+                "win_rate": 74.285714,
+                "best": 200.0,
+                "worst": -83.508772,
+                "count": 35
+              }
+            }
+          },
+          "extreme": {
+            "count": 9,
+            "forward_returns": {
+              "5d": {
+                "median": 20.760229,
+                "mean": 11.973957,
+                "win_rate": 77.777778,
+                "best": 31.484956,
+                "worst": -27.061649,
+                "count": 9
+              },
+              "10d": {
+                "median": 31.474289,
+                "mean": 22.331765,
+                "win_rate": 77.777778,
+                "best": 60.52631,
+                "worst": -14.960627,
+                "count": 9
+              },
+              "21d": {
+                "median": 39.899998,
+                "mean": 24.333284,
+                "win_rate": 66.666667,
+                "best": 77.725557,
+                "worst": -25.114155,
+                "count": 9
+              },
+              "42d": {
+                "median": -0.632911,
+                "mean": 32.609894,
+                "win_rate": 44.444444,
+                "best": 181.800003,
+                "worst": -24.770641,
+                "count": 9
+              },
+              "63d": {
+                "median": 2.320675,
+                "mean": 3.07202,
+                "win_rate": 55.555556,
+                "best": 44.399996,
+                "worst": -39.473683,
+                "count": 9
+              },
+              "126d": {
+                "median": 25.257143,
+                "mean": 74.132623,
+                "win_rate": 77.777778,
+                "best": 200.0,
+                "worst": -33.421053,
+                "count": 9
+              },
+              "252d": {
+                "median": 151.054852,
+                "mean": 125.604542,
+                "win_rate": 100.0,
+                "best": 200.0,
+                "worst": 13.6,
+                "count": 9
+              }
+            }
+          }
+        },
         "signal_edge_window": "10d",
         "lead_time": {
           "median_days": 63,
@@ -11361,7 +12335,8 @@
             },
             "days_to_peak": null,
             "season": "spring",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-12-01",
@@ -11379,7 +12354,8 @@
             },
             "days_to_peak": 10,
             "season": "winter",
-            "seasonality_weight": 1.3
+            "seasonality_weight": 1.3,
+            "ng_regime": "elevated"
           },
           {
             "date": "2025-11-21",
@@ -11397,7 +12373,8 @@
             },
             "days_to_peak": 21,
             "season": "winter",
-            "seasonality_weight": 1.3
+            "seasonality_weight": 1.3,
+            "ng_regime": "elevated"
           },
           {
             "date": "2025-11-11",
@@ -11415,7 +12392,8 @@
             },
             "days_to_peak": 63,
             "season": "winter",
-            "seasonality_weight": 1.3
+            "seasonality_weight": 1.3,
+            "ng_regime": "elevated"
           },
           {
             "date": "2025-10-30",
@@ -11433,7 +12411,8 @@
             },
             "days_to_peak": 63,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "elevated"
           },
           {
             "date": "2025-10-20",
@@ -11451,7 +12430,8 @@
             },
             "days_to_peak": 63,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "elevated"
           },
           {
             "date": "2025-09-29",
@@ -11469,7 +12449,8 @@
             },
             "days_to_peak": 42,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-09-08",
@@ -11487,7 +12468,8 @@
             },
             "days_to_peak": 63,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           }
         ]
       },
@@ -11513,7 +12495,8 @@
             },
             "extreme_override": false,
             "momentum_guard_active": true,
-            "ng_seasonal_z": 3.298237
+            "ng_seasonal_z": 3.298237,
+            "ng_regime": "extreme"
           }
         ],
         "annual_rate": 0.056725,
@@ -13935,13 +14918,13 @@
           "type": "vcvi_warning",
           "side": "short",
           "message": "VCVI (252d) = 65.7 \u2014 potential gas top \u2014 short/inverse setup",
-          "timestamp": "2026-03-17T10:06:38.616948+00:00"
+          "timestamp": "2026-03-17T10:18:29.978351+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "short",
           "message": "CVI (252d) = 61.4 \u2014 potential gas top \u2014 short/inverse setup",
-          "timestamp": "2026-03-17T10:06:38.616948+00:00"
+          "timestamp": "2026-03-17T10:18:29.978351+00:00"
         }
       ]
     },
@@ -14082,6 +15065,191 @@
             "count": 84
           }
         },
+        "forward_returns_by_regime": {
+          "normal": {
+            "count": 71,
+            "forward_returns": {
+              "5d": {
+                "median": 0.819964,
+                "mean": 0.927784,
+                "win_rate": 50.704225,
+                "best": 33.806877,
+                "worst": -35.413777,
+                "count": 71
+              },
+              "10d": {
+                "median": -0.906631,
+                "mean": 3.735013,
+                "win_rate": 47.887324,
+                "best": 67.368421,
+                "worst": -46.409432,
+                "count": 71
+              },
+              "21d": {
+                "median": 3.785612,
+                "mean": 4.948047,
+                "win_rate": 53.521127,
+                "best": 97.698032,
+                "worst": -66.157556,
+                "count": 71
+              },
+              "42d": {
+                "median": -1.865049,
+                "mean": 1.386104,
+                "win_rate": 43.661972,
+                "best": 200.0,
+                "worst": -86.665552,
+                "count": 71
+              },
+              "63d": {
+                "median": -10.475365,
+                "mean": 2.081472,
+                "win_rate": 39.43662,
+                "best": 200.0,
+                "worst": -95.310249,
+                "count": 71
+              },
+              "126d": {
+                "median": -18.068207,
+                "mean": 9.594932,
+                "win_rate": 39.705882,
+                "best": 200.0,
+                "worst": -93.455736,
+                "count": 68
+              },
+              "252d": {
+                "median": -65.026535,
+                "mean": -23.50105,
+                "win_rate": 29.230769,
+                "best": 200.0,
+                "worst": -99.750804,
+                "count": 65
+              }
+            }
+          },
+          "elevated": {
+            "count": 19,
+            "forward_returns": {
+              "5d": {
+                "median": -2.801004,
+                "mean": -4.145798,
+                "win_rate": 47.368421,
+                "best": 25.88165,
+                "worst": -41.160221,
+                "count": 19
+              },
+              "10d": {
+                "median": -12.284687,
+                "mean": -7.112965,
+                "win_rate": 31.578947,
+                "best": 56.58863,
+                "worst": -44.486692,
+                "count": 19
+              },
+              "21d": {
+                "median": -2.705616,
+                "mean": -3.703208,
+                "win_rate": 42.105263,
+                "best": 102.943147,
+                "worst": -73.368146,
+                "count": 19
+              },
+              "42d": {
+                "median": 1.016689,
+                "mean": -4.681442,
+                "win_rate": 52.631579,
+                "best": 106.567799,
+                "worst": -88.250653,
+                "count": 19
+              },
+              "63d": {
+                "median": -9.632104,
+                "mean": -9.128775,
+                "win_rate": 42.105263,
+                "best": 88.276837,
+                "worst": -94.209994,
+                "count": 19
+              },
+              "126d": {
+                "median": -68.984376,
+                "mean": -26.787146,
+                "win_rate": 31.25,
+                "best": 200.0,
+                "worst": -96.579635,
+                "count": 16
+              },
+              "252d": {
+                "median": -80.254899,
+                "mean": -10.701532,
+                "win_rate": 28.571429,
+                "best": 200.0,
+                "worst": -99.348476,
+                "count": 14
+              }
+            }
+          },
+          "extreme": {
+            "count": 5,
+            "forward_returns": {
+              "5d": {
+                "median": 0.490196,
+                "mean": 8.024562,
+                "win_rate": 60.0,
+                "best": 46.308863,
+                "worst": -22.564103,
+                "count": 5
+              },
+              "10d": {
+                "median": 0.0,
+                "mean": -11.272966,
+                "win_rate": 40.0,
+                "best": 26.999794,
+                "worst": -43.076923,
+                "count": 5
+              },
+              "21d": {
+                "median": 3.73832,
+                "mean": -6.751019,
+                "win_rate": 60.0,
+                "best": 61.682252,
+                "worst": -55.882353,
+                "count": 5
+              },
+              "42d": {
+                "median": 74.789225,
+                "mean": 42.551739,
+                "win_rate": 60.0,
+                "best": 100.934586,
+                "worst": -38.72549,
+                "count": 5
+              },
+              "63d": {
+                "median": -12.149528,
+                "mean": -10.52781,
+                "win_rate": 40.0,
+                "best": 59.777915,
+                "worst": -80.205128,
+                "count": 5
+              },
+              "126d": {
+                "median": 34.03249,
+                "mean": 56.334402,
+                "win_rate": 60.0,
+                "best": 200.0,
+                "worst": -77.948718,
+                "count": 5
+              },
+              "252d": {
+                "median": 9.702229,
+                "mean": 61.936628,
+                "win_rate": 60.0,
+                "best": 200.0,
+                "worst": -84.955789,
+                "count": 5
+              }
+            }
+          }
+        },
         "signal_edge_window": "63d",
         "lead_time": {
           "median_days": 42,
@@ -14106,7 +15274,8 @@
             },
             "days_to_peak": 21,
             "season": "winter",
-            "seasonality_weight": 1.3
+            "seasonality_weight": 1.3,
+            "ng_regime": "elevated"
           },
           {
             "date": "2025-11-20",
@@ -14124,7 +15293,8 @@
             },
             "days_to_peak": 21,
             "season": "winter",
-            "seasonality_weight": 1.3
+            "seasonality_weight": 1.3,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-11-10",
@@ -14142,7 +15312,8 @@
             },
             "days_to_peak": 42,
             "season": "winter",
-            "seasonality_weight": 1.3
+            "seasonality_weight": 1.3,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-10-31",
@@ -14160,7 +15331,8 @@
             },
             "days_to_peak": 63,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "elevated"
           },
           {
             "date": "2025-10-20",
@@ -14178,7 +15350,8 @@
             },
             "days_to_peak": 63,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "elevated"
           },
           {
             "date": "2025-09-30",
@@ -14196,7 +15369,8 @@
             },
             "days_to_peak": 42,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-09-03",
@@ -14214,7 +15388,8 @@
             },
             "days_to_peak": 63,
             "season": "fall",
-            "seasonality_weight": 1.0
+            "seasonality_weight": 1.0,
+            "ng_regime": "normal"
           },
           {
             "date": "2025-06-27",
@@ -14232,7 +15407,8 @@
             },
             "days_to_peak": 42,
             "season": "summer",
-            "seasonality_weight": 0.85
+            "seasonality_weight": 0.85,
+            "ng_regime": "elevated"
           }
         ]
       },
@@ -16699,119 +17875,119 @@
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (5d) = 85.9 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-03-17T10:06:36.364592+00:00",
+      "timestamp": "2026-03-17T10:18:27.695316+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (126d) = 76.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-03-17T10:06:36.364592+00:00",
+      "timestamp": "2026-03-17T10:18:27.695316+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (252d) = 94.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-03-17T10:06:36.364592+00:00",
+      "timestamp": "2026-03-17T10:18:27.695316+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_warning",
       "side": "long",
       "message": "CVI (5d) = 75.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-03-17T10:06:36.364592+00:00",
+      "timestamp": "2026-03-17T10:18:27.695316+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_warning",
       "side": "long",
       "message": "CVI (126d) = 66.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-03-17T10:06:36.364592+00:00",
+      "timestamp": "2026-03-17T10:18:27.695316+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (252d) = 82.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-03-17T10:06:36.364592+00:00",
+      "timestamp": "2026-03-17T10:18:27.695316+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vcvi_warning",
       "side": "long",
       "message": "VCVI (5d) = 55.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-03-17T10:06:37.001674+00:00",
+      "timestamp": "2026-03-17T10:18:28.353319+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (126d) = 74.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-03-17T10:06:37.001674+00:00",
+      "timestamp": "2026-03-17T10:18:28.353319+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (252d) = 92.1 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-03-17T10:06:37.001674+00:00",
+      "timestamp": "2026-03-17T10:18:28.353319+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_warning",
       "side": "long",
       "message": "CVI (126d) = 66.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-03-17T10:06:37.001674+00:00",
+      "timestamp": "2026-03-17T10:18:28.353319+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (252d) = 82.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-03-17T10:06:37.001674+00:00",
+      "timestamp": "2026-03-17T10:18:28.353319+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_warning",
       "side": "short",
       "message": "VCVI (126d) = 67.8 \u2014 potential gas top \u2014 short/inverse setup",
-      "timestamp": "2026-03-17T10:06:37.981289+00:00",
+      "timestamp": "2026-03-17T10:18:29.339510+00:00",
       "ticker": "KOLD"
     },
     {
       "type": "vcvi_critical",
       "side": "short",
       "message": "VCVI (252d) = 76.8 \u2014 potential gas top \u2014 short/inverse setup",
-      "timestamp": "2026-03-17T10:06:37.981289+00:00",
+      "timestamp": "2026-03-17T10:18:29.339510+00:00",
       "ticker": "KOLD"
     },
     {
       "type": "cvi_warning",
       "side": "short",
       "message": "CVI (126d) = 60.7 \u2014 potential gas top \u2014 short/inverse setup",
-      "timestamp": "2026-03-17T10:06:37.981289+00:00",
+      "timestamp": "2026-03-17T10:18:29.339510+00:00",
       "ticker": "KOLD"
     },
     {
       "type": "cvi_warning",
       "side": "short",
       "message": "CVI (252d) = 68.8 \u2014 potential gas top \u2014 short/inverse setup",
-      "timestamp": "2026-03-17T10:06:37.981289+00:00",
+      "timestamp": "2026-03-17T10:18:29.339510+00:00",
       "ticker": "KOLD"
     },
     {
       "type": "vcvi_warning",
       "side": "short",
       "message": "VCVI (252d) = 65.7 \u2014 potential gas top \u2014 short/inverse setup",
-      "timestamp": "2026-03-17T10:06:38.616948+00:00",
+      "timestamp": "2026-03-17T10:18:29.978351+00:00",
       "ticker": "HND.TO"
     },
     {
       "type": "cvi_warning",
       "side": "short",
       "message": "CVI (252d) = 61.4 \u2014 potential gas top \u2014 short/inverse setup",
-      "timestamp": "2026-03-17T10:06:38.616948+00:00",
+      "timestamp": "2026-03-17T10:18:29.978351+00:00",
       "ticker": "HND.TO"
     }
   ]
