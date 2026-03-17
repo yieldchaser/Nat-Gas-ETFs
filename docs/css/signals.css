@@ -905,9 +905,9 @@
     border-left: 2px solid var(--yellow);
 }
 .watch-pair-cards {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
-    flex-wrap: wrap;
 }
 .watch-card {
     border-left-color: var(--yellow) !important;
