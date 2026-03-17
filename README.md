@@ -11,13 +11,14 @@ This project implements a multi-timeframe volume analysis engine that:
 - **Detects volume anomalies** across 6 windows (5d/10d/21d/63d/126d/252d) using percentile ranking and Z-scores
 - **Models volatility** with historical volatility (HV), vol regime percentiles, ATR, and VoV (vol-of-vol)
 - **Synthesizes signals** via the **Volume Pressure Score (VPS)** — a 5-component composite metric
-- **Tracks historical echoes** — patterns showing price action following capitulation signals, with lead-time calibration
+- **Tracks historical echoes** — patterns showing price action following capitulation signals, with lead-time calibration and **regime-stratified forward returns**
 - **Monitors capitulation** with the **VCVI (Vol-Adjusted Capitulation Volume Index)** — CVI adjusted for volatility regime
 - **Detects weather spikes** with a 5d fast-window VCVI + ATR sharp-spike flag
 - **Gates signals** with a **seasonally-adjusted NG=F price z-score** (more meaningful than raw percentile for this commodity)
 - **Corrects for leveraged ETF decay** to prevent structural price drift from contaminating percentile signals
 - **Weights by season** (winter premium ×1.3, summer discount ×0.85)
 - **Measures price-volume correlation** across instruments — tracking the inverse relationship between volume spikes and price direction
+- **Classifies NG=F volatility regime** (normal / elevated / extreme) using price level, seasonal z-score, and NG's own realized vol percentile — tags every historical signal for regime-aware interpretation
 
 ## Instruments Tracked
 
@@ -66,6 +67,16 @@ Sits at the top of the Signal Command Center. Shows the current NG=F price along
 
 The bar also shows raw 2yr percentile for reference (in the tooltip).
 
+**Volatility Regime Badge** — Displayed alongside the price bar. Natural gas can enter "ultra-volatile" outlier regimes where typical signal patterns may not hold:
+
+| Regime | Trigger (any one sufficient) | Behavior |
+|--------|------------------------------|----------|
+| **● NORMAL** | Price ≤ $4.5, \|z\| < 1.5σ, NG HV < 70th pct | Typical conditions — signals behave as expected |
+| **⚠ ELEVATED STRESS** | Price > $4.5 OR \|z\| ≥ 1.5σ OR NG HV ≥ 70th pct | Heightened conditions — interpret with added caution |
+| **🚨 EXTREME REGIME** | Price > $7.0 OR \|z\| ≥ 2.5σ OR NG HV ≥ 90th pct | Outlier environment (2022 ~$9/MMBtu, Jan 2026 >$7) — signal outcomes may not match historical patterns |
+
+A warning strip appears below the price bar when the regime is elevated or extreme. Every historical signal is tagged with its ambient regime — enabling regime-stratified backtesting (see Historical Echoes below).
+
 #### Stress Matrix
 
 | Column | Description |
@@ -94,18 +105,23 @@ Tracks whether all 3 ETFs on the same side (e.g., KOLD + HND.TO + 3NGS.L) indepe
 | **SINGLE** | Only 1 ETF elevated |
 | **QUIET** | No spikes in last 15 days |
 
-#### Conviction Events — 4-Gate Filter (~1–2 events/ETF/year)
+#### Conviction Events — 5-Gate Filter (~1–2 events/ETF/year)
 
-A strict multi-gate filter designed to isolate true anomalies. **ALL 4 gates must fire simultaneously:**
+A strict multi-gate filter designed to isolate true anomalies. **ALL gates must fire simultaneously:**
 
 | Gate | Condition | Rationale |
 |------|-----------|-----------|
-| **Volume Capitulation** | VCVI-21d ≥ 72 | Must reach "critical" vol-adjusted level |
-| **Multi-Window Breadth** | ≥ 3 of 5 windows ≥ 85th pct | Broad-based surge, not single-window noise |
-| **Price Dislocation** | \|Daily move\| > 1.5× ATR-14 | Actual price shock, not just volume |
-| **Regime Context** | Vol regime ≤ 70th percentile | Non-turbulent env required (signals meaningful) |
+| **1 — Volume Capitulation** | VCVI-21d ≥ 72 (or Extreme Override) | Must reach "critical" vol-adjusted level |
+| **2 — Multi-Window Breadth** | ≥ 3 of 5 windows ≥ 85th pct | Broad-based surge, not single-window noise |
+| **3 — Price Dislocation** | \|Daily move\| > 1.5× ATR-14 | Actual price shock, not just volume |
+| **4 — Regime Context** | Vol regime ≤ 70th percentile | Non-turbulent env required (signals meaningful) |
+| **5 — NG Directional** | Long: seasonal z ≤ −1.0σ  \|  Short: seasonal z ≥ +1.0σ | Gas price must confirm the trade direction |
 
-Each event shows date, VCVI, daily move, ATR multiple, breadth count, price — plus season emoji and forward return stats.
+**Extreme Override** — Bypasses Gate 1's VCVI minimum if VCVI ≥ 90 AND \|move\| > 2× ATR. Captures severe capitulation events (Aug 2022, Jan 2026 analog) that pass the spirit of the filter even at unusual VCVI levels. Marked with ⚡ badge.
+
+**Momentum Guard** — For short-side ETFs (KOLD, HND.TO, 3NGS.L): when the NG=F seasonal z-score is positive (gas in seasonal uptrend), the VCVI minimum is raised by 13 points (72 → 85) to avoid firing a short-conviction signal into rising gas. Marked with 🛡 badge.
+
+Each event shows date, VCVI, daily move, ATR multiple, breadth count, price, NG seasonal z-score, and volatility regime badge (●/⚠/🚨). Aggregate forward return stats included.
 
 #### Elevated Watch — 3-Gate Filter (~4–8 events/ETF/year)
 
@@ -123,13 +139,16 @@ Dates within ±3 days of a full conviction event are excluded to prevent double-
 
 Pattern study of all past VCVI capitulation signals (VCVI ≥ 55, vol regime ≤ 60th):
 
-- **Forward windows** — 5/10/21/42/63/126/252 days
+- **Forward windows** — 5/10/21/42/63/126/252 days (recent events show partial returns rather than being excluded)
 - **Per-window stats** — Median return, win rate, best/worst (±200% clipped)
 - **Edge window** — Highlighted bar showing the window with the strongest historical edge
 - **⏱ Lead-time annotation** — "Peak ~Xd (IQR A–Bd)" showing median days from signal to peak, derived from all historical instances
 - **Yellow dashed marker** on the forward return chart at the median lead-time day
 - **Season tags** on occurrence dates — instantly shows if past signals clustered in winter vs summer
 - **Occurrence tooltips** — hover any date pill: VCVI, vol regime, price, forward return, season, peak day
+- **Returns by NG Regime** — Stratified forward return stats (median + win rate) broken down by the NG=F volatility regime at the time of each signal. Critical context: in known extreme regimes, typical forward return patterns may invert or disappear entirely.
+
+  > Example: BOIL echoes in the **extreme regime** show **0% win rate** at 21d with a median of −46%, versus **42% win rate** in normal regime — validating that 2022-style environments fundamentally change signal outcomes.
 
 ## Core Metrics Explained
 
@@ -209,10 +228,13 @@ scripts/
 └── data_pipeline.py    # Nightly ETL:
                         #   - Fetches OHLCV for 6 ETFs + NG=F futures
                         #   - Computes all metrics (6 windows: 5/10/21/63/126/252d)
-                        #   - Seasonal z-score gate for NG=F
+                        #   - NG=F seasonal z-score series + regime classification
+                        #     (normal/elevated/extreme, no-lookahead, shared across ETFs)
                         #   - Decay-corrected price percentile per ETF
-                        #   - Historical echoes with lead-time + season per occurrence
-                        #   - Conviction events (4-gate) + elevated watch (3-gate)
+                        #   - Historical echoes: lead-time, season, ng_regime per
+                        #     occurrence; regime-stratified forward return tables
+                        #   - Conviction events (5-gate + extreme override + momentum
+                        #     guard) + elevated watch (3-gate)
                         #   - Writes dashboard_data.json + latest_signals.json
 
 data/
@@ -226,18 +248,25 @@ docs/data/                   # GitHub Pages copy (synced by Actions)
 
 1. **GitHub Actions Trigger** (nightly) → `data_pipeline.py`
 2. **Fetch OHLCV** for 6 ETFs via Yahoo Finance + **NG=F** futures
-3. **Compute per-ETF metrics:**
+3. **Compute NG=F context** (once, shared across all ETFs):
+   - Seasonal z-score series (no-lookahead, per-month expanding window)
+   - NG=F own realized vol (21d) + HV percentile vs 2yr rolling history
+   - Full historical regime series: 'normal' / 'elevated' / 'extreme' per date
+   - Current regime classification + ng_hv_21d, ng_hv_pct for display
+4. **Compute per-ETF metrics:**
    - Volume: RVOL, Z-Score, VROC, percentiles across 6 windows (5–252d)
    - Volatility: HV, vol regime, ATR, VoV, term structure
    - Signals: CVI, VCVI per window, VCVI-5d fast, VPS composite
    - Decay-corrected price percentile → decay-adj VCVI-21d
    - Seasonality block: month, season, weight, adj_vcvi_21d
    - Sharp spike flag: |move| > 2×ATR AND VCVI-5d > 45
-4. **Compute NG=F seasonal z-score** — compare current price to same-month historical distribution
 5. **Compute SWVC** — cross-market spike convergence
-6. **Detect Conviction Events** (4 gates) + **Elevated Watch** (3 gates, softer)
-7. **Generate Historical Echoes** — with days_to_peak, season, seasonality_weight per occurrence; lead_time aggregate stats
-8. **Write JSON** → `data/` and sync to `docs/data/`
+6. **Detect Conviction Events** (5 gates + extreme override + momentum guard)
+   - Tags each event with ng_seasonal_z and ng_regime at time of event
+7. **Detect Elevated Watch** (3-gate softer filter)
+8. **Generate Historical Echoes** — with days_to_peak, season, ng_regime per occurrence;
+   lead_time aggregate stats; regime-stratified forward return tables
+9. **Write JSON** → `data/` and sync to `docs/data/`
 
 ## Development
 
@@ -276,6 +305,25 @@ CONVICTION_BREADTH_MIN = 3
 CONVICTION_BREADTH_PCT = 85
 CONVICTION_ATR_MULT = 1.5
 CONVICTION_VOL_REGIME_MAX = 70
+
+# Extreme override — bypasses Gate 1 minimum when both conditions are met
+EXTREME_OVERRIDE_VCVI_MIN = 90   # VCVI ≥ 90 (exceptional capitulation)
+EXTREME_OVERRIDE_ATR_MULT = 2.0  # AND |move| > 2× ATR-14
+
+# Gate 5 — NG=F directional confirmation thresholds
+CONVICTION_NG_Z_LONG  = -1.0  # Long-side: seasonal z must be ≤ −1.0 (gas low for season)
+CONVICTION_NG_Z_SHORT =  1.0  # Short-side: seasonal z must be ≥ +1.0 (gas high for season)
+
+# Momentum guard — raises short-side VCVI bar when gas is in seasonal uptrend
+MOMENTUM_GUARD_VCVI_BOOST = 13   # Added to CONVICTION_VCVI_MIN when seasonal z > 0
+
+# NG=F volatility regime thresholds
+NG_REGIME_EXTREME_PRICE   = 7.0   # > $7/MMBtu → extreme
+NG_REGIME_HIGH_PRICE      = 4.5   # > $4.5/MMBtu → elevated
+NG_REGIME_EXTREME_Z       = 2.5   # |seasonal z| ≥ 2.5σ → extreme
+NG_REGIME_ELEVATED_Z      = 1.5   # |seasonal z| ≥ 1.5σ → elevated
+NG_REGIME_EXTREME_HV_PCT  = 90    # NG 21d HV at 90th pct of own 2yr history → extreme
+NG_REGIME_ELEVATED_HV_PCT = 70    # NG 21d HV at 70th pct → elevated
 
 # Leveraged ETF decay rates (annual)
 ETF_ANNUAL_DECAY = {
