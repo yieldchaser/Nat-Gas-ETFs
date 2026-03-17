@@ -126,7 +126,83 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
 .legend-line { width: 16px; height: 2px; }
 
 /* ---- RANGE SLIDER (BRUSH) ---- */
-.range-slider-container { margin: 10px 0 20px; height: 40px; position: relative; }
+.range-slider-wrap {
+    position: relative;
+    height: 40px;
+    margin: 10px 0 20px;
+    background: #1a1a28;
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    padding: 0 10px;
+}
+.range-slider-track {
+    position: absolute;
+    top: 18px;
+    left: 10px;
+    right: 10px;
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+}
+.range-slider-highlight {
+    position: absolute;
+    top: 18px;
+    height: 4px;
+    background: var(--cyan);
+    border-radius: 2px;
+}
+.range-inputs {
+    position: relative;
+    height: 40px;
+}
+.range-inputs input[type=range] {
+    position: absolute;
+    width: 100%;
+    top: 10px;
+    left: 0;
+    pointer-events: none;
+    -webkit-appearance: none;
+    background: none;
+}
+.range-inputs input[type=range]::-webkit-slider-thumb {
+    pointer-events: auto;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    -webkit-appearance: none;
+    border: none;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+.range-inputs input[type=range]:hover::-webkit-slider-thumb {
+    background: var(--cyan);
+}
+.range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    font-weight: 700;
+    margin-top: 5px;
+}
+.download-btn {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    padding: 6px 14px;
+    border-radius: 4px;
+    background: rgba(0, 255, 255, 0.1);
+    color: var(--cyan);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+.download-btn:hover {
+    background: var(--cyan);
+    color: #000;
+}
 
 /* ---- TABLE SECTION ---- */
 .table-panel {
@@ -248,7 +324,19 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
 
         <div class="range-slider-container" id="range-slider-container">
-            <!-- Custom zoom/brush slider will be drawn here on a secondary canvas or div -->
+            <div class="range-slider-wrap">
+                <div class="range-slider-track"></div>
+                <div id="range-highlight" class="range-slider-highlight"></div>
+                <div class="range-inputs">
+                    <input type="range" id="range-start" min="0" max="100" value="0">
+                    <input type="range" id="range-end" min="0" max="100" value="100">
+                </div>
+            </div>
+            <div class="range-labels">
+                <span id="range-start-label">--</span>
+                <span id="range-active-label" style="color:var(--text-bright)">CUSTOM RANGE</span>
+                <span id="range-end-label">--</span>
+            </div>
         </div>
 
         <div class="chart-footer">
@@ -270,10 +358,13 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <div class="table-panel">
         <div class="table-header">
             <span class="table-title" id="table-title">— Cycle Detail</span>
-            <div class="tab-group">
-                <button class="tab-btn active" data-filter="all">ALL TIME</button>
-                <button class="tab-btn" data-filter="year">YEAR</button>
-                <button class="tab-btn" data-filter="6m">6 MONTHS</button>
+            <div class="tab-group" style="align-items:center; gap:12px; background:transparent; padding:0">
+                <div class="tab-group" style="padding:3px; background:#1a1a28; border-radius:6px;">
+                    <button class="tab-btn active" data-filter="all">ALL TIME</button>
+                    <button class="tab-btn" data-filter="year">YEAR</button>
+                    <button class="tab-btn" data-filter="6m">6 MONTHS</button>
+                </div>
+                <button class="download-btn" id="download-csv">Download CSV</button>
             </div>
         </div>
         <div id="table-container"></div>
@@ -312,8 +403,8 @@ const state = {
     fetchErr: {},    // symbol → true if all proxies failed
     threshold: 48,
     activeTab: 'KOLD',
-    timeRange: 'all', // 1w, 1m, 3m, 6m, 1y, all
-    zoom:     { start: null, end: null }, // Date objects
+    timeRange: 'all', // 1w, 1m, 3m, 6m, 1y, all, custom
+    zoom:     { startIdx: 0, endIdx: 0 }, // Indices
     tableFilter: 'all',
     chart: null, // Will hold custom canvas context/info if needed
     hover: { x: null, index: null }, // Track hover state
@@ -652,10 +743,146 @@ function initHorizonControls() {
             el.querySelectorAll('.horizon-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             state.timeRange = btn.dataset.range;
-            // TODO: Update state.zoom based on range
+            
+            // Reset custom sliders if choosing fixed range
+            syncRangeSlidersToRange(state.timeRange);
             renderChart();
         });
     });
+}
+
+function syncRangeSlidersToRange(range) {
+    const t = TICKERS.find(x => x.label === state.activeTab) || TICKERS[0];
+    const data = state.rawData[t.symbol];
+    if (!data) return;
+
+    let start = 0;
+    const end = data.dates.length - 1;
+
+    if (range !== 'all') {
+        const now = new Date();
+        let limit;
+        if (range === '1w') limit = 7;
+        else if (range === '1m') limit = 30;
+        else if (range === '3m') limit = 90;
+        else if (range === '6m') limit = 180;
+        else if (range === '1y') limit = 365;
+        const cutoff = new Date(now.getTime() - (limit * 24 * 60 * 60 * 1000)).toISOString().slice(0, 10);
+        start = data.dates.findIndex(d => d >= cutoff);
+        if (start === -1) start = 0;
+    }
+
+    state.zoom.startIdx = start;
+    state.zoom.endIdx = end;
+    
+    // Update Slider UI
+    const sStart = document.getElementById('range-start');
+    const sEnd = document.getElementById('range-end');
+    if (sStart && sEnd) {
+        sStart.max = end;
+        sEnd.max = end;
+        sStart.value = start;
+        sEnd.value = end;
+        updateRangeUI();
+    }
+}
+
+function initRangeSlider() {
+    const sStart = document.getElementById('range-start');
+    const sEnd = document.getElementById('range-end');
+    if (!sStart || !sEnd) return;
+
+    const onChange = () => {
+        let v1 = parseInt(sStart.value);
+        let v2 = parseInt(sEnd.value);
+        
+        if (v1 > v2) {
+            // Swap or block
+            if (event.target.id === 'range-start') sStart.value = v2;
+            else sEnd.value = v1;
+            v1 = parseInt(sStart.value);
+            v2 = parseInt(sEnd.value);
+        }
+
+        state.timeRange = 'custom';
+        state.zoom.startIdx = v1;
+        state.zoom.endIdx = v2;
+        
+        // Deactivate horizon buttons
+        document.querySelectorAll('.horizon-btn').forEach(b => b.classList.remove('active'));
+        
+        updateRangeUI();
+        renderChart();
+        renderTable();
+    };
+
+    sStart.addEventListener('input', onChange);
+    sEnd.addEventListener('input', onChange);
+}
+
+function updateRangeUI() {
+    const t = TICKERS.find(x => x.label === state.activeTab) || TICKERS[0];
+    const data = state.rawData[t.symbol];
+    if (!data) return;
+
+    const sStart = document.getElementById('range-start');
+    const sEnd = document.getElementById('range-end');
+    const highlight = document.getElementById('range-highlight');
+    const lblStart = document.getElementById('range-start-label');
+    const lblEnd = document.getElementById('range-end-label');
+
+    const v1 = parseInt(sStart.value);
+    const v2 = parseInt(sEnd.value);
+    const max = parseInt(sStart.max);
+
+    const p1 = (v1 / max) * 100;
+    const p2 = (v2 / max) * 100;
+
+    highlight.style.left = p1 + '%';
+    highlight.style.width = (p2 - p1) + '%';
+
+    lblStart.textContent = data.dates[v1] || '--';
+    lblEnd.textContent = data.dates[v2] || '--';
+}
+
+function downloadCSV() {
+    const t = TICKERS.find(x => x.label === state.activeTab) || TICKERS[0];
+    const cycles = state.cycles[t.symbol] || [];
+    
+    // Apply current table filters
+    const now = new Date();
+    let filtered = cycles;
+    if (state.tableFilter === '6m') {
+        const cutoff = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+        filtered = cycles.filter(c => new Date(c.troughDate) >= cutoff);
+    } else if (state.tableFilter === 'year') {
+        const cutoff = new Date(now.getFullYear(), 0, 1);
+        filtered = cycles.filter(c => new Date(c.troughDate) >= cutoff);
+    }
+
+    if (!filtered.length) return alert('No cycle data to export.');
+
+    const headers = ['#', 'Trough Date', 'Trough Price', 'Peak Date', 'Peak Price', '% Gain', 'Days'];
+    const rows = filtered.map(c => [
+        c.num,
+        c.troughDate,
+        c.troughPrice.toFixed(4),
+        c.peakDate,
+        c.peakPrice.toFixed(4),
+        c.gain.toFixed(2),
+        c.days
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${t.label}_cycles.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // ── Table ─────────────────────────────────────────────────────────────────────
@@ -718,6 +945,8 @@ function initFilterTabs() {
             renderTable();
         });
     });
+    const dl = document.getElementById('download-csv');
+    if (dl) dl.addEventListener('click', downloadCSV);
 }
 
 // ── Full re-render after threshold / data change ──────────────────────────────
@@ -741,6 +970,7 @@ slider.addEventListener('input', () => {
 // ── Init ──────────────────────────────────────────────────────────────────────
 initFilterTabs();
 initHorizonControls();
+initRangeSlider();
 initChartHover();
 renderChartTabs();
 renderCards(); // show loading skeletons
@@ -764,7 +994,12 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
 
     // 1. Filter data based on timeRange or zoom
     let startIndex = 0;
-    if (state.timeRange !== 'all') {
+    let endIndex = data.dates.length - 1;
+
+    if (state.timeRange === 'custom') {
+        startIndex = state.zoom.startIdx;
+        endIndex   = state.zoom.endIdx;
+    } else if (state.timeRange !== 'all') {
         const now = new Date();
         let limit;
         if (state.timeRange === '1w') limit = 7;
@@ -778,9 +1013,9 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         if (startIndex === -1) startIndex = 0;
     }
 
-    const visibleDates = data.dates.slice(startIndex);
-    const visibleCloses = data.closes.slice(startIndex);
-    const visibleVolumes = data.volumes.slice(startIndex);
+    const visibleDates = data.dates.slice(startIndex, endIndex + 1);
+    const visibleCloses = data.closes.slice(startIndex, endIndex + 1);
+    const visibleVolumes = data.volumes.slice(startIndex, endIndex + 1);
 
     if (visibleDates.length < 2) return;
 
@@ -917,24 +1152,31 @@ function drawRangeBrush(container, data) {
 (async () => {
     // 1. Try pre-built static JSON first (no CORS, instant)
     const staticAll = await loadStaticData();
-    if (staticAll) {
-        for (const t of TICKERS) {
-            if (staticAll[t.symbol]) state.rawData[t.symbol] = staticAll[t.symbol];
+        if (staticAll) {
+            for (const t of TICKERS) {
+                if (staticAll[t.symbol]) state.rawData[t.symbol] = staticAll[t.symbol];
+            }
+            // Initialize Slider Max with KOLD data length
+            syncRangeSlidersToRange('all');
+            recompute(); renderCards(); renderChartTabs(); renderChart(); renderTable();
+            return; // done — static data loaded for all tickers
         }
-        recompute(); renderCards(); renderChartTabs(); renderChart(); renderTable();
-        return; // done — static data loaded for all tickers
-    }
 
-    // 2. Fallback: live proxy fetch sequentially
-    for (const t of TICKERS) {
-        const d = await fetchTickerLive(t.symbol);
-        if (d) { state.rawData[t.symbol] = d; }
-        else   { state.fetchErr[t.symbol] = true; }
-        recompute();
-        renderCards();
-        if (t.label === state.activeTab) { renderChart(); renderTable(); }
-        await new Promise(r => setTimeout(r, 400));
-    }
+        // 2. Fallback: live proxy fetch sequentially
+        for (const t of TICKERS) {
+            const d = await fetchTickerLive(t.symbol);
+            if (d) { 
+                state.rawData[t.symbol] = d; 
+                if (t.symbol === 'KOLD' || !Object.keys(state.rawData).length) {
+                    syncRangeSlidersToRange('all');
+                }
+            }
+            else   { state.fetchErr[t.symbol] = true; }
+            recompute();
+            renderCards();
+            if (t.label === state.activeTab) { renderChart(); renderTable(); }
+            await new Promise(r => setTimeout(r, 400));
+        }
 })();
 </script>
 </body>
