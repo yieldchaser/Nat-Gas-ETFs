@@ -34,9 +34,9 @@ input[type=range] {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 6px;
-    background: #1a1a28;
-    border-radius: 3px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 5px;
     outline: none;
     cursor: pointer;
 }
@@ -307,7 +307,13 @@ async function loadStaticData() {
         if (!j.tickers) return null;
         const out = {};
         for (const [sym, v] of Object.entries(j.tickers)) {
-            if (v.dates && v.dates.length > 10) out[sym] = { dates: v.dates, closes: v.closes };
+            if (v.dates && v.dates.length > 10) {
+                out[sym] = { 
+                    dates: v.dates, 
+                    closes: v.closes,
+                    volumes: v.volumes || new Array(v.dates.length).fill(0) 
+                };
+            }
         }
         return Object.keys(out).length ? out : null;
     } catch (_) { return null; }
@@ -672,13 +678,23 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
 
     if (visibleDates.length < 2) return;
 
-    const minPrice = Math.min(...visibleCloses) * 0.95;
-    const maxPrice = Math.max(...visibleCloses) * 1.05;
-    const maxVol = Math.max(...visibleVolumes);
+    const minVal = Math.min(...visibleCloses);
+    const maxVal = Math.max(...visibleCloses);
+    const minPrice = (minVal === maxVal) ? minVal * 0.9 : minVal * 0.95;
+    const maxPrice = (minVal === maxVal) ? maxVal * 1.1 : maxVal * 1.05;
+    const maxVol = Math.max(...visibleVolumes, 1);
 
-    const getX = (i) => padding.left + (i / (visibleDates.length - 1)) * chartW;
-    const getY = (p) => padding.top + chartH - ((p - minPrice) / (maxPrice - minPrice)) * chartH;
-    const getVolY = (v) => padding.top + chartH - (v / maxVol) * (chartH * 0.3); // Vol at bottom 30%
+    const getX = (i) => padding.left + (i / Math.max(1, visibleDates.length - 1)) * chartW;
+    const getY = (p) => {
+        const range = maxPrice - minPrice;
+        if (range === 0) return padding.top + chartH / 2;
+        const val = padding.top + chartH - ((p - minPrice) / range) * chartH;
+        return isNaN(val) ? padding.top + chartH : val;
+    };
+    const getVolY = (v) => {
+        const val = padding.top + chartH - (v / maxVol) * (chartH * 0.3);
+        return isNaN(val) ? padding.top + chartH : val;
+    };
 
     // -- Background Bands --
     cycles.forEach(c => {
