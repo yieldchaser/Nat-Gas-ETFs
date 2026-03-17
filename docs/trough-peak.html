@@ -94,7 +94,7 @@ input[type=range]::-moz-range-thumb {
 .chart-tab:hover { color: var(--text-primary); border-color: var(--border-accent); }
 .chart-tab.active { color: var(--text-bright); background: var(--bg-panel); border-color: var(--border-accent); }
 .chart-count { font-size: 0.65rem; color: var(--text-muted); letter-spacing: 1px; }
-.chart-wrapper { position: relative; height: 220px; }
+.chart-wrapper { position: relative; height: 260px; }
 .chart-legend { display: flex; gap: 16px; margin-top: 10px; }
 .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.6rem; color: var(--text-muted); }
 .legend-dot { width: 8px; height: 2px; border-radius: 1px; }
@@ -485,19 +485,20 @@ function renderChart() {
         annotations[`band${idx}`] = {
             type: 'box', xScaleID: 'x', yScaleID: 'y',
             xMin: c.troughDate, xMax: c.peakDate,
-            backgroundColor: gainBandColor(c.gain, 0.13), borderWidth: 0,
+            backgroundColor: gainBandColor(c.gain, 0.18), borderWidth: 0,
+            drawTime: 'beforeDatasetsDraw',
         };
         annotations[`tl${idx}`] = {
             type: 'line', xScaleID: 'x', yScaleID: 'y',
             xMin: c.troughDate, xMax: c.troughDate,
-            borderColor: 'rgba(224,96,96,0.6)', borderWidth: 1,
-            borderDash: [4, 4],
+            borderColor: 'rgba(224,96,96,0.7)', borderWidth: 1,
+            borderDash: [4, 4], drawTime: 'beforeDatasetsDraw',
         };
         annotations[`pl${idx}`] = {
             type: 'line', xScaleID: 'x', yScaleID: 'y',
             xMin: c.peakDate, xMax: c.peakDate,
-            borderColor: 'rgba(61,184,122,0.6)', borderWidth: 1,
-            borderDash: [4, 4],
+            borderColor: 'rgba(61,184,122,0.7)', borderWidth: 1,
+            borderDash: [4, 4], drawTime: 'beforeDatasetsDraw',
         };
     });
 
@@ -526,8 +527,12 @@ function renderChart() {
                     ticks: { color: '#555565', font: { size: 10 }, maxTicksLimit: 10 },
                 },
                 y: {
+                    type: 'logarithmic',
                     grid: { color: 'rgba(37,37,53,0.6)' },
-                    ticks: { color: '#555565', font: { size: 10 } },
+                    ticks: {
+                        color: '#555565', font: { size: 10 },
+                        callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v >= 1 ? v.toFixed(0) : v.toFixed(2),
+                    },
                 }
             },
             plugins: {
