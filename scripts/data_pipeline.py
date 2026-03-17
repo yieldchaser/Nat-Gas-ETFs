@@ -257,50 +257,96 @@ def _decay_adjusted_price_percentile(
 
 
 # ---------------------------------------------------------------------------
-# NG=F price context (Feature 2)
+# NG=F price context (Feature 2) — seasonally-adjusted z-score
 # ---------------------------------------------------------------------------
+# Why seasonal z-score instead of raw 2-year percentile?
+# Natural gas is one of the most volatile commodities on earth — it regularly
+# traverses its entire 2-year price range in a single winter or summer cycle.
+# A raw percentile rank just tells you "cheap vs recent history" which is almost
+# always 'mid' and thus meaningless. The correct question is:
+#   "Is gas unusually HIGH or LOW for THIS time of year?"
+# Seasonal z-score answers that by comparing today's price to the distribution
+# of NG=F closes for the SAME CALENDAR MONTH across all available history.
+# Threshold: |z| > 1.5σ activates the gate (gas is anomalously far from norm).
+# ---------------------------------------------------------------------------
+NG_SEASONAL_Z_GATE = 1.5      # σ threshold — gates fire above/below this
+
 def _fetch_ng_price_context() -> dict:
     """
-    Fetch NG=F (NYMEX natural gas futures) via Yahoo Finance and compute
-    a 2-year rolling percentile rank of the current price.
+    Fetch NG=F (NYMEX natural gas futures) and compute a seasonally-adjusted
+    z-score: how many σ above/below the typical price for this calendar month.
 
-    Returns a dict with price, percentile, tier, and gate flags for both sides.
+    Also computes raw 2yr percentile for reference display, but the GATE logic
+    uses seasonal_zscore exclusively (more meaningful for a volatile seasonal commodity).
+
+    Returns dict with price, seasonal_zscore, tier, and gate flags for both sides.
     """
     logger.info("Fetching NG=F for gas price level gate …")
     df = _yahoo_fetch_one(NG_TICKER)
 
-    if df is None or df.empty or len(df) < 10:
+    if df is None or df.empty or len(df) < 60:
         logger.warning("Could not fetch NG=F — gas price gate unavailable")
         return {
-            "price": None,
-            "percentile_2yr": None,
-            "tier": "unknown",
-            "gate_short": None,
-            "gate_long": None,
-            "history_days": 0,
+            "price":           None,
+            "seasonal_zscore": None,
+            "percentile_2yr":  None,
+            "tier":            "unknown",
+            "gate_short":      None,
+            "gate_long":       None,
+            "history_days":    0,
+            "seasonal_note":   "insufficient data",
         }
 
     close = df["close"].dropna()
-    window_close = close.iloc[-NG_PRICE_WINDOW_DAYS:]
     current = float(close.iloc[-1])
-    pct = float((window_close < current).sum() / len(window_close) * 100)
+    current_month = close.index[-1].month
 
-    if pct >= 90:
-        tier = "extreme"
-    elif pct >= NG_HIGH_QUARTILE:
-        tier = "high"
-    elif pct <= NG_LOW_QUARTILE:
-        tier = "low"
+    # Raw 2yr percentile (for display only — shown in the bar)
+    window_close = close.iloc[-NG_PRICE_WINDOW_DAYS:]
+    pct_2yr = float((window_close < current).sum() / len(window_close) * 100)
+
+    # Seasonal z-score: compare current price to all historical values for this month
+    same_month_prices = close[close.index.month == current_month]
+    if len(same_month_prices) < 12:
+        # Not enough monthly data — fall back to 2yr percentile gate
+        seasonal_z = None
+        seasonal_note = f"only {len(same_month_prices)} {_season_label(current_month)}-month observations; using 2yr pct fallback"
+        gate_short = pct_2yr >= NG_HIGH_QUARTILE
+        gate_long  = pct_2yr <= NG_LOW_QUARTILE
     else:
-        tier = "mid"
+        m_mean = float(same_month_prices.mean())
+        m_std  = float(same_month_prices.std())
+        seasonal_z = round((current - m_mean) / m_std, 2) if m_std > 0 else 0.0
+        seasonal_note = (
+            f"vs {len(same_month_prices)} {_season_label(current_month)}-month obs "
+            f"(μ=${m_mean:.2f}, σ=${m_std:.2f})"
+        )
+        # Gate: fires when gas is anomalously high (short) or low (long) for this month
+        gate_short = seasonal_z >= NG_SEASONAL_Z_GATE
+        gate_long  = seasonal_z <= -NG_SEASONAL_Z_GATE
+
+    # Tier label driven by seasonal z-score (or 2yr pct fallback)
+    z_ref = seasonal_z if seasonal_z is not None else (pct_2yr / 50 - 1) * 3
+    if z_ref is not None and z_ref >= 2.5:
+        tier = "extreme_high"
+    elif z_ref is not None and z_ref >= NG_SEASONAL_Z_GATE:
+        tier = "seasonal_high"
+    elif z_ref is not None and z_ref <= -2.5:
+        tier = "extreme_low"
+    elif z_ref is not None and z_ref <= -NG_SEASONAL_Z_GATE:
+        tier = "seasonal_low"
+    else:
+        tier = "seasonal_mid"
 
     return {
-        "price":          round(current, 3),
-        "percentile_2yr": round(pct, 1),
-        "tier":           tier,
-        "gate_short":     pct >= NG_HIGH_QUARTILE,  # short signals credible (gas high)
-        "gate_long":      pct <= NG_LOW_QUARTILE,   # long signals credible (gas low)
-        "history_days":   len(window_close),
+        "price":           round(current, 3),
+        "seasonal_zscore": seasonal_z,
+        "percentile_2yr":  round(pct_2yr, 1),
+        "tier":            tier,
+        "gate_short":      gate_short,   # True = gas anomalously HIGH for season → short credible
+        "gate_long":       gate_long,    # True = gas anomalously LOW for season → long credible
+        "history_days":    len(window_close),
+        "seasonal_note":   seasonal_note,
     }
 
 

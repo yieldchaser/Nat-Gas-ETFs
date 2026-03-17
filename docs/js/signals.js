@@ -618,30 +618,52 @@ const Signals = {
 
         const p = ngPriceContext.price;
         const pct = ngPriceContext.percentile_2yr;
-        const tier = ngPriceContext.tier || 'mid';
+        const sz  = ngPriceContext.seasonal_zscore;
+        const tier = ngPriceContext.tier || 'seasonal_mid';
         const gateShort = ngPriceContext.gate_short;
         const gateLong  = ngPriceContext.gate_long;
+        const note = ngPriceContext.seasonal_note || '';
 
-        const tierColors = { extreme: 'var(--purple)', high: 'var(--red)', mid: 'var(--text-secondary)', low: 'var(--green)' };
-        const tierColor  = tierColors[tier] || 'var(--text-secondary)';
-        const fillWidth  = pct != null ? Math.round(pct) : 50;
+        // Tier color: red = seasonally high, green = seasonally low, muted = mid
+        const tierColors = {
+            extreme_high: 'var(--purple)', seasonal_high: 'var(--red)',
+            extreme_low: 'var(--green)',   seasonal_low:  'var(--blue)',
+            seasonal_mid: 'var(--text-secondary)'
+        };
+        const tierColor = tierColors[tier] || 'var(--text-secondary)';
 
-        const shortGateHtml = gateShort === true  ? '<span class="ng-gate active" data-tooltip="Short-side signals credible — gas price in top 25% of 2yr range">SHORT ✓</span>'
-                            : gateShort === false ? '<span class="ng-gate inactive" data-tooltip="Short-side signals WEAKENED — gas price NOT in top 25%">SHORT ✗</span>'
+        // Z-score bar: center=0, ±3σ fills the track. Clamp to -3..+3.
+        const zClamped   = Math.max(-3, Math.min(3, sz ?? 0));
+        const fillLeft   = sz != null ? ((zClamped / 3) * 50 + 50) : 50;  // pct from left
+        const fillWidth  = sz != null ? Math.abs(zClamped / 3 * 50) : 0;
+        const fillStart  = sz != null ? (sz >= 0 ? 50 : fillLeft) : 50;
+
+        // Z-score label: +1.8σ above seasonal norm
+        const zLabel = sz != null ? `${sz >= 0 ? '+' : ''}${sz.toFixed(1)}σ` : '—σ';
+        const tierLabel = tier.replace('_', ' ').toUpperCase();
+
+        const shortGateNote = `Seasonal z=${sz!=null?sz.toFixed(1):'—'}. Gate fires when z ≥ +1.5σ (gas anomalously HIGH for this month). ${note}`;
+        const longGateNote  = `Seasonal z=${sz!=null?sz.toFixed(1):'—'}. Gate fires when z ≤ −1.5σ (gas anomalously LOW for this month). ${note}`;
+
+        const shortGateHtml = gateShort === true  ? `<span class="ng-gate active"   data-tooltip="${shortGateNote}">SHORT ✓</span>`
+                            : gateShort === false ? `<span class="ng-gate inactive" data-tooltip="${shortGateNote}">SHORT ✗</span>`
                             : '<span class="ng-gate unknown">SHORT ?</span>';
-        const longGateHtml  = gateLong  === true  ? '<span class="ng-gate active" data-tooltip="Long-side signals credible — gas price in bottom 25% of 2yr range">LONG ✓</span>'
-                            : gateLong  === false ? '<span class="ng-gate inactive" data-tooltip="Long-side signals WEAKENED — gas price NOT in bottom 25%">LONG ✗</span>'
+        const longGateHtml  = gateLong  === true  ? `<span class="ng-gate active"   data-tooltip="${longGateNote}">LONG ✓</span>`
+                            : gateLong  === false ? `<span class="ng-gate inactive" data-tooltip="${longGateNote}">LONG ✗</span>`
                             : '<span class="ng-gate unknown">LONG ?</span>';
+
+        const fullTip = `NG=F Henry Hub futures — $${p.toFixed(3)}, seasonal z-score ${zLabel} (${tierLabel}). ${note}. 2yr pct: ${pct!=null?pct.toFixed(0):'—'}th (for reference only — seasonal z-score drives the gates).`;
 
         bar.innerHTML = `
             <span class="ng-bar-label">NG=F</span>
-            <span class="ng-bar-price" style="color:${tierColor}" data-tooltip="Henry Hub natural gas futures — current: $${p.toFixed(3)}, 2-yr percentile: ${pct!=null?pct.toFixed(0):'—'}th (${tier.toUpperCase()})">$${p.toFixed(3)}</span>
-            <div class="ng-bar-track" data-tooltip="${pct!=null?pct.toFixed(0):'—'}th percentile of 2-year price range">
-                <div class="ng-bar-fill" style="width:${fillWidth}%;background:${tierColor}"></div>
-                <div class="ng-bar-q25" style="left:25%"></div>
-                <div class="ng-bar-q75" style="left:75%"></div>
+            <span class="ng-bar-price" style="color:${tierColor}" data-tooltip="${fullTip}">$${p.toFixed(3)}</span>
+            <div class="ng-bar-track ng-bar-zscore" data-tooltip="${fullTip}">
+                <div class="ng-bar-center-mark"></div>
+                ${sz != null ? `<div class="ng-bar-fill" style="left:${fillStart}%;width:${fillWidth}%;background:${tierColor}"></div>` : ''}
+                <div class="ng-bar-z-neg15" style="left:25%"></div>
+                <div class="ng-bar-z-pos15" style="left:75%"></div>
             </div>
-            <span class="ng-bar-pct" style="color:${tierColor}">${pct!=null?pct.toFixed(0):'—'}th</span>
+            <span class="ng-bar-pct" style="color:${tierColor}">${zLabel}</span>
             <span class="ng-gates">${longGateHtml}${shortGateHtml}</span>`;
     },
 
