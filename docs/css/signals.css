@@ -755,3 +755,26 @@
     color: var(--text-secondary);
     line-height: 1.5;
 }
+
+/* ---- SETUP DIRECTION BADGES ---- */
+/* Used in alert feed, echo cards, and conviction cards to make trade direction explicit */
+.setup-badge {
+    display: inline-block;
+    font-size: 0.5rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 1px 5px;
+    border-radius: 3px;
+    vertical-align: middle;
+    margin: 0 3px;
+}
+.setup-bottom {
+    color: var(--green);
+    background: rgba(61,184,122,0.12);
+    border: 1px solid rgba(61,184,122,0.3);
+}
+.setup-top {
+    color: var(--red);
+    background: rgba(192,64,64,0.12);
+    border: 1px solid rgba(192,64,64,0.3);
+}

@@ -285,7 +285,7 @@ def _percentile_rank(series: pd.Series, window: int) -> pd.Series:
     return series.rolling(window, min_periods=max(2, window // 2)).apply(_rank_last, raw=True)
 
 
-def compute_etf_metrics(df: pd.DataFrame) -> dict:
+def compute_etf_metrics(df: pd.DataFrame, side: str = "long") -> dict:
     """
     Given a DataFrame with columns [open, high, low, close, volume],
     compute the full metric suite and return a dict.
@@ -504,18 +504,24 @@ def compute_etf_metrics(df: pd.DataFrame) -> dict:
     alerts: List[dict] = []
     now_iso = datetime.now(timezone.utc).isoformat()
 
-    # VCVI alerts (preferred over raw CVI — vol-regime-adjusted signal)
+    # VCVI alerts — message is directional based on which side fired
+    # Short-side VCVI spike = ETF price low while volume surges = gas is at a peak
+    # Long-side VCVI spike  = ETF price low while volume surges = gas is at a bottom
+    _vcvi_setup = "potential gas top — short/inverse setup" if side == "short" \
+                  else "potential gas bottom — long/leveraged setup"
     for w_key, vcvi_val in vcvi.items():
         if vcvi_val is not None and vcvi_val >= VCVI_CRITICAL:
             alerts.append({
                 "type": "vcvi_critical",
-                "message": f"VCVI ({w_key}) = {vcvi_val:.1f} — vol-adjusted extreme capitulation",
+                "side": side,
+                "message": f"VCVI ({w_key}) = {vcvi_val:.1f} — {_vcvi_setup}",
                 "timestamp": now_iso,
             })
         elif vcvi_val is not None and vcvi_val >= VCVI_WARNING:
             alerts.append({
                 "type": "vcvi_warning",
-                "message": f"VCVI ({w_key}) = {vcvi_val:.1f} — vol-adjusted capitulation signal",
+                "side": side,
+                "message": f"VCVI ({w_key}) = {vcvi_val:.1f} — {_vcvi_setup}",
                 "timestamp": now_iso,
             })
 
@@ -524,13 +530,15 @@ def compute_etf_metrics(df: pd.DataFrame) -> dict:
         if cvi_val is not None and cvi_val >= CVI_CRITICAL:
             alerts.append({
                 "type": "cvi_critical",
-                "message": f"CVI ({w_key}) = {cvi_val:.1f} — extreme capitulation signal",
+                "side": side,
+                "message": f"CVI ({w_key}) = {cvi_val:.1f} — {_vcvi_setup}",
                 "timestamp": now_iso,
             })
         elif cvi_val is not None and cvi_val >= CVI_WARNING:
             alerts.append({
                 "type": "cvi_warning",
-                "message": f"CVI ({w_key}) = {cvi_val:.1f} — elevated capitulation signal",
+                "side": side,
+                "message": f"CVI ({w_key}) = {cvi_val:.1f} — {_vcvi_setup}",
                 "timestamp": now_iso,
             })
 
@@ -1119,7 +1127,7 @@ def run_pipeline() -> None:
     for ticker, df in frames.items():
         logger.info("Computing metrics for %s …", ticker)
         try:
-            m = compute_etf_metrics(df)
+            m = compute_etf_metrics(df, side=ETF_CONFIG[ticker]["side"])
             all_metrics[ticker] = m
         except Exception:
             logger.exception("Metric computation failed for %s", ticker)
