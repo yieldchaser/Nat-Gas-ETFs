@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trough-to-Peak Analyzer · NAT GAS ETFs</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+/* ---- TP PAGE LAYOUT ---- */
+.tp-main { max-width: 1380px; margin: 0 auto; padding: 20px 24px 48px; }
+
+.tp-title-block { margin-bottom: 16px; }
+.tp-title-row { display: flex; align-items: baseline; gap: 12px; }
+.tp-title { font-size: 1.4rem; font-weight: 700; letter-spacing: 1px; color: var(--text-bright); }
+.tp-badge { font-size: 0.7rem; color: var(--text-muted); letter-spacing: 1px; }
+.tp-desc { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
+
+/* ---- SLIDER ---- */
+.slider-block {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--card-radius);
+    padding: 18px 20px 14px;
+    margin-bottom: 16px;
+}
+.slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.slider-label { font-size: 0.65rem; letter-spacing: 2px; color: var(--text-muted); }
+.slider-value { font-size: 1.1rem; font-weight: 700; color: var(--cyan); }
+.slider-track { position: relative; }
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border-accent);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px rgba(80,144,160,0.5);
+    cursor: pointer;
+}
+input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--cyan);
+    border: none;
+    cursor: pointer;
+}
+.slider-hints { display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.6rem; color: var(--text-muted); }
+
+/* ---- CARDS ---- */
+.cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.etf-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--card-radius);
+    padding: 14px 16px;
+    position: relative;
+}
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.card-ticker { font-size: 0.85rem; font-weight: 700; letter-spacing: 1px; }
+.card-cycles { font-size: 0.65rem; letter-spacing: 1px; }
+.card-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+.metric-group {}
+.metric-lbl { font-size: 0.55rem; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 2px; }
+.metric-val { font-size: 1.05rem; font-weight: 700; }
+.metric-sub { font-size: 0.65rem; }
+.card-loading { color: var(--text-muted); font-size: 0.7rem; text-align: center; padding: 20px 0; }
+
+/* ---- CHART SECTION ---- */
+.chart-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--card-radius);
+    padding: 16px;
+    margin-bottom: 20px;
+}
+.chart-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.chart-tabs { display: flex; gap: 4px; }
+.chart-tab {
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 1px;
+    padding: 4px 10px; border-radius: 4px;
+    border: 1px solid var(--border-primary);
+    background: transparent; color: var(--text-muted);
+    cursor: pointer; transition: all 0.15s;
+    font-family: inherit;
+}
+.chart-tab:hover { color: var(--text-primary); border-color: var(--border-accent); }
+.chart-tab.active { color: var(--text-bright); background: var(--bg-panel); border-color: var(--border-accent); }
+.chart-count { font-size: 0.65rem; color: var(--text-muted); letter-spacing: 1px; }
+.chart-wrapper { position: relative; height: 220px; }
+.chart-legend { display: flex; gap: 16px; margin-top: 10px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.6rem; color: var(--text-muted); }
+.legend-dot { width: 8px; height: 2px; border-radius: 1px; }
+.legend-box { width: 10px; height: 10px; border-radius: 2px; opacity: 0.6; }
+
+/* ---- TABLE SECTION ---- */
+.table-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--card-radius);
+    padding: 16px;
+}
+.table-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.table-title { font-size: 0.85rem; font-weight: 700; letter-spacing: 1px; color: var(--text-bright); }
+.filter-tabs { display: flex; gap: 4px; }
+.filter-tab {
+    font-size: 0.65rem; font-weight: 600; letter-spacing: 1px;
+    padding: 4px 10px; border-radius: 4px;
+    border: 1px solid var(--border-primary);
+    background: transparent; color: var(--text-muted);
+    cursor: pointer; transition: all 0.15s;
+    font-family: inherit;
+}
+.filter-tab.active { color: var(--text-bright); background: var(--bg-panel); border-color: var(--border-accent); }
+.filter-tab:hover:not(.active) { color: var(--text-primary); border-color: var(--border-accent); }
+
+table.cycle-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.72rem;
+}
+.cycle-table th {
+    text-align: left; padding: 6px 10px;
+    font-size: 0.6rem; letter-spacing: 1.5px; color: var(--text-muted);
+    border-bottom: 1px solid var(--border-primary);
+    white-space: nowrap;
+}
+.cycle-table th:not(:first-child) { text-align: right; }
+.cycle-table td { padding: 7px 10px; border-bottom: 1px solid rgba(37,37,53,0.5); white-space: nowrap; }
+.cycle-table td:not(:first-child) { text-align: right; }
+.cycle-table tr:hover td { background: var(--bg-hover); }
+.cycle-table tr.active-row td { background: rgba(80,144,160,0.08); }
+.cycle-table .avg-row td { border-top: 1px solid var(--border-accent); color: var(--text-muted); font-size: 0.65rem; }
+.cycle-table .avg-row .avg-gain { font-weight: 700; }
+
+.gain-200 { color: #3db87a; }
+.gain-100 { color: #5090a0; }
+.gain-50  { color: #d4a830; }
+.gain-low { color: #c07828; }
+.date-trough { color: #e06060; }
+.date-peak   { color: #3db87a; }
+.no-data { color: var(--text-muted); font-size: 0.7rem; padding: 20px 0; text-align: center; }
+
+@media (max-width: 900px) {
+    .cards-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+    .cards-grid { grid-template-columns: 1fr; }
+    .tp-main { padding: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header id="top-bar">
+    <div class="top-bar-left">
+        <h1>NAT GAS ETF VOLUME MONITOR</h1>
+        <span class="subtitle">Volume Flow Analytics</span>
+    </div>
+    <div class="top-bar-right">
+        <nav class="page-nav">
+            <a href="index.html" class="nav-link">Volume Monitor</a>
+            <a href="trough-peak.html" class="nav-link active">Trough-to-Peak</a>
+        </nav>
+    </div>
+</header>
+
+<main class="tp-main">
+
+    <!-- TITLE -->
+    <div class="tp-title-block">
+        <div class="tp-title-row">
+            <span class="tp-title">Trough-to-Peak Analyzer</span>
+            <span class="tp-badge">NAT GAS ETFs &middot; 2020&ndash;2026</span>
+        </div>
+        <div class="tp-desc">Identifies significant recovery cycles using ZigZag algorithm. A cycle is confirmed when price rallies &ge; threshold from a trough.</div>
+    </div>
+
+    <!-- SLIDER -->
+    <div class="slider-block">
+        <div class="slider-header">
+            <span class="slider-label">MINIMUM TROUGH-TO-PEAK THRESHOLD</span>
+            <span class="slider-value" id="slider-display">48%</span>
+        </div>
+        <div class="slider-track">
+            <input type="range" id="threshold-slider" min="0" max="300" step="1" value="48">
+        </div>
+        <div class="slider-hints">
+            <span>0% (sensitive)</span>
+            <span>150%</span>
+            <span>300% (selective)</span>
+        </div>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="cards-grid" id="cards-grid">
+        <!-- populated by JS -->
+    </div>
+
+    <!-- CHART -->
+    <div class="chart-section">
+        <div class="chart-top">
+            <div class="chart-tabs" id="chart-tabs"></div>
+            <span class="chart-count" id="chart-count"></span>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="tp-chart"></canvas>
+        </div>
+        <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#e06060;height:1px;border-top:1px dashed #e06060;width:12px;"></div> Trough</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#3db87a;height:1px;border-top:1px dashed #3db87a;width:12px;"></div> Peak</div>
+            <div class="legend-item"><div class="legend-box" style="background:#3db87a;"></div> &ge;200%</div>
+            <div class="legend-item"><div class="legend-box" style="background:#5090a0;"></div> &ge;100%</div>
+            <div class="legend-item"><div class="legend-box" style="background:#d4a830;"></div> &ge;50%</div>
+            <div class="legend-item"><div class="legend-box" style="background:#c07828;"></div> &lt;50%</div>
+        </div>
+    </div>
+
+    <!-- CYCLE DETAIL TABLE -->
+    <div class="table-section">
+        <div class="table-top">
+            <span class="table-title" id="table-title">— Cycle Detail</span>
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">All Time</button>
+                <button class="filter-tab" data-filter="year">By Year</button>
+                <button class="filter-tab" data-filter="6m">By 6 Months</button>
+            </div>
+        </div>
+        <div id="table-container"></div>
+    </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<script>
+'use strict';
+
+// ── Config ────────────────────────────────────────────────────────────────────
+const TICKERS = [
+    { symbol: 'KOLD',   label: 'KOLD',  color: '#5090a0' },
+    { symbol: 'BOIL',   label: 'BOIL',  color: '#c07828' },
+    { symbol: 'HNU.TO', label: 'HNU',   color: '#3db87a' },
+    { symbol: 'HND.TO', label: 'HND',   color: '#d4a830' },
+    { symbol: '3NGL.L', label: '3NGL',  color: '#8855bb' },
+    { symbol: '3NGS.L', label: '3NGS',  color: '#d4a830' },
+];
+const START_TS = Math.floor(new Date('2020-01-01').getTime() / 1000);
+const PROXY1 = s => `https://api.allorigins.win/raw?url=${encodeURIComponent(s)}`;
+const PROXY2 = s => `https://corsproxy.io/?${encodeURIComponent(s)}`;
+const YF_URL = sym => `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?period1=${START_TS}&period2=${Math.floor(Date.now()/1000)}&interval=1d&includePrePost=false`;
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const state = {
+    rawData: {},     // symbol → {dates[], closes[]}
+    cycles:  {},     // symbol → cycle[]
+    threshold: 48,
+    activeTab: 'KOLD',
+    tableFilter: 'all',
+    chart: null,
+};
+
+// ── Fetch ─────────────────────────────────────────────────────────────────────
+async function fetchTicker(sym) {
+    const yf = YF_URL(sym);
+    for (const proxy of [PROXY1(yf), PROXY2(yf)]) {
+        try {
+            const r = await fetch(proxy);
+            if (!r.ok) continue;
+            const j = await r.json();
+            return parseYahoo(j);
+        } catch (_) {}
+    }
+    return null;
+}
+
+function parseYahoo(j) {
+    try {
+        const res = j.chart.result[0];
+        const ts = res.timestamp;
+        const closes = res.indicators.adjclose?.[0]?.adjclose ?? res.indicators.quote[0].close;
+        const dates = [], c = [];
+        for (let i = 0; i < ts.length; i++) {
+            if (closes[i] == null || closes[i] <= 0) continue;
+            dates.push(new Date(ts[i] * 1000).toISOString().slice(0, 10));
+            c.push(+closes[i].toFixed(4));
+        }
+        return { dates, closes: c };
+    } catch (_) { return null; }
+}
+
+// ── ZigZag ────────────────────────────────────────────────────────────────────
+function detectCycles(dates, prices, pct) {
+    const thr = pct / 100;
+    if (!prices || prices.length < 2) return [];
+    const pivots = [];
+    let dir = null, pIdx = 0;
+
+    for (let i = 1; i < prices.length; i++) {
+        const chg = (prices[i] - prices[pIdx]) / prices[pIdx];
+        if (dir === null) {
+            if (chg >= thr) {
+                pivots.push({ i: pIdx, price: prices[pIdx], date: dates[pIdx], type: 'trough' });
+                dir = 'up'; pIdx = i;
+            } else if (chg <= -thr) {
+                pivots.push({ i: pIdx, price: prices[pIdx], date: dates[pIdx], type: 'peak' });
+                dir = 'down'; pIdx = i;
+            }
+        } else if (dir === 'up') {
+            if (prices[i] >= prices[pIdx]) { pIdx = i; }
+            else if ((prices[pIdx] - prices[i]) / prices[pIdx] >= thr) {
+                pivots.push({ i: pIdx, price: prices[pIdx], date: dates[pIdx], type: 'peak' });
+                dir = 'down'; pIdx = i;
+            }
+        } else {
+            if (prices[i] <= prices[pIdx]) { pIdx = i; }
+            else if ((prices[i] - prices[pIdx]) / prices[pIdx] >= thr) {
+                pivots.push({ i: pIdx, price: prices[pIdx], date: dates[pIdx], type: 'trough' });
+                dir = 'up'; pIdx = i;
+            }
+        }
+    }
+    if (dir !== null)
+        pivots.push({ i: pIdx, price: prices[pIdx], date: dates[pIdx], type: dir === 'up' ? 'peak' : 'trough' });
+
+    const cycles = [];
+    for (let i = 0; i < pivots.length - 1; i++) {
+        if (pivots[i].type === 'trough' && pivots[i+1].type === 'peak') {
+            const gain = (pivots[i+1].price - pivots[i].price) / pivots[i].price * 100;
+            const days = Math.round((new Date(pivots[i+1].date) - new Date(pivots[i].date)) / 86400000);
+            cycles.push({
+                num: cycles.length + 1,
+                troughDate: pivots[i].date, troughPrice: pivots[i].price,
+                peakDate: pivots[i+1].date,   peakPrice: pivots[i+1].price,
+                gain, days,
+            });
+        }
+    }
+    return cycles;
+}
+
+function gainClass(g) {
+    if (g >= 200) return 'gain-200';
+    if (g >= 100) return 'gain-100';
+    if (g >= 50)  return 'gain-50';
+    return 'gain-low';
+}
+function gainBandColor(g, a) {
+    if (g >= 200) return `rgba(61,184,122,${a})`;
+    if (g >= 100) return `rgba(80,144,160,${a})`;
+    if (g >= 50)  return `rgba(212,168,48,${a})`;
+    return `rgba(192,120,40,${a})`;
+}
+function fmt(n, d=2) { return n != null ? n.toFixed(d) : '—'; }
+function fmtPct(n) { return n != null ? `+${n.toFixed(1)}%` : '—'; }
+
+// ── Recompute all cycles when threshold changes ───────────────────────────────
+function recompute() {
+    for (const t of TICKERS) {
+        const d = state.rawData[t.symbol];
+        state.cycles[t.symbol] = d ? detectCycles(d.dates, d.closes, state.threshold) : [];
+    }
+}
+
+// ── Cards ─────────────────────────────────────────────────────────────────────
+function renderCards() {
+    const grid = document.getElementById('cards-grid');
+    grid.innerHTML = TICKERS.map(t => {
+        const cycles = state.cycles[t.symbol] || [];
+        const d = state.rawData[t.symbol];
+        if (!d) return `<div class="etf-card">
+            <div class="card-header">
+                <span class="card-ticker" style="color:${t.color}">${t.label}</span>
+            </div>
+            <div class="card-loading">Loading…</div>
+        </div>`;
+
+        const n = cycles.length;
+        if (!n) return `<div class="etf-card">
+            <div class="card-header">
+                <span class="card-ticker" style="color:${t.color}">${t.label}</span>
+                <span class="card-cycles" style="color:${t.color}">0 cycles</span>
+            </div>
+            <div class="card-loading">No cycles at this threshold</div>
+        </div>`;
+
+        const gains = cycles.map(c => c.gain);
+        const days  = cycles.map(c => c.days);
+        const avg   = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+        const max   = arr => Math.max(...arr);
+        const min   = arr => Math.min(...arr);
+
+        return `<div class="etf-card">
+            <div class="card-header">
+                <span class="card-ticker" style="color:${t.color}">${t.label}</span>
+                <span class="card-cycles" style="color:${t.color}">${n} cycles</span>
+            </div>
+            <div class="card-metrics">
+                <div class="metric-group">
+                    <div class="metric-lbl">AVG GAIN</div>
+                    <div class="metric-val" style="color:${t.color}">${Math.round(avg(gains))}%</div>
+                </div>
+                <div class="metric-group">
+                    <div class="metric-lbl">AVG DAYS</div>
+                    <div class="metric-val">${Math.round(avg(days))}d</div>
+                </div>
+                <div class="metric-group">
+                    <div class="metric-lbl">MAX GAIN</div>
+                    <div class="metric-sub" style="color:${t.color}">${Math.round(max(gains))}%</div>
+                </div>
+                <div class="metric-group">
+                    <div class="metric-lbl">MIN GAIN</div>
+                    <div class="metric-sub" style="color:${t.color}">${Math.round(min(gains))}%</div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ── Chart ─────────────────────────────────────────────────────────────────────
+function renderChart() {
+    const t = TICKERS.find(x => x.label === state.activeTab) || TICKERS[0];
+    const d = state.rawData[t.symbol];
+    const cycles = state.cycles[t.symbol] || [];
+
+    document.getElementById('chart-count').textContent =
+        d ? `${cycles.length} cycles detected` : 'Loading…';
+
+    if (state.chart) { state.chart.destroy(); state.chart = null; }
+    const ctx = document.getElementById('tp-chart').getContext('2d');
+
+    if (!d) return;
+
+    const priceData = d.dates.map((date, i) => ({ x: date, y: d.closes[i] }));
+
+    // Build annotation objects
+    const annotations = {};
+    cycles.forEach((c, idx) => {
+        annotations[`band${idx}`] = {
+            type: 'box', xScaleID: 'x', yScaleID: 'y',
+            xMin: c.troughDate, xMax: c.peakDate,
+            backgroundColor: gainBandColor(c.gain, 0.13), borderWidth: 0,
+        };
+        annotations[`tl${idx}`] = {
+            type: 'line', xScaleID: 'x', yScaleID: 'y',
+            xMin: c.troughDate, xMax: c.troughDate,
+            borderColor: 'rgba(224,96,96,0.6)', borderWidth: 1,
+            borderDash: [4, 4],
+        };
+        annotations[`pl${idx}`] = {
+            type: 'line', xScaleID: 'x', yScaleID: 'y',
+            xMin: c.peakDate, xMax: c.peakDate,
+            borderColor: 'rgba(61,184,122,0.6)', borderWidth: 1,
+            borderDash: [4, 4],
+        };
+    });
+
+    state.chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [{
+                data: priceData,
+                borderColor: t.color,
+                borderWidth: 1.5,
+                pointRadius: 0,
+                tension: 0.1,
+                fill: false,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            animation: false,
+            parsing: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: { unit: 'month', displayFormats: { month: 'yy-MM' } },
+                    grid: { color: 'rgba(37,37,53,0.6)' },
+                    ticks: { color: '#555565', font: { size: 10 }, maxTicksLimit: 10 },
+                },
+                y: {
+                    grid: { color: 'rgba(37,37,53,0.6)' },
+                    ticks: { color: '#555565', font: { size: 10 } },
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#181820', borderColor: '#303040', borderWidth: 1,
+                    titleColor: '#888898', bodyColor: '#e0ddd8',
+                    titleFont: { size: 10 }, bodyFont: { size: 11 },
+                    callbacks: { label: ctx => ` $${ctx.parsed.y.toFixed(2)}` }
+                },
+                annotation: { annotations },
+            }
+        }
+    });
+}
+
+// ── Chart tabs ────────────────────────────────────────────────────────────────
+function renderChartTabs() {
+    const el = document.getElementById('chart-tabs');
+    el.innerHTML = TICKERS.map(t =>
+        `<button class="chart-tab${t.label===state.activeTab?' active':''}" data-label="${t.label}">${t.label}</button>`
+    ).join('');
+    el.querySelectorAll('.chart-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+            state.activeTab = btn.dataset.label;
+            renderChartTabs();
+            renderChart();
+            renderTable();
+        });
+    });
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+function renderTable() {
+    const t = TICKERS.find(x => x.label === state.activeTab) || TICKERS[0];
+    document.getElementById('table-title').textContent = `${t.label} – Cycle Detail`;
+
+    const cycles = state.cycles[t.symbol] || [];
+    const now = new Date();
+    const cutoff = state.tableFilter === '6m'
+        ? new Date(now.getFullYear(), now.getMonth() - 6, now.getDate())
+        : state.tableFilter === 'year'
+        ? new Date(now.getFullYear(), 0, 1)
+        : null;
+
+    const filtered = cutoff
+        ? cycles.filter(c => new Date(c.troughDate) >= cutoff || new Date(c.peakDate) >= cutoff)
+        : cycles;
+
+    const container = document.getElementById('table-container');
+    if (!state.rawData[t.symbol]) {
+        container.innerHTML = '<div class="no-data">Loading data…</div>';
+        return;
+    }
+    if (!filtered.length) {
+        container.innerHTML = '<div class="no-data">No cycles in this period at the current threshold.</div>';
+        return;
+    }
+
+    const avgGain = filtered.reduce((s,c)=>s+c.gain,0)/filtered.length;
+    const avgDays = Math.round(filtered.reduce((s,c)=>s+c.days,0)/filtered.length);
+
+    // Determine if latest cycle is still open (no confirmed peak yet)
+    const lastCycle = cycles[cycles.length - 1];
+    const isActive = idx => filtered[idx] === lastCycle;
+
+    container.innerHTML = `<table class="cycle-table">
+        <thead><tr>
+            <th>#</th><th>TROUGH DATE</th><th>TROUGH $</th>
+            <th>PEAK DATE</th><th>PEAK $</th><th>% GAIN</th><th>DAYS</th>
+        </tr></thead>
+        <tbody>
+        ${filtered.map((c,i) => `<tr class="${isActive(i)?'active-row':''}">
+            <td style="color:var(--text-muted)">${c.num}</td>
+            <td class="date-trough">${c.troughDate}</td>
+            <td>${fmt(c.troughPrice)}</td>
+            <td class="date-peak">${c.peakDate}</td>
+            <td>${fmt(c.peakPrice)}</td>
+            <td class="${gainClass(c.gain)}">${fmtPct(c.gain)}</td>
+            <td style="color:var(--text-muted)">${c.days}d</td>
+        </tr>`).join('')}
+        </tbody>
+        <tfoot><tr class="avg-row">
+            <td colspan="5">AVERAGE</td>
+            <td class="avg-gain ${gainClass(avgGain)}">${fmtPct(avgGain)}</td>
+            <td style="color:var(--text-muted)">${avgDays}d</td>
+        </tr></tfoot>
+    </table>`;
+}
+
+// ── Filter tabs ───────────────────────────────────────────────────────────────
+function initFilterTabs() {
+    document.querySelectorAll('.filter-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.tableFilter = btn.dataset.filter;
+            renderTable();
+        });
+    });
+}
+
+// ── Full re-render after threshold / data change ──────────────────────────────
+function renderAll() {
+    recompute();
+    renderCards();
+    renderChartTabs();
+    renderChart();
+    renderTable();
+}
+
+// ── Slider ────────────────────────────────────────────────────────────────────
+const slider = document.getElementById('threshold-slider');
+const sliderDisplay = document.getElementById('slider-display');
+slider.addEventListener('input', () => {
+    state.threshold = +slider.value;
+    sliderDisplay.textContent = `${state.threshold}%`;
+    renderAll();
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+initFilterTabs();
+renderChartTabs();
+renderCards(); // show loading skeletons
+
+(async () => {
+    await Promise.all(TICKERS.map(async t => {
+        const d = await fetchTicker(t.symbol);
+        if (d) state.rawData[t.symbol] = d;
+        recompute();
+        renderCards();
+        if (t.label === state.activeTab) { renderChart(); renderTable(); }
+    }));
+})();
+</script>
+</body>
+</html>

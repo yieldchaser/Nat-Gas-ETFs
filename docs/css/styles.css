@@ -409,6 +409,27 @@ footer {
 .bg-orange { background: var(--orange); }
 .bg-purple { background: var(--purple); }
 
+/* ---- PAGE NAV ---- */
+.page-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.nav-link {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    text-transform: uppercase;
+}
+.nav-link:hover { color: var(--text-primary); border-color: var(--border-accent); }
+.nav-link.active { color: var(--text-bright); border-color: var(--border-accent); background: var(--bg-panel); }
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
     width: 6px;
