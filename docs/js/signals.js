@@ -412,24 +412,35 @@ const Signals = {
             : '<span class="setup-badge setup-top"    data-tooltip="Short-side conviction: all 4 gates fired on short ETF (gas near TOP) → short/inverse setup">↓ TOP SETUP</span>';
 
         // Gate spec display
-        const gateSpec = `VCVI≥${gates.vcvi_min || 72} · ${gates.breadth_min || 3}/5 windows≥${gates.breadth_pct || 85}th · Move>${gates.atr_mult || 1.5}×ATR · VolReg≤${gates.vol_regime_max || 70}th`;
+        const gateSpec = `VCVI≥${gates.vcvi_min || 72} · ${gates.breadth_min || 3}/5 windows≥${gates.breadth_pct || 85}th · Move>${gates.atr_mult || 1.5}×ATR · VolReg≤${gates.vol_regime_max || 70}th · Gate5:NG-z${side==='long'?'≤'+(gates.ng_z_long??-1.0):'≥'+(gates.ng_z_short??1.0)} | Override:VCVI≥${gates.extreme_override_vcvi||90}+Move>${gates.extreme_override_atr||2.0}×ATR`;
 
         // Event rows (most recent first) — with season tag
-        const eventRows = (ce.events || []).slice(0, 6).map(e => {
+        const eventRows = (ce.events || []).slice(0, 15).map(e => {
             const moveColor = e.daily_move_pct > 0 ? 'var(--green)' : 'var(--red)';
             const sign = e.daily_move_pct >= 0 ? '+' : '';
             const seasonCfg = e.season ? (CONFIG.seasonDisplay[e.season] || {}) : null;
             const seasonTag = seasonCfg
                 ? `<span style="color:${seasonCfg.color}" data-tooltip="${e.season} ×${(e.seasonality_weight||1).toFixed(2)}">${seasonCfg.emoji}</span>`
                 : '';
+            const overrideBadge = e.extreme_override
+                ? `<span class="ce-override-badge" data-tooltip="Extreme override: VCVI≥90 + Move>2×ATR bypassed Gate 1 minimum">⚡</span>`
+                : '';
+            const guardBadge = e.momentum_guard_active
+                ? `<span class="ce-guard-badge" data-tooltip="Momentum guard active: short-side VCVI bar raised (gas in seasonal uptrend)">🛡</span>`
+                : '';
+            const ngZStr = e.ng_seasonal_z != null ? e.ng_seasonal_z.toFixed(2) : '—';
+            const ngZColor = e.ng_seasonal_z != null
+                ? (e.ng_seasonal_z <= -1 ? 'var(--green)' : e.ng_seasonal_z >= 1 ? 'var(--red)' : 'var(--text-dim)')
+                : '';
             return `
                 <tr>
-                    <td class="ce-date">${e.date} ${seasonTag}</td>
+                    <td class="ce-date">${e.date} ${seasonTag}${overrideBadge}${guardBadge}</td>
                     <td class="ce-vcvi" data-tooltip="VCVI-21 on signal date">${e.vcvi?.toFixed(0) || '—'}</td>
                     <td class="ce-move" style="color:${moveColor}" data-tooltip="Daily price move">${sign}${e.daily_move_pct?.toFixed(1) || '—'}%</td>
                     <td class="ce-atr" data-tooltip="Multiple of ATR-14">${e.atr_ratio?.toFixed(1) || '—'}×</td>
                     <td class="ce-breadth" data-tooltip="Vol pct windows ≥ 85th">${e.breadth_count}/5</td>
                     <td class="ce-price" data-tooltip="Price at signal">$${e.price?.toFixed(2) || '—'}</td>
+                    <td class="ce-ngz" style="color:${ngZColor}" data-tooltip="NG=F seasonal z-score on signal date">${ngZStr}</td>
                 </tr>`;
         }).join('');
 
@@ -482,6 +493,7 @@ const Signals = {
                             <th data-tooltip="Move as multiple of ATR-14">ATR×</th>
                             <th data-tooltip="Vol pct windows above 85th">Breadth</th>
                             <th>Price</th>
+                            <th data-tooltip="NG=F seasonal z-score (Gate 5)">NG-z</th>
                         </tr>
                     </thead>
                     <tbody>${eventRows}</tbody>
@@ -709,7 +721,7 @@ const Signals = {
 
         const gateSpec = `VCVI≥${gates.vcvi_min||60} · ${gates.breadth_min||2}/N windows≥${gates.breadth_pct||75}th · Move>${gates.atr_mult||1.2}×ATR`;
 
-        const eventRows = (watch.events || []).slice(0, 5).map(e => {
+        const eventRows = (watch.events || []).slice(0, 10).map(e => {
             const moveColor = e.daily_move_pct > 0 ? 'var(--green)' : 'var(--red)';
             const sign = e.daily_move_pct >= 0 ? '+' : '';
             const seasonCfg = e.season ? (CONFIG.seasonDisplay[e.season] || {}) : {};

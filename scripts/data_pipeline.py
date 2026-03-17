@@ -137,6 +137,17 @@ WATCH_BREADTH_PCT = 75          # Gate 2: 75th pct (vs 85th for conviction)
 WATCH_ATR_MULT = 1.2            # Gate 3: 1.2× ATR (vs 1.5× for conviction)
 WATCH_MIN_GAP_DAYS = 7          # Dedup interval (tighter than conviction)
 
+# Extreme override — fires even if VCVI < CONVICTION_VCVI_MIN (bypasses Gate 1 only)
+EXTREME_OVERRIDE_VCVI_MIN = 90  # Must be >= 90 (exceptional capitulation)
+EXTREME_OVERRIDE_ATR_MULT = 2.0 # AND move > 2× ATR-14 (severe price dislocation)
+
+# NG=F seasonal z-score thresholds for Gate 5 directional confirmation
+CONVICTION_NG_Z_LONG  = -1.0   # Long-side fires only when gas z-score ≤ -1.0 (seasonally low)
+CONVICTION_NG_Z_SHORT =  1.0   # Short-side fires only when gas z-score ≥ +1.0 (seasonally high)
+
+# Momentum guard — raises VCVI bar for short-side when NG=F is in uptrend
+MOMENTUM_GUARD_VCVI_BOOST = 13  # Add to CONVICTION_VCVI_MIN when gas seasonal_z > 0
+
 # Fast-window spike detection (Feature 1)
 FAST_VCVI_THRESHOLD = 45        # 5d VCVI threshold for weather-spike flag
 SHARP_SPIKE_ATR_MULT = 2.0      # |daily move| > N × ATR to qualify as sharp spike
@@ -271,6 +282,23 @@ def _decay_adjusted_price_percentile(
 # ---------------------------------------------------------------------------
 NG_SEASONAL_Z_GATE = 1.5      # σ threshold — gates fire above/below this
 
+def _compute_ng_seasonal_z_series(ng_close: pd.Series) -> pd.Series:
+    """
+    Compute per-date seasonal z-score for NG=F using only prior same-month
+    observations (no lookahead bias).  Returns a Series aligned to ng_close.index.
+    """
+    result = pd.Series(np.nan, index=ng_close.index, dtype=float)
+    for month in range(1, 13):
+        mask = ng_close.index.month == month
+        idx = ng_close.index[mask]
+        prices = ng_close.loc[idx]
+        means = prices.expanding().mean().shift(1)
+        stds  = prices.expanding().std().shift(1)
+        z = ((prices - means) / stds).where(stds > 0)
+        result.loc[idx] = z.values
+    return result
+
+
 def _fetch_ng_price_context() -> dict:
     """
     Fetch NG=F (NYMEX natural gas futures) and compute a seasonally-adjusted
@@ -347,6 +375,7 @@ def _fetch_ng_price_context() -> dict:
         "gate_long":       gate_long,    # True = gas anomalously LOW for season → long credible
         "history_days":    len(window_close),
         "seasonal_note":   seasonal_note,
+        "_close_series":   close,        # Internal: full close series for z-score computation
     }
 
 
@@ -462,7 +491,9 @@ def _percentile_rank(series: pd.Series, window: int) -> pd.Series:
     return series.rolling(window, min_periods=max(2, window // 2)).apply(_rank_last, raw=True)
 
 
-def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "") -> dict:
+def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
+                        ng_close: "Optional[pd.Series]" = None,
+                        ng_seasonal_z_series: "Optional[pd.Series]" = None) -> dict:
     """
     Given a DataFrame with columns [open, high, low, close, volume],
     compute the full metric suite and return a dict.
@@ -617,6 +648,9 @@ def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "") 
         vol_pct_series_dict=vol_pct_series,
         atr14_series=atr14_series,
         windows=VOL_PCT_WINDOWS,
+        ng_close=ng_close,
+        etf_side=side,
+        ng_seasonal_z_series=ng_seasonal_z_series,
     )
 
     # --- Elevated Watch Events (3-gate softer filter, Feature 5) ---
@@ -959,8 +993,8 @@ def _compute_historical_echoes(
                 "threshold_vol_regime": vol_regime_max,
                 "forward_returns": {}, "occurrences": []}
 
-    # Exclude the most recent 21 days — need full forward windows
-    cutoff = df_work.index[-1] - pd.Timedelta(days=max(fwd_windows) * 2)
+    # Exclude only the last 5 trading days — allow partial forward returns (null for incomplete windows)
+    cutoff = df_work.index[-1] - pd.Timedelta(days=5)
     df_hist = df_work[df_work.index <= cutoff]
 
     if df_hist.empty:
@@ -1109,14 +1143,22 @@ def _detect_conviction_events(
     atr14_series: pd.Series,
     windows: list,
     min_gap_days: int = CONVICTION_MIN_GAP_DAYS,
-    max_display: int = 10,
+    max_display: int = 25,
+    ng_close: "Optional[pd.Series]" = None,
+    etf_side: str = "long",
+    ng_seasonal_z_series: "Optional[pd.Series]" = None,
 ) -> dict:
     """
-    Scan full history for Conviction Events — dates where ALL 4 gates fire:
+    Scan full history for Conviction Events — dates where ALL gates fire:
       Gate 1: VCVI-21 >= 72  (critical vol-adjusted capitulation)
+              OR Extreme Override: VCVI >= 90 AND |move| > 2× ATR (bypasses Gate 1 min)
       Gate 2: >= 3 of 5 vol-pct windows >= 85th percentile  (broad breadth)
       Gate 3: |daily move| > 1.5 × ATR-14  (price dislocation)
       Gate 4: vol regime <= 70th percentile  (non-turbulent context)
+      Gate 5: NG=F seasonal z-score directional confirmation (when available)
+              Long-side: z <= -1.0 (gas anomalously low for season)
+              Short-side: z >= +1.0 (gas anomalously high for season)
+              Momentum guard: short-side raises VCVI bar by 13 when gas seasonal_z > 0
 
     Designed to flag only ~1-2 genuine anomalies per ETF per year.
     """
@@ -1135,12 +1177,43 @@ def _detect_conviction_events(
         if w in vol_pct_series_dict:
             df_work[col] = vol_pct_series_dict[w]
 
+    # Add NG=F seasonal z-score series (aligned to ETF dates via forward-fill)
+    if ng_seasonal_z_series is not None and not ng_seasonal_z_series.empty:
+        df_work["ng_seasonal_z"] = ng_seasonal_z_series.reindex(
+            df_work.index.union(ng_seasonal_z_series.index)
+        ).ffill().reindex(df_work.index)
+    else:
+        df_work["ng_seasonal_z"] = np.nan
+
     df_work = df_work.dropna(subset=["close", "vcvi_21", "vol_regime", "atr14", "pct_change"])
     if df_work.empty:
         return {"count": 0, "events": [], "annual_rate": None, "gates": _conviction_gate_spec()}
 
-    # Gate 1: VCVI-21 >= critical
-    g1 = df_work["vcvi_21"] >= CONVICTION_VCVI_MIN
+    atr_pct = df_work["atr14"] / df_work["close"] * 100
+    daily_move_pct = df_work["pct_change"].abs()
+
+    # Momentum guard (Change D): for short-side, raise VCVI bar when gas is in seasonal uptrend
+    if etf_side == "short":
+        ng_z_col = df_work["ng_seasonal_z"].fillna(0.0)
+        vcvi_min_effective = np.where(
+            ng_z_col > 0,
+            CONVICTION_VCVI_MIN + MOMENTUM_GUARD_VCVI_BOOST,
+            CONVICTION_VCVI_MIN,
+        )
+        momentum_guard_active = pd.Series(ng_z_col > 0, index=df_work.index)
+    else:
+        vcvi_min_effective = CONVICTION_VCVI_MIN
+        momentum_guard_active = pd.Series(False, index=df_work.index)
+
+    # Gate 1: VCVI-21 >= effective minimum (may be boosted by momentum guard)
+    g1 = df_work["vcvi_21"] >= vcvi_min_effective
+
+    # Extreme Override (Change A): bypass Gate 1 minimum if VCVI >= 90 AND move > 2× ATR
+    extreme_override = (
+        (df_work["vcvi_21"] >= EXTREME_OVERRIDE_VCVI_MIN) &
+        (daily_move_pct > EXTREME_OVERRIDE_ATR_MULT * atr_pct)
+    )
+    g1_or_override = g1 | extreme_override
 
     # Gate 2: breadth — count windows above threshold
     breadth_cols = [f"vol_pct_{w}d" for w in windows if f"vol_pct_{w}d" in df_work.columns]
@@ -1151,15 +1224,23 @@ def _detect_conviction_events(
         g2 = pd.Series(False, index=df_work.index)
 
     # Gate 3: price dislocation — |daily move %| > N × ATR-14 as % of price
-    atr_pct = df_work["atr14"] / df_work["close"] * 100
-    daily_move_pct = df_work["pct_change"].abs()
     g3 = daily_move_pct > (CONVICTION_ATR_MULT * atr_pct)
 
     # Gate 4: vol regime context — must be non-turbulent
     g4 = df_work["vol_regime"] <= CONVICTION_VOL_REGIME_MAX
 
-    # ALL gates must fire
-    all_pass = g1 & g2 & g3 & g4
+    # Gate 5 (Change C): NG=F seasonal z-score directional confirmation (when available)
+    ng_z = df_work["ng_seasonal_z"]
+    ng_z_available = ng_z.notna()
+    if etf_side == "long":
+        # Long-side: gas should be seasonally low (z <= -1.0) or data unavailable
+        g5 = (~ng_z_available) | (ng_z <= CONVICTION_NG_Z_LONG)
+    else:
+        # Short-side: gas should be seasonally high (z >= +1.0) or data unavailable
+        g5 = (~ng_z_available) | (ng_z >= CONVICTION_NG_Z_SHORT)
+
+    # ALL gates must fire (Gate 1 allows extreme override)
+    all_pass = g1_or_override & g2 & g3 & g4 & g5
     signal_dates = df_work.index[all_pass].tolist()
 
     # Deduplicate with min gap
@@ -1194,6 +1275,9 @@ def _detect_conviction_events(
                 fwd_rets[f"{w}d"] = None
 
         occ_month = dt.month
+        is_extreme_override = bool(extreme_override.loc[dt]) if dt in extreme_override.index else False
+        is_momentum_guard = bool(momentum_guard_active.loc[dt]) if dt in momentum_guard_active.index else False
+        ng_z_val = _safe_float(row.get("ng_seasonal_z")) if "ng_seasonal_z" in row.index else None
         events.append({
             "date": dt.strftime("%Y-%m-%d"),
             "vcvi": _safe_float(row["vcvi_21"]),
@@ -1205,6 +1289,9 @@ def _detect_conviction_events(
             "season": _season_label(occ_month),
             "seasonality_weight": _seasonal_weight(occ_month),
             "fwd": fwd_rets,
+            "extreme_override":      is_extreme_override,
+            "momentum_guard_active": is_momentum_guard,
+            "ng_seasonal_z":         ng_z_val,
         })
 
     # Aggregate forward return statistics
@@ -1244,11 +1331,16 @@ def _detect_conviction_events(
 def _conviction_gate_spec() -> dict:
     """Return the gate thresholds used, for frontend display."""
     return {
-        "vcvi_min": CONVICTION_VCVI_MIN,
-        "breadth_min": CONVICTION_BREADTH_MIN,
-        "breadth_pct": CONVICTION_BREADTH_PCT,
-        "atr_mult": CONVICTION_ATR_MULT,
-        "vol_regime_max": CONVICTION_VOL_REGIME_MAX,
+        "vcvi_min":              CONVICTION_VCVI_MIN,
+        "breadth_min":           CONVICTION_BREADTH_MIN,
+        "breadth_pct":           CONVICTION_BREADTH_PCT,
+        "atr_mult":              CONVICTION_ATR_MULT,
+        "vol_regime_max":        CONVICTION_VOL_REGIME_MAX,
+        "extreme_override_vcvi": EXTREME_OVERRIDE_VCVI_MIN,
+        "extreme_override_atr":  EXTREME_OVERRIDE_ATR_MULT,
+        "ng_z_long":             CONVICTION_NG_Z_LONG,
+        "ng_z_short":            CONVICTION_NG_Z_SHORT,
+        "momentum_guard_boost":  MOMENTUM_GUARD_VCVI_BOOST,
     }
 
 
@@ -1264,7 +1356,7 @@ def _detect_elevated_watch_events(
     windows: list,
     conviction_dates: list = None,
     min_gap_days: int = WATCH_MIN_GAP_DAYS,
-    max_display: int = 10,
+    max_display: int = 15,
 ) -> dict:
     """
     3-Gate Elevated Watch — softer than Conviction Events, no vol-regime gate.
@@ -1569,6 +1661,13 @@ def run_pipeline() -> None:
 
     # ---- 1b. Fetch NG=F gas price context (Feature 2) ----
     ng_price_context = _fetch_ng_price_context()
+    # Extract internal close series (not JSON-serialised) and precompute z-score series once
+    ng_close_series: "Optional[pd.Series]" = ng_price_context.pop("_close_series", None)
+    ng_z_series: "Optional[pd.Series]" = (
+        _compute_ng_seasonal_z_series(ng_close_series)
+        if ng_close_series is not None and not ng_close_series.empty
+        else None
+    )
 
     if not frames:
         logger.error("No data frames available – aborting")
@@ -1579,7 +1678,13 @@ def run_pipeline() -> None:
     for ticker, df in frames.items():
         logger.info("Computing metrics for %s …", ticker)
         try:
-            m = compute_etf_metrics(df, side=ETF_CONFIG[ticker]["side"], ticker=ticker)
+            m = compute_etf_metrics(
+                df,
+                side=ETF_CONFIG[ticker]["side"],
+                ticker=ticker,
+                ng_close=ng_close_series,
+                ng_seasonal_z_series=ng_z_series,
+            )
             all_metrics[ticker] = m
         except Exception:
             logger.exception("Metric computation failed for %s", ticker)
