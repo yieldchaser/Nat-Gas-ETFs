@@ -113,8 +113,10 @@ const CONFIG = {
         },
         // Fast spike detection (5d VCVI window)
         fastVcvi: { threshold: 45, atrMult: 2.0 },
-        // Gas price level gate thresholds (NG=F percentile)
-        ngPriceGate: { highQuartile: 75, lowQuartile: 25 }
+        // Gas price level gate — uses seasonal z-score (not raw percentile)
+        // Because nat gas is so volatile, "high vs 2yr" is meaningless.
+        // Gate fires when gas is ≥1.5σ above/below its own seasonal monthly norm.
+        ngPriceGate: { zThreshold: 1.5 }
     },
 
     // VPS weights — 5-component including inverse vol regime
