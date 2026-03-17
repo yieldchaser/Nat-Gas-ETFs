@@ -3,6 +3,7 @@
 A real-time dashboard for tracking volume flow and price-volume dynamics across natural gas ETFs. Combines daily pipeline data from Yahoo Finance with a multi-timeframe volatility engine to surface statistically significant volume events.
 
 **Live Dashboard:** [https://yieldchaser.github.io/Nat-Gas-ETFs/](https://yieldchaser.github.io/Nat-Gas-ETFs/)
+**Trough-to-Peak Analyzer:** [https://yieldchaser.github.io/Nat-Gas-ETFs/trough-peak.html](https://yieldchaser.github.io/Nat-Gas-ETFs/trough-peak.html)
 
 ## Overview
 
@@ -150,6 +151,91 @@ Pattern study of all past VCVI capitulation signals (VCVI ≥ 55, vol regime ≤
 
   > Example: BOIL echoes in the **extreme regime** show **0% win rate** at 21d with a median of −46%, versus **42% win rate** in normal regime — validating that 2022-style environments fundamentally change signal outcomes.
 
+## Trough-to-Peak Analyzer
+
+A supplementary analytical tool for identifying significant recovery cycles in ETF price action using the **ZigZag algorithm**. Complements the volume-centric main dashboard.
+
+**Purpose:** Detect and quantify multi-month cycles where price rallied ≥ threshold from a confirmed trough to a peak, without regard to volume or seasonality — purely mechanical price-based pattern recognition.
+
+### How to Use
+
+1. **Adjust Threshold Slider** (0–300%, default 48%)
+   - Lower % → detects more/smaller cycles (sensitive)
+   - Higher % → detects only major cycles (selective)
+   - Changes recalculate all detected cycles in real-time
+
+2. **Select ETF Tab** (KOLD, BOIL, HNU, HND, 3NGL, 3NGS)
+   - Chart shows price history since 2020 with colored bands and dashed lines
+
+3. **Filter Cycle Detail Table**
+   - **All Time** – Show all detected cycles from 2020
+   - **By Year** – Show only cycles from current year (2026)
+   - **By 6 Months** – Show only cycles from last 180 days
+
+### Summary Cards
+
+Each card displays metrics for the selected threshold:
+
+| Metric | Description |
+|--------|-------------|
+| **AVG GAIN** | Mean % gain across all detected cycles |
+| **AVG DAYS** | Average duration from trough to peak (calendar days) |
+| **MAX GAIN** | Best single cycle % gain (or all-time max at 0% threshold) |
+| **MIN GAIN** | Worst performing cycle gain |
+| **Cycles** | Count of trough→peak pairs at this threshold |
+
+### Chart Visualization
+
+- **Price Line** – Thin line showing daily closes since 2020
+- **Colored Bands** – Background rectangles between trough and peak:
+  - **Green** – Gain ≥ 200%
+  - **Teal** – Gain ≥ 100%
+  - **Amber** – Gain ≥ 50%
+  - **Orange** – Gain < 50%
+- **Red Dashed Lines** – Trough dates
+- **Green Dashed Lines** – Peak dates
+- **Linear Scale** – Y-axis in $ (not log) for clarity
+
+### Cycle Detail Table
+
+Shows all cycles matching the filter, with:
+
+| Column | Description |
+|--------|-------------|
+| **#** | Cycle number |
+| **TROUGH DATE** | Date of confirmed trough (red text) |
+| **TROUGH $** | Price at trough |
+| **PEAK DATE** | Date of subsequent peak (green text) |
+| **PEAK $** | Price at peak |
+| **% GAIN** | Calculated gain; colored by magnitude |
+| **DAYS** | Calendar days between trough and peak |
+| **AVERAGE** | Aggregate stats across all cycles in filter |
+
+### Algorithm: ZigZag Detection
+
+The ZigZag approach identifies troughs and peaks mechanically:
+
+1. **Track running minimum** – Start with the first price
+2. **When price rises ≥ threshold%, confirm the minimum as a trough**
+3. **Track running maximum** from that trough onwards
+4. **When price falls ≥ threshold%, confirm the maximum as a peak** → cycle complete
+5. **Repeat** to detect subsequent cycles
+
+This creates naturally-spaced cycles that match human "eyeball" identification of recovery patterns. Unlike moving averages or other oscillators, ZigZag is deterministic and threshold-independent (changes to threshold don't require curve-fitting).
+
+### Data Source
+
+Historical price data (daily closes, 2020–present) is pre-computed server-side via `scripts/trough_peak_data.py` and bundled as `docs/data/trough_peak_data.json`. Updated on every GitHub Actions data pipeline run (15-minute interval during US market hours). Falls back to live Yahoo Finance fetch if static data is unavailable.
+
+### Interpretation Tips
+
+- **Leveraged ETFs:** BOIL/KOLD/HNU.TO/HND.TO/3NGL.L/3NGS.L all decay daily (~35–55%/yr). Cycles at low thresholds may include "false" recoveries from extreme lows caused by decay rather than commodity price action.
+- **Exchange differences:** HNU.TO/HND.TO (Toronto) and 3NGL.L/3NGS.L (London) trade in different time zones; price gaps/holidays may affect cycle timing vs BOIL/KOLD (US).
+- **Threshold selection:** 48% (default) filters out structural decay noise for 2x leveraged ETFs while catching genuine commodity moves. 3x instruments may benefit from slightly higher thresholds.
+- **Recent cycles:** Incomplete cycles (trough detected, no peak yet) appear in the table only if "All Time" or "By Year" filter includes their trough date, even if the peak is future.
+
+---
+
 ## Core Metrics Explained
 
 ### Volume Metrics
@@ -207,66 +293,84 @@ Today's current price is then ranked against the decay-adjusted historical distr
 ### Frontend
 ```
 docs/
-├── index.html          # Dashboard structure
+├── index.html                   # Main dashboard structure
+├── trough-peak.html             # Trough-to-Peak Analyzer (ZigZag cycle detection)
 ├── css/
-│   ├── styles.css      # Global theme, grid, tooltips
-│   ├── cards.css       # ETF card styling
-│   └── signals.css     # Signal panel styling
+│   ├── styles.css               # Global theme, grid, tooltips, page nav
+│   ├── cards.css                # ETF card styling
+│   └── signals.css              # Signal panel styling
+├── data/
+│   ├── dashboard_data.json       # Pre-computed dashboard metrics
+│   ├── latest_signals.json       # Current alert state
+│   └── trough_peak_data.json     # 6yr daily closes for all ETFs (trough-peak)
 └── js/
-    ├── app.js          # App controller, data loading
-    ├── data.js         # Yahoo Finance API fallback
-    ├── cards.js        # Card rendering (decay-adj VCVI, season badge, spike flag)
-    ├── charts.js       # Canvas rendering (sparklines, forward return curve, lead-time marker)
-    ├── signals.js      # NG bar, stress matrix, SWVC, conviction, elevated watch, echoes
-    ├── metrics.js      # Live calculations (RVOL, Z-Score, CVI, VCVI, HV, etc.)
-    └── config.js       # Thresholds, windows, ETF metadata, decay rates, season display
+    ├── app.js                   # App controller, data loading
+    ├── data.js                  # Yahoo Finance API fallback
+    ├── cards.js                 # Card rendering (decay-adj VCVI, season badge, spike flag)
+    ├── charts.js                # Canvas rendering (sparklines, forward return curve, lead-time marker)
+    ├── signals.js               # NG bar, stress matrix, SWVC, conviction, elevated watch, echoes
+    ├── metrics.js               # Live calculations (RVOL, Z-Score, CVI, VCVI, HV, etc.)
+    └── config.js                # Thresholds, windows, ETF metadata, decay rates, season display
 ```
 
 ### Backend
 ```
 scripts/
-└── data_pipeline.py    # Nightly ETL:
-                        #   - Fetches OHLCV for 6 ETFs + NG=F futures
-                        #   - Computes all metrics (6 windows: 5/10/21/63/126/252d)
-                        #   - NG=F seasonal z-score series + regime classification
-                        #     (normal/elevated/extreme, no-lookahead, shared across ETFs)
-                        #   - Decay-corrected price percentile per ETF
-                        #   - Historical echoes: lead-time, season, ng_regime per
-                        #     occurrence; regime-stratified forward return tables
-                        #   - Conviction events (5-gate + extreme override + momentum
-                        #     guard) + elevated watch (3-gate)
-                        #   - Writes dashboard_data.json + latest_signals.json
+├── data_pipeline.py         # Main ETL pipeline:
+│                             #   - Fetches OHLCV for 6 ETFs + NG=F futures
+│                             #   - Computes all metrics (6 windows: 5/10/21/63/126/252d)
+│                             #   - NG=F seasonal z-score series + regime classification
+│                             #   - Decay-corrected price percentile per ETF
+│                             #   - Historical echoes + conviction/elevated watch events
+│                             #   - Writes dashboard_data.json + latest_signals.json
+│
+└── trough_peak_data.py      # ZigZag cycle detector (trough-peak page):
+                             #   - Fetches 6yr daily closes for all 6 ETFs
+                             #   - No processing — just date/close pairs
+                             #   - Writes trough_peak_data.json (1,500+ rows per ticker)
 
 data/
-├── dashboard_data.json      # Pre-computed metrics for all ETFs
-└── latest_signals.json      # Current alert state
+├── dashboard_data.json          # Pre-computed dashboard metrics
+├── latest_signals.json          # Current alert state
+├── trough_peak_data.json        # Raw 6yr daily closes (generated locally)
 
-docs/data/                   # GitHub Pages copy (synced by Actions)
+docs/data/                       # GitHub Pages copy (synced by Actions)
+├── dashboard_data.json
+├── latest_signals.json
+└── trough_peak_data.json
 ```
 
 ### Data Flow
 
-1. **GitHub Actions Trigger** (nightly) → `data_pipeline.py`
-2. **Fetch OHLCV** for 6 ETFs via Yahoo Finance + **NG=F** futures
-3. **Compute NG=F context** (once, shared across all ETFs):
+1. **GitHub Actions Trigger** (every 15min during market hours, + end-of-day)
+2. **Main Pipeline** → `data_pipeline.py`:
+   - Fetch OHLCV for 6 ETFs via Yahoo Finance + **NG=F** futures
+   - Compute NG=F context (once, shared across all ETFs)
+   - Compute per-ETF metrics (volume, volatility, decay-corrected percentiles, seasonality)
+   - Detect Conviction Events + Elevated Watch + Historical Echoes
+   - Write `dashboard_data.json` + `latest_signals.json`
+3. **Trough-Peak Pipeline** → `trough_peak_data.py`:
+   - Fetch 6-year (2020–present) daily closes for all 6 ETFs
+   - Write `trough_peak_data.json` (minimal: just dates + closes per ticker)
+4. **Copy to GitHub Pages** → `docs/data/` (synced for public access)
+
+**Detailed Main Pipeline Steps:**
+1. Fetch OHLCV for 6 ETFs via Yahoo Finance + NG=F futures
+2. Compute NG=F context (once, shared across all ETFs):
    - Seasonal z-score series (no-lookahead, per-month expanding window)
    - NG=F own realized vol (21d) + HV percentile vs 2yr rolling history
    - Full historical regime series: 'normal' / 'elevated' / 'extreme' per date
-   - Current regime classification + ng_hv_21d, ng_hv_pct for display
-4. **Compute per-ETF metrics:**
+3. Compute per-ETF metrics:
    - Volume: RVOL, Z-Score, VROC, percentiles across 6 windows (5–252d)
    - Volatility: HV, vol regime, ATR, VoV, term structure
    - Signals: CVI, VCVI per window, VCVI-5d fast, VPS composite
    - Decay-corrected price percentile → decay-adj VCVI-21d
    - Seasonality block: month, season, weight, adj_vcvi_21d
    - Sharp spike flag: |move| > 2×ATR AND VCVI-5d > 45
-5. **Compute SWVC** — cross-market spike convergence
-6. **Detect Conviction Events** (5 gates + extreme override + momentum guard)
-   - Tags each event with ng_seasonal_z and ng_regime at time of event
-7. **Detect Elevated Watch** (3-gate softer filter)
-8. **Generate Historical Echoes** — with days_to_peak, season, ng_regime per occurrence;
-   lead_time aggregate stats; regime-stratified forward return tables
-9. **Write JSON** → `data/` and sync to `docs/data/`
+4. Compute SWVC — cross-market spike convergence
+5. Detect Conviction Events (5 gates + extreme override + momentum guard)
+6. Detect Elevated Watch (3-gate softer filter)
+7. Generate Historical Echoes — with days_to_peak, season, ng_regime per occurrence
 
 ## Development
 
@@ -274,14 +378,22 @@ docs/data/                   # GitHub Pages copy (synced by Actions)
 ```bash
 pip install pandas numpy
 
+# Generate dashboard data
 python scripts/data_pipeline.py
 
+# Generate trough-peak historical data (6yr daily closes)
+python scripts/trough_peak_data.py
+
+# Sync to docs folder (GitHub Pages)
 cp data/dashboard_data.json docs/data/
 cp data/latest_signals.json docs/data/
+cp data/trough_peak_data.json docs/data/
 
 # Serve locally (required for fetch() to work)
 python -m http.server 8080 --directory docs
-# Then open http://localhost:8080
+# Then open:
+#   http://localhost:8080                 # Main dashboard
+#   http://localhost:8080/trough-peak.html  # Trough-to-Peak Analyzer
 ```
 
 ### Key Constants (`data_pipeline.py`)
@@ -336,10 +448,12 @@ ETF_ANNUAL_DECAY = {
 ## Tech Stack
 
 - **Frontend:** Vanilla JS (ES6+), Canvas API, CSS3 Grid/Flexbox
+  - Dashboard: Custom canvas rendering for charts + sparklines
+  - Trough-Peak: Chart.js v4.4 + chartjs-plugin-annotation v3 for candlestick-style charting
 - **Backend:** Python 3, Pandas, NumPy
-- **Data:** Yahoo Finance v8 chart API (no external dependencies)
-- **Deployment:** GitHub Pages (docs/) + GitHub Actions (data pipeline)
-- **No frameworks** — lightweight, fast, single-page load
+- **Data:** Yahoo Finance v8 chart API (no external auth required)
+- **Deployment:** GitHub Pages (docs/) + GitHub Actions (data pipelines)
+- **No heavy frameworks** — lightweight, fast, single-page loads
 
 ## License
 
