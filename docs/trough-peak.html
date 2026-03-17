@@ -255,30 +255,52 @@ const TICKERS = [
     { symbol: '3NGS.L', label: '3NGS',  color: '#d4a830' },
 ];
 const START_TS = Math.floor(new Date('2020-01-01').getTime() / 1000);
-const PROXY1 = s => `https://api.allorigins.win/raw?url=${encodeURIComponent(s)}`;
-const PROXY2 = s => `https://corsproxy.io/?${encodeURIComponent(s)}`;
-const YF_URL = sym => `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?period1=${START_TS}&period2=${Math.floor(Date.now()/1000)}&interval=1d&includePrePost=false`;
+const END_TS   = () => Math.floor(Date.now() / 1000);
+const YF_BASE  = sym => `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?period1=${START_TS}&period2=${END_TS()}&interval=1d&includePrePost=false`;
+const YF_BASE2 = sym => `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?period1=${START_TS}&period2=${END_TS()}&interval=1d&includePrePost=false`;
+const PROXIES  = yf => [
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(yf)}`,
+    `https://corsproxy.io/?${encodeURIComponent(yf)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yf)}`,
+    `https://thingproxy.freeboard.io/fetch/${yf}`,
+];
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const state = {
-    rawData: {},     // symbol → {dates[], closes[]}
-    cycles:  {},     // symbol → cycle[]
+    rawData:  {},    // symbol → {dates[], closes[]}
+    cycles:   {},    // symbol → cycle[]
+    fetchErr: {},    // symbol → true if all proxies failed
     threshold: 48,
     activeTab: 'KOLD',
     tableFilter: 'all',
     chart: null,
 };
 
-// ── Fetch ─────────────────────────────────────────────────────────────────────
+// ── Fetch with timeout ────────────────────────────────────────────────────────
+async function fetchWithTimeout(url, ms = 12000) {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), ms);
+    try {
+        const r = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(tid);
+        return r;
+    } catch (e) {
+        clearTimeout(tid);
+        throw e;
+    }
+}
+
 async function fetchTicker(sym) {
-    const yf = YF_URL(sym);
-    for (const proxy of [PROXY1(yf), PROXY2(yf)]) {
-        try {
-            const r = await fetch(proxy);
-            if (!r.ok) continue;
-            const j = await r.json();
-            return parseYahoo(j);
-        } catch (_) {}
+    for (const base of [YF_BASE(sym), YF_BASE2(sym)]) {
+        for (const proxy of PROXIES(base)) {
+            try {
+                const r = await fetchWithTimeout(proxy, 12000);
+                if (!r.ok) continue;
+                const j = await r.json();
+                const parsed = parseYahoo(j);
+                if (parsed && parsed.dates.length > 10) return parsed;
+            } catch (_) {}
+        }
     }
     return null;
 }
@@ -377,12 +399,15 @@ function renderCards() {
     grid.innerHTML = TICKERS.map(t => {
         const cycles = state.cycles[t.symbol] || [];
         const d = state.rawData[t.symbol];
-        if (!d) return `<div class="etf-card">
-            <div class="card-header">
-                <span class="card-ticker" style="color:${t.color}">${t.label}</span>
-            </div>
-            <div class="card-loading">Loading…</div>
-        </div>`;
+        if (!d) {
+            const errMsg = state.fetchErr[t.symbol] ? 'Data unavailable' : 'Loading…';
+            return `<div class="etf-card">
+                <div class="card-header">
+                    <span class="card-ticker" style="color:${t.color}">${t.label}</span>
+                </div>
+                <div class="card-loading">${errMsg}</div>
+            </div>`;
+        }
 
         const n = cycles.length;
         if (!n) return `<div class="etf-card">
@@ -617,13 +642,19 @@ renderChartTabs();
 renderCards(); // show loading skeletons
 
 (async () => {
-    await Promise.all(TICKERS.map(async t => {
+    // Fetch sequentially with small delay to avoid proxy rate-limiting
+    for (const t of TICKERS) {
         const d = await fetchTicker(t.symbol);
-        if (d) state.rawData[t.symbol] = d;
+        if (d) {
+            state.rawData[t.symbol] = d;
+        } else {
+            state.fetchErr[t.symbol] = true;
+        }
         recompute();
         renderCards();
         if (t.label === state.activeTab) { renderChart(); renderTable(); }
-    }));
+        await new Promise(r => setTimeout(r, 400));
+    }
 })();
 </script>
 </body>
