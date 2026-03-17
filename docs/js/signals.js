@@ -35,12 +35,21 @@ const Signals = {
         }
 
         feed.innerHTML = allAlerts.slice(0, 15).map(a => {
-            const tickerColor = CONFIG.etfs[a.ticker]?.side === 'long' ? 'var(--green)' : 'var(--red)';
+            const side = a.side || CONFIG.etfs[a.ticker]?.side;
+            const tickerColor = side === 'long' ? 'var(--green)' : 'var(--red)';
             const icon = this._alertIcon(a.type);
+            // Only show the setup badge on VCVI/CVI alerts — those are the directional ones
+            const isCapAlert = a.type?.startsWith('vcvi') || a.type?.startsWith('cvi');
+            const setupBadge = isCapAlert
+                ? (side === 'long'
+                    ? '<span class="setup-badge setup-bottom">↑ BOTTOM</span>'
+                    : '<span class="setup-badge setup-top">↓ TOP</span>')
+                : '';
             return `
                 <div class="alert-item alert-${a.type} alert-level-${a.level}">
                     <span class="alert-time">${a.time}</span>
                     <span class="alert-ticker" style="color:${tickerColor}">${a.ticker}</span>
+                    ${setupBadge}
                     <span class="alert-icon">${icon}</span>
                     <span class="alert-message">${a.message}</span>
                 </div>`;
@@ -60,17 +69,19 @@ const Signals = {
             const longRvol  = longM?.rvol?.['21d'];
             const shortRvol = shortM?.rvol?.['21d'];
 
-            // Use VCVI as the primary capitulation signal in the stress matrix
+            // Keep long and short VCVI separate — they signal OPPOSITE directions:
+            // Long-side VCVI spike  = long ETF price low + high vol = gas BOTTOM signal
+            // Short-side VCVI spike = short ETF price low + high vol = gas TOP signal
             const shortVcvi = shortM?.vcvi?.['63d'] ?? shortM?.cvi?.['63d'];
             const longVcvi  = longM?.vcvi?.['63d']  ?? longM?.cvi?.['63d'];
-            const displayVcvi = Math.max(shortVcvi || 0, longVcvi || 0);
 
             // Vol regime: show the pair's long side vol regime (both should be similar)
             const volReg = longM?.volatility?.volRegimePct ?? shortM?.volatility?.volRegimePct;
             const regInfo = Metrics.getVolRegimeLabel(volReg);
 
             const rvolColor  = v => v != null ? Metrics.getValueColor(v, CONFIG.thresholds.rvol) : 'var(--text-muted)';
-            const vcviColor  = displayVcvi != null ? Metrics.getValueColor(displayVcvi, CONFIG.thresholds.vcvi) : 'var(--text-muted)';
+            const lCapColor  = longVcvi  != null ? Metrics.getValueColor(longVcvi,  CONFIG.thresholds.vcvi) : 'var(--text-muted)';
+            const sCapColor  = shortVcvi != null ? Metrics.getValueColor(shortVcvi, CONFIG.thresholds.vcvi) : 'var(--text-muted)';
             const ipsiColor  = ipsi != null ? Metrics.getValueColor(ipsi, CONFIG.thresholds.ipsi) : 'var(--text-muted)';
 
             const ipsiTip = ipsi != null ? `IPSI ${ipsi.toFixed(2)}x — short RVOL ÷ long RVOL for this pair` : 'IPSI unavailable';
@@ -78,10 +89,11 @@ const Signals = {
                 <tr>
                     <td class="pair-name">${pair.label}</td>
                     <td style="color:${rvolColor(longRvol)}" data-tooltip="Long ETF 21d RVOL — volume relative to its own 21-day average">${longRvol != null ? longRvol.toFixed(1) + 'x' : '--'}</td>
-                    <td style="color:${rvolColor(shortRvol)}" data-tooltip="Short/Inverse ETF 21d RVOL — elevated short-side RVOL signals directional capitulation">${shortRvol != null ? shortRvol.toFixed(1) + 'x' : '--'}</td>
-                    <td style="color:${vcviColor}" data-tooltip="Highest VCVI-63d across long/short pair — vol-adjusted capitulation index. Threshold: 55 warning, 72 critical.">${displayVcvi != null ? displayVcvi.toFixed(0) : '--'}</td>
+                    <td style="color:${rvolColor(shortRvol)}" data-tooltip="Short/Inverse ETF 21d RVOL — volume relative to its own 21-day average">${shortRvol != null ? shortRvol.toFixed(1) + 'x' : '--'}</td>
+                    <td style="color:${lCapColor}" data-tooltip="Long-side VCVI-63d (${pair.long}) — spikes when long ETF has high volume AND low price. This means gas is near a BOTTOM. Threshold: 55 watch, 72 critical.">${longVcvi != null ? longVcvi.toFixed(0) : '--'}</td>
+                    <td style="color:${sCapColor}" data-tooltip="Short-side VCVI-63d (${pair.short}) — spikes when short ETF has high volume AND low price (i.e. gas is HIGH). This means gas is near a TOP. Threshold: 55 watch, 72 critical.">${shortVcvi != null ? shortVcvi.toFixed(0) : '--'}</td>
                     <td style="color:${ipsiColor}" data-tooltip="${ipsiTip}">${ipsi != null ? ipsi.toFixed(1) + 'x' : '--'}</td>
-                    <td data-tooltip="Volatility regime — where current HV21 sits vs 252-day history. LOW/QUIET = signals more reliable in this environment."><span class="vol-regime-badge ${regInfo.cls}" style="font-size:0.6rem">${regInfo.label}</span></td>
+                    <td data-tooltip="Volatility regime — where HV21 sits vs 252-day history. LOW/QUIET = signals more reliable."><span class="vol-regime-badge ${regInfo.cls}" style="font-size:0.6rem">${regInfo.label}</span></td>
                     <td><span class="stress-status ${status}">${status.toUpperCase()}</span></td>
                 </tr>`;
         }).join('');
@@ -287,10 +299,15 @@ const Signals = {
         }).join('');
 
         const tickerColor = side === 'long' ? 'var(--green)' : 'var(--red)';
+        // Setup label makes the trade direction explicit — this was the original thesis
+        const setupLabel = side === 'long'
+            ? '<span class="setup-badge setup-bottom" data-tooltip="Long-side VCVI spike: long ETF has high volume at a low price → gas is near a BOTTOM → long/leveraged setup favored">↑ BOTTOM SETUP</span>'
+            : '<span class="setup-badge setup-top"    data-tooltip="Short-side VCVI spike: short ETF has high volume at a low price (gas at HIGH) → gas is near a TOP → short/inverse setup favored">↓ TOP SETUP</span>';
         return `
             <div class="echo-card echo-${side}">
                 <div class="echo-card-header">
                     <span class="echo-ticker" style="color:${tickerColor}">${ticker}</span>
+                    ${setupLabel}
                     <span class="echo-count" data-tooltip="Total distinct signal instances found in full history (VCVI≥${echoes.threshold_vcvi}, VolRegime≤${echoes.threshold_vol_regime}th). Dashed line separates signal-reliable (&lt;63d) from decay-dominated (&gt;63d) zone.">${echoes.count} instances</span>
                 </div>
                 <div class="echo-curve-container">
@@ -354,6 +371,9 @@ const Signals = {
         const gates = ce.gates || {};
         const tickerColor = side === 'long' ? 'var(--green)' : 'var(--red)';
         const rateStr = ce.annual_rate != null ? ce.annual_rate.toFixed(1) : '—';
+        const setupLabel = side === 'long'
+            ? '<span class="setup-badge setup-bottom" data-tooltip="Long-side conviction: all 4 gates fired on long ETF → gas near BOTTOM → long/leveraged setup">↑ BOTTOM SETUP</span>'
+            : '<span class="setup-badge setup-top"    data-tooltip="Short-side conviction: all 4 gates fired on short ETF (gas near TOP) → short/inverse setup">↓ TOP SETUP</span>';
 
         // Gate spec display
         const gateSpec = `VCVI≥${gates.vcvi_min || 72} · ${gates.breadth_min || 3}/5 windows≥${gates.breadth_pct || 85}th · Move>${gates.atr_mult || 1.5}×ATR · VolReg≤${gates.vol_regime_max || 70}th`;
@@ -408,6 +428,7 @@ const Signals = {
             <div class="conviction-card conviction-${side}">
                 <div class="conviction-header">
                     <span class="conviction-ticker" style="color:${tickerColor}">${ticker}</span>
+                    ${setupLabel}
                     <span class="conviction-count">${ce.count} events</span>
                     <span class="conviction-rate" data-tooltip="Average events per year across full history">${rateStr}/yr</span>
                 </div>
