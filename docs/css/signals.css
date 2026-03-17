@@ -934,3 +934,23 @@
     border-radius: 0 3px 3px 0;
     cursor: default;
 }
+
+/* Z-score bar variant for NG price bar */
+.ng-bar-zscore {
+    overflow: visible;
+}
+.ng-bar-center-mark {
+    position: absolute;
+    left: 50%;
+    top: -2px;
+    width: 1px;
+    height: 10px;
+    background: rgba(255,255,255,0.5);
+}
+.ng-bar-z-neg15, .ng-bar-z-pos15 {
+    position: absolute;
+    top: -1px;
+    width: 1px;
+    height: 8px;
+    background: rgba(255,255,255,0.2);
+}
