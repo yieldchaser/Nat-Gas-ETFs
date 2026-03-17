@@ -59,6 +59,14 @@
                 <span class="section-label">Volume Intelligence</span>
             </div>
 
+            <!-- NG=F GAS PRICE CONTEXT BAR (Feature 2) -->
+            <div class="ng-price-bar-panel" id="ng-price-bar-panel">
+                <div id="ng-price-bar" class="ng-price-bar">
+                    <span class="ng-bar-label">NG=F</span>
+                    <span class="ng-bar-na">Loading gas price context…</span>
+                </div>
+            </div>
+
             <!-- ALERT FEED -->
             <div class="signal-panel" id="alert-panel">
                 <h3>ACTIVE ALERTS</h3>
@@ -78,6 +86,8 @@
                             <th data-tooltip="Short/Inverse ETF 21-day Relative Volume">SHORT RVOL</th>
                             <th data-tooltip="Long-side VCVI-63d — spikes when long ETF has high volume AND low price. Gas is near a BOTTOM. Favors long/leveraged setup.">L-CAP</th>
                             <th data-tooltip="Short-side VCVI-63d — spikes when short ETF has high volume AND low price (gas is HIGH). Gas is near a TOP. Favors short/inverse setup.">S-CAP</th>
+                            <th data-tooltip="5d fast-window VCVI (Long/Short) — catches weather event spikes before longer windows. Threshold: 45. Format: L/S">FAST-5d</th>
+                            <th data-tooltip="Sharp Spike flag — fires when 5d VCVI>45 AND move>2×ATR on the same day. Weather event candidate.">SPIKE</th>
                             <th data-tooltip="Inverse Pair Stress Index — short ETF RVOL ÷ long ETF RVOL. &gt;2x indicates abnormal directional pressure.">IPSI</th>
                             <th data-tooltip="Current volatility regime — where HV21 sits in its own 252-day history. Signals in LOW/QUIET regimes are most reliable.">VOL REGIME</th>
                             <th>STATUS</th>
@@ -105,9 +115,17 @@
                 </div>
             </div>
 
+            <!-- ELEVATED WATCH — 3-gate softer filter (Feature 5) -->
+            <div class="signal-panel" id="elevated-watch-panel">
+                <h3 data-tooltip="3-gate softer filter: VCVI≥60, ≥2/N windows≥75th pct, move>1.2×ATR. No vol-regime gate — catches slow-building peaks. Designed for ~4-8 events per year. Excludes dates already flagged by full Conviction Events.">ELEVATED WATCH <span class="panel-subtitle">— 3-gate pre-conviction filter</span></h3>
+                <div id="elevated-watch-container">
+                    <div class="conviction-loading">Scanning watch events…</div>
+                </div>
+            </div>
+
             <!-- HISTORICAL ECHOES -->
             <div class="signal-panel" id="echoes-panel">
-                <h3 data-tooltip="When the same VCVI signal conditions existed in the past (VCVI≥55, VolRegime≤60th), what happened to prices over the next 5, 10, and 21 sessions? Base-rate statistics from full available history.">HISTORICAL ECHOES <span class="panel-subtitle">— past VCVI signals &amp; outcomes</span></h3>
+                <h3 data-tooltip="When the same VCVI signal conditions existed in the past (VCVI≥55, VolRegime≤60th), what happened to prices over the next 5, 10, and 21 sessions? Base-rate statistics from full available history. Lead-time marker shows median days to peak.">HISTORICAL ECHOES <span class="panel-subtitle">— past VCVI signals &amp; outcomes</span></h3>
                 <div id="echoes-container">
                     <div class="echoes-loading">Loading historical data…</div>
                 </div>

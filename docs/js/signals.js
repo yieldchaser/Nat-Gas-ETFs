@@ -8,7 +8,8 @@ const Signals = {
     _alertIcon(type) {
         const icons = {
             vcvi: '⚡', cvi: '🔥', mwca: '💥', rvol: '📈', vps: '📊',
-            atr_breakout: '📐', vov: '🌀', vol_regime: '🌡', ipsi_stress: '⚠'
+            atr_breakout: '📐', vov: '🌀', vol_regime: '🌡', ipsi_stress: '⚠',
+            fast_spike: '⚡', weather: '⛈'
         };
         return icons[type] || '●';
     },
@@ -84,16 +85,41 @@ const Signals = {
             const sCapColor  = shortVcvi != null ? Metrics.getValueColor(shortVcvi, CONFIG.thresholds.vcvi) : 'var(--text-muted)';
             const ipsiColor  = ipsi != null ? Metrics.getValueColor(ipsi, CONFIG.thresholds.ipsi) : 'var(--text-muted)';
 
+            // 5d fast-window VCVI for both sides (Feature 1)
+            const longVcvi5  = longM?.vcvi?.['5d']  ?? longM?.cvi?.['5d'];
+            const shortVcvi5 = shortM?.vcvi?.['5d'] ?? shortM?.cvi?.['5d'];
+            const anySpike   = longM?.sharpSpike || shortM?.sharpSpike;
+            const spikeTicker = longM?.sharpSpike ? pair.long : shortM?.sharpSpike ? pair.short : null;
+
+            const fastColor = v => {
+                if (v == null) return 'var(--text-muted)';
+                if (v >= 65) return 'var(--purple)';
+                if (v >= 45) return 'var(--orange)';
+                if (v >= 30) return 'var(--yellow)';
+                return 'var(--text-dim)';
+            };
+
             const ipsiTip = ipsi != null ? `IPSI ${ipsi.toFixed(2)}x — short RVOL ÷ long RVOL for this pair` : 'IPSI unavailable';
+
+            // Season badge for this pair (use long side)
+            const season = longM?.seasonality?.season;
+            const sw = longM?.seasonality?.weight;
+            const seasonCfg = season ? (CONFIG.seasonDisplay[season] || {}) : null;
+            const seasonTag = seasonCfg
+                ? `<span class="matrix-season" style="color:${seasonCfg.color}" data-tooltip="Season: ${season} ×${sw?.toFixed(2)||'1.00'}">${seasonCfg.emoji}</span>`
+                : '';
+
             return `
                 <tr>
-                    <td class="pair-name">${pair.label}</td>
-                    <td style="color:${rvolColor(longRvol)}" data-tooltip="Long ETF 21d RVOL — volume relative to its own 21-day average">${longRvol != null ? longRvol.toFixed(1) + 'x' : '--'}</td>
-                    <td style="color:${rvolColor(shortRvol)}" data-tooltip="Short/Inverse ETF 21d RVOL — volume relative to its own 21-day average">${shortRvol != null ? shortRvol.toFixed(1) + 'x' : '--'}</td>
-                    <td style="color:${lCapColor}" data-tooltip="Long-side VCVI-63d (${pair.long}) — spikes when long ETF has high volume AND low price. This means gas is near a BOTTOM. Threshold: 55 watch, 72 critical.">${longVcvi != null ? longVcvi.toFixed(0) : '--'}</td>
-                    <td style="color:${sCapColor}" data-tooltip="Short-side VCVI-63d (${pair.short}) — spikes when short ETF has high volume AND low price (i.e. gas is HIGH). This means gas is near a TOP. Threshold: 55 watch, 72 critical.">${shortVcvi != null ? shortVcvi.toFixed(0) : '--'}</td>
+                    <td class="pair-name">${pair.label}${seasonTag}</td>
+                    <td style="color:${rvolColor(longRvol)}" data-tooltip="Long ETF 21d RVOL">${longRvol != null ? longRvol.toFixed(1) + 'x' : '--'}</td>
+                    <td style="color:${rvolColor(shortRvol)}" data-tooltip="Short/Inverse ETF 21d RVOL">${shortRvol != null ? shortRvol.toFixed(1) + 'x' : '--'}</td>
+                    <td style="color:${lCapColor}" data-tooltip="Long-side VCVI-63d (${pair.long}) — gas BOTTOM signal. Threshold: 55 watch, 72 critical.">${longVcvi != null ? longVcvi.toFixed(0) : '--'}</td>
+                    <td style="color:${sCapColor}" data-tooltip="Short-side VCVI-63d (${pair.short}) — gas TOP signal. Threshold: 55 watch, 72 critical.">${shortVcvi != null ? shortVcvi.toFixed(0) : '--'}</td>
+                    <td style="color:${fastColor(longVcvi5||shortVcvi5)}" data-tooltip="5d fast-window VCVI — L:${longVcvi5!=null?longVcvi5.toFixed(0):'—'} S:${shortVcvi5!=null?shortVcvi5.toFixed(0):'—'}. Threshold 45. Fires on weather spikes before 21d window catches up.">${longVcvi5!=null?longVcvi5.toFixed(0):'—'}/${shortVcvi5!=null?shortVcvi5.toFixed(0):'—'}</td>
+                    <td data-tooltip="${anySpike?`SHARP SPIKE detected on ${spikeTicker} — move >2×ATR with VCVI-5d>45`:'No sharp spike'}">${anySpike ? '<span class="spike-badge-sm">⚡</span>' : '—'}</td>
                     <td style="color:${ipsiColor}" data-tooltip="${ipsiTip}">${ipsi != null ? ipsi.toFixed(1) + 'x' : '--'}</td>
-                    <td data-tooltip="Volatility regime — where HV21 sits vs 252-day history. LOW/QUIET = signals more reliable."><span class="vol-regime-badge ${regInfo.cls}" style="font-size:0.6rem">${regInfo.label}</span></td>
+                    <td data-tooltip="Volatility regime"><span class="vol-regime-badge ${regInfo.cls}" style="font-size:0.6rem">${regInfo.label}</span></td>
                     <td><span class="stress-status ${status}">${status.toUpperCase()}</span></td>
                 </tr>`;
         }).join('');
@@ -285,7 +311,13 @@ const Signals = {
         else if (edgeMed < -3 && edgeWr < 45) { bias = `↓ Bearish edge @ ${edgeLabel}`;  biasClass = 'bias-bear'; }
         else                                   { bias = `→ Mixed outcome @ ${edgeLabel}`; biasClass = 'bias-neutral'; }
 
-        // Recent occurrences — last 5 with edge-window return if available
+        // Lead-time annotation (Feature 4)
+        const lt = echoes.lead_time;
+        const leadTimeHtml = lt && lt.median_days != null
+            ? `<div class="echo-lead-time" data-tooltip="Days from VCVI signal to peak forward return (n=${lt.count}). IQR: ${lt.p25_days}–${lt.p75_days}d">⏱ Peak ~${lt.median_days}d  <span style="color:var(--text-dim)">(IQR ${lt.p25_days}–${lt.p75_days}d)</span></div>`
+            : '';
+
+        // Recent occurrences — last 5 with edge-window return, season tag, and lead-time
         const recent = (echoes.occurrences || []).slice(0, 5);
         const recentHtml = recent.map(o => {
             const retEdge = o.fwd?.[edgeW] ?? o.fwd?.['21d'];
@@ -294,8 +326,11 @@ const Signals = {
             const retLabel = retEdge != null
                 ? `${retEdge >= 0 ? '+' : ''}${retEdge.toFixed(1)}% over ${edgeW}`
                 : 'no fwd data';
+            const seasonCfg = o.season ? (CONFIG.seasonDisplay[o.season] || {}) : null;
+            const seasonEmoji = seasonCfg ? seasonCfg.emoji : '';
+            const leadNote = o.days_to_peak != null ? ` peak@${o.days_to_peak}d` : '';
             return `<span class="echo-past-date" style="color:${retColor}"
-                data-tooltip="VCVI=${o.vcvi?.toFixed(0)} VolReg=${o.vol_regime_pct?.toFixed(0)}th @ $${o.price?.toFixed(2)} → ${retLabel}">${o.date.slice(0,7)}</span>`;
+                data-tooltip="VCVI=${o.vcvi?.toFixed(0)} VolReg=${o.vol_regime_pct?.toFixed(0)}th @ $${o.price?.toFixed(2)} → ${retLabel}${leadNote} [${o.season||'?'} ×${(o.seasonality_weight||1).toFixed(2)}]">${seasonEmoji}${o.date.slice(0,7)}</span>`;
         }).join('');
 
         const tickerColor = side === 'long' ? 'var(--green)' : 'var(--red)';
@@ -325,6 +360,7 @@ const Signals = {
                     <tbody>${rows}</tbody>
                 </table>
                 <div class="echo-bias ${biasClass}" data-tooltip="Scored by |median|×(win_rate−50)² across ≤63d windows — beyond 63d leveraged ETF decay dominates">${bias}</div>
+                ${leadTimeHtml}
                 <div class="echo-recent">
                     <span class="echo-recent-label">Recent:</span>
                     ${recentHtml || '<span style="color:var(--text-muted)">—</span>'}
@@ -378,13 +414,17 @@ const Signals = {
         // Gate spec display
         const gateSpec = `VCVI≥${gates.vcvi_min || 72} · ${gates.breadth_min || 3}/5 windows≥${gates.breadth_pct || 85}th · Move>${gates.atr_mult || 1.5}×ATR · VolReg≤${gates.vol_regime_max || 70}th`;
 
-        // Event rows (most recent first)
+        // Event rows (most recent first) — with season tag
         const eventRows = (ce.events || []).slice(0, 6).map(e => {
             const moveColor = e.daily_move_pct > 0 ? 'var(--green)' : 'var(--red)';
             const sign = e.daily_move_pct >= 0 ? '+' : '';
+            const seasonCfg = e.season ? (CONFIG.seasonDisplay[e.season] || {}) : null;
+            const seasonTag = seasonCfg
+                ? `<span style="color:${seasonCfg.color}" data-tooltip="${e.season} ×${(e.seasonality_weight||1).toFixed(2)}">${seasonCfg.emoji}</span>`
+                : '';
             return `
                 <tr>
-                    <td class="ce-date">${e.date}</td>
+                    <td class="ce-date">${e.date} ${seasonTag}</td>
                     <td class="ce-vcvi" data-tooltip="VCVI-21 on signal date">${e.vcvi?.toFixed(0) || '—'}</td>
                     <td class="ce-move" style="color:${moveColor}" data-tooltip="Daily price move">${sign}${e.daily_move_pct?.toFixed(1) || '—'}%</td>
                     <td class="ce-atr" data-tooltip="Multiple of ATR-14">${e.atr_ratio?.toFixed(1) || '—'}×</td>
@@ -566,11 +606,141 @@ const Signals = {
             '<div class="swvc-empty">No data available.</div>';
     },
 
-    renderAll(allMetrics, sideConvergence) {
+    // ---- NG PRICE CONTEXT BAR (Feature 2) ----
+    renderNgPriceBar(ngPriceContext) {
+        const bar = document.getElementById('ng-price-bar');
+        if (!bar) return;
+
+        if (!ngPriceContext || ngPriceContext.price == null) {
+            bar.innerHTML = '<span class="ng-bar-label">NG=F</span><span class="ng-bar-na">—  price data unavailable</span>';
+            return;
+        }
+
+        const p = ngPriceContext.price;
+        const pct = ngPriceContext.percentile_2yr;
+        const tier = ngPriceContext.tier || 'mid';
+        const gateShort = ngPriceContext.gate_short;
+        const gateLong  = ngPriceContext.gate_long;
+
+        const tierColors = { extreme: 'var(--purple)', high: 'var(--red)', mid: 'var(--text-secondary)', low: 'var(--green)' };
+        const tierColor  = tierColors[tier] || 'var(--text-secondary)';
+        const fillWidth  = pct != null ? Math.round(pct) : 50;
+
+        const shortGateHtml = gateShort === true  ? '<span class="ng-gate active" data-tooltip="Short-side signals credible — gas price in top 25% of 2yr range">SHORT ✓</span>'
+                            : gateShort === false ? '<span class="ng-gate inactive" data-tooltip="Short-side signals WEAKENED — gas price NOT in top 25%">SHORT ✗</span>'
+                            : '<span class="ng-gate unknown">SHORT ?</span>';
+        const longGateHtml  = gateLong  === true  ? '<span class="ng-gate active" data-tooltip="Long-side signals credible — gas price in bottom 25% of 2yr range">LONG ✓</span>'
+                            : gateLong  === false ? '<span class="ng-gate inactive" data-tooltip="Long-side signals WEAKENED — gas price NOT in bottom 25%">LONG ✗</span>'
+                            : '<span class="ng-gate unknown">LONG ?</span>';
+
+        bar.innerHTML = `
+            <span class="ng-bar-label">NG=F</span>
+            <span class="ng-bar-price" style="color:${tierColor}" data-tooltip="Henry Hub natural gas futures — current: $${p.toFixed(3)}, 2-yr percentile: ${pct!=null?pct.toFixed(0):'—'}th (${tier.toUpperCase()})">$${p.toFixed(3)}</span>
+            <div class="ng-bar-track" data-tooltip="${pct!=null?pct.toFixed(0):'—'}th percentile of 2-year price range">
+                <div class="ng-bar-fill" style="width:${fillWidth}%;background:${tierColor}"></div>
+                <div class="ng-bar-q25" style="left:25%"></div>
+                <div class="ng-bar-q75" style="left:75%"></div>
+            </div>
+            <span class="ng-bar-pct" style="color:${tierColor}">${pct!=null?pct.toFixed(0):'—'}th</span>
+            <span class="ng-gates">${longGateHtml}${shortGateHtml}</span>`;
+    },
+
+    // ---- ELEVATED WATCH (Feature 5) ----
+    renderElevatedWatch(allMetrics) {
+        const container = document.getElementById('elevated-watch-container');
+        if (!container) return;
+
+        const tickers = Object.keys(CONFIG.etfs);
+        const hasAny = tickers.some(t => allMetrics[t]?.elevated_watch?.count > 0);
+
+        if (!hasAny) {
+            container.innerHTML = '<div class="watch-empty">No elevated watch events in history.</div>';
+            return;
+        }
+
+        const rows = CONFIG.pairs.map(pair => {
+            const longM  = allMetrics[pair.long];
+            const shortM = allMetrics[pair.short];
+            const longW  = longM?.elevated_watch;
+            const shortW = shortM?.elevated_watch;
+            if ((!longW || longW.count === 0) && (!shortW || shortW.count === 0)) return '';
+            return `
+                <div class="watch-pair-group">
+                    <div class="watch-pair-label">${pair.label}</div>
+                    <div class="watch-pair-cards">
+                        ${longW  && longW.count  > 0 ? this._watchCard(pair.long,  longW,  'long')  : ''}
+                        ${shortW && shortW.count > 0 ? this._watchCard(pair.short, shortW, 'short') : ''}
+                    </div>
+                </div>`;
+        }).join('');
+
+        container.innerHTML = rows || '<div class="watch-empty">No elevated watch events.</div>';
+    },
+
+    _watchCard(ticker, watch, side) {
+        const gates = watch.gates || {};
+        const tickerColor = side === 'long' ? 'var(--green)' : 'var(--red)';
+        const rateStr = watch.annual_rate != null ? watch.annual_rate.toFixed(1) : '—';
+        const setupLabel = side === 'long'
+            ? '<span class="setup-badge setup-bottom" style="opacity:0.8">↑ WATCH-BOTTOM</span>'
+            : '<span class="setup-badge setup-top"    style="opacity:0.8">↓ WATCH-TOP</span>';
+
+        const gateSpec = `VCVI≥${gates.vcvi_min||60} · ${gates.breadth_min||2}/N windows≥${gates.breadth_pct||75}th · Move>${gates.atr_mult||1.2}×ATR`;
+
+        const eventRows = (watch.events || []).slice(0, 5).map(e => {
+            const moveColor = e.daily_move_pct > 0 ? 'var(--green)' : 'var(--red)';
+            const sign = e.daily_move_pct >= 0 ? '+' : '';
+            const seasonCfg = e.season ? (CONFIG.seasonDisplay[e.season] || {}) : {};
+            const seasonTag = e.season ? `<span style="color:${seasonCfg.color||'var(--text-muted)'};" data-tooltip="Season: ${e.season}, weight: ×${(e.seasonality_weight||1).toFixed(2)}">${seasonCfg.emoji||''}</span>` : '';
+            return `
+                <tr>
+                    <td class="ce-date">${e.date} ${seasonTag}</td>
+                    <td class="ce-vcvi">${e.vcvi?.toFixed(0)||'—'}</td>
+                    <td class="ce-move" style="color:${moveColor}">${sign}${e.daily_move_pct?.toFixed(1)||'—'}%</td>
+                    <td class="ce-atr">${e.atr_ratio?.toFixed(1)||'—'}×</td>
+                    <td class="ce-price">$${e.price?.toFixed(2)||'—'}</td>
+                </tr>`;
+        }).join('');
+
+        const fwd = watch.forward_returns || {};
+        const fwdKeys = ['5d', '10d', '21d', '42d', '63d'];
+        const hasFwd = fwdKeys.some(k => fwd[k]);
+        const fwdHtml = hasFwd ? `
+            <div class="ce-fwd-returns">
+                <div class="ce-fwd-label">Fwd returns after watch event</div>
+                <table class="ce-fwd-table">
+                    <thead><tr>${fwdKeys.map(l=>`<th>${l}</th>`).join('')}</tr></thead>
+                    <tbody>
+                        <tr>${fwdKeys.map(k=>{const s=fwd[k];if(!s)return'<td>—</td>';const v=s.median;const c=v>0?'var(--green)':v<0?'var(--red)':'';return`<td style="color:${c}" data-tooltip="${s.count} samples">${v>=0?'+':''}${v.toFixed(1)}%</td>`}).join('')}</tr>
+                        <tr>${fwdKeys.map(k=>{const s=fwd[k];if(!s)return'<td>—</td>';const wr=s.win_rate;const c=wr>=55?'var(--green)':wr<=45?'var(--red)':'var(--text-dim)';return`<td style="color:${c}">${wr.toFixed(0)}%</td>`}).join('')}</tr>
+                    </tbody>
+                </table>
+            </div>` : '';
+
+        return `
+            <div class="conviction-card watch-card conviction-${side}">
+                <div class="conviction-header">
+                    <span class="conviction-ticker" style="color:${tickerColor}">${ticker}</span>
+                    ${setupLabel}
+                    <span class="conviction-count">${watch.count} events</span>
+                    <span class="conviction-rate" data-tooltip="Average watch events/year">${rateStr}/yr</span>
+                </div>
+                <div class="conviction-gates watch-gates" data-tooltip="3-gate softer filter (no vol-regime gate)">${gateSpec}</div>
+                <table class="conviction-table">
+                    <thead><tr><th>Date</th><th>VCVI</th><th>Move</th><th>ATR×</th><th>Price</th></tr></thead>
+                    <tbody>${eventRows}</tbody>
+                </table>
+                ${fwdHtml}
+            </div>`;
+    },
+
+    renderAll(allMetrics, sideConvergence, ngPriceContext) {
+        this.renderNgPriceBar(ngPriceContext);
         this.renderAlertFeed(allMetrics);
         this.renderStressMatrix(allMetrics);
         this.renderSideConvergence(sideConvergence);
         this.renderConvictionEvents(allMetrics);
+        this.renderElevatedWatch(allMetrics);
         this.renderHistoricalEchoes(allMetrics);
         this.renderHeatCalendar(allMetrics);
         this.renderConvergenceGauges(allMetrics);

@@ -67,13 +67,33 @@ const Cards = {
         }).join('');
 
         // VCVI values (primary — vol-adjusted capitulation index)
-        const vcviEntries = ['21d', '63d', '252d'].map(w => {
+        // Show 5d fast-window first, then 21d and 63d with decay-adj badge if available
+        const decay = metrics.decay || {};
+        const seasonality = metrics.seasonality || {};
+        const seasonCfg = seasonality.season ? (CONFIG.seasonDisplay[seasonality.season] || {}) : {};
+        const seasonBadge = seasonality.season
+            ? `<span class="season-badge" style="color:${seasonCfg.color||'var(--text-muted)'}" data-tooltip="Seasonal weight: ${seasonality.season} × ${(seasonality.weight||1).toFixed(2)} — affects vol signal reliability. Seasonally-adj VCVI-21d: ${seasonality.adj_vcvi_21d != null ? seasonality.adj_vcvi_21d.toFixed(0) : '--'}">${seasonCfg.emoji||''} ×${(seasonality.weight||1).toFixed(2)}</span>`
+            : '';
+
+        const spikeHtml = metrics.sharpSpike
+            ? `<span class="spike-badge" data-tooltip="SHARP SPIKE: 5d VCVI + move > 2×ATR. ${metrics.fastSignal === 'weather_top_candidate' ? 'Weather Top Candidate — gas may have peaked.' : 'Weather Bottom Candidate — gas may have bottomed.'}">⚡ SPIKE</span>`
+            : '';
+
+        const vcviEntries = ['5d', '21d', '63d'].map(w => {
             const val = (metrics.vcvi || {})[w];
             const color = val != null ? Metrics.getValueColor(val, CONFIG.thresholds.vcvi) : 'var(--text-muted)';
+            // Show decay-adjusted value alongside 21d if available
+            let decayNote = '';
+            if (w === '21d' && decay.correction_active && decay.adj_vcvi_21d != null) {
+                const diff = decay.adj_vcvi_21d - (val || 0);
+                const diffStr = diff >= 0 ? `+${diff.toFixed(0)}` : diff.toFixed(0);
+                const adjColor = Metrics.getValueColor(decay.adj_vcvi_21d, CONFIG.thresholds.vcvi);
+                decayNote = ` <span style="color:${adjColor};font-size:0.65rem" data-tooltip="Decay-corrected VCVI-21d: removes ETF price drift due to daily rebalancing decay (~${(decay.annual_rate*100).toFixed(0)}%/yr). Raw: ${val!=null?val.toFixed(0):'--'}, Adj: ${decay.adj_vcvi_21d.toFixed(0)} (${diffStr})">†${decay.adj_vcvi_21d.toFixed(0)}</span>`;
+            }
             return `
                 <div class="indicator-block">
-                    <span class="indicator-label" data-tooltip="Vol-Adjusted Capitulation Index (${w}). Quiet regimes ×1.5, turbulent ×0.5. Scale 0–100.">VCVI-${w}</span>
-                    <span class="indicator-value" style="color:${color}">${val != null ? val.toFixed(0) : '--'}</span>
+                    <span class="indicator-label" data-tooltip="Vol-Adjusted Capitulation Index (${w}). ${w==='5d'?'FAST window — weather event detection. Threshold: 45.':'Quiet regimes ×1.5, turbulent ×0.5.'} Scale 0–100.">VCVI-${w}</span>
+                    <span class="indicator-value" style="color:${color}">${val != null ? val.toFixed(0) : '--'}${decayNote}</span>
                 </div>`;
         }).join('');
 
@@ -154,6 +174,7 @@ const Cards = {
                     <div class="card-ticker-group">
                         <span class="card-ticker">${ticker}</span>
                         <span class="card-name">${config.name}</span>
+                        ${seasonBadge}${spikeHtml}
                     </div>
                     <div class="card-price-group">
                         <span class="card-price">${this.formatPrice(c.price)}</span>

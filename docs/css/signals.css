@@ -778,3 +778,159 @@
     background: rgba(192,64,64,0.12);
     border: 1px solid rgba(192,64,64,0.3);
 }
+
+/* ============================================================
+   FEATURE ADDITIONS: NG Price Bar, Fast-Spike, Season, Elevated Watch
+   ============================================================ */
+
+/* ---- NG=F Gas Price Context Bar (Feature 2) ---- */
+.ng-price-bar-panel {
+    padding: 4px 10px 6px;
+    border-bottom: 1px solid var(--border-primary);
+    background: rgba(0,0,0,0.2);
+}
+.ng-price-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.62rem;
+    font-family: monospace;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+}
+.ng-bar-label {
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    font-size: 0.58rem;
+}
+.ng-bar-price {
+    font-weight: 700;
+    font-size: 0.7rem;
+    cursor: default;
+}
+.ng-bar-pct {
+    font-weight: 600;
+    font-size: 0.65rem;
+}
+.ng-bar-na {
+    color: var(--text-muted);
+    font-size: 0.58rem;
+}
+.ng-bar-track {
+    position: relative;
+    width: 90px;
+    height: 6px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-primary);
+    border-radius: 3px;
+    overflow: visible;
+    cursor: default;
+}
+.ng-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+.ng-bar-q25, .ng-bar-q75 {
+    position: absolute;
+    top: -3px;
+    width: 1px;
+    height: 12px;
+    background: rgba(255,255,255,0.25);
+}
+.ng-gates { display: flex; gap: 5px; }
+.ng-gate {
+    font-size: 0.55rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.03em;
+}
+.ng-gate.active   { color: #3db87a; background: rgba(61,184,122,0.12); border: 1px solid rgba(61,184,122,0.3); }
+.ng-gate.inactive { color: var(--text-muted); background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary); text-decoration: line-through; opacity: 0.7; }
+.ng-gate.unknown  { color: var(--text-muted); opacity: 0.5; }
+
+/* ---- Sharp Spike Badge ---- */
+.spike-badge {
+    display: inline-block;
+    font-size: 0.5rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #f5c542;
+    background: rgba(245,197,66,0.12);
+    border: 1px solid rgba(245,197,66,0.35);
+    animation: spike-pulse 1.5s ease-in-out infinite;
+    cursor: default;
+}
+.spike-badge-sm {
+    font-size: 0.7rem;
+    cursor: default;
+}
+@keyframes spike-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+}
+
+/* ---- Season Badge (card header) ---- */
+.season-badge {
+    font-size: 0.55rem;
+    font-weight: 600;
+    cursor: default;
+    opacity: 0.85;
+    margin-left: 2px;
+}
+
+/* ---- Matrix Season Tag ---- */
+.matrix-season {
+    font-size: 0.65rem;
+    margin-left: 3px;
+    cursor: default;
+    opacity: 0.8;
+}
+
+/* ---- Elevated Watch Panel ---- */
+.watch-pair-group {
+    margin-bottom: 10px;
+}
+.watch-pair-label {
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    padding: 2px 4px;
+    border-left: 2px solid var(--yellow);
+}
+.watch-pair-cards {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.watch-card {
+    border-left-color: var(--yellow) !important;
+    opacity: 0.92;
+}
+.watch-gates {
+    color: var(--yellow) !important;
+    opacity: 0.75;
+}
+.watch-empty {
+    color: var(--text-muted);
+    font-size: 0.6rem;
+    padding: 8px 4px;
+}
+
+/* ---- Echo Lead-Time Indicator ---- */
+.echo-lead-time {
+    font-size: 0.58rem;
+    color: rgba(255,220,80,0.9);
+    padding: 2px 4px;
+    margin: 3px 0 2px;
+    border-left: 2px solid rgba(255,220,80,0.4);
+    background: rgba(255,220,80,0.04);
+    border-radius: 0 3px 3px 0;
+    cursor: default;
+}
