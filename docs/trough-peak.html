@@ -485,20 +485,20 @@ function renderChart() {
         annotations[`band${idx}`] = {
             type: 'box', xScaleID: 'x', yScaleID: 'y',
             xMin: c.troughDate, xMax: c.peakDate,
-            backgroundColor: gainBandColor(c.gain, 0.18), borderWidth: 0,
+            backgroundColor: gainBandColor(c.gain, 0.07), borderWidth: 0,
             drawTime: 'beforeDatasetsDraw',
         };
         annotations[`tl${idx}`] = {
             type: 'line', xScaleID: 'x', yScaleID: 'y',
             xMin: c.troughDate, xMax: c.troughDate,
-            borderColor: 'rgba(224,96,96,0.7)', borderWidth: 1,
-            borderDash: [4, 4], drawTime: 'beforeDatasetsDraw',
+            borderColor: 'rgba(224,96,96,0.55)', borderWidth: 1,
+            borderDash: [4, 4], drawTime: 'afterDatasetsDraw',
         };
         annotations[`pl${idx}`] = {
             type: 'line', xScaleID: 'x', yScaleID: 'y',
             xMin: c.peakDate, xMax: c.peakDate,
-            borderColor: 'rgba(61,184,122,0.7)', borderWidth: 1,
-            borderDash: [4, 4], drawTime: 'beforeDatasetsDraw',
+            borderColor: 'rgba(61,184,122,0.55)', borderWidth: 1,
+            borderDash: [4, 4], drawTime: 'afterDatasetsDraw',
         };
     });
 
@@ -508,10 +508,11 @@ function renderChart() {
             datasets: [{
                 data: priceData,
                 borderColor: t.color,
-                borderWidth: 1.5,
+                borderWidth: 1.8,
                 pointRadius: 0,
                 tension: 0.1,
                 fill: false,
+                order: 0,
             }]
         },
         options: {
@@ -527,11 +528,10 @@ function renderChart() {
                     ticks: { color: '#555565', font: { size: 10 }, maxTicksLimit: 10 },
                 },
                 y: {
-                    type: 'logarithmic',
                     grid: { color: 'rgba(37,37,53,0.6)' },
                     ticks: {
                         color: '#555565', font: { size: 10 },
-                        callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v >= 1 ? v.toFixed(0) : v.toFixed(2),
+                        callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v,
                     },
                 }
             },
