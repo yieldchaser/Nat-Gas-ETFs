@@ -255,14 +255,12 @@ input[type=range]:hover::-moz-range-thumb {
 
 table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.8rem; }
 .cycle-table th {
-    text-align: left; padding: 12px 16px;
+    text-align: center; padding: 12px 16px;
     font-size: 0.65rem; letter-spacing: 2px; color: var(--text-muted); font-weight: 700;
     border-bottom: 2px solid var(--bg-secondary);
     text-transform: uppercase;
 }
-.cycle-table th:not(:first-child) { text-align: right; }
-.cycle-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-primary); font-family: 'JetBrains Mono', monospace; }
-.cycle-table td:not(:first-child) { text-align: right; }
+.cycle-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; }
 .cycle-table tr:hover td { background: rgba(255,255,255,0.02); }
 
 .gain-pos { color: var(--green); font-weight: 700; }
@@ -1077,26 +1075,39 @@ function renderTable() {
         return;
     }
 
+    const gains = filtered.map(c => c.gain);
+    const minG = Math.min(...gains);
+    const maxG = Math.max(...gains);
+
     container.innerHTML = `<table class="cycle-table">
         <thead><tr>
             <th data-tooltip="Cycle number in chronological order">#</th>
-            <th style="text-align:left" data-tooltip="Date of the confirmed cycle low">TROUGH DATE</th>
-            <th style="text-align:left" data-tooltip="Adjusted closing price at the trough">TROUGH $</th>
-            <th style="text-align:left" data-tooltip="Date of the confirmed cycle high">PEAK DATE</th>
-            <th style="text-align:left" data-tooltip="Adjusted closing price at the peak">PEAK $</th>
+            <th data-tooltip="Date of the confirmed cycle low">TROUGH DATE</th>
+            <th data-tooltip="Adjusted closing price at the trough">TROUGH $</th>
+            <th data-tooltip="Date of the confirmed cycle high">PEAK DATE</th>
+            <th data-tooltip="Adjusted closing price at the peak">PEAK $</th>
             <th data-tooltip="Percentage gain from trough price to peak price">% GAIN</th>
             <th data-tooltip="Calendar days elapsed from trough to peak">DAYS</th>
         </tr></thead>
         <tbody>
-        ${filtered.slice().reverse().map(c => `<tr>
-            <td style="color:var(--text-dim)">${c.num}</td>
-            <td class="val-cyan">${c.troughDate}</td>
-            <td style="text-align:left">$${fmt(c.troughPrice)}</td>
-            <td style="color:var(--green)">${c.peakDate}</td>
-            <td style="text-align:left">$${fmt(c.peakPrice)}</td>
-            <td class="gain-pos">${fmtPct(c.gain)}</td>
-            <td style="color:var(--text-dim)">${c.days}D</td>
-        </tr>`).join('')}
+        ${filtered.slice().reverse().map(c => {
+            // Light pastel green gradient: light (90% light) to slightly darker (75% light)
+            // HSL: 140 is a nice green.
+            const ratio = maxG === minG ? 0 : (c.gain - minG) / (maxG - minG);
+            const lightness = 90 - (ratio * 15); // 90% down to 75%
+            const bgColor = `hsl(140, 40%, ${lightness}%)`;
+            const textColor = '#0a2010'; // Dark green text for contrast on light background
+
+            return `<tr>
+                <td style="color:var(--text-dim)">${c.num}</td>
+                <td class="val-cyan">${c.troughDate}</td>
+                <td>$${fmt(c.troughPrice)}</td>
+                <td>${c.peakDate}</td>
+                <td>$${fmt(c.peakPrice)}</td>
+                <td style="background:${bgColor}; color:${textColor}; font-weight:800">${fmtPct(c.gain)}</td>
+                <td style="color:var(--text-dim)">${c.days}D</td>
+            </tr>`
+        }).join('')}
         </tbody>
     </table>`;
 }
