@@ -384,7 +384,7 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- SLIDER -->
     <div class="slider-panel">
         <div class="slider-header">
-            <span class="slider-label">MINIMUM TROUGH-TO-PEAK THRESHOLD</span>
+            <span class="slider-label" data-tooltip="ZigZag threshold — minimum % rally from a trough required to confirm a cycle. Higher = fewer, larger cycles only.">MINIMUM TROUGH-TO-PEAK THRESHOLD</span>
             <span class="slider-value" id="slider-display">48%</span>
         </div>
         <div class="slider-track">
@@ -408,12 +408,12 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <div class="tab-group" id="chart-tabs"></div>
             <div class="chart-controls">
                 <div class="horizon-group" id="horizon-controls">
-                    <button class="horizon-btn" data-range="1w">1W</button>
-                    <button class="horizon-btn" data-range="1m">1M</button>
-                    <button class="horizon-btn" data-range="3m">3M</button>
-                    <button class="horizon-btn" data-range="6m">6M</button>
-                    <button class="horizon-btn" data-range="1y">1Y</button>
-                    <button class="horizon-btn active" data-range="all">ALL</button>
+                    <button class="horizon-btn" data-range="1w" data-tooltip="Last 7 calendar days">1W</button>
+                    <button class="horizon-btn" data-range="1m" data-tooltip="Last 30 calendar days">1M</button>
+                    <button class="horizon-btn" data-range="3m" data-tooltip="Last 3 months">3M</button>
+                    <button class="horizon-btn" data-range="6m" data-tooltip="Last 6 months">6M</button>
+                    <button class="horizon-btn" data-range="1y" data-tooltip="Last 12 months">1Y</button>
+                    <button class="horizon-btn active" data-range="all" data-tooltip="Full history from Jan 2020">ALL</button>
                 </div>
             </div>
         </div>
@@ -428,8 +428,8 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
                 <div class="range-inputs">
                     <div class="range-slider-track"></div>
                     <div id="range-highlight" class="range-slider-highlight"></div>
-                    <input type="range" id="range-start" min="0" max="100" value="0">
-                    <input type="range" id="range-end" min="0" max="100" value="100">
+                    <input type="range" id="range-start" min="0" max="100" value="0" data-tooltip="Drag to set the start of the visible date range">
+                    <input type="range" id="range-end" min="0" max="100" value="100" data-tooltip="Drag to set the end of the visible date range">
                 </div>
             </div>
             <div class="range-labels" style="justify-content: center;">
@@ -439,15 +439,15 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 
         <div class="chart-footer">
             <div class="chart-legend">
-                <div class="legend-item"><span class="legend-line" style="background:var(--cyan)"></span> PRICE</div>
-                <div class="legend-item"><span class="legend-symbol" style="background:rgba(255,255,255,0.1)"></span> VOLUME</div>
-                <div class="legend-item"><span class="legend-symbol" style="background:#e06060;border-radius:50%"></span> TROUGH</div>
-                <div class="legend-item"><span class="legend-symbol" style="background:#3db87a;border-radius:50%"></span> PEAK</div>
+                <div class="legend-item" data-tooltip="Adjusted closing price line"><span class="legend-line" style="background:var(--cyan)"></span> PRICE</div>
+                <div class="legend-item" data-tooltip="Daily trading volume bars (scaled to 30% of chart height)"><span class="legend-symbol" style="background:rgba(255,255,255,0.1)"></span> VOLUME</div>
+                <div class="legend-item" data-tooltip="Confirmed cycle low — price subsequently rallied ≥ threshold from here"><span class="legend-symbol" style="background:#e06060;border-radius:50%"></span> TROUGH</div>
+                <div class="legend-item" data-tooltip="Confirmed cycle high — price dropped ≥ threshold after this point"><span class="legend-symbol" style="background:#3db87a;border-radius:50%"></span> PEAK</div>
             </div>
             <div class="chart-legend">
-                <div class="legend-item"><span class="legend-symbol" style="background:rgba(61,184,122,0.15)"></span> &ge;200%</div>
-                <div class="legend-item"><span class="legend-symbol" style="background:rgba(80,144,160,0.15)"></span> &ge;100%</div>
-                <div class="legend-item"><span class="legend-symbol" style="background:rgba(212,168,48,0.15)"></span> &ge;50%</div>
+                <div class="legend-item" data-tooltip="Cycle gain ≥200% — price more than tripled from trough to peak"><span class="legend-symbol" style="background:rgba(61,184,122,0.15)"></span> &ge;200%</div>
+                <div class="legend-item" data-tooltip="Cycle gain 100–200% — price doubled or more"><span class="legend-symbol" style="background:rgba(80,144,160,0.15)"></span> &ge;100%</div>
+                <div class="legend-item" data-tooltip="Cycle gain 50–100% — strong but sub-double rally"><span class="legend-symbol" style="background:rgba(212,168,48,0.15)"></span> &ge;50%</div>
             </div>
         </div>
     </div>
@@ -458,11 +458,11 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <span class="table-title" id="table-title">— Cycle Detail</span>
             <div class="tab-group" style="align-items:center; gap:12px; background:transparent; padding:0">
                 <div class="tab-group" style="padding:3px; background:#1a1a28; border-radius:6px;">
-                    <button class="tab-btn active" data-filter="all">ALL TIME</button>
-                    <button class="tab-btn" data-filter="year">YEAR</button>
-                    <button class="tab-btn" data-filter="6m">6 MONTHS</button>
+                    <button class="tab-btn active" data-filter="all" data-tooltip="Show all detected cycles since 2020">ALL TIME</button>
+                    <button class="tab-btn" data-filter="year" data-tooltip="Show only cycles that started in the current calendar year">YEAR</button>
+                    <button class="tab-btn" data-filter="6m" data-tooltip="Show only cycles that started within the last 6 months">6 MONTHS</button>
                 </div>
-                <button class="download-btn" id="download-csv">Download CSV</button>
+                <button class="download-btn" id="download-csv" data-tooltip="Export the visible cycle data as a CSV file">Download CSV</button>
             </div>
         </div>
         <div id="table-container"></div>
@@ -476,12 +476,12 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const TICKERS = [
-    { symbol: 'KOLD',   label: 'KOLD',  color: '#5090a0' },
-    { symbol: 'BOIL',   label: 'BOIL',  color: '#c07828' },
-    { symbol: 'HNU.TO', label: 'HNU',   color: '#3db87a' },
-    { symbol: 'HND.TO', label: 'HND',   color: '#d4a830' },
-    { symbol: '3NGL.L', label: '3NGL',  color: '#8855bb' },
-    { symbol: '3NGS.L', label: '3NGS',  color: '#d4a830' },
+    { symbol: 'KOLD',   label: 'KOLD',  color: '#5090a0', tip: 'ProShares UltraShort Bloomberg Natural Gas — 2× inverse. Gains when gas prices fall.' },
+    { symbol: 'BOIL',   label: 'BOIL',  color: '#c07828', tip: 'ProShares Ultra Bloomberg Natural Gas — 2× leveraged long. Gains when gas prices rise.' },
+    { symbol: 'HNU.TO', label: 'HNU',   color: '#3db87a', tip: 'BetaPro Natural Gas 2× Daily Bull ETF — Canadian-listed 2× long exposure.' },
+    { symbol: 'HND.TO', label: 'HND',   color: '#d4a830', tip: 'BetaPro Natural Gas 2× Daily Bear ETF — Canadian-listed 2× inverse/short.' },
+    { symbol: '3NGL.L', label: '3NGL',  color: '#8855bb', tip: 'WisdomTree Natural Gas 3× Daily Leveraged ETP — London-listed 3× long.' },
+    { symbol: '3NGS.L', label: '3NGS',  color: '#d4a830', tip: 'WisdomTree Natural Gas 3× Daily Short ETP — London-listed 3× inverse.' },
 ];
 const START_TS = Math.floor(new Date('2020-01-01').getTime() / 1000);
 const END_TS   = () => Math.floor(Date.now() / 1000);
@@ -691,22 +691,22 @@ function renderCards() {
                 <span class="kpi-cycles">${n} CYCLES</span>
             </div>
             <div class="kpi-main-metric">
-                <div class="kpi-lbl">AVG GAIN</div>
+                <div class="kpi-lbl" data-tooltip="Mean % gain across all detected trough-to-peak cycles">AVG GAIN</div>
                 <div class="kpi-val" style="color:${t.color}">${Math.round(avg(gains))}%</div>
             </div>
             <div class="kpi-stats-row">
                 <div class="stat-item">
-                    <div class="stat-lbl">AVG DAYS</div>
+                    <div class="stat-lbl" data-tooltip="Mean calendar days from trough to peak across all cycles">AVG DAYS</div>
                     <div class="stat-val">${Math.round(avg(days))}D</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-lbl">MAX GAIN</div>
+                    <div class="stat-lbl" data-tooltip="Largest single trough-to-peak gain on record">MAX GAIN</div>
                     <div class="stat-val" style="color:${t.color}">${Math.round(max(gains))}%</div>
                 </div>
             </div>
             <div class="kpi-stats-row" style="border:none; padding:0">
                 <div class="stat-item">
-                    <div class="stat-lbl">MIN GAIN</div>
+                    <div class="stat-lbl" data-tooltip="Smallest trough-to-peak gain that still met the threshold">MIN GAIN</div>
                     <div class="stat-val" style="color:${t.color}">${Math.round(min(gains))}%</div>
                 </div>
             </div>
@@ -871,7 +871,7 @@ function renderChartTabs() {
     const el = document.getElementById('chart-tabs');
     if (!el) return;
     el.innerHTML = TICKERS.map(t =>
-        `<button class="tab-btn${t.label===state.activeTab?' active':''}" data-label="${t.label}">${t.label}</button>`
+        `<button class="tab-btn${t.label===state.activeTab?' active':''}" data-label="${t.label}" data-tooltip="${t.tip}">${t.label}</button>`
     ).join('');
     el.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1068,10 +1068,13 @@ function renderTable() {
 
     container.innerHTML = `<table class="cycle-table">
         <thead><tr>
-            <th>#</th>
-            <th style="text-align:left">TROUGH DATE</th><th style="text-align:left">TROUGH $</th>
-            <th style="text-align:left">PEAK DATE</th><th style="text-align:left">PEAK $</th>
-            <th>% GAIN</th><th>DAYS</th>
+            <th data-tooltip="Cycle number in chronological order">#</th>
+            <th style="text-align:left" data-tooltip="Date of the confirmed cycle low">TROUGH DATE</th>
+            <th style="text-align:left" data-tooltip="Adjusted closing price at the trough">TROUGH $</th>
+            <th style="text-align:left" data-tooltip="Date of the confirmed cycle high">PEAK DATE</th>
+            <th style="text-align:left" data-tooltip="Adjusted closing price at the peak">PEAK $</th>
+            <th data-tooltip="Percentage gain from trough price to peak price">% GAIN</th>
+            <th data-tooltip="Calendar days elapsed from trough to peak">DAYS</th>
         </tr></thead>
         <tbody>
         ${filtered.slice().reverse().map(c => `<tr>
@@ -1591,6 +1594,40 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         ctx.stroke();
     }
 }
+
+// ── Universal Tooltip Singleton (mirrors app.js) ─────────────────────────────
+(function () {
+    const tt = document.createElement('div');
+    tt.id = 'tt';
+    document.body.appendChild(tt);
+    let active = null;
+    function show(el) {
+        if (el === active) return;
+        active = el;
+        tt.textContent = el.getAttribute('data-tooltip');
+        tt.style.display = 'block';
+        tt.style.opacity = '0';
+        requestAnimationFrame(function () {
+            const r  = el.getBoundingClientRect();
+            const tw = tt.offsetWidth;
+            const th = tt.offsetHeight;
+            const pad = 8;
+            let x = r.left + r.width / 2 - tw / 2;
+            let y = r.top - th - 8;
+            if (y < pad) y = r.bottom + 8;
+            x = Math.max(pad, Math.min(x, window.innerWidth - tw - pad));
+            tt.style.left = x + 'px';
+            tt.style.top  = y + 'px';
+            tt.style.opacity = '1';
+        });
+    }
+    function hide() { tt.style.opacity = '0'; tt.style.display = 'none'; active = null; }
+    document.addEventListener('mouseover', function (e) {
+        const el = e.target.closest('[data-tooltip]');
+        if (el) show(el); else hide();
+    });
+    document.addEventListener('mouseleave', function () { hide(); }, true);
+}());
 
 (async () => {
     // 1. Try pre-built static JSON first (no CORS, instant)
