@@ -173,7 +173,9 @@ const App = {
 
         this.ngPriceContext = data.ng_price_context || null;   // Feature 2
         this.sideConvergence = data.side_convergence || null;
-        this.updateMarketStatus(data.market_status || 'unknown');
+        // Always compute market status from current wall-clock time so the
+        // label is correct even when the pre-computed JSON is stale.
+        this.updateMarketStatus(this.getMarketStatusNow());
         this.render();
         this.updateTimestamp(data.last_updated);
     },
@@ -187,6 +189,38 @@ const App = {
 
         // Section C: Signal Command Center
         Signals.renderAll(this.allMetrics, this.sideConvergence || null, this.ngPriceContext || null);
+    },
+
+    // Returns NYSE session state based on the current wall-clock time.
+    // Uses the NYSE schedule (ET) and correctly handles US DST transitions.
+    // This is always called at render-time so the label is never stale.
+    getMarketStatusNow() {
+        const now = new Date();
+        const day = now.getUTCDay(); // 0=Sun … 6=Sat
+        if (day === 0 || day === 6) return 'closed';
+
+        // US DST: starts 2nd Sunday in March at 2 AM ET, ends 1st Sunday in Nov at 2 AM ET
+        const yr  = now.getUTCFullYear();
+        const dstStart = this._nthSundayUTC(yr, 2, 2, 7);  // March 2nd Sun, 07:00 UTC = 2 AM EST
+        const dstEnd   = this._nthSundayUTC(yr, 10, 1, 6); // Nov  1st Sun, 06:00 UTC = 2 AM EDT
+        const isDST    = now >= dstStart && now < dstEnd;
+        const offsetMin = isDST ? 240 : 300; // minutes behind UTC (EDT=UTC-4, EST=UTC-5)
+
+        const utcMin = now.getUTCHours() * 60 + now.getUTCMinutes();
+        const etMin  = (utcMin - offsetMin + 1440) % 1440;
+
+        if (etMin >= 570  && etMin < 960)  return 'open';        // 09:30–16:00
+        if (etMin >= 240  && etMin < 570)  return 'pre_market';  // 04:00–09:30
+        if (etMin >= 960  && etMin < 1200) return 'after_hours'; // 16:00–20:00
+        return 'closed';
+    },
+
+    _nthSundayUTC(year, month, n, hour) {
+        // month: 0-indexed (2=March, 10=November)
+        const d = new Date(Date.UTC(year, month, 1, hour, 0, 0));
+        const dow = d.getUTCDay();
+        d.setUTCDate(d.getUTCDate() + ((7 - dow) % 7) + (n - 1) * 7);
+        return d;
     },
 
     updateMarketStatus(state) {
@@ -235,10 +269,12 @@ const App = {
 
     startAutoRefresh() {
         if (this.refreshTimer) clearInterval(this.refreshTimer);
-        // Check market status and set appropriate interval
-        const interval = CONFIG.refreshInterval;
+        const state    = this.getMarketStatusNow();
+        const interval = state === 'open'
+            ? CONFIG.refreshInterval        // 60 s during regular session
+            : CONFIG.refreshIntervalClosed; // 300 s outside market hours
         this.refreshTimer = setInterval(() => this.refresh(), interval);
-        console.log(`[MONITOR] Auto-refresh every ${interval / 1000}s`);
+        console.log(`[MONITOR] Auto-refresh every ${interval / 1000}s (market: ${state})`);
     },
 
     handleResize() {
