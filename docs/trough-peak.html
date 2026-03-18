@@ -371,10 +371,8 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
                     <input type="range" id="range-end" min="0" max="100" value="100">
                 </div>
             </div>
-            <div class="range-labels">
-                <span id="range-start-label">--</span>
-                <span id="range-active-label" style="color:var(--text-bright)">CUSTOM RANGE</span>
-                <span id="range-end-label">--</span>
+            <div class="range-labels" style="justify-content: center;">
+                <span id="range-active-label" style="color:var(--text-bright); text-transform: uppercase; letter-spacing: 2px;">ALL DATA</span>
             </div>
         </div>
 
@@ -919,9 +917,9 @@ function updateRangeUI() {
     highlight.style.left = `calc(${p1 * 100}% + ${(10 - p1 * 20)}px)`;
     highlight.style.width = `calc(${(p2 - p1) * 100}% + ${( (p1 - p2) * 20)}px)`;
 
-    lblStart.textContent = data.dates[v1] || '--';
-    lblEnd.textContent = data.dates[v2] || '--';
-    lblStatus.textContent = state.timeRange === 'custom' ? 'CUSTOM SELECTION' : `PRESET: ${state.timeRange.toUpperCase()}`;
+    lblStatus.textContent = state.timeRange === 'custom' 
+        ? `${data.dates[v1]} — ${data.dates[v2]}` 
+        : `PRESET: ${state.timeRange.toUpperCase()} (${data.dates[v1]} / ${data.dates[v2]})`;
 }
 
 function downloadCSV() {
@@ -1233,45 +1231,51 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
     const count = visibleDates.length;
     let ticks = [];
     
-    // 1. Determine spacing strategy
     if (count <= 14) { // 1W-ish: Every day
         for (let i = 0; i < count; i++) ticks.push(i);
-    } else if (count <= 65) { // 1M-ish: Every Week (First trade day of week)
-        let lastWeekYear = -1;
-        visibleDates.forEach((d, i) => {
-            const date = new Date(d);
-            const week = getWeekNumber(date);
-            const year = date.getFullYear();
-            const weekYear = year + "-" + week;
-            if (weekYear !== lastWeekYear) {
-                ticks.push(i);
-                lastWeekYear = weekYear;
-            }
-        });
     } else {
-        // Multi-month/year: Proactive spacing (Every 1, 2, 3, 4, 6, 12... months)
-        const approxLabelWidth = 100;
-        const maxLabels = Math.floor(chartW / approxLabelWidth);
-        const monthsRange = (new Date(visibleDates[count-1]) - new Date(visibleDates[0])) / (30 * 24 * 3600 * 1000);
-        
-        let monthInterval = Math.max(1, Math.round(monthsRange / maxLabels));
-        const common = [1, 2, 3, 4, 6, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120];
-        monthInterval = common.find(c => c >= monthInterval) || monthInterval;
+        // Always include first and last
+        ticks.push(0);
+        ticks.push(count - 1);
 
-        let lastMonthTotal = -1;
-        let lastLoggedMonth = -1;
-        visibleDates.forEach((d, i) => {
-            const [y, m, day] = d.split('-').map(Number);
-            const totalMonths = y * 12 + m;
-            if (totalMonths !== lastMonthTotal) {
-                if (lastLoggedMonth === -1 || (totalMonths - lastLoggedMonth) >= monthInterval) {
-                    ticks.push(i);
-                    lastLoggedMonth = totalMonths;
+        if (count <= 65) { // 1M-ish: Every Week (First trade day of week)
+            let lastWeekYear = -1;
+            visibleDates.forEach((d, i) => {
+                const date = new Date(d);
+                const week = getWeekNumber(date);
+                const year = date.getFullYear();
+                const weekYear = year + "-" + week;
+                if (weekYear !== lastWeekYear) {
+                    if (i !== 0 && i !== count - 1) ticks.push(i);
+                    lastWeekYear = weekYear;
                 }
-                lastMonthTotal = totalMonths;
-            }
-        });
+            });
+        } else {
+            // Multi-month/year: Proactive spacing
+            const approxLabelWidth = 100;
+            const maxLabels = Math.floor(chartW / approxLabelWidth);
+            const monthsRange = (new Date(visibleDates[count-1]) - new Date(visibleDates[0])) / (30 * 24 * 3600 * 1000);
+            
+            let monthInterval = Math.max(1, Math.round(monthsRange / maxLabels));
+            const common = [1, 2, 3, 4, 6, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120];
+            monthInterval = common.find(c => c >= monthInterval) || monthInterval;
+
+            let lastMonthTotal = -1;
+            let lastLoggedMonth = -1;
+            visibleDates.forEach((d, i) => {
+                const [y, m, day] = d.split('-').map(Number);
+                const totalMonths = y * 12 + m;
+                if (totalMonths !== lastMonthTotal) {
+                    if (lastLoggedMonth === -1 || (totalMonths - lastLoggedMonth) >= monthInterval) {
+                        if (i !== 0 && i !== count - 1) ticks.push(i);
+                        lastLoggedMonth = totalMonths;
+                    }
+                    lastMonthTotal = totalMonths;
+                }
+            });
+        }
     }
+    ticks.sort((a, b) => a - b);
 
     function getWeekNumber(d) {
         let d2 = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -1289,7 +1293,10 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         const [y, m, day] = d.split('-');
         const x = getX(idx);
         
-        if (x < 10 || x > w - 10) return;
+        // Slightly more permissive for edge labels
+        if (idx !== 0 && idx !== count - 1) {
+            if (x < 40 || x > w - 40) return;
+        }
 
         let txt = "";
         const mIdx = parseInt(m) - 1;
