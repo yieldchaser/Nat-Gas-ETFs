@@ -1184,27 +1184,61 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         }
     });
 
-    // -- X-Axis Labels (Year Markers) --
+    // -- X-Axis Labels (Adaptive Google Finance Style) --
     ctx.fillStyle = 'var(--text-dim)';
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'center';
-    let lastYear = null;
-    visibleDates.forEach((d, i) => {
-        const year = d.split('-')[0];
-        if (year !== lastYear) {
-            const x = getX(i);
-            ctx.fillText(year, x, padding.top + chartH + 15);
-            lastYear = year;
+    
+    const count = visibleDates.length;
+    let mode = 'year';
+    if (count <= 12) mode = 'day';
+    else if (count <= 60) mode = 'week';
+    else if (count <= 400) mode = 'month';
 
-            // Optional: subtle vertical divider at year start
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-            ctx.setLineDash([]);
-            ctx.moveTo(x, padding.top);
-            ctx.lineTo(x, padding.top + chartH);
-            ctx.stroke();
+    let lastVal = null;
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+    visibleDates.forEach((d, i) => {
+        const [y, m, day] = d.split('-');
+        let val = null;
+        let txt = "";
+
+        if (mode === 'year') {
+            val = y; txt = y;
+        } else if (mode === 'month') {
+            val = y + '-' + m;
+            txt = months[parseInt(m)-1];
+            if (i === 0 || m === '01') txt += " " + y;
+        } else if (mode === 'week') {
+            if (i % 7 === 0) { 
+                val = d; 
+                txt = months[parseInt(m)-1] + " " + day; 
+            }
+        } else { // day
+            val = d;
+            txt = day;
+            if (i === 0 || day === '01') txt = months[parseInt(m)-1] + " " + day;
+        }
+
+        if (val && val !== lastVal) {
+            const x = getX(i);
+            // Only draw if not too close to the very right edge
+            if (x < width - 30) {
+                ctx.fillText(txt, x, padding.top + chartH + 15);
+                lastVal = val;
+                
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.setLineDash([]);
+                ctx.moveTo(x, padding.top);
+                ctx.lineTo(x, padding.top + chartH);
+                ctx.stroke();
+            }
         }
     });
+
+    // Reset dash for others
+    ctx.setLineDash([]);
 
     // -- Measurement Range (Google Finance Style) --
     if (state.drag.startIdx !== null && state.drag.currentIdx !== null && state.drag.startIdx !== state.drag.currentIdx) {
