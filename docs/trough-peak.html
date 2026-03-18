@@ -376,7 +376,7 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <div class="tp-title-block">
         <div class="tp-title-row">
             <span class="tp-title">Trough-to-Peak Analyzer</span>
-            <span class="tp-badge">NAT GAS ETFs &middot; 2020&ndash;2026</span>
+            <span class="tp-badge" id="tp-badge">NAT GAS ETFs &middot; 2020&ndash;</span>
         </div>
         <div class="tp-desc">Identifies significant recovery cycles using ZigZag algorithm. A cycle is confirmed when price rallies &ge; threshold from a trough.</div>
     </div>
@@ -1122,6 +1122,7 @@ slider.addEventListener('input', () => {
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+document.getElementById('tp-badge').textContent = `NAT GAS ETFs · 2020\u2013${new Date().getFullYear()}`;
 initFilterTabs();
 initHorizonControls();
 initRangeSlider();
