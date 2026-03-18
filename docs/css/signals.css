@@ -954,3 +954,39 @@
     height: 8px;
     background: rgba(255,255,255,0.2);
 }
+
+/* ---- MOBILE ---- */
+.table-scroll-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+    /* Stress matrix: enforce min-width so it scrolls instead of squashing */
+    .stress-matrix { min-width: 640px; font-size: 0.65rem; }
+    .stress-matrix th { font-size: 0.55rem; padding: 5px 6px; letter-spacing: 0.5px; }
+    .stress-matrix td { padding: 6px 6px; font-size: 0.65rem; }
+
+    /* Conviction table (8 cols, JS-injected) — scroll within card */
+    .conviction-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .conviction-table { min-width: 500px; font-size: 0.62rem; }
+    .conviction-table th,
+    .conviction-table td { padding: 5px 7px; }
+
+    /* Forward return table inside conviction card */
+    .ce-fwd-returns { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .ce-fwd-table { min-width: 280px; font-size: 0.62rem; }
+
+    /* Echo table — 4 cols, compact enough but let it breathe */
+    .echo-table { width: 100%; font-size: 0.65rem; }
+
+    /* Alert feed */
+    .alert-item { font-size: 0.65rem; gap: 8px; }
+
+    /* General signal panel tightening */
+    .signal-panel { padding: 10px; }
+    .signal-panel h3 { font-size: 0.65rem; }
+
+    /* Conviction gates text wraps instead of overflowing */
+    .conviction-gates { font-size: 0.55rem; word-break: break-word; white-space: normal; }
+}
