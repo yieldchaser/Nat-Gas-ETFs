@@ -1185,7 +1185,7 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
     });
 
     // -- X-Axis Labels (Adaptive Google Finance Style) --
-    ctx.fillStyle = 'var(--text-dim)';
+    ctx.fillStyle = '#94a3b8'; // Robust Slate Hex
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'center';
     
@@ -1212,12 +1212,10 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
     visibleDates.forEach((d, i) => {
         const [y, m, day] = d.split('-');
         let txt = "";
-        let force = false;
 
         if (mode === 'year') {
             if (i === 0 || d.slice(5) === '01-01' || i % skip === 0) {
                 txt = y;
-                force = (d.slice(5) === '01-01');
             }
         } else if (mode === 'month') {
             if (i === 0 || day === '01' || i % skip === 0) {
@@ -1235,8 +1233,8 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
 
         if (txt) {
             const x = getX(i);
-            // Minimum distance between labels to avoid overlap
-            if (x > lastLabelX + 45 && x < width - 30) {
+            // x < w - 30 (Using 'w' instead of 'width')
+            if (x > lastLabelX + 45 && x < w - 30) {
                 ctx.fillText(txt, x, padding.top + chartH + 15);
                 lastLabelX = x;
                 
