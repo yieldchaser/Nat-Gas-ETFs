@@ -73,9 +73,16 @@ def fetch_ticker_data(ticker: str):
                 # Volume can be None or 0, we treat it as 0
                 vol_val = int(v) if v is not None else 0
                 
-                dates.append(datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d"))
-                prices.append(round(float(c), 4))
-                vols.append(vol_val)
+                date_str = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
+                # Deduplicate: Yahoo sometimes returns two records for the same date
+                # (intraday estimate + official close). Keep the last (most up-to-date).
+                if dates and dates[-1] == date_str:
+                    prices[-1] = round(float(c), 4)
+                    vols[-1] = vol_val
+                else:
+                    dates.append(date_str)
+                    prices.append(round(float(c), 4))
+                    vols.append(vol_val)
 
             log.info("%s: %d rows fetched (adjusted prices)", ticker, len(dates))
             return {
