@@ -1225,12 +1225,11 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
     ctx.stroke();
 
     // -- X-Axis Labels (Proactive Grid-Aligned Engine) --
-
-    // -- X-Axis Labels (Proactive Grid-Aligned Engine) --
     ctx.fillStyle = '#94a3b8';
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'center';
 
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     const count = visibleDates.length;
     let ticks = [];
     
@@ -1251,12 +1250,12 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         });
     } else {
         // Multi-month/year: Proactive spacing (Every 1, 2, 3, 4, 6, 12... months)
-        const approxLabelWidth = 90;
+        const approxLabelWidth = 100;
         const maxLabels = Math.floor(chartW / approxLabelWidth);
         const monthsRange = (new Date(visibleDates[count-1]) - new Date(visibleDates[0])) / (30 * 24 * 3600 * 1000);
         
         let monthInterval = Math.max(1, Math.round(monthsRange / maxLabels));
-        const common = [1, 2, 3, 4, 6, 12, 24, 36, 48, 60];
+        const common = [1, 2, 3, 4, 6, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120];
         monthInterval = common.find(c => c >= monthInterval) || monthInterval;
 
         let lastMonthTotal = -1;
@@ -1275,28 +1274,39 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
     }
 
     function getWeekNumber(d) {
-        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-        return Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+        let d2 = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        d2.setUTCDate(d2.getUTCDate() + 4 - (d2.getUTCDay()||7));
+        var yearStart = new Date(Date.UTC(d2.getUTCFullYear(),0,1));
+        return Math.ceil(( ( (d2 - yearStart) / 86400000) + 1)/7);
     }
 
     let lastLabelTxt = "";
+    let lastLabelYear = -1;
+
     ticks.forEach(idx => {
         const d = visibleDates[idx];
+        if (!d) return;
         const [y, m, day] = d.split('-');
         const x = getX(idx);
         
-        if (x < 30 || x > w - 30) return;
+        if (x < 10 || x > w - 10) return;
 
         let txt = "";
-        const mName = months[parseInt(m)-1];
+        const mIdx = parseInt(m) - 1;
+        const mName = months[mIdx] || "";
         
-        if (count <= 14) txt = day;
-        else if (count <= 65) txt = mName + " " + day;
-        else {
+        if (count <= 14) {
+            txt = day;
+        } else if (count <= 65) {
+            txt = mName + " " + day;
+        } else {
+            // Multi-year/Long range: Show Month + Year if year changes
             txt = mName;
-            if (m === '01' || idx === ticks[0]) txt += " " + y;
+            const currentYear = parseInt(y);
+            if (currentYear !== lastLabelYear || idx === ticks[0]) {
+                txt += " " + y;
+                lastLabelYear = currentYear;
+            }
         }
 
         if (txt && txt !== lastLabelTxt) {
