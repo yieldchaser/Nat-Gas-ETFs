@@ -173,7 +173,7 @@ input[type=range]:hover::-moz-range-thumb {
 }
 .range-slider-track {
     position: absolute;
-    top: 14px;
+    top: 21px; /* Centered on 48px wrap, aligned with 32px inputs */
     left: 0;
     right: 0;
     height: 6px;
@@ -183,7 +183,7 @@ input[type=range]:hover::-moz-range-thumb {
 }
 .range-slider-highlight {
     position: absolute;
-    top: 14px;
+    top: 21px; /* Matches track centering */
     height: 6px;
     background: var(--cyan);
     border-radius: 3px;
@@ -749,14 +749,15 @@ function initChartHover() {
         }
     });
 
-    canvas.addEventListener('mouseleave', hideTooltip);
+    canvas.addEventListener('mouseleave', () => hideTooltip());
+}
 
-    function hideTooltip() {
-        state.hover.x = null;
-        state.hover.index = null;
-        tooltip.style.display = 'none';
-        renderChart();
-    }
+function hideTooltip() {
+    const tooltip = document.getElementById('chart-tooltip');
+    state.hover.x = null;
+    state.hover.index = null;
+    if (tooltip) tooltip.style.display = 'none';
+    renderChart();
 }
 
 // ── Chart UI Interaction ────────────────────────────────────────────────────
