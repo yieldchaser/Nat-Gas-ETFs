@@ -1237,9 +1237,17 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
     // 1. Determine spacing strategy
     if (count <= 14) { // 1W-ish: Every day
         for (let i = 0; i < count; i++) ticks.push(i);
-    } else if (count <= 65) { // 1M-ish: Every Monday
+    } else if (count <= 65) { // 1M-ish: Every Week (First trade day of week)
+        let lastWeekYear = -1;
         visibleDates.forEach((d, i) => {
-            if (new Date(d).getDay() === 1) ticks.push(i);
+            const date = new Date(d);
+            const week = getWeekNumber(date);
+            const year = date.getFullYear();
+            const weekYear = year + "-" + week;
+            if (weekYear !== lastWeekYear) {
+                ticks.push(i);
+                lastWeekYear = weekYear;
+            }
         });
     } else {
         // Multi-month/year: Proactive spacing (Every 1, 2, 3, 4, 6, 12... months)
@@ -1248,21 +1256,29 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         const monthsRange = (new Date(visibleDates[count-1]) - new Date(visibleDates[0])) / (30 * 24 * 3600 * 1000);
         
         let monthInterval = Math.max(1, Math.round(monthsRange / maxLabels));
-        // Snap to common intervals: 1, 2, 3, 4, 6, 12, 24, 36
         const common = [1, 2, 3, 4, 6, 12, 24, 36, 48, 60];
         monthInterval = common.find(c => c >= monthInterval) || monthInterval;
 
-        let lastMonth = -1;
+        let lastMonthTotal = -1;
+        let lastLoggedMonth = -1;
         visibleDates.forEach((d, i) => {
             const [y, m, day] = d.split('-').map(Number);
             const totalMonths = y * 12 + m;
-            if (day === 1) {
-                if (lastMonth === -1 || (totalMonths - lastMonth) >= monthInterval) {
+            if (totalMonths !== lastMonthTotal) {
+                if (lastLoggedMonth === -1 || (totalMonths - lastLoggedMonth) >= monthInterval) {
                     ticks.push(i);
-                    lastMonth = totalMonths;
+                    lastLoggedMonth = totalMonths;
                 }
+                lastMonthTotal = totalMonths;
             }
         });
+    }
+
+    function getWeekNumber(d) {
+        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        return Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
     }
 
     let lastLabelTxt = "";
