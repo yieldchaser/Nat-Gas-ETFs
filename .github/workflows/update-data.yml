@@ -49,6 +49,7 @@ jobs:
           cp data/latest_signals.json docs/data/ 2>/dev/null || true
           cp data/validation_results.json docs/data/ 2>/dev/null || true
           cp data/split_warnings.json docs/data/ 2>/dev/null || true
+          cp data/known_splits.json docs/data/ 2>/dev/null || true
 
       - name: Commit and push if changed
         run: |

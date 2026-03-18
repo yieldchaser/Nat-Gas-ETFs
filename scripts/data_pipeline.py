@@ -42,6 +42,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 DASHBOARD_JSON = DATA_DIR / "dashboard_data.json"
 SIGNALS_JSON = DATA_DIR / "latest_signals.json"
 SPLIT_WARNINGS_JSON = DATA_DIR / "split_warnings.json"
+KNOWN_SPLITS_JSON   = DATA_DIR / "known_splits.json"
 
 # Any single-day price ratio >= this value is impossible for a 3x leveraged gas
 # ETF to produce organically (would require NG=F to move ~100% in one day) and
@@ -186,31 +187,79 @@ ETF_ANNUAL_DECAY = {
 }
 DECAY_CORRECTION_WINDOW = 252   # Rolling window (1yr) for decay-adjusted percentile
 
-# Manual split/consolidation history for tickers that Yahoo Finance may not
-# correctly reflect in its adjusted price series.
-# ratio > 1  → reverse split (consolidation): N:1, historical prices ×N
-# ratio < 1  → forward split: 1:M, historical prices ×(1/M)
-# Each entry: (date_string, multiplier_for_pre_split_prices)
-MANUAL_SPLITS: Dict[str, List[Tuple[str, float]]] = {
+# Hardcoded seed — used ONLY to bootstrap data/known_splits.json on first run.
+# After that, known_splits.json is the sole source of truth and is auto-updated
+# when new splits are detected from price data.
+_SPLITS_SEED: Dict[str, List[Tuple[str, float]]] = {
     "3NGL.L": [
-        ("2016-03-18", 10.0),    # 10:1 consolidation
-        ("2019-02-25", 10.0),    # 10:1 consolidation
-        ("2020-04-17", 10.0),    # 10:1 consolidation
-        ("2023-03-27", 10.0),    # 10:1 consolidation
-        ("2024-01-12", 10.0),    # 10:1 consolidation
-        ("2024-07-22", 420.0),   # 420:1 consolidation
-        ("2024-09-09", 10.0),    # 10:1 consolidation
-        ("2026-03-03", 10.0),    # 10:1 consolidation
+        ("2016-03-18", 10.0),
+        ("2019-02-25", 10.0),
+        ("2020-04-17", 10.0),
+        ("2023-03-27", 10.0),
+        ("2024-01-12", 10.0),
+        ("2024-07-22", 420.0),
+        ("2024-09-09", 10.0),
+        ("2026-03-03", 10.0),
     ],
     "3NGS.L": [
-        ("2019-06-04", 10.0),    # 10:1 consolidation
-        ("2021-09-15", 10.0),    # 10:1 consolidation
-        ("2022-05-30", 10.0),    # 10:1 consolidation
-        ("2022-09-12", 10.0),    # 10:1 consolidation
-        ("2022-12-19", 17000.0), # 17000:1 consolidation
-        ("2024-07-22", 1.0/17),  # 1:17 forward split
+        ("2019-06-04", 10.0),
+        ("2021-09-15", 10.0),
+        ("2022-05-30", 10.0),
+        ("2022-09-12", 10.0),
+        ("2022-12-19", 17000.0),
+        ("2024-07-22", 1.0 / 17),
     ],
 }
+
+
+def _load_known_splits() -> Dict[str, List[Tuple[str, float]]]:
+    """Load split history from data/known_splits.json.
+
+    Falls back to the hardcoded _SPLITS_SEED if the file is absent or corrupt
+    (e.g. first run in a fresh clone).
+    """
+    if KNOWN_SPLITS_JSON.exists():
+        try:
+            with open(KNOWN_SPLITS_JSON) as f:
+                raw = json.load(f)
+            loaded: Dict[str, List[Tuple[str, float]]] = {}
+            for ticker, entries in raw.get("splits", {}).items():
+                loaded[ticker] = [(e["date"], float(e["ratio"])) for e in entries]
+            logger.info(
+                "Loaded known splits for %d ticker(s) from %s",
+                len(loaded), KNOWN_SPLITS_JSON.name,
+            )
+            return loaded
+        except Exception as exc:
+            logger.warning(
+                "Could not load %s (%s) — falling back to hardcoded seed",
+                KNOWN_SPLITS_JSON, exc,
+            )
+    return {k: list(v) for k, v in _SPLITS_SEED.items()}
+
+
+def _save_known_splits(splits: Dict[str, List[Tuple[str, float]]]) -> None:
+    """Persist the splits dict to data/known_splits.json.
+
+    The file is committed automatically by GitHub Actions alongside dashboard
+    data, so new auto-detected splits are permanent after the next push.
+    """
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    payload: dict = {
+        "note": (
+            "Auto-managed by data_pipeline.py. New corporate actions are appended "
+            "automatically when detected from price data. "
+            "'source': 'manual' = verified from WisdomTree/LSE filings; "
+            "'auto_detected' = inferred from price discontinuity."
+        ),
+        "splits": {
+            ticker: [{"date": d, "ratio": r} for d, r in sorted(entries)]
+            for ticker, entries in sorted(splits.items())
+        },
+    }
+    with open(KNOWN_SPLITS_JSON, "w") as f:
+        json.dump(payload, f, indent=2)
+    logger.info("Saved known splits → %s", KNOWN_SPLITS_JSON.name)
 
 # Side-Wide Volume Convergence (SWVC) — rolling tri-ETF same-side detection
 SWVC_RVOL_THRESHOLD = 2.0   # Min RVOL-21d to qualify as a "spike" for one ETF
@@ -221,18 +270,24 @@ SWVC_WINDOW_DAYS    = 10    # All 3 spikes must fall within this window to "conv
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-def _apply_split_adjustments(df: pd.DataFrame, ticker: str) -> pd.DataFrame:
-    """Apply manual split/consolidation adjustments to an OHLCV DataFrame.
+def _apply_split_adjustments(
+    df: pd.DataFrame,
+    ticker: str,
+    known_splits: Dict[str, List[Tuple[str, float]]],
+) -> pd.DataFrame:
+    """Apply known split/consolidation adjustments to an OHLCV DataFrame.
 
-    For each known split event we check whether Yahoo Finance has already
-    reflected it by comparing the price ratio at the split boundary to the
-    expected ratio (in log-space). Only missing adjustments are applied,
-    preventing double-counting.
+    Uses the dynamically loaded known_splits dict (data/known_splits.json) so
+    new auto-detected splits are handled without any code change.
+
+    For each event we check whether Yahoo Finance has already reflected it via
+    log-space distance at the split boundary. Only missing adjustments are
+    applied, preventing double-counting.
 
     For a reverse split (N:1, ratio=N): pre-split prices ×N, volume ÷N.
     For a forward split (1:M, ratio=1/M): pre-split prices ×(1/M), volume ÷(1/M).
     """
-    splits = MANUAL_SPLITS.get(ticker)
+    splits = known_splits.get(ticker)
     if not splits:
         return df
 
@@ -643,7 +698,10 @@ def _market_status() -> str:
 # ---------------------------------------------------------------------------
 # Data fetching – Yahoo Finance v8 chart API (no yfinance dependency)
 # ---------------------------------------------------------------------------
-def _yahoo_fetch_one(ticker: str) -> Optional[pd.DataFrame]:
+def _yahoo_fetch_one(
+    ticker: str,
+    known_splits: Dict[str, List[Tuple[str, float]]],
+) -> Optional[pd.DataFrame]:
     """Fetch full daily OHLCV history for a single ticker via Yahoo Finance v8 chart API.
 
     Uses period1/period2 parameters to request the complete daily history
@@ -684,8 +742,8 @@ def _yahoo_fetch_one(ticker: str) -> Optional[pd.DataFrame]:
             df["volume"] = df["volume"].astype(float)
             df.sort_index(inplace=True)
 
-            # Apply manual split adjustments for tickers Yahoo may not cover
-            df = _apply_split_adjustments(df, ticker)
+            # Apply known split adjustments (from data/known_splits.json)
+            df = _apply_split_adjustments(df, ticker, known_splits)
 
             return df
 
@@ -701,28 +759,47 @@ def _yahoo_fetch_one(ticker: str) -> Optional[pd.DataFrame]:
 def _fetch_all() -> Tuple[Dict[str, pd.DataFrame], List[dict]]:
     """Download full daily OHLCV history for all 6 ETFs via Yahoo Finance v8 API.
 
-    Returns (frames, auto_detected_splits).  Known splits are applied inside
-    _yahoo_fetch_one; any remaining unregistered large jumps are detected and
-    auto-applied here, with events returned for persistence to split_warnings.json.
+    Two-pass split handling:
+      Pass 1 (_apply_split_adjustments): applies all entries from
+              data/known_splits.json with smart already-applied detection.
+      Pass 2 (_detect_and_apply_unknown_splits): scans for any remaining
+              large jumps not yet in the file, applies them, and records
+              the events so run_pipeline() can persist them back to
+              known_splits.json and commit them alongside the data.
+
+    Returns (frames, newly_detected_splits).
     """
+    known_splits = _load_known_splits()
     frames: Dict[str, pd.DataFrame] = {}
     all_detected: List[dict] = []
 
     for ticker in ETF_CONFIG:
         logger.info("Fetching %s from Yahoo Finance …", ticker)
-        df = _yahoo_fetch_one(ticker)
+        df = _yahoo_fetch_one(ticker, known_splits)
 
         if df is not None and not df.empty:
-            # Second pass: auto-detect any splits not yet in MANUAL_SPLITS
+            # Pass 2: auto-detect splits not yet in known_splits.json
             df, detected = _detect_and_apply_unknown_splits(df, ticker)
+            if detected:
+                # Merge into the in-memory dict so it's available for saving
+                for event in detected:
+                    bucket = known_splits.setdefault(event["ticker"], [])
+                    existing_dates = {d for d, _ in bucket}
+                    if event["date"] not in existing_dates:
+                        bucket.append((event["date"], event["observed_ratio"]))
+                        bucket.sort()
             all_detected.extend(detected)
 
             frames[ticker] = df
             first = df.index[0].strftime("%Y-%m-%d")
-            last = df.index[-1].strftime("%Y-%m-%d")
+            last  = df.index[-1].strftime("%Y-%m-%d")
             logger.info("  → %d daily rows for %s (%s to %s)", len(df), ticker, first, last)
         else:
             logger.error("No data for %s after %d retries", ticker, MAX_RETRIES)
+
+    # Persist updated splits dict so the next run treats new events as "known"
+    if all_detected:
+        _save_known_splits(known_splits)
 
     return frames, all_detected
 
