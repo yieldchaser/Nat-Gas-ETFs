@@ -844,11 +844,8 @@ function initChartHover() {
     window.addEventListener('mouseup', () => {
         if (state.drag.active) {
             state.drag.active = false;
-            // If click with no drag, clear. If actual range dragged, keep visible (GF style).
-            if (state.drag.startIdx === state.drag.currentIdx) {
-                state.drag.startIdx = null;
-                state.drag.currentIdx = null;
-            }
+            state.drag.startIdx = null;
+            state.drag.currentIdx = null;
             renderChart();
         }
     });
