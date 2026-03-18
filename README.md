@@ -37,6 +37,17 @@ This project implements a multi-timeframe volume analysis engine that:
 
 ## Dashboard Features
 
+### Trough-to-Peak Analyzer
+
+A dedicated professional-grade recovery analyzer (found at `/trough-peak.html`) that:
+
+- **Identifies Recovery Cycles** using a parameterized ZigZag algorithm.
+- **Dynamic Thresholding** — Adjust the % rally required to confirm a trough-to-peak move (0% to 300%).
+- **Interactive Canvas Charting** — A high-performance, vanilla JS chart with custom zoom (date brush), crosshair, and real-time tooltips.
+- **KPI Summary Grid** — Instantly calculates Avg Gain, Avg Days, Max Gain, and Cycle Count across all 6 ETFs for any window.
+- **Excel-Compatible CSV Export** — One-click download of filtered cycle data including trough/peak dates, prices, and percentage returns.
+- **Multi-Ticker Synchronization** — Seamlessly toggle between KOLD, BOIL, HNU, HND, 3NGL, and 3NGS while maintaining zoom state.
+
 ### ETF Cards
 
 Each card shows:
@@ -208,24 +219,25 @@ Today's current price is then ranked against the decay-adjusted historical distr
 ```
 docs/
 ├── index.html          # Dashboard structure
+├── trough-peak.html    # Interactive recovery analyzer
 ├── css/
-│   ├── styles.css      # Global theme, grid, tooltips
+│   ├── styles.css      # Global theme, grid, tooltips (shared dashboard styling)
 │   ├── cards.css       # ETF card styling
 │   └── signals.css     # Signal panel styling
 └── js/
     ├── app.js          # App controller, data loading
     ├── data.js         # Yahoo Finance API fallback
     ├── cards.js        # Card rendering (decay-adj VCVI, season badge, spike flag)
-    ├── charts.js       # Canvas rendering (sparklines, forward return curve, lead-time marker)
+    ├── charts.js       # Canvas rendering (sparklines, forward return curve, lead-time marker, trough-to-peak charts)
     ├── signals.js      # NG bar, stress matrix, SWVC, conviction, elevated watch, echoes
     ├── metrics.js      # Live calculations (RVOL, Z-Score, CVI, VCVI, HV, etc.)
-    └── config.js       # Thresholds, windows, ETF metadata, decay rates, season display
+    └── config.js       # Thresholds, windows, ETF metadata, decay rates, season display (includes trough-to-peak config)
 ```
 
 ### Backend
 ```
 scripts/
-└── data_pipeline.py    # Nightly ETL:
+├── data_pipeline.py    # Nightly ETF/Signals ETL:
                         #   - Fetches OHLCV for 6 ETFs + NG=F futures
                         #   - Computes all metrics (6 windows: 5/10/21/63/126/252d)
                         #   - NG=F seasonal z-score series + regime classification
@@ -236,6 +248,7 @@ scripts/
                         #   - Conviction events (5-gate + extreme override + momentum
                         #     guard) + elevated watch (3-gate)
                         #   - Writes dashboard_data.json + latest_signals.json
+└── trough_peak_data.py # Trough-to-Peak static data builder (OHLCV + Volume)
 
 data/
 ├── dashboard_data.json      # Pre-computed metrics for all ETFs
