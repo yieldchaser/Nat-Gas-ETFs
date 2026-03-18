@@ -23,7 +23,7 @@ OUT_FILE     = PROJECT_ROOT / "docs" / "data" / "trough_peak_data.json"
 
 YAHOO_URL = "https://query1.finance.yahoo.com/v8/finance/chart/"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-START_TS   = int(datetime(2020, 1, 1).timestamp())
+START_TS   = int(datetime(2008, 1, 1).timestamp())
 TICKERS    = ["KOLD", "BOIL", "HNU.TO", "HND.TO", "3NGL.L", "3NGS.L"]
 MAX_TRIES  = 3
 
