@@ -789,21 +789,40 @@ function initChartHover() {
                 const date = visibleDates[idx];
                 const price = data.closes[startIndex + idx];
                 const vol = data.volumes ? data.volumes[startIndex + idx] : 0;
-                
-                tooltip.style.display = 'block';
-                tooltip.style.left = `${x + 15}px`;
-                tooltip.style.top = `${y - 15}px`;
-                tooltip.innerHTML = `
+                const prevPrice = (startIndex + idx) > 0 ? data.closes[startIndex + idx - 1] : null;
+                const dailyDiff = prevPrice != null ? price - prevPrice : null;
+                const dailyPct = prevPrice != null ? (dailyDiff / prevPrice) * 100 : null;
+
+                // Hide hover tooltip while dragging (measuring range)
+                if (state.drag.active) {
+                    tooltip.style.display = 'none';
+                } else {
+                    // Smart edge flip: if near right edge, show tooltip to the left
+                    const tipW = 170;
+                    const leftPos = (x + 15 + tipW > rect.width) ? x - tipW - 10 : x + 15;
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = `${leftPos}px`;
+                    tooltip.style.top = `${Math.max(5, y - 15)}px`;
+
+                    const changeRow = dailyDiff != null ? `
+                    <div class="tooltip-row">
+                        <span class="tooltip-lbl">Change</span>
+                        <span class="tooltip-val" style="color:${dailyDiff >= 0 ? 'var(--green)' : 'var(--red)'}">${dailyDiff >= 0 ? '+' : ''}${fmt(dailyDiff)} (${dailyDiff >= 0 ? '+' : ''}${dailyPct.toFixed(2)}%)</span>
+                    </div>` : '';
+
+                    tooltip.innerHTML = `
                     <div class="tooltip-date">${date}</div>
                     <div class="tooltip-row">
                         <span class="tooltip-lbl">Price</span>
                         <span class="tooltip-val" style="color:var(--text-bright)">$${fmt(price)}</span>
                     </div>
+                    ${changeRow}
                     <div class="tooltip-row">
                         <span class="tooltip-lbl">Volume</span>
                         <span class="tooltip-val" style="color:var(--text-dim)">${vol.toLocaleString()}</span>
                     </div>
-                `;
+                    `;
+                }
                 renderChart();
             } else {
                 hideTooltip();
@@ -825,9 +844,11 @@ function initChartHover() {
     window.addEventListener('mouseup', () => {
         if (state.drag.active) {
             state.drag.active = false;
-            // Clear immediately on release (Google Finance style)
-            state.drag.startIdx = null;
-            state.drag.currentIdx = null;
+            // If click with no drag, clear. If actual range dragged, keep visible (GF style).
+            if (state.drag.startIdx === state.drag.currentIdx) {
+                state.drag.startIdx = null;
+                state.drag.currentIdx = null;
+            }
             renderChart();
         }
     });
@@ -1462,35 +1483,95 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         const i2 = Math.max(state.drag.startIdx, state.drag.currentIdx);
         const x1 = getX(i1);
         const x2 = getX(i2);
-        
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.07)';
+
+        // Band fill — use ticker color tint
+        ctx.fillStyle = hexToRgba(tickerColor, 0.10);
         ctx.fillRect(x1, padding.top, x2 - x1, chartH);
-        
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+
+        // Dashed boundary lines
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]);
         ctx.beginPath(); ctx.moveTo(x1, padding.top); ctx.lineTo(x1, padding.top + chartH); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(x2, padding.top); ctx.lineTo(x2, padding.top + chartH); ctx.stroke();
         ctx.setLineDash([]);
-        
+
         const p1 = visibleCloses[i1];
         const p2 = visibleCloses[i2];
         const diff = p2 - p1;
         const pct = (diff / p1) * 100;
-        const color = pct >= 0 ? '#3db87a' : '#e06060'; // Hardcoded hex for Canvas
-        
-        const labelX = x1 + (x2 - x1) / 2;
-        const labelY = padding.top + 20;
-        
-        ctx.font = 'bold 12px sans-serif';
-        ctx.textAlign = 'center';
-        const txt = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} (${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%)`;
-        
-        const metrics = ctx.measureText(txt);
-        ctx.fillStyle = 'rgba(20, 20, 30, 0.95)';
-        ctx.fillRect(labelX - metrics.width/2 - 8, labelY - 14, metrics.width + 16, 20);
-        
-        ctx.fillStyle = color;
-        ctx.fillText(txt, labelX, labelY + 3);
+        const isPos = diff >= 0;
+        const accentColor = isPos ? '#3db87a' : '#e06060';
+
+        // Volume range across the selected band
+        const bandVols = visibleVolumes.slice(i1, i2 + 1);
+        const bandVolMin = Math.min(...bandVols);
+        const bandVolMax = Math.max(...bandVols);
+        const fmtVol = v => {
+            if (v >= 1e9) return (v / 1e9).toFixed(1) + 'B';
+            if (v >= 1e6) return (v / 1e6).toFixed(2) + 'M';
+            if (v >= 1e3) return (v / 1e3).toFixed(0) + 'K';
+            return v.toLocaleString();
+        };
+
+        // Date range labels
+        const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        const fmtDate = d => {
+            const [y, mo, dd] = d.split('-').map(Number);
+            return months[mo-1] + ' ' + dd + ', ' + y;
+        };
+
+        const sign = isPos ? '+' : '';
+        const line1 = `${isPos ? '↑' : '↓'} ${sign}${fmt(Math.abs(diff))} (${sign}${pct.toFixed(2)}%)`;
+        const line2 = `${fmtDate(visibleDates[i1])} – ${fmtDate(visibleDates[i2])}`;
+        const line3 = `Vol: ${fmtVol(bandVolMin)} – ${fmtVol(bandVolMax)}`;
+
+        // Measure all lines to size the card
+        ctx.font = 'bold 13px sans-serif';
+        const w1 = ctx.measureText(line1).width;
+        ctx.font = '10px sans-serif';
+        const w2 = ctx.measureText(line2).width;
+        const w3 = ctx.measureText(line3).width;
+        const cardW = Math.max(w1, w2, w3) + 24;
+        const cardH = 58;
+        const cardR = 6;
+
+        // Center in band, clamped within chart area
+        let cardX = x1 + (x2 - x1) / 2 - cardW / 2;
+        cardX = Math.max(padding.left + 4, Math.min(padding.left + chartW - cardW - 4, cardX));
+        const cardY = padding.top + 12;
+
+        // Card background
+        ctx.beginPath();
+        ctx.moveTo(cardX + cardR, cardY);
+        ctx.lineTo(cardX + cardW - cardR, cardY);
+        ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + cardR);
+        ctx.lineTo(cardX + cardW, cardY + cardH - cardR);
+        ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - cardR, cardY + cardH);
+        ctx.lineTo(cardX + cardR, cardY + cardH);
+        ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - cardR);
+        ctx.lineTo(cardX, cardY + cardR);
+        ctx.quadraticCurveTo(cardX, cardY, cardX + cardR, cardY);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(13, 17, 28, 0.97)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.13)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Line 1: price change (bold, accent color)
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillStyle = accentColor;
+        ctx.textAlign = 'left';
+        ctx.fillText(line1, cardX + 10, cardY + 18);
+
+        // Line 2: date range (gray)
+        ctx.font = '10px sans-serif';
+        ctx.fillStyle = 'rgba(148,163,184,0.9)';
+        ctx.fillText(line2, cardX + 10, cardY + 34);
+
+        // Line 3: volume range (gray)
+        ctx.fillText(line3, cardX + 10, cardY + 49);
     }
 
     // -- Crosshair --
