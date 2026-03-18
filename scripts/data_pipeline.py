@@ -246,14 +246,17 @@ def _apply_split_adjustments(df: pd.DataFrame, ticker: str) -> pd.DataFrame:
 
         price_before = pre_close.iloc[-1]
         price_after  = post_close.iloc[0]
-        if price_before <= 0:
+        if price_before <= 0 or price_after <= 0:
             continue
 
         observed_ratio = price_after / price_before
 
         # In log-space: is the observed jump closer to 1.0 (already adjusted)
         # or to the expected ratio (unadjusted)?
-        log_observed = abs(math.log(observed_ratio))
+        try:
+            log_observed = abs(math.log(observed_ratio))
+        except ValueError:
+            continue
         log_expected = abs(math.log(ratio))
         already_applied = abs(log_observed) < abs(log_observed - log_expected)
 
