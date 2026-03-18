@@ -1138,7 +1138,7 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         const y = padding.top + (i / 5) * chartH;
         ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(padding.left + chartW, y); ctx.stroke();
         // Label
-        ctx.fillStyle = 'var(--text-dim)';
+        ctx.fillStyle = '#94a3b8';
         ctx.font = '10px sans-serif';
         const price = maxPrice - (i / 5) * (maxPrice - minPrice);
         ctx.fillText('$' + price.toFixed(price > 100 ? 0 : 2), padding.left + chartW + 5, y + 3);
