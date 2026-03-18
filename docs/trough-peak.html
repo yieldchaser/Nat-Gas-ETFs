@@ -1230,9 +1230,9 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
     let ticks = [];
     let isYearBoundaryMode = false;
 
-    if (count <= 14) { // 1W-ish: Every day
+    if (count <= 14) { // ~1W: Every trading day
         for (let i = 0; i < count; i++) ticks.push(i);
-    } else if (count <= 65) { // 1M-ish: Every week (first trade day of week)
+    } else if (count <= 35) { // ~1M: Weekly — first trading day of each calendar week
         ticks.push(0);
         ticks.push(count - 1);
         let lastWeekYear = -1;
@@ -1246,18 +1246,32 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
                 lastWeekYear = weekYear;
             }
         });
+    } else if (count <= 65) { // ~2-3M: Biweekly — first trading day of every other calendar week
+        ticks.push(0);
+        ticks.push(count - 1);
+        let lastWeekYear = -1;
+        let weekIdx = 0;
+        visibleDates.forEach((d, i) => {
+            const date = new Date(d);
+            const week = getWeekNumber(date);
+            const year = date.getFullYear();
+            const weekYear = year + "-" + week;
+            if (weekYear !== lastWeekYear) {
+                lastWeekYear = weekYear;
+                weekIdx++;
+                if (weekIdx % 2 === 0 && i !== 0 && i !== count - 1) ticks.push(i);
+            }
+        });
     } else {
         const monthsRange = (new Date(visibleDates[count-1]) - new Date(visibleDates[0])) / (30 * 24 * 3600 * 1000);
 
         if (monthsRange > 36) {
-            // Year-boundary mode (Google Finance style): show clean year numbers at Jan 1 boundaries
+            // Year-boundary mode (Google Finance style): clean year numbers at Jan 1 boundaries
             isYearBoundaryMode = true;
             const yearsRange = monthsRange / 12;
-            // Pick a round year interval: 1yr for <5yr range, 2yr for <15yr, 5yr for <30yr, else 10yr
             const yearInterval = yearsRange <= 5 ? 1 : yearsRange <= 15 ? 2 : yearsRange <= 30 ? 5 : 10;
             const dataStartYear = new Date(visibleDates[0]).getFullYear();
             const dataEndYear   = new Date(visibleDates[count-1]).getFullYear();
-            // Align first tick to nearest multiple of yearInterval at or after data start
             const firstTickYear = Math.ceil(dataStartYear / yearInterval) * yearInterval;
             for (let yr = firstTickYear; yr <= dataEndYear; yr += yearInterval) {
                 const target = `${yr}-01-01`;
@@ -1269,10 +1283,10 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
                 }
             }
         } else {
-            // Multi-month (≤3 years): month-interval labels
+            // Multi-month (≤3 years): evenly-spaced month-boundary labels
             ticks.push(0);
             ticks.push(count - 1);
-            const approxLabelWidth = 100;
+            const approxLabelWidth = 150; // wider spacing → fewer, cleaner labels
             const maxLabels = Math.floor(chartW / approxLabelWidth);
             let monthInterval = Math.max(1, Math.round(monthsRange / maxLabels));
             const common = [1, 2, 3, 4, 6, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120];
@@ -1305,6 +1319,10 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         return Math.ceil(( ( (d2 - yearStart) / 86400000) + 1)/7);
     }
 
+    // Show year on all monthly labels when the chart range crosses a calendar year boundary
+    const spansMultipleYears = count > 1 &&
+        new Date(visibleDates[0]).getFullYear() !== new Date(visibleDates[count-1]).getFullYear();
+
     let lastLabelMonth = -1;
     let lastLabelYear = -1;
     let lastLabelX = -1;
@@ -1314,31 +1332,31 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         if (!d) return;
         const [y, m, day] = d.split('-').map(Number);
         const x = getX(idx);
-        
+
         if (idx !== 0 && idx !== count - 1) {
             if (x < 40 || x > w - 40) return;
         }
 
         let txt = "";
         const mName = months[m - 1] || "";
-        
+
         if (count <= 14) {
-            // Short range: Show Month on first/last or when it changes
+            // ~1W: "Mon DD", show month name when it changes
             if (m !== lastLabelMonth || tIdx === 0 || tIdx === ticks.length - 1) {
                 txt = mName + " " + day;
             } else {
                 txt = day.toString();
             }
         } else if (count <= 65) {
+            // ~1M–3M: "Mon DD", mark the year only when it transitions
             txt = mName + " " + day;
+            if (lastLabelYear !== -1 && y !== lastLabelYear) txt += " " + y;
         } else if (isYearBoundaryMode) {
-            // Google Finance style: just the year number at Jan boundaries
+            // Multi-year: just the year number
             txt = y.toString();
         } else {
-            txt = mName;
-            if (y !== lastLabelYear || idx === 0) {
-                txt += " " + y;
-            }
+            // Multi-month: always include year when range crosses a year boundary (like Google Finance)
+            txt = mName + (spansMultipleYears ? " " + y : "");
         }
 
         // Standard deduplication and collision check
