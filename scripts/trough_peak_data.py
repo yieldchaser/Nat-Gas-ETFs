@@ -32,6 +32,10 @@ MAX_TRIES  = 3
 # Manual split/consolidation history for tickers that Yahoo Finance may not
 # correctly reflect.  ratio > 1 = reverse split (N:1), ratio < 1 = forward split (1:M).
 # Each entry multiplies pre-split prices by ratio so the full series is consistent.
+# Any single-day price ratio >= this is treated as an unregistered corporate action.
+# Requires NG=F to move ~100% in one day to false-positive — essentially impossible.
+SPLIT_ANOMALY_THRESHOLD = 4.0
+
 MANUAL_SPLITS: Dict[str, List[Tuple[str, float]]] = {
     "3NGL.L": [
         ("2016-03-18", 10.0),    # 10:1 consolidation
@@ -116,6 +120,59 @@ def _apply_split_adjustments(
 
     return dates, closes, volumes
 
+
+def _detect_and_apply_unknown_splits(
+    dates: List[str],
+    closes: List[float],
+    volumes: List[int],
+    ticker: str,
+) -> Tuple[List[str], List[float], List[int], List[dict]]:
+    """Scan for large price discontinuities not in MANUAL_SPLITS and auto-apply them.
+
+    Returns adjusted (dates, closes, volumes) plus a list of detection dicts.
+    """
+    closes  = list(closes)
+    volumes = list(volumes)
+    detections: List[dict] = []
+
+    lo = 1.0 / SPLIT_ANOMALY_THRESHOLD
+    hi = SPLIT_ANOMALY_THRESHOLD
+
+    for i in range(1, len(closes)):
+        if closes[i - 1] <= 0:
+            continue
+        try:
+            ratio = closes[i] / closes[i - 1]
+        except ZeroDivisionError:
+            continue
+        if not (ratio >= hi or ratio <= lo):
+            continue
+
+        date_str = dates[i]
+        log.warning(
+            "AUTO-DETECTED unregistered split for %s on %s: observed ×%.4g — "
+            "auto-applying correction. Add to MANUAL_SPLITS to silence this warning.",
+            ticker, date_str, ratio,
+        )
+        for j in range(i):
+            closes[j]  = round(closes[j] * ratio, 4)
+            volumes[j] = int(volumes[j] / ratio) if volumes[j] else 0
+
+        detections.append({
+            "ticker": ticker,
+            "date": date_str,
+            "observed_ratio": round(float(ratio), 6),
+            "direction": "reverse_split" if ratio > 1 else "forward_split",
+            "auto_applied": True,
+            "action_required": (
+                f"Add (\"{date_str}\", {round(float(ratio), 4)}) "
+                f"to MANUAL_SPLITS[\"{ticker}\"] in data_pipeline.py and trough_peak_data.py"
+            ),
+        })
+
+    return dates, closes, volumes, detections
+
+
 def fetch_ticker_data(ticker: str):
     period2 = int(datetime.now().timestamp())
     url = (
@@ -178,10 +235,16 @@ def fetch_ticker_data(ticker: str):
             # Apply manual split adjustments for tickers Yahoo may not cover
             dates, prices, vols = _apply_split_adjustments(dates, prices, vols, ticker)
 
+            # Auto-detect and apply any remaining unregistered splits
+            dates, prices, vols, detected = _detect_and_apply_unknown_splits(
+                dates, prices, vols, ticker
+            )
+
             return {
                 "dates": dates,
                 "closes": prices,
-                "volumes": vols
+                "volumes": vols,
+                "_detected_splits": detected,   # internal; stripped before writing JSON
             }
 
         except Exception as e:
@@ -195,20 +258,29 @@ def fetch_ticker_data(ticker: str):
 
 def main():
     OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    # The generated timestamp is removed from top-level as per user's strict schema request
-    # but I'll keep it as a comment or meta field if desired. 
-    # User requested: {"tickers": {"TICKER": {...}}}
     output = {"tickers": {}}
+    all_detected: List[dict] = []
 
     for ticker in TICKERS:
         data = fetch_ticker_data(ticker)
         if data:
+            # Strip internal key before writing to JSON
+            detected = data.pop("_detected_splits", [])
+            all_detected.extend(detected)
             output["tickers"][ticker] = data
         time.sleep(1)  # polite delay between requests
 
     with open(OUT_FILE, "w") as f:
         json.dump(output, f, separators=(",", ":"))
     log.info("Written to %s", OUT_FILE)
+
+    if all_detected:
+        log.warning(
+            "SPLIT WARNINGS (trough_peak): %d unregistered split(s) auto-applied — "
+            "review and add to MANUAL_SPLITS in both scripts: %s",
+            len(all_detected),
+            [f"{d['ticker']} {d['date']} ×{d['observed_ratio']}" for d in all_detected],
+        )
 
 
 if __name__ == "__main__":
