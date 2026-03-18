@@ -766,21 +766,19 @@ function initChartHover() {
     window.addEventListener('mouseup', () => {
         if (state.drag.active) {
             state.drag.active = false;
-            // Clear if it was just a static click (no drag)
-            if (state.drag.startIdx === state.drag.currentIdx) {
-                state.drag.startIdx = null;
-                state.drag.currentIdx = null;
-            }
-            renderChart();
-        } else if (state.hover.x === null) {
-            // If user clicked outside the chart zone completely
+            // Clear immediately on release (Google Finance style)
             state.drag.startIdx = null;
             state.drag.currentIdx = null;
             renderChart();
         }
     });
 
-    canvas.addEventListener('mouseleave', () => hideTooltip());
+    canvas.addEventListener('mouseleave', () => {
+        state.drag.active = false;
+        state.drag.startIdx = null;
+        state.drag.currentIdx = null;
+        hideTooltip();
+    });
 }
 
 function hideTooltip() {
@@ -1216,7 +1214,7 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         const p2 = visibleCloses[i2];
         const diff = p2 - p1;
         const pct = (diff / p1) * 100;
-        const color = pct >= 0 ? 'var(--green)' : 'var(--red)';
+        const color = pct >= 0 ? '#3db87a' : '#e06060'; // Hardcoded hex for Canvas
         
         const labelX = x1 + (x2 - x1) / 2;
         const labelY = padding.top + 20;
@@ -1226,7 +1224,7 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         const txt = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} (${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%)`;
         
         const metrics = ctx.measureText(txt);
-        ctx.fillStyle = 'rgba(10, 10, 15, 0.85)';
+        ctx.fillStyle = 'rgba(20, 20, 30, 0.95)';
         ctx.fillRect(labelX - metrics.width/2 - 8, labelY - 14, metrics.width + 16, 20);
         
         ctx.fillStyle = color;
