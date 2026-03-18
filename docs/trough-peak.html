@@ -898,18 +898,12 @@ function updateRangeUI() {
     const sStart = document.getElementById('range-start');
     const sEnd = document.getElementById('range-end');
     const highlight = document.getElementById('range-highlight');
-    const lblStart = document.getElementById('range-start-label');
-    const lblEnd = document.getElementById('range-end-label');
     const lblStatus = document.getElementById('range-active-label');
 
     const v1 = parseInt(sStart.value);
     const v2 = parseInt(sEnd.value);
     const max = parseInt(sStart.max);
 
-    // Precise calculation: thumbs are 20px wide, and the track is padded by 12px on each side.
-    // The thumb center moves within (wrapWidth - 24px - 20px)? No, the input is 100%.
-    // In CSS, input width includes the thumbs. 100% means the thumb edges touch the track edges.
-    // Thumb center travels (containerWidth - thumbWidth).
     const p1 = (v1 / max);
     const p2 = (v2 / max);
 
@@ -1287,45 +1281,46 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         return Math.ceil(( ( (d2 - yearStart) / 86400000) + 1)/7);
     }
 
-    let lastLabelTxt = "";
+    let lastLabelMonth = -1;
     let lastLabelYear = -1;
     let lastLabelX = -1;
 
-    ticks.forEach(idx => {
+    ticks.forEach((idx, tIdx) => {
         const d = visibleDates[idx];
         if (!d) return;
-        const [y, m, day] = d.split('-');
+        const [y, m, day] = d.split('-').map(Number);
         const x = getX(idx);
         
-        // Slightly more permissive for edge labels
         if (idx !== 0 && idx !== count - 1) {
             if (x < 40 || x > w - 40) return;
         }
 
         let txt = "";
-        const mIdx = parseInt(m) - 1;
-        const mName = months[mIdx] || "";
+        const mName = months[m - 1] || "";
         
         if (count <= 14) {
-            txt = day;
+            // Short range: Show Month on first/last or when it changes
+            if (m !== lastLabelMonth || tIdx === 0 || tIdx === ticks.length - 1) {
+                txt = mName + " " + day;
+            } else {
+                txt = day.toString();
+            }
         } else if (count <= 65) {
             txt = mName + " " + day;
         } else {
-            // Multi-year/Long range: Show Month + Year if year changes
             txt = mName;
-            const currentYear = parseInt(y);
-            if (currentYear !== lastLabelYear || idx === ticks[0]) {
+            if (y !== lastLabelYear || idx === 0) {
                 txt += " " + y;
-                lastLabelYear = currentYear;
             }
         }
 
-        if (txt && txt !== lastLabelTxt) {
-            // Final safety: don't draw if too close to last drawn label center
-            if (lastLabelX > -1 && Math.abs(x - lastLabelX) < 30) return;
+        // Standard deduplication and collision check
+        if (txt) {
+            if (lastLabelX > -1 && Math.abs(x - lastLabelX) < 45) return;
 
             ctx.fillText(txt, x, padding.top + chartH + 15);
-            lastLabelTxt = txt;
+            lastLabelMonth = m;
+            lastLabelYear = y;
             lastLabelX = x;
             
             ctx.beginPath();
