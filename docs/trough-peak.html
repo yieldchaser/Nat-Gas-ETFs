@@ -685,6 +685,13 @@ function renderCards() {
         const max   = arr => Math.max(...arr);
         const min   = arr => Math.min(...arr);
 
+        // Average gap: calendar days from peak of cycle[i] to trough of cycle[i+1]
+        const gaps = [];
+        for (let i = 0; i < cycles.length - 1; i++) {
+            gaps.push(Math.round((new Date(cycles[i+1].troughDate) - new Date(cycles[i].peakDate)) / 86400000));
+        }
+        const avgGapStr = gaps.length ? Math.round(avg(gaps)) + 'D' : '--';
+
         return `<div class="kpi-card">
             <div class="kpi-header">
                 <span class="kpi-ticker" style="color:${t.color}">${t.label}</span>
@@ -700,11 +707,15 @@ function renderCards() {
                     <div class="stat-val">${Math.round(avg(days))}D</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-lbl" data-tooltip="Largest single trough-to-peak gain on record">MAX GAIN</div>
-                    <div class="stat-val" style="color:${t.color}">${Math.round(max(gains))}%</div>
+                    <div class="stat-lbl" data-tooltip="Mean calendar days from one cycle's peak to the next cycle's trough (idle period between rallies)">AVG GAP</div>
+                    <div class="stat-val">${avgGapStr}</div>
                 </div>
             </div>
             <div class="kpi-stats-row" style="border:none; padding:0">
+                <div class="stat-item">
+                    <div class="stat-lbl" data-tooltip="Largest single trough-to-peak gain on record">MAX GAIN</div>
+                    <div class="stat-val" style="color:${t.color}">${Math.round(max(gains))}%</div>
+                </div>
                 <div class="stat-item">
                     <div class="stat-lbl" data-tooltip="Smallest trough-to-peak gain that still met the threshold">MIN GAIN</div>
                     <div class="stat-val" style="color:${t.color}">${Math.round(min(gains))}%</div>
