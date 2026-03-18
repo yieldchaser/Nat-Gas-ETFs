@@ -289,8 +289,69 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 .tooltip-val { font-weight: 700; font-family: 'JetBrains Mono', monospace; }
 
 @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 800px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 500px) { .kpi-grid { grid-template-columns: 1fr; } }
+@media (max-width: 800px)  { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px)  { .kpi-grid { grid-template-columns: 1fr; } }
+
+/* ---- MOBILE ---- */
+@media (max-width: 768px) {
+    .tp-main { padding: 14px 12px 40px; }
+
+    /* Title */
+    .tp-title-row { flex-wrap: wrap; gap: 8px; }
+    .tp-title { font-size: 1.2rem; }
+    .tp-desc { font-size: 0.7rem; }
+
+    /* Slider panel */
+    .slider-panel { padding: 16px; }
+    .slider-header { flex-wrap: wrap; gap: 4px; }
+    .slider-label { font-size: 0.6rem; letter-spacing: 1.5px; }
+    .slider-value { font-size: 1.2rem; }
+    .slider-hints { font-size: 0.6rem; }
+
+    /* Chart header — stack tabs above horizon buttons */
+    .chart-container { padding: 14px; }
+    .chart-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .chart-controls { width: 100%; justify-content: flex-start; }
+    .horizon-group { flex-wrap: wrap; gap: 4px; }
+    .horizon-btn { font-size: 0.55rem; padding: 4px 8px; }
+    .tab-btn { font-size: 0.62rem; padding: 5px 10px; }
+
+    /* Chart canvas shorter on mobile */
+    .chart-canvas-wrap { height: 260px; }
+
+    /* Chart footer — stack legends */
+    .chart-footer { flex-direction: column; gap: 10px; align-items: flex-start; }
+    .chart-legend { flex-wrap: wrap; gap: 10px; }
+
+    /* Table panel */
+    .table-panel { padding: 14px; }
+    .table-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .table-title { font-size: 0.85rem; }
+
+    /* Make table scrollable horizontally */
+    #table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table.cycle-table { font-size: 0.7rem; min-width: 520px; }
+    .cycle-table th,
+    .cycle-table td { padding: 9px 10px; }
+
+    /* Download button full-width on mobile */
+    .download-btn { width: 100%; text-align: center; }
+
+    /* KPI cards */
+    .kpi-val { font-size: 1.15rem; }
+    .stat-val { font-size: 0.7rem; }
+
+    /* Range slider labels */
+    .range-labels { font-size: 0.6rem; }
+}
+
+@media (max-width: 420px) {
+    .tp-main { padding: 10px 8px 32px; }
+    .chart-canvas-wrap { height: 220px; }
+    .tp-title { font-size: 1rem; letter-spacing: 0.5px; }
+    .slider-label { display: none; } /* value display is enough on very small screens */
+    table.cycle-table { min-width: 460px; font-size: 0.65rem; }
+}
 </style>
 </head>
 <body>
