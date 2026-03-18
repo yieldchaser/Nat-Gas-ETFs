@@ -945,10 +945,10 @@ function initRangeSlider() {
         let v1 = parseInt(sStart.value);
         let v2 = parseInt(sEnd.value);
         
-        if (v1 > v2) {
-            // Swap or block
-            if (e.target.id === 'range-start') sStart.value = v2;
-            else sEnd.value = v1;
+        if (v1 >= v2) {
+            // Enforce minimum gap of 1 so chart always has ≥ 2 data points
+            if (e.target.id === 'range-start') sStart.value = Math.max(0, v2 - 1);
+            else sEnd.value = Math.min(parseInt(sEnd.max), v1 + 1);
             v1 = parseInt(sStart.value);
             v2 = parseInt(sEnd.value);
         }
@@ -1396,11 +1396,8 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
             });
         }
     }
-    // Final deduplication, sort, and remove ticks too close to the last point
+    // Final deduplication and sort — collision check in the render loop handles crowding
     ticks = [...new Set(ticks)].sort((a, b) => a - b);
-    // Drop any intermediate tick within 3 trading days of the last point to prevent
-    // the last weekday (e.g. Mar 16) and last date (e.g. Mar 17) both rendering
-    ticks = ticks.filter(t => t === 0 || t === count - 1 || (count - 1 - t) > 3);
 
     function getWeekNumber(d) {
         let d2 = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
