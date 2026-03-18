@@ -1224,69 +1224,75 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // -- X-Axis Labels (Adaptive Google Finance Style) --
-    ctx.fillStyle = '#94a3b8'; // Robust Slate Hex
+    // -- X-Axis Labels (Proactive Grid-Aligned Engine) --
+
+    // -- X-Axis Labels (Proactive Grid-Aligned Engine) --
+    ctx.fillStyle = '#94a3b8';
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'center';
-    
+
     const count = visibleDates.length;
-    let mode = 'year';
-    let skip = 1;
+    let ticks = [];
     
-    if (count <= 14) {
-        mode = 'day';
-    } else if (count <= 65) {
-        mode = 'week';
-        skip = Math.max(1, Math.floor(count / 6));
-    } else if (count <= 500) {
-        mode = 'month';
-        skip = Math.max(1, Math.floor(count / 8));
+    // 1. Determine spacing strategy
+    if (count <= 14) { // 1W-ish: Every day
+        for (let i = 0; i < count; i++) ticks.push(i);
+    } else if (count <= 65) { // 1M-ish: Every Monday
+        visibleDates.forEach((d, i) => {
+            if (new Date(d).getDay() === 1) ticks.push(i);
+        });
     } else {
-        mode = 'year';
-        skip = Math.max(1, Math.floor(count / 10));
+        // Multi-month/year: Proactive spacing (Every 1, 2, 3, 4, 6, 12... months)
+        const approxLabelWidth = 90;
+        const maxLabels = Math.floor(chartW / approxLabelWidth);
+        const monthsRange = (new Date(visibleDates[count-1]) - new Date(visibleDates[0])) / (30 * 24 * 3600 * 1000);
+        
+        let monthInterval = Math.max(1, Math.round(monthsRange / maxLabels));
+        // Snap to common intervals: 1, 2, 3, 4, 6, 12, 24, 36
+        const common = [1, 2, 3, 4, 6, 12, 24, 36, 48, 60];
+        monthInterval = common.find(c => c >= monthInterval) || monthInterval;
+
+        let lastMonth = -1;
+        visibleDates.forEach((d, i) => {
+            const [y, m, day] = d.split('-').map(Number);
+            const totalMonths = y * 12 + m;
+            if (day === 1) {
+                if (lastMonth === -1 || (totalMonths - lastMonth) >= monthInterval) {
+                    ticks.push(i);
+                    lastMonth = totalMonths;
+                }
+            }
+        });
     }
 
-    let lastLabelX = -100;
     let lastLabelTxt = "";
-    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-    visibleDates.forEach((d, i) => {
+    ticks.forEach(idx => {
+        const d = visibleDates[idx];
         const [y, m, day] = d.split('-');
-        let txt = "";
+        const x = getX(idx);
+        
+        if (x < 30 || x > w - 30) return;
 
-        if (mode === 'year') {
-            if (i === 0 || d.slice(5) === '01-01' || i % skip === 0) {
-                txt = y;
-            }
-        } else if (mode === 'month') {
-            if (i === 0 || day === '01') {
-                txt = months[parseInt(m)-1];
-                if (i === 0 || m === '01') txt += " " + y;
-            }
-        } else if (mode === 'week') {
-            const dateObj = new Date(d);
-            if (i === 0 || dateObj.getDay() === 1) { // Mondays
-                txt = months[parseInt(m)-1] + " " + day;
-            }
-        } else { // day
-            txt = (i === 0 || day === '01') ? (months[parseInt(m)-1] + " " + day) : day;
+        let txt = "";
+        const mName = months[parseInt(m)-1];
+        
+        if (count <= 14) txt = day;
+        else if (count <= 65) txt = mName + " " + day;
+        else {
+            txt = mName;
+            if (m === '01' || idx === ticks[0]) txt += " " + y;
         }
 
         if (txt && txt !== lastLabelTxt) {
-            const x = getX(i);
-            // x < w - 30 (Using 'w' instead of 'width')
-            if (x > lastLabelX + 45 && x < w - 30) {
-                ctx.fillText(txt, x, padding.top + chartH + 15);
-                lastLabelX = x;
-                lastLabelTxt = txt;
-                
-                ctx.beginPath();
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-                ctx.setLineDash([]);
-                ctx.moveTo(x, padding.top);
-                ctx.lineTo(x, padding.top + chartH);
-                ctx.stroke();
-            }
+            ctx.fillText(txt, x, padding.top + chartH + 15);
+            lastLabelTxt = txt;
+            
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.setLineDash([]);
+            ctx.moveTo(x, padding.top);
+            ctx.lineTo(x, padding.top + chartH);
+            ctx.stroke();
         }
     });
 
