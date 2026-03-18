@@ -1273,8 +1273,11 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
             });
         }
     }
-    // Final deduplication and sort
+    // Final deduplication, sort, and remove ticks too close to the last point
     ticks = [...new Set(ticks)].sort((a, b) => a - b);
+    // Drop any intermediate tick within 3 trading days of the last point to prevent
+    // the last weekday (e.g. Mar 16) and last date (e.g. Mar 17) both rendering
+    ticks = ticks.filter(t => t === 0 || t === count - 1 || (count - 1 - t) > 3);
 
     function getWeekNumber(d) {
         let d2 = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
