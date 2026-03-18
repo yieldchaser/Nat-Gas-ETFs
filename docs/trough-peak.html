@@ -1228,36 +1228,55 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     const count = visibleDates.length;
     let ticks = [];
-    
+    let isYearBoundaryMode = false;
+
     if (count <= 14) { // 1W-ish: Every day
         for (let i = 0; i < count; i++) ticks.push(i);
-    } else {
-        // Always include first and last
+    } else if (count <= 65) { // 1M-ish: Every week (first trade day of week)
         ticks.push(0);
         ticks.push(count - 1);
+        let lastWeekYear = -1;
+        visibleDates.forEach((d, i) => {
+            const date = new Date(d);
+            const week = getWeekNumber(date);
+            const year = date.getFullYear();
+            const weekYear = year + "-" + week;
+            if (weekYear !== lastWeekYear) {
+                if (i !== 0 && i !== count - 1) ticks.push(i);
+                lastWeekYear = weekYear;
+            }
+        });
+    } else {
+        const monthsRange = (new Date(visibleDates[count-1]) - new Date(visibleDates[0])) / (30 * 24 * 3600 * 1000);
 
-        if (count <= 65) { // 1M-ish: Every Week (First trade day of week)
-            let lastWeekYear = -1;
-            visibleDates.forEach((d, i) => {
-                const date = new Date(d);
-                const week = getWeekNumber(date);
-                const year = date.getFullYear();
-                const weekYear = year + "-" + week;
-                if (weekYear !== lastWeekYear) {
-                    if (i !== 0 && i !== count - 1) ticks.push(i);
-                    lastWeekYear = weekYear;
+        if (monthsRange > 36) {
+            // Year-boundary mode (Google Finance style): show clean year numbers at Jan 1 boundaries
+            isYearBoundaryMode = true;
+            const yearsRange = monthsRange / 12;
+            // Pick a round year interval: 1yr for <5yr range, 2yr for <15yr, 5yr for <30yr, else 10yr
+            const yearInterval = yearsRange <= 5 ? 1 : yearsRange <= 15 ? 2 : yearsRange <= 30 ? 5 : 10;
+            const dataStartYear = new Date(visibleDates[0]).getFullYear();
+            const dataEndYear   = new Date(visibleDates[count-1]).getFullYear();
+            // Align first tick to nearest multiple of yearInterval at or after data start
+            const firstTickYear = Math.ceil(dataStartYear / yearInterval) * yearInterval;
+            for (let yr = firstTickYear; yr <= dataEndYear; yr += yearInterval) {
+                const target = `${yr}-01-01`;
+                for (let i = 0; i < count; i++) {
+                    if (visibleDates[i] >= target) {
+                        if (i !== 0 && i !== count - 1) ticks.push(i);
+                        break;
+                    }
                 }
-            });
+            }
         } else {
-            // Multi-month/year: Proactive spacing
+            // Multi-month (≤3 years): month-interval labels
+            ticks.push(0);
+            ticks.push(count - 1);
             const approxLabelWidth = 100;
             const maxLabels = Math.floor(chartW / approxLabelWidth);
-            const monthsRange = (new Date(visibleDates[count-1]) - new Date(visibleDates[0])) / (30 * 24 * 3600 * 1000);
-            
             let monthInterval = Math.max(1, Math.round(monthsRange / maxLabels));
             const common = [1, 2, 3, 4, 6, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120];
             monthInterval = common.find(c => c >= monthInterval) || monthInterval;
-
             let lastMonthTotal = -1;
             let lastLoggedMonth = -1;
             visibleDates.forEach((d, i) => {
@@ -1312,6 +1331,9 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
             }
         } else if (count <= 65) {
             txt = mName + " " + day;
+        } else if (isYearBoundaryMode) {
+            // Google Finance style: just the year number at Jan boundaries
+            txt = y.toString();
         } else {
             txt = mName;
             if (y !== lastLabelYear || idx === 0) {
