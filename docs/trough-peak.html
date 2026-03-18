@@ -911,21 +911,6 @@ function updateRangeUI() {
     // In CSS, input width includes the thumbs. 100% means the thumb edges touch the track edges.
     // Thumb center travels (containerWidth - thumbWidth).
     const p1 = (v1 / max);
-    const p2 = (v2 / max);
-
-    // We use calc() to perfectly align the cyan bar with the thumb centers (offset by 10px half-width).
-    highlight.style.left = `calc(${p1 * 100}% + ${(10 - p1 * 20)}px)`;
-    highlight.style.width = `calc(${(p2 - p1) * 100}% + ${( (p1 - p2) * 20)}px)`;
-
-    lblStatus.textContent = state.timeRange === 'custom' 
-        ? 'CUSTOM SELECTION' 
-        : `PRESET: ${state.timeRange.toUpperCase()}`;
-}
-
-function downloadCSV() {
-    const t = TICKERS.find(x => x.label === state.activeTab) || TICKERS[0];
-    const cycles = state.cycles[t.symbol] || [];
-    
     // Apply current table filters
     const now = new Date();
     let filtered = cycles;
@@ -1287,6 +1272,7 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
 
     let lastLabelTxt = "";
     let lastLabelYear = -1;
+    let lastLabelX = -1;
 
     ticks.forEach(idx => {
         const d = visibleDates[idx];
@@ -1318,8 +1304,12 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         }
 
         if (txt && txt !== lastLabelTxt) {
+            // Final safety: don't draw if too close to last drawn label center
+            if (lastLabelX > -1 && Math.abs(x - lastLabelX) < 30) return;
+
             ctx.fillText(txt, x, padding.top + chartH + 15);
             lastLabelTxt = txt;
+            lastLabelX = x;
             
             ctx.beginPath();
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
