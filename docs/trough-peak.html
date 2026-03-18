@@ -686,14 +686,18 @@ function initChartHover() {
         
         state.hover.x = x;
         
-        // Data needs to be retrieved to map X to index
         const t = TICKERS.find(x => x.label === state.activeTab) || TICKERS[0];
         const data = state.rawData[t.symbol];
         if (!data) return;
 
-        // Respect current zoom
+        // UNIFIED ZOOM LOGIC (Matches drawTroughPeakChart)
         let startIndex = 0;
-        if (state.timeRange !== 'all') {
+        let endIndex = data.dates.length - 1;
+
+        if (state.timeRange === 'custom') {
+            startIndex = state.zoom.startIdx;
+            endIndex   = state.zoom.endIdx;
+        } else if (state.timeRange !== 'all') {
             const now = new Date();
             let limit;
             if (state.timeRange === '1w') limit = 7;
@@ -706,7 +710,7 @@ function initChartHover() {
             if (startIndex === -1) startIndex = 0;
         }
 
-        const visibleDates = data.dates.slice(startIndex);
+        const visibleDates = data.dates.slice(startIndex, endIndex + 1);
         const paddingLeft = 60;
         const paddingRight = 60;
         const chartW = rect.width - paddingLeft - paddingRight;
@@ -736,8 +740,6 @@ function initChartHover() {
                         <span class="tooltip-val" style="color:var(--text-dim)">${vol.toLocaleString()}</span>
                     </div>
                 `;
-                
-                // Redraw to show crosshair
                 renderChart();
             } else {
                 hideTooltip();
@@ -832,6 +834,7 @@ function initRangeSlider() {
     if (!sStart || !sEnd) return;
 
     const onChange = () => {
+        hideTooltip(); // Clear tooltip when dragging slider
         let v1 = parseInt(sStart.value);
         let v2 = parseInt(sEnd.value);
         
@@ -875,11 +878,16 @@ function updateRangeUI() {
     const v2 = parseInt(sEnd.value);
     const max = parseInt(sStart.max);
 
-    const p1 = (v1 / max) * 100;
-    const p2 = (v2 / max) * 100;
+    // Precise calculation: thumbs are 20px wide, and the track is padded by 12px on each side.
+    // The thumb center moves within (wrapWidth - 24px - 20px)? No, the input is 100%.
+    // In CSS, input width includes the thumbs. 100% means the thumb edges touch the track edges.
+    // Thumb center travels (containerWidth - thumbWidth).
+    const p1 = (v1 / max);
+    const p2 = (v2 / max);
 
-    highlight.style.left = p1 + '%';
-    highlight.style.width = (p2 - p1) + '%';
+    // We use calc() to perfectly align the cyan bar with the thumb centers (offset by 10px half-width).
+    highlight.style.left = `calc(${p1 * 100}% + ${(10 - p1 * 20)}px)`;
+    highlight.style.width = `calc(${(p2 - p1) * 100}% + ${( (p1 - p2) * 20)}px)`;
 
     lblStart.textContent = data.dates[v1] || '--';
     lblEnd.textContent = data.dates[v2] || '--';
