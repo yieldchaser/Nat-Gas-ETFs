@@ -1269,7 +1269,10 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
             // Year-boundary mode (Google Finance style): clean year numbers at Jan 1 boundaries
             isYearBoundaryMode = true;
             const yearsRange = monthsRange / 12;
-            const yearInterval = yearsRange <= 5 ? 1 : yearsRange <= 15 ? 2 : yearsRange <= 30 ? 5 : 10;
+            const maxYearLabels = Math.floor(chartW / 150);
+            let yearInterval = Math.max(1, Math.round(yearsRange / maxYearLabels));
+            const commonYears = [1, 2, 3, 5, 10, 20];
+            yearInterval = commonYears.find(c => c >= yearInterval) || yearInterval;
             const dataStartYear = new Date(visibleDates[0]).getFullYear();
             const dataEndYear   = new Date(visibleDates[count-1]).getFullYear();
             const firstTickYear = Math.ceil(dataStartYear / yearInterval) * yearInterval;
@@ -1326,6 +1329,7 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
     let lastLabelMonth = -1;
     let lastLabelYear = -1;
     let lastLabelX = -1;
+    let lastMonthYearRendered = -1;
 
     ticks.forEach((idx, tIdx) => {
         const d = visibleDates[idx];
@@ -1356,6 +1360,9 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
             txt = y.toString();
         } else {
             // Multi-month: always include year when range crosses a year boundary (like Google Finance)
+            // Skip if this month-year was already rendered (prevents "Mar 2026" appearing twice)
+            const monthYear = y * 12 + m;
+            if (monthYear === lastMonthYearRendered) return;
             txt = mName + (spansMultipleYears ? " " + y : "");
         }
 
@@ -1367,6 +1374,7 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
             lastLabelMonth = m;
             lastLabelYear = y;
             lastLabelX = x;
+            lastMonthYearRendered = y * 12 + m;
             
             ctx.beginPath();
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
