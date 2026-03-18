@@ -918,8 +918,8 @@ function updateRangeUI() {
     highlight.style.width = `calc(${(p2 - p1) * 100}% + ${( (p1 - p2) * 20)}px)`;
 
     lblStatus.textContent = state.timeRange === 'custom' 
-        ? `${data.dates[v1]} — ${data.dates[v2]}` 
-        : `PRESET: ${state.timeRange.toUpperCase()} (${data.dates[v1]} / ${data.dates[v2]})`;
+        ? 'CUSTOM SELECTION' 
+        : `PRESET: ${state.timeRange.toUpperCase()}`;
 }
 
 function downloadCSV() {
@@ -1275,7 +1275,8 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
             });
         }
     }
-    ticks.sort((a, b) => a - b);
+    // Final deduplication and sort
+    ticks = [...new Set(ticks)].sort((a, b) => a - b);
 
     function getWeekNumber(d) {
         let d2 = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
