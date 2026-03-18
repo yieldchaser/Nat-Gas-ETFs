@@ -569,7 +569,7 @@ def _fetch_ng_price_context() -> dict:
     Returns dict with price, seasonal_zscore, tier, and gate flags for both sides.
     """
     logger.info("Fetching NG=F for gas price level gate …")
-    df = _yahoo_fetch_one(NG_TICKER)
+    df = _yahoo_fetch_one(NG_TICKER, {})
 
     if df is None or df.empty or len(df) < 60:
         logger.warning("Could not fetch NG=F — gas price gate unavailable")
