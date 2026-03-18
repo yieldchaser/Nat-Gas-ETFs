@@ -27,6 +27,36 @@ START_TS   = int(datetime(2008, 1, 1).timestamp())
 TICKERS    = ["KOLD", "BOIL", "HNU.TO", "HND.TO", "3NGL.L", "3NGS.L"]
 MAX_TRIES  = 3
 
+SPLIT_RATIO_THRESHOLD = 5.0  # 5× single-day move = reverse split (real 3x nat-gas max ≈ 2.2×)
+
+def strip_split_contamination(dates, closes, vols, ticker):
+    """
+    Scan the price series for any single-day move that exceeds SPLIT_RATIO_THRESHOLD
+    in either direction (price jumps to >5× or drops to <0.2× of the previous close).
+    Such moves are impossible in real trading for 3x leveraged nat-gas ETPs and
+    indicate unadjusted reverse-split data stitched together by Yahoo Finance.
+    We keep only the data from the day of the LAST such event onward, discarding
+    all prior contaminated history. Unaffected tickers pass through unchanged.
+    """
+    last_split_idx = 0
+    for i in range(1, len(closes)):
+        if closes[i - 1] > 0:
+            ratio = closes[i] / closes[i - 1]
+            if ratio > SPLIT_RATIO_THRESHOLD or ratio < (1.0 / SPLIT_RATIO_THRESHOLD):
+                last_split_idx = i
+
+    if last_split_idx > 0:
+        clipped = len(dates) - last_split_idx
+        log.warning(
+            "%s: split discontinuity detected — discarding %d pre-split rows, "
+            "keeping %d rows from %s onward",
+            ticker, last_split_idx, clipped, dates[last_split_idx]
+        )
+        return dates[last_split_idx:], closes[last_split_idx:], vols[last_split_idx:]
+
+    return dates, closes, vols
+
+
 def fetch_ticker_data(ticker: str):
     period2 = int(datetime.now().timestamp())
     url = (
@@ -84,7 +114,8 @@ def fetch_ticker_data(ticker: str):
                     prices.append(round(float(c), 4))
                     vols.append(vol_val)
 
-            log.info("%s: %d rows fetched (adjusted prices)", ticker, len(dates))
+            dates, prices, vols = strip_split_contamination(dates, prices, vols, ticker)
+            log.info("%s: %d rows kept after split-contamination check", ticker, len(dates))
             return {
                 "dates": dates,
                 "closes": prices,
