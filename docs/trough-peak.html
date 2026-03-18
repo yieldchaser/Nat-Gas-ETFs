@@ -173,9 +173,9 @@ input[type=range]:hover::-moz-range-thumb {
 }
 .range-slider-track {
     position: absolute;
-    top: 22px;
-    left: 12px;
-    right: 12px;
+    top: 14px;
+    left: 0;
+    right: 0;
     height: 6px;
     background: rgba(255, 255, 255, 0.15);
     border-radius: 3px;
@@ -183,7 +183,7 @@ input[type=range]:hover::-moz-range-thumb {
 }
 .range-slider-highlight {
     position: absolute;
-    top: 22px;
+    top: 14px;
     height: 6px;
     background: var(--cyan);
     border-radius: 3px;
@@ -364,9 +364,9 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 
         <div class="range-slider-container" id="range-slider-container">
             <div class="range-slider-wrap">
-                <div class="range-slider-track"></div>
-                <div id="range-highlight" class="range-slider-highlight"></div>
                 <div class="range-inputs">
+                    <div class="range-slider-track"></div>
+                    <div id="range-highlight" class="range-slider-highlight"></div>
                     <input type="range" id="range-start" min="0" max="100" value="0">
                     <input type="range" id="range-end" min="0" max="100" value="100">
                 </div>
@@ -833,14 +833,14 @@ function initRangeSlider() {
     const sEnd = document.getElementById('range-end');
     if (!sStart || !sEnd) return;
 
-    const onChange = () => {
+    const onChange = (e) => {
         hideTooltip(); // Clear tooltip when dragging slider
         let v1 = parseInt(sStart.value);
         let v2 = parseInt(sEnd.value);
         
         if (v1 > v2) {
             // Swap or block
-            if (event.target.id === 'range-start') sStart.value = v2;
+            if (e.target.id === 'range-start') sStart.value = v2;
             else sEnd.value = v1;
             v1 = parseInt(sStart.value);
             v2 = parseInt(sEnd.value);
