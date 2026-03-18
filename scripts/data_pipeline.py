@@ -180,6 +180,32 @@ ETF_ANNUAL_DECAY = {
 }
 DECAY_CORRECTION_WINDOW = 252   # Rolling window (1yr) for decay-adjusted percentile
 
+# Manual split/consolidation history for tickers that Yahoo Finance may not
+# correctly reflect in its adjusted price series.
+# ratio > 1  → reverse split (consolidation): N:1, historical prices ×N
+# ratio < 1  → forward split: 1:M, historical prices ×(1/M)
+# Each entry: (date_string, multiplier_for_pre_split_prices)
+MANUAL_SPLITS: Dict[str, List[Tuple[str, float]]] = {
+    "3NGL.L": [
+        ("2016-03-18", 10.0),    # 10:1 consolidation
+        ("2019-02-25", 10.0),    # 10:1 consolidation
+        ("2020-04-17", 10.0),    # 10:1 consolidation
+        ("2023-03-27", 10.0),    # 10:1 consolidation
+        ("2024-01-12", 10.0),    # 10:1 consolidation
+        ("2024-07-22", 420.0),   # 420:1 consolidation
+        ("2024-09-09", 10.0),    # 10:1 consolidation
+        ("2026-03-03", 10.0),    # 10:1 consolidation
+    ],
+    "3NGS.L": [
+        ("2019-06-04", 10.0),    # 10:1 consolidation
+        ("2021-09-15", 10.0),    # 10:1 consolidation
+        ("2022-05-30", 10.0),    # 10:1 consolidation
+        ("2022-09-12", 10.0),    # 10:1 consolidation
+        ("2022-12-19", 17000.0), # 17000:1 consolidation
+        ("2024-07-22", 1.0/17),  # 1:17 forward split
+    ],
+}
+
 # Side-Wide Volume Convergence (SWVC) — rolling tri-ETF same-side detection
 SWVC_RVOL_THRESHOLD = 2.0   # Min RVOL-21d to qualify as a "spike" for one ETF
 SWVC_LOOKBACK_DAYS  = 15    # How many trading days back to search for spikes
@@ -189,6 +215,67 @@ SWVC_WINDOW_DAYS    = 10    # All 3 spikes must fall within this window to "conv
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+def _apply_split_adjustments(df: pd.DataFrame, ticker: str) -> pd.DataFrame:
+    """Apply manual split/consolidation adjustments to an OHLCV DataFrame.
+
+    For each known split event we check whether Yahoo Finance has already
+    reflected it by comparing the price ratio at the split boundary to the
+    expected ratio (in log-space). Only missing adjustments are applied,
+    preventing double-counting.
+
+    For a reverse split (N:1, ratio=N): pre-split prices ×N, volume ÷N.
+    For a forward split (1:M, ratio=1/M): pre-split prices ×(1/M), volume ÷(1/M).
+    """
+    splits = MANUAL_SPLITS.get(ticker)
+    if not splits:
+        return df
+
+    df = df.copy()
+    price_cols = [c for c in ("open", "high", "low", "close") if c in df.columns]
+
+    for date_str, ratio in splits:
+        split_date = pd.Timestamp(date_str)
+        pre_mask = df.index < split_date
+        if not pre_mask.any():
+            continue  # No data before this split
+
+        pre_close  = df.loc[pre_mask, "close"].dropna()
+        post_close = df.loc[df.index >= split_date, "close"].dropna()
+        if pre_close.empty or post_close.empty:
+            continue
+
+        price_before = pre_close.iloc[-1]
+        price_after  = post_close.iloc[0]
+        if price_before <= 0:
+            continue
+
+        observed_ratio = price_after / price_before
+
+        # In log-space: is the observed jump closer to 1.0 (already adjusted)
+        # or to the expected ratio (unadjusted)?
+        log_observed = abs(math.log(observed_ratio))
+        log_expected = abs(math.log(ratio))
+        already_applied = abs(log_observed) < abs(log_observed - log_expected)
+
+        if not already_applied:
+            logger.info(
+                "Applying split adjustment for %s: ×%.4g on %s "
+                "(observed jump ×%.4g vs expected ×%.4g)",
+                ticker, ratio, date_str, observed_ratio, ratio,
+            )
+            for col in price_cols:
+                df.loc[pre_mask, col] = (df.loc[pre_mask, col] * ratio)
+            if "volume" in df.columns:
+                df.loc[pre_mask, "volume"] = (df.loc[pre_mask, "volume"] / ratio)
+        else:
+            logger.debug(
+                "Split %s ×%.4g on %s already reflected in Yahoo data — skipping",
+                ticker, ratio, date_str,
+            )
+
+    return df
+
+
 def _safe_float(val: Any) -> Optional[float]:
     """Convert a value to float, returning None for NaN / Inf / non-numeric."""
     if val is None:
@@ -531,6 +618,9 @@ def _yahoo_fetch_one(ticker: str) -> Optional[pd.DataFrame]:
             df = df.dropna(subset=["close", "volume"])
             df["volume"] = df["volume"].astype(float)
             df.sort_index(inplace=True)
+
+            # Apply manual split adjustments for tickers Yahoo may not cover
+            df = _apply_split_adjustments(df, ticker)
 
             return df
 
