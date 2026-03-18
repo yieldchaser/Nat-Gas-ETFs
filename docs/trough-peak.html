@@ -1184,13 +1184,25 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         }
     });
 
-    // -- X-Axis Labels (Dates) --
+    // -- X-Axis Labels (Year Markers) --
     ctx.fillStyle = 'var(--text-dim)';
-    const skip = Math.max(1, Math.floor(visibleDates.length / 8));
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    let lastYear = null;
     visibleDates.forEach((d, i) => {
-        if (i % skip === 0) {
+        const year = d.split('-')[0];
+        if (year !== lastYear) {
             const x = getX(i);
-            ctx.fillText(d.slice(2), x - 15, padding.top + chartH + 15);
+            ctx.fillText(year, x, padding.top + chartH + 15);
+            lastYear = year;
+
+            // Optional: subtle vertical divider at year start
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.setLineDash([]);
+            ctx.moveTo(x, padding.top);
+            ctx.lineTo(x, padding.top + chartH);
+            ctx.stroke();
         }
     });
 
