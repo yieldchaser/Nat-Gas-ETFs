@@ -20,42 +20,71 @@ from typing import Dict, List, Tuple
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("trough_peak_data")
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-OUT_FILE     = PROJECT_ROOT / "docs" / "data" / "trough_peak_data.json"
+PROJECT_ROOT     = Path(__file__).resolve().parent.parent
+OUT_FILE         = PROJECT_ROOT / "docs" / "data" / "trough_peak_data.json"
+KNOWN_SPLITS_JSON = PROJECT_ROOT / "data" / "known_splits.json"
 
-YAHOO_URL = "https://query1.finance.yahoo.com/v8/finance/chart/"
+YAHOO_URL  = "https://query1.finance.yahoo.com/v8/finance/chart/"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 START_TS   = int(datetime(2008, 1, 1).timestamp())
 TICKERS    = ["KOLD", "BOIL", "HNU.TO", "HND.TO", "3NGL.L", "3NGS.L"]
 MAX_TRIES  = 3
 
-# Manual split/consolidation history for tickers that Yahoo Finance may not
-# correctly reflect.  ratio > 1 = reverse split (N:1), ratio < 1 = forward split (1:M).
-# Each entry multiplies pre-split prices by ratio so the full series is consistent.
 # Any single-day price ratio >= this is treated as an unregistered corporate action.
-# Requires NG=F to move ~100% in one day to false-positive — essentially impossible.
 SPLIT_ANOMALY_THRESHOLD = 4.0
 
-MANUAL_SPLITS: Dict[str, List[Tuple[str, float]]] = {
+# Fallback seed used only when known_splits.json is absent (e.g. fresh clone).
+_SPLITS_SEED: Dict[str, List[Tuple[str, float]]] = {
     "3NGL.L": [
-        ("2016-03-18", 10.0),    # 10:1 consolidation
-        ("2019-02-25", 10.0),    # 10:1 consolidation
-        ("2020-04-17", 10.0),    # 10:1 consolidation
-        ("2023-03-27", 10.0),    # 10:1 consolidation
-        ("2024-01-12", 10.0),    # 10:1 consolidation
-        ("2024-07-22", 420.0),   # 420:1 consolidation
-        ("2024-09-09", 10.0),    # 10:1 consolidation
-        ("2026-03-03", 10.0),    # 10:1 consolidation
+        ("2016-03-18", 10.0), ("2019-02-25", 10.0), ("2020-04-17", 10.0),
+        ("2023-03-27", 10.0), ("2024-01-12", 10.0), ("2024-07-22", 420.0),
+        ("2024-09-09", 10.0), ("2026-03-03", 10.0),
     ],
     "3NGS.L": [
-        ("2019-06-04", 10.0),    # 10:1 consolidation
-        ("2021-09-15", 10.0),    # 10:1 consolidation
-        ("2022-05-30", 10.0),    # 10:1 consolidation
-        ("2022-09-12", 10.0),    # 10:1 consolidation
-        ("2022-12-19", 17000.0), # 17000:1 consolidation
-        ("2024-07-22", 1.0/17),  # 1:17 forward split
+        ("2019-06-04", 10.0), ("2021-09-15", 10.0), ("2022-05-30", 10.0),
+        ("2022-09-12", 10.0), ("2022-12-19", 17000.0), ("2024-07-22", 1.0 / 17),
     ],
 }
+
+
+def _load_known_splits() -> Dict[str, List[Tuple[str, float]]]:
+    """Load split history from shared data/known_splits.json.
+
+    data_pipeline.py runs first in the workflow, so by the time this script
+    executes any newly auto-detected splits are already in the file.
+    Falls back to hardcoded seed if the file is absent or corrupt.
+    """
+    if KNOWN_SPLITS_JSON.exists():
+        try:
+            with open(KNOWN_SPLITS_JSON) as f:
+                raw = json.load(f)
+            return {
+                ticker: [(e["date"], float(e["ratio"])) for e in entries]
+                for ticker, entries in raw.get("splits", {}).items()
+            }
+        except Exception as exc:
+            log.warning("Could not load %s (%s) — using seed", KNOWN_SPLITS_JSON.name, exc)
+    return {k: list(v) for k, v in _SPLITS_SEED.items()}
+
+
+def _save_known_splits(splits: Dict[str, List[Tuple[str, float]]]) -> None:
+    """Persist updated splits back to data/known_splits.json."""
+    KNOWN_SPLITS_JSON.parent.mkdir(parents=True, exist_ok=True)
+    payload: dict = {
+        "note": (
+            "Auto-managed by data_pipeline.py. New corporate actions are appended "
+            "automatically when detected from price data. "
+            "'source': 'manual' = verified from WisdomTree/LSE filings; "
+            "'auto_detected' = inferred from price discontinuity."
+        ),
+        "splits": {
+            ticker: [{"date": d, "ratio": r} for d, r in sorted(entries)]
+            for ticker, entries in sorted(splits.items())
+        },
+    }
+    with open(KNOWN_SPLITS_JSON, "w") as f:
+        json.dump(payload, f, indent=2)
+    log.info("Saved known splits → %s", KNOWN_SPLITS_JSON.name)
 
 
 def _apply_split_adjustments(
@@ -63,14 +92,15 @@ def _apply_split_adjustments(
     closes: List[float],
     volumes: List[int],
     ticker: str,
+    known_splits: Dict[str, List[Tuple[str, float]]],
 ) -> tuple:
-    """Apply manual split adjustments to price/volume lists.
+    """Apply known split adjustments from known_splits.json to price/volume lists.
 
-    For each split we inspect the price ratio at the split boundary in log-space
-    to detect whether Yahoo has already reflected the event.  Only missing
-    adjustments are applied, preventing double-counting.
+    For each event we inspect the price ratio at the boundary in log-space to
+    detect whether Yahoo has already reflected it.  Only missing adjustments are
+    applied, preventing double-counting.
     """
-    splits = MANUAL_SPLITS.get(ticker)
+    splits = known_splits.get(ticker)
     if not splits:
         return dates, closes, volumes
 
@@ -151,7 +181,7 @@ def _detect_and_apply_unknown_splits(
         date_str = dates[i]
         log.warning(
             "AUTO-DETECTED unregistered split for %s on %s: observed ×%.4g — "
-            "auto-applying correction. Add to MANUAL_SPLITS to silence this warning.",
+            "auto-applying and persisting to known_splits.json.",
             ticker, date_str, ratio,
         )
         for j in range(i):
@@ -173,7 +203,7 @@ def _detect_and_apply_unknown_splits(
     return dates, closes, volumes, detections
 
 
-def fetch_ticker_data(ticker: str):
+def fetch_ticker_data(ticker: str, known_splits: Dict[str, List[Tuple[str, float]]]):
     period2 = int(datetime.now().timestamp())
     url = (
         f"{YAHOO_URL}{urllib.request.quote(ticker)}"
@@ -232,8 +262,8 @@ def fetch_ticker_data(ticker: str):
 
             log.info("%s: %d rows fetched (adjusted prices)", ticker, len(dates))
 
-            # Apply manual split adjustments for tickers Yahoo may not cover
-            dates, prices, vols = _apply_split_adjustments(dates, prices, vols, ticker)
+            # Apply known split adjustments (from data/known_splits.json)
+            dates, prices, vols = _apply_split_adjustments(dates, prices, vols, ticker, known_splits)
 
             # Auto-detect and apply any remaining unregistered splits
             dates, prices, vols, detected = _detect_and_apply_unknown_splits(
@@ -258,14 +288,27 @@ def fetch_ticker_data(ticker: str):
 
 def main():
     OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    # Load shared known_splits.json (data_pipeline.py runs first in the workflow
+    # and may have already added newly detected splits to this file)
+    known_splits = _load_known_splits()
+
     output = {"tickers": {}}
     all_detected: List[dict] = []
 
     for ticker in TICKERS:
-        data = fetch_ticker_data(ticker)
+        data = fetch_ticker_data(ticker, known_splits)
         if data:
             # Strip internal key before writing to JSON
             detected = data.pop("_detected_splits", [])
+            if detected:
+                # Merge into the in-memory dict for persistence
+                for event in detected:
+                    bucket = known_splits.setdefault(event["ticker"], [])
+                    existing = {d for d, _ in bucket}
+                    if event["date"] not in existing:
+                        bucket.append((event["date"], event["observed_ratio"]))
+                        bucket.sort()
             all_detected.extend(detected)
             output["tickers"][ticker] = data
         time.sleep(1)  # polite delay between requests
@@ -274,12 +317,12 @@ def main():
         json.dump(output, f, separators=(",", ":"))
     log.info("Written to %s", OUT_FILE)
 
+    # Persist any newly discovered splits so future runs treat them as known
     if all_detected:
+        _save_known_splits(known_splits)
         log.warning(
-            "SPLIT WARNINGS (trough_peak): %d unregistered split(s) auto-applied — "
-            "review and add to MANUAL_SPLITS in both scripts: %s",
-            len(all_detected),
-            [f"{d['ticker']} {d['date']} ×{d['observed_ratio']}" for d in all_detected],
+            "SPLIT WARNINGS: %d unregistered split(s) auto-applied and saved to %s",
+            len(all_detected), KNOWN_SPLITS_JSON.name,
         )
 
 
