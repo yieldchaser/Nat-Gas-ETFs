@@ -1091,12 +1091,11 @@ function renderTable() {
         </tr></thead>
         <tbody>
         ${filtered.slice().reverse().map(c => {
-            // Light pastel green gradient: light (90% light) to slightly darker (75% light)
-            // HSL: 140 is a nice green.
+            // Light-green text gradient: light (85% L) to slightly darker pastel (70% L)
+            // Range is kept within soft/pastel greens on the dark background.
             const ratio = maxG === minG ? 0 : (c.gain - minG) / (maxG - minG);
-            const lightness = 90 - (ratio * 15); // 90% down to 75%
-            const bgColor = `hsl(140, 40%, ${lightness}%)`;
-            const textColor = '#0a2010'; // Dark green text for contrast on light background
+            const lightness = 85 - (ratio * 15); // 85% (low gain) down to 70% (high gain)
+            const color = `hsl(145, 60%, ${lightness}%)`;
 
             return `<tr>
                 <td style="color:var(--text-dim)">${c.num}</td>
@@ -1104,7 +1103,7 @@ function renderTable() {
                 <td>$${fmt(c.troughPrice)}</td>
                 <td>${c.peakDate}</td>
                 <td>$${fmt(c.peakPrice)}</td>
-                <td style="background:${bgColor}; color:${textColor}; font-weight:800">${fmtPct(c.gain)}</td>
+                <td style="color:${color}; font-weight:800">${fmtPct(c.gain)}</td>
                 <td style="color:var(--text-dim)">${c.days}D</td>
             </tr>`
         }).join('')}
