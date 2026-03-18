@@ -1191,41 +1191,54 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
     
     const count = visibleDates.length;
     let mode = 'year';
-    if (count <= 12) mode = 'day';
-    else if (count <= 60) mode = 'week';
-    else if (count <= 400) mode = 'month';
+    let skip = 1;
+    
+    if (count <= 14) {
+        mode = 'day';
+    } else if (count <= 65) {
+        mode = 'week';
+        skip = Math.max(1, Math.floor(count / 6));
+    } else if (count <= 500) {
+        mode = 'month';
+        skip = Math.max(1, Math.floor(count / 8));
+    } else {
+        mode = 'year';
+        skip = Math.max(1, Math.floor(count / 10));
+    }
 
-    let lastVal = null;
+    let lastLabelX = -100;
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
     visibleDates.forEach((d, i) => {
         const [y, m, day] = d.split('-');
-        let val = null;
         let txt = "";
+        let force = false;
 
         if (mode === 'year') {
-            val = y; txt = y;
+            if (i === 0 || d.slice(5) === '01-01' || i % skip === 0) {
+                txt = y;
+                force = (d.slice(5) === '01-01');
+            }
         } else if (mode === 'month') {
-            val = y + '-' + m;
-            txt = months[parseInt(m)-1];
-            if (i === 0 || m === '01') txt += " " + y;
+            if (i === 0 || day === '01' || i % skip === 0) {
+                txt = months[parseInt(m)-1];
+                if (i === 0 || m === '01') txt += " " + y;
+            }
         } else if (mode === 'week') {
-            if (i % 7 === 0) { 
-                val = d; 
-                txt = months[parseInt(m)-1] + " " + day; 
+            if (i === 0 || i % 7 === 0 || i % skip === 0) {
+                txt = months[parseInt(m)-1] + " " + day;
             }
         } else { // day
-            val = d;
             txt = day;
             if (i === 0 || day === '01') txt = months[parseInt(m)-1] + " " + day;
         }
 
-        if (val && val !== lastVal) {
+        if (txt) {
             const x = getX(i);
-            // Only draw if not too close to the very right edge
-            if (x < width - 30) {
+            // Minimum distance between labels to avoid overlap
+            if (x > lastLabelX + 45 && x < width - 30) {
                 ctx.fillText(txt, x, padding.top + chartH + 15);
-                lastVal = val;
+                lastLabelX = x;
                 
                 ctx.beginPath();
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
@@ -1237,7 +1250,6 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         }
     });
 
-    // Reset dash for others
     ctx.setLineDash([]);
 
     // -- Measurement Range (Google Finance Style) --
