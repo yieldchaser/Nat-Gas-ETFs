@@ -120,11 +120,11 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 
 /* ---- Section 5 & 6 ---- */
 #chartZ { width: 100%; height: 280px; }
-#chartCross { width: 100%; height: 300px; }
+#chartCross { width: 100%; height: 340px; }
 
 /* Custom Tooltip */
 #chart-tooltip {
-    position: absolute; display: none; background: rgba(13, 17, 28, 0.95);
+    position: fixed; display: none; background: rgba(13, 17, 28, 0.95);
     border: 1px solid var(--border-primary); border-radius: 6px; padding: 12px;
     font-size: 0.75rem; color: var(--text-bright); pointer-events: none; z-index: 100;
     box-shadow: 0 8px 24px rgba(0,0,0,0.5); min-width: 160px;
@@ -441,7 +441,14 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <div class="panel">
             <div class="panel-header">
                 <div class="panel-title" data-tooltip="Historical chart of the flow Z-Score. Helps visualize the frequency and magnitude of accumulation and distribution events.">Flow Z-Score History</div>
-                <span style="font-size:0.65rem; color:var(--text-dim); text-transform:uppercase;">Tracks extremes vs 30-day baseline</span>
+                <div class="tab-group time-tabs" id="z-time-tabs">
+                    <button class="tab-btn" data-range="1w">1W</button>
+                    <button class="tab-btn" data-range="1m">1M</button>
+                    <button class="tab-btn" data-range="3m">3M</button>
+                    <button class="tab-btn" data-range="6m">6M</button>
+                    <button class="tab-btn" data-range="1y">1Y</button>
+                    <button class="tab-btn active" data-range="all">ALL</button>
+                </div>
             </div>
             <div class="chart-wrap">
                 <canvas id="chartZ"></canvas>
@@ -453,6 +460,14 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <div class="panel-header">
                 <div class="panel-title" data-tooltip="Compare cumulative capital flows continuously across multiple ETFs. Click ETF chips to toggle visibility.">Cross-ETF Cumulative Flow Comparison</div>
                 <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <div class="tab-group time-tabs" id="cross-time-tabs">
+                        <button class="tab-btn" data-range="1w">1W</button>
+                        <button class="tab-btn" data-range="1m">1M</button>
+                        <button class="tab-btn" data-range="3m">3M</button>
+                        <button class="tab-btn" data-range="6m">6M</button>
+                        <button class="tab-btn" data-range="1y">1Y</button>
+                        <button class="tab-btn active" data-range="all">ALL</button>
+                    </div>
                     <div class="tab-group time-tabs" id="cross-tabs">
                         <button class="tab-btn active" data-filter="all">ALL</button>
                         <button class="tab-btn" data-filter="long">LONG</button>
@@ -633,15 +648,23 @@ async function init() {
             });
         });
         
-        document.querySelectorAll('#time-tabs .tab-btn').forEach(b => {
-            b.addEventListener('click', async (e) => {
-                document.querySelectorAll('#time-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
-                b.classList.add('active');
-                state.timeRange = b.dataset.range;
-                state.zoom = { start: 0, end: 1 }; // reset zoom on range change
-                await loadTickerDataAndRender();
-                syncRangeSlider();
-                loadAllTickersForCross(); // refresh cross chart timeline
+        // Shared time-range handler used by all three tab groups
+        async function setTimeRange(range) {
+            state.timeRange = range;
+            state.zoom = { start: 0, end: 1 };
+            ['#time-tabs', '#z-time-tabs', '#cross-time-tabs'].forEach(sel => {
+                document.querySelectorAll(sel + ' .tab-btn').forEach(b => {
+                    b.classList.toggle('active', b.dataset.range === range);
+                });
+            });
+            await loadTickerDataAndRender();
+            syncRangeSlider();
+            renderCrossChart();
+        }
+
+        ['#time-tabs', '#z-time-tabs', '#cross-time-tabs'].forEach(sel => {
+            document.querySelectorAll(sel + ' .tab-btn').forEach(b => {
+                b.addEventListener('click', () => setTimeRange(b.dataset.range));
             });
         });
 
@@ -1659,10 +1682,10 @@ function renderCrossChart() {
     ctxCross.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctxCross.clearRect(0, 0, w, h);
     
-    const pad = { top: 20, right: 60, bottom: 20, left: 60 };
+    const pad = { top: 20, right: 60, bottom: 32, left: 60 };
     const chartW = w - pad.left - pad.right;
     const chartH = h - pad.top - pad.bottom;
-    
+
     // Use toggle state for which ETFs to show
     let tickers = Object.keys(state.crossToggles).filter(tk => state.crossToggles[tk]);
     if (tickers.length === 0) tickers = ['BOIL']; // fallback
