@@ -767,7 +767,7 @@ function renderCards() {
             if (max === min) return '50%';
             const val = Math.round(((lastPrice - min) / (max - min)) * 100);
             const colorClass = val <= 30 ? 'soft-green' : val > 70 ? 'soft-red' : '';
-            return `<span class="${colorClass}" data-tooltip="Relative Price Position: Percentile ranking within the ${name} price range.">${val}%</span>`;
+            return `<span class="${colorClass}" data-tooltip="Relative Price Position: Percentile ranking within the ${name} price range (Green ≤30%, Red >70%).">${val}%</span>`;
         };
         const m1 = getRangePos(21, '21-day'), m3 = getRangePos(63, '63-day'), m6 = getRangePos(126, '126-day');
 
@@ -781,8 +781,8 @@ function renderCards() {
             const pkClass = pkVal > -10 ? 'soft-red' : '';
             const trClass = trVal < 10 ? 'soft-green' : '';
             
-            distPk = `<span class="${pkClass}" data-tooltip="Real-time percentage distance below the most recent confirmed cycle peak.">${pkVal}%</span>`;
-            distTr = `<span class="${trClass}" data-tooltip="Real-time percentage distance above the most recent confirmed cycle trough.">${trVal >= 0 ? '+' : ''}${trVal}%</span>`;
+            distPk = `<span class="${pkClass}" data-tooltip="Real-time percentage distance below the most recent confirmed cycle peak (Red if within 10%).">${pkVal}%</span>`;
+            distTr = `<span class="${trClass}" data-tooltip="Real-time percentage distance above the most recent confirmed cycle trough (Green if within 10%).">${trVal >= 0 ? '+' : ''}${trVal}%</span>`;
         }
         if (d.closes.length > 1) {
             const slice30 = d.closes.slice(-30);
