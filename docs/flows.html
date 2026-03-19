@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLOW MONITOR · NAT GAS ETFs</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+/* Base Reset & Core (mimicking other pages) */
+:root {
+    --green: #3db87a;
+    --red: #ef4444;
+    --orange: #d4a830;
+    --cyan: #00ffff;
+    --text-bright: #ffffff;
+    --text-primary: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-muted: #64748b;
+    --bg-main: #0a0e17;
+    --bg-panel: #131724;
+    --bg-secondary: #1e2638;
+    --border-primary: rgba(255,255,255,0.06);
+    --border-accent: rgba(255,255,255,0.15);
+}
+
+body {
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    margin: 0; padding: 0;
+}
+
+header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 32px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border-primary);
+}
+.top-bar-left h1 { margin: 0; font-size: 1.2rem; letter-spacing: 2px; color: var(--text-bright); }
+.top-bar-left .subtitle { font-size: 0.75rem; color: var(--cyan); letter-spacing: 1px; font-weight: 600; }
+.top-bar-right { display: flex; align-items: center; gap: 24px; }
+.page-nav { display: flex; gap: 16px; align-items: center; }
+.nav-link { 
+    font-size: 0.75rem; font-weight: 800; letter-spacing: 1px;
+    color: var(--text-muted); text-decoration: none; text-transform: uppercase;
+    transition: color 0.2s;
+}
+.nav-link:hover { color: var(--text-bright); }
+.nav-link.active { color: var(--cyan); border-bottom: 2px solid var(--cyan); padding-bottom: 4px; }
+
+main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
+
+/* ---- Section 1: Sentiment Bar ---- */
+.sentiment-banner {
+    background: var(--bg-panel); border: 1px solid var(--border-primary);
+    border-radius: 8px; padding: 16px 24px; margin-bottom: 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.sentiment-side { display: flex; flex-direction: column; text-align: center; width: 25%; }
+.sentiment-side.left { text-align: left; }
+.sentiment-side.right { text-align: right; }
+.s-label { font-size: 0.65rem; color: var(--text-dim); letter-spacing: 1px; font-weight: 700; margin-bottom: 4px; }
+.s-val { font-size: 1.2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.s-tickers { font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.5px; }
+
+.sentiment-center { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.s-center-label { font-size: 0.65rem; color: var(--text-dim); letter-spacing: 2px; font-weight: 800; }
+.s-bar-wrap { width: 100%; max-width: 400px; height: 12px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden; display: flex; }
+.s-bar-fill { height: 100%; transition: width 0.5s ease; }
+.s-status { font-size: 0.9rem; font-weight: 900; letter-spacing: 2px; }
+
+/* ---- Section 2: Summary Cards ---- */
+.summary-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;
+}
+.side-col { display: flex; flex-direction: column; gap: 16px; }
+.side-header { font-size: 0.8rem; font-weight: 800; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 4px; border-bottom: 1px solid var(--border-primary); padding-bottom: 8px; }
+
+.flow-card {
+    background: var(--bg-panel); border: 1px solid var(--border-primary);
+    border-radius: 8px; padding: 16px; display: flex; gap: 16px;
+    transition: border-color 0.2s;
+}
+.flow-card:hover { border-color: var(--border-accent); }
+.fc-left { width: 120px; display: flex; flex-direction: column; justify-content: space-between; border-right: 1px solid var(--border-primary); padding-right: 16px; }
+.fc-ticker { font-size: 1.2rem; font-weight: 900; letter-spacing: 1px; color: var(--text-bright); }
+.fc-nav { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); }
+.fc-regime { display: inline-block; font-size: 0.55rem; font-weight: 800; letter-spacing: 1px; padding: 3px 6px; border-radius: 4px; margin-top: 8px; text-align: center; }
+
+.fc-main { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.fc-metric { display: flex; flex-direction: column; justify-content: center; }
+.fc-m-lbl { font-size: 0.6rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+.fc-m-val { font-size: 1.3rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+
+.fc-right { width: 100px; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
+.fc-pres-lbl { font-size: 0.6rem; color: var(--text-dim); font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+.fc-pres-val { font-size: 1.6rem; font-weight: 900; }
+
+.mom-row { display: flex; gap: 12px; margin-top: 8px; font-size: 0.65rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;}
+.mom-item span { font-weight: 700; }
+
+.val-green { color: var(--green); }
+.val-red { color: var(--red); }
+.val-cyan { color: var(--cyan); }
+.val-muted { color: var(--text-muted); }
+
+/* ---- Section 3: Deep Dive Chart Panel ---- */
+.panel {
+    background: var(--bg-panel); border: 1px solid var(--border-primary);
+    border-radius: 8px; padding: 24px; margin-bottom: 24px;
+}
+.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.panel-title { font-size: 1rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--text-bright); }
+
+.tab-group { display: flex; background: var(--bg-secondary); padding: 4px; border-radius: 6px; gap: 4px;}
+.tab-btn {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
+    padding: 6px 14px; border-radius: 4px; border: none;
+    background: transparent; color: var(--text-dim);
+    cursor: pointer; transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--text-bright); }
+.tab-btn.active { background: var(--bg-panel); color: var(--cyan); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+.time-tabs .tab-btn { font-size: 0.65rem; padding: 4px 10px; }
+
+.chart-wrap { position: relative; width: 100%; }
+#chartA { width: 100%; height: 350px; }
+#chartB { width: 100%; height: 200px; margin-top: 10px;}
+
+.stats-row { 
+    display: flex; justify-content: center; gap: 32px; 
+    padding: 12px 0; border-top: 1px solid var(--border-primary); border-bottom: 1px solid var(--border-primary);
+    margin: 16px 0; background: rgba(0,0,0,0.2); border-radius: 4px;
+}
+.st-item { display: flex; flex-direction: column; align-items: center; }
+.st-lbl { font-size: 0.6rem; color: var(--text-dim); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.st-val { font-size: 0.9rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+
+/* ---- Section 4: Divergence Panel ---- */
+.div-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.div-table th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border-primary); color: var(--text-dim); font-size: 0.65rem; letter-spacing: 1px; }
+.div-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); font-family: 'JetBrains Mono', monospace; }
+.div-table tr:hover td { background: rgba(255,255,255,0.02); }
+.div-badge { display: inline-block; font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px; }
+.bg-bear { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
+.bg-bull { background: rgba(61, 184, 122, 0.15); color: var(--green); border: 1px solid rgba(61, 184, 122, 0.3); }
+
+/* ---- Section 5 & 6 ---- */
+#chartZ, #chartCross { width: 100%; height: 250px; }
+
+/* Custom Tooltip */
+#chart-tooltip {
+    position: absolute; display: none; background: rgba(13, 17, 28, 0.95);
+    border: 1px solid var(--border-primary); border-radius: 6px; padding: 12px;
+    font-size: 0.75rem; color: var(--text-bright); pointer-events: none; z-index: 100;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5); min-width: 160px;
+}
+.tt-row { display: flex; justify-content: space-between; margin-bottom: 4px; gap: 16px; }
+.tt-lbl { color: var(--text-dim); font-size: 0.65rem; text-transform: uppercase; font-weight: 700; }
+.tt-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+.tt-date { font-size: 0.7rem; color: var(--cyan); margin-bottom: 8px; font-weight: 800; border-bottom: 1px solid var(--border-primary); padding-bottom: 4px;}
+
+.loading-overlay { display: flex; justify-content: center; align-items: center; height: 200px; color: var(--text-dim); font-size: 0.8rem; letter-spacing: 2px; }
+
+</style>
+</head>
+<body>
+    <header id="top-bar">
+        <div class="top-bar-left">
+            <h1>NAT GAS ETF VOLUME MONITOR</h1>
+            <span class="subtitle">Volume Flow Analytics</span>
+        </div>
+        <div class="top-bar-right">
+            <nav class="page-nav">
+                <a href="index.html" class="nav-link">Volume Monitor</a>
+                <a href="trough-peak.html" class="nav-link">Trough-to-Peak</a>
+                <a href="flows.html" class="nav-link active">FLOW MONITOR</a>
+            </nav>
+            <div class="last-updated" id="last-updated" style="font-size: 0.7rem; color: var(--text-dim);">--</div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Section 1 -->
+        <div class="sentiment-banner" id="sentiment-banner">
+            <div class="sentiment-side left">
+                <div class="s-label">LONG SIDE FLOWS</div>
+                <div class="s-tickers">BOIL + HNU + 3NGL</div>
+                <div class="s-val val-muted" id="sent-long">--</div>
+            </div>
+            <div class="sentiment-center">
+                <div class="s-center-label">CROSS-ETF SENTIMENT (30D)</div>
+                <div class="s-bar-wrap">
+                    <div class="s-bar-fill" id="sent-bar" style="width: 50%; background: var(--text-dim);"></div>
+                </div>
+                <div class="s-status val-muted" id="sent-status">LOADING</div>
+            </div>
+            <div class="sentiment-side right">
+                <div class="s-label">SHORT SIDE FLOWS</div>
+                <div class="s-tickers">KOLD + HND + 3NGS</div>
+                <div class="s-val val-muted" id="sent-short">--</div>
+            </div>
+        </div>
+
+        <!-- Section 2 -->
+        <div class="summary-grid">
+            <div class="side-col" id="col-long">
+                <div class="side-header">LONG SIDE (2X / 3X)</div>
+                <!-- Cards injected here -->
+            </div>
+            <div class="side-col" id="col-short">
+                <div class="side-header">SHORT SIDE (2X / 3X)</div>
+                <!-- Cards injected here -->
+            </div>
+        </div>
+
+        <!-- Section 3 -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="tab-group" id="etf-tabs">
+                    <button class="tab-btn active" data-ticker="BOIL">BOIL</button>
+                    <button class="tab-btn" data-ticker="HNU">HNU</button>
+                    <button class="tab-btn" data-ticker="3NGL">3NGL</button>
+                    <button class="tab-btn" data-ticker="KOLD">KOLD</button>
+                    <button class="tab-btn" data-ticker="HND">HND</button>
+                    <button class="tab-btn" data-ticker="3NGS">3NGS</button>
+                </div>
+                <div class="tab-group time-tabs" id="time-tabs">
+                    <button class="tab-btn" data-range="1m">1M</button>
+                    <button class="tab-btn" data-range="3m">3M</button>
+                    <button class="tab-btn" data-range="6m">6M</button>
+                    <button class="tab-btn" data-range="1y">1Y</button>
+                    <button class="tab-btn" data-range="3y">3Y</button>
+                    <button class="tab-btn active" data-range="all">ALL</button>
+                </div>
+            </div>
+
+            <div class="chart-wrap" style="padding-right: 48px;"> <!-- Padding for right Y-axis -->
+                <canvas id="chartA"></canvas>
+                <div id="chart-tooltip"></div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row" id="stats-row">
+                <div class="st-item"><div class="st-lbl">Z-Score</div><div class="st-val" id="st-z">--</div></div>
+                <div class="st-item"><div class="st-lbl">5D Mom</div><div class="st-val" id="st-mom5">--</div></div>
+                <div class="st-item"><div class="st-lbl">20D Mom</div><div class="st-val" id="st-mom20">--</div></div>
+                <div class="st-item"><div class="st-lbl">Regime</div><div class="st-val" id="st-reg">--</div></div>
+                <div class="st-item"><div class="st-lbl">Pressure</div><div class="st-val" id="st-pres">--</div></div>
+            </div>
+
+            <div class="chart-wrap">
+                <canvas id="chartB"></canvas>
+            </div>
+        </div>
+
+        <!-- Section 4 -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Flow vs Price Divergence (Last 90 Days)</div>
+            </div>
+            <table class="div-table">
+                <thead>
+                    <tr>
+                        <th>DATE</th>
+                        <th>DURATION</th>
+                        <th>TYPE</th>
+                        <th>PRICE MOVE</th>
+                        <th>NET FLOW</th>
+                        <th>SIGNAL</th>
+                    </tr>
+                </thead>
+                <tbody id="div-body">
+                    <tr><td colspan="6" style="text-align:center; color:var(--text-dim);">Scanning for divergences...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section 5 -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Flow Z-Score History</div>
+                <span style="font-size:0.65rem; color:var(--text-dim); text-transform:uppercase;">Tracks extremes vs 30-day baseline</span>
+            </div>
+            <div class="chart-wrap">
+                <canvas id="chartZ"></canvas>
+            </div>
+        </div>
+
+        <!-- Section 6 -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Cross-ETF Cumulative Flow Comparison</div>
+                <div class="tab-group time-tabs" id="cross-tabs">
+                    <button class="tab-btn active" data-filter="all">ALL</button>
+                    <button class="tab-btn" data-filter="long">LONG ONLY</button>
+                    <button class="tab-btn" data-filter="short">SHORT ONLY</button>
+                </div>
+            </div>
+            <div class="chart-wrap">
+                <canvas id="chartCross"></canvas>
+                <div id="cross-tooltip" style="position:absolute; display:none; background:rgba(0,0,0,0.8); padding:8px; border:1px solid #333; border-radius:4px; font-size:0.7rem; pointer-events:none;"></div>
+            </div>
+        </div>
+    </main>
+
+<script>
+// Formatters
+const fmtUsd = (val) => {
+    if (val === 0) return "$0";
+    const abs = Math.abs(val);
+    const sign = val < 0 ? '-' : '+';
+    // Values are expected in actual dollars if parsed correctly by new script.
+    // If they are in thousands or millions, we format appropriately.
+    // Current trackinsight parser scale: *1. actual output dollars.
+    if (abs >= 1e9) return `${sign}${(abs/1e9).toFixed(2)}B`;
+    if (abs >= 1e6) return `${sign}${(abs/1e6).toFixed(1)}M`;
+    if (abs >= 1e3) return `${sign}${(abs/1e3).toFixed(0)}K`;
+    return `${sign}$${abs.toFixed(0)}`;
+};
+const fmtPct = (val) => `${val > 0 ? '+' : ''}${(val * 100).toFixed(1)}%`;
+
+// State
+const state = {
+    summary: null,
+    cache: {},
+    activeTicker: 'BOIL',
+    timeRange: 'all',
+    crossFilter: 'all', // all, long, short
+    hoverIdx: null
+};
+
+// Elements
+const el = (id) => document.getElementById(id);
+const ctxA = el('chartA').getContext('2d');
+const ctxB = el('chartB').getContext('2d');
+const ctxZ = el('chartZ').getContext('2d');
+const ctxCross = el('chartCross').getContext('2d');
+const tooltip = el('chart-tooltip');
+
+// Colors
+const colors = {
+    'BOIL': '#c07828', 'HNU': '#3db87a', '3NGL': '#8855bb',
+    'KOLD': '#5090a0', 'HND': '#d4a830', '3NGS': '#d4a830'
+};
+
+async function init() {
+    try {
+        const res = await fetch('data/flows/all_flows_summary.json?t=' + Date.now());
+        state.summary = await res.json();
+        el('last-updated').textContent = `Updated: ${state.summary.updated}`;
+        renderSection1();
+        renderSection2();
+        
+        // Setup listeners
+        document.querySelectorAll('#etf-tabs .tab-btn').forEach(b => {
+            b.addEventListener('click', (e) => {
+                document.querySelectorAll('#etf-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+                b.classList.add('active');
+                state.activeTicker = b.dataset.ticker;
+                loadTickerDataAndRender();
+            });
+        });
+        
+        document.querySelectorAll('#time-tabs .tab-btn').forEach(b => {
+            b.addEventListener('click', (e) => {
+                document.querySelectorAll('#time-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+                b.classList.add('active');
+                state.timeRange = b.dataset.range;
+                loadTickerDataAndRender();
+                loadAllTickersForCross(); // refresh cross chart timeline
+            });
+        });
+
+        document.querySelectorAll('#cross-tabs .tab-btn').forEach(b => {
+            b.addEventListener('click', (e) => {
+                document.querySelectorAll('#cross-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+                b.classList.add('active');
+                state.crossFilter = b.dataset.filter;
+                renderCrossChart();
+            });
+        });
+
+        // Initialize first chart data
+        await loadTickerDataAndRender();
+        await loadAllTickersForCross();
+
+        // Mouse events for A & B
+        el('chartA').addEventListener('mousemove', handleHover);
+        el('chartB').addEventListener('mousemove', handleHover);
+        el('chartA').addEventListener('mouseleave', hideHover);
+        el('chartB').addEventListener('mouseleave', hideHover);
+        
+    } catch (e) {
+        console.error("Failed to init", e);
+    }
+}
+
+function renderSection1() {
+    const data = state.summary.cross_etf;
+    el('sent-long').textContent = fmtUsd(data.bull_flow_30d);
+    el('sent-long').className = `s-val ${data.bull_flow_30d >= 0 ? 'val-green' : 'val-red'}`;
+    
+    el('sent-short').textContent = fmtUsd(data.bear_flow_30d);
+    el('sent-short').className = `s-val ${data.bear_flow_30d >= 0 ? 'val-red' : 'val-green'}`; // Note: short side inflow is bearish for NG
+    
+    const status = data.sentiment;
+    el('sent-status').textContent = status;
+    
+    let w = 50, col = 'var(--text-dim)';
+    if (status === 'BULLISH') {
+        const total = Math.abs(data.bull_flow_30d) + Math.abs(data.bear_flow_30d);
+        w = total > 0 ? 50 + (data.bull_flow_30d / total) * 50 : 100;
+        col = 'var(--green)';
+        el('sent-status').className = 's-status val-green';
+    } else if (status === 'BEARISH') {
+        const total = Math.abs(data.bull_flow_30d) + Math.abs(data.bear_flow_30d);
+        w = total > 0 ? 50 - (data.bear_flow_30d / total) * 50 : 0;
+        col = 'var(--red)';
+        el('sent-status').className = 's-status val-red';
+    } else {
+        el('sent-status').className = 's-status val-muted';
+    }
+    el('sent-bar').style.width = `${Math.min(Math.max(w, 5), 95)}%`;
+    el('sent-bar').style.background = col;
+}
+
+function renderSection2() {
+    const longs = ['BOIL', 'HNU', '3NGL'];
+    const shorts = ['KOLD', 'HND', '3NGS'];
+    
+    const createCard = (tk) => {
+        const d = state.summary.tickers[tk];
+        if (!d) return '';
+        
+        let regClass = 'bg-bear';
+        if (d.regime === 'ACCUMULATION') regClass = 'bg-bull';
+        else if (d.regime === 'BALANCED') regClass = 'val-muted';
+        else regClass = 'bg-bear';
+
+        let zCol = d.zscore >= 1.5 ? 'val-green' : (d.zscore <= -1.5 ? 'val-red' : 'val-muted');
+        
+        return `<div class="flow-card">
+            <div class="fc-left">
+                <div>
+                    <div class="fc-ticker" style="color:${colors[tk] || '#fff'}">${tk}</div>
+                    <div class="fc-nav">$${d.latest_nav.toFixed(2)}</div>
+                </div>
+                <div class="fc-regime ${regClass}">${d.regime}</div>
+            </div>
+            <div class="fc-main">
+                <div class="fc-metric">
+                    <div class="fc-m-lbl">30D Net Flow</div>
+                    <div class="fc-m-val ${d.last_30d_net >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(d.last_30d_net)}</div>
+                </div>
+                <div class="fc-metric">
+                    <div class="fc-m-lbl">Z-Score</div>
+                    <div class="fc-m-val ${zCol}">${d.zscore >= 0 ? '+' : ''}${d.zscore.toFixed(1)}</div>
+                </div>
+                <div class="mom-row" style="grid-column: 1 /span 2;">
+                    <div class="mom-item">5D MOM: <span class="${d.flow_5d >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(d.flow_5d)}</span></div>
+                    <div class="mom-item">20D MOM: <span class="${d.flow_20d >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(d.flow_20d)}</span></div>
+                </div>
+            </div>
+            <div class="fc-right">
+                <div class="fc-pres-lbl">PRESSURE</div>
+                <div class="fc-pres-val ${d.pressure >= 0 ? 'val-green' : 'val-red'}">${d.pressure >=0 ? '+' : ''}${d.pressure}</div>
+            </div>
+        </div>`;
+    };
+
+    el('col-long').innerHTML += longs.map(createCard).join('');
+    el('col-short').innerHTML += shorts.map(createCard).join('');
+}
+
+async function loadTickerDataAndRender() {
+    const tk = state.activeTicker;
+    if (!state.cache[tk]) {
+        try {
+            const res = await fetch(`data/flows/${tk}_flows.json`);
+            state.cache[tk] = await res.json();
+        } catch (e) {
+            console.error("Failed to load data for", tk);
+            return;
+        }
+    }
+    
+    updateStatsRow();
+    renderCharts();
+    renderDivergence();
+}
+
+function getVisibleData() {
+    const allData = state.cache[state.activeTicker].data;
+    if (state.timeRange === 'all') return allData;
+    
+    // limit based on timeRange
+    let days = 30;
+    if (state.timeRange === '1m') days = 30;
+    else if (state.timeRange === '3m') days = 90;
+    else if (state.timeRange === '6m') days = 180;
+    else if (state.timeRange === '1y') days = 365;
+    else if (state.timeRange === '3y') days = 1095;
+    
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    const cutoffStr = cutoffDate.toISOString().slice(0, 10);
+    
+    const idx = allData.findIndex(d => d.date >= cutoffStr);
+    return idx === -1 ? allData : allData.slice(idx);
+}
+
+function updateStatsRow() {
+    const d = state.summary.tickers[state.activeTicker];
+    if (!d) return;
+    el('st-z').textContent = `${d.zscore > 0 ? '+' : ''}${d.zscore.toFixed(1)}`;
+    el('st-z').className = `st-val ${d.zscore >= 1.5 ? 'val-green' : (d.zscore <= -1.5 ? 'val-red' : 'val-muted')}`;
+    
+    el('st-mom5').textContent = fmtUsd(d.flow_5d);
+    el('st-mom5').className = `st-val ${d.flow_5d >= 0 ? 'val-green' : 'val-red'}`;
+    
+    el('st-mom20').textContent = fmtUsd(d.flow_20d);
+    el('st-mom20').className = `st-val ${d.flow_20d >= 0 ? 'val-green' : 'val-red'}`;
+    
+    el('st-reg').textContent = d.regime;
+    el('st-reg').className = `st-val ${d.regime==='ACCUMULATION'?'val-green':(d.regime==='DISTRIBUTION'?'val-red':'val-muted')}`;
+    
+    el('st-pres').textContent = `${d.pressure > 0 ? '+' : ''}${d.pressure}`;
+    el('st-pres').className = `st-val ${d.pressure >=0 ? 'val-green' : 'val-red'}`;
+}
+
+// ---- Canvas Rendering Helpers ----
+function resizeCanvas(canvas) {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    return { w: rect.width, h: rect.height, dpr };
+}
+
+function renderCharts() {
+    const data = getVisibleData();
+    if (!data || data.length === 0) return;
+    drawChartA(data);
+    drawChartB(data);
+    drawChartZ(data);
+}
+
+function drawChartA(data) {
+    const cvs = el('chartA');
+    const { w, h, dpr } = resizeCanvas(cvs);
+    ctxA.scale(dpr, dpr);
+    ctxA.clearRect(0, 0, w, h);
+    
+    const pad = { top: 20, right: 60, bottom: 30, left: 60 };
+    const chartW = w - pad.left - pad.right;
+    const chartH = h - pad.top - pad.bottom;
+    
+    // Normalize cum flow to 0 at start of visible range
+    const startCum = data[0].cumulative_flow;
+    const flows = data.map(d => d.cumulative_flow - startCum);
+    const navs = data.map(d => d.nav);
+    
+    const fMax = Math.max(...flows), fMin = Math.min(...flows);
+    const fRange = Math.max(fMax - fMin, 1);
+    
+    const nMax = Math.max(...navs), nMin = Math.min(...navs);
+    const nRange = Math.max(nMax - nMin, 0.01);
+    
+    const getX = i => pad.left + (i / (data.length - 1)) * chartW;
+    const getFY = val => pad.top + chartH - ((val - fMin) / fRange) * chartH;
+    const getNY = val => pad.top + chartH - ((val - nMin) / nRange) * chartH;
+    
+    // Zero line for flow
+    if (fMax > 0 && fMin < 0) {
+        const y0 = getFY(0);
+        ctxA.beginPath(); ctxA.moveTo(pad.left, y0); ctxA.lineTo(w - pad.right, y0);
+        ctxA.strokeStyle = 'rgba(255,255,255,0.1)'; ctxA.setLineDash([4,4]); ctxA.stroke(); ctxA.setLineDash([]);
+    }
+
+    // Cumulative Flow Area
+    ctxA.beginPath();
+    ctxA.moveTo(pad.left, pad.top + chartH);
+    for (let i = 0; i < data.length; i++) {
+        ctxA.lineTo(getX(i), getFY(flows[i]));
+    }
+    ctxA.lineTo(w - pad.right, pad.top + chartH);
+    ctxA.closePath();
+    
+    // End is positive or negative relative to start?
+    const isNetPos = flows[flows.length - 1] >= 0;
+    const grad = ctxA.createLinearGradient(0, pad.top, 0, pad.top + chartH);
+    if (isNetPos) {
+        grad.addColorStop(0, 'rgba(61,184,122,0.4)');
+        grad.addColorStop(1, 'rgba(61,184,122,0.0)');
+    } else {
+        grad.addColorStop(0, 'rgba(239,68,68,0.4)');
+        grad.addColorStop(1, 'rgba(239,68,68,0.0)');
+    }
+    ctxA.fillStyle = grad;
+    ctxA.fill();
+    
+    // Flow Line
+    ctxA.beginPath();
+    ctxA.strokeStyle = isNetPos ? 'rgba(61,184,122,0.8)' : 'rgba(239,68,68,0.8)';
+    ctxA.lineWidth = 2;
+    for (let i = 0; i < data.length; i++) {
+        if (i===0) ctxA.moveTo(getX(i), getFY(flows[i]));
+        else ctxA.lineTo(getX(i), getFY(flows[i]));
+    }
+    ctxA.stroke();
+    
+    // NAV Line
+    ctxA.beginPath();
+    ctxA.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctxA.lineWidth = 1.5;
+    for (let i = 0; i < data.length; i++) {
+        if (i===0) ctxA.moveTo(getX(i), getNY(navs[i]));
+        else ctxA.lineTo(getX(i), getNY(navs[i]));
+    }
+    ctxA.stroke();
+    
+    // Axes text
+    ctxA.fillStyle = 'var(--text-dim)'; ctxA.font = '10px sans-serif';
+    ctxA.textAlign = 'right';
+    ctxA.fillText(fmtUsd(fMax), pad.left - 8, pad.top + 5);
+    ctxA.fillText(fmtUsd(fMin), pad.left - 8, pad.top + chartH);
+    
+    ctxA.textAlign = 'left';
+    ctxA.fillText('$' + nMax.toFixed(2), w - pad.right + 8, pad.top + 5);
+    ctxA.fillText('$' + nMin.toFixed(2), w - pad.right + 8, pad.top + chartH);
+    
+    // Draw crosshair overlay if active
+    if (state.hoverIdx !== null && state.hoverIdx < data.length) {
+        let hx = getX(state.hoverIdx);
+        ctxA.beginPath(); ctxA.moveTo(hx, pad.top); ctxA.lineTo(hx, pad.top + chartH);
+        ctxA.strokeStyle = 'rgba(255,255,255,0.2)'; ctxA.setLineDash([2,2]); ctxA.stroke(); ctxA.setLineDash([]);
+        
+        ctxA.beginPath(); ctxA.arc(hx, getFY(flows[state.hoverIdx]), 4, 0, Math.PI*2);
+        ctxA.fillStyle = isNetPos ? 'var(--green)' : 'var(--red)'; ctxA.fill();
+        
+        ctxA.beginPath(); ctxA.arc(hx, getNY(navs[state.hoverIdx]), 4, 0, Math.PI*2);
+        ctxA.fillStyle = '#fff'; ctxA.fill();
+    }
+}
+
+function drawChartB(data) {
+    const cvs = el('chartB');
+    const { w, h, dpr } = resizeCanvas(cvs);
+    ctxB.scale(dpr, dpr);
+    ctxB.clearRect(0, 0, w, h);
+    
+    const pad = { top: 10, right: 60, bottom: 20, left: 60 };
+    const chartW = w - pad.left - pad.right;
+    const chartH = h - pad.top - pad.bottom;
+    
+    const maxBar = Math.max(...data.map(d => Math.abs(d.usd_flow)), 1);
+    
+    const getX = i => pad.left + (i / (data.length - 1)) * chartW;
+    const y0 = pad.top + chartH / 2;
+    
+    const barW = Math.max(chartW / data.length * 0.8, 1);
+    
+    for (let i = 0; i < data.length; i++) {
+        const val = data[i].usd_flow;
+        const x = getX(i) - barW/2;
+        const barH = (Math.abs(val) / maxBar) * (chartH / 2);
+        
+        if (val >= 0) {
+            ctxB.fillStyle = 'rgba(61,184,122,0.8)';
+            ctxB.fillRect(x, y0 - barH, barW, barH);
+        } else {
+            ctxB.fillStyle = 'rgba(239,68,68,0.8)';
+            ctxB.fillRect(x, y0, barW, barH);
+        }
+    }
+    
+    // Zero line
+    ctxB.beginPath(); ctxB.moveTo(pad.left, y0); ctxB.lineTo(w - pad.right, y0);
+    ctxB.strokeStyle = 'rgba(255,255,255,0.1)'; ctxB.stroke();
+    
+    if (state.hoverIdx !== null && state.hoverIdx < data.length) {
+        let hx = getX(state.hoverIdx);
+        ctxB.beginPath(); ctxB.moveTo(hx, pad.top); ctxB.lineTo(hx, pad.top + chartH);
+        ctxB.strokeStyle = 'rgba(255,255,255,0.2)'; ctxB.setLineDash([2,2]); ctxB.stroke(); ctxB.setLineDash([]);
+    }
+}
+
+function drawChartZ(data) {
+    const cvs = el('chartZ');
+    const { w, h, dpr } = resizeCanvas(cvs);
+    ctxZ.scale(dpr, dpr);
+    ctxZ.clearRect(0, 0, w, h);
+    
+    const pad = { top: 20, right: 20, bottom: 20, left: 40 };
+    const chartW = w - pad.left - pad.right;
+    const chartH = h - pad.top - pad.bottom;
+    
+    const getX = i => pad.left + (i / (data.length - 1)) * chartW;
+    
+    // Fixed scale for Z-score -3 to +3 usually, but fit to data if larger
+    const maxZ = Math.max(3, ...data.map(d => Math.abs(d.flow_zscore)));
+    const getY = val => pad.top + chartH/2 - (val / maxZ) * (chartH/2);
+    
+    // Safe zones bands
+    ctxZ.fillStyle = 'rgba(61,184,122,0.05)';
+    ctxZ.fillRect(pad.left, pad.top, chartW, getY(1.5) - pad.top);
+    ctxZ.fillStyle = 'rgba(239,68,68,0.05)';
+    ctxZ.fillRect(pad.left, getY(-1.5), chartW, pad.top + chartH - getY(-1.5));
+    
+    // Lines
+    ctxZ.strokeStyle = 'rgba(255,255,255,0.2)'; ctxZ.setLineDash([4,4]);
+    ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(1.5)); ctxZ.lineTo(pad.left+chartW, getY(1.5)); ctxZ.stroke();
+    ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(-1.5)); ctxZ.lineTo(pad.left+chartW, getY(-1.5)); ctxZ.stroke();
+    ctxZ.strokeStyle = 'rgba(255,255,255,0.4)'; ctxZ.setLineDash([]);
+    ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(0)); ctxZ.lineTo(pad.left+chartW, getY(0)); ctxZ.stroke();
+    
+    // The Z-Score line
+    ctxZ.beginPath();
+    ctxZ.lineWidth = 1.5;
+    for (let i = 0; i < data.length; i++) {
+        const x = getX(i), y = getY(data[i].flow_zscore);
+        if (i===0) ctxZ.moveTo(x, y);
+        else ctxZ.lineTo(x, y);
+    }
+    
+    // Gradient based on values (above 1.5 = green, below -1.5 = red, else neutral)
+    const strokeGrad = ctxZ.createLinearGradient(0, pad.top, 0, pad.top + chartH);
+    strokeGrad.addColorStop(0, 'rgba(61,184,122,1)');
+    strokeGrad.addColorStop(0.5, 'rgba(148,163,184,0.6)');
+    strokeGrad.addColorStop(1, 'rgba(239,68,68,1)');
+    ctxZ.strokeStyle = strokeGrad;
+    ctxZ.stroke();
+    
+    // Y-labels
+    ctxZ.fillStyle = 'var(--text-dim)'; ctxZ.font = '10px sans-serif'; ctxZ.textAlign = 'right';
+    ctxZ.fillText('+1.5', pad.left - 5, getY(1.5) + 3);
+    ctxZ.fillText('-1.5', pad.left - 5, getY(-1.5) + 3);
+    ctxZ.fillText('0', pad.left - 5, getY(0) + 3);
+}
+
+// ---- Hover Interaction ----
+function handleHover(e) {
+    const cvs = e.target;
+    // ensure same alignment
+    const rect = cvs.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    
+    const data = getVisibleData();
+    if (!data.length) return;
+    
+    const padL = 60, padR = 60; // used for chart A & B
+    const chartW = rect.width - padL - padR;
+    
+    if (x >= padL && x <= rect.width - padR) {
+        let pct = (x - padL) / chartW;
+        let idx = Math.round(pct * (data.length - 1));
+        idx = Math.max(0, Math.min(idx, data.length - 1));
+        
+        state.hoverIdx = idx;
+        
+        // Show tooltip
+        const d = data[idx];
+        tooltip.style.display = 'block';
+        tooltip.innerHTML = `
+            <div class="tt-date">${d.date}</div>
+            <div class="tt-row"><span class="tt-lbl">NAV</span> <span class="tt-val">$${d.nav.toFixed(2)}</span></div>
+            <div class="tt-row"><span class="tt-lbl">Daily Flow</span> <span class="tt-val" style="color:${d.usd_flow>=0?'var(--green)':'var(--red)'}">${fmtUsd(d.usd_flow)}</span></div>
+            <div class="tt-row"><span class="tt-lbl">Net Cumul.</span> <span class="tt-val" style="color:${(d.cumulative_flow - data[0].cumulative_flow)>=0?'var(--green)':'var(--red)'}">${fmtUsd(d.cumulative_flow - data[0].cumulative_flow)}</span></div>
+            <div class="tt-row"><span class="tt-lbl">Z-Score</span> <span class="tt-val">${d.flow_zscore.toFixed(2)}</span></div>
+        `;
+        
+        let tx = e.clientX + 15;
+        if (tx + 180 > window.innerWidth) tx = e.clientX - 180 - 15;
+        tooltip.style.left = tx + 'px';
+        tooltip.style.top = (e.clientY - 40) + 'px';
+        
+    } else {
+        hideHover();
+    }
+    renderCharts();
+}
+
+function hideHover() {
+    state.hoverIdx = null;
+    tooltip.style.display = 'none';
+    renderCharts();
+}
+
+// ---- Divergence Engine ----
+function renderDivergence() {
+    const data = state.cache[state.activeTicker].data;
+    if (!data || data.length < 90) return;
+    
+    const recent = data.slice(-90);
+    const tbody = el('div-body');
+    let html = '';
+    
+    const windows = [3, 5, 10]; // Lookback days to check
+    
+    for (let i = recent.length - 1; i >= Math.max(...windows); i--) {
+        const cur = recent[i];
+        
+        for (let w of windows) {
+            const prev = recent[i - w];
+            const priceMove = (cur.nav / prev.nav) - 1;
+            const flowSum = cur.cumulative_flow - prev.cumulative_flow;
+            
+            let isDiv = false;
+            let type = '', badgeClass = '', sig = '';
+            
+            // Bearish Div: Price up > 3%, but net flow is negative
+            if (priceMove > 0.03 && flowSum < 0) {
+                isDiv = true; type = 'BEARISH DIV'; badgeClass = 'bg-bear'; sig = '⚠️ Distribution';
+            }
+            // Bullish Div: Price down > 3%, but net flow is positive
+            if (priceMove < -0.03 && flowSum > 0) {
+                isDiv = true; type = 'BULLISH DIV'; badgeClass = 'bg-bull'; sig = '🟢 Accumulation';
+            }
+            
+            if (isDiv) {
+                html += `<tr>
+                    <td>${cur.date}</td>
+                    <td>${w}d</td>
+                    <td><span class="div-badge ${badgeClass}">${type}</span></td>
+                    <td class="${priceMove>=0?'val-green':'val-red'}">${fmtPct(priceMove)}</td>
+                    <td class="${flowSum>=0?'val-green':'val-red'}">${fmtUsd(flowSum)}</td>
+                    <td style="font-weight:700">${sig}</td>
+                </tr>`;
+                break; // Only show one divergence logic per day to avoid spam
+            }
+        }
+    }
+    
+    if (html === '') {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-dim);">No significant price-flow divergences detected in the last 90 days.</td></tr>';
+    } else {
+        tbody.innerHTML = html;
+    }
+}
+
+// ---- Cross ETF Chart ----
+async function loadAllTickersForCross() {
+    const tickers = ['BOIL', 'HNU', '3NGL', 'KOLD', 'HND', '3NGS'];
+    const proms = tickers.map(tk => {
+        if (!state.cache[tk]) {
+            return fetch(`data/flows/${tk}_flows.json`).then(r => r.json()).then(d => { state.cache[tk] = d; });
+        }
+        return Promise.resolve();
+    });
+    
+    await Promise.all(proms);
+    renderCrossChart();
+}
+
+function renderCrossChart() {
+    const cvs = el('chartCross');
+    const { w, h, dpr } = resizeCanvas(cvs);
+    ctxCross.scale(dpr, dpr);
+    ctxCross.clearRect(0, 0, w, h);
+    
+    const pad = { top: 20, right: 60, bottom: 20, left: 60 };
+    const chartW = w - pad.left - pad.right;
+    const chartH = h - pad.top - pad.bottom;
+    
+    let tickers = [];
+    if (state.crossFilter === 'all') tickers = ['BOIL', 'HNU', '3NGL', 'KOLD', 'HND', '3NGS'];
+    if (state.crossFilter === 'long') tickers = ['BOIL', 'HNU', '3NGL'];
+    if (state.crossFilter === 'short') tickers = ['KOLD', 'HND', '3NGS'];
+    
+    // Find common date domain length based on timeRange
+    // To simplify, use BOIL dates to align
+    const baseData = state.cache['BOIL'].data;
+    
+    let days = 30;
+    if (state.timeRange === 'all') days = 9999;
+    else if (state.timeRange === '1m') days = 30;
+    else if (state.timeRange === '3m') days = 90;
+    else if (state.timeRange === '6m') days = 180;
+    else if (state.timeRange === '1y') days = 365;
+    else if (state.timeRange === '3y') days = 1095;
+    
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    const cutoffStr = cutoffDate.toISOString().slice(0, 10);
+    
+    let startIdxBase = baseData.findIndex(d => d.date >= cutoffStr);
+    if (startIdxBase === -1) startIdxBase = 0;
+    const visibleDates = baseData.slice(startIdxBase).map(d => d.date);
+    
+    const series = {}; // ticker -> [normalized flows aligned to visibleDates]
+    
+    let globalMax = -Infinity, globalMin = Infinity;
+    
+    tickers.forEach(tk => {
+        const d = state.cache[tk].data;
+        // align
+        let startIdx = d.findIndex(x => x.date >= visibleDates[0]);
+        if (startIdx === -1) startIdx = 0;
+        
+        const offset = d[startIdx] ? d[startIdx].cumulative_flow : 0;
+        const vals = [];
+        
+        for (let i = 0; i < visibleDates.length; i++) {
+            const date = visibleDates[i];
+            const match = d.find(x => x.date === date);
+            if (match) {
+                const norm = match.cumulative_flow - offset;
+                vals.push(norm);
+                if (norm > globalMax) globalMax = norm;
+                if (norm < globalMin) globalMin = norm;
+            } else {
+                vals.push(vals.length > 0 ? vals[vals.length - 1] : 0);
+            }
+        }
+        series[tk] = vals;
+    });
+    
+    if (globalMax === -Infinity) return;
+    if (globalMax === globalMin) { globalMax += 1; globalMin -= 1; }
+    
+    const range = globalMax - globalMin;
+    const getX = i => pad.left + (i / (visibleDates.length - 1)) * chartW;
+    const getY = val => pad.top + chartH - ((val - globalMin) / range) * chartH;
+    
+    // Zero line
+    if (globalMax > 0 && globalMin < 0) {
+        ctxCross.beginPath(); ctxCross.moveTo(pad.left, getY(0)); ctxCross.lineTo(pad.left+chartW, getY(0));
+        ctxCross.strokeStyle = 'rgba(255,255,255,0.1)'; ctxCross.setLineDash([4,4]); ctxCross.stroke(); ctxCross.setLineDash([]);
+    }
+    
+    // Draw lines
+    tickers.forEach(tk => {
+        const vals = series[tk];
+        ctxCross.beginPath();
+        ctxCross.strokeStyle = colors[tk];
+        ctxCross.lineWidth = tk === state.activeTicker ? 3 : 1.5;
+        
+        for (let i = 0; i < vals.length; i++) {
+            if (i===0) ctxCross.moveTo(getX(i), getY(vals[i]));
+            else ctxCross.lineTo(getX(i), getY(vals[i]));
+        }
+        ctxCross.stroke();
+        
+        // Label at end
+        ctxCross.fillStyle = colors[tk];
+        ctxCross.font = tk === state.activeTicker ? 'bold 10px sans-serif' : '10px sans-serif';
+        ctxCross.textAlign = 'left';
+        ctxCross.fillText(tk, getX(vals.length-1) + 4, getY(vals[vals.length-1]) + 3);
+    });
+    
+    // axes labels
+    ctxCross.fillStyle = 'var(--text-dim)'; ctxCross.font = '10px sans-serif'; ctxCross.textAlign = 'right';
+    ctxCross.fillText(fmtUsd(globalMax), pad.left - 5, pad.top + 5);
+    ctxCross.fillText(fmtUsd(globalMin), pad.left - 5, pad.top + chartH);
+}
+
+// Init
+init();
+
+</script>
+</body>
+</html>

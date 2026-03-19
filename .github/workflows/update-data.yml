@@ -42,6 +42,11 @@ jobs:
         env:
           PYTHONUNBUFFERED: '1'
 
+      - name: Fetch ETF Flows Data
+        run: |
+          python scripts/fetch_flows.py
+        continue-on-error: true
+
       - name: Copy data to docs folder
         run: |
           mkdir -p docs/data
