@@ -1146,16 +1146,27 @@ function downloadCSV() {
 
     if (!filtered.length) return alert('No cycle data to export.');
 
-    const headers = ['#', 'Trough Date', 'Trough Price', 'Peak Date', 'Peak Price', '% Gain', 'Days'];
-    const rows = filtered.map(c => [
-        c.num,
-        c.troughDate,
-        c.troughPrice.toFixed(4),
-        c.peakDate,
-        c.peakPrice.toFixed(4),
-        c.gain.toFixed(2),
-        c.days
-    ]);
+    const headers = ['#', 'Trough Date', 'Trough Price', 'Peak Date', 'Peak Price', '% Gain', 'Days', 'Gap'];
+    const rows = filtered.map(c => {
+        const idx = cycles.indexOf(c);
+        let gap = '--';
+        if (idx > 0) {
+            const prev = cycles[idx - 1];
+            const d1 = new Date(prev.peakDate);
+            const d2 = new Date(c.troughDate);
+            gap = Math.round((d2 - d1) / (24 * 60 * 60 * 1000));
+        }
+        return [
+            c.num,
+            c.troughDate,
+            c.troughPrice.toFixed(4),
+            c.peakDate,
+            c.peakPrice.toFixed(4),
+            c.gain.toFixed(2),
+            c.days,
+            gap
+        ];
+    });
 
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1211,11 +1222,20 @@ function renderTable() {
             <th data-tooltip="Adjusted closing price at the peak">PEAK $</th>
             <th data-tooltip="Percentage gain from trough price to peak price">% GAIN</th>
             <th data-tooltip="Calendar days elapsed from trough to peak">DAYS</th>
+            <th data-tooltip="Wait time (idle days) from previous cycle peak to current cycle trough">GAP</th>
         </tr></thead>
         <tbody>
         ${filtered.slice().reverse().map(c => {
+            const idx = cycles.indexOf(c);
+            let gapStr = '--';
+            if (idx > 0) {
+                const prev = cycles[idx - 1];
+                const d1 = new Date(prev.peakDate);
+                const d2 = new Date(c.troughDate);
+                gapStr = Math.round((d2 - d1) / (24 * 60 * 60 * 1000)) + 'D';
+            }
+
             // Light-green text gradient: light (85% L) to slightly darker pastel (70% L)
-            // Range is kept within soft/pastel greens on the dark background.
             const ratio = maxG === minG ? 0 : (c.gain - minG) / (maxG - minG);
             const lightness = 85 - (ratio * 15); // 85% (low gain) down to 70% (high gain)
             const color = `hsl(145, 60%, ${lightness}%)`;
@@ -1228,6 +1248,7 @@ function renderTable() {
                 <td>$${fmt(c.peakPrice)}</td>
                 <td style="color:${color}; font-weight:800">${fmtPct(c.gain)}</td>
                 <td style="color:var(--text-dim)">${c.days}D</td>
+                <td style="color:var(--text-dim)">${gapStr}</td>
             </tr>`
         }).join('')}
         </tbody>
