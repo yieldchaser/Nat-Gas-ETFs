@@ -1310,6 +1310,7 @@ function renderYearlyMatrix() {
 
     const allYears = new Set();
     const tickerFreq = {}; // Ticker -> Year -> {count, sumGain}
+    const allAvgGains = [];
 
     for (const t of TICKERS) {
         tickerFreq[t.label] = {};
@@ -1330,6 +1331,24 @@ function renderYearlyMatrix() {
         return;
     }
 
+    // Pre-calculate min/max for color gradient mapping
+    for (const yr in allYears) {
+        for (const tk in tickerFreq) {
+            const s = tickerFreq[tk][yr];
+            if (s && s.count > 0) allAvgGains.push(s.sumGain / s.count);
+        }
+    }
+    // Correct way to iterate allYears (Set)
+    sortedYears.forEach(year => {
+        TICKERS.forEach(t => {
+            const s = tickerFreq[t.label][year];
+            if (s && s.count > 0) allAvgGains.push(s.sumGain / s.count);
+        });
+    });
+
+    const minAvg = allAvgGains.length ? Math.min(...allAvgGains) : 0;
+    const maxAvg = allAvgGains.length ? Math.max(...allAvgGains) : 0;
+
     let html = `<table class="matrix-table">
         <thead>
             <tr>
@@ -1346,10 +1365,18 @@ function renderYearlyMatrix() {
             const stats = tickerFreq[t.label][year] || { count: 0, sumGain: 0 };
             const count = stats.count;
             if (count > 0) {
-                const avg = (stats.sumGain / count).toFixed(0);
+                const avgNum = stats.sumGain / count;
+                const avgText = avgNum.toFixed(0);
+                
+                // Magnitude Color Mapping
+                const ratio = maxAvg === minAvg ? 0 : (avgNum - minAvg) / (maxAvg - minAvg);
+                const lightness = 85 - (ratio * 15); // 85% (low) -> 70% (high)
+                const magnitudeColor = `hsl(145, 60%, ${lightness}%)`;
+
                 html += `<td class="matrix-count has-data">
                     <span style="font-weight:800">${count}</span>
-                    <span style="font-size:0.62rem; opacity:0.5; margin-left:3px; font-weight:600">(${avg}%)</span>
+                    <span style="font-size:0.62rem; color:${magnitudeColor}; margin-left:3px; font-weight:700" 
+                          data-tooltip="Average recovery magnitude for ${count} cycles in ${year}">(${avgText}%)</span>
                 </td>`;
             } else {
                 html += `<td class="matrix-count no-data">--</td>`;
