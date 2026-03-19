@@ -1309,7 +1309,7 @@ function renderYearlyMatrix() {
     if (!container) return;
 
     const allYears = new Set();
-    const tickerFreq = {}; // Ticker -> Year -> Count
+    const tickerFreq = {}; // Ticker -> Year -> {count, sumGain}
 
     for (const t of TICKERS) {
         tickerFreq[t.label] = {};
@@ -1317,7 +1317,9 @@ function renderYearlyMatrix() {
         cycles.forEach(c => {
             const year = c.troughDate.slice(0, 4);
             allYears.add(year);
-            tickerFreq[t.label][year] = (tickerFreq[t.label][year] || 0) + 1;
+            if (!tickerFreq[t.label][year]) tickerFreq[t.label][year] = { count: 0, sumGain: 0 };
+            tickerFreq[t.label][year].count++;
+            tickerFreq[t.label][year].sumGain += c.gain;
         });
     }
 
@@ -1341,10 +1343,17 @@ function renderYearlyMatrix() {
         html += `<tr class="matrix-row">
             <td class="matrix-year">${year}</td>`;
         TICKERS.forEach(t => {
-            const count = tickerFreq[t.label][year] || 0;
-            const cls = count > 0 ? 'has-data' : 'no-data';
-            const display = count > 0 ? count : '--';
-            html += `<td class="matrix-count ${cls}">${display}</td>`;
+            const stats = tickerFreq[t.label][year] || { count: 0, sumGain: 0 };
+            const count = stats.count;
+            if (count > 0) {
+                const avg = (stats.sumGain / count).toFixed(0);
+                html += `<td class="matrix-count has-data">
+                    <span style="font-weight:800">${count}</span>
+                    <span style="font-size:0.62rem; opacity:0.5; margin-left:3px; font-weight:600">(${avg}%)</span>
+                </td>`;
+            } else {
+                html += `<td class="matrix-count no-data">--</td>`;
+            }
         });
         html += `</tr>`;
     });
