@@ -184,6 +184,10 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
     </header>
 
     <main>
+        <!-- IMP 6: Loading overlay -->
+        <div id="loading-overlay" style="display:flex; position:fixed; top:56px; left:0; width:100%; height:calc(100vh - 56px); background:rgba(10,10,16,0.7); z-index:100; justify-content:center; align-items:center; color:var(--signal-accent); font-weight:bold; letter-spacing:2px; font-size:1.2rem; backdrop-filter:blur(2px);">
+            LOADING...
+        </div>
         <!-- Section 1 -->
         <div class="sentiment-banner" id="sentiment-banner">
             <div class="sentiment-side left">
@@ -295,7 +299,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
             <div class="panel-header">
                 <div class="panel-title" data-tooltip="Compare cumulative capital flows continuously across multiple ETFs.">Cross-ETF Cumulative Flow Comparison</div>
                 <div class="tab-group time-tabs" id="cross-tabs">
-                    <button class="tab-btn active" data-filter="all">ALL</button>>
+                    <button class="tab-btn active" data-filter="all">ALL</button>
                     <button class="tab-btn" data-filter="long">LONG ONLY</button>
                     <button class="tab-btn" data-filter="short">SHORT ONLY</button>
                 </div>
@@ -316,9 +320,9 @@ const fmtUsd = (val) => {
     // Values are expected in actual dollars if parsed correctly by new script.
     // If they are in thousands or millions, we format appropriately.
     // Current trackinsight parser scale: *1. actual output dollars.
-    if (abs >= 1e9) return `${sign}${(abs/1e9).toFixed(2)}B`;
-    if (abs >= 1e6) return `${sign}${(abs/1e6).toFixed(1)}M`;
-    if (abs >= 1e3) return `${sign}${(abs/1e3).toFixed(0)}K`;
+    if (abs >= 1e9) return `${sign}$${(abs/1e9).toFixed(2)}B`;
+    if (abs >= 1e6) return `${sign}$${(abs/1e6).toFixed(1)}M`;
+    if (abs >= 1e3) return `${sign}$${(abs/1e3).toFixed(0)}K`;
     return `${sign}$${abs.toFixed(0)}`;
 };
 const fmtPct = (val) => `${val > 0 ? '+' : ''}${(val * 100).toFixed(1)}%`;
@@ -344,7 +348,7 @@ const tooltip = el('chart-tooltip');
 // Colors
 const colors = {
     'BOIL': '#c07828', 'HNU': '#3db87a', '3NGL': '#8855bb',
-    'KOLD': '#5090a0', 'HND': '#d4a830', '3NGS': '#d4a830'
+    'KOLD': '#5090a0', 'HND': '#d4a830', '3NGS': '#e06030'
 };
 
 async function init() {
@@ -404,8 +408,13 @@ function renderSection1() {
     el('sent-long').textContent = fmtUsd(data.bull_flow_30d);
     el('sent-long').className = `s-val ${data.bull_flow_30d >= 0 ? 'val-green' : 'val-red'}`;
     
-    el('sent-short').textContent = fmtUsd(data.bear_flow_30d);
-    el('sent-short').className = `s-val ${data.bear_flow_30d >= 0 ? 'val-red' : 'val-green'}`; // Note: short side inflow is bearish for NG
+    if (data.bear_flow_30d > 0) {
+        el('sent-short').textContent = `+${fmtUsd(data.bear_flow_30d).replace('+', '')} (Bearish)`;
+        el('sent-short').className = `s-val val-red`;
+    } else {
+        el('sent-short').textContent = `${fmtUsd(data.bear_flow_30d)} (Bullish)`;
+        el('sent-short').className = `s-val val-green`;
+    }
     
     const status = data.sentiment;
     el('sent-status').textContent = status;
@@ -432,6 +441,7 @@ function renderSection2() {
     const longs = ['BOIL', 'HNU', '3NGL'];
     const shorts = ['KOLD', 'HND', '3NGS'];
     
+    // IMP 2: Bold border for active card
     const createCard = (tk) => {
         const d = state.summary.tickers[tk];
         if (!d) return '';
@@ -443,7 +453,10 @@ function renderSection2() {
 
         let zCol = d.zscore >= 1.5 ? 'val-green' : (d.zscore <= -1.5 ? 'val-red' : 'val-muted');
         
-        return `<div class="flow-card">
+        // Active border style
+        const bc = tk === state.activeTicker ? `border-color:${colors[tk]}; box-shadow: 0 0 12px ${colors[tk]}40;` : '';
+        
+        return `<div class="flow-card" style="${bc}">
             <div class="fc-left">
                 <div>
                     <div class="fc-ticker" style="color:${colors[tk] || '#fff'}">${tk}</div>
@@ -472,11 +485,14 @@ function renderSection2() {
         </div>`;
     };
 
+    el('col-long').querySelectorAll('.flow-card').forEach(c => c.remove());
+    el('col-short').querySelectorAll('.flow-card').forEach(c => c.remove());
     el('col-long').innerHTML += longs.map(createCard).join('');
     el('col-short').innerHTML += shorts.map(createCard).join('');
 }
 
 async function loadTickerDataAndRender() {
+    el('loading-overlay').style.display = 'flex';
     const tk = state.activeTicker;
     if (!state.cache[tk]) {
         try {
@@ -484,13 +500,21 @@ async function loadTickerDataAndRender() {
             state.cache[tk] = await res.json();
         } catch (e) {
             console.error("Failed to load data for", tk);
+            el('loading-overlay').style.display = 'none';
             return;
         }
     }
     
+    // Re-render cards so active card updates
+    renderSection2();
     updateStatsRow();
     renderCharts();
+    const data = getVisibleData();
+    if (data && data.length > 0) {
+        drawChartZ(data);
+    }
     renderDivergence();
+    el('loading-overlay').style.display = 'none';
 }
 
 function getVisibleData() {
@@ -552,7 +576,7 @@ function renderCharts() {
 function drawChartA(data) {
     const cvs = el('chartA');
     const { w, h, dpr } = resizeCanvas(cvs);
-    ctxA.scale(dpr, dpr);
+    ctxA.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctxA.clearRect(0, 0, w, h);
     
     const pad = { top: 20, right: 60, bottom: 30, left: 60 };
@@ -574,20 +598,21 @@ function drawChartA(data) {
     const getFY = val => pad.top + chartH - ((val - fMin) / fRange) * chartH;
     const getNY = val => pad.top + chartH - ((val - nMin) / nRange) * chartH;
     
+    const y0 = Math.max(pad.top, Math.min(pad.top + chartH, getFY(0)));
+    
     // Zero line for flow
     if (fMax > 0 && fMin < 0) {
-        const y0 = getFY(0);
         ctxA.beginPath(); ctxA.moveTo(pad.left, y0); ctxA.lineTo(w - pad.right, y0);
         ctxA.strokeStyle = 'rgba(255,255,255,0.1)'; ctxA.setLineDash([4,4]); ctxA.stroke(); ctxA.setLineDash([]);
     }
 
     // Cumulative Flow Area
     ctxA.beginPath();
-    ctxA.moveTo(pad.left, pad.top + chartH);
+    ctxA.moveTo(pad.left, y0);
     for (let i = 0; i < data.length; i++) {
         ctxA.lineTo(getX(i), getFY(flows[i]));
     }
-    ctxA.lineTo(w - pad.right, pad.top + chartH);
+    ctxA.lineTo(w - pad.right, y0);
     ctxA.closePath();
     
     // End is positive or negative relative to start?
@@ -632,6 +657,17 @@ function drawChartA(data) {
     ctxA.textAlign = 'left';
     ctxA.fillText('$' + nMax.toFixed(2), w - pad.right + 8, pad.top + 5);
     ctxA.fillText('$' + nMin.toFixed(2), w - pad.right + 8, pad.top + chartH);
+
+    // IMP 1: X-axis labels for Chart A
+    ctxA.textAlign = 'center';
+    const numLabels = 5;
+    for (let i = 0; i < numLabels; i++) {
+        const idx = Math.floor(i * (data.length - 1) / (numLabels - 1));
+        if (data[idx]) {
+            const dateStr = data[idx].date.substring(5); // MM-DD
+            ctxA.fillText(dateStr, getX(idx), pad.top + chartH + 15);
+        }
+    }
     
     // Draw crosshair overlay if active
     if (state.hoverIdx !== null && state.hoverIdx < data.length) {
@@ -681,6 +717,11 @@ function drawChartB(data) {
     // Zero line
     ctxB.beginPath(); ctxB.moveTo(pad.left, y0); ctxB.lineTo(w - pad.right, y0);
     ctxB.strokeStyle = 'rgba(255,255,255,0.1)'; ctxB.stroke();
+    
+    // IMP 3: Y-axis Labels for Chart B
+    ctxB.fillStyle = 'var(--text-dim)'; ctxB.font = '10px sans-serif'; ctxB.textAlign = 'right';
+    ctxB.fillText(fmtUsd(maxBar), pad.left - 8, pad.top + 10);
+    ctxB.fillText(fmtUsd(-maxBar), pad.left - 8, pad.top + chartH - 2);
     
     if (state.hoverIdx !== null && state.hoverIdx < data.length) {
         let hx = getX(state.hoverIdx);
@@ -806,7 +847,14 @@ function renderDivergence() {
         
         for (let w of windows) {
             const prev = recent[i - w];
-            const priceMove = (cur.nav / prev.nav) - 1;
+            
+            // BUG 1 FIX: Split-adjusted price move using cumulative perf_pct
+            let cumRet = 1;
+            for (let j = i - w + 1; j <= i; j++) {
+                cumRet *= (1 + recent[j].perf_pct);
+            }
+            const priceMove = cumRet - 1;
+            
             const flowSum = cur.cumulative_flow - prev.cumulative_flow;
             
             let isDiv = false;
@@ -830,13 +878,15 @@ function renderDivergence() {
                     <td class="${flowSum>=0?'val-green':'val-red'}">${fmtUsd(flowSum)}</td>
                     <td style="font-weight:700">${sig}</td>
                 </tr>`;
-                break; // Only show one divergence logic per day to avoid spam
+                
+                i -= (w - 1); // BUG 5 FIX: Skip past this sequence to avoid overlapping copies
+                break; // Only show one divergence logic per sequence
             }
         }
     }
     
     if (html === '') {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-dim);">No significant price-flow divergences detected in the last 90 days.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-dim); padding: 20px;">No significant price-flow divergences detected.<br><span style="font-size: 0.65rem; color:var(--text-dim);">Requires a split-adjusted price move > 3% alongside opposing net flows within a 3, 5, or 10 day window.</span></td></tr>';
     } else {
         tbody.innerHTML = html;
     }
@@ -859,7 +909,7 @@ async function loadAllTickersForCross() {
 function renderCrossChart() {
     const cvs = el('chartCross');
     const { w, h, dpr } = resizeCanvas(cvs);
-    ctxCross.scale(dpr, dpr);
+    ctxCross.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctxCross.clearRect(0, 0, w, h);
     
     const pad = { top: 20, right: 60, bottom: 20, left: 60 };
@@ -897,6 +947,10 @@ function renderCrossChart() {
     
     tickers.forEach(tk => {
         const d = state.cache[tk].data;
+        // BUG 7 FIX: Pre-index dates to O(1)
+        const dateIdx = {};
+        for (let j = 0; j < d.length; j++) dateIdx[d[j].date] = d[j];
+        
         // align
         let startIdx = d.findIndex(x => x.date >= visibleDates[0]);
         if (startIdx === -1) startIdx = 0;
@@ -906,7 +960,7 @@ function renderCrossChart() {
         
         for (let i = 0; i < visibleDates.length; i++) {
             const date = visibleDates[i];
-            const match = d.find(x => x.date === date);
+            const match = dateIdx[date];
             if (match) {
                 const norm = match.cumulative_flow - offset;
                 vals.push(norm);
@@ -944,18 +998,34 @@ function renderCrossChart() {
             else ctxCross.lineTo(getX(i), getY(vals[i]));
         }
         ctxCross.stroke();
-        
-        // Label at end
+    });
+    
+    // IMP 5: Legend box
+    let legendY = pad.top + 5;
+    tickers.forEach(tk => {
         ctxCross.fillStyle = colors[tk];
+        ctxCross.fillRect(w - pad.right - 40, legendY - 8, 8, 8);
         ctxCross.font = tk === state.activeTicker ? 'bold 10px sans-serif' : '10px sans-serif';
         ctxCross.textAlign = 'left';
-        ctxCross.fillText(tk, getX(vals.length-1) + 4, getY(vals[vals.length-1]) + 3);
+        ctxCross.fillText(tk, w - pad.right - 28, legendY);
+        legendY += 14;
     });
     
     // axes labels
     ctxCross.fillStyle = 'var(--text-dim)'; ctxCross.font = '10px sans-serif'; ctxCross.textAlign = 'right';
     ctxCross.fillText(fmtUsd(globalMax), pad.left - 5, pad.top + 5);
     ctxCross.fillText(fmtUsd(globalMin), pad.left - 5, pad.top + chartH);
+
+    // IMP 1: X-axis Labels for Cross-ETF
+    ctxCross.textAlign = 'center';
+    const numLabels = 5;
+    for (let i = 0; i < numLabels; i++) {
+        const idx = Math.floor(i * (visibleDates.length - 1) / (numLabels - 1));
+        if (visibleDates[idx]) {
+            const dateStr = visibleDates[idx].substring(5); // MM-DD
+            ctxCross.fillText(dateStr, getX(idx), pad.top + chartH + 15);
+        }
+    }
 }
 
 // Init
@@ -979,8 +1049,8 @@ init();
             const th = tt.offsetHeight;
             const pad = 8;
             let x = r.left + r.width / 2 - tw / 2;
-            let y = r.top - th - 8;
-            if (y < pad) y = r.bottom + 8;
+            let y = r.top - th - 8 + window.scrollY;
+            if (y - window.scrollY < pad) y = r.bottom + 8 + window.scrollY;
             x = Math.max(pad, Math.min(x, window.innerWidth - tw - pad));
             tt.style.left = x + 'px';
             tt.style.top = y + 'px';
