@@ -146,6 +146,8 @@ input[type=range]:hover::-moz-range-thumb {
  .sig-pos { font-weight: 800; color: var(--text-bright); }
  .str-val { opacity: 0.85; } /* Secondary hierarchy */
  .ctx-val { opacity: 0.7; color: var(--text-dim); font-weight: 600; } /* Tertiary hierarchy */
+ .soft-green { color: #3db87a; opacity: 0.85; }
+ .soft-red { color: #ef4444; opacity: 0.85; }
  .breakout-text { color: #fff; text-shadow: 0 0 8px rgba(0,255,255,0.6); font-weight: 900; }
 
 /* ---- CHART SECTION ---- */
@@ -719,8 +721,8 @@ function renderCards() {
         // --- Micro Analytics Calculations ---
         const lastPrice = d.closes[d.closes.length - 1];
         
-        // 1. Cycle Position
-        let cycPosStr = '--';
+        // 1. Cycle Position & Regime Label
+        let cycPosStr = '--', cycLabel = '';
         let cycColor = 'var(--text-dim)';
         let isBreakout = false;
         if (cycles.length > 0) {
@@ -730,6 +732,7 @@ function renderCards() {
                 const rawPos = (lastPrice - lastC.troughPrice) / range;
                 const pos = Math.max(0, Math.min(1.2, rawPos));
                 cycPosStr = Math.round(pos * 100) + '%';
+                cycLabel = pos <= 0.3 ? 'EARLY' : pos <= 0.7 ? 'MID' : pos <= 1.0 ? 'LATE' : 'EXTREME';
                 if (pos >= 1.0) { cycColor = 'var(--cyan)'; isBreakout = true; }
                 else if (pos > 0.7) cycColor = '#ef4444';
                 else if (pos > 0.3) cycColor = '#d4a830';
@@ -761,7 +764,9 @@ function renderCards() {
             const slice = d.closes.slice(-len);
             const min = Math.min(...slice), max = Math.max(...slice);
             if (max === min) return '50%';
-            return Math.round(((lastPrice - min) / (max - min)) * 100) + '%';
+            const val = Math.round(((lastPrice - min) / (max - min)) * 100);
+            const colorClass = val <= 30 ? 'soft-green' : val > 70 ? 'soft-red' : '';
+            return `<span class="${colorClass}">${val}%</span>`;
         };
         const m1 = getRangePos(21), m3 = getRangePos(63), m6 = getRangePos(126);
 
@@ -769,8 +774,14 @@ function renderCards() {
         let distPk = '--', distTr = '--', rngStr = '--';
         if (cycles.length > 0) {
             const lastC = cycles[cycles.length - 1];
-            distPk = Math.round(((lastPrice / lastC.peakPrice) - 1) * 100) + '%';
-            distTr = '+' + Math.round(((lastPrice / lastC.troughPrice) - 1) * 100) + '%';
+            const pkVal = Math.round(((lastPrice / lastC.peakPrice) - 1) * 100);
+            const trVal = Math.round(((lastPrice / lastC.troughPrice) - 1) * 100);
+            
+            const pkClass = pkVal > -10 ? 'soft-red' : '';
+            const trClass = trVal < 10 ? 'soft-green' : '';
+            
+            distPk = `<span class="${pkClass}">${pkVal}%</span>`;
+            distTr = `<span class="${trClass}">+${trVal}%</span>`;
         }
         if (d.closes.length > 1) {
             const slice30 = d.closes.slice(-30);
@@ -813,7 +824,7 @@ function renderCards() {
                 <div class="micro-line">
                     <div class="micro-group">
                         <span class="micro-label">Cyc:</span>
-                        <span class="sig-pos ${isBreakout?'breakout-text':''}" style="color:${isBreakout?'':cycColor}">${cycPosStr}</span>
+                        <span class="sig-pos ${isBreakout?'breakout-text':''}" style="color:${isBreakout?'':cycColor}">${cycPosStr} <span style="font-size:0.55rem; opacity:0.7">${cycLabel}</span></span>
                     </div>
                     <div class="micro-group" style="margin-left:auto">
                         <span class="micro-label">Str:</span>
