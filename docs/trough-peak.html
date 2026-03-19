@@ -1917,7 +1917,7 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
             }
             // Initialize Slider Max with KOLD data length
             syncRangeSlidersToRange('all');
-            recompute(); renderCards(); renderChartTabs(); renderChart(); renderTable();
+            renderAll();
             updateBadge();
             return; // done — static data loaded for all tickers
         }
@@ -1932,10 +1932,8 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
                 }
             }
             else   { state.fetchErr[t.symbol] = true; }
-            recompute();
-            renderCards();
+            renderAll();
             updateBadge();
-            if (t.label === state.activeTab) { renderChart(); renderTable(); }
             await new Promise(r => setTimeout(r, 400));
         }
 })();
