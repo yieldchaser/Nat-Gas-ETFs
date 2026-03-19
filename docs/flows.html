@@ -7,47 +7,17 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 <link rel="stylesheet" href="css/styles.css">
 <style>
-/* Base Reset & Core (mimicking other pages) */
+/* ---- Flow Monitor Page Styles ---- */
+/* Extends styles.css base — override only what differs */
 :root {
+    --cyan: #00ffff;
     --green: #3db87a;
     --red: #ef4444;
-    --orange: #d4a830;
-    --cyan: #00ffff;
-    --text-bright: #ffffff;
-    --text-primary: #e2e8f0;
-    --text-dim: #94a3b8;
-    --text-muted: #64748b;
     --bg-main: #0a0e17;
     --bg-panel: #131724;
     --bg-secondary: #1e2638;
-    --border-primary: rgba(255,255,255,0.06);
-    --border-accent: rgba(255,255,255,0.15);
+    --text-dim: #94a3b8;
 }
-
-body {
-    background: var(--bg-main);
-    color: var(--text-primary);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    margin: 0; padding: 0;
-}
-
-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 32px;
-    background: var(--bg-panel);
-    border-bottom: 1px solid var(--border-primary);
-}
-.top-bar-left h1 { margin: 0; font-size: 1.2rem; letter-spacing: 2px; color: var(--text-bright); }
-.top-bar-left .subtitle { font-size: 0.75rem; color: var(--cyan); letter-spacing: 1px; font-weight: 600; }
-.top-bar-right { display: flex; align-items: center; gap: 24px; }
-.page-nav { display: flex; gap: 16px; align-items: center; }
-.nav-link { 
-    font-size: 0.75rem; font-weight: 800; letter-spacing: 1px;
-    color: var(--text-muted); text-decoration: none; text-transform: uppercase;
-    transition: color 0.2s;
-}
-.nav-link:hover { color: var(--text-bright); }
-.nav-link.active { color: var(--cyan); border-bottom: 2px solid var(--cyan); padding-bottom: 4px; }
 
 main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 
@@ -149,7 +119,8 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .bg-bull { background: rgba(61, 184, 122, 0.15); color: var(--green); border: 1px solid rgba(61, 184, 122, 0.3); }
 
 /* ---- Section 5 & 6 ---- */
-#chartZ, #chartCross { width: 100%; height: 250px; }
+#chartZ { width: 100%; height: 280px; }
+#chartCross { width: 100%; height: 300px; }
 
 /* Custom Tooltip */
 #chart-tooltip {
@@ -164,6 +135,38 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .tt-date { font-size: 0.7rem; color: var(--cyan); margin-bottom: 8px; font-weight: 800; border-bottom: 1px solid var(--border-primary); padding-bottom: 4px;}
 
 .loading-overlay { display: flex; justify-content: center; align-items: center; height: 200px; color: var(--text-dim); font-size: 0.8rem; letter-spacing: 2px; }
+
+/* ETF Toggle Chips */
+.etf-chip {
+    font-size: 0.6rem; font-weight: 800; letter-spacing: 0.5px;
+    padding: 4px 10px; border-radius: 4px; border: 1px solid;
+    cursor: pointer; transition: all 0.2s; user-select: none;
+    font-family: 'JetBrains Mono', monospace;
+}
+.etf-chip.active { opacity: 1; }
+.etf-chip.inactive { opacity: 0.3; background: transparent !important; }
+
+/* Canvas interactivity hints */
+#chartA, #chartB, #chartZ, #chartCross { cursor: crosshair; }
+
+/* Responsive */
+@media (max-width: 900px) {
+    main { padding: 16px 12px 40px; }
+    .sentiment-banner { flex-direction: column; gap: 16px; padding: 16px; }
+    .sentiment-side { width: 100%; text-align: center !important; }
+    .summary-grid { grid-template-columns: 1fr; }
+    .flow-card { flex-direction: column; }
+    .fc-left { width: 100%; border-right: none; border-bottom: 1px solid var(--border-primary); padding-right: 0; padding-bottom: 12px; flex-direction: row; align-items: center; gap: 12px; }
+    .fc-right { width: 100%; flex-direction: row; align-items: center; gap: 8px; }
+    .panel-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .stats-row { flex-wrap: wrap; gap: 16px; }
+    #chartA { height: 280px; }
+    #chartB { height: 160px; }
+    #chartZ { height: 220px; }
+    #chartCross { height: 250px; }
+    .div-table { font-size: 0.7rem; }
+    .div-table th, .div-table td { padding: 8px 6px; }
+}
 
 </style>
 </head>
@@ -242,7 +245,17 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
                 </div>
             </div>
 
-            <div class="chart-wrap" style="padding-right: 48px;"> <!-- Padding for right Y-axis -->
+            <!-- Chart A: Cumulative Flow + Price -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div style="display:flex; gap:16px; font-size:0.6rem; font-weight:600; color:var(--text-muted);">
+                    <span data-tooltip="Split-adjusted NAV price line (white)">◼ <span style="color:#fff;">PRICE (ADJ)</span></span>
+                    <span data-tooltip="Cumulative net flow area (green=inflow, red=outflow)">◼ <span style="color:var(--green);">CUM. FLOW</span></span>
+                </div>
+                <div id="zoom-indicator" style="font-size:0.55rem; color:var(--text-muted); letter-spacing:1px; display:none;">
+                    ZOOMED — SCROLL TO ADJUST · <span style="cursor:pointer; color:var(--cyan);" onclick="state.zoom={start:0,end:1};renderCharts();">RESET</span>
+                </div>
+            </div>
+            <div class="chart-wrap" style="padding-right: 48px;">
                 <canvas id="chartA"></canvas>
                 <div id="chart-tooltip"></div>
             </div>
@@ -256,6 +269,11 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
                 <div class="st-item"><div class="st-lbl" data-tooltip="Flow Pressure Score (0-100). Combines Z-Score, 5D Momentum, and Consecutive Flow Streaks into a single metric.">Pressure</div><div class="st-val" id="st-pres">--</div></div>
             </div>
 
+            <!-- Chart B: Daily Flow Bars -->
+            <div style="margin-bottom:6px; font-size:0.6rem; font-weight:600; color:var(--text-muted);">
+                <span data-tooltip="Daily net capital flow. Green bars = inflows, red bars = outflows.">DAILY FLOW BARS</span>
+                <span style="margin-left:16px;">🟢 INFLOW &nbsp; 🔴 OUTFLOW</span>
+            </div>
             <div class="chart-wrap">
                 <canvas id="chartB"></canvas>
             </div>
@@ -297,19 +315,29 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
         <!-- Section 6 -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Compare cumulative capital flows continuously across multiple ETFs.">Cross-ETF Cumulative Flow Comparison</div>
-                <div class="tab-group time-tabs" id="cross-tabs">
-                    <button class="tab-btn active" data-filter="all">ALL</button>
-                    <button class="tab-btn" data-filter="long">LONG ONLY</button>
-                    <button class="tab-btn" data-filter="short">SHORT ONLY</button>
+                <div class="panel-title" data-tooltip="Compare cumulative capital flows continuously across multiple ETFs. Click ETF chips to toggle visibility.">Cross-ETF Cumulative Flow Comparison</div>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <div class="tab-group time-tabs" id="cross-tabs">
+                        <button class="tab-btn active" data-filter="all">ALL</button>
+                        <button class="tab-btn" data-filter="long">LONG</button>
+                        <button class="tab-btn" data-filter="short">SHORT</button>
+                    </div>
+                    <div id="cross-etf-toggles" style="display:flex; gap:4px; flex-wrap:wrap;"></div>
                 </div>
             </div>
             <div class="chart-wrap">
                 <canvas id="chartCross"></canvas>
-                <div id="cross-tooltip" style="position:absolute; display:none; background:rgba(0,0,0,0.8); padding:8px; border:1px solid #333; border-radius:4px; font-size:0.7rem; pointer-events:none;"></div>
+                <div id="cross-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:6px; font-size:0.7rem; pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:140px;"></div>
             </div>
         </div>
     </main>
+
+    <footer>
+        <div class="footer-content">
+            <span>NAT GAS ETF Flow Monitor | Data via TrackInsight + Yahoo Finance</span>
+            <span>Flow Z-Score, Pressure Score & Divergence Detection are proprietary indicators</span>
+        </div>
+    </footer>
 
 <script>
 // Formatters
@@ -334,7 +362,11 @@ const state = {
     activeTicker: 'BOIL',
     timeRange: 'all',
     crossFilter: 'all', // all, long, short
-    hoverIdx: null
+    hoverIdx: null,
+    hoverZIdx: null,
+    hoverCrossIdx: null,
+    crossToggles: { 'BOIL': true, 'HNU': true, '3NGL': true, 'KOLD': true, 'HND': true, '3NGS': true },
+    zoom: { start: 0, end: 1 } // 0-1 range within getVisibleData base result
 };
 
 // Elements
@@ -374,6 +406,7 @@ async function init() {
                 document.querySelectorAll('#time-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
                 b.classList.add('active');
                 state.timeRange = b.dataset.range;
+                state.zoom = { start: 0, end: 1 }; // reset zoom on range change
                 loadTickerDataAndRender();
                 loadAllTickersForCross(); // refresh cross chart timeline
             });
@@ -384,9 +417,18 @@ async function init() {
                 document.querySelectorAll('#cross-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
                 b.classList.add('active');
                 state.crossFilter = b.dataset.filter;
+                // Update toggles to match filter
+                const longs = ['BOIL', 'HNU', '3NGL'], shorts = ['KOLD', 'HND', '3NGS'];
+                if (b.dataset.filter === 'all') Object.keys(state.crossToggles).forEach(tk => state.crossToggles[tk] = true);
+                else if (b.dataset.filter === 'long') { longs.forEach(tk => state.crossToggles[tk] = true); shorts.forEach(tk => state.crossToggles[tk] = false); }
+                else if (b.dataset.filter === 'short') { longs.forEach(tk => state.crossToggles[tk] = false); shorts.forEach(tk => state.crossToggles[tk] = true); }
+                updateCrossToggleUI();
                 renderCrossChart();
             });
         });
+
+        // Build ETF toggle chips
+        buildCrossToggles();
 
         // Initialize first chart data
         await loadTickerDataAndRender();
@@ -397,6 +439,19 @@ async function init() {
         el('chartB').addEventListener('mousemove', handleHover);
         el('chartA').addEventListener('mouseleave', hideHover);
         el('chartB').addEventListener('mouseleave', hideHover);
+
+        // Scroll-to-zoom on main charts
+        ['chartA', 'chartB', 'chartZ'].forEach(id => {
+            el(id).addEventListener('wheel', handleChartWheel, { passive: false });
+        });
+
+        // Z-Score chart hover
+        el('chartZ').addEventListener('mousemove', handleZHover);
+        el('chartZ').addEventListener('mouseleave', hideZHover);
+
+        // Cross chart hover
+        el('chartCross').addEventListener('mousemove', handleCrossHover);
+        el('chartCross').addEventListener('mouseleave', hideCrossHover);
         
     } catch (e) {
         console.error("Failed to init", e);
@@ -491,6 +546,23 @@ function renderSection2() {
     el('col-short').innerHTML += shorts.map(createCard).join('');
 }
 
+// Compute split-adjusted prices by chaining perf_pct backwards from latest NAV
+function computeAdjustedPrices(tickerData) {
+    const data = tickerData.data;
+    if (!data || data.length === 0) return;
+    if (data[0].adj_nav !== undefined) return; // already computed
+
+    // Start from the last row: its nav IS the current (adjusted) price
+    // Walk backwards: adj_nav[i] = adj_nav[i+1] / (1 + perf_pct[i+1])
+    const n = data.length;
+    data[n - 1].adj_nav = data[n - 1].nav;
+    for (let i = n - 2; i >= 0; i--) {
+        const nextReturn = data[i + 1].perf_pct || 0;
+        const divisor = 1 + nextReturn;
+        data[i].adj_nav = divisor !== 0 ? data[i + 1].adj_nav / divisor : data[i].nav;
+    }
+}
+
 async function loadTickerDataAndRender() {
     el('loading-overlay').style.display = 'flex';
     const tk = state.activeTicker;
@@ -498,6 +570,7 @@ async function loadTickerDataAndRender() {
         try {
             const res = await fetch(`data/flows/${tk}_flows.json`);
             state.cache[tk] = await res.json();
+            computeAdjustedPrices(state.cache[tk]);
         } catch (e) {
             console.error("Failed to load data for", tk);
             el('loading-overlay').style.display = 'none';
@@ -517,24 +590,31 @@ async function loadTickerDataAndRender() {
     el('loading-overlay').style.display = 'none';
 }
 
-function getVisibleData() {
+function getBaseVisibleData() {
     const allData = state.cache[state.activeTicker].data;
     if (state.timeRange === 'all') return allData;
-    
-    // limit based on timeRange
+
     let days = 30;
     if (state.timeRange === '1m') days = 30;
     else if (state.timeRange === '3m') days = 90;
     else if (state.timeRange === '6m') days = 180;
     else if (state.timeRange === '1y') days = 365;
     else if (state.timeRange === '3y') days = 1095;
-    
+
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
     const cutoffStr = cutoffDate.toISOString().slice(0, 10);
-    
+
     const idx = allData.findIndex(d => d.date >= cutoffStr);
     return idx === -1 ? allData : allData.slice(idx);
+}
+
+function getVisibleData() {
+    const base = getBaseVisibleData();
+    if (state.zoom.start === 0 && state.zoom.end === 1) return base;
+    const s = Math.floor(state.zoom.start * base.length);
+    const e = Math.ceil(state.zoom.end * base.length);
+    return base.slice(Math.max(0, s), Math.min(base.length, e));
 }
 
 function updateStatsRow() {
@@ -571,6 +651,12 @@ function renderCharts() {
     drawChartA(data);
     drawChartB(data);
     drawChartZ(data);
+
+    // Zoom indicator
+    const zi = el('zoom-indicator');
+    if (zi) {
+        zi.style.display = (state.zoom.start > 0.001 || state.zoom.end < 0.999) ? 'block' : 'none';
+    }
 }
 
 function drawChartA(data) {
@@ -586,7 +672,7 @@ function drawChartA(data) {
     // Normalize cum flow to 0 at start of visible range
     const startCum = data[0].cumulative_flow;
     const flows = data.map(d => d.cumulative_flow - startCum);
-    const navs = data.map(d => d.nav);
+    const navs = data.map(d => d.adj_nav !== undefined ? d.adj_nav : d.nav);
     
     const fMax = Math.max(...flows), fMin = Math.min(...flows);
     const fRange = Math.max(fMax - fMin, 1);
@@ -649,7 +735,7 @@ function drawChartA(data) {
     ctxA.stroke();
     
     // Axes text
-    ctxA.fillStyle = 'var(--text-dim)'; ctxA.font = '10px sans-serif';
+    ctxA.fillStyle = '#94a3b8'; ctxA.font = '10px monospace';
     ctxA.textAlign = 'right';
     ctxA.fillText(fmtUsd(fMax), pad.left - 8, pad.top + 5);
     ctxA.fillText(fmtUsd(fMin), pad.left - 8, pad.top + chartH);
@@ -676,7 +762,7 @@ function drawChartA(data) {
         ctxA.strokeStyle = 'rgba(255,255,255,0.2)'; ctxA.setLineDash([2,2]); ctxA.stroke(); ctxA.setLineDash([]);
         
         ctxA.beginPath(); ctxA.arc(hx, getFY(flows[state.hoverIdx]), 4, 0, Math.PI*2);
-        ctxA.fillStyle = isNetPos ? 'var(--green)' : 'var(--red)'; ctxA.fill();
+        ctxA.fillStyle = isNetPos ? '#3db87a' : '#ef4444'; ctxA.fill();
         
         ctxA.beginPath(); ctxA.arc(hx, getNY(navs[state.hoverIdx]), 4, 0, Math.PI*2);
         ctxA.fillStyle = '#fff'; ctxA.fill();
@@ -686,13 +772,13 @@ function drawChartA(data) {
 function drawChartB(data) {
     const cvs = el('chartB');
     const { w, h, dpr } = resizeCanvas(cvs);
-    ctxB.scale(dpr, dpr);
+    ctxB.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctxB.clearRect(0, 0, w, h);
     
-    const pad = { top: 10, right: 60, bottom: 20, left: 60 };
+    const pad = { top: 10, right: 60, bottom: 28, left: 60 };
     const chartW = w - pad.left - pad.right;
     const chartH = h - pad.top - pad.bottom;
-    
+
     const maxBar = Math.max(...data.map(d => Math.abs(d.usd_flow)), 1);
     
     const getX = i => pad.left + (i / (data.length - 1)) * chartW;
@@ -718,11 +804,21 @@ function drawChartB(data) {
     ctxB.beginPath(); ctxB.moveTo(pad.left, y0); ctxB.lineTo(w - pad.right, y0);
     ctxB.strokeStyle = 'rgba(255,255,255,0.1)'; ctxB.stroke();
     
-    // IMP 3: Y-axis Labels for Chart B
-    ctxB.fillStyle = 'var(--text-dim)'; ctxB.font = '10px sans-serif'; ctxB.textAlign = 'right';
+    // Y-axis Labels for Chart B
+    ctxB.fillStyle = '#94a3b8'; ctxB.font = '10px monospace'; ctxB.textAlign = 'right';
     ctxB.fillText(fmtUsd(maxBar), pad.left - 8, pad.top + 10);
     ctxB.fillText(fmtUsd(-maxBar), pad.left - 8, pad.top + chartH - 2);
-    
+
+    // X-axis date labels for Chart B
+    ctxB.textAlign = 'center';
+    const numLabelsB = 5;
+    for (let i = 0; i < numLabelsB; i++) {
+        const idx = Math.floor(i * (data.length - 1) / (numLabelsB - 1));
+        if (data[idx]) {
+            ctxB.fillText(data[idx].date.substring(5), getX(idx), pad.top + chartH + 12);
+        }
+    }
+
     if (state.hoverIdx !== null && state.hoverIdx < data.length) {
         let hx = getX(state.hoverIdx);
         ctxB.beginPath(); ctxB.moveTo(hx, pad.top); ctxB.lineTo(hx, pad.top + chartH);
@@ -733,32 +829,39 @@ function drawChartB(data) {
 function drawChartZ(data) {
     const cvs = el('chartZ');
     const { w, h, dpr } = resizeCanvas(cvs);
-    ctxZ.scale(dpr, dpr);
+    ctxZ.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctxZ.clearRect(0, 0, w, h);
-    
-    const pad = { top: 20, right: 20, bottom: 20, left: 40 };
+
+    const pad = { top: 20, right: 20, bottom: 32, left: 45 };
     const chartW = w - pad.left - pad.right;
     const chartH = h - pad.top - pad.bottom;
-    
+
     const getX = i => pad.left + (i / (data.length - 1)) * chartW;
-    
+
     // Fixed scale for Z-score -3 to +3 usually, but fit to data if larger
     const maxZ = Math.max(3, ...data.map(d => Math.abs(d.flow_zscore)));
     const getY = val => pad.top + chartH/2 - (val / maxZ) * (chartH/2);
-    
+
     // Safe zones bands
     ctxZ.fillStyle = 'rgba(61,184,122,0.05)';
     ctxZ.fillRect(pad.left, pad.top, chartW, getY(1.5) - pad.top);
     ctxZ.fillStyle = 'rgba(239,68,68,0.05)';
     ctxZ.fillRect(pad.left, getY(-1.5), chartW, pad.top + chartH - getY(-1.5));
-    
-    // Lines
+
+    // Threshold lines
     ctxZ.strokeStyle = 'rgba(255,255,255,0.2)'; ctxZ.setLineDash([4,4]);
     ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(1.5)); ctxZ.lineTo(pad.left+chartW, getY(1.5)); ctxZ.stroke();
     ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(-1.5)); ctxZ.lineTo(pad.left+chartW, getY(-1.5)); ctxZ.stroke();
     ctxZ.strokeStyle = 'rgba(255,255,255,0.4)'; ctxZ.setLineDash([]);
     ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(0)); ctxZ.lineTo(pad.left+chartW, getY(0)); ctxZ.stroke();
-    
+
+    // Zone labels (right side)
+    ctxZ.font = '9px sans-serif'; ctxZ.textAlign = 'left';
+    ctxZ.fillStyle = 'rgba(61,184,122,0.5)';
+    ctxZ.fillText('ACCUMULATION', pad.left + 4, getY(1.5) + 11);
+    ctxZ.fillStyle = 'rgba(239,68,68,0.5)';
+    ctxZ.fillText('DISTRIBUTION', pad.left + 4, getY(-1.5) - 4);
+
     // The Z-Score line
     ctxZ.beginPath();
     ctxZ.lineWidth = 1.5;
@@ -767,20 +870,47 @@ function drawChartZ(data) {
         if (i===0) ctxZ.moveTo(x, y);
         else ctxZ.lineTo(x, y);
     }
-    
-    // Gradient based on values (above 1.5 = green, below -1.5 = red, else neutral)
+
     const strokeGrad = ctxZ.createLinearGradient(0, pad.top, 0, pad.top + chartH);
     strokeGrad.addColorStop(0, 'rgba(61,184,122,1)');
     strokeGrad.addColorStop(0.5, 'rgba(148,163,184,0.6)');
     strokeGrad.addColorStop(1, 'rgba(239,68,68,1)');
     ctxZ.strokeStyle = strokeGrad;
     ctxZ.stroke();
-    
+
     // Y-labels
-    ctxZ.fillStyle = 'var(--text-dim)'; ctxZ.font = '10px sans-serif'; ctxZ.textAlign = 'right';
+    ctxZ.fillStyle = '#94a3b8'; ctxZ.font = '10px monospace'; ctxZ.textAlign = 'right';
+    ctxZ.fillText('+' + maxZ.toFixed(1), pad.left - 5, pad.top + 5);
     ctxZ.fillText('+1.5', pad.left - 5, getY(1.5) + 3);
-    ctxZ.fillText('-1.5', pad.left - 5, getY(-1.5) + 3);
     ctxZ.fillText('0', pad.left - 5, getY(0) + 3);
+    ctxZ.fillText('-1.5', pad.left - 5, getY(-1.5) + 3);
+    ctxZ.fillText('-' + maxZ.toFixed(1), pad.left - 5, pad.top + chartH + 3);
+
+    // X-axis date labels
+    ctxZ.textAlign = 'center'; ctxZ.fillStyle = '#94a3b8'; ctxZ.font = '9px monospace';
+    const numLabels = Math.min(7, data.length);
+    for (let i = 0; i < numLabels; i++) {
+        const idx = Math.floor(i * (data.length - 1) / (numLabels - 1));
+        if (data[idx]) {
+            ctxZ.fillText(data[idx].date.substring(5), getX(idx), pad.top + chartH + 14);
+        }
+    }
+
+    // Hover crosshair + highlight
+    if (state.hoverZIdx !== null && state.hoverZIdx >= 0 && state.hoverZIdx < data.length) {
+        const hi = state.hoverZIdx;
+        const hx = getX(hi);
+        const hy = getY(data[hi].flow_zscore);
+
+        ctxZ.beginPath(); ctxZ.moveTo(hx, pad.top); ctxZ.lineTo(hx, pad.top + chartH);
+        ctxZ.strokeStyle = 'rgba(255,255,255,0.2)'; ctxZ.setLineDash([2,2]); ctxZ.lineWidth = 1; ctxZ.stroke(); ctxZ.setLineDash([]);
+
+        const zVal = data[hi].flow_zscore;
+        const dotColor = zVal >= 1.5 ? '#3db87a' : (zVal <= -1.5 ? '#ef4444' : '#94a3b8');
+        ctxZ.beginPath(); ctxZ.arc(hx, hy, 5, 0, Math.PI*2);
+        ctxZ.fillStyle = dotColor; ctxZ.fill();
+        ctxZ.strokeStyle = '#fff'; ctxZ.lineWidth = 1.5; ctxZ.stroke();
+    }
 }
 
 // ---- Hover Interaction ----
@@ -808,7 +938,7 @@ function handleHover(e) {
         tooltip.style.display = 'block';
         tooltip.innerHTML = `
             <div class="tt-date">${d.date}</div>
-            <div class="tt-row"><span class="tt-lbl">NAV</span> <span class="tt-val">$${d.nav.toFixed(2)}</span></div>
+            <div class="tt-row"><span class="tt-lbl">NAV (Adj)</span> <span class="tt-val">$${(d.adj_nav !== undefined ? d.adj_nav : d.nav).toFixed(2)}</span></div>
             <div class="tt-row"><span class="tt-lbl">Daily Flow</span> <span class="tt-val" style="color:${d.usd_flow>=0?'var(--green)':'var(--red)'}">${fmtUsd(d.usd_flow)}</span></div>
             <div class="tt-row"><span class="tt-lbl">Net Cumul.</span> <span class="tt-val" style="color:${(d.cumulative_flow - data[0].cumulative_flow)>=0?'var(--green)':'var(--red)'}">${fmtUsd(d.cumulative_flow - data[0].cumulative_flow)}</span></div>
             <div class="tt-row"><span class="tt-lbl">Z-Score</span> <span class="tt-val">${d.flow_zscore.toFixed(2)}</span></div>
@@ -829,6 +959,146 @@ function hideHover() {
     state.hoverIdx = null;
     tooltip.style.display = 'none';
     renderCharts();
+}
+
+// ---- Scroll-to-Zoom ----
+function handleChartWheel(e) {
+    e.preventDefault();
+    const rect = e.target.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const padL = 60, padR = 60;
+    const chartW = rect.width - padL - padR;
+    // Mouse position as fraction within chart
+    const frac = Math.max(0, Math.min(1, (x - padL) / chartW));
+
+    const zoomFactor = 0.1;
+    const dir = e.deltaY > 0 ? 1 : -1; // scroll down = zoom out, up = zoom in
+    const range = state.zoom.end - state.zoom.start;
+    const delta = range * zoomFactor * dir;
+
+    // Zoom around mouse position
+    let newStart = state.zoom.start - delta * frac;
+    let newEnd = state.zoom.end + delta * (1 - frac);
+
+    // Clamp
+    if (newStart < 0) { newEnd -= newStart; newStart = 0; }
+    if (newEnd > 1) { newStart -= (newEnd - 1); newEnd = 1; }
+    newStart = Math.max(0, newStart);
+    newEnd = Math.min(1, newEnd);
+
+    // Minimum zoom: 20 data points
+    const base = getBaseVisibleData();
+    const minRange = Math.min(1, 20 / base.length);
+    if (newEnd - newStart < minRange) return;
+
+    state.zoom.start = newStart;
+    state.zoom.end = newEnd;
+
+    renderCharts();
+}
+
+// ---- Z-Score Chart Hover ----
+function handleZHover(e) {
+    const cvs = el('chartZ');
+    const rect = cvs.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const data = getVisibleData();
+    if (!data.length) return;
+
+    const padL = 45, padR = 20;
+    const chartW = rect.width - padL - padR;
+    if (x >= padL && x <= rect.width - padR) {
+        let pct = (x - padL) / chartW;
+        let idx = Math.round(pct * (data.length - 1));
+        idx = Math.max(0, Math.min(idx, data.length - 1));
+        state.hoverZIdx = idx;
+
+        const d = data[idx];
+        const zCol = d.flow_zscore >= 1.5 ? 'var(--green)' : (d.flow_zscore <= -1.5 ? 'var(--red)' : '#94a3b8');
+        tooltip.style.display = 'block';
+        tooltip.innerHTML = `
+            <div class="tt-date">${d.date}</div>
+            <div class="tt-row"><span class="tt-lbl">Z-Score</span> <span class="tt-val" style="color:${zCol}">${d.flow_zscore >= 0 ? '+' : ''}${d.flow_zscore.toFixed(2)}</span></div>
+            <div class="tt-row"><span class="tt-lbl">Daily Flow</span> <span class="tt-val" style="color:${d.usd_flow>=0?'var(--green)':'var(--red)'}">${fmtUsd(d.usd_flow)}</span></div>
+            <div class="tt-row"><span class="tt-lbl">Regime</span> <span class="tt-val">${d.regime || 'BALANCED'}</span></div>
+        `;
+        let tx = e.clientX + 15;
+        if (tx + 180 > window.innerWidth) tx = e.clientX - 180 - 15;
+        tooltip.style.left = tx + 'px';
+        tooltip.style.top = (e.clientY - 40) + 'px';
+    } else {
+        hideZHover();
+    }
+    drawChartZ(data);
+}
+
+function hideZHover() {
+    state.hoverZIdx = null;
+    tooltip.style.display = 'none';
+    const data = getVisibleData();
+    if (data && data.length > 0) drawChartZ(data);
+}
+
+// ---- Cross Chart Hover ----
+function handleCrossHover(e) {
+    const cvs = el('chartCross');
+    const rect = cvs.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+
+    const padL = 60, padR = 60;
+    const chartW = rect.width - padL - padR;
+    const crossTooltip = el('cross-tooltip');
+    if (x >= padL && x <= rect.width - padR) {
+        const baseData = state.cache['BOIL']?.data;
+        if (!baseData) return;
+
+        let days = state.timeRange === 'all' ? 9999 : {'1m':30,'3m':90,'6m':180,'1y':365,'3y':1095}[state.timeRange] || 9999;
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+        const cutoffStr = cutoffDate.toISOString().slice(0, 10);
+        let startIdxBase = baseData.findIndex(d => d.date >= cutoffStr);
+        if (startIdxBase === -1) startIdxBase = 0;
+        const visibleDates = baseData.slice(startIdxBase).map(d => d.date);
+
+        let pct = (x - padL) / chartW;
+        let idx = Math.round(pct * (visibleDates.length - 1));
+        idx = Math.max(0, Math.min(idx, visibleDates.length - 1));
+        state.hoverCrossIdx = idx;
+
+        const date = visibleDates[idx];
+        let html = `<div style="color:#00ffff; font-weight:800; margin-bottom:4px; font-size:0.65rem;">${date}</div>`;
+        const tickers = Object.keys(state.crossToggles).filter(tk => state.crossToggles[tk]);
+        tickers.forEach(tk => {
+            const d = state.cache[tk]?.data;
+            if (!d) return;
+            const dateIdx = {};
+            for (let j = 0; j < d.length; j++) dateIdx[d[j].date] = d[j];
+            const match = dateIdx[date];
+            if (match) {
+                let startIdx = d.findIndex(x => x.date >= visibleDates[0]);
+                if (startIdx === -1) startIdx = 0;
+                const offset = d[startIdx].cumulative_flow;
+                const norm = match.cumulative_flow - offset;
+                html += `<div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:${colors[tk]};font-weight:700;">${tk}</span><span style="font-family:monospace;">${fmtUsd(norm)}</span></div>`;
+            }
+        });
+
+        crossTooltip.style.display = 'block';
+        crossTooltip.innerHTML = html;
+        let tx = e.clientX - rect.left + 15;
+        if (tx + 160 > rect.width) tx = e.clientX - rect.left - 160 - 15;
+        crossTooltip.style.left = tx + 'px';
+        crossTooltip.style.top = (e.clientY - rect.top - 40) + 'px';
+    } else {
+        hideCrossHover();
+    }
+    renderCrossChart();
+}
+
+function hideCrossHover() {
+    state.hoverCrossIdx = null;
+    el('cross-tooltip').style.display = 'none';
+    renderCrossChart();
 }
 
 // ---- Divergence Engine ----
@@ -892,12 +1162,49 @@ function renderDivergence() {
     }
 }
 
+// ---- Cross ETF Toggle Chips ----
+function buildCrossToggles() {
+    const container = el('cross-etf-toggles');
+    if (!container) return;
+    container.innerHTML = '';
+    ['BOIL', 'HNU', '3NGL', 'KOLD', 'HND', '3NGS'].forEach(tk => {
+        const chip = document.createElement('span');
+        chip.className = 'etf-chip active';
+        chip.textContent = tk;
+        chip.style.color = colors[tk];
+        chip.style.borderColor = colors[tk];
+        chip.style.background = colors[tk] + '20';
+        chip.addEventListener('click', () => {
+            state.crossToggles[tk] = !state.crossToggles[tk];
+            updateCrossToggleUI();
+            renderCrossChart();
+        });
+        container.appendChild(chip);
+    });
+}
+
+function updateCrossToggleUI() {
+    const container = el('cross-etf-toggles');
+    if (!container) return;
+    const chips = container.querySelectorAll('.etf-chip');
+    chips.forEach(chip => {
+        const tk = chip.textContent;
+        if (state.crossToggles[tk]) {
+            chip.className = 'etf-chip active';
+            chip.style.background = colors[tk] + '20';
+        } else {
+            chip.className = 'etf-chip inactive';
+            chip.style.background = 'transparent';
+        }
+    });
+}
+
 // ---- Cross ETF Chart ----
 async function loadAllTickersForCross() {
     const tickers = ['BOIL', 'HNU', '3NGL', 'KOLD', 'HND', '3NGS'];
     const proms = tickers.map(tk => {
         if (!state.cache[tk]) {
-            return fetch(`data/flows/${tk}_flows.json`).then(r => r.json()).then(d => { state.cache[tk] = d; });
+            return fetch(`data/flows/${tk}_flows.json`).then(r => r.json()).then(d => { state.cache[tk] = d; computeAdjustedPrices(d); });
         }
         return Promise.resolve();
     });
@@ -916,10 +1223,9 @@ function renderCrossChart() {
     const chartW = w - pad.left - pad.right;
     const chartH = h - pad.top - pad.bottom;
     
-    let tickers = [];
-    if (state.crossFilter === 'all') tickers = ['BOIL', 'HNU', '3NGL', 'KOLD', 'HND', '3NGS'];
-    if (state.crossFilter === 'long') tickers = ['BOIL', 'HNU', '3NGL'];
-    if (state.crossFilter === 'short') tickers = ['KOLD', 'HND', '3NGS'];
+    // Use toggle state for which ETFs to show
+    let tickers = Object.keys(state.crossToggles).filter(tk => state.crossToggles[tk]);
+    if (tickers.length === 0) tickers = ['BOIL']; // fallback
     
     // Find common date domain length based on timeRange
     // To simplify, use BOIL dates to align
@@ -1012,19 +1318,36 @@ function renderCrossChart() {
     });
     
     // axes labels
-    ctxCross.fillStyle = 'var(--text-dim)'; ctxCross.font = '10px sans-serif'; ctxCross.textAlign = 'right';
+    ctxCross.fillStyle = '#94a3b8'; ctxCross.font = '10px monospace'; ctxCross.textAlign = 'right';
     ctxCross.fillText(fmtUsd(globalMax), pad.left - 5, pad.top + 5);
     ctxCross.fillText(fmtUsd(globalMin), pad.left - 5, pad.top + chartH);
 
-    // IMP 1: X-axis Labels for Cross-ETF
+    // X-axis Labels for Cross-ETF
     ctxCross.textAlign = 'center';
-    const numLabels = 5;
+    const numLabels = 7;
     for (let i = 0; i < numLabels; i++) {
         const idx = Math.floor(i * (visibleDates.length - 1) / (numLabels - 1));
         if (visibleDates[idx]) {
             const dateStr = visibleDates[idx].substring(5); // MM-DD
             ctxCross.fillText(dateStr, getX(idx), pad.top + chartH + 15);
         }
+    }
+
+    // Crosshair on hover
+    if (state.hoverCrossIdx !== null && state.hoverCrossIdx < visibleDates.length) {
+        const hx = getX(state.hoverCrossIdx);
+        ctxCross.beginPath(); ctxCross.moveTo(hx, pad.top); ctxCross.lineTo(hx, pad.top + chartH);
+        ctxCross.strokeStyle = 'rgba(255,255,255,0.2)'; ctxCross.setLineDash([2,2]); ctxCross.lineWidth = 1; ctxCross.stroke(); ctxCross.setLineDash([]);
+
+        // Dots on each line
+        tickers.forEach(tk => {
+            const val = series[tk]?.[state.hoverCrossIdx];
+            if (val !== undefined) {
+                ctxCross.beginPath(); ctxCross.arc(hx, getY(val), 4, 0, Math.PI*2);
+                ctxCross.fillStyle = colors[tk]; ctxCross.fill();
+                ctxCross.strokeStyle = '#fff'; ctxCross.lineWidth = 1; ctxCross.stroke();
+            }
+        });
     }
 }
 
