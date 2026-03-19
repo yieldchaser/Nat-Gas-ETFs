@@ -961,6 +961,47 @@ function renderCrossChart() {
 // Init
 init();
 
+// Universal Tooltip System
+(function () {
+    const tt = document.createElement('div');
+    tt.id = 'tt';
+    document.body.appendChild(tt);
+    let active = null;
+    function show(el) {
+        if (el === active && tt.style.display === 'block') return;
+        active = el;
+        tt.innerHTML = el.getAttribute('data-tooltip');
+        tt.style.display = 'block';
+        tt.style.opacity = '0';
+        requestAnimationFrame(function () {
+            const r = el.getBoundingClientRect();
+            const tw = tt.offsetWidth;
+            const th = tt.offsetHeight;
+            const pad = 8;
+            let x = r.left + r.width / 2 - tw / 2;
+            let y = r.top - th - 8;
+            if (y < pad) y = r.bottom + 8;
+            x = Math.max(pad, Math.min(x, window.innerWidth - tw - pad));
+            tt.style.left = x + 'px';
+            tt.style.top = y + 'px';
+            tt.style.opacity = '1';
+        });
+    }
+    function hide() {
+        tt.style.opacity = '0';
+        tt.style.display = 'none';
+        active = null;
+    }
+    document.addEventListener('mouseover', function (e) {
+        const el = e.target.closest('[data-tooltip]');
+        if (el) show(el);
+    });
+    document.addEventListener('mouseout', function (e) {
+        const el = e.target.closest('[data-tooltip]');
+        if (el && (!e.relatedTarget || !el.contains(e.relatedTarget))) hide();
+    });
+}());
+
 </script>
 </body>
 </html>
