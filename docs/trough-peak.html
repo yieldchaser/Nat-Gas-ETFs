@@ -124,25 +124,28 @@ input[type=range]:hover::-moz-range-thumb {
  
  /* ---- MICRO ANALYTICS (IN-CARD) ---- */
  .micro-analytics {
-     margin-top: 4px;
-     padding-top: 8px;
-     border-top: 1px solid rgba(255,255,255,0.05);
+     margin-top: 6px;
+     padding-top: 10px;
+     border-top: 1px solid rgba(255,255,255,0.06);
      display: flex;
      flex-direction: column;
-     gap: 3px;
+     gap: 7px; /* Increased vertical breathing room */
  }
  .micro-line {
      display: flex;
      justify-content: space-between;
+     align-items: center;
      font-size: 0.58rem;
      font-weight: 700;
      color: var(--text-dim);
-     letter-spacing: 0.3px;
+     letter-spacing: 0.2px;
      white-space: nowrap;
  }
- .micro-label { color: var(--text-muted); text-transform: uppercase; font-size: 0.52rem; }
- .micro-group { display: flex; gap: 8px; }
+ .micro-label { color: var(--text-muted); text-transform: uppercase; font-size: 0.5rem; opacity: 0.7; letter-spacing: 0.5px; }
+ .micro-group { display: flex; align-items: center; gap: 6px; }
  .sig-pos { font-weight: 800; color: var(--text-bright); }
+ .str-val { opacity: 0.85; } /* Secondary hierarchy */
+ .ctx-val { opacity: 0.7; color: var(--text-dim); font-weight: 600; } /* Tertiary hierarchy */
  .breakout-text { color: #fff; text-shadow: 0 0 8px rgba(0,255,255,0.6); font-weight: 900; }
 
 /* ---- CHART SECTION ---- */
@@ -807,15 +810,15 @@ function renderCards() {
                         <span class="micro-label">Cyc:</span>
                         <span class="sig-pos ${isBreakout?'breakout-text':''}" style="color:${isBreakout?'':cycColor}">${cycPosStr}</span>
                     </div>
-                    <div class="micro-group">
+                    <div class="micro-group" style="margin-left:auto">
                         <span class="micro-label">Str:</span>
-                        <span class="sig-pos" style="color:${strColor}">${strStr}</span>
+                        <span class="sig-pos str-val" style="color:${strColor}">${strStr}</span>
                     </div>
                 </div>
-                <div class="micro-line">
+                <div class="micro-line ctx-val">
                     <span>1M: ${m1}</span><span>3M: ${m3}</span><span>6M: ${m6}</span>
                 </div>
-                <div class="micro-line">
+                <div class="micro-line ctx-val" style="margin-top:2px">
                     <span>&darr;Pk: ${distPk}</span>
                     <span>&uarr;Tr: ${distTr}</span>
                 </div>
