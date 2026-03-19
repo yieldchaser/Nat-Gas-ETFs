@@ -761,16 +761,16 @@ function renderCards() {
         }
 
         // 3. Multi-Horizon (1M, 3M, 6M)
-        const getRangePos = (len, name) => {
+        const getRangePos = (len, name, label) => {
             if (d.closes.length < len) return '--';
             const slice = d.closes.slice(-len);
             const min = Math.min(...slice), max = Math.max(...slice);
             if (max === min) return '50%';
             const val = Math.round(((lastPrice - min) / (max - min)) * 100);
             const colorClass = val <= 30 ? 'soft-green' : val > 70 ? 'soft-red' : '';
-            return `<span class="${colorClass}" data-tooltip="Relative Price Position: Percentile ranking within the ${name} price range (Green ≤30%, Red >70%).">${val}%</span>`;
+            return `<span data-tooltip="Relative Price Position: Percentile ranking within the ${name} price range (Green ≤30%, Red >70%).">${label}: <span class="${colorClass}">${val}%</span></span>`;
         };
-        const m1 = getRangePos(21, '21-day'), m3 = getRangePos(63, '63-day'), m6 = getRangePos(126, '126-day');
+        const m1 = getRangePos(21, '21-day', '1M'), m3 = getRangePos(63, '63-day', '3M'), m6 = getRangePos(126, '126-day', '6M');
 
         // 4. Distances & Range
         let distPk = '--', distTr = '--', rngStr = '--';
@@ -782,13 +782,13 @@ function renderCards() {
             const pkClass = pkVal > -10 ? 'soft-red' : '';
             const trClass = trVal < 10 ? 'soft-green' : '';
             
-            distPk = `<span class="${pkClass}" data-tooltip="Real-time percentage distance below the most recent confirmed cycle peak (Red if within 10%).">${pkVal}%</span>`;
-            distTr = `<span class="${trClass}" data-tooltip="Real-time percentage distance above the most recent confirmed cycle trough (Green if within 10%).">${trVal >= 0 ? '+' : ''}${trVal}%</span>`;
+            distPk = `<span data-tooltip="Real-time percentage distance below the most recent confirmed cycle peak (Red if within 10%).">&darr;Pk: <span class="${pkClass}">${pkVal}%</span></span>`;
+            distTr = `<span data-tooltip="Real-time percentage distance above the most recent confirmed cycle trough (Green if within 10%).">&uarr;Tr: <span class="${trClass}">${trVal >= 0 ? '+' : ''}${trVal}%</span></span>`;
         }
         if (d.closes.length > 1) {
             const slice30 = d.closes.slice(-30);
             const rMin = Math.min(...slice30), rMax = Math.max(...slice30);
-            rngStr = `<span data-tooltip="30-day Range Compression: (30D Max - 30D Min) / 30D Min. Context for recent price expansion or contraction.">${Math.round(((rMax - rMin) / rMin) * 100)}%</span>`;
+            rngStr = `<span data-tooltip="30-day Range Compression: (30D Max - 30D Min) / 30D Min. Context for recent price expansion or contraction.">Rng: ${Math.round(((rMax - rMin) / rMin) * 100)}%</span>`;
         }
 
         return `<div class="kpi-card">
@@ -835,12 +835,10 @@ function renderCards() {
                     </div>
                 </div>
                 <div class="micro-line ctx-val">
-                    <span>1M: ${m1}</span><span>3M: ${m3}</span><span>6M: ${m6}</span>
+                    ${m1}${m3}${m6}
                 </div>
                 <div class="micro-line ctx-val" style="margin-top:2px">
-                    <span>&darr;Pk: ${distPk}</span>
-                    <span>&uarr;Tr: ${distTr}</span>
-                    <span>Rng: ${rngStr}</span>
+                    ${distPk}${distTr}${rngStr}
                 </div>
             </div>
         </div>`;
