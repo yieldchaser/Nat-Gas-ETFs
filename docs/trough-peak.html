@@ -135,13 +135,13 @@ input[type=range]:hover::-moz-range-thumb {
      display: flex;
      justify-content: space-between;
      align-items: center;
-     font-size: 0.58rem;
+     font-size: 0.7rem; /* Scaled up for readability (+2px) */
      font-weight: 700;
      color: var(--text-dim);
-     letter-spacing: 0.2px;
+     letter-spacing: 0.1px;
      white-space: nowrap;
  }
- .micro-label { color: var(--text-muted); text-transform: uppercase; font-size: 0.5rem; opacity: 0.7; letter-spacing: 0.5px; }
+ .micro-label { color: var(--text-muted); text-transform: uppercase; font-size: 0.6rem; opacity: 0.7; letter-spacing: 0.5px; }
  .micro-group { display: flex; align-items: center; gap: 6px; }
  .sig-pos { font-weight: 800; color: var(--text-bright); }
  .str-val { opacity: 0.85; } /* Secondary hierarchy */
@@ -765,12 +765,17 @@ function renderCards() {
         };
         const m1 = getRangePos(21), m3 = getRangePos(63), m6 = getRangePos(126);
 
-        // 4. Distances
-        let distPk = '--', distTr = '--';
+        // 4. Distances & Range
+        let distPk = '--', distTr = '--', rngStr = '--';
         if (cycles.length > 0) {
             const lastC = cycles[cycles.length - 1];
             distPk = Math.round(((lastPrice / lastC.peakPrice) - 1) * 100) + '%';
             distTr = '+' + Math.round(((lastPrice / lastC.troughPrice) - 1) * 100) + '%';
+        }
+        if (d.closes.length > 1) {
+            const slice30 = d.closes.slice(-30);
+            const rMin = Math.min(...slice30), rMax = Math.max(...slice30);
+            rngStr = Math.round(((rMax - rMin) / rMin) * 100) + '%';
         }
 
         return `<div class="kpi-card">
@@ -821,6 +826,7 @@ function renderCards() {
                 <div class="micro-line ctx-val" style="margin-top:2px">
                     <span>&darr;Pk: ${distPk}</span>
                     <span>&uarr;Tr: ${distTr}</span>
+                    <span>Rng: ${rngStr}</span>
                 </div>
             </div>
         </div>`;
