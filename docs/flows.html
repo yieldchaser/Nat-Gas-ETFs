@@ -634,7 +634,7 @@ async function init() {
         });
         
         document.querySelectorAll('#time-tabs .tab-btn').forEach(b => {
-            b.addEventListener('click', (e) => {
+            b.addEventListener('click', async (e) => {
                 document.querySelectorAll('#time-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
                 b.classList.add('active');
                 state.timeRange = b.dataset.range;
