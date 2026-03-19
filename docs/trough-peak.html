@@ -760,16 +760,16 @@ function renderCards() {
         }
 
         // 3. Multi-Horizon (1M, 3M, 6M)
-        const getRangePos = (len) => {
+        const getRangePos = (len, name) => {
             if (d.closes.length < len) return '--';
             const slice = d.closes.slice(-len);
             const min = Math.min(...slice), max = Math.max(...slice);
             if (max === min) return '50%';
             const val = Math.round(((lastPrice - min) / (max - min)) * 100);
             const colorClass = val <= 30 ? 'soft-green' : val > 70 ? 'soft-red' : '';
-            return `<span class="${colorClass}">${val}%</span>`;
+            return `<span class="${colorClass}" data-tooltip="Relative Price Position: Percentile ranking within the ${name} price range.">${val}%</span>`;
         };
-        const m1 = getRangePos(21), m3 = getRangePos(63), m6 = getRangePos(126);
+        const m1 = getRangePos(21, '21-day'), m3 = getRangePos(63, '63-day'), m6 = getRangePos(126, '126-day');
 
         // 4. Distances & Range
         let distPk = '--', distTr = '--', rngStr = '--';
@@ -781,13 +781,13 @@ function renderCards() {
             const pkClass = pkVal > -10 ? 'soft-red' : '';
             const trClass = trVal < 10 ? 'soft-green' : '';
             
-            distPk = `<span class="${pkClass}">${pkVal}%</span>`;
-            distTr = `<span class="${trClass}">+${trVal}%</span>`;
+            distPk = `<span class="${pkClass}" data-tooltip="Real-time percentage distance below the most recent confirmed cycle peak.">${pkVal}%</span>`;
+            distTr = `<span class="${trClass}" data-tooltip="Real-time percentage distance above the most recent confirmed cycle trough.">${trVal >= 0 ? '+' : ''}${trVal}%</span>`;
         }
         if (d.closes.length > 1) {
             const slice30 = d.closes.slice(-30);
             const rMin = Math.min(...slice30), rMax = Math.max(...slice30);
-            rngStr = Math.round(((rMax - rMin) / rMin) * 100) + '%';
+            rngStr = `<span data-tooltip="30-day Range Compression: (30D Max - 30D Min) / 30D Min. Context for recent price expansion or contraction.">${Math.round(((rMax - rMin) / rMin) * 100)}%</span>`;
         }
 
         return `<div class="kpi-card">
@@ -823,12 +823,12 @@ function renderCards() {
 
             <div class="micro-analytics">
                 <div class="micro-line">
-                    <div class="micro-group" style="flex:1">
+                    <div class="micro-group" style="flex:1" data-tooltip="Tracks current price progress from trough (0%) toward the last confirmed peak (100%). Clamped at 120% for breakouts.">
                         <span class="micro-label">Cyc:</span>
                         <span class="sig-pos ${isBreakout?'breakout-text':''}" style="color:${isBreakout?'':cycColor}">${cycPosStr}</span>
                     </div>
-                    <div class="regime-label">${cycLabel}</div>
-                    <div class="micro-group" style="flex:1; justify-content:flex-end">
+                    <div class="regime-label" data-tooltip="Cycle Maturity: Early (≤30%), Mid (30-70%), Late (70-100%), and Extreme (>100% breakout).">${cycLabel}</div>
+                    <div class="micro-group" style="flex:1; justify-content:flex-end" data-tooltip="Stretch Index: Z-score of the 3-day return vs. 30-day volatility. Highlights overextended (+2σ) or compressed (-2σ) states.">
                         <span class="micro-label">Str:</span>
                         <span class="sig-pos str-val" style="color:${strColor}">${strStr}</span>
                     </div>
