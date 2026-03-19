@@ -380,6 +380,46 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     .slider-label { display: none; } /* value display is enough on very small screens */
     table.cycle-table { min-width: 460px; font-size: 0.65rem; }
 }
+
+/* ---- YEARLY MATRIX ---- */
+.matrix-panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+.matrix-header { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+.matrix-title { font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; color: var(--text-dim); text-transform: uppercase; }
+
+.matrix-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.matrix-table th { 
+    padding: 10px 8px; 
+    font-size: 0.65rem; 
+    color: var(--text-dim); 
+    text-transform: uppercase; 
+    text-align: center;
+    border-bottom: 2px solid var(--bg-secondary);
+}
+.matrix-table td { 
+    padding: 12px 8px; 
+    font-size: 0.75rem; 
+    color: var(--text-primary); 
+    text-align: center; 
+    font-family: 'JetBrains Mono', monospace;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.matrix-row:hover td { background: rgba(255,255,255,0.02); }
+.matrix-year { color: var(--cyan); font-weight: 800; text-align: left !important; width: 80px; }
+.matrix-count { font-weight: 700; }
+.matrix-count.has-data { color: var(--text-primary); }
+.matrix-count.no-data { color: var(--text-dim); opacity: 0.3; }
+
+@media (max-width: 768px) {
+    .matrix-panel { padding: 14px; }
+    .matrix-table { min-width: 580px; }
+    .matrix-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
 </style>
 </head>
 <body>
@@ -477,6 +517,16 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
                 <div class="legend-item" data-tooltip="Cycle gain 100–200% — price doubled or more"><span class="legend-symbol" style="background:rgba(80,144,160,0.15)"></span> &ge;100%</div>
                 <div class="legend-item" data-tooltip="Cycle gain 50–100% — strong but sub-double rally"><span class="legend-symbol" style="background:rgba(212,168,48,0.15)"></span> &ge;50%</div>
             </div>
+        </div>
+    </div>
+
+    <!-- YEARLY FREQUENCY MATRIX -->
+    <div class="matrix-panel">
+        <div class="matrix-header">
+            <span class="matrix-title">Yearly Opportunity Frequency</span>
+        </div>
+        <div class="matrix-table-wrap" id="matrix-container">
+            <!-- populated by JS -->
         </div>
     </div>
 
@@ -1254,6 +1304,55 @@ function renderTable() {
     </table>`;
 }
 
+function renderYearlyMatrix() {
+    const container = document.getElementById('matrix-container');
+    if (!container) return;
+
+    const allYears = new Set();
+    const tickerFreq = {}; // Ticker -> Year -> Count
+
+    for (const t of TICKERS) {
+        tickerFreq[t.label] = {};
+        const cycles = state.cycles[t.symbol] || [];
+        cycles.forEach(c => {
+            const year = c.troughDate.slice(0, 4);
+            allYears.add(year);
+            tickerFreq[t.label][year] = (tickerFreq[t.label][year] || 0) + 1;
+        });
+    }
+
+    const sortedYears = Array.from(allYears).sort((a, b) => b - a);
+
+    if (sortedYears.length === 0) {
+        container.innerHTML = `<div class="val-muted" style="text-align:center; padding:20px; font-size:0.7rem;">NO CYCLES DETECTED AT THIS THRESHOLD</div>`;
+        return;
+    }
+
+    let html = `<table class="matrix-table">
+        <thead>
+            <tr>
+                <th class="matrix-year">YEAR</th>
+                ${TICKERS.map(t => `<th data-tooltip="${t.tip}">${t.label}</th>`).join('')}
+            </tr>
+        </thead>
+        <tbody>`;
+
+    sortedYears.forEach(year => {
+        html += `<tr class="matrix-row">
+            <td class="matrix-year">${year}</td>`;
+        TICKERS.forEach(t => {
+            const count = tickerFreq[t.label][year] || 0;
+            const cls = count > 0 ? 'has-data' : 'no-data';
+            const display = count > 0 ? count : '--';
+            html += `<td class="matrix-count ${cls}">${display}</td>`;
+        });
+        html += `</tr>`;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+}
+
 // ── Filter tabs ───────────────────────────────────────────────────────────────
 function initFilterTabs() {
     document.querySelectorAll('.tab-btn[data-filter]').forEach(btn => {
@@ -1274,6 +1373,7 @@ function renderAll() {
     state.drag.currentIdx = null;
     recompute();
     renderCards();
+    renderYearlyMatrix();
     renderChartTabs();
     renderChart();
     renderTable();
