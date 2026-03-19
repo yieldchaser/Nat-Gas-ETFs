@@ -192,7 +192,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
                 <div class="s-val val-muted" id="sent-long">--</div>
             </div>
             <div class="sentiment-center">
-                <div class="s-center-label">CROSS-ETF SENTIMENT (30D)</div>
+                <div class="s-center-label" data-tooltip="Overall capital sentiment. Measures the net 30-day directional flow among all 6 tracked ETFs.">CROSS-ETF SENTIMENT (30D)</div>
                 <div class="s-bar-wrap">
                     <div class="s-bar-fill" id="sent-bar" style="width: 50%; background: var(--text-dim);"></div>
                 </div>
@@ -208,11 +208,11 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
         <!-- Section 2 -->
         <div class="summary-grid">
             <div class="side-col" id="col-long">
-                <div class="side-header">LONG SIDE (2X / 3X)</div>
+                <div class="side-header" data-tooltip="Capital flows into ETFs that profit when Natural Gas prices go up (BOIL, HNU.TO, 3NGL.L).">LONG SIDE (2X / 3X)</div>
                 <!-- Cards injected here -->
             </div>
             <div class="side-col" id="col-short">
-                <div class="side-header">SHORT SIDE (2X / 3X)</div>
+                <div class="side-header" data-tooltip="Capital flows into ETFs that profit when Natural Gas prices go down (KOLD, HND.TO, 3NGS.L).">SHORT SIDE (2X / 3X)</div>
                 <!-- Cards injected here -->
             </div>
         </div>
@@ -245,11 +245,11 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 
             <!-- Stats Row -->
             <div class="stats-row" id="stats-row">
-                <div class="st-item"><div class="st-lbl">Z-Score</div><div class="st-val" id="st-z">--</div></div>
-                <div class="st-item"><div class="st-lbl">5D Mom</div><div class="st-val" id="st-mom5">--</div></div>
-                <div class="st-item"><div class="st-lbl">20D Mom</div><div class="st-val" id="st-mom20">--</div></div>
-                <div class="st-item"><div class="st-lbl">Regime</div><div class="st-val" id="st-reg">--</div></div>
-                <div class="st-item"><div class="st-lbl">Pressure</div><div class="st-val" id="st-pres">--</div></div>
+                <div class="st-item"><div class="st-lbl" data-tooltip="Current flow Z-Score. Measures how unusual today's flow is compared to the 30-day average.">Z-Score</div><div class="st-val" id="st-z">--</div></div>
+                <div class="st-item"><div class="st-lbl" data-tooltip="5-day rolling net flow momentum.">5D Mom</div><div class="st-val" id="st-mom5">--</div></div>
+                <div class="st-item"><div class="st-lbl" data-tooltip="20-day rolling net flow momentum.">20D Mom</div><div class="st-val" id="st-mom20">--</div></div>
+                <div class="st-item"><div class="st-lbl" data-tooltip="Current regime classification based on Z-Score (Accumulation > 1.5, Distribution < -1.5, otherwise Balanced).">Regime</div><div class="st-val" id="st-reg">--</div></div>
+                <div class="st-item"><div class="st-lbl" data-tooltip="Flow Pressure Score (0-100). Combines Z-Score, 5D Momentum, and Consecutive Flow Streaks into a single metric.">Pressure</div><div class="st-val" id="st-pres">--</div></div>
             </div>
 
             <div class="chart-wrap">
@@ -260,17 +260,17 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
         <!-- Section 4 -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title">Flow vs Price Divergence (Last 90 Days)</div>
+                <div class="panel-title" data-tooltip="Scans the last 90 days for instances where price and capital flow moved in opposite directions. Divergences can signal stealth accumulation or distribution.">Flow vs Price Divergence (Last 90 Days)</div>
             </div>
             <table class="div-table">
                 <thead>
                     <tr>
-                        <th>DATE</th>
-                        <th>DURATION</th>
-                        <th>TYPE</th>
-                        <th>PRICE MOVE</th>
-                        <th>NET FLOW</th>
-                        <th>SIGNAL</th>
+                        <th data-tooltip="Date the divergence was detected.">DATE</th>
+                        <th data-tooltip="Number of days the divergence persisted.">DURATION</th>
+                        <th data-tooltip="Type of divergence: Bullish (Price down, Flow in) or Bearish (Price up, Flow out).">TYPE</th>
+                        <th data-tooltip="Percentage price move during the divergence window.">PRICE MOVE</th>
+                        <th data-tooltip="Total net capital flow during the divergence window.">NET FLOW</th>
+                        <th data-tooltip="The resulting signal implied by the divergence.">SIGNAL</th>
                     </tr>
                 </thead>
                 <tbody id="div-body">
@@ -282,7 +282,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
         <!-- Section 5 -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title">Flow Z-Score History</div>
+                <div class="panel-title" data-tooltip="Historical chart of the flow Z-Score. Helps visualize the frequency and magnitude of accumulation and distribution events.">Flow Z-Score History</div>
                 <span style="font-size:0.65rem; color:var(--text-dim); text-transform:uppercase;">Tracks extremes vs 30-day baseline</span>
             </div>
             <div class="chart-wrap">
@@ -293,9 +293,9 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
         <!-- Section 6 -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title">Cross-ETF Cumulative Flow Comparison</div>
+                <div class="panel-title" data-tooltip="Compare cumulative capital flows continuously across multiple ETFs.">Cross-ETF Cumulative Flow Comparison</div>
                 <div class="tab-group time-tabs" id="cross-tabs">
-                    <button class="tab-btn active" data-filter="all">ALL</button>
+                    <button class="tab-btn active" data-filter="all">ALL</button>>
                     <button class="tab-btn" data-filter="long">LONG ONLY</button>
                     <button class="tab-btn" data-filter="short">SHORT ONLY</button>
                 </div>
@@ -453,20 +453,20 @@ function renderSection2() {
             </div>
             <div class="fc-main">
                 <div class="fc-metric">
-                    <div class="fc-m-lbl">30D Net Flow</div>
+                    <div class="fc-m-lbl" data-tooltip="Total net capital flow over the last 30 trading days.">30D Net Flow</div>
                     <div class="fc-m-val ${d.last_30d_net >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(d.last_30d_net)}</div>
                 </div>
                 <div class="fc-metric">
-                    <div class="fc-m-lbl">Z-Score</div>
+                    <div class="fc-m-lbl" data-tooltip="Current flow Z-Score. Values > 1.5 suggest accumulation, < -1.5 suggest distribution.">Z-Score</div>
                     <div class="fc-m-val ${zCol}">${d.zscore >= 0 ? '+' : ''}${d.zscore.toFixed(1)}</div>
                 </div>
                 <div class="mom-row" style="grid-column: 1 /span 2;">
-                    <div class="mom-item">5D MOM: <span class="${d.flow_5d >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(d.flow_5d)}</span></div>
-                    <div class="mom-item">20D MOM: <span class="${d.flow_20d >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(d.flow_20d)}</span></div>
+                    <div class="mom-item" data-tooltip="5-day rolling net flow momentum.">5D MOM: <span class="${d.flow_5d >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(d.flow_5d)}</span></div>
+                    <div class="mom-item" data-tooltip="20-day rolling net flow momentum.">20D MOM: <span class="${d.flow_20d >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(d.flow_20d)}</span></div>
                 </div>
             </div>
             <div class="fc-right">
-                <div class="fc-pres-lbl">PRESSURE</div>
+                <div class="fc-pres-lbl" data-tooltip="Flow Pressure Score (0-100). Combines Z-Score, 5D Momentum, and Consecutive Flow Streaks into a single metric.">PRESSURE</div>
                 <div class="fc-pres-val ${d.pressure >= 0 ? 'val-green' : 'val-red'}">${d.pressure >=0 ? '+' : ''}${d.pressure}</div>
             </div>
         </div>`;
