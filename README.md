@@ -43,10 +43,16 @@ A dedicated professional-grade recovery analyzer (found at `/trough-peak.html`) 
 
 - **Identifies Recovery Cycles** using a parameterized ZigZag algorithm.
 - **Dynamic Thresholding** — Adjust the % rally required to confirm a trough-to-peak move (0% to 300%).
+- **Micro-Analytics Suite** — High-density in-card metrics:
+  - **Cyc / Regime**: Tracks price progress from trough (0%) to peak (100%) with maturity tagging (**Early**, **Mid**, **Late**, **Extreme**).
+  - **Str**: Stretch Index (Z-score of 3rd return vs 3rd volatility).
+  - **1M/3M/6M**: Percentile ranking within relative price ranges.
+  - **↓Pk / ↑Tr**: Real-time distance from the most recent cycle peak/trough.
+  - **Rng**: 30-day range compression (volatility context).
+- **Wait-Time Analysis (GAP)** — Tracks "Idle Days" between sessions (Previous Peak to Current Trough) in both the historical table and CSV export.
+- **Unified Tooltip Engine** — Every metric on the dashboard is self-documenting with expanded hit areas covering both labels and values.
 - **Interactive Canvas Charting** — A high-performance, vanilla JS chart with custom zoom (date brush), crosshair, and real-time tooltips.
-- **KPI Summary Grid** — Instantly calculates Avg Gain, Avg Days, Max Gain, and Cycle Count across all 6 ETFs for any window.
-- **Excel-Compatible CSV Export** — One-click download of filtered cycle data including trough/peak dates, prices, and percentage returns.
-- **Multi-Ticker Synchronization** — Seamlessly toggle between KOLD, BOIL, HNU, HND, 3NGL, and 3NGS while maintaining zoom state.
+- **KPI Summary Grid** — Instantly calculates Avg Gain, Avg Days, Avg Gap, and Max/Min Gain across all 6 ETFs for any window.
 
 ### ETF Cards
 
