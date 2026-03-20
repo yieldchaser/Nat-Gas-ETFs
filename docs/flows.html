@@ -365,7 +365,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <span style="font-size:0.75rem; color:var(--cyan); letter-spacing:2px; font-weight:600;">NAT GAS ETFs</span>
             </div>
             <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; line-height:1.6; max-width:800px;">
-                Tracks daily capital inflows and outflows across all 6 leveraged ETFs. Flow Z-Score, pressure score, and divergence detection identify accumulation and distribution events in real time. <span style="color:var(--cyan); font-weight:600;">Short ETF colors are inverted — outflows = bullish, inflows = bearish.</span>
+                Tracks daily capital inflows and outflows across all 6 leveraged ETFs. Flow Z-Score, pressure score, and divergence detection identify accumulation and distribution events in real time.
             </div>
         </div>
 
@@ -910,15 +910,14 @@ function renderSection1() {
     el('sent-long-sub').textContent = longFlow >= 0 ? '▲ Smart money long' : '▼ Longs reducing';
     el('sent-long-sub').style.color = longFlow >= 0 ? 'var(--green)' : 'var(--red)';
 
-    // Short side: bear_flow_30d negative = outflows from shorts = bullish = green
+    // Short side: unbiased — inflows = green (accumulating), outflows = red (declining)
     const shortFlow = data.bear_flow_30d;
-    const shortIsBullish = shortFlow <= 0; // exits from shorts = bullish
     el('sent-short').textContent = fmtUsd(shortFlow);
-    el('sent-short').className = `s-val ${shortIsBullish ? 'val-green' : 'val-red'}`;
-    el('sent-short-sub').textContent = shortIsBullish ? '▲ Shorts being unwound' : '▼ Short entries rising';
-    el('sent-short-sub').style.color = shortIsBullish ? 'var(--green)' : 'var(--red)';
+    el('sent-short').className = `s-val ${shortFlow >= 0 ? 'val-green' : 'val-red'}`;
+    el('sent-short-sub').textContent = shortFlow >= 0 ? '▲ Shorts accumulating' : '▼ Shorts declining';
+    el('sent-short-sub').style.color = shortFlow >= 0 ? 'var(--green)' : 'var(--red)';
 
-    // Split bar: shows share of absolute flow between long and short sides
+    // Split bar: share of absolute flow between long and short sides
     const absLong  = Math.abs(longFlow);
     const absShort = Math.abs(shortFlow);
     const total    = absLong + absShort;
@@ -927,9 +926,8 @@ function renderSection1() {
 
     el('sent-bar-long').style.width  = `${longPct.toFixed(1)}%`;
     el('sent-bar-short').style.width = `${shortPct.toFixed(1)}%`;
-    // Color the bars by sentiment direction
     el('sent-bar-long').style.background  = longFlow  >= 0 ? 'var(--green)' : 'var(--red)';
-    el('sent-bar-short').style.background = shortIsBullish ? 'rgba(61,184,122,0.5)' : 'var(--red)';
+    el('sent-bar-short').style.background = shortFlow >= 0 ? 'var(--green)' : 'var(--red)';
 
     el('sent-pct-long').textContent  = `LONG ${longPct.toFixed(0)}%`;
     el('sent-pct-short').textContent = `SHORT ${shortPct.toFixed(0)}%`;
@@ -943,43 +941,21 @@ function renderSection2() {
     const longs = ['BOIL', 'HNU', '3NGL'];
     const shorts = ['KOLD', 'HND', '3NGS'];
 
-    // For SHORT ETFs: inflow (+) = bearish for nat gas = RED; outflow (-) = bullish = GREEN
-    // For LONG ETFs:  inflow (+) = bullish for nat gas = GREEN; outflow (-) = bearish = RED
-    const flowColor = (tk, val) => {
-        const isShort = shorts.includes(tk);
-        const isBullish = isShort ? val <= 0 : val >= 0;
-        return isBullish ? 'val-green' : 'val-red';
-    };
+    // Unbiased: green = inflows (accumulation), red = outflows (distribution) for all ETFs
+    const flowColor = (tk, val) => val >= 0 ? 'val-green' : 'val-red';
 
     const createCard = (tk) => {
         const d = state.summary.tickers[tk];
         if (!d) return '';
-        const isShort = shorts.includes(tk);
 
-        // Regime badge: semantically inverted for short ETFs
-        // Short: ACCUMULATION (inflows) = bearish = red   DISTRIBUTION (outflows) = bullish = green
-        // Long:  ACCUMULATION (inflows) = bullish = green  DISTRIBUTION (outflows) = bearish = red
-        let regClass;
-        if (d.regime === 'BALANCED') {
-            regClass = 'val-muted';
-        } else if (d.regime === 'ACCUMULATION') {
-            regClass = isShort ? 'bg-bear' : 'bg-bull';
-        } else {
-            regClass = isShort ? 'bg-bull' : 'bg-bear';
-        }
+        // Regime badge: ACCUMULATION = green (inflows), DISTRIBUTION = red (outflows)
+        const regClass = d.regime === 'ACCUMULATION' ? 'bg-bull' : d.regime === 'BALANCED' ? 'val-muted' : 'bg-bear';
 
-        // Z-Score color: side-aware
-        let zCol;
-        if (isShort) {
-            zCol = d.zscore >= 1.5 ? 'val-red' : (d.zscore <= -1.5 ? 'val-green' : 'val-muted');
-        } else {
-            zCol = d.zscore >= 1.5 ? 'val-green' : (d.zscore <= -1.5 ? 'val-red' : 'val-muted');
-        }
+        // Z-Score: positive = more inflows = green, negative = more outflows = red
+        const zCol = d.zscore >= 1.5 ? 'val-green' : (d.zscore <= -1.5 ? 'val-red' : 'val-muted');
 
-        // Pressure: for short ETFs, positive pressure = bearish; invert display color
-        const presCol = isShort
-            ? (d.pressure <= 0 ? 'val-green' : 'val-red')
-            : (d.pressure >= 0 ? 'val-green' : 'val-red');
+        // Pressure: positive = buying pressure = green, negative = selling pressure = red
+        const presCol = d.pressure >= 0 ? 'val-green' : 'val-red';
 
         const bc = tk === state.activeTicker ? `border-color:${colors[tk]}; box-shadow: 0 0 12px ${colors[tk]}40;` : '';
 
@@ -995,7 +971,7 @@ function renderSection2() {
             </div>
             <div class="fc-main">
                 <div class="fc-metric">
-                    <div class="fc-m-lbl" data-tooltip="Net capital flow last 30 days. SHORT ETFs: outflow (−) = bullish.">30D NET</div>
+                    <div class="fc-m-lbl" data-tooltip="Net capital flow last 30 days. Positive = inflows (accumulation), negative = outflows (distribution).">30D NET</div>
                     <div class="fc-m-val ${flowColor(tk, d.last_30d_net)}">${fmtUsd(d.last_30d_net)}</div>
                 </div>
                 <div class="fc-metric">
@@ -1008,7 +984,7 @@ function renderSection2() {
                 </div>
             </div>
             <div class="fc-right">
-                <div class="fc-pres-lbl" data-tooltip="Pressure Score (−100 to +100). For short ETFs: negative = bullish (exits), positive = bearish.">PRESS.</div>
+                <div class="fc-pres-lbl" data-tooltip="Pressure Score (−100 to +100). Positive = buying pressure (inflows), negative = selling pressure (outflows).">PRESS.</div>
                 <div class="fc-pres-val ${presCol}">${d.pressure >= 0 ? '+' : ''}${d.pressure}</div>
                 <div class="fc-pres-bar-wrap">
                     <div class="fc-pres-bar-fill" style="width:${presAbs}%;background:${presBarCol};"></div>
