@@ -541,14 +541,6 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <div class="panel">
             <div class="panel-header">
                 <div class="panel-title" data-tooltip="Z-Score of daily flow over time. Spikes signal unusual accumulation or distribution.">Flow Z-Score History</div>
-                <div class="tab-group" id="z-etf-tabs" style="margin-right:8px;">
-                    <button class="tab-btn active" data-zticker="BOIL" onclick="selectZTicker(this)" style="color:#F5C542;">BOIL</button>
-                    <button class="tab-btn" data-zticker="HNU"  onclick="selectZTicker(this)" style="color:#E8924A;">HNU</button>
-                    <button class="tab-btn" data-zticker="3NGL" onclick="selectZTicker(this)" style="color:#C4773A;">3NGL</button>
-                    <button class="tab-btn" data-zticker="KOLD" onclick="selectZTicker(this)" style="color:#4A9CF5;">KOLD</button>
-                    <button class="tab-btn" data-zticker="HND"  onclick="selectZTicker(this)" style="color:#4DD4EA;">HND</button>
-                    <button class="tab-btn" data-zticker="3NGS" onclick="selectZTicker(this)" style="color:#A07AF5;">3NGS</button>
-                </div>
                 <div class="tab-group time-tabs" id="z-time-tabs">
                     <button class="tab-btn" data-range="1w">1W</button>
                     <button class="tab-btn" data-range="1m">1M</button>
@@ -563,6 +555,8 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <div class="chart-wrap">
                 <canvas id="chartZ"></canvas>
             </div>
+            <!-- Z-Score ETF selector -->
+            <div id="z-etf-tabs" style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap; margin-top:8px;"></div>
             <!-- Z-Score independent range slider -->
             <div class="range-slider-container" style="margin-top:8px;">
                 <div class="range-slider-wrap">
@@ -861,6 +855,7 @@ async function init() {
 
         // Build ETF toggle chips
         buildCrossToggles();
+        buildZEtfChips();
 
         // Initialize first chart data
         await loadTickerDataAndRender();
@@ -1069,12 +1064,34 @@ async function loadTickerDataAndRender() {
     el('loading-overlay').style.display = 'none';
 }
 
-async function selectZTicker(btn) {
-    const tk = btn.dataset.zticker;
+function buildZEtfChips() {
+    const container = el('z-etf-tabs');
+    if (!container) return;
+    container.innerHTML = '';
+    ['BOIL','HNU','3NGL','KOLD','HND','3NGS'].forEach(tk => {
+        const chip = document.createElement('button');
+        chip.className = tk === state.activeZTicker ? 'etf-chip active' : 'etf-chip';
+        chip.textContent = tk;
+        chip.style.color = colors[tk];
+        chip.style.borderColor = colors[tk];
+        chip.style.background = tk === state.activeZTicker ? colors[tk] + '20' : 'transparent';
+        chip.style.opacity = tk === state.activeZTicker ? '1' : '0.45';
+        chip.addEventListener('click', () => selectZTicker(tk));
+        container.appendChild(chip);
+    });
+}
+
+async function selectZTicker(tk) {
     state.activeZTicker = tk;
     state.zoomZ = { start: 0, end: 1 };
-    document.querySelectorAll('#z-etf-tabs .tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    // Update chip styles
+    const container = el('z-etf-tabs');
+    container.querySelectorAll('.etf-chip').forEach(chip => {
+        const active = chip.textContent === tk;
+        chip.className = active ? 'etf-chip active' : 'etf-chip';
+        chip.style.background = active ? colors[chip.textContent] + '20' : 'transparent';
+        chip.style.opacity = active ? '1' : '0.45';
+    });
     if (!state.cache[tk]) {
         try {
             const res = await fetch(`data/flows/${tk}_flows.json`);
