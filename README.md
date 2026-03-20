@@ -1,291 +1,293 @@
 # Nat Gas ETF Volume Monitor
 
-A real-time dashboard for tracking volume flow and price-volume dynamics across natural gas ETFs. Combines daily pipeline data from Yahoo Finance with a multi-timeframe volatility engine to surface statistically significant volume events.
+A real-time dashboard for tracking volume flow and price-volume dynamics across natural gas ETFs. Combines daily pipeline data from Yahoo Finance and TrackInsight with a multi-timeframe volatility engine to surface statistically significant volume and capital flow events.
 
 **Live Dashboard:** [https://yieldchaser.github.io/Nat-Gas-ETFs/](https://yieldchaser.github.io/Nat-Gas-ETFs/)
 
+---
+
 ## Overview
 
-This project implements a multi-timeframe volume analysis engine that:
+This project implements three interconnected analytical engines:
 
-- **Detects volume anomalies** across 6 windows (5d/10d/21d/63d/126d/252d) using percentile ranking and Z-scores
-- **Models volatility** with historical volatility (HV), vol regime percentiles, ATR, and VoV (vol-of-vol)
-- **Synthesizes signals** via the **Volume Pressure Score (VPS)** — a 5-component composite metric
-- **Tracks historical echoes** — patterns showing price action following capitulation signals, with lead-time calibration and **regime-stratified forward returns**
-- **Monitors capitulation** with the **VCVI (Vol-Adjusted Capitulation Volume Index)** — CVI adjusted for volatility regime
-- **Detects weather spikes** with a 5d fast-window VCVI + ATR sharp-spike flag
-- **Gates signals** with a **seasonally-adjusted NG=F price z-score** (more meaningful than raw percentile for this commodity)
-- **Corrects for leveraged ETF decay** to prevent structural price drift from contaminating percentile signals
-- **Weights by season** (winter premium ×1.3, summer discount ×0.85)
-- **Measures price-volume correlation** across instruments — tracking the inverse relationship between volume spikes and price direction
-- **Classifies NG=F volatility regime** (normal / elevated / extreme) using price level, seasonal z-score, and NG's own realized vol percentile — tags every historical signal for regime-aware interpretation
+1. **Volume Monitor** (`index.html`) — Multi-timeframe volume anomaly detection, volatility modeling, and conviction event filtering across 6 leveraged ETFs.
+2. **Flow Monitor** (`flows.html`) — Daily capital flow tracking (AUM in/out), Z-Score history, pressure scoring, divergence detection, and cross-ETF comparison.
+3. **Trough-to-Peak Analyzer** (`trough-peak.html`) — Parameterized ZigZag recovery cycle identification with micro-analytics and forward-return context.
+
+---
 
 ## Instruments Tracked
 
-**LONG SIDE** (Bull):
-- **BOIL** – ProShares Ultra Bloomberg NG (2x leveraged, NYSE)
-- **HNU.TO** – BetaPro Natural Gas 2x Bull (2x leveraged, TSX)
-- **3NGL.L** – WisdomTree NG 3x Daily Long (3x leveraged, LSE)
+**LONG SIDE** (Bull — profit when Nat Gas rises):
+- **BOIL** – ProShares Ultra Bloomberg NG (2×, NYSE)
+- **HNU.TO** – BetaPro Natural Gas 2× Bull (2×, TSX)
+- **3NGL.L** – WisdomTree NG 3× Daily Long (3×, LSE)
 
-**SHORT SIDE** (Bear):
-- **KOLD** – ProShares UltraShort Bloomberg NG (2x inverse, NYSE)
-- **HND.TO** – BetaPro Natural Gas 2x Bear (2x inverse, TSX)
-- **3NGS.L** – WisdomTree NG 3x Daily Short (3x inverse, LSE)
+**SHORT SIDE** (Bear — profit when Nat Gas falls):
+- **KOLD** – ProShares UltraShort Bloomberg NG (2× inverse, NYSE)
+- **HND.TO** – BetaPro Natural Gas 2× Bear (2× inverse, TSX)
+- **3NGS.L** – WisdomTree NG 3× Daily Short (3× inverse, LSE)
 
 **Underlying futures context:**
 - **NG=F** – NYMEX Henry Hub Natural Gas Futures (signal gate only — not traded)
 
-## Dashboard Features
+> **Color convention across all dashboards:** For SHORT ETFs, color is semantically inverted — outflows (−) are shown green (bullish: shorts being unwound) and inflows (+) are shown red (bearish: new short entries). Long ETFs follow the standard convention.
 
-### Trough-to-Peak Analyzer
+---
 
-A dedicated professional-grade recovery analyzer (found at `/trough-peak.html`) that:
+## Dashboard Pages
 
-- **Identifies Recovery Cycles** using a parameterized ZigZag algorithm.
-- **Dynamic Thresholding** — Adjust the % rally required to confirm a trough-to-peak move (0% to 300%).
-- **Micro-Analytics Suite** — High-density in-card metrics:
-  - **Cyc / Regime**: Tracks price progress from trough (0%) to peak (100%) with maturity tagging (**Early**, **Mid**, **Late**, **Extreme**).
-  - **Str**: Stretch Index (Z-score of 3rd return vs 3rd volatility).
-  - **1M/3M/6M**: Percentile ranking within relative price ranges.
-  - **↓Pk / ↑Tr**: Real-time distance from the most recent cycle peak/trough.
-  - **Rng**: 30-day range compression (volatility context).
-- **Wait-Time Analysis (GAP)** — Tracks "Idle Days" between sessions (Previous Peak to Current Trough) in both the historical table and CSV export.
-- **Unified Tooltip Engine** — Every metric on the dashboard is self-documenting with expanded hit areas covering both labels and values.
-- **Interactive Canvas Charting** — A high-performance, vanilla JS chart with custom zoom (date brush), crosshair, and real-time tooltips.
-- **KPI Summary Grid** — Instantly calculates Avg Gain, Avg Days, Avg Gap, and Max/Min Gain across all 6 ETFs for any window.
+### 1. Flow Monitor (`flows.html`)
 
-### ETF Cards
+Tracks daily capital inflows and outflows (AUM changes) across all 6 ETFs via TrackInsight data. Identifies stealth accumulation, distribution events, and divergences between price and capital flow.
+
+#### Cross-ETF Sentiment Banner
+
+A split bar showing the balance of 30-day capital flows between long and short sides:
+- **Left (green)** — long-side flow share (BOIL + HNU + 3NGL). Inflows = bullish.
+- **Right (red)** — short-side flow share (KOLD + HND + 3NGS). Outflows = bullish (shorts unwinding).
+- Sub-labels explain direction: *"Shorts being unwound"* vs *"Short entries rising"*.
+- Overall sentiment badge: `BULLISH` / `BEARISH` / `NEUTRAL`.
+
+#### KPI Flow Cards (Long & Short Side)
+
+Compact cards — one per ETF — show at a glance:
+
+| Metric | Description |
+|--------|-------------|
+| **30D Net Flow** | Total net capital movement over 30 trading days |
+| **Z-Score** | How unusual today's flow is vs. the 30-day rolling average |
+| **5D / 20D Momentum** | Rolling short- and medium-term net flow |
+| **Regime** | `ACCUMULATION` (Z > +1.5) / `DISTRIBUTION` (Z < −1.5) / `BALANCED` |
+| **Pressure Score** | Composite −100→+100: Z-Score (25pts) + momentum factor + consecutive-streak bonus. Displayed with a mini fill bar. |
+
+All color logic is side-aware: short ETF cards invert green/red to reflect bullish/bearish meaning for Nat Gas price.
+
+Clicking any card loads that ETF in the Deep Dive panel.
+
+#### Deep Dive Chart Panel
+
+Select any ETF + time range (1W / 1M / 3M / 6M / 1Y / 3Y / ALL). Contains:
+
+1. **Cumulative Flow + Price chart** — Split-adjusted NAV price (white line) overlaid with cumulative net flow area (green = net inflows, red = net outflows from the visible range start). Drag to measure price and flow changes between two dates.
+2. **Global Range Slider** — Immediately below the top chart. Controls the zoom of **all charts on the page simultaneously** (cumulative chart, daily bars, Z-Score history, cross-ETF comparison). Scroll-wheel zoom also syncs.
+3. **Daily Flow Bars** — Green bars above zero = inflow days; red bars below = outflow days.
+4. **Stats Row** — Bottom of panel: Z-Score, 5D/20D momentum, Regime, Pressure for the active ETF.
+
+#### Flow vs Price Divergence Table
+
+Scans the active ETF's history for windows (3d / 5d / 10d) where price and flow moved in opposite directions by meaningful thresholds:
+
+- **Bullish Divergence** — Price fell >3% but net flow was positive (stealth accumulation).
+- **Bearish Divergence** — Price rose >3% but net flow was negative (distribution behind the rally).
+
+Filterable by lookback (90D / 6M / 1Y / ALL). Right-aligned numeric columns, alternating row tints.
+
+#### Flow Z-Score History Chart
+
+Full historical chart of the rolling flow Z-Score with:
+- Green shaded zone above +1.5σ (Accumulation)
+- Red shaded zone below −1.5σ (Distribution)
+- Zone labels right-aligned at chart edge
+- Hover crosshair with date, Z-Score, daily flow, and regime tooltip
+- Controlled by the global range slider
+
+#### Cross-ETF Cumulative Flow Comparison
+
+Overlaid cumulative flow lines for all 6 ETFs (normalized to zero at start of visible range). Features:
+- ETF toggle chips (click to show/hide individual ETFs)
+- Filter by side: ALL / LONG / SHORT
+- HTML legend below the chart (no canvas overlap or label collision)
+- Active ETF highlighted with thicker line and bold legend entry
+- Hover crosshair showing all visible ETF values at any date
+- Controlled by the global range slider
+
+#### Yearly Flow Activity Matrix
+
+Heatmap-style table showing the count of significant flow events (|Z-Score| ≥ 1.5) per year per ETF, alongside average Z-Score magnitude. Useful for identifying which years had the most active capital flow signals.
+
+---
+
+### 2. Volume Monitor (`index.html`)
+
+Multi-timeframe volume anomaly detection engine:
+
+- **Detects volume anomalies** across 6 windows (5d/10d/21d/63d/126d/252d) using percentile ranking and Z-scores
+- **Models volatility** with HV, vol regime percentiles, ATR, and VoV
+- **Synthesizes signals** via the **VPS (Volume Pressure Score)** — a 5-component composite
+- **Tracks historical echoes** — patterns showing price action following capitulation signals, with lead-time calibration and regime-stratified forward returns
+- **Monitors capitulation** with **VCVI** (Vol-Adjusted Capitulation Volume Index)
+- **Detects weather spikes** via 5d fast-window VCVI + ATR sharp-spike flag
+- **Gates signals** with a seasonally-adjusted NG=F price Z-score
+- **Corrects for leveraged ETF decay** to prevent structural price drift contaminating percentile signals
+- **Weights by season** (winter ×1.3, summer ×0.85)
+- **Classifies NG=F volatility regime** (normal / elevated / extreme)
+
+#### ETF Cards
 
 Each card shows:
 
-1. **Price & Change** — Current price, % daily change
-2. **Season Badge** — ❄ ×1.3 / ✿ ×1.0 / ☀ ×0.85 / ◈ ×1.0 (seasonal signal weight)
-3. **⚡ SPIKE Badge** — Flashes when 5d VCVI > 45 AND |move| > 2×ATR (weather event candidate)
-4. **Volume Metrics** — RVOL-21d, Z-Score, VROC-10d
-5. **Volume Percentile Bars** — 6 timeframes (5/10/21/63/126/252d)
-6. **Volatility Panel** — HV-10d/21d/63d, Vol Regime, ATR-14, Term Structure, VoV-21
-7. **VCVI Indicators** — 5d (fast), 21d (with decay-corrected †value), 63d
-8. **VPS + MWCA** — Composite score and multi-window alarm
-9. **Dollar Volume**
+1. Price & daily change, season badge, ⚡ SPIKE badge
+2. Volume metrics: RVOL-21d, Z-Score, VROC-10d
+3. Volume percentile bars: 6 timeframes (5/10/21/63/126/252d)
+4. Volatility panel: HV-10/21/63d, vol regime, ATR-14, term structure, VoV-21
+5. VCVI indicators: 5d fast, 21d (with decay-corrected †value), 63d
+6. VPS composite score + MWCA alarm
 
-### Signal Command Center
+#### Signal Command Center
 
-#### NG=F Gas Price Context Bar
-
-Sits at the top of the Signal Command Center. Shows the current NG=F price alongside a **seasonal z-score** bar — how many standard deviations above or below the typical price for this calendar month.
-
-**Why seasonal z-score instead of raw percentile?** Natural gas is one of the most volatile commodities on earth. It regularly traverses its entire 2-year price range in a single season. A 2-year percentile would show "mid" almost constantly and be meaningless. The seasonally-adjusted z-score answers the actionable question: *"Is gas anomalously high or low for this time of year?"*
+**NG=F Price Context Bar** — Seasonal Z-score gate:
 
 | Gate | Condition | Meaning |
 |------|-----------|---------|
-| **LONG ✓** | Seasonal z ≤ −1.5σ | Gas is unusually cheap for this month → long-side signals credible |
-| **SHORT ✓** | Seasonal z ≥ +1.5σ | Gas is unusually expensive for this month → short-side signals credible |
-| **Both ✗** | −1.5 < z < +1.5 | Gas is within its seasonal norm → signals are context-less, interpret with caution |
+| **LONG ✓** | Seasonal z ≤ −1.5σ | Gas anomalously cheap for the month → long signals credible |
+| **SHORT ✓** | Seasonal z ≥ +1.5σ | Gas anomalously expensive → short signals credible |
+| **Both ✗** | −1.5 < z < +1.5 | Gas within seasonal norm → interpret with caution |
 
-The bar also shows raw 2yr percentile for reference (in the tooltip).
+**Volatility Regime Badge:**
 
-**Volatility Regime Badge** — Displayed alongside the price bar. Natural gas can enter "ultra-volatile" outlier regimes where typical signal patterns may not hold:
+| Regime | Trigger | Behavior |
+|--------|---------|----------|
+| **● NORMAL** | Price ≤ $4.5, \|z\| < 1.5σ, NG HV < 70th pct | Signals behave as expected |
+| **⚠ ELEVATED** | Price > $4.5 OR \|z\| ≥ 1.5σ OR HV ≥ 70th pct | Interpret with caution |
+| **🚨 EXTREME** | Price > $7.0 OR \|z\| ≥ 2.5σ OR HV ≥ 90th pct | Outlier environment — historical patterns may invert |
 
-| Regime | Trigger (any one sufficient) | Behavior |
-|--------|------------------------------|----------|
-| **● NORMAL** | Price ≤ $4.5, \|z\| < 1.5σ, NG HV < 70th pct | Typical conditions — signals behave as expected |
-| **⚠ ELEVATED STRESS** | Price > $4.5 OR \|z\| ≥ 1.5σ OR NG HV ≥ 70th pct | Heightened conditions — interpret with added caution |
-| **🚨 EXTREME REGIME** | Price > $7.0 OR \|z\| ≥ 2.5σ OR NG HV ≥ 90th pct | Outlier environment (2022 ~$9/MMBtu, Jan 2026 >$7) — signal outcomes may not match historical patterns |
+**Conviction Events (5-gate filter, ~1–2/ETF/year):**
 
-A warning strip appears below the price bar when the regime is elevated or extreme. Every historical signal is tagged with its ambient regime — enabling regime-stratified backtesting (see Historical Echoes below).
+| Gate | Condition |
+|------|-----------|
+| 1 — Volume Capitulation | VCVI-21d ≥ 72 (or Extreme Override) |
+| 2 — Multi-Window Breadth | ≥ 3 of 5 windows ≥ 85th pct |
+| 3 — Price Dislocation | \|Daily move\| > 1.5× ATR-14 |
+| 4 — Regime Context | Vol regime ≤ 70th percentile |
+| 5 — NG Directional | Long: z ≤ −0.5σ · Short: z ≥ +0.2σ |
 
-#### Stress Matrix
+**Elevated Watch (3-gate, ~4–8/ETF/year):** softer thresholds (VCVI ≥ 60, 2/75 breadth, 1.2× ATR), no vol-regime constraint.
 
-| Column | Description |
+**Historical Echoes:** forward return study (5/10/21/42/63/126/252d windows) for all past VCVI ≥ 55 signals, with median lead-time to peak, season tags, regime-stratified return tables.
+
+---
+
+### 3. Trough-to-Peak Analyzer (`trough-peak.html`)
+
+Professional-grade recovery cycle identification:
+
+- **Parameterized ZigZag** — Adjustable % rally threshold (0–300%) to confirm trough-to-peak moves
+- **Micro-Analytics:** Cyc/Regime (maturity tagging), Stretch Index, 1M/3M/6M percentile ranks, distance from peak/trough, range compression
+- **Wait-Time Analysis (GAP)** — Idle days between cycles
+- **KPI Summary Grid** — Avg Gain, Avg Days, Avg Gap, Max/Min across all 6 ETFs
+- **Interactive Canvas** — Custom zoom brush, crosshair, real-time tooltips
+
+---
+
+## Core Metrics
+
+### Flow Metrics (`fetch_flows.py`)
+
+| Metric | Formula / Description |
+|--------|-----------------------|
+| **Daily Flow** | USD AUM change per day (TrackInsight) |
+| **Cumulative Flow** | Running sum of daily flows from inception |
+| **Flow Z-Score** | `(daily_flow − 30d_mean) / 30d_std` |
+| **Flow 5D / 20D** | Rolling 5-day and 20-day net flow sums |
+| **Regime** | `ACCUMULATION` (Z > +1.5) / `DISTRIBUTION` (Z < −1.5) / `BALANCED` |
+| **Pressure Score** | `Z×25 + momentum_factor + streak_bonus`, clamped to ±100 |
+| **Cross-ETF Sentiment** | Net 30d flows compared between long and short aggregates |
+
+### Volume Metrics (`data_pipeline.py`)
+
+| Metric | Description |
 |--------|-------------|
-| PAIR | ETF pair with season emoji |
-| LONG RVOL | Long-side 21d relative volume |
-| SHORT RVOL | Short-side 21d relative volume |
-| L-CAP | Long-side VCVI-63d (gas bottom signal) |
-| S-CAP | Short-side VCVI-63d (gas top signal) |
-| **FAST-5d** | 5d fast-window VCVI for L/S — catches weather spikes early |
-| **SPIKE** | ⚡ flag when 5d VCVI > 45 AND move > 2×ATR |
-| IPSI | Short RVOL ÷ Long RVOL ratio |
-| VOL REGIME | HV-21d vs its 252d history |
-| STATUS | QUIET / ELEVATED / STRESS / CRITICAL |
-
-#### Side-Wide Volume Convergence (SWVC)
-
-Tracks whether all 3 ETFs on the same side (e.g., KOLD + HND.TO + 3NGS.L) independently showed elevated volume within a rolling 10-trading-day window — even if the spikes did not occur on the same day.
-
-**The signal:** BOIL, HNU.TO, and 3NGL.L are listed on NYSE, TSX, and LSE respectively, trading in different time zones and held by different investor bases. When all three independently spike within ~2 weeks, it means separate market participant cohorts in the US, Canada, and UK are all acting — independent corroborating evidence.
-
-| Status | Meaning |
-|--------|---------|
-| **CONVERGED** | All 3 ETFs on same side spiked within 10 trading days |
-| **PARTIAL** | 2 of 3 ETFs active, or all 3 but spread > 10 days |
-| **SINGLE** | Only 1 ETF elevated |
-| **QUIET** | No spikes in last 15 days |
-
-#### Conviction Events — 5-Gate Filter (~1–2 events/ETF/year)
-
-A strict multi-gate filter designed to isolate true anomalies. **ALL gates must fire simultaneously:**
-
-| Gate | Condition | Rationale |
-|------|-----------|-----------|
-| **1 — Volume Capitulation** | VCVI-21d ≥ 72 (or Extreme Override) | Must reach "critical" vol-adjusted level |
-| **2 — Multi-Window Breadth** | ≥ 3 of 5 windows ≥ 85th pct | Broad-based surge, not single-window noise |
-| **3 — Price Dislocation** | \|Daily move\| > 1.5× ATR-14 | Actual price shock, not just volume |
-| **4 — Regime Context** | Vol regime ≤ 70th percentile | Non-turbulent env required (signals meaningful) |
-| **5 — NG Directional** | Long: seasonal z ≤ −0.5σ  \|  Short: seasonal z ≥ +0.2σ | Gas price must confirm the trade direction (asymmetric — short-side fires on early moves) |
-
-**Extreme Override** — Bypasses Gate 1's VCVI minimum if VCVI ≥ 90 AND \|move\| > 2× ATR. Captures severe capitulation events (Aug 2022, Jan 2026 analog) that pass the spirit of the filter even at unusual VCVI levels. Marked with ⚡ badge.
-
-**Momentum Guard** — For short-side ETFs (KOLD, HND.TO, 3NGS.L): when the NG=F seasonal z-score is positive (gas in seasonal uptrend), the VCVI minimum is raised by 13 points (72 → 85) to avoid firing a short-conviction signal into rising gas. Marked with 🛡 badge.
-
-Each event shows date, VCVI, daily move, ATR multiple, breadth count, price, NG seasonal z-score, and volatility regime badge (●/⚠/🚨). Aggregate forward return stats included.
-
-#### Elevated Watch — 3-Gate Filter (~4–8 events/ETF/year)
-
-A softer variant that catches slow-building peaks that conviction events miss. **Requires only 3 gates, no vol-regime constraint:**
-
-| Gate | Condition | vs Conviction |
-|------|-----------|---------------|
-| **Volume Capitulation** | VCVI-21d ≥ 60 | Softer (60 vs 72) |
-| **Multi-Window Breadth** | ≥ 2 windows ≥ 75th pct | Softer (2/75 vs 3/85) |
-| **Price Dislocation** | \|Daily move\| > 1.2× ATR | Softer (1.2× vs 1.5×) |
-
-Dates within ±3 days of a full conviction event are excluded to prevent double-counting. Season tags and forward return stats included.
-
-#### Historical Echoes
-
-Pattern study of all past VCVI capitulation signals (VCVI ≥ 55, vol regime ≤ 60th):
-
-- **Forward windows** — 5/10/21/42/63/126/252 days (recent events show partial returns rather than being excluded)
-- **Per-window stats** — Median return, win rate, best/worst (±200% clipped)
-- **Edge window** — Highlighted bar showing the window with the strongest historical edge
-- **⏱ Lead-time annotation** — "Peak ~Xd (IQR A–Bd)" showing median days from signal to peak, derived from all historical instances
-- **Yellow dashed marker** on the forward return chart at the median lead-time day
-- **Season tags** on occurrence dates — instantly shows if past signals clustered in winter vs summer
-- **Occurrence tooltips** — hover any date pill: VCVI, vol regime, price, forward return, season, peak day
-- **Returns by NG Regime** — Stratified forward return stats (median + win rate) broken down by the NG=F volatility regime at the time of each signal. Critical context: in known extreme regimes, typical forward return patterns may invert or disappear entirely.
-
-  > Example: BOIL echoes in the **extreme regime** show **0% win rate** at 21d with a median of −46%, versus **42% win rate** in normal regime — validating that 2022-style environments fundamentally change signal outcomes.
-
-## Core Metrics Explained
-
-### Volume Metrics
-- **RVOL** – Relative volume: today ÷ N-day average. 2x = twice normal participation.
-- **Z-Score** – Standard deviations from mean. >2σ = statistically unusual (~2.5% probability).
-- **VROC** – Volume rate of change. Captures acceleration vs deceleration.
-- **Vol Percentile** – Rank vs own rolling history. 90th+ triggers MWCA window contribution.
-
-### Volatility Metrics
-- **HV** – Realized historical volatility: std dev of log returns × √252 × 100 (annualized %).
-  - HV-10d = most recent (sensitive), HV-21d = regime classification, HV-63d = trend
-- **Vol Regime** – Where HV-21d sits in its 252-day history. 0th = calm (signals boosted), 100th = turbulent (signals discounted).
-- **HV Term Structure** – HV10 ÷ HV63. <0.65 = calming; >1.35 = accelerating.
-- **VoV-21** – Volatility of volatility. Std dev of the 10d HV series over 21 days.
-- **ATR-14** – Average true range as % of price. Expected daily trading range.
-
-### Composite Metrics
-- **CVI** – Capitulation Volume Index. `vol_percentile × (1 − price_percentile / 100)`. High when volume is elevated AND price is depressed — captures capitulation divergence.
-- **VCVI** – Vol-adjusted CVI. `CVI × (1.5 − vol_regime_pct / 100)`. Quiet environments boost the signal ×1.5; turbulent environments discount it ×0.5.
-- **VCVI-5d** – Fast-window VCVI. Same formula but over 5 trading days. Fires on weather event spikes before longer windows catch up. Alert threshold: 45 (lower than standard 55).
-- **Decay-adj VCVI-21d (†)** – VCVI recomputed using decay-corrected price percentile (see below).
-- **VPS** – Volume Pressure Score: RVOL (25%) + Z-Score (20%) + Vol%ile (25%) + VROC (10%) + Inv Vol Regime (20%). Composite 0–100 scale.
-- **MWCA** – Volume ≥90th percentile across ALL 6 windows simultaneously. Extremely rare.
-
-### Seasonality Weighting
-Natural gas demand peaks in winter (heating) and troughs in summer. Volume signals carry different informational content by season:
-
-| Season | Months | Weight | Rationale |
-|--------|--------|--------|-----------|
-| Winter | Nov–Feb | ×1.30 | Peak demand season — capitulation signals more reliable |
-| Spring/Fall | Mar–May, Sep–Oct | ×1.00 | Transition — baseline reliability |
-| Summer | Jun–Aug | ×0.85 | Low demand — volume spikes less sustained |
-
-Seasonally-adjusted VCVI is displayed on cards and used in forward-return context.
+| **RVOL** | Relative volume: today ÷ N-day avg |
+| **Z-Score** | Std deviations from rolling mean |
+| **VROC** | Volume rate of change |
+| **Vol Percentile** | Rank vs own rolling history |
+| **CVI** | `vol_pct × (1 − price_pct/100)` |
+| **VCVI** | `CVI × (1.5 − vol_regime_pct/100)` |
+| **VPS** | RVOL (25%) + Z (20%) + Vol% (25%) + VROC (10%) + Inv Vol Regime (20%) |
+| **MWCA** | Volume ≥90th pct across all 6 windows simultaneously |
 
 ### Leveraged ETF Decay Correction
 
-Leveraged and inverse ETFs lose value daily through path-dependent rebalancing — unrelated to the underlying commodity's actual price. Without correction, historical price percentiles are contaminated: a 2x ETF that has decayed 40%+ over a year will appear "cheap" even when gas is genuinely high.
+| ETF Type | Approx. Decay |
+|----------|--------------|
+| 2× long/short (BOIL, KOLD, HNU.TO, HND.TO) | ~35–40%/yr |
+| 3× long/short (3NGL.L, 3NGS.L) | ~55%/yr |
 
-**Annual decay estimates used:**
+Adjusted price: `adj_price[t] = raw_price[t] × (1 + decay/252)^t`
 
-| ETF Type | Approximate Decay |
-|----------|------------------|
-| 2x long/short (BOIL, KOLD, HNU.TO, HND.TO) | ~35–40%/yr |
-| 3x long/short (3NGL.L, 3NGS.L) | ~55%/yr |
-
-**Method:** For each historical price point at age `t` days, the adjusted price is:
-```
-adj_price[t] = raw_price[t] × (1 + annual_decay/252)^t
-```
-Today's current price is then ranked against the decay-adjusted historical distribution. This makes "low price" actually mean "gas is high" rather than "time has passed." The correction is shown on cards as `†XX` alongside the raw VCVI-21d.
+---
 
 ## Architecture
 
 ### Frontend
 ```
 docs/
-├── index.html          # Dashboard structure
-├── trough-peak.html    # Interactive recovery analyzer
+├── index.html           # Volume Monitor dashboard
+├── flows.html           # Flow Monitor (capital flow analytics)
+├── trough-peak.html     # Trough-to-Peak recovery analyzer
 ├── css/
-│   ├── styles.css      # Global theme, grid, tooltips (shared dashboard styling)
-│   ├── cards.css       # ETF card styling
-│   └── signals.css     # Signal panel styling
+│   ├── styles.css       # Shared global theme, grid, tooltips
+│   ├── cards.css        # ETF card styling
+│   └── signals.css      # Signal panel styling
 └── js/
-    ├── app.js          # App controller, data loading
-    ├── data.js         # Yahoo Finance API fallback
-    ├── cards.js        # Card rendering (decay-adj VCVI, season badge, spike flag)
-    ├── charts.js       # Canvas rendering (sparklines, forward return curve, lead-time marker, trough-to-peak charts)
-    ├── signals.js      # NG bar, stress matrix, SWVC, conviction, elevated watch, echoes
-    ├── metrics.js      # Live calculations (RVOL, Z-Score, CVI, VCVI, HV, etc.)
-    └── config.js       # Thresholds, windows, ETF metadata, decay rates, season display (includes trough-to-peak config)
+    ├── app.js           # App controller, data loading
+    ├── data.js          # Yahoo Finance API
+    ├── cards.js         # Card rendering (decay-adj VCVI, season badge, spike)
+    ├── charts.js        # Canvas charts (sparklines, forward return, trough-to-peak)
+    ├── signals.js       # NG bar, stress matrix, SWVC, conviction, echoes
+    ├── metrics.js       # Live metric calculations
+    └── config.js        # Thresholds, windows, ETF metadata, decay rates
 ```
 
 ### Backend
 ```
 scripts/
-├── data_pipeline.py    # Nightly ETF/Signals ETL:
-                        #   - Fetches OHLCV for 6 ETFs + NG=F futures
-                        #   - Computes all metrics (6 windows: 5/10/21/63/126/252d)
-                        #   - NG=F seasonal z-score series + regime classification
-                        #     (normal/elevated/extreme, no-lookahead, shared across ETFs)
-                        #   - Decay-corrected price percentile per ETF
-                        #   - Historical echoes: lead-time, season, ng_regime per
-                        #     occurrence; regime-stratified forward return tables
-                        #   - Conviction events (5-gate + extreme override + momentum
-                        #     guard) + elevated watch (3-gate)
-                        #   - Writes dashboard_data.json + latest_signals.json
-└── trough_peak_data.py # Trough-to-Peak static data builder (OHLCV + Volume)
+├── data_pipeline.py       # Nightly ETF + volume/signals ETL (Yahoo Finance)
+│                          #   → dashboard_data.json + latest_signals.json
+├── fetch_flows.py         # Nightly AUM flow ETL (TrackInsight)
+│                          #   → data/flows/{TICKER}_flows.json
+│                          #   → data/flows/all_flows_summary.json
+├── trough_peak_data.py    # Static trough-to-peak OHLCV builder
+├── get_snapshots_scraper.py  # TrackInsight snapshot scraper helper
+└── validate_hypothesis.py    # Backtesting / signal validation utilities
 
 data/
-├── dashboard_data.json      # Pre-computed metrics for all ETFs
-└── latest_signals.json      # Current alert state
+├── dashboard_data.json        # Pre-computed volume metrics for all ETFs
+├── latest_signals.json        # Current alert state
+└── flows/
+    ├── all_flows_summary.json # Cross-ETF sentiment + per-ticker summary stats
+    ├── BOIL_flows.json        # Daily flow history with Z-Score, regime, pressure
+    ├── KOLD_flows.json
+    ├── HNU_flows.json
+    ├── HND_flows.json
+    ├── 3NGL_flows.json
+    └── 3NGS_flows.json
 
-docs/data/                   # GitHub Pages copy (synced by Actions)
+docs/data/                     # GitHub Pages copy (synced by Actions)
 ```
 
 ### Data Flow
 
-1. **GitHub Actions Trigger** (nightly) → `data_pipeline.py`
-2. **Fetch OHLCV** for 6 ETFs via Yahoo Finance + **NG=F** futures
-3. **Compute NG=F context** (once, shared across all ETFs):
-   - Seasonal z-score series (no-lookahead, per-month expanding window)
-   - NG=F own realized vol (21d) + HV percentile vs 2yr rolling history
-   - Full historical regime series: 'normal' / 'elevated' / 'extreme' per date
-   - Current regime classification + ng_hv_21d, ng_hv_pct for display
-4. **Compute per-ETF metrics:**
-   - Volume: RVOL, Z-Score, VROC, percentiles across 6 windows (5–252d)
-   - Volatility: HV, vol regime, ATR, VoV, term structure
-   - Signals: CVI, VCVI per window, VCVI-5d fast, VPS composite
-   - Decay-corrected price percentile → decay-adj VCVI-21d
-   - Seasonality block: month, season, weight, adj_vcvi_21d
-   - Sharp spike flag: |move| > 2×ATR AND VCVI-5d > 45
-5. **Compute SWVC** — cross-market spike convergence
-6. **Detect Conviction Events** (5 gates + extreme override + momentum guard)
-   - Tags each event with ng_seasonal_z and ng_regime at time of event
-7. **Detect Elevated Watch** (3-gate softer filter)
-8. **Generate Historical Echoes** — with days_to_peak, season, ng_regime per occurrence;
-   lead_time aggregate stats; regime-stratified forward return tables
-9. **Write JSON** → `data/` and sync to `docs/data/`
+**Volume pipeline (nightly via GitHub Actions):**
+1. Fetch OHLCV for 6 ETFs + NG=F via Yahoo Finance
+2. Compute NG=F context: seasonal Z-score, HV percentile, regime series
+3. Compute per-ETF: volume metrics (6 windows), volatility, CVI/VCVI, VPS, decay-adj
+4. Detect conviction events (5-gate + extreme override + momentum guard)
+5. Detect elevated watch events (3-gate)
+6. Generate historical echoes with regime-stratified forward return tables
+7. Write `dashboard_data.json` + `latest_signals.json` → sync to `docs/data/`
+
+**Flow pipeline (nightly via GitHub Actions):**
+1. Fetch daily AUM snapshots for all 6 ETFs from TrackInsight
+2. Parse USD flow, NAV, and daily performance from snapshot fields
+3. Compute cumulative flow, 30-day rolling Z-Score, 5D/20D momentum
+4. Classify regime per day (Accumulation / Distribution / Balanced)
+5. Compute pressure score (Z + momentum + streak bonus, clamped ±100)
+6. Aggregate cross-ETF sentiment (bull vs bear 30d net flows, BULLISH/BEARISH/NEUTRAL)
+7. Write per-ticker JSON + summary JSON → sync to `docs/data/flows/`
+
+---
 
 ## Development
 
@@ -293,72 +295,69 @@ docs/data/                   # GitHub Pages copy (synced by Actions)
 ```bash
 pip install pandas numpy
 
+# Volume/signals data
 python scripts/data_pipeline.py
-
 cp data/dashboard_data.json docs/data/
 cp data/latest_signals.json docs/data/
 
+# Flow data
+python scripts/fetch_flows.py
+cp -r data/flows docs/data/
+
 # Serve locally (required for fetch() to work)
 python -m http.server 8080 --directory docs
-# Then open http://localhost:8080
+# Open http://localhost:8080
 ```
 
-### Key Constants (`data_pipeline.py`)
+### Key Constants
+
+**`data_pipeline.py`**
 ```python
-# Fast spike detection
-FAST_VCVI_THRESHOLD = 45      # 5d VCVI threshold
-SHARP_SPIKE_ATR_MULT = 2.0    # |move| must exceed N × ATR-14
+FAST_VCVI_THRESHOLD       = 45    # 5d VCVI threshold for spike flag
+SHARP_SPIKE_ATR_MULT      = 2.0   # |move| must exceed N × ATR-14
+NG_SEASONAL_Z_GATE        = 1.5   # σ threshold for long/short gate
 
-# NG=F seasonal z-score gate
-NG_SEASONAL_Z_GATE = 1.5      # σ threshold (gates fire at ±1.5σ from seasonal norm)
-
-# Elevated watch gates
-WATCH_VCVI_MIN = 60
-WATCH_BREADTH_MIN = 2
-WATCH_BREADTH_PCT = 75
-WATCH_ATR_MULT = 1.2
-
-# Conviction event gates
-CONVICTION_VCVI_MIN = 72
-CONVICTION_BREADTH_MIN = 3
-CONVICTION_BREADTH_PCT = 85
-CONVICTION_ATR_MULT = 1.5
+CONVICTION_VCVI_MIN       = 72
+CONVICTION_BREADTH_MIN    = 3
+CONVICTION_BREADTH_PCT    = 85
+CONVICTION_ATR_MULT       = 1.5
 CONVICTION_VOL_REGIME_MAX = 70
 
-# Extreme override — bypasses Gate 1 minimum when both conditions are met
-EXTREME_OVERRIDE_VCVI_MIN = 90   # VCVI ≥ 90 (exceptional capitulation)
-EXTREME_OVERRIDE_ATR_MULT = 2.0  # AND |move| > 2× ATR-14
+EXTREME_OVERRIDE_VCVI_MIN = 90    # Bypasses Gate 1 minimum
+EXTREME_OVERRIDE_ATR_MULT = 2.0
 
-# Gate 5 — NG=F directional confirmation thresholds
-CONVICTION_NG_Z_LONG  = -0.5  # Long-side: seasonal z must be ≤ −0.5 (gas low for season)
-CONVICTION_NG_Z_SHORT =  0.2  # Short-side: seasonal z must be ≥ +0.2 (early move sufficient)
+CONVICTION_NG_Z_LONG      = -0.5  # Long: seasonal z ≤ −0.5
+CONVICTION_NG_Z_SHORT     =  0.2  # Short: seasonal z ≥ +0.2
 
-# Momentum guard — raises short-side VCVI bar when gas is in seasonal uptrend
-MOMENTUM_GUARD_VCVI_BOOST = 13   # Added to CONVICTION_VCVI_MIN when seasonal z > 0
+WATCH_VCVI_MIN            = 60
+WATCH_BREADTH_MIN         = 2
+WATCH_BREADTH_PCT         = 75
+WATCH_ATR_MULT            = 1.2
 
-# NG=F volatility regime thresholds
-NG_REGIME_EXTREME_PRICE   = 7.0   # > $7/MMBtu → extreme
-NG_REGIME_HIGH_PRICE      = 4.5   # > $4.5/MMBtu → elevated
-NG_REGIME_EXTREME_Z       = 2.5   # |seasonal z| ≥ 2.5σ → extreme
-NG_REGIME_ELEVATED_Z      = 1.5   # |seasonal z| ≥ 1.5σ → elevated
-NG_REGIME_EXTREME_HV_PCT  = 90    # NG 21d HV at 90th pct of own 2yr history → extreme
-NG_REGIME_ELEVATED_HV_PCT = 70    # NG 21d HV at 70th pct → elevated
-
-# Leveraged ETF decay rates (annual)
-ETF_ANNUAL_DECAY = {
-    "BOIL": 0.35, "KOLD": 0.35,
-    "HNU.TO": 0.40, "HND.TO": 0.40,
-    "3NGL.L": 0.55, "3NGS.L": 0.55,
-}
+MOMENTUM_GUARD_VCVI_BOOST = 13    # Short-side bar raised when seasonal z > 0
 ```
+
+**`fetch_flows.py`**
+```python
+Z_WINDOW     = 30   # Days for rolling mean/std (flow Z-Score)
+MOM_SHORT    = 5    # 5-day momentum window
+MOM_LONG     = 20   # 20-day momentum window
+Z_ACCUM_THR  =  1.5 # Z > +1.5 → ACCUMULATION regime
+Z_DIST_THR   = -1.5 # Z < −1.5 → DISTRIBUTION regime
+PRESSURE_MAX = 100  # Pressure score clamp
+```
+
+---
 
 ## Tech Stack
 
 - **Frontend:** Vanilla JS (ES6+), Canvas API, CSS3 Grid/Flexbox
 - **Backend:** Python 3, Pandas, NumPy
-- **Data:** Yahoo Finance v8 chart API (no external dependencies)
-- **Deployment:** GitHub Pages (docs/) + GitHub Actions (data pipeline)
+- **Data:** Yahoo Finance v8 chart API + TrackInsight snapshot API
+- **Deployment:** GitHub Pages (`docs/`) + GitHub Actions (nightly pipeline)
 - **No frameworks** — lightweight, fast, single-page load
+
+---
 
 ## License
 
@@ -366,4 +365,4 @@ MIT — Free for personal and commercial use.
 
 ---
 
-**Questions?** Hover any metric label on the dashboard for detailed explanations — the dashboard is self-documenting.
+**Questions?** Hover any metric label on the dashboard for detailed explanations — all three pages are self-documenting via tooltips.
