@@ -108,7 +108,7 @@ input[type=range]:hover::-moz-range-thumb {
     gap: 12px;
     transition: border-color 0.2s;
 }
-.kpi-card:hover { border-color: var(--border-accent); }
+.kpi-card:hover { border-color: var(--card-color, var(--border-accent)); }
 .kpi-header { display: flex; justify-content: space-between; align-items: center; }
 .kpi-ticker { font-size: 1rem; font-weight: 800; letter-spacing: 1px; }
 .kpi-cycles { font-size: 0.6rem; color: var(--text-muted); font-weight: 700; }
@@ -120,7 +120,7 @@ input[type=range]:hover::-moz-range-thumb {
 .kpi-stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
  .stat-item { display: flex; flex-direction: column; gap: 2px; }
  .kpi-stats-row .stat-item:nth-child(2) { text-align: right; align-items: flex-end; }
- .stat-lbl { font-size: 0.45rem; letter-spacing: 1px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; }
+ .stat-lbl { font-size: 0.5rem; letter-spacing: 1px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; }
  .stat-val { font-size: 0.75rem; font-weight: 700; color: var(--text-bright); }
  
  /* ---- MICRO ANALYTICS (IN-CARD) ---- */
@@ -743,7 +743,7 @@ function renderCards() {
         }
 
         const n = cycles.length;
-        if (!n) return `<div class="kpi-card">
+        if (!n) return `<div class="kpi-card" style="--card-color:${t.color}; border-left:3px solid ${t.color};">
             <div class="kpi-header">
                 <span class="kpi-ticker" style="color:${t.color}">${t.label}</span>
                 <span class="kpi-cycles">0 CYCLES</span>
@@ -777,13 +777,14 @@ function renderCards() {
         // 1. Cycle Position & Regime Label
         let cycPosStr = '--', cycLabel = '';
         let cycColor = 'var(--text-dim)';
-        let isBreakout = false;
+        let isBreakout = false, cycPosPct = 0;
         if (cycles.length > 0) {
             const lastC = cycles[cycles.length - 1];
             const range = Math.max(lastC.peakPrice, lastPrice) - lastC.troughPrice;
             if (range > 0) {
                 const rawPos = (lastPrice - lastC.troughPrice) / range;
                 const pos = Math.max(0, Math.min(1.2, rawPos));
+                cycPosPct = Math.min(pos * 100, 100);
                 cycPosStr = Math.round(pos * 100) + '%';
                 cycLabel = pos <= 0.3 ? 'Early' : pos <= 0.7 ? 'Mid' : pos <= 1.0 ? 'Late' : 'Extreme';
                 if (pos >= 1.0) { cycColor = 'var(--cyan)'; isBreakout = true; }
@@ -842,7 +843,7 @@ function renderCards() {
             rngStr = `<span data-tooltip="30-day Range Compression: (30D Max - 30D Min) / 30D Min. Context for recent price expansion or contraction.">Rng: ${Math.round(((rMax - rMin) / rMin) * 100)}%</span>`;
         }
 
-        return `<div class="kpi-card">
+        return `<div class="kpi-card" style="--card-color:${t.color}; border-left:3px solid ${t.color};">
             <div class="kpi-header">
                 <span class="kpi-ticker" style="color:${t.color}">${t.label}</span>
                 <span class="kpi-cycles">${n} CYCLES</span>
@@ -885,11 +886,18 @@ function renderCards() {
                         <span class="sig-pos str-val" style="color:${strColor}">${strStr}</span>
                     </div>
                 </div>
-                <div class="micro-line ctx-val">
-                    ${m1}${m3}${m6}
+                <div style="height:2px;background:rgba(255,255,255,0.07);border-radius:1px;margin:3px 0 4px;" data-tooltip="Cycle progress bar: 0% = trough, 100% = last confirmed peak.">
+                    <div style="height:100%;width:${cycPosPct}%;background:${cycColor};border-radius:1px;opacity:0.75;transition:width 0.4s;"></div>
                 </div>
-                <div class="micro-line ctx-val" style="margin-top:2px">
-                    ${distPk}${distTr}${rngStr}
+                <div class="micro-line ctx-val">
+                    <span style="flex:1;" data-tooltip="Relative price position within the last 21 trading days (Green ≤30%, Red >70%).">${m1}</span>
+                    <span style="flex:1;text-align:center;" data-tooltip="Relative price position within the last 63 trading days (Green ≤30%, Red >70%).">${m3}</span>
+                    <span style="flex:1;text-align:right;" data-tooltip="Relative price position within the last 126 trading days (Green ≤30%, Red >70%).">${m6}</span>
+                </div>
+                <div class="micro-line ctx-val" style="margin-top:3px">
+                    <span style="flex:1;">${distPk}</span>
+                    <span style="flex:1;text-align:center;">${distTr}</span>
+                    <span style="flex:1;text-align:right;">${rngStr}</span>
                 </div>
             </div>
         </div>`;
