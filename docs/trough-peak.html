@@ -417,7 +417,8 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     font-family: 'JetBrains Mono', monospace;
     border-bottom: 1px solid rgba(255,255,255,0.03);
 }
-.matrix-row:hover td { background: rgba(255,255,255,0.02); }
+.matrix-row:hover td { background: rgba(255,255,255,0.05) !important; }
+.matrix-totals td { border-top: 2px solid rgba(255,255,255,0.08); }
 .matrix-year { color: var(--cyan); font-weight: 800; text-align: left !important; width: 80px; }
 .matrix-count { font-weight: 700; }
 .matrix-count.has-data { color: var(--text-primary); }
@@ -551,7 +552,7 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- YEARLY FREQUENCY MATRIX -->
     <div class="matrix-panel">
         <div class="matrix-header">
-            <span class="matrix-title">Yearly Opportunity Frequency</span>
+            <span class="matrix-title" style="border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;color:var(--text-bright);">Yearly Opportunity Frequency</span>
         </div>
         <div class="matrix-table-wrap" id="matrix-container">
             <!-- populated by JS -->
@@ -1349,8 +1350,7 @@ function renderYearlyMatrix() {
     if (!container) return;
 
     const allYears = new Set();
-    const tickerFreq = {}; // Ticker -> Year -> {count, sumGain}
-    const allAvgGains = [];
+    const tickerFreq = {};
 
     for (const t of TICKERS) {
         tickerFreq[t.label] = {};
@@ -1365,67 +1365,75 @@ function renderYearlyMatrix() {
     }
 
     const sortedYears = Array.from(allYears).sort((a, b) => b - a);
-
     if (sortedYears.length === 0) {
-        container.innerHTML = `<div class="val-muted" style="text-align:center; padding:20px; font-size:0.7rem;">NO CYCLES DETECTED AT THIS THRESHOLD</div>`;
+        container.innerHTML = `<div class="val-muted" style="text-align:center;padding:20px;font-size:0.7rem;">NO CYCLES DETECTED AT THIS THRESHOLD</div>`;
         return;
     }
 
-    // Pre-calculate min/max for color gradient mapping
-    for (const yr in allYears) {
-        for (const tk in tickerFreq) {
-            const s = tickerFreq[tk][yr];
-            if (s && s.count > 0) allAvgGains.push(s.sumGain / s.count);
-        }
-    }
-    // Correct way to iterate allYears (Set)
+    // Global min/max for normalized heatmap intensity
+    const allAvgGains = [];
     sortedYears.forEach(year => {
         TICKERS.forEach(t => {
             const s = tickerFreq[t.label][year];
             if (s && s.count > 0) allAvgGains.push(s.sumGain / s.count);
         });
     });
-
     const minAvg = allAvgGains.length ? Math.min(...allAvgGains) : 0;
     const maxAvg = allAvgGains.length ? Math.max(...allAvgGains) : 0;
 
+    // Hex → [r,g,b]
+    const hexRgb = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+
+    const curYear = String(new Date().getFullYear());
+
     let html = `<table class="matrix-table">
-        <thead>
-            <tr>
-                <th class="matrix-year">YEAR</th>
-                ${TICKERS.map(t => `<th data-tooltip="${t.tip}">${t.label}</th>`).join('')}
-            </tr>
-        </thead>
+        <thead><tr>
+            <th class="matrix-year">YEAR</th>
+            ${TICKERS.map(t => `<th style="color:${t.color};" data-tooltip="${t.tip}">${t.label}</th>`).join('')}
+        </tr></thead>
         <tbody>`;
 
     sortedYears.forEach(year => {
-        html += `<tr class="matrix-row">
-            <td class="matrix-year">${year}</td>`;
+        const isCur = year === curYear;
+        const yearStyle = isCur ? 'border-left:3px solid rgba(0,255,255,0.55);padding-left:5px;' : '';
+        html += `<tr class="matrix-row"><td class="matrix-year" style="${yearStyle}">${year}</td>`;
+
         TICKERS.forEach(t => {
             const stats = tickerFreq[t.label][year] || { count: 0, sumGain: 0 };
-            const count = stats.count;
-            if (count > 0) {
-                const avgNum = stats.sumGain / count;
-                const avgText = avgNum.toFixed(0);
-                
-                // Magnitude Color Mapping
-                const ratio = maxAvg === minAvg ? 0 : (avgNum - minAvg) / (maxAvg - minAvg);
-                const lightness = 85 - (ratio * 15); // 85% (low) -> 70% (high)
-                const magnitudeColor = `hsl(145, 60%, ${lightness}%)`;
+            if (stats.count > 0) {
+                const avgNum = stats.sumGain / stats.count;
+                const ratio  = maxAvg === minAvg ? 0.5 : (avgNum - minAvg) / (maxAvg - minAvg);
+                const alpha  = (0.06 + ratio * 0.26).toFixed(3);
+                const [r,g,b] = hexRgb(t.color);
+                const lightness = 85 - (ratio * 15);
+                const textColor = `hsl(145,60%,${lightness}%)`;
 
-                html += `<td class="matrix-count has-data">
-                    <span style="font-weight:800">${count}</span>
-                    <span style="font-size:0.62rem; color:${magnitudeColor}; margin-left:3px; font-weight:700" 
-                          data-tooltip="Average recovery magnitude for ${count} cycles in ${year}">(${avgText}%)</span>
+                html += `<td class="matrix-count has-data"
+                    style="background:rgba(${r},${g},${b},${alpha});"
+                    data-tooltip="Avg recovery: ${Math.round(avgNum)}% across ${stats.count} cycle${stats.count>1?'s':''} in ${year}">
+                    <span style="font-weight:800;font-size:0.78rem;">${stats.count}</span>
+                    <span style="font-size:0.6rem;color:${textColor};margin-left:4px;font-weight:700;">(${Math.round(avgNum)}%)</span>
                 </td>`;
             } else {
-                html += `<td class="matrix-count no-data">--</td>`;
+                html += `<td class="matrix-count no-data">—</td>`;
             }
         });
         html += `</tr>`;
     });
 
-    html += `</tbody></table>`;
+    // Totals row
+    html += `<tr class="matrix-row matrix-totals">
+        <td class="matrix-year" style="color:var(--text-muted);font-size:0.6rem;letter-spacing:1.5px;">TOTAL</td>`;
+    TICKERS.forEach(t => {
+        const all   = Object.values(tickerFreq[t.label]);
+        const total = all.reduce((a,b) => a + b.count, 0);
+        const avgAll = total > 0 ? all.reduce((a,b) => a + b.sumGain, 0) / total : 0;
+        html += `<td style="color:${t.color};font-weight:800;font-size:0.72rem;">
+            ${total} <span style="opacity:0.6;font-size:0.6rem;">(${Math.round(avgAll)}%)</span>
+        </td>`;
+    });
+    html += `</tr></tbody></table>`;
+
     container.innerHTML = html;
 }
 
