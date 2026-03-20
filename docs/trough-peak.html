@@ -44,15 +44,20 @@ input[type=range] {
 /* Track styles - Restricted to top threshold slider */
 #threshold-slider::-webkit-slider-runnable-track {
     height: 6px;
-    background: rgba(255, 255, 255, 0.15);
+    background: linear-gradient(to right, var(--cyan) var(--fill-pct, 10%), rgba(255,255,255,0.15) var(--fill-pct, 10%));
     border-radius: 3px;
     border: none;
 }
 #threshold-slider::-moz-range-track {
     height: 6px;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255,255,255,0.15);
     border-radius: 3px;
     border: none;
+}
+#threshold-slider::-moz-range-progress {
+    height: 6px;
+    background: var(--cyan);
+    border-radius: 3px;
 }
 
 /* Thumb styles */
@@ -1474,11 +1479,17 @@ function renderAll() {
 // ── Slider ────────────────────────────────────────────────────────────────────
 const slider = document.getElementById('threshold-slider');
 const sliderDisplay = document.getElementById('slider-display');
+function updateSliderFill() {
+    const pct = ((+slider.value - +slider.min) / (+slider.max - +slider.min)) * 100;
+    slider.style.setProperty('--fill-pct', pct + '%');
+}
 slider.addEventListener('input', () => {
     state.threshold = +slider.value;
     sliderDisplay.textContent = `${state.threshold}%`;
+    updateSliderFill();
     renderAll();
 });
+updateSliderFill(); // set fill on page load
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 // Badge start year is set dynamically after data loads (see updateBadge())
