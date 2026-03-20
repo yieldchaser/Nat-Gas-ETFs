@@ -380,3 +380,25 @@
 .card-dollar-volume .dv-value {
     font-weight: 600;
 }
+
+/* ---- MOBILE ---- */
+@media (max-width: 768px) {
+    .etf-card { padding: 10px; }
+    .card-header { gap: 6px; }
+    .card-ticker { font-size: 1rem; }
+    .card-price { font-size: 1rem; }
+    .card-metrics { grid-template-columns: 1fr 1fr; gap: 6px 8px; }
+    .percentile-row .pr-label { font-size: 0.5rem; width: 22px; }
+    .percentile-row .pr-value { font-size: 0.6rem; }
+    .card-volatility .vol-item { padding: 4px 6px; }
+    .card-vcvi .vcvi-item { padding: 4px 6px; }
+}
+
+@media (max-width: 480px) {
+    .etf-card { padding: 8px; }
+    .card-metrics { grid-template-columns: 1fr 1fr; gap: 4px 6px; }
+    .card-section-label { font-size: 0.5rem; }
+    .card-metric-val { font-size: 0.75rem; }
+    .card-vps-bar { height: 5px; }
+    .card-sparkline { height: 40px; }
+}

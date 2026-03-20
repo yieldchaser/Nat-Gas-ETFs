@@ -992,3 +992,13 @@
     /* Conviction gates text wraps instead of overflowing */
     .conviction-gates { font-size: 0.55rem; word-break: break-word; white-space: normal; }
 }
+
+@media (max-width: 480px) {
+    .stress-matrix { min-width: 580px; font-size: 0.6rem; }
+    .stress-matrix th { font-size: 0.5rem; padding: 4px 4px; }
+    .stress-matrix td { padding: 5px 4px; font-size: 0.6rem; }
+    .conviction-table { min-width: 400px; font-size: 0.58rem; }
+    .conviction-table th, .conviction-table td { padding: 3px 4px; }
+    .alert-item { font-size: 0.6rem; gap: 6px; }
+    .signal-panel { padding: 8px; }
+}
