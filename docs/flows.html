@@ -393,7 +393,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <span id="sent-pct-short" style="color:var(--red)">50%</span>
                 </div>
             </div>
-            <div class="sentiment-side right" data-tooltip="Net 30-day capital flow into SHORT ETFs (KOLD, HND, 3NGS). Outflows from shorts (−) = bullish for Nat Gas. Inflows (+) = bearish.">
+            <div class="sentiment-side right" data-tooltip="Net 30-day capital flow into SHORT ETFs (KOLD, HND, 3NGS). Positive = inflows (accumulation), negative = outflows (distribution).">
                 <div class="s-label">SHORT SIDE FLOWS</div>
                 <div class="s-tickers">KOLD · HND · 3NGS</div>
                 <div class="s-val val-muted" id="sent-short">--</div>
@@ -926,8 +926,10 @@ function renderSection1() {
 
     el('sent-bar-long').style.width  = `${longPct.toFixed(1)}%`;
     el('sent-bar-short').style.width = `${shortPct.toFixed(1)}%`;
-    el('sent-bar-long').style.background  = longFlow  >= 0 ? 'var(--green)' : 'var(--red)';
-    el('sent-bar-short').style.background = shortFlow >= 0 ? 'var(--green)' : 'var(--red)';
+    // Long segment: green = inflows, amber = outflows. Short segment: cyan = inflows, red = outflows.
+    // Fixed colors per side keep the balance bar readable regardless of flow direction.
+    el('sent-bar-long').style.background  = longFlow  >= 0 ? 'var(--green)' : '#d97706';
+    el('sent-bar-short').style.background = shortFlow >= 0 ? 'var(--cyan)'  : 'var(--red)';
 
     el('sent-pct-long').textContent  = `LONG ${longPct.toFixed(0)}%`;
     el('sent-pct-short').textContent = `SHORT ${shortPct.toFixed(0)}%`;
