@@ -117,7 +117,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .time-tabs .tab-btn { font-size: 0.65rem; padding: 4px 10px; }
 
 .chart-wrap { position: relative; width: 100%; }
-#chartA { width: 100%; height: 270px; }
+#chartA { width: 100%; height: 290px; }
 #chartB { width: 100%; height: 130px; margin-top: 6px;}
 
 .stats-row {
@@ -436,7 +436,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 3 -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Deep Dive: Select an ETF then adjust time range. Range slider zooms all charts simultaneously. Drag on chart to measure price/flow.">DEEP DIVE</div>
+                <div class="panel-title" data-tooltip="Deep Dive: Select an ETF then adjust time range. Range slider zooms all charts simultaneously. Drag on chart to measure price/flow." style="font-size:1.05rem; border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">DEEP DIVE</div>
                 <div class="tab-group time-tabs" id="time-tabs">
                     <button class="tab-btn" data-range="1w">1W</button>
                     <button class="tab-btn" data-range="1m">1M</button>
@@ -462,7 +462,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
 
             <!-- Chart B: Daily Flow Bars -->
-            <div style="margin: 6px 0 4px; font-size:0.6rem; font-weight:700; color:var(--text-muted); letter-spacing:1px;">
+            <div style="margin: 8px 0 4px; font-size:0.65rem; font-weight:800; color:var(--text-dim); letter-spacing:1.5px;">
                 <span data-tooltip="Daily net capital flow. Green bars = inflows (bullish for long ETFs / bearish for short ETFs). Red = opposite.">DAILY FLOW BARS</span>
             </div>
             <div class="chart-wrap">
@@ -1292,10 +1292,12 @@ function drawChartA(data) {
     const isNetPos = flows[flows.length - 1] >= 0;
     const grad = ctxA.createLinearGradient(0, pad.top, 0, pad.top + chartH);
     if (isNetPos) {
-        grad.addColorStop(0, 'rgba(61,184,122,0.4)');
+        grad.addColorStop(0, 'rgba(61,184,122,0.5)');
+        grad.addColorStop(0.6, 'rgba(61,184,122,0.15)');
         grad.addColorStop(1, 'rgba(61,184,122,0.0)');
     } else {
-        grad.addColorStop(0, 'rgba(239,68,68,0.4)');
+        grad.addColorStop(0, 'rgba(239,68,68,0.5)');
+        grad.addColorStop(0.6, 'rgba(239,68,68,0.15)');
         grad.addColorStop(1, 'rgba(239,68,68,0.0)');
     }
     ctxA.fillStyle = grad;
@@ -1313,7 +1315,7 @@ function drawChartA(data) {
     
     // NAV Line
     ctxA.beginPath();
-    ctxA.strokeStyle = '#5090a0';
+    ctxA.strokeStyle = '#4ab8d8';
     ctxA.lineWidth = 1.5;
     for (let i = 0; i < data.length; i++) {
         if (i===0) ctxA.moveTo(getX(i), getNY(navs[i]));
@@ -1407,7 +1409,7 @@ function drawChartA(data) {
     if (!state.drag.active && state.hoverIdx !== null && state.hoverIdx < data.length) {
         let hx = getX(state.hoverIdx);
         ctxA.beginPath(); ctxA.moveTo(hx, pad.top); ctxA.lineTo(hx, pad.top + chartH);
-        ctxA.strokeStyle = 'rgba(255,255,255,0.2)'; ctxA.setLineDash([2,2]); ctxA.stroke(); ctxA.setLineDash([]);
+        ctxA.strokeStyle = 'rgba(0,255,255,0.22)'; ctxA.lineWidth = 1; ctxA.setLineDash([]); ctxA.stroke();
 
         ctxA.beginPath(); ctxA.arc(hx, getFY(flows[state.hoverIdx]), 4, 0, Math.PI*2);
         ctxA.fillStyle = isNetPos ? '#3db87a' : '#ef4444'; ctxA.fill();
@@ -1479,7 +1481,7 @@ function drawChartB(data) {
     if (state.hoverIdx !== null && state.hoverIdx < data.length) {
         let hx = getX(state.hoverIdx);
         ctxB.beginPath(); ctxB.moveTo(hx, pad.top); ctxB.lineTo(hx, pad.top + chartH);
-        ctxB.strokeStyle = 'rgba(255,255,255,0.2)'; ctxB.setLineDash([2,2]); ctxB.stroke(); ctxB.setLineDash([]);
+        ctxB.strokeStyle = 'rgba(0,255,255,0.22)'; ctxB.lineWidth = 1; ctxB.setLineDash([]); ctxB.stroke();
 
         // Dot at zero line center of hovered bar
         const val = data[state.hoverIdx].usd_flow;
