@@ -483,7 +483,9 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- ENHANCED CHART SECTION -->
     <div class="chart-container">
         <div class="chart-header">
-            <div style="flex:1"></div>
+            <div style="flex:1">
+                <span id="chart-title" style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;">Price &amp; Cycle Map</span>
+            </div>
             <div class="chart-controls">
                 <div class="horizon-group" id="horizon-controls">
                     <button class="horizon-btn" data-range="1w" data-tooltip="Last 7 calendar days">1W</button>
@@ -1073,6 +1075,12 @@ function renderChartTabs() {
     const container = document.getElementById('chart-etf-chips');
     if (!container) return;
     container.innerHTML = '';
+    const activeTicker = TICKERS.find(x => x.label === state.activeTab) || TICKERS[0];
+    const titleEl = document.getElementById('chart-title');
+    if (titleEl) {
+        titleEl.innerHTML = `<span style="color:${activeTicker.color}">${activeTicker.label}</span> &mdash; Price &amp; Cycle Map`;
+        titleEl.style.borderLeftColor = activeTicker.color;
+    }
     TICKERS.forEach(t => {
         const active = t.label === state.activeTab;
         const chip = document.createElement('button');
