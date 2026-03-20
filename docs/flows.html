@@ -1089,22 +1089,7 @@ function getZVisibleData() {
 }
 
 function updateStatsRow() {
-    const d = state.summary.tickers[state.activeTicker];
-    if (!d) return;
-    el('st-z').textContent = `${d.zscore > 0 ? '+' : ''}${d.zscore.toFixed(1)}`;
-    el('st-z').className = `st-val ${d.zscore >= 1.5 ? 'val-green' : (d.zscore <= -1.5 ? 'val-red' : 'val-muted')}`;
-    
-    el('st-mom5').textContent = fmtUsd(d.flow_5d);
-    el('st-mom5').className = `st-val ${d.flow_5d >= 0 ? 'val-green' : 'val-red'}`;
-    
-    el('st-mom20').textContent = fmtUsd(d.flow_20d);
-    el('st-mom20').className = `st-val ${d.flow_20d >= 0 ? 'val-green' : 'val-red'}`;
-    
-    el('st-reg').textContent = d.regime;
-    el('st-reg').className = `st-val ${d.regime==='ACCUMULATION'?'val-green':(d.regime==='DISTRIBUTION'?'val-red':'val-muted')}`;
-    
-    el('st-pres').textContent = `${d.pressure > 0 ? '+' : ''}${d.pressure}`;
-    el('st-pres').className = `st-val ${d.pressure >=0 ? 'val-green' : 'val-red'}`;
+    // Stats row removed — stats are shown in the ETF cards above
 }
 
 // ---- Canvas Rendering Helpers ----
