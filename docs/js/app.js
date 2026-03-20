@@ -349,4 +349,18 @@ document.addEventListener('DOMContentLoaded', () => App.init());
     });
 
     document.addEventListener('mouseleave', function () { hide(); }, true);
+
+    // Touch: tap to show tooltip, auto-dismiss after 2.5s or on next tap elsewhere
+    let touchTimer = null;
+    document.addEventListener('touchstart', function (e) {
+        const el = e.target.closest('[data-tooltip]');
+        clearTimeout(touchTimer);
+        if (el) {
+            if (active === el) { hide(); return; }
+            show(el);
+            touchTimer = setTimeout(hide, 2500);
+        } else {
+            hide();
+        }
+    }, { passive: true });
 }());
