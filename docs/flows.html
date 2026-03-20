@@ -963,7 +963,7 @@ function renderSection2() {
         const presAbs = Math.min(Math.abs(d.pressure), 100);
         const presBarCol = presCol === 'val-green' ? 'var(--green)' : 'var(--red)';
 
-        return `<div class="flow-card" style="${bc}" onclick="(function(){document.querySelectorAll('#etf-tabs .tab-btn').forEach(b=>b.classList.remove('active'));document.querySelector('#etf-tabs [data-ticker=${tk}]').classList.add('active');state.activeTicker='${tk}';loadTickerDataAndRender();})()">
+        return `<div class="flow-card" style="${bc}" onclick="(function(){var t='${tk}';document.querySelectorAll('#etf-tabs .tab-btn').forEach(function(b){b.classList[b.dataset.ticker===t?'add':'remove']('active');});state.activeTicker=t;loadTickerDataAndRender();})()">
             <div class="fc-left">
                 <div class="fc-ticker" style="color:${colors[tk] || '#fff'}">${tk}</div>
                 <div class="fc-nav">$${d.latest_nav.toFixed(2)}</div>
