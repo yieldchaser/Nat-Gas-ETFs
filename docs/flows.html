@@ -589,7 +589,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 6 -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Cumulative flow across all ETFs on one chart. Toggle tickers with the chips below.">Cross-ETF Cumulative Flow Comparison</div>
+                <div class="panel-title" data-tooltip="Cumulative flow across all ETFs on one chart. Toggle tickers with the chips below." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Cross-ETF Cumulative Flow Comparison</div>
                 <div class="tab-group time-tabs" id="cross-time-tabs">
                     <button class="tab-btn" data-range="1w">1W</button>
                     <button class="tab-btn" data-range="1m">1M</button>
@@ -2283,7 +2283,7 @@ function renderCrossChart() {
     // Zero line (if in range) — more prominent than grid lines
     if (globalMax > 0 && globalMin < 0) {
         ctxCross.beginPath(); ctxCross.moveTo(pad.left, getY(0)); ctxCross.lineTo(pad.left+chartW, getY(0));
-        ctxCross.strokeStyle = 'rgba(255,255,255,0.12)'; ctxCross.setLineDash([4,4]); ctxCross.stroke(); ctxCross.setLineDash([]);
+        ctxCross.strokeStyle = 'rgba(255,255,255,0.18)'; ctxCross.setLineDash([4,4]); ctxCross.stroke(); ctxCross.setLineDash([]);
     }
 
     // Draw lines
@@ -2291,13 +2291,29 @@ function renderCrossChart() {
         const vals = series[tk];
         ctxCross.beginPath();
         ctxCross.strokeStyle = colors[tk];
-        ctxCross.lineWidth = tk === state.activeTicker ? 3 : 1.5;
-        
+        ctxCross.lineWidth = tk === state.activeTicker ? 2.5 : 1.2;
+
         for (let i = 0; i < vals.length; i++) {
             if (i===0) ctxCross.moveTo(getX(i), getY(vals[i]));
             else ctxCross.lineTo(getX(i), getY(vals[i]));
         }
         ctxCross.stroke();
+    });
+
+    // End-of-line ticker labels (Bloomberg-style, right edge)
+    const endLabels = tickers.map(tk => {
+        const vals = series[tk];
+        return { tk, y: getY(vals[vals.length - 1]), color: colors[tk] };
+    }).sort((a, b) => a.y - b.y);
+    // Collision avoidance: minimum 13px gap
+    for (let i = 1; i < endLabels.length; i++) {
+        if (endLabels[i].y - endLabels[i-1].y < 13)
+            endLabels[i].y = endLabels[i-1].y + 13;
+    }
+    ctxCross.font = 'bold 9px monospace'; ctxCross.textAlign = 'left';
+    endLabels.forEach(({ tk, y, color }) => {
+        ctxCross.fillStyle = color;
+        ctxCross.fillText(tk, pad.left + chartW + 5, Math.min(pad.top + chartH, Math.max(pad.top + 8, y + 3)));
     });
     
     // HTML legend (outside canvas — no collision)
@@ -2309,7 +2325,7 @@ function renderCrossChart() {
             const bold   = tk === state.activeTicker;
             return `<div style="display:flex;align-items:center;gap:5px;opacity:${active?1:0.3};">
                 <span style="display:inline-block;width:${bold?18:12}px;height:${bold?3:2}px;background:${colors[tk]};border-radius:2px;"></span>
-                <span style="font-size:0.62rem;font-weight:${bold?'900':'600'};color:${active?colors[tk]:'var(--text-muted)'};font-family:monospace;letter-spacing:0.5px;">${tk}</span>
+                <span style="font-size:0.65rem;font-weight:${bold?'900':'700'};color:${active?colors[tk]:'var(--text-muted)'};font-family:monospace;letter-spacing:0.5px;">${tk}</span>
             </div>`;
         }).join('');
     }
@@ -2330,7 +2346,7 @@ function renderCrossChart() {
     if (state.hoverCrossIdx !== null && state.hoverCrossIdx < visibleDates.length) {
         const hx = getX(state.hoverCrossIdx);
         ctxCross.beginPath(); ctxCross.moveTo(hx, pad.top); ctxCross.lineTo(hx, pad.top + chartH);
-        ctxCross.strokeStyle = 'rgba(255,255,255,0.2)'; ctxCross.setLineDash([2,2]); ctxCross.lineWidth = 1; ctxCross.stroke(); ctxCross.setLineDash([]);
+        ctxCross.strokeStyle = 'rgba(0,255,255,0.22)'; ctxCross.lineWidth = 1; ctxCross.setLineDash([]); ctxCross.stroke();
 
         // Dots on each line
         tickers.forEach(tk => {
