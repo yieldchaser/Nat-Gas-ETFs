@@ -168,7 +168,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .bg-bull { background: rgba(61, 184, 122, 0.15); color: var(--green); border: 1px solid rgba(61, 184, 122, 0.3); }
 
 /* ---- Section 5 & 6 ---- */
-#chartZ { width: 100%; height: 280px; }
+#chartZ { width: 100%; height: 300px; }
 #chartCross { width: 100%; height: 340px; }
 
 /* Custom Tooltip */
@@ -552,7 +552,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 5 -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Z-Score of daily flow over time. Spikes signal unusual accumulation or distribution.">Flow Z-Score History</div>
+                <div class="panel-title" data-tooltip="Z-Score of daily flow over time. Spikes signal unusual accumulation or distribution." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Flow Z-Score History</div>
                 <div class="tab-group time-tabs" id="z-time-tabs">
                     <button class="tab-btn" data-range="1w">1W</button>
                     <button class="tab-btn" data-range="1m">1M</button>
@@ -1509,29 +1509,29 @@ function drawChartZ(data) {
     const getY = val => pad.top + chartH/2 - (val / maxZ) * (chartH/2);
 
     // Safe zones bands
-    ctxZ.fillStyle = 'rgba(61,184,122,0.05)';
+    ctxZ.fillStyle = 'rgba(61,184,122,0.08)';
     ctxZ.fillRect(pad.left, pad.top, chartW, getY(1.5) - pad.top);
-    ctxZ.fillStyle = 'rgba(239,68,68,0.05)';
+    ctxZ.fillStyle = 'rgba(239,68,68,0.08)';
     ctxZ.fillRect(pad.left, getY(-1.5), chartW, pad.top + chartH - getY(-1.5));
 
-    // Threshold lines
-    ctxZ.strokeStyle = 'rgba(255,255,255,0.2)'; ctxZ.setLineDash([4,4]);
+    // Threshold lines — colored per zone
+    ctxZ.lineWidth = 1; ctxZ.setLineDash([4,4]);
+    ctxZ.strokeStyle = 'rgba(61,184,122,0.45)';
     ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(1.5)); ctxZ.lineTo(pad.left+chartW, getY(1.5)); ctxZ.stroke();
+    ctxZ.strokeStyle = 'rgba(239,68,68,0.45)';
     ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(-1.5)); ctxZ.lineTo(pad.left+chartW, getY(-1.5)); ctxZ.stroke();
-    ctxZ.strokeStyle = 'rgba(255,255,255,0.4)'; ctxZ.setLineDash([]);
+    ctxZ.setLineDash([]);
+    ctxZ.strokeStyle = 'rgba(255,255,255,0.25)';
     ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(0)); ctxZ.lineTo(pad.left+chartW, getY(0)); ctxZ.stroke();
 
     // Zone labels — placed INSIDE their respective zones
-    ctxZ.font = 'bold 10px sans-serif'; ctxZ.textAlign = 'right';
-    // ACCUMULATION label: inside the green zone above +1.5 line
-    ctxZ.fillStyle = 'rgba(61,184,122,0.7)';
-    ctxZ.fillText('▲ ACCUMULATION', pad.left + chartW - 4, Math.max(pad.top + 12, (pad.top + getY(1.5)) / 2 + 4));
-    // DISTRIBUTION label: inside the red zone below −1.5 line
-    ctxZ.fillStyle = 'rgba(239,68,68,0.7)';
+    ctxZ.font = 'bold 11px sans-serif'; ctxZ.textAlign = 'right';
+    ctxZ.fillStyle = 'rgba(61,184,122,0.8)';
+    ctxZ.fillText('▲ ACCUMULATION', pad.left + chartW - 4, Math.max(pad.top + 13, (pad.top + getY(1.5)) / 2 + 4));
+    ctxZ.fillStyle = 'rgba(239,68,68,0.8)';
     ctxZ.fillText('▼ DISTRIBUTION', pad.left + chartW - 4, Math.min(pad.top + chartH - 3, (getY(-1.5) + pad.top + chartH) / 2 + 4));
-    // BALANCED label: middle of the chart (between ±1.5 lines)
-    ctxZ.font = '9px sans-serif'; ctxZ.fillStyle = 'rgba(148,163,184,0.4)';
-    ctxZ.fillText('BALANCED', pad.left + chartW - 4, getY(0) - 4);
+    ctxZ.font = '9px sans-serif'; ctxZ.fillStyle = 'rgba(148,163,184,0.35)';
+    ctxZ.fillText('NEUTRAL ZONE', pad.left + chartW - 4, getY(0) - 4);
 
     // The Z-Score line
     ctxZ.beginPath();
@@ -1553,11 +1553,16 @@ function drawChartZ(data) {
     ctxZ.stroke();
 
     // Y-labels
-    ctxZ.fillStyle = '#94a3b8'; ctxZ.font = '10px monospace'; ctxZ.textAlign = 'right';
+    ctxZ.font = '10px monospace'; ctxZ.textAlign = 'right';
+    ctxZ.fillStyle = 'rgba(148,163,184,0.7)';
     ctxZ.fillText('+' + maxZ.toFixed(1), pad.left - 5, pad.top + 5);
+    ctxZ.fillStyle = 'rgba(61,184,122,0.9)';
     ctxZ.fillText('+1.5', pad.left - 5, getY(1.5) + 3);
+    ctxZ.fillStyle = 'rgba(148,163,184,0.6)';
     ctxZ.fillText('0', pad.left - 5, getY(0) + 3);
+    ctxZ.fillStyle = 'rgba(239,68,68,0.9)';
     ctxZ.fillText('-1.5', pad.left - 5, getY(-1.5) + 3);
+    ctxZ.fillStyle = 'rgba(148,163,184,0.7)';
     ctxZ.fillText('-' + maxZ.toFixed(1), pad.left - 5, pad.top + chartH + 3);
 
     // Adaptive X-axis for Chart Z
@@ -1570,7 +1575,7 @@ function drawChartZ(data) {
         const hy = getY(data[hi].flow_zscore);
 
         ctxZ.beginPath(); ctxZ.moveTo(hx, pad.top); ctxZ.lineTo(hx, pad.top + chartH);
-        ctxZ.strokeStyle = 'rgba(255,255,255,0.2)'; ctxZ.setLineDash([2,2]); ctxZ.lineWidth = 1; ctxZ.stroke(); ctxZ.setLineDash([]);
+        ctxZ.strokeStyle = 'rgba(0,255,255,0.22)'; ctxZ.lineWidth = 1; ctxZ.setLineDash([]); ctxZ.stroke();
 
         const zVal = data[hi].flow_zscore;
         const dotColor = zVal >= 1.5 ? '#3db87a' : (zVal <= -1.5 ? '#ef4444' : '#94a3b8');
