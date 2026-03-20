@@ -384,7 +384,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <div class="s-sub" id="sent-long-sub">--</div>
             </div>
             <div class="sentiment-center">
-                <div class="s-center-label" data-tooltip="Each bar shows the 30-day capital activity for that side. Width = share of total absolute flow. Color = direction: green = inflows, white = outflows.">CROSS-ETF CAPITAL BALANCE · 30D</div>
+                <div class="s-center-label" data-tooltip="Each bar shows the 30-day capital activity for that side. Width = share of total absolute flow. Color = direction: green = inflows, red = outflows.">CROSS-ETF CAPITAL BALANCE · 30D</div>
                 <div class="s-meters">
                     <div class="s-meter-row">
                         <span class="s-meter-lbl">LONG</span>
@@ -487,7 +487,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <!-- Chart Footer Legend -->
             <div class="chart-footer" style="margin-top:8px;">
                 <div class="chart-legend">
-                    <div class="legend-item" data-tooltip="Split-adjusted NAV price line"><span class="legend-line" style="background:#fff"></span> PRICE (ADJ)</div>
+                    <div class="legend-item" data-tooltip="Split-adjusted NAV price line"><span class="legend-line" style="background:var(--cyan)"></span> PRICE (ADJ)</div>
                     <div class="legend-item" data-tooltip="Cumulative net capital flow from start of visible range"><span class="legend-swatch" style="background:rgba(61,184,122,0.5)"></span> CUM. FLOW (IN)</div>
                     <div class="legend-item" data-tooltip="Cumulative outflow period"><span class="legend-swatch" style="background:rgba(239,68,68,0.5)"></span> CUM. FLOW (OUT)</div>
                 </div>
@@ -932,8 +932,8 @@ function renderSection1() {
 
     el('sent-bar-long').style.width  = `${longPct.toFixed(1)}%`;
     el('sent-bar-short').style.width = `${shortPct.toFixed(1)}%`;
-    const longColor  = longFlow  >= 0 ? 'var(--green)' : 'rgba(255,255,255,0.8)';
-    const shortColor = shortFlow >= 0 ? 'var(--green)' : 'rgba(255,255,255,0.8)';
+    const longColor  = longFlow  >= 0 ? 'var(--green)' : 'var(--red)';
+    const shortColor = shortFlow >= 0 ? 'var(--green)' : 'var(--red)';
     el('sent-bar-long').style.background  = longColor;
     el('sent-bar-short').style.background = shortColor;
     el('sent-pct-long').textContent  = `${longPct.toFixed(0)}%`;
@@ -1231,7 +1231,7 @@ function drawChartA(data) {
     
     // NAV Line
     ctxA.beginPath();
-    ctxA.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctxA.strokeStyle = 'var(--cyan)';
     ctxA.lineWidth = 1.5;
     for (let i = 0; i < data.length; i++) {
         if (i===0) ctxA.moveTo(getX(i), getNY(navs[i]));
