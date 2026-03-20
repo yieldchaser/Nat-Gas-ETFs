@@ -381,6 +381,14 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     table.cycle-table { min-width: 460px; font-size: 0.65rem; }
 }
 
+/* ---- ETF CHIPS ---- */
+.etf-chip {
+    font-size: 0.6rem; font-weight: 800; letter-spacing: 0.5px;
+    padding: 4px 10px; border-radius: 4px; border: 1px solid;
+    cursor: pointer; transition: all 0.2s; user-select: none;
+    font-family: 'JetBrains Mono', monospace;
+}
+
 /* ---- YEARLY MATRIX ---- */
 .matrix-panel {
     background: var(--bg-panel);
@@ -474,7 +482,7 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- ENHANCED CHART SECTION -->
     <div class="chart-container">
         <div class="chart-header">
-            <div class="tab-group" id="chart-tabs"></div>
+            <div style="flex:1"></div>
             <div class="chart-controls">
                 <div class="horizon-group" id="horizon-controls">
                     <button class="horizon-btn" data-range="1w" data-tooltip="Last 7 calendar days">1W</button>
@@ -505,6 +513,9 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
                 <span id="range-active-label" style="color:var(--text-bright); text-transform: uppercase; letter-spacing: 2px;">ALL DATA</span>
             </div>
         </div>
+
+        <!-- ETF Chip Selector -->
+        <div id="chart-etf-chips" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin:10px 0 4px;"></div>
 
         <div class="chart-footer">
             <div class="chart-legend">
@@ -1058,18 +1069,26 @@ function hideTooltip() {
 
 // ── Chart UI Interaction ────────────────────────────────────────────────────
 function renderChartTabs() {
-    const el = document.getElementById('chart-tabs');
-    if (!el) return;
-    el.innerHTML = TICKERS.map(t =>
-        `<button class="tab-btn${t.label===state.activeTab?' active':''}" data-label="${t.label}" data-tooltip="${t.tip}">${t.label}</button>`
-    ).join('');
-    el.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            state.activeTab = btn.dataset.label;
+    const container = document.getElementById('chart-etf-chips');
+    if (!container) return;
+    container.innerHTML = '';
+    TICKERS.forEach(t => {
+        const active = t.label === state.activeTab;
+        const chip = document.createElement('button');
+        chip.className = 'etf-chip';
+        chip.textContent = t.label;
+        chip.setAttribute('data-tooltip', t.tip);
+        chip.style.color = t.color;
+        chip.style.borderColor = t.color;
+        chip.style.background = active ? t.color + '22' : 'transparent';
+        chip.style.opacity = active ? '1' : '0.45';
+        chip.addEventListener('click', () => {
+            state.activeTab = t.label;
             renderChartTabs();
             renderChart();
             renderTable();
         });
+        container.appendChild(chip);
     });
 }
 
