@@ -91,9 +91,9 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 /* ---- Section 3: Deep Dive Chart Panel ---- */
 .panel {
     background: var(--bg-panel); border: 1px solid var(--border-primary);
-    border-radius: 8px; padding: 24px; margin-bottom: 24px;
+    border-radius: 8px; padding: 16px 20px; margin-bottom: 16px;
 }
-.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .panel-title { font-size: 1rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--text-bright); }
 
 .tab-group { display: flex; background: #1a1a28; padding: 3px; border-radius: 6px; gap: 4px;}
@@ -109,13 +109,13 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .time-tabs .tab-btn { font-size: 0.65rem; padding: 4px 10px; }
 
 .chart-wrap { position: relative; width: 100%; }
-#chartA { width: 100%; height: 350px; }
-#chartB { width: 100%; height: 200px; margin-top: 10px;}
+#chartA { width: 100%; height: 270px; }
+#chartB { width: 100%; height: 130px; margin-top: 6px;}
 
 .stats-row {
     display: flex; justify-content: center; gap: 0;
-    padding: 14px 0 10px; border-top: 1px solid var(--border-primary);
-    margin: 16px 0 0; background: rgba(0,0,0,0.15); border-radius: 0 0 6px 6px;
+    padding: 8px 0 6px; border-top: 1px solid var(--border-primary);
+    margin: 10px 0 0; background: rgba(0,0,0,0.15); border-radius: 0 0 6px 6px;
 }
 .st-item {
     display: flex; flex-direction: column; align-items: center;
@@ -453,7 +453,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
 
             <!-- Chart B: Daily Flow Bars -->
-            <div style="margin: 12px 0 6px; font-size:0.6rem; font-weight:700; color:var(--text-muted); letter-spacing:1px;">
+            <div style="margin: 6px 0 4px; font-size:0.6rem; font-weight:700; color:var(--text-muted); letter-spacing:1px;">
                 <span data-tooltip="Daily net capital flow. Green bars = inflows (bullish for long ETFs / bearish for short ETFs). Red = opposite.">DAILY FLOW BARS</span>
             </div>
             <div class="chart-wrap">
@@ -461,7 +461,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
 
             <!-- ETF selector — centred below both charts -->
-            <div style="display:flex; justify-content:center; margin-top:12px;">
+            <div style="display:flex; justify-content:center; margin-top:8px;">
                 <div class="tab-group" id="etf-tabs">
                     <button class="tab-btn active" data-ticker="BOIL">BOIL</button>
                     <button class="tab-btn" data-ticker="HNU">HNU</button>
@@ -473,7 +473,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
 
             <!-- Range Slider Brush — controls ALL charts -->
-            <div class="range-slider-container" id="range-slider-container" style="margin-top:8px;">
+            <div class="range-slider-container" id="range-slider-container" style="margin-top:4px;">
                 <div class="range-slider-wrap">
                     <div class="range-inputs">
                         <div class="range-slider-track"></div>
@@ -488,7 +488,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
 
             <!-- Chart Footer Legend -->
-            <div class="chart-footer" style="margin-top:8px;">
+            <div class="chart-footer" style="margin-top:6px;">
                 <div class="chart-legend">
                     <div class="legend-item" data-tooltip="Split-adjusted NAV price line"><span class="legend-line" style="background:var(--cyan)"></span> PRICE (ADJ)</div>
                     <div class="legend-item" data-tooltip="Cumulative net capital flow from start of visible range"><span class="legend-swatch" style="background:rgba(61,184,122,0.5)"></span> CUM. FLOW (IN)</div>
@@ -500,14 +500,6 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 </div>
             </div>
 
-            <!-- Stats Row — at the bottom of the panel -->
-            <div class="stats-row" id="stats-row">
-                <div class="st-item"><div class="st-lbl" data-tooltip="Flow Z-Score vs 30-day average. >+1.5 = Accumulation, <−1.5 = Distribution.">Z-SCORE</div><div class="st-val" id="st-z">--</div></div>
-                <div class="st-item"><div class="st-lbl" data-tooltip="5-day rolling net flow momentum.">5D MOM</div><div class="st-val" id="st-mom5">--</div></div>
-                <div class="st-item"><div class="st-lbl" data-tooltip="20-day rolling net flow momentum.">20D MOM</div><div class="st-val" id="st-mom20">--</div></div>
-                <div class="st-item"><div class="st-lbl" data-tooltip="Regime classification: Accumulation (Z>1.5), Distribution (Z<−1.5), or Balanced.">REGIME</div><div class="st-val" id="st-reg">--</div></div>
-                <div class="st-item"><div class="st-lbl" data-tooltip="Pressure Score (−100→+100). Combines Z-Score, 5D momentum, and consecutive flow streaks.">PRESSURE</div><div class="st-val" id="st-pres">--</div></div>
-            </div>
         </div>
 
         <!-- Section 4 -->
