@@ -29,11 +29,13 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 
 .sentiment-center { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 16px; }
 .s-center-label { font-size: 0.62rem; color: var(--text-dim); letter-spacing: 2px; font-weight: 800; }
-/* Split bar: two halves from center */
-.s-bar-outer { width: 100%; max-width: 420px; height: 14px; background: rgba(255,255,255,0.05); border-radius: 7px; overflow: hidden; position: relative; display: flex; }
-.s-bar-long  { height: 100%; background: var(--green); transition: width 0.6s ease; border-radius: 7px 0 0 7px; }
-.s-bar-short { height: 100%; background: var(--red);   transition: width 0.6s ease; border-radius: 0 7px 7px 0; }
-.s-bar-pcts  { display: flex; justify-content: space-between; width: 100%; max-width: 420px; font-size: 0.58rem; color: var(--text-muted); font-weight: 700; margin-top: 2px; }
+/* Two stacked meters */
+.s-meters     { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 7px; }
+.s-meter-row  { display: flex; align-items: center; gap: 8px; }
+.s-meter-lbl  { font-size: 0.55rem; font-weight: 800; letter-spacing: 1px; color: var(--text-dim); width: 38px; text-align: right; flex-shrink: 0; }
+.s-meter-track{ flex: 1; height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden; }
+.s-meter-fill { height: 100%; transition: width 0.6s ease; border-radius: 5px; }
+.s-meter-pct  { font-size: 0.58rem; font-weight: 700; width: 30px; flex-shrink: 0; }
 .s-status { font-size: 0.85rem; font-weight: 900; letter-spacing: 2px; }
 
 /* ---- Section 2: Summary Cards ---- */
@@ -382,16 +384,20 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <div class="s-sub" id="sent-long-sub">--</div>
             </div>
             <div class="sentiment-center">
-                <div class="s-center-label" data-tooltip="Split bar: left (green) = long-side flow share, right (red) = short-side flow share of total 30-day capital movement. Width shows relative weight.">CROSS-ETF CAPITAL BALANCE · 30D</div>
-                <div class="s-bar-outer">
-                    <div class="s-bar-long"  id="sent-bar-long"  style="width:50%"></div>
-                    <div class="s-bar-short" id="sent-bar-short" style="width:50%"></div>
+                <div class="s-center-label" data-tooltip="Each bar shows the 30-day capital activity for that side. Width = share of total absolute flow. Color = direction: green/amber for longs, cyan/red for shorts.">CROSS-ETF CAPITAL BALANCE · 30D</div>
+                <div class="s-meters">
+                    <div class="s-meter-row">
+                        <span class="s-meter-lbl">LONG</span>
+                        <div class="s-meter-track"><div class="s-meter-fill" id="sent-bar-long" style="width:50%"></div></div>
+                        <span class="s-meter-pct" id="sent-pct-long" style="color:var(--green)">50%</span>
+                    </div>
+                    <div class="s-meter-row">
+                        <span class="s-meter-lbl">SHORT</span>
+                        <div class="s-meter-track"><div class="s-meter-fill" id="sent-bar-short" style="width:50%"></div></div>
+                        <span class="s-meter-pct" id="sent-pct-short" style="color:var(--red)">50%</span>
+                    </div>
                 </div>
-                <div class="s-bar-pcts">
-                    <span id="sent-pct-long" style="color:var(--green)">50%</span>
-                    <div class="s-status val-muted" id="sent-status">LOADING</div>
-                    <span id="sent-pct-short" style="color:var(--red)">50%</span>
-                </div>
+                <div class="s-status val-muted" id="sent-status">LOADING</div>
             </div>
             <div class="sentiment-side right" data-tooltip="Net 30-day capital flow into SHORT ETFs (KOLD, HND, 3NGS). Positive = inflows (accumulation), negative = outflows (distribution).">
                 <div class="s-label">SHORT SIDE FLOWS</div>
@@ -926,13 +932,14 @@ function renderSection1() {
 
     el('sent-bar-long').style.width  = `${longPct.toFixed(1)}%`;
     el('sent-bar-short').style.width = `${shortPct.toFixed(1)}%`;
-    // Long segment: green = inflows, amber = outflows. Short segment: cyan = inflows, red = outflows.
-    // Fixed colors per side keep the balance bar readable regardless of flow direction.
-    el('sent-bar-long').style.background  = longFlow  >= 0 ? 'var(--green)' : '#d97706';
-    el('sent-bar-short').style.background = shortFlow >= 0 ? 'var(--cyan)'  : 'var(--red)';
-
-    el('sent-pct-long').textContent  = `LONG ${longPct.toFixed(0)}%`;
-    el('sent-pct-short').textContent = `SHORT ${shortPct.toFixed(0)}%`;
+    const longColor  = longFlow  >= 0 ? 'var(--green)' : '#d97706';
+    const shortColor = shortFlow >= 0 ? 'var(--cyan)'  : 'var(--red)';
+    el('sent-bar-long').style.background  = longColor;
+    el('sent-bar-short').style.background = shortColor;
+    el('sent-pct-long').textContent  = `${longPct.toFixed(0)}%`;
+    el('sent-pct-short').textContent = `${shortPct.toFixed(0)}%`;
+    el('sent-pct-long').style.color  = longColor;
+    el('sent-pct-short').style.color = shortColor;
 
     const status = data.sentiment;
     el('sent-status').textContent = status;
