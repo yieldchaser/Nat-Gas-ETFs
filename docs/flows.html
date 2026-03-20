@@ -158,7 +158,8 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 }
 .div-table td:first-child { text-align: left; }
 .div-table tbody tr:nth-child(even) td { background: rgba(255,255,255,0.012); }
-.div-table tbody tr:hover td { background: rgba(255,255,255,0.03); }
+.div-table tbody tr:hover td { background: rgba(255,255,255,0.04) !important; }
+.div-table tbody tr td:first-child { border-left: 3px solid transparent; }
 .div-badge {
     display: inline-block; font-size: 0.6rem; font-weight: 800;
     padding: 3px 8px; border-radius: 4px; letter-spacing: 0.8px;
@@ -515,7 +516,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 4 -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Scans for instances where price and capital flow moved in opposite directions. Divergences can signal stealth accumulation or distribution.">Flow vs Price Divergence</div>
+                <div class="panel-title" data-tooltip="Scans for instances where price and capital flow moved in opposite directions. Divergences can signal stealth accumulation or distribution." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Flow vs Price Divergence</div>
                 <div style="display:flex; align-items:center; gap:12px;">
                     <div class="tab-group" id="div-filter-tabs">
                         <button class="tab-btn active" data-divrange="90" data-tooltip="Scan the last 90 days">90D</button>
@@ -2060,12 +2061,28 @@ function renderDivergence() {
                 const wNorm = w / 10; // 3d=0.3, 5d=0.5, 10d=1.0
                 const strength = Math.round(pNorm * 0.4 * 100 + fNorm * 0.4 * 100 + wNorm * 0.2 * 100);
                 const strCol = strength >= 70 ? 'val-green' : strength >= 40 ? 'val-muted' : 'val-red';
+                const strRgb = strength >= 70 ? '61,184,122' : strength >= 40 ? '148,163,184' : '192,64,64';
 
                 const zCol   = zAtEnd >= 1.5 ? 'val-green' : zAtEnd <= -1.5 ? 'val-red' : 'val-muted';
                 const presCol = presAtEnd >= 0 ? 'val-green' : 'val-red';
 
+                // Row left-border accent color
+                const rowAccent = isBear ? 'rgba(192,64,64,0.7)' : 'rgba(61,184,122,0.7)';
+
+                // Clean signal HTML (no platform-dependent emojis)
+                const sigDot = confirmed
+                    ? `<span style="color:${isBear?'var(--red)':'var(--green)'};font-size:0.65rem;">◆</span>`
+                    : `<span style="color:${isBear?'var(--red)':'var(--green)'};font-size:0.55rem;">▲</span>`;
+                const sigLabel = confirmed
+                    ? `<span style="font-weight:900;letter-spacing:0.3px;">${isBear?'CONFIRMED Dist.':'CONFIRMED Accum.'}</span>`
+                    : `<span style="font-weight:600;opacity:0.85;">${isBear?'Distribution':'Accumulation'}</span>`;
+                const sigHtml = `<span style="color:${isBear?'var(--red)':'var(--green)'};font-size:0.72rem;white-space:nowrap;">${sigDot} ${sigLabel}</span>`;
+
+                // STR bar: gradient background behind the number
+                const strBar = `linear-gradient(90deg,rgba(${strRgb},0.18) ${strength}%,transparent ${strength}%)`;
+
                 html += `<tr>
-                    <td style="color:var(--text-muted);font-size:0.7rem;">${cur.date}</td>
+                    <td style="color:var(--text-muted);font-size:0.7rem;border-left:3px solid ${rowAccent};">${cur.date}</td>
                     <td style="color:var(--text-dim);">${w}d</td>
                     <td><span class="div-badge ${badgeClass}">${type}</span></td>
                     <td class="${priceMove>=0?'val-green':'val-red'}">${fmtPct(priceMove)}</td>
@@ -2073,8 +2090,8 @@ function renderDivergence() {
                     <td style="color:var(--text-dim);">${fmtUsd(avgDaily)}/d</td>
                     <td class="${zCol}">${zAtEnd >= 0 ? '+' : ''}${zAtEnd.toFixed(2)}</td>
                     <td class="${presCol}">${presAtEnd >= 0 ? '+' : ''}${presAtEnd}</td>
-                    <td style="font-weight:700;font-size:0.72rem;">${sig}</td>
-                    <td class="${strCol}" style="font-weight:700;">${strength}</td>
+                    <td>${sigHtml}</td>
+                    <td class="${strCol}" style="font-weight:700;background:${strBar};">${strength}</td>
                 </tr>`;
 
                 i -= (w - 1); // skip past this sequence to avoid overlapping copies
