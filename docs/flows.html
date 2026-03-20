@@ -2176,7 +2176,7 @@ function renderYearlyMatrix() {
     });
 
     // Summary totals row
-    html += `<tr style="border-top:1px solid rgba(255,255,255,0.1);"><td class="matrix-year" style="color:var(--text-muted);font-size:0.58rem;letter-spacing:1px;font-weight:600;">TOTAL</td>`;
+    html += `<tr style="border-top:1px solid rgba(255,255,255,0.1);"><td class="matrix-year" style="color:var(--text-muted);font-size:0.75rem;letter-spacing:1px;font-weight:800;">TOTAL</td>`;
     tickers.forEach(tk => {
         const t = totals[tk];
         html += `<td style="opacity:0.6;"><span style="font-weight:700;font-size:0.75rem;">${t.count}</span><span style="font-size:0.56rem;color:${zColor(t.avgZ)};margin-left:3px;">(${t.avgZ.toFixed(1)}σ)</span></td>`;
