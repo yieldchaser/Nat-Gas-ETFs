@@ -2,6 +2,7 @@
 import argparse
 import json
 import logging
+import time
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -189,6 +190,7 @@ def main():
 
     for ticker in TICKERS:
         logger.info(f"Processing {ticker}...")
+        time.sleep(1)
         df = pd.DataFrame()
         
         if args.seed:
@@ -203,8 +205,11 @@ def main():
                 logger.warning(f"No CSV found for {ticker}")
                 continue
         else:
-            df = fetch_live_data(ticker, "2021-01-01", today_str)
-            
+            df = fetch_live_data(ticker, "2010-01-01", today_str)
+            if df.empty:
+                logger.warning(f"Extended history unavailable for {ticker}, falling back to 2021-01-01")
+                df = fetch_live_data(ticker, "2021-01-01", today_str)
+
         if df.empty:
             logger.error(f"No data for {ticker}. Skipping.")
             continue
