@@ -715,10 +715,14 @@ const ctxZ = el('chartZ').getContext('2d');
 const ctxCross = el('chartCross').getContext('2d');
 const tooltip = el('chart-tooltip');
 
-// Colors
+// Colors — two professional families: gold/amber (longs) · blue/cyan/violet (shorts)
 const colors = {
-    'BOIL': '#c07828', 'HNU': '#3db87a', '3NGL': '#8855bb',
-    'KOLD': '#5090a0', 'HND': '#d4a830', '3NGS': '#e06030'
+    'BOIL':  '#F5C542',  // deep gold          — 2× long flagship
+    'HNU':   '#E8924A',  // amber              — 2× long
+    '3NGL':  '#C4773A',  // copper             — 3× long
+    'KOLD':  '#4A9CF5',  // electric blue      — 2× short flagship
+    'HND':   '#4DD4EA',  // ice cyan           — 2× short
+    '3NGS':  '#A07AF5',  // violet-indigo      — 3× short
 };
 
 async function init() {
