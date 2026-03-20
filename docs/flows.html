@@ -19,48 +19,67 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
     display: flex; justify-content: space-between; align-items: center;
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
-.sentiment-side { display: flex; flex-direction: column; text-align: center; width: 25%; }
+.sentiment-side { display: flex; flex-direction: column; text-align: center; width: 22%; }
 .sentiment-side.left { text-align: left; }
 .sentiment-side.right { text-align: right; }
 .s-label { font-size: 0.65rem; color: var(--text-dim); letter-spacing: 1px; font-weight: 700; margin-bottom: 4px; }
-.s-val { font-size: 1.2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
-.s-tickers { font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.5px; }
+.s-val { font-size: 1.1rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.s-tickers { font-size: 0.58rem; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 2px; }
+.s-sub { font-size: 0.62rem; color: var(--text-muted); margin-top: 4px; font-weight: 600; }
 
-.sentiment-center { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.s-center-label { font-size: 0.65rem; color: var(--text-dim); letter-spacing: 2px; font-weight: 800; }
-.s-bar-wrap { width: 100%; max-width: 400px; height: 12px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden; display: flex; }
-.s-bar-fill { height: 100%; transition: width 0.5s ease; }
-.s-status { font-size: 0.9rem; font-weight: 900; letter-spacing: 2px; }
+.sentiment-center { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 16px; }
+.s-center-label { font-size: 0.62rem; color: var(--text-dim); letter-spacing: 2px; font-weight: 800; }
+/* Split bar: two halves from center */
+.s-bar-outer { width: 100%; max-width: 420px; height: 14px; background: rgba(255,255,255,0.05); border-radius: 7px; overflow: hidden; position: relative; display: flex; }
+.s-bar-long  { height: 100%; background: var(--green); transition: width 0.6s ease; border-radius: 7px 0 0 7px; }
+.s-bar-short { height: 100%; background: var(--red);   transition: width 0.6s ease; border-radius: 0 7px 7px 0; }
+.s-bar-pcts  { display: flex; justify-content: space-between; width: 100%; max-width: 420px; font-size: 0.58rem; color: var(--text-muted); font-weight: 700; margin-top: 2px; }
+.s-status { font-size: 0.85rem; font-weight: 900; letter-spacing: 2px; }
 
 /* ---- Section 2: Summary Cards ---- */
 .summary-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px;
 }
-.side-col { display: flex; flex-direction: column; gap: 16px; }
-.side-header { font-size: 0.8rem; font-weight: 800; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 4px; border-bottom: 1px solid var(--border-primary); padding-bottom: 8px; }
+.side-col { display: flex; flex-direction: column; gap: 10px; }
+.side-header {
+    font-size: 0.72rem; font-weight: 800; letter-spacing: 2px; color: var(--text-dim);
+    margin-bottom: 2px; border-bottom: 1px solid var(--border-primary); padding-bottom: 7px;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.side-header-sub { font-size: 0.58rem; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; text-transform: none; }
 
+/* Card: horizontal compact layout */
 .flow-card {
     background: var(--bg-panel); border: 1px solid var(--border-primary);
-    border-radius: 8px; padding: 16px; display: flex; gap: 16px;
-    transition: border-color 0.2s;
+    border-radius: 8px; padding: 12px 14px; display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 12px; align-items: center;
+    transition: border-color 0.2s; cursor: pointer;
 }
-.flow-card:hover { border-color: var(--border-accent); }
-.fc-left { width: 120px; display: flex; flex-direction: column; justify-content: space-between; border-right: 1px solid var(--border-primary); padding-right: 16px; }
-.fc-ticker { font-size: 1.2rem; font-weight: 900; letter-spacing: 1px; color: var(--text-bright); }
-.fc-nav { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); }
-.fc-regime { display: inline-block; font-size: 0.55rem; font-weight: 800; letter-spacing: 1px; padding: 3px 6px; border-radius: 4px; margin-top: 8px; text-align: center; }
+.flow-card:hover { border-color: var(--border-accent); background: var(--bg-hover); }
 
-.fc-main { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.fc-metric { display: flex; flex-direction: column; justify-content: center; }
-.fc-m-lbl { font-size: 0.6rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
-.fc-m-val { font-size: 1.3rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.fc-left { display: flex; flex-direction: column; gap: 4px; border-right: 1px solid var(--border-primary); padding-right: 12px; }
+.fc-ticker { font-size: 1.05rem; font-weight: 900; letter-spacing: 1px; color: var(--text-bright); }
+.fc-nav { font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); }
+.fc-regime { display: inline-block; font-size: 0.5rem; font-weight: 800; letter-spacing: 0.8px; padding: 2px 5px; border-radius: 3px; white-space: nowrap; }
 
-.fc-right { width: 100px; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
-.fc-pres-lbl { font-size: 0.6rem; color: var(--text-dim); font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
-.fc-pres-val { font-size: 1.6rem; font-weight: 900; }
+/* Main metrics: 2x2 grid */
+.fc-main { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+.fc-metric { display: flex; flex-direction: column; }
+.fc-m-lbl { font-size: 0.55rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.8px; margin-bottom: 2px; }
+.fc-m-val { font-size: 0.9rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1.2; }
 
-.mom-row { display: flex; gap: 12px; margin-top: 8px; font-size: 0.65rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;}
+/* Momentum row spanning both columns */
+.mom-row { grid-column: 1 / span 2; display: flex; gap: 10px; font-size: 0.6rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
 .mom-item span { font-weight: 700; }
+
+/* Right section: pressure gauge */
+.fc-right { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 52px; }
+.fc-pres-lbl { font-size: 0.5rem; color: var(--text-muted); font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
+.fc-pres-val { font-size: 1.1rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; }
+/* Mini pressure bar */
+.fc-pres-bar-wrap { width: 44px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+.fc-pres-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
 
 .val-green { color: var(--green); }
 .val-red { color: var(--red); }
@@ -91,14 +110,18 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 #chartA { width: 100%; height: 350px; }
 #chartB { width: 100%; height: 200px; margin-top: 10px;}
 
-.stats-row { 
-    display: flex; justify-content: center; gap: 32px; 
-    padding: 12px 0; border-top: 1px solid var(--border-primary); border-bottom: 1px solid var(--border-primary);
-    margin: 16px 0; background: rgba(0,0,0,0.2); border-radius: 4px;
+.stats-row {
+    display: flex; justify-content: center; gap: 0;
+    padding: 14px 0 10px; border-top: 1px solid var(--border-primary);
+    margin: 16px 0 0; background: rgba(0,0,0,0.15); border-radius: 0 0 6px 6px;
 }
-.st-item { display: flex; flex-direction: column; align-items: center; }
-.st-lbl { font-size: 0.6rem; color: var(--text-dim); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
-.st-val { font-size: 0.9rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.st-item {
+    display: flex; flex-direction: column; align-items: center;
+    flex: 1; padding: 0 8px; border-right: 1px solid var(--border-primary);
+}
+.st-item:last-child { border-right: none; }
+.st-lbl { font-size: 0.62rem; color: var(--text-dim); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; cursor: default; }
+.st-val { font-size: 1rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
 
 /* ---- Download button ---- */
 .download-btn {
@@ -110,12 +133,27 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .download-btn:hover { background: var(--cyan); color: #000; }
 
 /* ---- Section 4: Divergence Panel ---- */
-.div-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-.div-table th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border-primary); color: var(--text-dim); font-size: 0.65rem; letter-spacing: 1px; }
-.div-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); font-family: 'JetBrains Mono', monospace; }
-.div-table tr:hover td { background: rgba(255,255,255,0.02); }
-.div-badge { display: inline-block; font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px; }
-.bg-bear { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
+.div-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.div-table thead tr { border-bottom: 2px solid var(--border-primary); }
+.div-table th {
+    text-align: left; padding: 10px 12px;
+    color: var(--text-muted); font-size: 0.6rem; letter-spacing: 1.2px;
+    text-transform: uppercase; font-weight: 800; white-space: nowrap;
+}
+.div-table th.num { text-align: right; }
+.div-table td {
+    padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.025);
+    font-family: 'JetBrains Mono', monospace; color: var(--text-primary); font-size: 0.75rem;
+}
+.div-table td.num { text-align: right; }
+.div-table tbody tr:nth-child(even) td { background: rgba(255,255,255,0.012); }
+.div-table tbody tr:hover td { background: rgba(255,255,255,0.03); }
+.div-badge {
+    display: inline-block; font-size: 0.6rem; font-weight: 800;
+    padding: 3px 8px; border-radius: 4px; letter-spacing: 0.8px;
+    white-space: nowrap; font-family: sans-serif;
+}
+.bg-bear { background: rgba(192, 64, 64, 0.15); color: var(--red); border: 1px solid rgba(192, 64, 64, 0.3); }
 .bg-bull { background: rgba(61, 184, 122, 0.15); color: var(--green); border: 1px solid rgba(61, 184, 122, 0.3); }
 
 /* ---- Section 5 & 6 ---- */
@@ -283,11 +321,12 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Page Title Block -->
         <div style="margin-bottom:24px;">
             <div style="display:flex; align-items:baseline; gap:16px;">
-                <span style="font-size:1.6rem; font-weight:800; letter-spacing:1px; color:var(--text-bright); text-transform:uppercase;">Flow Monitor</span>
+                <span data-tooltip="Flow Monitor tracks daily capital inflows &amp; outflows across 6 leveraged Nat Gas ETFs. Green = bullish signal (longs accumulating / shorts unwinding). Red = bearish." style="font-size:1.6rem; font-weight:800; letter-spacing:1px; color:var(--text-bright); text-transform:uppercase; cursor:default;">Flow Monitor</span>
                 <span style="font-size:0.75rem; color:var(--cyan); letter-spacing:2px; font-weight:600;">NAT GAS ETFs</span>
             </div>
             <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; line-height:1.6; max-width:800px;">
                 Tracks daily capital inflows and outflows across all 6 leveraged ETFs. Flow Z-Score, pressure score, and divergence detection identify accumulation and distribution events in real time.
+                <span style="color:var(--cyan); font-weight:600;"> · Short ETF colors are inverted: outflows = bullish, inflows = bearish.</span>
             </div>
         </div>
 
@@ -297,63 +336,79 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         </div>
         <!-- Section 1 -->
         <div class="sentiment-banner" id="sentiment-banner">
-            <div class="sentiment-side left">
+            <div class="sentiment-side left" data-tooltip="Net 30-day capital flow into LONG ETFs (BOIL, HNU, 3NGL). Positive = smart money going bullish on Nat Gas.">
                 <div class="s-label">LONG SIDE FLOWS</div>
-                <div class="s-tickers">BOIL + HNU + 3NGL</div>
+                <div class="s-tickers">BOIL · HNU · 3NGL</div>
                 <div class="s-val val-muted" id="sent-long">--</div>
+                <div class="s-sub" id="sent-long-sub">--</div>
             </div>
             <div class="sentiment-center">
-                <div class="s-center-label" data-tooltip="Overall capital sentiment. Measures the net 30-day directional flow among all 6 tracked ETFs.">CROSS-ETF SENTIMENT (30D)</div>
-                <div class="s-bar-wrap">
-                    <div class="s-bar-fill" id="sent-bar" style="width: 50%; background: var(--text-dim);"></div>
+                <div class="s-center-label" data-tooltip="Split bar: left (green) = long-side flow share, right (red) = short-side flow share of total 30-day capital movement. Width shows relative weight.">CROSS-ETF CAPITAL BALANCE · 30D</div>
+                <div class="s-bar-outer">
+                    <div class="s-bar-long"  id="sent-bar-long"  style="width:50%"></div>
+                    <div class="s-bar-short" id="sent-bar-short" style="width:50%"></div>
                 </div>
-                <div class="s-status val-muted" id="sent-status">LOADING</div>
+                <div class="s-bar-pcts">
+                    <span id="sent-pct-long" style="color:var(--green)">50%</span>
+                    <div class="s-status val-muted" id="sent-status">LOADING</div>
+                    <span id="sent-pct-short" style="color:var(--red)">50%</span>
+                </div>
             </div>
-            <div class="sentiment-side right">
+            <div class="sentiment-side right" data-tooltip="Net 30-day capital flow into SHORT ETFs (KOLD, HND, 3NGS). Outflows from shorts (−) = bullish for Nat Gas. Inflows (+) = bearish.">
                 <div class="s-label">SHORT SIDE FLOWS</div>
-                <div class="s-tickers">KOLD + HND + 3NGS</div>
+                <div class="s-tickers">KOLD · HND · 3NGS</div>
                 <div class="s-val val-muted" id="sent-short">--</div>
+                <div class="s-sub" id="sent-short-sub">--</div>
             </div>
         </div>
 
         <!-- Section 2 -->
         <div class="summary-grid">
             <div class="side-col" id="col-long">
-                <div class="side-header" data-tooltip="Capital flows into ETFs that profit when Natural Gas prices go up (BOIL, HNU.TO, 3NGL.L).">LONG SIDE (2X / 3X)</div>
+                <div class="side-header" data-tooltip="Capital flows into ETFs that profit when Natural Gas prices go up (BOIL, HNU.TO, 3NGL.L). Inflows = bullish signal.">
+                    <span>▲ LONG SIDE · 2X / 3X</span>
+                    <span class="side-header-sub">BOIL · HNU · 3NGL</span>
+                </div>
                 <!-- Cards injected here -->
             </div>
             <div class="side-col" id="col-short">
-                <div class="side-header" data-tooltip="Capital flows into ETFs that profit when Natural Gas prices go down (KOLD, HND.TO, 3NGS.L).">SHORT SIDE (2X / 3X)</div>
+                <div class="side-header" data-tooltip="Capital flows into ETFs that profit when Natural Gas prices go down (KOLD, HND.TO, 3NGS.L). Outflows from shorts = bullish signal.">
+                    <span>▼ SHORT SIDE · 2X / 3X</span>
+                    <span class="side-header-sub">KOLD · HND · 3NGS</span>
+                </div>
                 <!-- Cards injected here -->
             </div>
         </div>
 
         <!-- Section 3 -->
         <div class="panel">
-            <div class="panel-header">
-                <div class="tab-group" id="etf-tabs">
-                    <button class="tab-btn active" data-ticker="BOIL">BOIL</button>
-                    <button class="tab-btn" data-ticker="HNU">HNU</button>
-                    <button class="tab-btn" data-ticker="3NGL">3NGL</button>
-                    <button class="tab-btn" data-ticker="KOLD">KOLD</button>
-                    <button class="tab-btn" data-ticker="HND">HND</button>
-                    <button class="tab-btn" data-ticker="3NGS">3NGS</button>
-                </div>
-                <div class="tab-group time-tabs" id="time-tabs">
-                    <button class="tab-btn" data-range="1w">1W</button>
-                    <button class="tab-btn" data-range="1m">1M</button>
-                    <button class="tab-btn" data-range="3m">3M</button>
-                    <button class="tab-btn" data-range="6m">6M</button>
-                    <button class="tab-btn" data-range="1y">1Y</button>
-                    <button class="tab-btn" data-range="3y">3Y</button>
-                    <button class="tab-btn active" data-range="all">ALL</button>
+            <div class="panel-header" style="flex-wrap:wrap; gap:8px;">
+                <div class="panel-title" data-tooltip="Deep Dive: Select an ETF then adjust time range. Range slider zooms all charts simultaneously. Drag on chart to measure price/flow.">DEEP DIVE</div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <div class="tab-group" id="etf-tabs">
+                        <button class="tab-btn active" data-ticker="BOIL">BOIL</button>
+                        <button class="tab-btn" data-ticker="HNU">HNU</button>
+                        <button class="tab-btn" data-ticker="3NGL">3NGL</button>
+                        <button class="tab-btn" data-ticker="KOLD">KOLD</button>
+                        <button class="tab-btn" data-ticker="HND">HND</button>
+                        <button class="tab-btn" data-ticker="3NGS">3NGS</button>
+                    </div>
+                    <div class="tab-group time-tabs" id="time-tabs">
+                        <button class="tab-btn" data-range="1w">1W</button>
+                        <button class="tab-btn" data-range="1m">1M</button>
+                        <button class="tab-btn" data-range="3m">3M</button>
+                        <button class="tab-btn" data-range="6m">6M</button>
+                        <button class="tab-btn" data-range="1y">1Y</button>
+                        <button class="tab-btn" data-range="3y">3Y</button>
+                        <button class="tab-btn active" data-range="all">ALL</button>
+                    </div>
                 </div>
             </div>
 
             <!-- Chart A: Cumulative Flow + Price -->
             <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
                 <div id="zoom-indicator" style="font-size:0.55rem; color:var(--text-muted); letter-spacing:1px; display:none;">
-                    ZOOMED — SCROLL TO ADJUST · <span style="cursor:pointer; color:var(--cyan);" onclick="state.zoom={start:0,end:1};renderCharts();">RESET</span>
+                    ZOOMED — SCROLL TO ADJUST · <span style="cursor:pointer; color:var(--cyan);" onclick="state.zoom={start:0,end:1};renderCharts();renderCrossChart();">RESET</span>
                 </div>
             </div>
             <div class="chart-wrap" style="padding-right: 48px;">
@@ -361,25 +416,31 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <div id="chart-tooltip"></div>
             </div>
 
-            <!-- Stats Row -->
-            <div class="stats-row" id="stats-row">
-                <div class="st-item"><div class="st-lbl" data-tooltip="Current flow Z-Score. Measures how unusual today's flow is compared to the 30-day average.">Z-Score</div><div class="st-val" id="st-z">--</div></div>
-                <div class="st-item"><div class="st-lbl" data-tooltip="5-day rolling net flow momentum.">5D Mom</div><div class="st-val" id="st-mom5">--</div></div>
-                <div class="st-item"><div class="st-lbl" data-tooltip="20-day rolling net flow momentum.">20D Mom</div><div class="st-val" id="st-mom20">--</div></div>
-                <div class="st-item"><div class="st-lbl" data-tooltip="Current regime classification based on Z-Score (Accumulation > 1.5, Distribution < -1.5, otherwise Balanced).">Regime</div><div class="st-val" id="st-reg">--</div></div>
-                <div class="st-item"><div class="st-lbl" data-tooltip="Flow Pressure Score (0-100). Combines Z-Score, 5D Momentum, and Consecutive Flow Streaks into a single metric.">Pressure</div><div class="st-val" id="st-pres">--</div></div>
+            <!-- Range Slider Brush — directly below chart A, controls ALL charts -->
+            <div class="range-slider-container" id="range-slider-container">
+                <div class="range-slider-wrap">
+                    <div class="range-inputs">
+                        <div class="range-slider-track"></div>
+                        <div id="range-highlight" class="range-slider-highlight"></div>
+                        <input type="range" id="range-start" min="0" max="100" value="0" data-tooltip="Drag to set the start of the visible date range. Controls all charts.">
+                        <input type="range" id="range-end" min="0" max="100" value="100" data-tooltip="Drag to set the end of the visible date range. Controls all charts.">
+                    </div>
+                </div>
+                <div class="range-labels">
+                    <span id="range-active-label" style="color:var(--text-bright); text-transform:uppercase; letter-spacing:2px;">ALL DATA</span>
+                </div>
             </div>
 
             <!-- Chart B: Daily Flow Bars -->
-            <div style="margin-bottom:6px; font-size:0.6rem; font-weight:700; color:var(--text-muted); letter-spacing:1px;">
-                <span data-tooltip="Daily net capital flow. Green bars = inflows, red bars = outflows.">DAILY FLOW BARS</span>
+            <div style="margin: 12px 0 6px; font-size:0.6rem; font-weight:700; color:var(--text-muted); letter-spacing:1px;">
+                <span data-tooltip="Daily net capital flow. Green bars = inflows (bullish for long ETFs / bearish for short ETFs). Red = opposite.">DAILY FLOW BARS</span>
             </div>
             <div class="chart-wrap">
                 <canvas id="chartB"></canvas>
             </div>
 
             <!-- Chart Footer Legend -->
-            <div class="chart-footer">
+            <div class="chart-footer" style="margin-top:8px;">
                 <div class="chart-legend">
                     <div class="legend-item" data-tooltip="Split-adjusted NAV price line"><span class="legend-line" style="background:#fff"></span> PRICE (ADJ)</div>
                     <div class="legend-item" data-tooltip="Cumulative net capital flow from start of visible range"><span class="legend-swatch" style="background:rgba(61,184,122,0.5)"></span> CUM. FLOW (IN)</div>
@@ -391,19 +452,13 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 </div>
             </div>
 
-            <!-- Range Slider Brush -->
-            <div class="range-slider-container" id="range-slider-container">
-                <div class="range-slider-wrap">
-                    <div class="range-inputs">
-                        <div class="range-slider-track"></div>
-                        <div id="range-highlight" class="range-slider-highlight"></div>
-                        <input type="range" id="range-start" min="0" max="100" value="0" data-tooltip="Drag to set the start of the visible date range">
-                        <input type="range" id="range-end" min="0" max="100" value="100" data-tooltip="Drag to set the end of the visible date range">
-                    </div>
-                </div>
-                <div class="range-labels">
-                    <span id="range-active-label" style="color:var(--text-bright); text-transform:uppercase; letter-spacing:2px;">ALL DATA</span>
-                </div>
+            <!-- Stats Row — at the bottom of the panel -->
+            <div class="stats-row" id="stats-row">
+                <div class="st-item"><div class="st-lbl" data-tooltip="Flow Z-Score vs 30-day average. >+1.5 = Accumulation, <−1.5 = Distribution.">Z-SCORE</div><div class="st-val" id="st-z">--</div></div>
+                <div class="st-item"><div class="st-lbl" data-tooltip="5-day rolling net flow momentum.">5D MOM</div><div class="st-val" id="st-mom5">--</div></div>
+                <div class="st-item"><div class="st-lbl" data-tooltip="20-day rolling net flow momentum.">20D MOM</div><div class="st-val" id="st-mom20">--</div></div>
+                <div class="st-item"><div class="st-lbl" data-tooltip="Regime classification: Accumulation (Z>1.5), Distribution (Z<−1.5), or Balanced.">REGIME</div><div class="st-val" id="st-reg">--</div></div>
+                <div class="st-item"><div class="st-lbl" data-tooltip="Pressure Score (−100→+100). Combines Z-Score, 5D momentum, and consecutive flow streaks.">PRESSURE</div><div class="st-val" id="st-pres">--</div></div>
             </div>
         </div>
 
@@ -424,11 +479,11 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <thead>
                     <tr>
                         <th data-tooltip="Date the divergence was detected.">DATE</th>
-                        <th data-tooltip="Number of days the divergence persisted.">DURATION</th>
-                        <th data-tooltip="Type of divergence: Bullish (Price down, Flow in) or Bearish (Price up, Flow out).">TYPE</th>
-                        <th data-tooltip="Percentage price move during the divergence window.">PRICE MOVE</th>
-                        <th data-tooltip="Total net capital flow during the divergence window.">NET FLOW</th>
-                        <th data-tooltip="The resulting signal implied by the divergence.">SIGNAL</th>
+                        <th data-tooltip="Number of days in the divergence window checked.">WINDOW</th>
+                        <th data-tooltip="Bearish Div: Price up but net flow negative. Bullish Div: Price down but net flow positive.">TYPE</th>
+                        <th class="num" data-tooltip="Split-adjusted price move over the divergence window.">PRICE Δ</th>
+                        <th class="num" data-tooltip="Total net capital flow during the divergence window.">NET FLOW</th>
+                        <th data-tooltip="Signal implied by the divergence pattern.">SIGNAL</th>
                     </tr>
                 </thead>
                 <tbody id="div-body">
@@ -440,7 +495,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 5 -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Historical chart of the flow Z-Score. Helps visualize the frequency and magnitude of accumulation and distribution events.">Flow Z-Score History</div>
+                <div class="panel-title" data-tooltip="Historical chart of the flow Z-Score. Controlled by the global range slider above. Helps visualize frequency and magnitude of accumulation/distribution events.">Flow Z-Score History</div>
                 <div class="tab-group time-tabs" id="z-time-tabs">
                     <button class="tab-btn" data-range="1w">1W</button>
                     <button class="tab-btn" data-range="1m">1M</button>
@@ -453,12 +508,15 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <div class="chart-wrap">
                 <canvas id="chartZ"></canvas>
             </div>
+            <div style="padding-top:6px; font-size:0.58rem; color:var(--text-muted); text-align:center; letter-spacing:1px;">
+                ↕ Use the range slider in the Deep Dive panel above to zoom all charts simultaneously
+            </div>
         </div>
 
         <!-- Section 6 -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Compare cumulative capital flows continuously across multiple ETFs. Click ETF chips to toggle visibility.">Cross-ETF Cumulative Flow Comparison</div>
+                <div class="panel-title" data-tooltip="Compare cumulative capital flows across all ETFs. Zoom controlled by global range slider. Toggle ETFs with chips below.">Cross-ETF Cumulative Flow Comparison</div>
                 <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                     <div class="tab-group time-tabs" id="cross-time-tabs">
                         <button class="tab-btn" data-range="1w">1W</button>
@@ -480,6 +538,8 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <canvas id="chartCross"></canvas>
                 <div id="cross-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:6px; font-size:0.7rem; pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:140px;"></div>
             </div>
+            <!-- HTML legend for cross ETF chart — avoids canvas collision -->
+            <div id="cross-html-legend" style="display:flex; flex-wrap:wrap; gap:12px; padding:8px 0 4px; border-top:1px solid rgba(255,255,255,0.05);"></div>
         </div>
 
         <!-- Section 7: Yearly Flow Frequency Matrix -->
@@ -752,82 +812,106 @@ async function init() {
 
 function renderSection1() {
     const data = state.summary.cross_etf;
-    el('sent-long').textContent = fmtUsd(data.bull_flow_30d);
-    el('sent-long').className = `s-val ${data.bull_flow_30d >= 0 ? 'val-green' : 'val-red'}`;
-    
-    if (data.bear_flow_30d > 0) {
-        el('sent-short').textContent = `+${fmtUsd(data.bear_flow_30d).replace('+', '')} (Bearish)`;
-        el('sent-short').className = `s-val val-red`;
-    } else {
-        el('sent-short').textContent = `${fmtUsd(data.bear_flow_30d)} (Bullish)`;
-        el('sent-short').className = `s-val val-green`;
-    }
-    
+
+    // Long side: bull_flow_30d positive = inflows to longs = bullish = green
+    const longFlow = data.bull_flow_30d;
+    el('sent-long').textContent = fmtUsd(longFlow);
+    el('sent-long').className = `s-val ${longFlow >= 0 ? 'val-green' : 'val-red'}`;
+    el('sent-long-sub').textContent = longFlow >= 0 ? '▲ Smart money long' : '▼ Longs reducing';
+    el('sent-long-sub').style.color = longFlow >= 0 ? 'var(--green)' : 'var(--red)';
+
+    // Short side: bear_flow_30d negative = outflows from shorts = bullish = green
+    const shortFlow = data.bear_flow_30d;
+    const shortIsBullish = shortFlow <= 0; // exits from shorts = bullish
+    el('sent-short').textContent = fmtUsd(shortFlow);
+    el('sent-short').className = `s-val ${shortIsBullish ? 'val-green' : 'val-red'}`;
+    el('sent-short-sub').textContent = shortIsBullish ? '▲ Shorts being unwound' : '▼ Short entries rising';
+    el('sent-short-sub').style.color = shortIsBullish ? 'var(--green)' : 'var(--red)';
+
+    // Split bar: shows share of absolute flow between long and short sides
+    const absLong  = Math.abs(longFlow);
+    const absShort = Math.abs(shortFlow);
+    const total    = absLong + absShort;
+    const longPct  = total > 0 ? (absLong  / total) * 100 : 50;
+    const shortPct = total > 0 ? (absShort / total) * 100 : 50;
+
+    el('sent-bar-long').style.width  = `${longPct.toFixed(1)}%`;
+    el('sent-bar-short').style.width = `${shortPct.toFixed(1)}%`;
+    // Color the bars by sentiment direction
+    el('sent-bar-long').style.background  = longFlow  >= 0 ? 'var(--green)' : 'var(--red)';
+    el('sent-bar-short').style.background = shortIsBullish ? 'rgba(61,184,122,0.5)' : 'var(--red)';
+
+    el('sent-pct-long').textContent  = `LONG ${longPct.toFixed(0)}%`;
+    el('sent-pct-short').textContent = `SHORT ${shortPct.toFixed(0)}%`;
+
     const status = data.sentiment;
     el('sent-status').textContent = status;
-    
-    let w = 50, col = 'var(--text-dim)';
-    if (status === 'BULLISH') {
-        const total = Math.abs(data.bull_flow_30d) + Math.abs(data.bear_flow_30d);
-        w = total > 0 ? 50 + (data.bull_flow_30d / total) * 50 : 100;
-        col = 'var(--green)';
-        el('sent-status').className = 's-status val-green';
-    } else if (status === 'BEARISH') {
-        const total = Math.abs(data.bull_flow_30d) + Math.abs(data.bear_flow_30d);
-        w = total > 0 ? 50 - (data.bear_flow_30d / total) * 50 : 0;
-        col = 'var(--red)';
-        el('sent-status').className = 's-status val-red';
-    } else {
-        el('sent-status').className = 's-status val-muted';
-    }
-    el('sent-bar').style.width = `${Math.min(Math.max(w, 5), 95)}%`;
-    el('sent-bar').style.background = col;
+    el('sent-status').className = `s-status ${status === 'BULLISH' ? 'val-green' : status === 'BEARISH' ? 'val-red' : 'val-muted'}`;
 }
 
 function renderSection2() {
     const longs = ['BOIL', 'HNU', '3NGL'];
     const shorts = ['KOLD', 'HND', '3NGS'];
-    
-    // IMP 2: Bold border for active card
+
+    // For SHORT ETFs: inflow (+) = bearish for nat gas = RED; outflow (-) = bullish = GREEN
+    // For LONG ETFs:  inflow (+) = bullish for nat gas = GREEN; outflow (-) = bearish = RED
+    const flowColor = (tk, val) => {
+        const isShort = shorts.includes(tk);
+        const isBullish = isShort ? val <= 0 : val >= 0;
+        return isBullish ? 'val-green' : 'val-red';
+    };
+
     const createCard = (tk) => {
         const d = state.summary.tickers[tk];
         if (!d) return '';
-        
+        const isShort = shorts.includes(tk);
+
         let regClass = 'bg-bear';
         if (d.regime === 'ACCUMULATION') regClass = 'bg-bull';
         else if (d.regime === 'BALANCED') regClass = 'val-muted';
         else regClass = 'bg-bear';
 
+        // Z-Score: for short ETFs, high positive Z = strong inflow to shorts = bearish
+        // Color: always based on absolute signal (accumulation = green regardless of side)
         let zCol = d.zscore >= 1.5 ? 'val-green' : (d.zscore <= -1.5 ? 'val-red' : 'val-muted');
-        
-        // Active border style
+
+        // Pressure: for short ETFs, positive pressure = bearish; invert display color
+        const presCol = isShort
+            ? (d.pressure <= 0 ? 'val-green' : 'val-red')
+            : (d.pressure >= 0 ? 'val-green' : 'val-red');
+
         const bc = tk === state.activeTicker ? `border-color:${colors[tk]}; box-shadow: 0 0 12px ${colors[tk]}40;` : '';
-        
-        return `<div class="flow-card" style="${bc}">
+
+        // Pressure bar: width = |pressure|/100, color = presCol
+        const presAbs = Math.min(Math.abs(d.pressure), 100);
+        const presBarCol = presCol === 'val-green' ? 'var(--green)' : 'var(--red)';
+
+        return `<div class="flow-card" style="${bc}" onclick="(function(){document.querySelectorAll('#etf-tabs .tab-btn').forEach(b=>b.classList.remove('active'));document.querySelector('#etf-tabs [data-ticker=${tk}]').classList.add('active');state.activeTicker='${tk}';loadTickerDataAndRender();})()">
             <div class="fc-left">
-                <div>
-                    <div class="fc-ticker" style="color:${colors[tk] || '#fff'}">${tk}</div>
-                    <div class="fc-nav">$${d.latest_nav.toFixed(2)}</div>
-                </div>
+                <div class="fc-ticker" style="color:${colors[tk] || '#fff'}">${tk}</div>
+                <div class="fc-nav">$${d.latest_nav.toFixed(2)}</div>
                 <div class="fc-regime ${regClass}">${d.regime}</div>
             </div>
             <div class="fc-main">
                 <div class="fc-metric">
-                    <div class="fc-m-lbl" data-tooltip="Total net capital flow over the last 30 trading days.">30D Net Flow</div>
-                    <div class="fc-m-val ${d.last_30d_net >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(d.last_30d_net)}</div>
+                    <div class="fc-m-lbl" data-tooltip="Net capital flow last 30 days. SHORT ETFs: outflow (−) = bullish.">30D NET</div>
+                    <div class="fc-m-val ${flowColor(tk, d.last_30d_net)}">${fmtUsd(d.last_30d_net)}</div>
                 </div>
                 <div class="fc-metric">
-                    <div class="fc-m-lbl" data-tooltip="Current flow Z-Score. Values > 1.5 suggest accumulation, < -1.5 suggest distribution.">Z-Score</div>
-                    <div class="fc-m-val ${zCol}">${d.zscore >= 0 ? '+' : ''}${d.zscore.toFixed(1)}</div>
+                    <div class="fc-m-lbl" data-tooltip="Flow Z-Score vs 30-day avg. >+1.5 = accumulation, <−1.5 = distribution.">Z-SCORE</div>
+                    <div class="fc-m-val ${zCol}">${d.zscore >= 0 ? '+' : ''}${d.zscore.toFixed(2)}</div>
                 </div>
-                <div class="mom-row" style="grid-column: 1 /span 2;">
-                    <div class="mom-item" data-tooltip="5-day rolling net flow momentum.">5D MOM: <span class="${d.flow_5d >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(d.flow_5d)}</span></div>
-                    <div class="mom-item" data-tooltip="20-day rolling net flow momentum.">20D MOM: <span class="${d.flow_20d >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(d.flow_20d)}</span></div>
+                <div class="mom-row">
+                    <div class="mom-item" data-tooltip="5-day rolling net flow momentum.">5D <span class="${flowColor(tk, d.flow_5d)}">${fmtUsd(d.flow_5d)}</span></div>
+                    <div class="mom-item" data-tooltip="20-day rolling net flow momentum.">20D <span class="${flowColor(tk, d.flow_20d)}">${fmtUsd(d.flow_20d)}</span></div>
                 </div>
             </div>
             <div class="fc-right">
-                <div class="fc-pres-lbl" data-tooltip="Flow Pressure Score (0-100). Combines Z-Score, 5D Momentum, and Consecutive Flow Streaks into a single metric.">PRESSURE</div>
-                <div class="fc-pres-val ${d.pressure >= 0 ? 'val-green' : 'val-red'}">${d.pressure >=0 ? '+' : ''}${d.pressure}</div>
+                <div class="fc-pres-lbl" data-tooltip="Pressure Score (−100 to +100). For short ETFs: negative = bullish (exits), positive = bearish.">PRESS.</div>
+                <div class="fc-pres-val ${presCol}">${d.pressure >= 0 ? '+' : ''}${d.pressure}</div>
+                <div class="fc-pres-bar-wrap">
+                    <div class="fc-pres-bar-fill" style="width:${presAbs}%;background:${presBarCol};"></div>
+                </div>
             </div>
         </div>`;
     };
@@ -1200,12 +1284,14 @@ function drawChartZ(data) {
     ctxZ.strokeStyle = 'rgba(255,255,255,0.4)'; ctxZ.setLineDash([]);
     ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(0)); ctxZ.lineTo(pad.left+chartW, getY(0)); ctxZ.stroke();
 
-    // Zone labels (right side)
-    ctxZ.font = '9px sans-serif'; ctxZ.textAlign = 'left';
-    ctxZ.fillStyle = 'rgba(61,184,122,0.5)';
-    ctxZ.fillText('ACCUMULATION', pad.left + 4, getY(1.5) + 11);
-    ctxZ.fillStyle = 'rgba(239,68,68,0.5)';
-    ctxZ.fillText('DISTRIBUTION', pad.left + 4, getY(-1.5) - 4);
+    // Zone labels — right side, readable size
+    ctxZ.font = 'bold 10px sans-serif'; ctxZ.textAlign = 'right';
+    ctxZ.fillStyle = 'rgba(61,184,122,0.7)';
+    ctxZ.fillText('▲ ACCUMULATION', pad.left + chartW - 4, getY(1.5) + 13);
+    ctxZ.fillStyle = 'rgba(239,68,68,0.7)';
+    ctxZ.fillText('▼ DISTRIBUTION', pad.left + chartW - 4, getY(-1.5) - 4);
+    ctxZ.font = '9px sans-serif'; ctxZ.fillStyle = 'rgba(148,163,184,0.4)';
+    ctxZ.fillText('BALANCED', pad.left + chartW - 4, getY(0) - 4);
 
     // The Z-Score line
     ctxZ.beginPath();
@@ -1365,7 +1451,8 @@ function initRangeSlider() {
         // Deactivate preset buttons
         document.querySelectorAll('#time-tabs .tab-btn').forEach(b => b.classList.remove('active'));
         updateRangeUI();
-        renderCharts();
+        renderCharts();       // chartA + chartB + chartZ (all use getVisibleData)
+        renderCrossChart();   // cross ETF chart also respects state.zoom now
     };
     sStart.addEventListener('input', onChange);
     sEnd.addEventListener('input', onChange);
@@ -1456,13 +1543,16 @@ function handleCrossHover(e) {
         const baseData = state.cache['BOIL']?.data;
         if (!baseData) return;
 
-        let days = {'1w':7,'1m':30,'3m':90,'6m':180,'1y':365,'3y':1095}[state.timeRange] || 9999;
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - days);
-        const cutoffStr = cutoffDate.toISOString().slice(0, 10);
-        let startIdxBase = baseData.findIndex(d => d.date >= cutoffStr);
-        if (startIdxBase === -1) startIdxBase = 0;
-        const visibleDates = baseData.slice(startIdxBase).map(d => d.date);
+        let days2 = {'1w':7,'1m':30,'3m':90,'6m':180,'1y':365,'3y':1095}[state.timeRange] || 9999;
+        const cutoffDate2 = new Date();
+        cutoffDate2.setDate(cutoffDate2.getDate() - days2);
+        const cutoffStr2 = cutoffDate2.toISOString().slice(0, 10);
+        let startIdxBase2 = baseData.findIndex(d => d.date >= cutoffStr2);
+        if (startIdxBase2 === -1) startIdxBase2 = 0;
+        const baseDates2 = baseData.slice(startIdxBase2).map(d => d.date);
+        const zS2 = Math.floor(state.zoom.start * baseDates2.length);
+        const zE2 = Math.ceil(state.zoom.end   * baseDates2.length);
+        const visibleDates = baseDates2.slice(Math.max(0, zS2), Math.min(baseDates2.length, zE2));
 
         let pct = (x - padL) / chartW;
         let idx = Math.round(pct * (visibleDates.length - 1));
@@ -1546,12 +1636,12 @@ function renderDivergence() {
             
             if (isDiv) {
                 html += `<tr>
-                    <td>${cur.date}</td>
-                    <td>${w}d</td>
+                    <td style="color:var(--text-muted);font-size:0.7rem;">${cur.date}</td>
+                    <td style="color:var(--text-dim);">${w}d</td>
                     <td><span class="div-badge ${badgeClass}">${type}</span></td>
-                    <td class="${priceMove>=0?'val-green':'val-red'}">${fmtPct(priceMove)}</td>
-                    <td class="${flowSum>=0?'val-green':'val-red'}">${fmtUsd(flowSum)}</td>
-                    <td style="font-weight:700">${sig}</td>
+                    <td class="num ${priceMove>=0?'val-green':'val-red'}">${fmtPct(priceMove)}</td>
+                    <td class="num ${flowSum>=0?'val-green':'val-red'}">${fmtUsd(flowSum)}</td>
+                    <td style="font-weight:700;font-size:0.72rem;">${sig}</td>
                 </tr>`;
                 
                 i -= (w - 1); // BUG 5 FIX: Skip past this sequence to avoid overlapping copies
@@ -1702,7 +1792,11 @@ function renderCrossChart() {
 
     let startIdxBase = baseData.findIndex(d => d.date >= cutoffStr);
     if (startIdxBase === -1) startIdxBase = 0;
-    const visibleDates = baseData.slice(startIdxBase).map(d => d.date);
+    const baseDates = baseData.slice(startIdxBase).map(d => d.date);
+    // Apply zoom (same state.zoom used by range slider and scroll-wheel)
+    const zS = Math.floor(state.zoom.start * baseDates.length);
+    const zE = Math.ceil(state.zoom.end   * baseDates.length);
+    const visibleDates = baseDates.slice(Math.max(0, zS), Math.min(baseDates.length, zE));
     
     const series = {}; // ticker -> [normalized flows aligned to visibleDates]
     
@@ -1763,16 +1857,19 @@ function renderCrossChart() {
         ctxCross.stroke();
     });
     
-    // IMP 5: Legend box
-    let legendY = pad.top + 5;
-    tickers.forEach(tk => {
-        ctxCross.fillStyle = colors[tk];
-        ctxCross.fillRect(w - pad.right - 40, legendY - 8, 8, 8);
-        ctxCross.font = tk === state.activeTicker ? 'bold 10px sans-serif' : '10px sans-serif';
-        ctxCross.textAlign = 'left';
-        ctxCross.fillText(tk, w - pad.right - 28, legendY);
-        legendY += 14;
-    });
+    // HTML legend (outside canvas — no collision)
+    const legendEl = document.getElementById('cross-html-legend');
+    if (legendEl) {
+        const allTickers = ['BOIL','HNU','3NGL','KOLD','HND','3NGS'];
+        legendEl.innerHTML = allTickers.map(tk => {
+            const active = state.crossToggles[tk];
+            const bold   = tk === state.activeTicker;
+            return `<div style="display:flex;align-items:center;gap:5px;opacity:${active?1:0.3};">
+                <span style="display:inline-block;width:${bold?18:12}px;height:${bold?3:2}px;background:${colors[tk]};border-radius:2px;"></span>
+                <span style="font-size:0.62rem;font-weight:${bold?'900':'600'};color:${active?colors[tk]:'var(--text-muted)'};font-family:monospace;letter-spacing:0.5px;">${tk}</span>
+            </div>`;
+        }).join('');
+    }
     
     // axes labels
     ctxCross.fillStyle = '#94a3b8'; ctxCross.font = '10px monospace'; ctxCross.textAlign = 'right';
