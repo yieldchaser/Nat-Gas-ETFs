@@ -932,8 +932,8 @@ function renderSection1() {
 
     el('sent-bar-long').style.width  = `${longPct.toFixed(1)}%`;
     el('sent-bar-short').style.width = `${shortPct.toFixed(1)}%`;
-    const longColor  = longFlow  >= 0 ? 'var(--green)' : '#d97706';
-    const shortColor = shortFlow >= 0 ? 'var(--cyan)'  : 'var(--red)';
+    const longColor  = longFlow  >= 0 ? 'var(--green)' : 'var(--red)';
+    const shortColor = shortFlow >= 0 ? 'var(--green)' : 'var(--red)';
     el('sent-bar-long').style.background  = longColor;
     el('sent-bar-short').style.background = shortColor;
     el('sent-pct-long').textContent  = `${longPct.toFixed(0)}%`;
