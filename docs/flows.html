@@ -516,6 +516,8 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     </div>
                 </div>
             </div>
+            <!-- Divergence ETF selector -->
+            <div id="div-etf-tabs" style="display:flex; gap:4px; flex-wrap:wrap; margin:0 0 10px 0;"></div>
             <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
             <table class="div-table" style="min-width:560px;">
                 <thead>
@@ -756,6 +758,7 @@ const state = {
     activeZTicker: 'BOIL',
     timeRange: 'all',
     crossFilter: 'all', // all, long, short
+    divTicker: 'BOIL',  // independent ETF selector for divergence panel
     divRange: 90,       // days for divergence scan; 'all' = entire history
     hoverIdx: null,
     hoverZIdx: null,
@@ -860,6 +863,7 @@ async function init() {
         // Build ETF toggle chips
         buildCrossToggles();
         buildZEtfChips();
+        buildDivEtfChips();
 
         // Initialize first chart data
         await loadTickerDataAndRender();
@@ -1936,11 +1940,47 @@ function hideCrossHover() {
 // Dynamic threshold by leverage: 3x→3%, 2x→2%, 1x→1%
 const DIV_LEVERAGE = { BOIL:3, KOLD:3, '3NGL':3, '3NGS':3, HNU:2, HND:2 };
 
+function buildDivEtfChips() {
+    const container = el('div-etf-tabs');
+    if (!container) return;
+    container.innerHTML = '';
+    ['BOIL','HNU','3NGL','KOLD','HND','3NGS'].forEach(tk => {
+        const chip = document.createElement('button');
+        chip.className = tk === state.divTicker ? 'etf-chip active' : 'etf-chip';
+        chip.textContent = tk;
+        chip.style.color = colors[tk];
+        chip.style.borderColor = colors[tk];
+        chip.style.background = tk === state.divTicker ? colors[tk] + '20' : 'transparent';
+        chip.style.opacity = tk === state.divTicker ? '1' : '0.45';
+        chip.addEventListener('click', () => selectDivTicker(tk));
+        container.appendChild(chip);
+    });
+}
+
+async function selectDivTicker(tk) {
+    state.divTicker = tk;
+    const container = el('div-etf-tabs');
+    container.querySelectorAll('.etf-chip').forEach(chip => {
+        const active = chip.textContent === tk;
+        chip.className = active ? 'etf-chip active' : 'etf-chip';
+        chip.style.background = active ? colors[chip.textContent] + '20' : 'transparent';
+        chip.style.opacity = active ? '1' : '0.45';
+    });
+    if (!state.cache[tk]) {
+        try {
+            const res = await fetch(`data/flows/${tk}_flows.json`);
+            state.cache[tk] = await res.json();
+            computeAdjustedPrices(state.cache[tk]);
+        } catch(e) { console.error('Failed to load', tk, e); return; }
+    }
+    renderDivergence();
+}
+
 function renderDivergence() {
-    const data = state.cache[state.activeTicker].data;
+    const data = state.cache[state.divTicker] && state.cache[state.divTicker].data;
     if (!data || data.length < 10) return;
 
-    const thresh = (DIV_LEVERAGE[state.activeTicker] || 1) * 0.01; // e.g. 0.03 for 3x
+    const thresh = (DIV_LEVERAGE[state.divTicker] || 1) * 0.01; // e.g. 0.03 for 3x
     const lookback = state.divRange === 'all' ? data.length : Math.min(state.divRange, data.length);
     const recent = data.slice(-lookback);
     const tbody = el('div-body');
