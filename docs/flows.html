@@ -198,43 +198,56 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 /* ---- Range Slider Brush ---- */
 .range-slider-container { margin: 8px 0 4px; }
 .range-slider-wrap {
-    position: relative; height: 48px;
-    background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary);
-    border-radius: 8px; padding: 0 12px;
+    position: relative; height: 44px;
+    background: rgba(255,255,255,0.015);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 0 14px;
 }
 .range-slider-track {
     position: absolute; top: 21px; left: 0; right: 0;
-    height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; z-index: 1;
+    height: 2px; background: rgba(255,255,255,0.07); border-radius: 1px; z-index: 1;
 }
 .range-slider-highlight {
-    position: absolute; top: 21px; height: 6px;
-    background: var(--cyan); border-radius: 3px; z-index: 2;
-    box-shadow: 0 0 10px rgba(0,255,255,0.3);
+    position: absolute; top: 21px; height: 2px;
+    background: rgba(56,189,248,0.65); border-radius: 1px; z-index: 2;
+    box-shadow: 0 0 8px rgba(56,189,248,0.3);
 }
 .range-inputs { position: relative; width: 100%; }
 .range-inputs input[type=range] {
-    position: absolute; width: 100%; top: 8px; left: 0;
+    position: absolute; width: 100%; top: 6px; left: 0;
     pointer-events: none; -webkit-appearance: none; appearance: none;
     background: none; height: 32px; margin: 0; z-index: 3;
 }
 .range-inputs input[type=range]::-webkit-slider-thumb { pointer-events: auto; }
-.range-inputs input[type=range]::-moz-range-thumb { pointer-events: auto; }
+.range-inputs input[type=range]::-moz-range-thumb   { pointer-events: auto; }
 .range-inputs input[type=range]::-webkit-slider-runnable-track { background: none !important; border: none !important; }
-.range-inputs input[type=range]::-moz-range-track { background: none !important; border: none !important; }
+.range-inputs input[type=range]::-moz-range-track   { background: none !important; border: none !important; }
+/* Thumb — circular radar dot: dark core + thin accent ring + soft outer glow */
 input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none; appearance: none;
-    width: 18px; height: 18px; border-radius: 4px;
-    background: #fff; border: 2px solid var(--cyan);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5); cursor: pointer; margin-top: -6px; transition: all 0.15s;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #0d111c;
+    border: 1.5px solid rgba(56,189,248,0.8);
+    box-shadow: 0 0 0 3px rgba(56,189,248,0.1), 0 0 12px rgba(56,189,248,0.25);
+    cursor: ew-resize; margin-top: -6px; transition: box-shadow 0.18s, background 0.18s;
 }
 input[type=range]::-moz-range-thumb {
-    width: 18px; height: 18px; border-radius: 4px;
-    background: #fff; border: 2px solid var(--cyan);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.15s;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #0d111c;
+    border: 1.5px solid rgba(56,189,248,0.8);
+    box-shadow: 0 0 0 3px rgba(56,189,248,0.1), 0 0 12px rgba(56,189,248,0.25);
+    cursor: ew-resize; transition: box-shadow 0.18s, background 0.18s;
 }
-input[type=range]:hover::-webkit-slider-thumb { background: var(--cyan); border-color: #fff; }
-input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-color: #fff; }
-.range-labels { display: flex; justify-content: center; font-size: 0.65rem; color: var(--text-dim); font-weight: 700; margin-top: 6px; letter-spacing: 1px; }
+input[type=range]:hover::-webkit-slider-thumb {
+    background: rgba(56,189,248,0.12);
+    box-shadow: 0 0 0 5px rgba(56,189,248,0.15), 0 0 18px rgba(56,189,248,0.4);
+}
+input[type=range]:hover::-moz-range-thumb {
+    background: rgba(56,189,248,0.12);
+    box-shadow: 0 0 0 5px rgba(56,189,248,0.15), 0 0 18px rgba(56,189,248,0.4);
+}
+.range-labels { display: flex; justify-content: center; font-size: 0.58rem; color: rgba(148,163,184,0.4); font-weight: 700; margin-top: 4px; letter-spacing: 2px; }
 
 /* ---- Yearly Matrix ---- */
 .matrix-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -688,6 +701,15 @@ const fmtUsd = (val) => {
     return `${sign}$${abs.toFixed(0)}`;
 };
 const fmtPct = (val) => `${val > 0 ? '+' : ''}${(val * 100).toFixed(1)}%`;
+// Y-axis labels: no '+' prefix on positive values (professional financial convention)
+const fmtAxisUsd = (val) => {
+    if (val === 0) return '$0';
+    const abs = Math.abs(val), sign = val < 0 ? '-' : '';
+    if (abs >= 1e9) return `${sign}$${(abs/1e9).toFixed(abs >= 10e9 ? 1 : 2)}B`;
+    if (abs >= 1e6) return `${sign}$${(abs/1e6).toFixed(abs >= 100e6 ? 0 : 1)}M`;
+    if (abs >= 1e3) return `${sign}$${(abs/1e3).toFixed(0)}K`;
+    return `${sign}$${abs.toFixed(0)}`;
+};
 
 // State
 const state = {
@@ -1211,7 +1233,7 @@ function drawChartA(data) {
         const gy = getFY(tick);
         if (gy < pad.top - 2 || gy > pad.top + chartH + 2) return;
         ctxA.fillStyle = tick === 0 ? 'rgba(148,163,184,0.6)' : '#94a3b8';
-        ctxA.fillText(fmtUsd(tick), pad.left - 6, gy + 3);
+        ctxA.fillText(fmtAxisUsd(tick), pad.left - 6, gy + 3);
     });
 
     // NAV Y-axis tick labels (right)
@@ -1354,7 +1376,7 @@ function drawChartB(data) {
         const gy = getBY(tick);
         if (gy < pad.top - 2 || gy > pad.top + chartH + 2) return;
         ctxB.fillStyle = tick === 0 ? 'rgba(148,163,184,0.5)' : '#94a3b8';
-        ctxB.fillText(fmtUsd(tick), pad.left - 6, gy + 3);
+        ctxB.fillText(fmtAxisUsd(tick), pad.left - 6, gy + 3);
     });
 
     // Adaptive X-axis for Chart B
@@ -2133,7 +2155,7 @@ function renderCrossChart() {
         const gy = getY(tick);
         if (gy < pad.top - 2 || gy > pad.top + chartH + 2) return;
         ctxCross.fillStyle = tick === 0 ? 'rgba(148,163,184,0.6)' : '#94a3b8';
-        ctxCross.fillText(fmtUsd(tick), pad.left - 5, gy + 3);
+        ctxCross.fillText(fmtAxisUsd(tick), pad.left - 5, gy + 3);
     });
 
     // Adaptive X-axis for Cross chart (grid lines included via drawXAxis)
