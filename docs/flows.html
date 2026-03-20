@@ -508,8 +508,19 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <div class="chart-wrap">
                 <canvas id="chartZ"></canvas>
             </div>
-            <div style="padding-top:6px; font-size:0.58rem; color:var(--text-muted); text-align:center; letter-spacing:1px;">
-                ↕ Use the range slider in the Deep Dive panel above to zoom all charts simultaneously
+            <!-- Z-Score independent range slider -->
+            <div class="range-slider-container" style="margin-top:8px;">
+                <div class="range-slider-wrap">
+                    <div class="range-inputs">
+                        <div class="range-slider-track"></div>
+                        <div id="z-range-highlight" class="range-slider-highlight"></div>
+                        <input type="range" id="z-range-start" min="0" max="100" value="0" data-tooltip="Zoom start for Z-Score chart">
+                        <input type="range" id="z-range-end"   min="0" max="100" value="100" data-tooltip="Zoom end for Z-Score chart">
+                    </div>
+                </div>
+                <div class="range-labels">
+                    <span id="z-range-label" style="color:var(--text-bright); text-transform:uppercase; letter-spacing:2px;">ALL</span>
+                </div>
             </div>
         </div>
 
@@ -537,6 +548,20 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <div class="chart-wrap">
                 <canvas id="chartCross"></canvas>
                 <div id="cross-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:6px; font-size:0.7rem; pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:140px;"></div>
+            </div>
+            <!-- Cross ETF independent range slider -->
+            <div class="range-slider-container" style="margin-top:4px;">
+                <div class="range-slider-wrap">
+                    <div class="range-inputs">
+                        <div class="range-slider-track"></div>
+                        <div id="cross-range-highlight" class="range-slider-highlight"></div>
+                        <input type="range" id="cross-range-start" min="0" max="100" value="0" data-tooltip="Zoom start for Cross-ETF chart">
+                        <input type="range" id="cross-range-end"   min="0" max="100" value="100" data-tooltip="Zoom end for Cross-ETF chart">
+                    </div>
+                </div>
+                <div class="range-labels">
+                    <span id="cross-range-label" style="color:var(--text-bright); text-transform:uppercase; letter-spacing:2px;">ALL</span>
+                </div>
             </div>
             <!-- HTML legend for cross ETF chart — avoids canvas collision -->
             <div id="cross-html-legend" style="display:flex; flex-wrap:wrap; gap:12px; padding:8px 0 4px; border-top:1px solid rgba(255,255,255,0.05);"></div>
@@ -672,7 +697,9 @@ const state = {
     hoverZIdx: null,
     hoverCrossIdx: null,
     crossToggles: { 'BOIL': true, 'HNU': true, '3NGL': true, 'KOLD': true, 'HND': true, '3NGS': true },
-    zoom: { start: 0, end: 1 }, // 0-1 range within getVisibleData base result
+    zoom:      { start: 0, end: 1 }, // deep dive (chartA + chartB)
+    zoomZ:     { start: 0, end: 1 }, // Z-Score history (chartZ) — independent
+    zoomCross: { start: 0, end: 1 }, // cross ETF comparison — independent
     drag: { active: false, startIdx: null, currentIdx: null }
 };
 
@@ -711,7 +738,9 @@ async function init() {
         // Shared time-range handler used by all three tab groups
         async function setTimeRange(range) {
             state.timeRange = range;
-            state.zoom = { start: 0, end: 1 };
+            state.zoom      = { start: 0, end: 1 };
+            state.zoomZ     = { start: 0, end: 1 };
+            state.zoomCross = { start: 0, end: 1 };
             ['#time-tabs', '#z-time-tabs', '#cross-time-tabs'].forEach(sel => {
                 document.querySelectorAll(sel + ' .tab-btn').forEach(b => {
                     b.classList.toggle('active', b.dataset.range === range);
@@ -719,7 +748,9 @@ async function init() {
             });
             await loadTickerDataAndRender();
             syncRangeSlider();
+            syncZSlider();
             renderCrossChart();
+            syncCrossSlider();
         }
 
         ['#time-tabs', '#z-time-tabs', '#cross-time-tabs'].forEach(sel => {
@@ -743,8 +774,10 @@ async function init() {
             });
         });
 
-        // Range slider
+        // Range sliders (main + independent Z + independent cross)
         initRangeSlider();
+        initZSlider();
+        initCrossSlider();
 
         // Divergence filter tabs
         document.querySelectorAll('#div-filter-tabs .tab-btn').forEach(b => {
@@ -959,10 +992,9 @@ async function loadTickerDataAndRender() {
     updateStatsRow();
     renderCharts();
     syncRangeSlider();
-    const data = getVisibleData();
-    if (data && data.length > 0) {
-        drawChartZ(data);
-    }
+    syncZSlider();
+    const zData = getZVisibleData();
+    if (zData && zData.length > 0) drawChartZ(zData);
     renderDivergence();
     el('loading-overlay').style.display = 'none';
 }
@@ -992,6 +1024,15 @@ function getVisibleData() {
     if (state.zoom.start === 0 && state.zoom.end === 1) return base;
     const s = Math.floor(state.zoom.start * base.length);
     const e = Math.ceil(state.zoom.end * base.length);
+    return base.slice(Math.max(0, s), Math.min(base.length, e));
+}
+
+// Independent zoom for Z-Score chart
+function getZVisibleData() {
+    const base = getBaseVisibleData();
+    if (state.zoomZ.start === 0 && state.zoomZ.end === 1) return base;
+    const s = Math.floor(state.zoomZ.start * base.length);
+    const e = Math.ceil(state.zoomZ.end * base.length);
     return base.slice(Math.max(0, s), Math.min(base.length, e));
 }
 
@@ -1028,9 +1069,12 @@ function renderCharts() {
     if (!data || data.length === 0) return;
     drawChartA(data);
     drawChartB(data);
-    drawChartZ(data);
 
-    // Zoom indicator
+    // Z chart uses its own independent zoom
+    const zData = getZVisibleData();
+    if (zData && zData.length > 0) drawChartZ(zData);
+
+    // Zoom indicator for main deep dive slider
     const zi = el('zoom-indicator');
     if (zi) {
         zi.style.display = (state.zoom.start > 0.001 || state.zoom.end < 0.999) ? 'block' : 'none';
@@ -1398,38 +1442,50 @@ function hideHover() {
 // ---- Scroll-to-Zoom ----
 function handleChartWheel(e) {
     e.preventDefault();
-    const rect = e.target.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const padL = 60, padR = 60;
+    const id = e.target.id;
+    // Route to the correct zoom state based on which chart was scrolled
+    const isZ     = id === 'chartZ';
+    const isCross = id === 'chartCross';
+    const zoomKey = isZ ? 'zoomZ' : isCross ? 'zoomCross' : 'zoom';
+
+    const rect   = e.target.getBoundingClientRect();
+    const x      = e.clientX - rect.left;
+    const padL   = isZ ? 45 : 60;
+    const padR   = isZ ? 20 : 60;
     const chartW = rect.width - padL - padR;
-    // Mouse position as fraction within chart
-    const frac = Math.max(0, Math.min(1, (x - padL) / chartW));
+    const frac   = Math.max(0, Math.min(1, (x - padL) / chartW));
 
     const zoomFactor = 0.1;
-    const dir = e.deltaY > 0 ? 1 : -1; // scroll down = zoom out, up = zoom in
-    const range = state.zoom.end - state.zoom.start;
-    const delta = range * zoomFactor * dir;
+    const dir    = e.deltaY > 0 ? 1 : -1;
+    const cur    = state[zoomKey];
+    const range  = cur.end - cur.start;
+    const delta  = range * zoomFactor * dir;
 
-    // Zoom around mouse position
-    let newStart = state.zoom.start - delta * frac;
-    let newEnd = state.zoom.end + delta * (1 - frac);
+    let newStart = cur.start - delta * frac;
+    let newEnd   = cur.end   + delta * (1 - frac);
 
-    // Clamp
     if (newStart < 0) { newEnd -= newStart; newStart = 0; }
-    if (newEnd > 1) { newStart -= (newEnd - 1); newEnd = 1; }
+    if (newEnd > 1)   { newStart -= (newEnd - 1); newEnd = 1; }
     newStart = Math.max(0, newStart);
-    newEnd = Math.min(1, newEnd);
+    newEnd   = Math.min(1, newEnd);
 
-    // Minimum zoom: 20 data points
-    const base = getBaseVisibleData();
+    const base     = getBaseVisibleData();
     const minRange = Math.min(1, 20 / base.length);
     if (newEnd - newStart < minRange) return;
 
-    state.zoom.start = newStart;
-    state.zoom.end = newEnd;
+    state[zoomKey] = { start: newStart, end: newEnd };
 
-    renderCharts();
-    syncRangeSlider();
+    if (isCross) {
+        renderCrossChart();
+        syncCrossSlider();
+    } else if (isZ) {
+        const zData = getZVisibleData();
+        if (zData && zData.length > 0) drawChartZ(zData);
+        syncZSlider();
+    } else {
+        renderCharts();
+        syncRangeSlider();
+    }
 }
 
 // ---- Range Slider Brush ----
@@ -1451,8 +1507,7 @@ function initRangeSlider() {
         // Deactivate preset buttons
         document.querySelectorAll('#time-tabs .tab-btn').forEach(b => b.classList.remove('active'));
         updateRangeUI();
-        renderCharts();       // chartA + chartB + chartZ (all use getVisibleData)
-        renderCrossChart();   // cross ETF chart also respects state.zoom now
+        renderCharts();  // chartA + chartB only (Z uses its own zoomZ now)
     };
     sStart.addEventListener('input', onChange);
     sEnd.addEventListener('input', onChange);
@@ -1488,12 +1543,116 @@ function updateRangeUI() {
     }
 }
 
+// ---- Z-Score Range Slider ----
+function initZSlider() {
+    const s1 = el('z-range-start'), s2 = el('z-range-end');
+    if (!s1 || !s2) return;
+    const onChange = (e) => {
+        let v1 = parseInt(s1.value), v2 = parseInt(s2.value);
+        if (v1 >= v2) {
+            if (e.target.id === 'z-range-start') s1.value = Math.max(0, v2 - 1);
+            else s2.value = Math.min(parseInt(s2.max), v1 + 1);
+            v1 = parseInt(s1.value); v2 = parseInt(s2.value);
+        }
+        const max = parseInt(s1.max);
+        state.zoomZ.start = v1 / max;
+        state.zoomZ.end   = v2 / max;
+        updateZSliderUI();
+        const data = getZVisibleData();
+        if (data && data.length > 0) drawChartZ(data);
+    };
+    s1.addEventListener('input', onChange);
+    s2.addEventListener('input', onChange);
+}
+
+function syncZSlider() {
+    const s1 = el('z-range-start'), s2 = el('z-range-end');
+    if (!s1 || !s2) return;
+    const base = getBaseVisibleData();
+    const total = base.length;
+    s1.max = total; s2.max = total;
+    s1.value = Math.round(state.zoomZ.start * total);
+    s2.value = Math.round(state.zoomZ.end   * total);
+    updateZSliderUI();
+}
+
+function updateZSliderUI() {
+    const s1 = el('z-range-start'), s2 = el('z-range-end');
+    const hl = el('z-range-highlight'), lbl = el('z-range-label');
+    if (!s1 || !s2) return;
+    const v1 = parseInt(s1.value), v2 = parseInt(s2.value), max = parseInt(s1.max) || 1;
+    const p1 = v1 / max, p2 = v2 / max;
+    if (hl) {
+        hl.style.left  = `calc(${p1 * 100}% + ${(10 - p1 * 20)}px)`;
+        hl.style.width = `calc(${(p2 - p1) * 100}% + ${(p1 - p2) * 20}px)`;
+    }
+    if (lbl) {
+        const z = state.zoomZ;
+        lbl.textContent = (z.start > 0.001 || z.end < 0.999) ? 'CUSTOM' : 'ALL';
+    }
+}
+
+// ---- Cross ETF Range Slider ----
+function initCrossSlider() {
+    const s1 = el('cross-range-start'), s2 = el('cross-range-end');
+    if (!s1 || !s2) return;
+    const onChange = (e) => {
+        let v1 = parseInt(s1.value), v2 = parseInt(s2.value);
+        if (v1 >= v2) {
+            if (e.target.id === 'cross-range-start') s1.value = Math.max(0, v2 - 1);
+            else s2.value = Math.min(parseInt(s2.max), v1 + 1);
+            v1 = parseInt(s1.value); v2 = parseInt(s2.value);
+        }
+        const max = parseInt(s1.max);
+        state.zoomCross.start = v1 / max;
+        state.zoomCross.end   = v2 / max;
+        updateCrossSliderUI();
+        renderCrossChart();
+    };
+    s1.addEventListener('input', onChange);
+    s2.addEventListener('input', onChange);
+}
+
+function syncCrossSlider() {
+    const s1 = el('cross-range-start'), s2 = el('cross-range-end');
+    if (!s1 || !s2) return;
+    // Base dates from BOIL aligned to timeRange
+    const baseData = state.cache['BOIL']?.data;
+    if (!baseData) return;
+    let days = {'1w':7,'1m':30,'3m':90,'6m':180,'1y':365,'3y':1095}[state.timeRange] || 9999;
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    let si = baseData.findIndex(d => d.date >= cutoffStr);
+    if (si === -1) si = 0;
+    const total = baseData.length - si;
+    s1.max = total; s2.max = total;
+    s1.value = Math.round(state.zoomCross.start * total);
+    s2.value = Math.round(state.zoomCross.end   * total);
+    updateCrossSliderUI();
+}
+
+function updateCrossSliderUI() {
+    const s1 = el('cross-range-start'), s2 = el('cross-range-end');
+    const hl = el('cross-range-highlight'), lbl = el('cross-range-label');
+    if (!s1 || !s2) return;
+    const v1 = parseInt(s1.value), v2 = parseInt(s2.value), max = parseInt(s1.max) || 1;
+    const p1 = v1 / max, p2 = v2 / max;
+    if (hl) {
+        hl.style.left  = `calc(${p1 * 100}% + ${(10 - p1 * 20)}px)`;
+        hl.style.width = `calc(${(p2 - p1) * 100}% + ${(p1 - p2) * 20}px)`;
+    }
+    if (lbl) {
+        const z = state.zoomCross;
+        lbl.textContent = (z.start > 0.001 || z.end < 0.999) ? 'CUSTOM' : 'ALL';
+    }
+}
+
 // ---- Z-Score Chart Hover ----
 function handleZHover(e) {
     const cvs = el('chartZ');
     const rect = cvs.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const data = getVisibleData();
+    const data = getZVisibleData();
     if (!data.length) return;
 
     const padL = 45, padR = 20;
@@ -1526,7 +1685,7 @@ function handleZHover(e) {
 function hideZHover() {
     state.hoverZIdx = null;
     tooltip.style.display = 'none';
-    const data = getVisibleData();
+    const data = getZVisibleData();
     if (data && data.length > 0) drawChartZ(data);
 }
 
@@ -1550,8 +1709,8 @@ function handleCrossHover(e) {
         let startIdxBase2 = baseData.findIndex(d => d.date >= cutoffStr2);
         if (startIdxBase2 === -1) startIdxBase2 = 0;
         const baseDates2 = baseData.slice(startIdxBase2).map(d => d.date);
-        const zS2 = Math.floor(state.zoom.start * baseDates2.length);
-        const zE2 = Math.ceil(state.zoom.end   * baseDates2.length);
+        const zS2 = Math.floor(state.zoomCross.start * baseDates2.length);
+        const zE2 = Math.ceil(state.zoomCross.end   * baseDates2.length);
         const visibleDates = baseDates2.slice(Math.max(0, zS2), Math.min(baseDates2.length, zE2));
 
         let pct = (x - padL) / chartW;
@@ -1763,6 +1922,7 @@ async function loadAllTickersForCross() {
     
     await Promise.all(proms);
     renderCrossChart();
+    syncCrossSlider();
     renderYearlyMatrix();
 }
 
@@ -1793,9 +1953,9 @@ function renderCrossChart() {
     let startIdxBase = baseData.findIndex(d => d.date >= cutoffStr);
     if (startIdxBase === -1) startIdxBase = 0;
     const baseDates = baseData.slice(startIdxBase).map(d => d.date);
-    // Apply zoom (same state.zoom used by range slider and scroll-wheel)
-    const zS = Math.floor(state.zoom.start * baseDates.length);
-    const zE = Math.ceil(state.zoom.end   * baseDates.length);
+    // Apply cross-specific independent zoom
+    const zS = Math.floor(state.zoomCross.start * baseDates.length);
+    const zE = Math.ceil(state.zoomCross.end   * baseDates.length);
     const visibleDates = baseDates.slice(Math.max(0, zS), Math.min(baseDates.length, zE));
     
     const series = {}; // ticker -> [normalized flows aligned to visibleDates]
@@ -1899,7 +2059,11 @@ function renderCrossChart() {
 
 // Init
 init();
-window.addEventListener('resize', () => { renderCharts(); renderCrossChart(); });
+window.addEventListener('resize', () => {
+    renderCharts();
+    const zd = getZVisibleData(); if (zd && zd.length > 0) drawChartZ(zd);
+    renderCrossChart();
+});
 document.getElementById('refresh-btn').addEventListener('click', () => {
     state.cache = {};
     state.summary = null;
