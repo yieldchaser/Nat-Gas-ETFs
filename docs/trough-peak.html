@@ -1534,13 +1534,34 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         const startIdx = visibleDates.indexOf(c.troughDate);
         const endIdx = visibleDates.indexOf(c.peakDate);
         if (startIdx === -1 && endIdx === -1) return;
-        
+
         const xStart = startIdx === -1 ? padding.left : getX(startIdx);
         const xEnd = endIdx === -1 ? padding.left + chartW : getX(endIdx);
-        
-        ctx.fillStyle = gainBandColor(c.gain, 0.12);
+
+        ctx.fillStyle = gainBandColor(c.gain, 0.09);
         ctx.fillRect(xStart, padding.top, xEnd - xStart, chartH);
     });
+
+    // -- Band Gain Labels --
+    ctx.save();
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    let lastBandLabelX = -999;
+    cycles.forEach(c => {
+        const startIdx = visibleDates.indexOf(c.troughDate);
+        const endIdx   = visibleDates.indexOf(c.peakDate);
+        if (startIdx === -1 && endIdx === -1) return;
+        const xStart = startIdx === -1 ? padding.left : getX(startIdx);
+        const xEnd   = endIdx   === -1 ? padding.left + chartW : getX(endIdx);
+        const bandW  = xEnd - xStart;
+        if (bandW < 42) return;                              // too narrow to label
+        const midX = xStart + bandW / 2;
+        if (Math.abs(midX - lastBandLabelX) < 42) return;   // collision guard
+        ctx.fillStyle = gainBandColor(c.gain, 0.8);
+        ctx.fillText(`+${Math.round(c.gain)}%`, midX, padding.top + 14);
+        lastBandLabelX = midX;
+    });
+    ctx.restore();
 
     // -- Grid --
     ctx.strokeStyle = 'rgba(255,255,255,0.05)';
@@ -1609,31 +1630,33 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
     cycles.forEach(c => {
         const tIdx = visibleDates.indexOf(c.troughDate);
         const pIdx = visibleDates.indexOf(c.peakDate);
-        
+
         if (tIdx !== -1) {
             const x = getX(tIdx);
             const y = getY(visibleCloses[tIdx]);
+            ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 9;
             ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = '#ef4444'; ctx.fill();
-            ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1; ctx.stroke();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1; ctx.stroke();
         }
         if (pIdx !== -1) {
             const x = getX(pIdx);
             const y = getY(visibleCloses[pIdx]);
+            ctx.shadowColor = '#10b981'; ctx.shadowBlur = 9;
             ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = '#10b981'; ctx.fill();
-            ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1; ctx.stroke();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1; ctx.stroke();
         }
     });
 
-    // -- Live Pulse Dot (GF Style) --
+    // -- Live Pulse Dot --
     const lastX = getX(visibleCloses.length - 1);
     const lastY = getY(visibleCloses[visibleCloses.length - 1]);
-    ctx.beginPath();
-    ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
-    ctx.fillStyle = tickerColor;
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    ctx.shadowColor = tickerColor; ctx.shadowBlur = 14;
+    ctx.beginPath(); ctx.arc(lastX, lastY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = tickerColor; ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
 
     // -- X-Axis Labels (Proactive Grid-Aligned Engine) --
     ctx.fillStyle = '#94a3b8';
