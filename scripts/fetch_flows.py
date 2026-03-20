@@ -92,14 +92,23 @@ def fetch_live_data(ticker: str, start_date: str, end_date: str) -> pd.DataFrame
         method="POST"
     )
     
-    try:
-        with urllib.request.urlopen(req, timeout=30) as response:
-            if response.status == 200:
-                raw_data = json.loads(response.read().decode())
-                return parse_snapshots(raw_data, ticker)
-    except Exception as e:
-        logger.warning(f"Failed to request data for {ticker} with endDate. Trying without. Error: {e}")
-        
+    def _do_request(r):
+        for attempt, wait in enumerate([0, 15, 30, 60]):
+            if wait:
+                logger.info(f"Rate limited for {ticker}, waiting {wait}s (attempt {attempt+1}/4)...")
+                time.sleep(wait)
+            try:
+                with urllib.request.urlopen(r, timeout=30) as response:
+                    if response.status == 200:
+                        return json.loads(response.read().decode())
+            except Exception as e:
+                logger.warning(f"Request error for {ticker}: {e}")
+        return None
+
+    raw_data = _do_request(req)
+    if raw_data is not None:
+        return parse_snapshots(raw_data, ticker)
+
     # Retry without endDate
     payload["requests"][0].pop("endDate", None)
     req = urllib.request.Request(
@@ -112,14 +121,10 @@ def fetch_live_data(ticker: str, start_date: str, end_date: str) -> pd.DataFrame
         },
         method="POST"
     )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as response:
-            if response.status == 200:
-                raw_data = json.loads(response.read().decode())
-                return parse_snapshots(raw_data, ticker)
-    except Exception as e:
-        logger.error(f"Failed to fetch {ticker}: {e}")
-    
+    raw_data = _do_request(req)
+    if raw_data is not None:
+        return parse_snapshots(raw_data, ticker)
+
     return pd.DataFrame()
 
 def apply_derived_metrics(df: pd.DataFrame) -> pd.DataFrame:
