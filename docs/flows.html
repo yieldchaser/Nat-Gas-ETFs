@@ -20,22 +20,24 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 .sentiment-side { display: flex; flex-direction: column; text-align: center; width: 22%; }
-.sentiment-side.left { text-align: left; }
-.sentiment-side.right { text-align: right; }
-.s-label { font-size: 0.65rem; color: var(--text-dim); letter-spacing: 1px; font-weight: 700; margin-bottom: 4px; }
-.s-val { font-size: 1.1rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
-.s-tickers { font-size: 0.58rem; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 2px; }
-.s-sub { font-size: 0.62rem; color: var(--text-muted); margin-top: 4px; font-weight: 600; }
+.sentiment-side.left { text-align: left; border-left: 3px solid rgba(34,197,94,0.35); padding-left: 10px; }
+.sentiment-side.right { text-align: right; border-right: 3px solid rgba(239,68,68,0.35); padding-right: 10px; }
+.s-label { font-size: 0.68rem; letter-spacing: 1px; font-weight: 800; margin-bottom: 4px; }
+.s-label-long { color: rgba(34,197,94,0.8); }
+.s-label-short { color: rgba(239,68,68,0.75); }
+.s-val { font-size: 1.25rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.s-tickers { font-size: 0.62rem; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 2px; }
+.s-sub { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; font-weight: 700; }
 
 .sentiment-center { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 16px; }
-.s-center-label { font-size: 0.62rem; color: var(--text-dim); letter-spacing: 2px; font-weight: 800; }
+.s-center-label { font-size: 0.66rem; color: var(--text-dim); letter-spacing: 2px; font-weight: 800; }
 /* Two stacked meters */
 .s-meters     { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 7px; }
 .s-meter-row  { display: flex; align-items: center; gap: 8px; }
-.s-meter-lbl  { font-size: 0.55rem; font-weight: 800; letter-spacing: 1px; color: var(--text-dim); width: 38px; text-align: right; flex-shrink: 0; }
-.s-meter-track{ flex: 1; height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden; }
+.s-meter-lbl  { font-size: 0.62rem; font-weight: 800; letter-spacing: 1px; color: var(--text-dim); width: 38px; text-align: right; flex-shrink: 0; }
+.s-meter-track{ flex: 1; height: 11px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden; }
 .s-meter-fill { height: 100%; transition: width 0.6s ease; border-radius: 5px; }
-.s-meter-pct  { font-size: 0.58rem; font-weight: 700; width: 30px; flex-shrink: 0; }
+.s-meter-pct  { font-size: 0.64rem; font-weight: 700; width: 30px; flex-shrink: 0; }
 .s-status { font-size: 0.85rem; font-weight: 900; letter-spacing: 2px; }
 
 /* ---- Section 2: Summary Cards ---- */
@@ -369,7 +371,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Page Title Block -->
         <div style="margin-bottom:24px;">
             <div style="display:flex; align-items:baseline; gap:16px;">
-                <span data-tooltip="Flow Monitor tracks daily capital inflows &amp; outflows across 6 leveraged Nat Gas ETFs. Green = bullish signal (longs accumulating / shorts unwinding). Red = bearish." style="font-size:1.6rem; font-weight:800; letter-spacing:1px; color:var(--text-bright); text-transform:uppercase; cursor:default;">Flow Monitor</span>
+                <span data-tooltip="Flow Monitor tracks daily capital inflows &amp; outflows across 6 leveraged Nat Gas ETFs. Green = bullish signal (longs accumulating / shorts unwinding). Red = bearish." style="font-size:1.8rem; font-weight:900; letter-spacing:1px; color:var(--text-bright); text-transform:uppercase; cursor:default;">Flow Monitor</span>
                 <span style="font-size:0.75rem; color:var(--cyan); letter-spacing:2px; font-weight:600;">NAT GAS ETFs</span>
             </div>
             <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; line-height:1.6; max-width:800px;">
@@ -384,7 +386,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 1 -->
         <div class="sentiment-banner" id="sentiment-banner">
             <div class="sentiment-side left" data-tooltip="Net 30-day capital flow into LONG ETFs (BOIL, HNU, 3NGL). Positive = smart money going bullish on Nat Gas.">
-                <div class="s-label">LONG SIDE FLOWS</div>
+                <div class="s-label s-label-long">LONG SIDE FLOWS</div>
                 <div class="s-tickers">BOIL · HNU · 3NGL</div>
                 <div class="s-val val-muted" id="sent-long">--</div>
                 <div class="s-sub" id="sent-long-sub">--</div>
@@ -406,7 +408,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <div class="s-status val-muted" id="sent-status">LOADING</div>
             </div>
             <div class="sentiment-side right" data-tooltip="Net 30-day capital flow into SHORT ETFs (KOLD, HND, 3NGS). Positive = inflows (accumulation), negative = outflows (distribution).">
-                <div class="s-label">SHORT SIDE FLOWS</div>
+                <div class="s-label s-label-short">SHORT SIDE FLOWS</div>
                 <div class="s-tickers">KOLD · HND · 3NGS</div>
                 <div class="s-val val-muted" id="sent-short">--</div>
                 <div class="s-sub" id="sent-short-sub">--</div>
@@ -936,8 +938,9 @@ function renderSection1() {
     const shortFlow = data.bear_flow_30d;
     el('sent-short').textContent = fmtUsd(shortFlow);
     el('sent-short').className = `s-val ${shortFlow >= 0 ? 'val-green' : 'val-red'}`;
-    el('sent-short-sub').textContent = shortFlow >= 0 ? '▲ Shorts accumulating' : '▼ Shorts declining';
-    el('sent-short-sub').style.color = shortFlow >= 0 ? 'var(--green)' : 'var(--red)';
+    el('sent-short-sub').textContent = shortFlow >= 0 ? '▲ Shorts accumulating' : '▼ Shorts unwinding';
+    // Inverted: shorts unwinding (outflows) = bullish signal = green; shorts accumulating = bearish = red
+    el('sent-short-sub').style.color = shortFlow >= 0 ? 'var(--red)' : 'var(--green)';
 
     // Split bar: share of absolute flow between long and short sides
     const absLong  = Math.abs(longFlow);
