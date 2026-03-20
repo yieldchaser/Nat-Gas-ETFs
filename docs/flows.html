@@ -44,44 +44,50 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 }
 .side-col { display: flex; flex-direction: column; gap: 10px; }
 .side-header {
-    font-size: 0.72rem; font-weight: 800; letter-spacing: 2px; color: var(--text-dim);
-    margin-bottom: 2px; border-bottom: 1px solid var(--border-primary); padding-bottom: 7px;
+    font-size: 0.74rem; font-weight: 800; letter-spacing: 2px; color: var(--text-dim);
+    margin-bottom: 2px; border-bottom: 1px solid var(--border-primary); padding-bottom: 8px;
     display: flex; align-items: center; justify-content: space-between;
 }
-.side-header-sub { font-size: 0.58rem; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; text-transform: none; }
+.side-header-long { border-bottom-color: rgba(34,197,94,0.3); }
+.side-header-short { border-bottom-color: rgba(239,68,68,0.3); }
+.sh-arrow-long { color: var(--green); }
+.sh-arrow-short { color: var(--red); }
+.side-header-sub { font-size: 0.64rem; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; text-transform: none; }
 
 /* Card: horizontal compact layout */
 .flow-card {
     background: var(--bg-panel); border: 1px solid var(--border-primary);
+    border-left: 3px solid transparent;
     border-radius: 8px; padding: 12px 14px; display: grid;
-    grid-template-columns: 80px 1fr auto;
+    grid-template-columns: 90px 1fr auto;
     gap: 12px; align-items: center;
-    transition: border-color 0.2s; cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s; cursor: pointer;
 }
 .flow-card:hover { border-color: var(--border-accent); background: var(--bg-hover); }
 
-.fc-left { display: flex; flex-direction: column; gap: 4px; border-right: 1px solid var(--border-primary); padding-right: 12px; }
-.fc-ticker { font-size: 1.05rem; font-weight: 900; letter-spacing: 1px; color: var(--text-bright); }
-.fc-nav { font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); }
-.fc-regime { display: inline-block; font-size: 0.5rem; font-weight: 800; letter-spacing: 0.8px; padding: 2px 5px; border-radius: 3px; white-space: nowrap; }
+.fc-left { display: flex; flex-direction: column; gap: 5px; border-right: 1px solid var(--border-primary); padding-right: 12px; }
+.fc-ticker { font-size: 1.15rem; font-weight: 900; letter-spacing: 1px; color: var(--text-bright); }
+.fc-nav { font-size: 0.74rem; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); }
+.fc-regime { display: inline-block; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.8px; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
 
 /* Main metrics: 2x2 grid */
-.fc-main { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+.fc-main { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; }
 .fc-metric { display: flex; flex-direction: column; }
-.fc-m-lbl { font-size: 0.55rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.8px; margin-bottom: 2px; }
-.fc-m-val { font-size: 0.9rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1.2; }
+.fc-m-lbl { font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.8px; margin-bottom: 2px; }
+.fc-m-val { font-size: 0.92rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1.2; }
 
 /* Momentum row spanning both columns */
-.mom-row { grid-column: 1 / span 2; display: flex; gap: 10px; font-size: 0.6rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.mom-row { grid-column: 1 / span 2; display: flex; gap: 10px; font-size: 0.62rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
 .mom-item span { font-weight: 700; }
 
 /* Right section: pressure gauge */
-.fc-right { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 52px; }
-.fc-pres-lbl { font-size: 0.5rem; color: var(--text-muted); font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
-.fc-pres-val { font-size: 1.1rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; }
-/* Mini pressure bar */
-.fc-pres-bar-wrap { width: 44px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
-.fc-pres-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+.fc-right { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 58px; }
+.fc-pres-lbl { font-size: 0.58rem; color: var(--text-muted); font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
+.fc-pres-val { font-size: 1.2rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; }
+/* Bidirectional pressure bar */
+.fc-pres-bar-wrap { position: relative; width: 58px; height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
+.fc-pres-bar-wrap::after { content:''; position: absolute; left: 50%; top: 0; width: 1px; height: 100%; background: rgba(255,255,255,0.22); transform: translateX(-50%); }
+.fc-pres-bar-fill { position: absolute; top: 0; height: 100%; border-radius: 2px; transition: all 0.4s ease; }
 
 .val-green { color: var(--green); }
 .val-red { color: var(--red); }
@@ -410,15 +416,15 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 2 -->
         <div class="summary-grid">
             <div class="side-col" id="col-long">
-                <div class="side-header" data-tooltip="Capital flows into ETFs that profit when Natural Gas prices go up (BOIL, HNU.TO, 3NGL.L). Inflows = bullish signal.">
-                    <span>▲ LONG SIDE · 2X / 3X</span>
+                <div class="side-header side-header-long" data-tooltip="Capital flows into ETFs that profit when Natural Gas prices go up (BOIL, HNU.TO, 3NGL.L). Inflows = bullish signal.">
+                    <span><span class="sh-arrow-long">▲</span> LONG SIDE · <span style="opacity:0.6">2X / 3X</span></span>
                     <span class="side-header-sub">BOIL · HNU · 3NGL</span>
                 </div>
                 <!-- Cards injected here -->
             </div>
             <div class="side-col" id="col-short">
-                <div class="side-header" data-tooltip="Capital flows into ETFs that profit when Natural Gas prices go down (KOLD, HND.TO, 3NGS.L). Outflows from shorts = bullish signal.">
-                    <span>▼ SHORT SIDE · 2X / 3X</span>
+                <div class="side-header side-header-short" data-tooltip="Capital flows into ETFs that profit when Natural Gas prices go down (KOLD, HND.TO, 3NGS.L). Outflows from shorts = bullish signal.">
+                    <span><span class="sh-arrow-short">▼</span> SHORT SIDE · <span style="opacity:0.6">2X / 3X</span></span>
                     <span class="side-header-sub">KOLD · HND · 3NGS</span>
                 </div>
                 <!-- Cards injected here -->
@@ -976,15 +982,21 @@ function renderSection2() {
         // Pressure: positive = buying pressure = green, negative = selling pressure = red
         const presCol = d.pressure >= 0 ? 'val-green' : 'val-red';
 
-        const bc = tk === state.activeTicker ? `border-color:${colors[tk]}; box-shadow: 0 0 12px ${colors[tk]}40;` : '';
+        const accentCol = colors[tk] || '#888';
+        const bc = tk === state.activeTicker
+            ? `border-left-color:${accentCol}; border-color:${accentCol}; box-shadow: 0 0 14px ${accentCol}40;`
+            : `border-left-color:${accentCol};`;
 
-        // Pressure bar: width = |pressure|/100, color = presCol
+        // Bidirectional pressure bar: fills left of center for negative, right for positive
         const presAbs = Math.min(Math.abs(d.pressure), 100);
         const presBarCol = presCol === 'val-green' ? 'var(--green)' : 'var(--red)';
+        const barWidth = (presAbs / 100) * 50;
+        const barLeft  = d.pressure >= 0 ? 50 : (50 - barWidth);
+        const barStyle = `left:${barLeft}%;width:${barWidth}%;background:${presBarCol};`;
 
         return `<div class="flow-card" style="${bc}" onclick="(function(){var t='${tk}';document.querySelectorAll('#etf-tabs .tab-btn').forEach(function(b){b.classList[b.dataset.ticker===t?'add':'remove']('active');});state.activeTicker=t;loadTickerDataAndRender();})()">
             <div class="fc-left">
-                <div class="fc-ticker" style="color:${colors[tk] || '#fff'}">${tk}</div>
+                <div class="fc-ticker" style="color:${accentCol}">${tk}</div>
                 <div class="fc-nav">$${d.latest_nav.toFixed(2)}</div>
                 <div class="fc-regime ${regClass}">${d.regime}</div>
             </div>
@@ -994,19 +1006,19 @@ function renderSection2() {
                     <div class="fc-m-val ${flowColor(tk, d.last_30d_net)}">${fmtUsd(d.last_30d_net)}</div>
                 </div>
                 <div class="fc-metric">
-                    <div class="fc-m-lbl" data-tooltip="Flow Z-Score vs 30-day avg. >+1.5 = accumulation, <−1.5 = distribution.">Z-SCORE</div>
+                    <div class="fc-m-lbl" data-tooltip="Flow Z-Score vs 30-day avg. >+1.5 = unusual accumulation, <−1.5 = unusual distribution.">Z-SCORE</div>
                     <div class="fc-m-val ${zCol}">${d.zscore >= 0 ? '+' : ''}${d.zscore.toFixed(2)}</div>
                 </div>
                 <div class="mom-row">
-                    <div class="mom-item" data-tooltip="5-day rolling net flow momentum.">5D <span class="${flowColor(tk, d.flow_5d)}">${fmtUsd(d.flow_5d)}</span></div>
-                    <div class="mom-item" data-tooltip="20-day rolling net flow momentum.">20D <span class="${flowColor(tk, d.flow_20d)}">${fmtUsd(d.flow_20d)}</span></div>
+                    <div class="mom-item" data-tooltip="5-day rolling net flow.">5D <span class="${flowColor(tk, d.flow_5d)}">${fmtUsd(d.flow_5d)}</span></div>
+                    <div class="mom-item" data-tooltip="20-day rolling net flow.">20D <span class="${flowColor(tk, d.flow_20d)}">${fmtUsd(d.flow_20d)}</span></div>
                 </div>
             </div>
             <div class="fc-right">
-                <div class="fc-pres-lbl" data-tooltip="Pressure Score (−100 to +100). Positive = buying pressure (inflows), negative = selling pressure (outflows).">PRESS.</div>
+                <div class="fc-pres-lbl" data-tooltip="Pressure Score (−100 to +100). Blends Z-Score, momentum, and streak. Positive = buying pressure, negative = selling pressure.">PRESS.</div>
                 <div class="fc-pres-val ${presCol}">${d.pressure >= 0 ? '+' : ''}${d.pressure}</div>
                 <div class="fc-pres-bar-wrap">
-                    <div class="fc-pres-bar-fill" style="width:${presAbs}%;background:${presBarCol};"></div>
+                    <div class="fc-pres-bar-fill" style="${barStyle}"></div>
                 </div>
             </div>
         </div>`;
