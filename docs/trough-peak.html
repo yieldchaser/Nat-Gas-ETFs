@@ -44,15 +44,20 @@ input[type=range] {
 /* Track styles - Restricted to top threshold slider */
 #threshold-slider::-webkit-slider-runnable-track {
     height: 6px;
-    background: rgba(255, 255, 255, 0.15);
+    background: linear-gradient(to right, var(--cyan) var(--fill-pct, 10%), rgba(255,255,255,0.15) var(--fill-pct, 10%));
     border-radius: 3px;
     border: none;
 }
 #threshold-slider::-moz-range-track {
     height: 6px;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255,255,255,0.15);
     border-radius: 3px;
     border: none;
+}
+#threshold-slider::-moz-range-progress {
+    height: 6px;
+    background: var(--cyan);
+    border-radius: 3px;
 }
 
 /* Thumb styles */
@@ -483,7 +488,9 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- ENHANCED CHART SECTION -->
     <div class="chart-container">
         <div class="chart-header">
-            <div style="flex:1"></div>
+            <div style="flex:1">
+                <span id="chart-title" style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;">Price &amp; Cycle Map</span>
+            </div>
             <div class="chart-controls">
                 <div class="horizon-group" id="horizon-controls">
                     <button class="horizon-btn" data-range="1w" data-tooltip="Last 7 calendar days">1W</button>
@@ -1073,6 +1080,12 @@ function renderChartTabs() {
     const container = document.getElementById('chart-etf-chips');
     if (!container) return;
     container.innerHTML = '';
+    const activeTicker = TICKERS.find(x => x.label === state.activeTab) || TICKERS[0];
+    const titleEl = document.getElementById('chart-title');
+    if (titleEl) {
+        titleEl.innerHTML = `<span style="color:${activeTicker.color}">${activeTicker.label}</span> &mdash; Price &amp; Cycle Map`;
+        titleEl.style.borderLeftColor = activeTicker.color;
+    }
     TICKERS.forEach(t => {
         const active = t.label === state.activeTab;
         const chip = document.createElement('button');
@@ -1466,11 +1479,17 @@ function renderAll() {
 // ── Slider ────────────────────────────────────────────────────────────────────
 const slider = document.getElementById('threshold-slider');
 const sliderDisplay = document.getElementById('slider-display');
+function updateSliderFill() {
+    const pct = ((+slider.value - +slider.min) / (+slider.max - +slider.min)) * 100;
+    slider.style.setProperty('--fill-pct', pct + '%');
+}
 slider.addEventListener('input', () => {
     state.threshold = +slider.value;
     sliderDisplay.textContent = `${state.threshold}%`;
+    updateSliderFill();
     renderAll();
 });
+updateSliderFill(); // set fill on page load
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 // Badge start year is set dynamically after data loads (see updateBadge())
