@@ -444,6 +444,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                         <button class="tab-btn" data-range="3m">3M</button>
                         <button class="tab-btn" data-range="6m">6M</button>
                         <button class="tab-btn" data-range="1y">1Y</button>
+                        <button class="tab-btn" data-range="2y">2Y</button>
                         <button class="tab-btn" data-range="3y">3Y</button>
                         <button class="tab-btn active" data-range="all">ALL</button>
                     </div>
@@ -580,31 +581,32 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <div class="panel">
             <div class="panel-header">
                 <div class="panel-title" data-tooltip="Cumulative flow across all ETFs on one chart. Toggle tickers with the chips below.">Cross-ETF Cumulative Flow Comparison</div>
-                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                    <div class="tab-group time-tabs" id="cross-time-tabs">
-                        <button class="tab-btn" data-range="1w">1W</button>
-                        <button class="tab-btn" data-range="1m">1M</button>
-                        <button class="tab-btn" data-range="3m">3M</button>
-                        <button class="tab-btn" data-range="6m">6M</button>
-                        <button class="tab-btn" data-range="1y">1Y</button>
-                        <button class="tab-btn" data-range="2y">2Y</button>
-                        <button class="tab-btn" data-range="3y">3Y</button>
-                        <button class="tab-btn active" data-range="all">ALL</button>
-                    </div>
-                    <div class="tab-group time-tabs" id="cross-tabs">
-                        <button class="tab-btn active" data-filter="all">ALL</button>
-                        <button class="tab-btn" data-filter="long">LONG</button>
-                        <button class="tab-btn" data-filter="short">SHORT</button>
-                    </div>
-                    <div id="cross-etf-toggles" style="display:flex; gap:4px; flex-wrap:wrap;"></div>
+                <div class="tab-group time-tabs" id="cross-time-tabs">
+                    <button class="tab-btn" data-range="1w">1W</button>
+                    <button class="tab-btn" data-range="1m">1M</button>
+                    <button class="tab-btn" data-range="3m">3M</button>
+                    <button class="tab-btn" data-range="6m">6M</button>
+                    <button class="tab-btn" data-range="1y">1Y</button>
+                    <button class="tab-btn" data-range="2y">2Y</button>
+                    <button class="tab-btn" data-range="3y">3Y</button>
+                    <button class="tab-btn active" data-range="all">ALL</button>
                 </div>
             </div>
             <div class="chart-wrap">
                 <canvas id="chartCross"></canvas>
                 <div id="cross-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:6px; font-size:0.7rem; pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:140px;"></div>
             </div>
+            <!-- Filter + ETF toggles row -->
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;">
+                <div class="tab-group time-tabs" id="cross-tabs">
+                    <button class="tab-btn active" data-filter="all">ALL</button>
+                    <button class="tab-btn" data-filter="long">LONG</button>
+                    <button class="tab-btn" data-filter="short">SHORT</button>
+                </div>
+                <div id="cross-etf-toggles" style="display:flex; gap:4px; flex-wrap:wrap;"></div>
+            </div>
             <!-- Cross ETF independent range slider -->
-            <div class="range-slider-container" style="margin-top:4px;">
+            <div class="range-slider-container" style="margin-top:8px;">
                 <div class="range-slider-wrap">
                     <div class="range-inputs">
                         <div class="range-slider-track"></div>
@@ -617,8 +619,6 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <span id="cross-range-label" style="color:var(--text-bright); text-transform:uppercase; letter-spacing:2px;">ALL</span>
                 </div>
             </div>
-            <!-- HTML legend for cross ETF chart — avoids canvas collision -->
-            <div id="cross-html-legend" style="display:flex; flex-wrap:wrap; gap:12px; padding:8px 0 4px; border-top:1px solid rgba(255,255,255,0.05);"></div>
         </div>
 
         <!-- Section 7: Yearly Flow Frequency Matrix -->
