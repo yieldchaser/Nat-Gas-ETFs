@@ -529,10 +529,11 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                         <th data-tooltip="Flow Z-Score at the end of the window — how unusual that day's flow was vs. its 30-day rolling average.">Z-SCORE</th>
                         <th data-tooltip="Composite pressure score (−100 to +100) at the end of the window. Blends Z-Score, momentum, and streak bonus.">PRESS.</th>
                         <th data-tooltip="Signal interpretation implied by the divergence pattern.">SIGNAL</th>
+                        <th data-tooltip="Divergence strength (0–100). Combines price magnitude × flow magnitude × window length. Higher = more significant.">STR</th>
                     </tr>
                 </thead>
                 <tbody id="div-body">
-                    <tr><td colspan="9" style="text-align:center; color:var(--text-dim);">Scanning for divergences...</td></tr>
+                    <tr><td colspan="10" style="text-align:center; color:var(--text-dim);">Scanning for divergences...</td></tr>
                 </tbody>
             </table>
             </div><!-- /overflow scroll wrapper -->
@@ -1932,50 +1933,74 @@ function hideCrossHover() {
 }
 
 // ---- Divergence Engine ----
+// Dynamic threshold by leverage: 3x→3%, 2x→2%, 1x→1%
+const DIV_LEVERAGE = { BOIL:3, KOLD:3, '3NGL':3, '3NGS':3, HNU:2, HND:2 };
+
 function renderDivergence() {
     const data = state.cache[state.activeTicker].data;
     if (!data || data.length < 10) return;
 
+    const thresh = (DIV_LEVERAGE[state.activeTicker] || 1) * 0.01; // e.g. 0.03 for 3x
     const lookback = state.divRange === 'all' ? data.length : Math.min(state.divRange, data.length);
     const recent = data.slice(-lookback);
     const tbody = el('div-body');
     let html = '';
-    
-    const windows = [3, 5, 10]; // Lookback days to check
-    
+
+    // Largest window first → strongest/sustained signals surface before short blips
+    const windows = [10, 5, 3];
+
+    // Pre-compute max abs flow in window for normalisation
+    let maxAbsFlow = 0;
+    for (let i = windows[0]; i < recent.length; i++) {
+        for (const w of windows) {
+            if (i < w) continue;
+            const f = Math.abs(recent[i].cumulative_flow - recent[i - w].cumulative_flow);
+            if (f > maxAbsFlow) maxAbsFlow = f;
+        }
+    }
+
     for (let i = recent.length - 1; i >= Math.max(...windows); i--) {
         const cur = recent[i];
-        
-        for (let w of windows) {
+
+        for (const w of windows) {
             const prev = recent[i - w];
-            
-            // BUG 1 FIX: Split-adjusted price move using cumulative perf_pct
+
             let cumRet = 1;
-            for (let j = i - w + 1; j <= i; j++) {
-                cumRet *= (1 + recent[j].perf_pct);
-            }
+            for (let j = i - w + 1; j <= i; j++) cumRet *= (1 + (recent[j].perf_pct || 0));
             const priceMove = cumRet - 1;
-            
+
             const flowSum = cur.cumulative_flow - prev.cumulative_flow;
-            
-            let isDiv = false;
-            let type = '', badgeClass = '', sig = '';
-            
-            // Bearish Div: Price up > 3%, but net flow is negative
-            if (priceMove > 0.03 && flowSum < 0) {
+
+            let isDiv = false, type = '', badgeClass = '', sig = '';
+
+            if (priceMove > thresh && flowSum < 0) {
                 isDiv = true; type = 'BEARISH DIV'; badgeClass = 'bg-bear'; sig = '⚠️ Distribution';
-            }
-            // Bullish Div: Price down > 3%, but net flow is positive
-            if (priceMove < -0.03 && flowSum > 0) {
+            } else if (priceMove < -thresh && flowSum > 0) {
                 isDiv = true; type = 'BULLISH DIV'; badgeClass = 'bg-bull'; sig = '🟢 Accumulation';
             }
-            
+
             if (isDiv) {
-                const avgDaily = flowSum / w;
-                const zAtEnd   = cur.flow_zscore ?? 0;
+                const avgDaily  = flowSum / w;
+                const zAtEnd    = cur.flow_zscore ?? 0;
                 const presAtEnd = Math.round(cur.pressure ?? 0);
-                const zCol  = zAtEnd >= 1.5 ? 'val-green' : zAtEnd <= -1.5 ? 'val-red' : 'val-muted';
+
+                // Confirmation: Z-score and pressure both agree with divergence type
+                const isBear = type === 'BEARISH DIV';
+                const zAgrees   = isBear ? zAtEnd <= -0.5 : zAtEnd >= 0.5;
+                const presAgrees = isBear ? presAtEnd < 0 : presAtEnd > 0;
+                const confirmed = zAgrees && presAgrees;
+                if (confirmed) sig = isBear ? '🔴 CONFIRMED Dist.' : '🟢 CONFIRMED Accum.';
+
+                // Strength score 0–100: price magnitude × flow magnitude × window weight
+                const pNorm = Math.min(Math.abs(priceMove) / (thresh * 5), 1); // cap at 5× threshold
+                const fNorm = maxAbsFlow > 0 ? Math.min(Math.abs(flowSum) / maxAbsFlow, 1) : 0;
+                const wNorm = w / 10; // 3d=0.3, 5d=0.5, 10d=1.0
+                const strength = Math.round(pNorm * 0.4 * 100 + fNorm * 0.4 * 100 + wNorm * 0.2 * 100);
+                const strCol = strength >= 70 ? 'val-green' : strength >= 40 ? 'val-muted' : 'val-red';
+
+                const zCol   = zAtEnd >= 1.5 ? 'val-green' : zAtEnd <= -1.5 ? 'val-red' : 'val-muted';
                 const presCol = presAtEnd >= 0 ? 'val-green' : 'val-red';
+
                 html += `<tr>
                     <td style="color:var(--text-muted);font-size:0.7rem;">${cur.date}</td>
                     <td style="color:var(--text-dim);">${w}d</td>
@@ -1986,16 +2011,17 @@ function renderDivergence() {
                     <td class="${zCol}">${zAtEnd >= 0 ? '+' : ''}${zAtEnd.toFixed(2)}</td>
                     <td class="${presCol}">${presAtEnd >= 0 ? '+' : ''}${presAtEnd}</td>
                     <td style="font-weight:700;font-size:0.72rem;">${sig}</td>
+                    <td class="${strCol}" style="font-weight:700;">${strength}</td>
                 </tr>`;
-                
-                i -= (w - 1); // BUG 5 FIX: Skip past this sequence to avoid overlapping copies
-                break; // Only show one divergence logic per sequence
+
+                i -= (w - 1); // skip past this sequence to avoid overlapping copies
+                break;
             }
         }
     }
-    
+
     if (html === '') {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--text-dim); padding: 20px;">No significant price-flow divergences detected.<br><span style="font-size: 0.65rem; color:var(--text-dim);">Requires a split-adjusted price move > 3% alongside opposing net flows within a 3, 5, or 10 day window.</span></td></tr>';
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--text-dim); padding: 20px;">No significant price-flow divergences detected.<br><span style="font-size: 0.65rem; color:var(--text-dim);">Requires a split-adjusted price move > ${(thresh*100).toFixed(0)}% alongside opposing net flows within a 3, 5, or 10 day window.</span></td></tr>`;
     } else {
         tbody.innerHTML = html;
     }
