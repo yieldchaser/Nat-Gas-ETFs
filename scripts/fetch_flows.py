@@ -2,6 +2,7 @@
 import argparse
 import json
 import logging
+import time
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -91,14 +92,23 @@ def fetch_live_data(ticker: str, start_date: str, end_date: str) -> pd.DataFrame
         method="POST"
     )
     
-    try:
-        with urllib.request.urlopen(req, timeout=30) as response:
-            if response.status == 200:
-                raw_data = json.loads(response.read().decode())
-                return parse_snapshots(raw_data, ticker)
-    except Exception as e:
-        logger.warning(f"Failed to request data for {ticker} with endDate. Trying without. Error: {e}")
-        
+    def _do_request(r):
+        for attempt, wait in enumerate([0, 15, 30, 60]):
+            if wait:
+                logger.info(f"Rate limited for {ticker}, waiting {wait}s (attempt {attempt+1}/4)...")
+                time.sleep(wait)
+            try:
+                with urllib.request.urlopen(r, timeout=30) as response:
+                    if response.status == 200:
+                        return json.loads(response.read().decode())
+            except Exception as e:
+                logger.warning(f"Request error for {ticker}: {e}")
+        return None
+
+    raw_data = _do_request(req)
+    if raw_data is not None:
+        return parse_snapshots(raw_data, ticker)
+
     # Retry without endDate
     payload["requests"][0].pop("endDate", None)
     req = urllib.request.Request(
@@ -111,17 +121,18 @@ def fetch_live_data(ticker: str, start_date: str, end_date: str) -> pd.DataFrame
         },
         method="POST"
     )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as response:
-            if response.status == 200:
-                raw_data = json.loads(response.read().decode())
-                return parse_snapshots(raw_data, ticker)
-    except Exception as e:
-        logger.error(f"Failed to fetch {ticker}: {e}")
-    
+    raw_data = _do_request(req)
+    if raw_data is not None:
+        return parse_snapshots(raw_data, ticker)
+
     return pd.DataFrame()
 
 def apply_derived_metrics(df: pd.DataFrame) -> pd.DataFrame:
+    # Recompute simple derivations from usd_flow (ensures correctness after merge)
+    df["cumulative_flow"] = df["usd_flow"].cumsum()
+    df["daily_inflow"] = df["usd_flow"].clip(lower=0)
+    df["daily_outflow"] = df["usd_flow"].clip(upper=0)
+
     # 30-day rolling Z-Score
     window = 30
     df["mean_30d"] = df["usd_flow"].rolling(window, min_periods=5).mean()
@@ -170,9 +181,22 @@ def apply_derived_metrics(df: pd.DataFrame) -> pd.DataFrame:
         
     return df
 
+RAW_COLS = ["date", "usd_flow", "nav", "perf_pct"]
+
+def load_existing(json_path: Path) -> pd.DataFrame:
+    """Load raw columns from an existing flows JSON file."""
+    try:
+        with open(json_path) as f:
+            existing = json.load(f)
+        df = pd.DataFrame(existing["data"])
+        return df[[c for c in RAW_COLS if c in df.columns]]
+    except Exception:
+        return pd.DataFrame()
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", action="store_true", help="Seed from local CSVs")
+    parser.add_argument("--full", action="store_true", help="Force full re-fetch from 2010-01-01 (ignores existing data)")
     args = parser.parse_args()
 
     FLOWS_DIR.mkdir(parents=True, exist_ok=True)
@@ -183,17 +207,17 @@ def main():
         "tickers": {},
         "cross_etf": {}
     }
-    
+
     flow_30d_bull = 0.0
     flow_30d_bear = 0.0
 
     for ticker in TICKERS:
         logger.info(f"Processing {ticker}...")
+        time.sleep(1)
         df = pd.DataFrame()
-        
+        json_out = FLOWS_DIR / f"{ticker}_flows.json"
+
         if args.seed:
-            # e.g., KOLD_flows_2021-01-01_2026-03-19.csv
-            # We look for a file starting with ticker_flows_
             csv_files = list(DATA_DIR.glob(f"{ticker}_flows_*.csv"))
             if csv_files:
                 csv_file = sorted(csv_files)[-1]
@@ -202,9 +226,38 @@ def main():
             else:
                 logger.warning(f"No CSV found for {ticker}")
                 continue
+        elif args.full or not json_out.exists():
+            # First run or forced full re-fetch
+            df = fetch_live_data(ticker, "2010-01-01", today_str)
+            if df.empty:
+                logger.warning(f"Extended history unavailable for {ticker}, falling back to 2021-01-01")
+                df = fetch_live_data(ticker, "2021-01-01", today_str)
         else:
-            df = fetch_live_data(ticker, "2021-01-01", today_str)
-            
+            # Incremental: load existing, fetch only new rows
+            existing_df = load_existing(json_out)
+            if existing_df.empty:
+                start_date = "2010-01-01"
+            else:
+                last_date = existing_df["date"].max()
+                start_date = last_date  # API will return last_date again; we deduplicate below
+                logger.info(f"{ticker}: have data through {last_date}, fetching from {start_date}")
+
+            new_df = fetch_live_data(ticker, start_date, today_str)
+
+            if new_df.empty and existing_df.empty:
+                logger.error(f"No data for {ticker}. Skipping.")
+                continue
+            elif new_df.empty:
+                logger.warning(f"No new data for {ticker}, keeping existing.")
+                df = existing_df
+            elif existing_df.empty:
+                df = new_df
+            else:
+                new_raw = new_df[[c for c in RAW_COLS if c in new_df.columns]]
+                df = pd.concat([existing_df, new_raw], ignore_index=True)
+                df = df.drop_duplicates("date").sort_values("date").reset_index(drop=True)
+                logger.info(f"{ticker}: merged {len(existing_df)} existing + {len(new_raw)} new = {len(df)} rows")
+
         if df.empty:
             logger.error(f"No data for {ticker}. Skipping.")
             continue
