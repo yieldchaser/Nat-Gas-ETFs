@@ -463,10 +463,10 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <div class="slider-panel">
         <div class="slider-header">
             <span class="slider-label" data-tooltip="ZigZag threshold — minimum % rally from a trough required to confirm a cycle. Higher = fewer, larger cycles only.">MINIMUM TROUGH-TO-PEAK THRESHOLD</span>
-            <span class="slider-value" id="slider-display">48%</span>
+            <span class="slider-value" id="slider-display">30%</span>
         </div>
         <div class="slider-track">
-            <input type="range" id="threshold-slider" min="0" max="300" step="1" value="48">
+            <input type="range" id="threshold-slider" min="0" max="300" step="1" value="30">
         </div>
         <div class="slider-hints">
             <span>0% (SENSITIVE)</span>
@@ -590,7 +590,7 @@ const state = {
     rawData:  {},    // symbol → {dates[], closes[], volumes[]}
     cycles:   {},    // symbol → cycle[]
     fetchErr: {},    // symbol → true if all proxies failed
-    threshold: 48,
+    threshold: 30,
     activeTab: 'KOLD',
     timeRange: 'all', // 1w, 1m, 3m, 6m, 1y, all, custom
     zoom:     { startIdx: 0, endIdx: 0 }, // Indices
