@@ -541,6 +541,14 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <div class="panel">
             <div class="panel-header">
                 <div class="panel-title" data-tooltip="Z-Score of daily flow over time. Spikes signal unusual accumulation or distribution.">Flow Z-Score History</div>
+                <div class="tab-group" id="z-etf-tabs" style="margin-right:8px;">
+                    <button class="tab-btn active" data-zticker="BOIL" onclick="selectZTicker(this)" style="color:#F5C542;">BOIL</button>
+                    <button class="tab-btn" data-zticker="HNU"  onclick="selectZTicker(this)" style="color:#E8924A;">HNU</button>
+                    <button class="tab-btn" data-zticker="3NGL" onclick="selectZTicker(this)" style="color:#C4773A;">3NGL</button>
+                    <button class="tab-btn" data-zticker="KOLD" onclick="selectZTicker(this)" style="color:#4A9CF5;">KOLD</button>
+                    <button class="tab-btn" data-zticker="HND"  onclick="selectZTicker(this)" style="color:#4DD4EA;">HND</button>
+                    <button class="tab-btn" data-zticker="3NGS" onclick="selectZTicker(this)" style="color:#A07AF5;">3NGS</button>
+                </div>
                 <div class="tab-group time-tabs" id="z-time-tabs">
                     <button class="tab-btn" data-range="1w">1W</button>
                     <button class="tab-btn" data-range="1m">1M</button>
@@ -747,6 +755,7 @@ const state = {
     summary: null,
     cache: {},
     activeTicker: 'BOIL',
+    activeZTicker: 'BOIL',
     timeRange: 'all',
     crossFilter: 'all', // all, long, short
     divRange: 90,       // days for divergence scan; 'all' = entire history
@@ -1038,6 +1047,16 @@ async function loadTickerDataAndRender() {
         }
     }
     
+    // Ensure Z chart ticker is also cached
+    const ztk = state.activeZTicker;
+    if (!state.cache[ztk]) {
+        try {
+            const zres = await fetch(`data/flows/${ztk}_flows.json`);
+            state.cache[ztk] = await zres.json();
+            computeAdjustedPrices(state.cache[ztk]);
+        } catch (e) { console.error("Failed to load Z data for", ztk); }
+    }
+
     // Re-render cards so active card updates
     renderSection2();
     updateStatsRow();
@@ -1048,6 +1067,27 @@ async function loadTickerDataAndRender() {
     if (zData && zData.length > 0) drawChartZ(zData);
     renderDivergence();
     el('loading-overlay').style.display = 'none';
+}
+
+async function selectZTicker(btn) {
+    const tk = btn.dataset.zticker;
+    state.activeZTicker = tk;
+    state.zoomZ = { start: 0, end: 1 };
+    document.querySelectorAll('#z-etf-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (!state.cache[tk]) {
+        try {
+            const res = await fetch(`data/flows/${tk}_flows.json`);
+            state.cache[tk] = await res.json();
+            computeAdjustedPrices(state.cache[tk]);
+        } catch (e) {
+            console.error("Failed to load Z data for", tk);
+            return;
+        }
+    }
+    syncZSlider();
+    const zData = getZVisibleData();
+    if (zData && zData.length > 0) drawChartZ(zData);
 }
 
 function getBaseVisibleData() {
@@ -1080,8 +1120,24 @@ function getVisibleData() {
 }
 
 // Independent zoom for Z-Score chart
+function getZBaseData() {
+    const tk = state.activeZTicker;
+    if (!state.cache[tk]) return [];
+    const allData = state.cache[tk].data;
+    if (state.timeRange === 'all') return allData;
+    let days = 30;
+    if (state.timeRange === '1w') days = 7;
+    else if (state.timeRange === '1m') days = 30;
+    else if (state.timeRange === '3m') days = 90;
+    else if (state.timeRange === '6m') days = 180;
+    else if (state.timeRange === '1y') days = 365;
+    else if (state.timeRange === '2y') days = 730;
+    else if (state.timeRange === '3y') days = 1095;
+    return allData.slice(-days);
+}
+
 function getZVisibleData() {
-    const base = getBaseVisibleData();
+    const base = getZBaseData();
     if (state.zoomZ.start === 0 && state.zoomZ.end === 1) return base;
     const s = Math.floor(state.zoomZ.start * base.length);
     const e = Math.ceil(state.zoomZ.end * base.length);
@@ -1442,9 +1498,12 @@ function drawChartZ(data) {
         else ctxZ.lineTo(x, y);
     }
 
+    const tkColor = colors[state.activeZTicker] || '#94a3b8';
     const strokeGrad = ctxZ.createLinearGradient(0, pad.top, 0, pad.top + chartH);
     strokeGrad.addColorStop(0, 'rgba(61,184,122,1)');
+    strokeGrad.addColorStop(0.35, tkColor);
     strokeGrad.addColorStop(0.5, 'rgba(148,163,184,0.6)');
+    strokeGrad.addColorStop(0.65, tkColor);
     strokeGrad.addColorStop(1, 'rgba(239,68,68,1)');
     ctxZ.strokeStyle = strokeGrad;
     ctxZ.stroke();
