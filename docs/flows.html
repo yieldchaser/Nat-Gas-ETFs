@@ -262,11 +262,12 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 
 /* ---- Yearly Matrix ---- */
 .matrix-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-.matrix-table th { padding: 10px 8px; font-size: 0.62rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; text-align: center; border-bottom: 2px solid var(--bg-secondary); }
-.matrix-table td { padding: 10px 8px; font-size: 0.75rem; color: var(--text-primary); text-align: center; font-family: 'JetBrains Mono', monospace; border-bottom: 1px solid rgba(255,255,255,0.03); }
-.matrix-table tr:hover td { background: rgba(255,255,255,0.02); }
-.matrix-year { color: var(--cyan); font-weight: 800; text-align: left !important; width: 70px; }
-.matrix-none { color: var(--text-dim); opacity: 0.3; }
+.matrix-table th { padding: 7px 8px; font-size: 0.62rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.matrix-table th.group-header { padding: 6px 4px 4px; font-size: 0.55rem; letter-spacing: 2px; border-bottom: none; }
+.matrix-table td { padding: 8px 8px; font-size: 0.75rem; color: var(--text-primary); text-align: center; font-family: 'JetBrains Mono', monospace; border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.15s; }
+.matrix-table tbody tr:hover td { background: rgba(255,255,255,0.04) !important; }
+.matrix-year { color: var(--cyan); font-weight: 800; text-align: left !important; width: 62px; }
+.matrix-none { color: var(--text-dim); opacity: 0.2; font-size: 0.7rem; }
 
 /* Responsive — 900px */
 @media (max-width: 900px) {
@@ -634,7 +635,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 7: Yearly Flow Frequency Matrix -->
         <div class="panel" id="yearly-matrix-panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Shows the number of significant flow events (|Z-Score| ≥ 1.5) per year per ETF, with average Z-Score magnitude. Helps identify which years had the most active flow signals.">Yearly Flow Activity Matrix</div>
+                <div class="panel-title" data-tooltip="Shows the number of significant flow events (|Z-Score| ≥ 1.5) per year per ETF, with average Z-Score magnitude. Helps identify which years had the most active flow signals." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Yearly Flow Activity Matrix</div>
             </div>
             <div id="yearly-matrix-container" style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
                 <div style="color:var(--text-muted); padding:20px; text-align:center; font-size:0.7rem; letter-spacing:1px;">Loading matrix…</div>
@@ -2125,24 +2126,62 @@ function renderYearlyMatrix() {
 
     const tipMap = { 'BOIL':'ProShares Ultra 2× Long', 'HNU':'BetaPro 2× Bull', '3NGL':'WisdomTree 3× Long', 'KOLD':'ProShares 2× Inverse', 'HND':'BetaPro 2× Bear', '3NGS':'WisdomTree 3× Short' };
 
-    let html = `<table class="matrix-table"><thead><tr><th class="matrix-year">YEAR</th>${tickers.map(tk=>`<th data-tooltip="${tipMap[tk]||tk}">${tk}</th>`).join('')}</tr></thead><tbody>`;
+    // Per-column max for heat map intensity
+    const colMax = {};
+    tickers.forEach(tk => { colMax[tk] = Math.max(...years.map(yr => freq[tk][yr]?.count || 0), 1); });
+
+    // ETF RGB for cell background heat map
+    const rgbMap = { 'BOIL':'245,197,66','HNU':'232,146,74','3NGL':'196,119,58','KOLD':'74,156,245','HND':'77,212,234','3NGS':'160,122,245' };
+
+    // Z-score → color: muted → gold → orange → red
+    function zColor(z) {
+        if (z >= 3.0) return '#ef4444';
+        if (z >= 2.5) return '#E8924A';
+        if (z >= 2.0) return '#F5C542';
+        return 'rgba(148,163,184,0.7)';
+    }
+
+    // Totals row
+    const totals = {};
+    tickers.forEach(tk => {
+        let tc = 0, tz = 0;
+        years.forEach(yr => { if (freq[tk][yr]) { tc += freq[tk][yr].count; tz += freq[tk][yr].sumZ; } });
+        totals[tk] = { count: tc, avgZ: tc ? tz / tc : 0 };
+    });
+
+    let html = `<table class="matrix-table">
+      <thead>
+        <tr>
+          <th class="matrix-year" rowspan="2">YEAR</th>
+          <th colspan="3" class="group-header" style="color:rgba(245,197,66,0.75);border-bottom:1px solid rgba(245,197,66,0.2);">▲ LONG</th>
+          <th colspan="3" class="group-header" style="color:rgba(74,156,245,0.75);border-bottom:1px solid rgba(74,156,245,0.2);">▼ SHORT</th>
+        </tr>
+        <tr>${tickers.map(tk=>`<th data-tooltip="${tipMap[tk]||tk}" style="color:${colors[tk]};">${tk}</th>`).join('')}</tr>
+      </thead><tbody>`;
+
     years.forEach(yr => {
         html += `<tr><td class="matrix-year">${yr}</td>`;
         tickers.forEach(tk => {
             const s = freq[tk][yr];
             if (s && s.count) {
                 const avgZ = s.sumZ / s.count;
-                const ratio = maxZ === minZ ? 0 : (avgZ - minZ) / (maxZ - minZ);
-                const lum = 85 - ratio * 15;
-                const col = `hsl(145,60%,${lum}%)`;
-                html += `<td data-tooltip="${s.count} events · avg |Z| ${avgZ.toFixed(1)}"><span style="font-weight:800">${s.count}</span><span style="font-size:0.6rem;color:${col};margin-left:3px;">(${avgZ.toFixed(1)}σ)</span></td>`;
+                const ratio = s.count / colMax[tk];
+                const bg = `rgba(${rgbMap[tk]},${(ratio * 0.22).toFixed(2)})`;
+                html += `<td data-tooltip="${s.count} events · avg |Z| ${avgZ.toFixed(1)}" style="background:${bg};"><span style="font-weight:800;font-size:0.8rem;">${s.count}</span><span style="font-size:0.58rem;color:${zColor(avgZ)};margin-left:3px;">(${avgZ.toFixed(1)}σ)</span></td>`;
             } else {
-                html += `<td class="matrix-none">--</td>`;
+                html += `<td class="matrix-none">—</td>`;
             }
         });
         html += '</tr>';
     });
-    html += '</tbody></table>';
+
+    // Summary totals row
+    html += `<tr style="border-top:1px solid rgba(255,255,255,0.1);"><td class="matrix-year" style="color:var(--text-muted);font-size:0.58rem;letter-spacing:1px;font-weight:600;">TOTAL</td>`;
+    tickers.forEach(tk => {
+        const t = totals[tk];
+        html += `<td style="opacity:0.6;"><span style="font-weight:700;font-size:0.75rem;">${t.count}</span><span style="font-size:0.56rem;color:${zColor(t.avgZ)};margin-left:3px;">(${t.avgZ.toFixed(1)}σ)</span></td>`;
+    });
+    html += `</tr></tbody></table>`;
     container.innerHTML = html;
 }
 
