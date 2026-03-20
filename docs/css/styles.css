@@ -511,3 +511,24 @@ footer {
     transition: opacity 0.15s ease;
     word-break: break-word;
 }
+
+/* ---- MOBILE 480px ---- */
+@media (max-width: 480px) {
+    #top-bar { padding: 0 10px; }
+    .top-bar-right { gap: 8px; }
+    .nav-link { padding: 3px 6px; font-size: 0.6rem; letter-spacing: 0; }
+    /* Shrink "Updated: ..." text */
+    #last-updated { font-size: 0.55rem; letter-spacing: 0; }
+    /* Tooltip narrower so it never clips on small screens */
+    #tt { max-width: calc(100vw - 20px); font-size: 0.62rem; }
+    /* Validation grid: 2 cols max */
+    .validation-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* ---- MOBILE 375px ---- */
+@media (max-width: 375px) {
+    .top-bar-left h1 { font-size: 0.65rem; }
+    /* Hide trough-to-peak nav link on tiny screens to prevent overflow */
+    .page-nav .nav-link:nth-child(2) { display: none; }
+    .nav-link { padding: 3px 5px; font-size: 0.58rem; }
+}
