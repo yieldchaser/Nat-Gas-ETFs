@@ -530,7 +530,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <!-- Divergence ETF selector -->
             <div id="div-etf-tabs" style="display:flex; gap:4px; flex-wrap:wrap; justify-content:center; margin:0 0 10px 0;"></div>
             <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
-            <table class="div-table" style="min-width:900px;">
+            <table class="div-table" style="min-width:1280px;">
                 <thead>
                     <tr>
                         <th data-tooltip="Date the divergence window ends.">DATE</th>
@@ -543,8 +543,8 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                         <th data-tooltip="Composite pressure score (−100 to +100) at the end of the window. Blends Z-Score, momentum, and streak bonus.">PRESS.</th>
                         <th data-tooltip="Signal interpretation implied by the divergence pattern.">SIGNAL</th>
                         <th data-tooltip="Divergence strength (0–100). Combines price magnitude × flow magnitude × window length. Higher = more significant.">STR</th>
-                        <th data-tooltip="Average daily flow across the symmetric 7-day window centred on the divergence date (3 days before + exact day + 3 days after). Provides a smoothed local flow baseline around the event. Shows N/A when fewer than 3 days of future data are available.">±3D AVG</th>
-                        <th data-tooltip="Average daily flow for the 3 trading days after the divergence date. Measures post-signal flow follow-through — did capital continue in the same direction or reverse? Shows N/A for the most recent divergences.">+3D AVG</th>
+                        <th data-tooltip="Average daily flow across the symmetric 7-day window centred on the divergence date (3 days before + exact day + 3 days after). Provides a smoothed local flow baseline around the event. Shows — when fewer than 3 days of future data are available." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">±3D AVG</th>
+                        <th data-tooltip="Average daily flow for the 3 trading days after the divergence date. Measures post-signal flow follow-through — did capital continue in the same direction or reverse? Shows — for the most recent divergences.">+3D AVG</th>
                         <th data-tooltip="Average daily flow for the 3 trading days immediately before the divergence date. Reveals pre-divergence flow momentum — was the imbalance already building or is this a sudden regime shift?">-3D AVG</th>
                         <th data-tooltip="Net capital flow on the exact divergence end-date. Distinct from AVG/DAY (which averages across the full window); isolates whether the final day itself spiked or was ordinary.">DAY FLOW</th>
                         <th data-tooltip="Average daily flow across the entire history prior to the divergence window (full-history baseline). Compare window-period flows against this benchmark to judge whether the divergence activity is truly anomalous.">PRE-BASE</th>
@@ -2145,11 +2145,11 @@ function renderDivergence() {
                     <td class="${presCol}">${presAtEnd >= 0 ? '+' : ''}${presAtEnd}</td>
                     <td>${sigHtml}</td>
                     <td class="${strCol}" style="font-weight:700;background:${strBar};">${strength}</td>
-                    <td class="${ctxCol(avgCenter7)}" style="font-size:0.7rem;">${fmtCtx(avgCenter7)}</td>
-                    <td class="${ctxCol(avgPost3)}" style="font-size:0.7rem;">${fmtCtx(avgPost3)}</td>
-                    <td class="${ctxCol(avgPre3)}" style="font-size:0.7rem;">${fmtCtx(avgPre3)}</td>
-                    <td class="${exactFlow>=0?'val-green':'val-red'}" style="font-size:0.7rem;">${fmtUsd(exactFlow)}/d</td>
-                    <td class="${ctxCol(avgPrePeriod)}" style="font-size:0.7rem;">${fmtCtx(avgPrePeriod)}</td>
+                    <td class="${ctxCol(avgCenter7)}" style="font-size:0.68rem;padding:6px 7px 6px 14px;border-left:1px solid rgba(255,255,255,0.08);">${fmtCtx(avgCenter7)}</td>
+                    <td class="${ctxCol(avgPost3)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(avgPost3)}</td>
+                    <td class="${ctxCol(avgPre3)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(avgPre3)}</td>
+                    <td class="${exactFlow>=0?'val-green':'val-red'}" style="font-size:0.68rem;padding:6px 7px;">${fmtUsd(exactFlow)}/d</td>
+                    <td class="${ctxCol(avgPrePeriod)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(avgPrePeriod)}</td>
                 </tr>`;
 
                 i -= (w - 1); // skip past this sequence to avoid overlapping copies
