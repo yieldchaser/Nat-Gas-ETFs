@@ -518,6 +518,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <div class="panel-header">
                 <div class="panel-title" data-tooltip="Scans for instances where price and capital flow moved in opposite directions. Divergences can signal stealth accumulation or distribution." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Flow vs Price Divergence</div>
                 <div style="display:flex; align-items:center; gap:12px;">
+                    <button class="download-btn" id="download-div-csv" title="Export divergences to CSV">DOWNLOAD CSV</button>
                     <div class="tab-group" id="div-filter-tabs">
                         <button class="tab-btn active" data-divrange="90" data-tooltip="Scan the last 90 days">90D</button>
                         <button class="tab-btn" data-divrange="180" data-tooltip="Scan the last 180 days">6M</button>
@@ -869,6 +870,9 @@ async function init() {
                 renderDivergence();
             });
         });
+
+        const btnDivDl = document.getElementById('download-div-csv');
+        if (btnDivDl) btnDivDl.addEventListener('click', downloadDivCSV);
 
         // Build ETF toggle chips
         buildCrossToggles();
@@ -2105,6 +2109,93 @@ function renderDivergence() {
     } else {
         tbody.innerHTML = html;
     }
+}
+
+function downloadDivCSV() {
+    const tk = state.divTicker;
+    const data = state.cache[tk] && state.cache[tk].data;
+    if (!data || data.length < 10) return alert('No data to export.');
+
+    const thresh = (DIV_LEVERAGE[tk] || 1) * 0.01;
+    const lookback = state.divRange === 'all' ? data.length : Math.min(state.divRange, data.length);
+    const recent = data.slice(-lookback);
+    
+    const results = [];
+    const windows = [10, 5, 3];
+
+    let maxAbsFlow = 0;
+    for (let i = windows[0]; i < recent.length; i++) {
+        for (const w of windows) {
+            if (i < w) continue;
+            const f = Math.abs(recent[i].cumulative_flow - recent[i - w].cumulative_flow);
+            if (f > maxAbsFlow) maxAbsFlow = f;
+        }
+    }
+
+    for (let i = recent.length - 1; i >= Math.max(...windows); i--) {
+        const cur = recent[i];
+        for (const w of windows) {
+            const prev = recent[i - w];
+            let cumRet = 1;
+            for (let j = i - w + 1; j <= i; j++) cumRet *= (1 + (recent[j].perf_pct || 0));
+            const priceMove = cumRet - 1;
+            const flowSum = cur.cumulative_flow - prev.cumulative_flow;
+
+            let isDiv = false, type = '';
+            if (priceMove > thresh && flowSum < 0) { isDiv = true; type = 'BEARISH DIV'; } 
+            else if (priceMove < -thresh && flowSum > 0) { isDiv = true; type = 'BULLISH DIV'; }
+
+            if (isDiv) {
+                const avgDaily  = flowSum / w;
+                const zAtEnd    = cur.flow_zscore ?? 0;
+                const presAtEnd = Math.round(cur.pressure ?? 0);
+                
+                const isBear = type === 'BEARISH DIV';
+                const zAgrees   = isBear ? zAtEnd <= -0.5 : zAtEnd >= 0.5;
+                const presAgrees = isBear ? presAtEnd < 0 : presAtEnd > 0;
+                const confirmed = zAgrees && presAgrees;
+                const sigLabel = confirmed ? (isBear ? 'CONFIRMED Dist.' : 'CONFIRMED Accum.') : (isBear ? 'Distribution' : 'Accumulation');
+
+                const pNorm = Math.min(Math.abs(priceMove) / (thresh * 5), 1);
+                const fNorm = maxAbsFlow > 0 ? Math.min(Math.abs(flowSum) / maxAbsFlow, 1) : 0;
+                const wNorm = w / 10;
+                const strength = Math.round(pNorm * 0.4 * 100 + fNorm * 0.4 * 100 + wNorm * 0.2 * 100);
+
+                results.push({
+                    date: cur.date,
+                    window: `${w}d`,
+                    type: type,
+                    price_change: (priceMove * 100).toFixed(2) + '%',
+                    net_flow: flowSum.toFixed(2),
+                    avg_daily: avgDaily.toFixed(2),
+                    z_score: zAtEnd.toFixed(2),
+                    pressure: presAtEnd,
+                    signal: sigLabel,
+                    strength: strength
+                });
+
+                i -= (w - 1);
+                break;
+            }
+        }
+    }
+
+    if (!results.length) return alert('No significant divergences found.');
+
+    const headers = ['Date', 'Window', 'Type', 'Price Change', 'Net Flow', 'Avg/Day', 'Z-Score', 'Pressure', 'Signal', 'Strength'];
+    const csvRows = results.map(r => [
+        r.date, r.window, r.type, r.price_change, r.net_flow, r.avg_daily, r.z_score, r.pressure, r.signal, r.strength
+    ].join(','));
+
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${tk}_divergences.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // ---- Yearly Flow Activity Matrix ----
