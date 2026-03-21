@@ -541,13 +541,13 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                         <th data-tooltip="Daily average flow over the window. Normalises for window length.">AVG/DAY</th>
                         <th data-tooltip="Flow Z-Score at the end of the window — how unusual that day's flow was vs. its 30-day rolling average.">Z-SCORE</th>
                         <th data-tooltip="Composite pressure score (−100 to +100) at the end of the window. Blends Z-Score, momentum, and streak bonus.">PRESS.</th>
-                        <th data-tooltip="Signal interpretation implied by the divergence pattern.">SIGNAL</th>
-                        <th data-tooltip="Divergence strength (0–100). Combines price magnitude × flow magnitude × window length. Higher = more significant.">STR</th>
                         <th data-tooltip="Average daily flow across the symmetric 7-day window centred on the divergence date (3 days before + exact day + 3 days after). Provides a smoothed local flow baseline around the event. Shows — when fewer than 3 days of future data are available." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">±3D AVG</th>
                         <th data-tooltip="Average daily flow for the 3 trading days after the divergence date. Measures post-signal flow follow-through — did capital continue in the same direction or reverse? Shows — for the most recent divergences.">+3D AVG</th>
                         <th data-tooltip="Average daily flow for the 3 trading days immediately before the divergence date. Reveals pre-divergence flow momentum — was the imbalance already building or is this a sudden regime shift?">-3D AVG</th>
                         <th data-tooltip="Net capital flow on the exact divergence end-date. Distinct from AVG/DAY (which averages across the full window); isolates whether the final day itself spiked or was ordinary.">DAY FLOW</th>
                         <th data-tooltip="Average daily flow across the entire history prior to the divergence window (full-history baseline). Compare window-period flows against this benchmark to judge whether the divergence activity is truly anomalous.">PRE-BASE</th>
+                        <th data-tooltip="Signal interpretation implied by the divergence pattern." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">SIGNAL</th>
+                        <th data-tooltip="Divergence strength (0–100). Combines price magnitude × flow magnitude × window length. Higher = more significant.">STR</th>
                     </tr>
                 </thead>
                 <tbody id="div-body">
@@ -2143,13 +2143,13 @@ function renderDivergence() {
                     <td style="color:var(--text-dim);">${fmtUsd(avgDaily)}/d</td>
                     <td class="${zCol}">${zAtEnd >= 0 ? '+' : ''}${zAtEnd.toFixed(2)}</td>
                     <td class="${presCol}">${presAtEnd >= 0 ? '+' : ''}${presAtEnd}</td>
-                    <td>${sigHtml}</td>
-                    <td class="${strCol}" style="font-weight:700;background:${strBar};">${strength}</td>
                     <td class="${ctxCol(avgCenter7)}" style="font-size:0.68rem;padding:6px 7px 6px 14px;border-left:1px solid rgba(255,255,255,0.08);">${fmtCtx(avgCenter7)}</td>
                     <td class="${ctxCol(avgPost3)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(avgPost3)}</td>
                     <td class="${ctxCol(avgPre3)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(avgPre3)}</td>
                     <td class="${exactFlow>=0?'val-green':'val-red'}" style="font-size:0.68rem;padding:6px 7px;">${fmtUsd(exactFlow)}/d</td>
                     <td class="${ctxCol(avgPrePeriod)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(avgPrePeriod)}</td>
+                    <td style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">${sigHtml}</td>
+                    <td class="${strCol}" style="font-weight:700;background:${strBar};">${strength}</td>
                 </tr>`;
 
                 i -= (w - 1); // skip past this sequence to avoid overlapping copies
@@ -2267,11 +2267,13 @@ function downloadDivCSV() {
 
     if (!results.length) return alert('No significant divergences found.');
 
-    const headers = ['Date', 'Window', 'Type', 'Price Change', 'Net Flow', 'Avg/Day', 'Z-Score', 'Pressure', 'Signal', 'Strength',
-                     'Avg Flow (+-3D)', 'Avg Flow (+3D After)', 'Avg Flow (-3D Before)', 'Exact Day Flow', 'Avg Flow (Pre-Period Baseline)'];
+    const headers = ['Date', 'Window', 'Type', 'Price Change', 'Net Flow', 'Avg/Day', 'Z-Score', 'Pressure',
+                     'Avg Flow (+-3D)', 'Avg Flow (+3D After)', 'Avg Flow (-3D Before)', 'Exact Day Flow', 'Avg Flow (Pre-Period Baseline)',
+                     'Signal', 'Strength'];
     const csvRows = results.map(r => [
-        r.date, r.window, r.type, r.price_change, r.net_flow, r.avg_daily, r.z_score, r.pressure, r.signal, r.strength,
-        r.avg_center7, r.avg_post3, r.avg_pre3, r.exact_flow, r.avg_pre_period
+        r.date, r.window, r.type, r.price_change, r.net_flow, r.avg_daily, r.z_score, r.pressure,
+        r.avg_center7, r.avg_post3, r.avg_pre3, r.exact_flow, r.avg_pre_period,
+        r.signal, r.strength
     ].join(','));
 
     const csvContent = [headers.join(','), ...csvRows].join('\n');
