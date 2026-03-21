@@ -518,13 +518,13 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <div class="panel-header">
                 <div class="panel-title" data-tooltip="Scans for instances where price and capital flow moved in opposite directions. Divergences can signal stealth accumulation or distribution." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Flow vs Price Divergence</div>
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <button class="download-btn" id="download-div-csv" title="Export divergences to CSV">DOWNLOAD CSV</button>
                     <div class="tab-group" id="div-filter-tabs">
                         <button class="tab-btn active" data-divrange="90" data-tooltip="Scan the last 90 days">90D</button>
                         <button class="tab-btn" data-divrange="180" data-tooltip="Scan the last 180 days">6M</button>
                         <button class="tab-btn" data-divrange="365" data-tooltip="Scan the last year">1Y</button>
                         <button class="tab-btn" data-divrange="all" data-tooltip="Scan full history">ALL</button>
                     </div>
+                    <button class="download-btn" id="download-div-csv" title="Export divergences to CSV">DOWNLOAD CSV</button>
                 </div>
             </div>
             <!-- Divergence ETF selector -->
