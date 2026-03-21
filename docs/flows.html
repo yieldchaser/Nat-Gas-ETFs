@@ -530,7 +530,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <!-- Divergence ETF selector -->
             <div id="div-etf-tabs" style="display:flex; gap:4px; flex-wrap:wrap; justify-content:center; margin:0 0 10px 0;"></div>
             <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
-            <table class="div-table" style="min-width:560px;">
+            <table class="div-table" style="min-width:1280px;">
                 <thead>
                     <tr>
                         <th data-tooltip="Date the divergence window ends.">DATE</th>
@@ -543,10 +543,15 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                         <th data-tooltip="Composite pressure score (−100 to +100) at the end of the window. Blends Z-Score, momentum, and streak bonus.">PRESS.</th>
                         <th data-tooltip="Signal interpretation implied by the divergence pattern.">SIGNAL</th>
                         <th data-tooltip="Divergence strength (0–100). Combines price magnitude × flow magnitude × window length. Higher = more significant.">STR</th>
+                        <th data-tooltip="Average daily flow across the symmetric 7-day window centred on the divergence date (3 days before + exact day + 3 days after). Provides a smoothed local flow baseline around the event. Shows — when fewer than 3 days of future data are available." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">±3D AVG</th>
+                        <th data-tooltip="Average daily flow for the 3 trading days after the divergence date. Measures post-signal flow follow-through — did capital continue in the same direction or reverse? Shows — for the most recent divergences.">+3D AVG</th>
+                        <th data-tooltip="Average daily flow for the 3 trading days immediately before the divergence date. Reveals pre-divergence flow momentum — was the imbalance already building or is this a sudden regime shift?">-3D AVG</th>
+                        <th data-tooltip="Net capital flow on the exact divergence end-date. Distinct from AVG/DAY (which averages across the full window); isolates whether the final day itself spiked or was ordinary.">DAY FLOW</th>
+                        <th data-tooltip="Average daily flow across the entire history prior to the divergence window (full-history baseline). Compare window-period flows against this benchmark to judge whether the divergence activity is truly anomalous.">PRE-BASE</th>
                     </tr>
                 </thead>
                 <tbody id="div-body">
-                    <tr><td colspan="10" style="text-align:center; color:var(--text-dim);">Scanning for divergences...</td></tr>
+                    <tr><td colspan="15" style="text-align:center; color:var(--text-dim);">Scanning for divergences...</td></tr>
                 </tbody>
             </table>
             </div><!-- /overflow scroll wrapper -->
@@ -2011,6 +2016,8 @@ function renderDivergence() {
     const thresh = (DIV_LEVERAGE[state.divTicker] || 1) * 0.01; // e.g. 0.03 for 3x
     const lookback = state.divRange === 'all' ? data.length : Math.min(state.divRange, data.length);
     const recent = data.slice(-lookback);
+    // dataOffset: index in the full data[] where recent[0] lives — needed for pre-period baseline
+    const dataOffset = data.length - lookback;
     const tbody = el('div-body');
     let html = '';
 
@@ -2085,6 +2092,48 @@ function renderDivergence() {
                 // STR bar: gradient background behind the number
                 const strBar = `linear-gradient(90deg,rgba(${strRgb},0.18) ${strength}%,transparent ${strength}%)`;
 
+                // === Context flow metrics ===
+                const canPost3 = (i + 3) < recent.length;
+                const canPre3  = (i - 3) >= 0;
+
+                // 1. ±3D AVG: average daily flow over symmetric 7-day window centred on divergence date
+                let avgCenter7 = null;
+                if (canPre3 && canPost3) {
+                    let s = 0;
+                    for (let k = i - 3; k <= i + 3; k++) s += (recent[k].usd_flow || 0);
+                    avgCenter7 = s / 7;
+                }
+
+                // 2. +3D AVG: average daily flow for the 3 days after the divergence date
+                let avgPost3 = null;
+                if (canPost3) {
+                    avgPost3 = ((recent[i+1].usd_flow || 0) + (recent[i+2].usd_flow || 0) + (recent[i+3].usd_flow || 0)) / 3;
+                }
+
+                // 3. -3D AVG: average daily flow for the 3 days before the divergence date
+                let avgPre3 = null;
+                if (canPre3) {
+                    avgPre3 = ((recent[i-1].usd_flow || 0) + (recent[i-2].usd_flow || 0) + (recent[i-3].usd_flow || 0)) / 3;
+                }
+
+                // 4. DAY FLOW: net flow on the exact divergence end-date
+                const exactFlow = recent[i].usd_flow || 0;
+
+                // 5. PRE-BASE: average daily flow from full history before the divergence window start
+                //    Uses the full data[] array so history outside the current lookback slice is included.
+                const preEndIdx = dataOffset + i - w; // # of days before the window start in full data
+                let avgPrePeriod = null;
+                if (preEndIdx > 0) {
+                    // cumulative_flow[preEndIdx-1] = sum of all flows from data[0]…data[preEndIdx-1]
+                    avgPrePeriod = data[preEndIdx - 1].cumulative_flow / preEndIdx;
+                }
+
+                // Helper: format a nullable context flow value
+                const fmtCtx = (v) => v === null
+                    ? `<span style="opacity:0.35;font-size:0.62rem;">—</span>`
+                    : `${fmtUsd(v)}/d`;
+                const ctxCol = (v) => v === null ? '' : (v >= 0 ? 'val-green' : 'val-red');
+
                 html += `<tr>
                     <td style="color:var(--text-muted);font-size:0.7rem;border-left:3px solid ${rowAccent};">${cur.date}</td>
                     <td style="color:var(--text-dim);">${w}d</td>
@@ -2096,6 +2145,11 @@ function renderDivergence() {
                     <td class="${presCol}">${presAtEnd >= 0 ? '+' : ''}${presAtEnd}</td>
                     <td>${sigHtml}</td>
                     <td class="${strCol}" style="font-weight:700;background:${strBar};">${strength}</td>
+                    <td class="${ctxCol(avgCenter7)}" style="font-size:0.68rem;padding:6px 7px 6px 14px;border-left:1px solid rgba(255,255,255,0.08);">${fmtCtx(avgCenter7)}</td>
+                    <td class="${ctxCol(avgPost3)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(avgPost3)}</td>
+                    <td class="${ctxCol(avgPre3)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(avgPre3)}</td>
+                    <td class="${exactFlow>=0?'val-green':'val-red'}" style="font-size:0.68rem;padding:6px 7px;">${fmtUsd(exactFlow)}/d</td>
+                    <td class="${ctxCol(avgPrePeriod)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(avgPrePeriod)}</td>
                 </tr>`;
 
                 i -= (w - 1); // skip past this sequence to avoid overlapping copies
@@ -2105,7 +2159,7 @@ function renderDivergence() {
     }
 
     if (html === '') {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--text-dim); padding: 20px;">No significant price-flow divergences detected.<br><span style="font-size: 0.65rem; color:var(--text-dim);">Requires a split-adjusted price move > ${(thresh*100).toFixed(0)}% alongside opposing net flows within a 3, 5, or 10 day window.</span></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:var(--text-dim); padding: 20px;">No significant price-flow divergences detected.<br><span style="font-size: 0.65rem; color:var(--text-dim);">Requires a split-adjusted price move > ${(thresh*100).toFixed(0)}% alongside opposing net flows within a 3, 5, or 10 day window.</span></td></tr>`;
     } else {
         tbody.innerHTML = html;
     }
@@ -2119,7 +2173,8 @@ function downloadDivCSV() {
     const thresh = (DIV_LEVERAGE[tk] || 1) * 0.01;
     const lookback = state.divRange === 'all' ? data.length : Math.min(state.divRange, data.length);
     const recent = data.slice(-lookback);
-    
+    const dataOffset = data.length - lookback;
+
     const results = [];
     const windows = [10, 5, 3];
 
@@ -2161,6 +2216,31 @@ function downloadDivCSV() {
                 const wNorm = w / 10;
                 const strength = Math.round(pNorm * 0.4 * 100 + fNorm * 0.4 * 100 + wNorm * 0.2 * 100);
 
+                // Context flow metrics for CSV
+                const canPost3c = (i + 3) < recent.length;
+                const canPre3c  = (i - 3) >= 0;
+
+                let avgCenter7c = null;
+                if (canPre3c && canPost3c) {
+                    let s = 0;
+                    for (let k = i - 3; k <= i + 3; k++) s += (recent[k].usd_flow || 0);
+                    avgCenter7c = s / 7;
+                }
+                let avgPost3c = null;
+                if (canPost3c) {
+                    avgPost3c = ((recent[i+1].usd_flow || 0) + (recent[i+2].usd_flow || 0) + (recent[i+3].usd_flow || 0)) / 3;
+                }
+                let avgPre3c = null;
+                if (canPre3c) {
+                    avgPre3c = ((recent[i-1].usd_flow || 0) + (recent[i-2].usd_flow || 0) + (recent[i-3].usd_flow || 0)) / 3;
+                }
+                const exactFlowC = recent[i].usd_flow || 0;
+                const preEndIdxC = dataOffset + i - w;
+                let avgPrePeriodC = null;
+                if (preEndIdxC > 0) {
+                    avgPrePeriodC = data[preEndIdxC - 1].cumulative_flow / preEndIdxC;
+                }
+
                 results.push({
                     date: cur.date,
                     window: `${w}d`,
@@ -2171,7 +2251,12 @@ function downloadDivCSV() {
                     z_score: zAtEnd.toFixed(2),
                     pressure: presAtEnd,
                     signal: sigLabel,
-                    strength: strength
+                    strength: strength,
+                    avg_center7: avgCenter7c !== null ? avgCenter7c.toFixed(2) : 'N/A',
+                    avg_post3: avgPost3c !== null ? avgPost3c.toFixed(2) : 'N/A',
+                    avg_pre3: avgPre3c !== null ? avgPre3c.toFixed(2) : 'N/A',
+                    exact_flow: exactFlowC.toFixed(2),
+                    avg_pre_period: avgPrePeriodC !== null ? avgPrePeriodC.toFixed(2) : 'N/A'
                 });
 
                 i -= (w - 1);
@@ -2182,9 +2267,11 @@ function downloadDivCSV() {
 
     if (!results.length) return alert('No significant divergences found.');
 
-    const headers = ['Date', 'Window', 'Type', 'Price Change', 'Net Flow', 'Avg/Day', 'Z-Score', 'Pressure', 'Signal', 'Strength'];
+    const headers = ['Date', 'Window', 'Type', 'Price Change', 'Net Flow', 'Avg/Day', 'Z-Score', 'Pressure', 'Signal', 'Strength',
+                     'Avg Flow (+-3D)', 'Avg Flow (+3D After)', 'Avg Flow (-3D Before)', 'Exact Day Flow', 'Avg Flow (Pre-Period Baseline)'];
     const csvRows = results.map(r => [
-        r.date, r.window, r.type, r.price_change, r.net_flow, r.avg_daily, r.z_score, r.pressure, r.signal, r.strength
+        r.date, r.window, r.type, r.price_change, r.net_flow, r.avg_daily, r.z_score, r.pressure, r.signal, r.strength,
+        r.avg_center7, r.avg_post3, r.avg_pre3, r.exact_flow, r.avg_pre_period
     ].join(','));
 
     const csvContent = [headers.join(','), ...csvRows].join('\n');
