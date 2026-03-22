@@ -298,10 +298,14 @@ const VolRegime = {
         const allMetrics = {};
         for (const [ticker, etfData] of Object.entries(data.etfs || {})) {
             if (!etfData) continue;
-            const histCloses = (etfData.history || []).map(h => h.close ?? h[1]).filter(v => v != null);
+            const history = etfData.history || [];
+            const histCloses = history.map(h => h.close ?? h[1]).filter(v => v != null);
+            const histDates  = history.map(h => h.date  ?? h[0]);
             const vol = etfData.volatility || {};
             const hvSeries21 = vol.hv_series21 || vol.hvSeries21
                 || (histCloses.length >= 22 ? Metrics.computeHVSeries(histCloses, 21, histCloses.length) : []);
+            // Dates aligned to HV series: hvSeries21[j] corresponds to histDates[21 + j]
+            const hvDates21 = histDates.slice(21, 21 + hvSeries21.length);
             const hvPercentiles = vol.hv_percentiles || vol.hvPercentiles || {
                 '5d':   histCloses.length >= 6   ? Metrics.computeHVPercentile(histCloses, 5)   : null,
                 '21d':  histCloses.length >= 22  ? Metrics.computeHVPercentile(histCloses, 21)  : null,
@@ -316,6 +320,7 @@ const VolRegime = {
                     hv,
                     hvPercentiles,
                     hvSeries21,
+                    hvDates21,
                     hvTermStructure: vol.hv_term_structure ?? vol.hvTermStructure ?? null,
                     vov21:       vol.vov21       ?? null,
                     volRegimePct: vol.vol_regime_pct ?? vol.volRegimePct ?? null,
@@ -324,6 +329,37 @@ const VolRegime = {
             };
         }
         return allMetrics;
+    },
+
+    // Build metrics from live {dates, closes, volumes} format (trough-peak style)
+    buildMetricsFromLive(ticker, liveData) {
+        if (!liveData || !liveData.closes || liveData.closes.length < 22) return null;
+        const closes = liveData.closes;
+        const dates  = liveData.dates || [];
+        const hvSeries21 = Metrics.computeHVSeries(closes, 21, closes.length);
+        const hvDates21  = dates.slice(21, 21 + hvSeries21.length);
+        return {
+            ticker,
+            volatility: {
+                hv: {
+                    '5d':  Metrics.computeHV(closes, 5),
+                    '10d': Metrics.computeHV(closes, 10),
+                    '21d': Metrics.computeHV(closes, 21),
+                    '63d': Metrics.computeHV(closes, 63),
+                    '252d': Metrics.computeHV(closes, 252),
+                },
+                hvPercentiles: {
+                    '5d':   Metrics.computeHVPercentile(closes, 5),
+                    '21d':  Metrics.computeHVPercentile(closes, 21),
+                    '63d':  Metrics.computeHVPercentile(closes, 63),
+                    '252d': Metrics.computeHVPercentile(closes, 252),
+                },
+                hvSeries21,
+                hvDates21,
+                hvTermStructure: Metrics.computeHVTermStructure(closes),
+                vov21: Metrics.computeVoV21(closes),
+            },
+        };
     },
 
     // ── Range slider init ──────────────────────────────────
@@ -418,7 +454,7 @@ const VolRegime = {
         const pctFn  = f => sorted[Math.max(0, Math.floor(sorted.length * f) - 1)];
         const p25 = pctFn(0.25), p75 = pctFn(0.75), p90 = pctFn(0.90);
 
-        const pad = { top: 20, right: 54, bottom: 14, left: 10 };
+        const pad = { top: 20, right: 54, bottom: 28, left: 10 };
         const cW  = cssW - pad.left - pad.right;
         const cH  = cssH - pad.top  - pad.bottom;
 
@@ -509,10 +545,69 @@ const VolRegime = {
             ctx.fillText(lastV.toFixed(1) + '%', lX - 10, lY - 4);
         }
 
-        // ── X-axis session labels ─────────────────────────────
-        ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.20)';
-        ctx.textAlign = 'left';  ctx.fillText(si === 0 ? '← start' : `← session ${si + 1}`, pad.left, cssH - 1);
-        ctx.textAlign = 'right'; ctx.fillText(atEnd ? 'now →' : `session ${ei} →`, pad.left + cW, cssH - 1);
+        // ── X-axis date labels (matches Price & Cycle Map logic) ─
+        const fullDates = m?.volatility?.hvDates21 || [];
+        const viewDates = fullDates.slice(si, ei);
+        const count = viewDates.length;
+        ctx.font = '9px monospace';
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.textAlign = 'center';
+
+        if (count >= 2) {
+            const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const monthsRange = (new Date(viewDates[count-1]) - new Date(viewDates[0])) / (30*24*3600*1000);
+            const spansYears = new Date(viewDates[0]).getFullYear() !== new Date(viewDates[count-1]).getFullYear();
+            let ticks = [];
+
+            if (monthsRange > 36) {
+                // Year-boundary mode: clean year numbers at Jan 1
+                const maxLabels = Math.floor(cW / 120);
+                const yearsRange = monthsRange / 12;
+                let yearInt = Math.max(1, Math.round(yearsRange / maxLabels));
+                const common = [1, 2, 3, 5, 10, 20];
+                yearInt = common.find(c => c >= yearInt) || yearInt;
+                const startY = new Date(viewDates[0]).getFullYear();
+                const endY   = new Date(viewDates[count-1]).getFullYear();
+                const firstY = Math.ceil(startY / yearInt) * yearInt;
+                for (let yr = firstY; yr <= endY; yr += yearInt) {
+                    const target = `${yr}-01-01`;
+                    for (let i = 0; i < count; i++) {
+                        if (viewDates[i] >= target) { ticks.push({ i, label: String(yr) }); break; }
+                    }
+                }
+            } else {
+                // Month-boundary mode
+                const maxLabels = Math.floor(cW / 100);
+                let monthInt = Math.max(1, Math.round(monthsRange / maxLabels));
+                const common = [1, 2, 3, 4, 6, 12];
+                monthInt = common.find(c => c >= monthInt) || monthInt;
+                let lastTotal = -1, lastLogged = -1;
+                viewDates.forEach((d, i) => {
+                    const [y, mo] = d.split('-').map(Number);
+                    const total = y * 12 + mo;
+                    if (total !== lastTotal) {
+                        if (lastLogged === -1 || (total - lastLogged) >= monthInt) {
+                            const lbl = MONTHS[mo-1] + (spansYears ? ' ' + y : '');
+                            ticks.push({ i, label: lbl });
+                            lastLogged = total;
+                        }
+                        lastTotal = total;
+                    }
+                });
+            }
+
+            // Draw with collision avoidance
+            let lastX = -999;
+            for (const t of ticks) {
+                const x = toX(t.i);
+                if (x - lastX < 45) continue;
+                ctx.fillText(t.label, x, pad.top + cH + 16);
+                // Subtle tick mark
+                ctx.beginPath(); ctx.moveTo(x, pad.top + cH); ctx.lineTo(x, pad.top + cH + 4);
+                ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1; ctx.stroke();
+                lastX = x;
+            }
+        }
     },
 
     // ── Label helpers ──────────────────────────────────────
