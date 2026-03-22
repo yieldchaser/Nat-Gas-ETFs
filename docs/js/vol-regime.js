@@ -298,10 +298,14 @@ const VolRegime = {
         const allMetrics = {};
         for (const [ticker, etfData] of Object.entries(data.etfs || {})) {
             if (!etfData) continue;
-            const histCloses = (etfData.history || []).map(h => h.close ?? h[1]).filter(v => v != null);
+            const history = etfData.history || [];
+            const histCloses = history.map(h => h.close ?? h[1]).filter(v => v != null);
+            const histDates  = history.map(h => h.date  ?? h[0]);
             const vol = etfData.volatility || {};
             const hvSeries21 = vol.hv_series21 || vol.hvSeries21
                 || (histCloses.length >= 22 ? Metrics.computeHVSeries(histCloses, 21, histCloses.length) : []);
+            // Dates aligned to HV series: hvSeries21[j] corresponds to histDates[21 + j]
+            const hvDates21 = histDates.slice(21, 21 + hvSeries21.length);
             const hvPercentiles = vol.hv_percentiles || vol.hvPercentiles || {
                 '5d':   histCloses.length >= 6   ? Metrics.computeHVPercentile(histCloses, 5)   : null,
                 '21d':  histCloses.length >= 22  ? Metrics.computeHVPercentile(histCloses, 21)  : null,
@@ -316,6 +320,7 @@ const VolRegime = {
                     hv,
                     hvPercentiles,
                     hvSeries21,
+                    hvDates21,
                     hvTermStructure: vol.hv_term_structure ?? vol.hvTermStructure ?? null,
                     vov21:       vol.vov21       ?? null,
                     volRegimePct: vol.vol_regime_pct ?? vol.volRegimePct ?? null,
@@ -418,7 +423,7 @@ const VolRegime = {
         const pctFn  = f => sorted[Math.max(0, Math.floor(sorted.length * f) - 1)];
         const p25 = pctFn(0.25), p75 = pctFn(0.75), p90 = pctFn(0.90);
 
-        const pad = { top: 20, right: 54, bottom: 14, left: 10 };
+        const pad = { top: 20, right: 54, bottom: 28, left: 10 };
         const cW  = cssW - pad.left - pad.right;
         const cH  = cssH - pad.top  - pad.bottom;
 
@@ -509,10 +514,26 @@ const VolRegime = {
             ctx.fillText(lastV.toFixed(1) + '%', lX - 10, lY - 4);
         }
 
-        // ── X-axis session labels ─────────────────────────────
-        ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.20)';
-        ctx.textAlign = 'left';  ctx.fillText(si === 0 ? '← start' : `← session ${si + 1}`, pad.left, cssH - 1);
-        ctx.textAlign = 'right'; ctx.fillText(atEnd ? 'now →' : `session ${ei} →`, pad.left + cW, cssH - 1);
+        // ── X-axis date labels ────────────────────────────────
+        const fullDates = m?.volatility?.hvDates21 || [];
+        const viewDates = fullDates.slice(si, ei);
+        ctx.font = '9px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.textAlign = 'center';
+        if (viewDates.length >= 2) {
+            const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const fmtDate = (ds) => {
+                const d = new Date(ds + 'T00:00:00');
+                return MONTHS[d.getMonth()] + ' ' + d.getFullYear().toString().slice(2);
+            };
+            // Pick ~5-7 evenly spaced labels
+            const numLabels = Math.min(7, Math.max(2, Math.floor(cW / 80)));
+            for (let k = 0; k < numLabels; k++) {
+                const idx = Math.round(k / (numLabels - 1) * (viewDates.length - 1));
+                const x = toX(idx);
+                const label = fmtDate(viewDates[idx]);
+                ctx.fillText(label, x, pad.top + cH + 16);
+            }
+        }
     },
 
     // ── Label helpers ──────────────────────────────────────
