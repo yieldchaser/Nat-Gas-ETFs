@@ -8,11 +8,12 @@ A real-time dashboard for tracking volume flow and price-volume dynamics across 
 
 ## Overview
 
-This project implements three interconnected analytical engines:
+This project implements four interconnected analytical engines:
 
 1. **Volume Monitor** (`index.html`) — Multi-timeframe volume anomaly detection, volatility modeling, and conviction event filtering across 6 leveraged ETFs.
 2. **Flow Monitor** (`flows.html`) — Daily capital flow tracking (AUM in/out), Z-Score history, pressure scoring, divergence detection, and cross-ETF comparison.
 3. **Trough-to-Peak Analyzer** (`trough-peak.html`) — Parameterized ZigZag recovery cycle identification with micro-analytics and forward-return context.
+4. **Vol Regime Monitor** (embedded in `trough-peak.html`) — Full-lifetime historical volatility chart (5D/21D/63D/252D HV) with regime classification, crosshair tooltips, measurement tool, and side-by-side pair comparison.
 
 ---
 
@@ -219,7 +220,7 @@ CVI, VPS, ATR breakout, VoV-21, and vol-regime warnings are computed and visible
 
 ---
 
-### 3. Trough-to-Peak Analyzer (`trough-peak.html`)
+### 3. Trough-to-Peak Analyzer + Vol Regime Monitor (`trough-peak.html`)
 
 Professional-grade recovery cycle identification:
 
@@ -227,7 +228,58 @@ Professional-grade recovery cycle identification:
 - **Micro-Analytics:** Cyc/Regime (maturity tagging), Stretch Index, 1M/3M/6M percentile ranks, distance from peak/trough, range compression
 - **Wait-Time Analysis (GAP)** — Idle days between cycles
 - **KPI Summary Grid** — Avg Gain, Avg Days, Avg Gap, Max/Min across all 6 ETFs
-- **Interactive Canvas** — Custom zoom brush, crosshair, real-time tooltips
+- **Price & Cycle Map** — Interactive canvas with crosshair tooltip, click-drag measurement tool, quick-range horizon buttons (1W/1M/3M/6M/1Y/ALL), dual range-slider brush, trough/peak markers, cycle band shading
+- **Cycle Detail Table** — All confirmed cycles with filterable time periods (ALL TIME / YEAR / 6M) and CSV export
+- **Yearly Opportunity Matrix** — Heatmap of cycle count and avg gain per year per ETF
+
+#### Vol Regime Monitor
+
+Embedded below the Price & Cycle Map. Displays full-lifetime historical volatility for all 6 ETFs and NG=F:
+
+**Selector modes:**
+- **1-UP** — One instrument at a time (7 chips: NG=F, BOIL, HNU, 3NGL, KOLD, HND, 3NGS)
+- **PAIR** — Long vs short side-by-side with 21D ΔHV spread (BOIL↔KOLD, HNU↔HND, 3NGL↔3NGS)
+
+**HV Stat Boxes (per instrument):**
+
+| Window | Purpose |
+|--------|---------|
+| **5D HV** | Ultra-short spike detector — catches weather events before 21D registers |
+| **21D HV** | Monthly baseline — primary regime signal, standard for ETF sizing |
+| **63D HV** | Seasonal-quarter — aligns with NG injection/withdrawal cycles |
+| **252D HV** | Annual baseline — full NG seasonal cycle reference |
+
+Each box shows the annualised HV %, its percentile vs full available history, and a colour-coded regime pip.
+
+**Chart features (matching Price & Cycle Map):**
+- Full-lifetime HV-21 line chart (3,300–4,500+ sessions depending on ETF) with colour-segmented line (Blue/Green/Orange/Red by regime)
+- Background regime zones (Low / Normal / Elevated / Spike)
+- Area-fill gradient under line
+- 5-level evenly-spaced Y-axis grid with left-side HV% labels
+- Right-side percentile threshold labels (p25 / p75 / p90)
+- X-axis date labels — adaptive to zoom: daily (≤14 bars), weekly (≤35), biweekly (≤65), monthly, or yearly-boundary mode
+- Vertical grid lines from every x-axis tick
+- **Crosshair + hover tooltip** — vertical dashed line, dot on line, floating card with date / HV-21 / daily change
+- **Click-drag measurement tool** — tinted band + card showing HV Δ and date range
+- **Horizon quick-range buttons** (1W / 1M / 3M / 6M / 1Y / ALL)
+- **Dual range-slider brush** — label shows actual start–end date strings
+- Current-value pulse dot (when viewing latest data)
+
+**Footer stats (per card):**
+- **TERM STRUCT** — 5D/63D HV ratio; flags when near-term vol is accelerating (>1.35×)
+- **VoV-21** — Vol-of-vol (std of rolling HV-10 over 21 days); STABLE / MODERATE / SHIFTING / UNSTABLE
+- **EFF VOL N×** — HV-21 × leverage multiplier; realistic annual swing band
+
+**Regime classification:**
+
+| Label | Percentile | Colour |
+|-------|-----------|--------|
+| LOW | < 25th | Blue |
+| NORMAL | 25–75th | Green |
+| ELEVATED | 75–90th | Orange |
+| SPIKE | ≥ 90th | Red |
+
+Percentiles computed against the full available history for each instrument.
 
 ---
 
@@ -276,18 +328,19 @@ Adjusted price: `adj_price[t] = raw_price[t] × (1 + decay/252)^t`
 docs/
 ├── index.html           # Volume Monitor dashboard
 ├── flows.html           # Flow Monitor (capital flow analytics)
-├── trough-peak.html     # Trough-to-Peak recovery analyzer
+├── trough-peak.html     # Trough-to-Peak analyzer + Vol Regime Monitor
 ├── css/
 │   ├── styles.css       # Shared global theme, grid, tooltips
 │   ├── cards.css        # ETF card styling
-│   └── signals.css      # Signal panel styling
+│   └── signals.css      # Signal panel + Vol Regime Monitor styling
 └── js/
     ├── app.js           # App controller, data loading
     ├── data.js          # Yahoo Finance API
     ├── cards.js         # Card rendering (decay-adj VCVI, season badge, spike)
     ├── charts.js        # Canvas charts (sparklines, forward return, trough-to-peak)
     ├── signals.js       # NG bar, stress matrix, SWVC, conviction, echoes
-    ├── metrics.js       # Live metric calculations
+    ├── metrics.js       # Live metric calculations (HV, percentiles, VoV, term structure)
+    ├── vol-regime.js    # Vol Regime Monitor (HV chart, 1-UP/PAIR modes, crosshair, drag)
     └── config.js        # Thresholds, windows, ETF metadata, decay rates
 ```
 
@@ -321,13 +374,15 @@ docs/data/                     # GitHub Pages copy (synced by Actions)
 ### Data Flow
 
 **Volume pipeline (nightly via GitHub Actions):**
-1. Fetch OHLCV for 6 ETFs + NG=F via Yahoo Finance
+1. Fetch full-lifetime OHLCV for 6 ETFs + NG=F via Yahoo Finance (3,300–4,500+ sessions per ETF, back to 2008–2012 depending on listing date)
 2. Compute NG=F context: seasonal Z-score, HV percentile, regime series
 3. Compute per-ETF: volume metrics (6 windows), volatility, CVI/VCVI, VPS, decay-adj
 4. Detect conviction events (5-gate + extreme override + momentum guard)
 5. Detect elevated watch events (3-gate)
 6. Generate historical echoes with regime-stratified forward return tables
 7. Write `dashboard_data.json` + `latest_signals.json` → sync to `docs/data/`
+
+> Full-lifetime history is stored (not capped at 252 days) so the Vol Regime Monitor can render complete HV sparklines from each ETF's inception date, and percentile rankings are computed against the full available record.
 
 **Flow pipeline (nightly via GitHub Actions):**
 1. Fetch daily AUM snapshots for all 6 ETFs from TrackInsight
