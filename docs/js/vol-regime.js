@@ -16,6 +16,8 @@ const VolRegime = {
     selectedPair: 0,     // active pair index (0-2) in pair mode
     _allMetrics: null,
     _ngVolMetrics: null,
+    _viewOffset: {},      // ticker -> sessions offset from "now" (0 = latest, positive = older)
+    _VIEW_WINDOW: 90,     // sessions visible at once
 
     // ── Config ─────────────────────────────────────────────
     _instruments: ['NG=F', 'BOIL', 'HNU.TO', '3NGL.L', 'KOLD', 'HND.TO', '3NGS.L'],
@@ -109,12 +111,18 @@ const VolRegime = {
     },
 
     _pick1Up(ticker) {
+        if (this.selected !== ticker) delete this._viewOffset[ticker];
         this.selected = ticker;
         this._buildSelector();
         this._renderContent();
     },
 
     _pickPair(idx) {
+        if (this.selectedPair !== idx) {
+            const p = this._pairs[idx];
+            delete this._viewOffset[p.long];
+            delete this._viewOffset[p.short];
+        }
         this.selectedPair = idx;
         this._buildSelector();
         this._renderContent();
@@ -250,6 +258,7 @@ const VolRegime = {
                             <span class="vrm-leg-dot vrm-reg-elevated"></span>Elevated
                             <span class="vrm-leg-dot vrm-reg-spike"></span>Spike
                         </span>
+                        <span class="vrm-spark-scroll-hint">scroll to pan history</span>
                     </div>
                     <canvas class="vrm-spark-canvas" id="${canvasId}"></canvas>
                 </div>
@@ -290,13 +299,13 @@ const VolRegime = {
         const cvs = document.getElementById(id);
         if (!cvs) return;
 
-        const series = m?.volatility?.hvSeries21 || [];
-        const ctx    = cvs.getContext('2d');
-        const W      = cvs.width  = cvs.parentElement.clientWidth || 300;
-        const H      = cvs.height = 90;
+        const fullSeries = m?.volatility?.hvSeries21 || [];
+        const ctx        = cvs.getContext('2d');
+        const W          = cvs.width  = cvs.parentElement.clientWidth || 300;
+        const H          = cvs.height = 130;
         ctx.clearRect(0, 0, W, H);
 
-        if (series.length < 5) {
+        if (fullSeries.length < 5) {
             ctx.fillStyle = 'rgba(255,255,255,0.12)';
             ctx.font      = '9px monospace';
             ctx.textAlign = 'center';
@@ -304,14 +313,58 @@ const VolRegime = {
             return;
         }
 
-        // Percentile thresholds from the series itself
-        const sorted  = [...series].sort((a, b) => a - b);
-        const idx     = f => sorted[Math.max(0, Math.floor(sorted.length * f) - 1)];
-        const p25 = idx(0.25), p75 = idx(0.75), p90 = idx(0.90);
+        // ── Attach scroll/drag handler (once per canvas instance) ──
+        if (!cvs._vrmScrollAttached) {
+            cvs._vrmScrollAttached = true;
+            cvs.style.cursor = 'ew-resize';
 
-        const padL = 30, padR = 6, padT = 6, padB = 18;
-        const cW = W - padL - padR;
-        const cH = H - padT - padB;
+            // Wheel pan
+            cvs.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const full  = m?.volatility?.hvSeries21 || [];
+                const max   = Math.max(0, full.length - this._VIEW_WINDOW);
+                const delta = Math.sign(e.deltaX || e.deltaY);
+                this._viewOffset[ticker] = Math.max(0, Math.min(max, (this._viewOffset[ticker] || 0) + delta * 3));
+                this._drawSparkline(ticker, m);
+            }, { passive: false });
+
+            // Drag pan
+            let dragStart = null;
+            let dragOffset0 = 0;
+            cvs.addEventListener('mousedown', e => {
+                dragStart  = e.clientX;
+                dragOffset0 = this._viewOffset[ticker] || 0;
+            });
+            window.addEventListener('mousemove', e => {
+                if (dragStart == null) return;
+                const full  = m?.volatility?.hvSeries21 || [];
+                const max   = Math.max(0, full.length - this._VIEW_WINDOW);
+                const pxPerSession = (W - 36) / this._VIEW_WINDOW;
+                const delta = Math.round((dragStart - e.clientX) / pxPerSession);
+                this._viewOffset[ticker] = Math.max(0, Math.min(max, dragOffset0 + delta));
+                this._drawSparkline(ticker, m);
+            });
+            window.addEventListener('mouseup', () => { dragStart = null; });
+        }
+
+        // ── Viewport slice ───────────────────────────────────
+        const offset = this._viewOffset[ticker] || 0;
+        const end    = fullSeries.length - offset;
+        const start  = Math.max(0, end - this._VIEW_WINDOW);
+        const series = fullSeries.slice(start, end);
+        const atNow  = offset === 0;
+
+        // Percentile thresholds from FULL series (stable across scrolling)
+        const sorted = [...fullSeries].sort((a, b) => a - b);
+        const pct    = f => sorted[Math.max(0, Math.floor(sorted.length * f) - 1)];
+        const p25 = pct(0.25), p75 = pct(0.75), p90 = pct(0.90);
+
+        const padL = 32, padR = 8, padT = 8;
+        const mmH  = 7;   // minimap height
+        const xLblH = 14; // x-axis label row
+        const padB = mmH + xLblH + 4;
+        const cW   = W - padL - padR;
+        const cH   = H - padT - padB;
 
         const rawMin = Math.min(...series);
         const rawMax = Math.max(...series);
@@ -319,15 +372,15 @@ const VolRegime = {
         const vMax   = rawMax * 1.08;
         const vRange = vMax - vMin || 1;
 
-        const toY = v  => padT + cH - ((v - vMin) / vRange) * cH;
-        const toX = i  => padL + (i / Math.max(series.length - 1, 1)) * cW;
+        const toY = v => padT + cH - ((v - vMin) / vRange) * cH;
+        const toX = i => padL + (i / Math.max(series.length - 1, 1)) * cW;
 
         // ── Background regime zones ──────────────────────────
         const zones = [
-            { lo: p90,  hi: vMax, color: 'rgba(192,64,64,0.13)'   },   // Spike
-            { lo: p75,  hi: p90,  color: 'rgba(192,120,40,0.11)'  },   // Elevated
-            { lo: p25,  hi: p75,  color: 'rgba(61,184,122,0.08)'  },   // Normal
-            { lo: vMin, hi: p25,  color: 'rgba(74,128,184,0.11)'  },   // Low
+            { lo: p90,  hi: vMax, color: 'rgba(192,64,64,0.15)'  },
+            { lo: p75,  hi: p90,  color: 'rgba(192,120,40,0.13)' },
+            { lo: p25,  hi: p75,  color: 'rgba(61,184,122,0.09)' },
+            { lo: vMin, hi: p25,  color: 'rgba(74,128,184,0.13)' },
         ];
         for (const z of zones) {
             const y1 = toY(Math.min(z.hi, vMax));
@@ -338,14 +391,18 @@ const VolRegime = {
         // ── Threshold dashes ────────────────────────────────
         ctx.lineWidth = 0.5;
         ctx.setLineDash([3, 4]);
-        for (const [val, col] of [[p25,'rgba(74,128,184,0.5)'],[p75,'rgba(61,184,122,0.5)'],[p90,'rgba(192,64,64,0.5)']]) {
+        for (const [val, col] of [
+            [p25, 'rgba(74,128,184,0.55)'],
+            [p75, 'rgba(61,184,122,0.55)'],
+            [p90, 'rgba(192,64,64,0.55)'],
+        ]) {
             const y = toY(val);
             ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y);
             ctx.strokeStyle = col; ctx.stroke();
         }
         ctx.setLineDash([]);
 
-        // ── HV line — colour-segmented by live regime ────────
+        // ── HV line — colour-segmented by regime ─────────────
         ctx.lineWidth = 1.8;
         for (let i = 1; i < series.length; i++) {
             const v = series[i];
@@ -356,38 +413,57 @@ const VolRegime = {
             ctx.stroke();
         }
 
-        // ── Current value dot + label ────────────────────────
-        const lastV = series[series.length - 1];
-        const lastX = toX(series.length - 1);
-        const lastY = toY(lastV);
-        const dotColor = lastV >= p90 ? '#c04040' : lastV >= p75 ? '#c07828' : lastV >= p25 ? '#3db87a' : '#4a80b8';
-
-        ctx.beginPath();
-        ctx.arc(lastX, lastY, 3.5, 0, Math.PI * 2);
-        ctx.fillStyle = dotColor; ctx.fill();
-
-        ctx.font = 'bold 8px monospace';
-        ctx.fillStyle = dotColor;
-        ctx.textAlign = lastX > W * 0.85 ? 'right' : 'left';
-        const lblX = lastX > W * 0.85 ? lastX - 7 : lastX + 7;
-        ctx.fillText(lastV.toFixed(1) + '%', lblX, lastY + 3);
+        // ── Current value dot + label (only when showing "now") ─
+        if (atNow && series.length > 0) {
+            const lastV    = series[series.length - 1];
+            const lastX    = toX(series.length - 1);
+            const lastY    = toY(lastV);
+            const dotColor = lastV >= p90 ? '#c04040' : lastV >= p75 ? '#c07828' : lastV >= p25 ? '#3db87a' : '#4a80b8';
+            ctx.beginPath();
+            ctx.arc(lastX, lastY, 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = dotColor; ctx.fill();
+            ctx.font = 'bold 8px monospace';
+            ctx.fillStyle = dotColor;
+            ctx.textAlign = lastX > W * 0.85 ? 'right' : 'left';
+            ctx.fillText(lastV.toFixed(1) + '%', lastX > W * 0.85 ? lastX - 7 : lastX + 7, lastY + 3);
+        }
 
         // ── Y-axis tick labels ───────────────────────────────
         ctx.font = '7px monospace';
         ctx.textAlign = 'right';
-        const ticks = [vMin, p25, p75, p90].filter(v => v >= vMin && v <= vMax);
-        for (const tick of ticks) {
-            ctx.fillStyle = 'rgba(255,255,255,0.28)';
-            ctx.fillText(tick.toFixed(0) + '%', padL - 3, toY(tick) + 3);
+        for (const tick of [p25, p75, p90]) {
+            if (tick >= vMin && tick <= vMax) {
+                ctx.fillStyle = 'rgba(255,255,255,0.30)';
+                ctx.fillText(tick.toFixed(0) + '%', padL - 3, toY(tick) + 3);
+            }
         }
 
-        // ── X-axis end labels ────────────────────────────────
+        // ── X-axis labels ────────────────────────────────────
+        const xLblY  = padT + cH + xLblH - 2;
+        const leftLbl = offset > 0 ? `← ${start + 1}` : '← 90 sessions';
+        const rightLbl = atNow ? 'now →' : `${end} →`;
         ctx.font = '7px monospace';
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        ctx.textAlign = 'left';
-        ctx.fillText('← 90 sessions', padL, H - 4);
-        ctx.textAlign = 'right';
-        ctx.fillText('now →', W - padR, H - 4);
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.textAlign = 'left';  ctx.fillText(leftLbl,  padL,     xLblY);
+        ctx.textAlign = 'right'; ctx.fillText(rightLbl, W - padR, xLblY);
+
+        // ── Minimap scrollbar ────────────────────────────────
+        const mmY  = H - mmH - 1;
+        const mmW  = cW;
+        const total = fullSeries.length;
+        // background track
+        ctx.fillStyle = 'rgba(255,255,255,0.07)';
+        ctx.fillRect(padL, mmY, mmW, mmH);
+        // viewport handle
+        const hX1 = padL + (start / total) * mmW;
+        const hX2 = padL + (end   / total) * mmW;
+        ctx.fillStyle = atNow ? 'rgba(74,128,184,0.60)' : 'rgba(74,128,184,0.35)';
+        ctx.fillRect(hX1, mmY, Math.max(4, hX2 - hX1), mmH);
+        // "now" tick at right edge
+        if (!atNow) {
+            ctx.fillStyle = 'rgba(74,128,184,0.5)';
+            ctx.fillRect(padL + mmW - 2, mmY, 2, mmH);
+        }
     },
 
     // ── Label helpers ──────────────────────────────────────

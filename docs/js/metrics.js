@@ -311,8 +311,8 @@ const Metrics = {
             '63d': this.computeHV(closes, 63),
             '252d': this.computeHV(closes, 252),
         };
-        // Rolling 21D HV series for the Vol Regime sparkline (last 90 sessions)
-        const hvSeries21 = this.computeHVSeries(closes, 21, 90);
+        // Rolling 21D HV series for the Vol Regime sparkline (full history, up to 252 sessions)
+        const hvSeries21 = this.computeHVSeries(closes, 21, 252);
         // Per-window HV percentiles vs full available history (for regime colouring)
         const hvPercentiles = {
             '5d':  this.computeHVPercentile(closes, 5),
