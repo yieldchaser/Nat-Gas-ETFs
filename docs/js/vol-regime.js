@@ -20,6 +20,7 @@ const VolRegime = {
     _hoverState: {},      // ticker -> hovered series index (null = no hover)
     _dragState:  {},      // ticker -> { active, startIdx, currentIdx }
     _horizonState: {},    // ticker -> active horizon key ('all','1y','6m','3m','1m','1w')
+    _activeSeries: {},    // ticker -> array of active HV keys e.g. ['21d', '63d']
 
     // ── Config ─────────────────────────────────────────────
     _instruments: ['NG=F', 'BOIL', 'HNU.TO', '3NGL.L', 'KOLD', 'HND.TO', '3NGS.L'],
@@ -130,6 +131,19 @@ const VolRegime = {
         this._renderContent();
     },
 
+    _toggleSeries(ticker, key) {
+        if (!this._activeSeries[ticker]) this._activeSeries[ticker] = ['21d'];
+        const active = this._activeSeries[ticker];
+        if (active.includes(key)) {
+            if (active.length > 1) { // Ensure at least one is selected
+                this._activeSeries[ticker] = active.filter(k => k !== key);
+            }
+        } else {
+            this._activeSeries[ticker].push(key);
+        }
+        this._renderContent();
+    },
+
     // ── Content dispatch ───────────────────────────────────
     _renderContent() {
         const el = document.getElementById('vrm-content');
@@ -221,12 +235,15 @@ const VolRegime = {
         const canvasId = 'vrm-spark-' + ticker.replace(/[^a-zA-Z0-9]/g, '_');
 
         // HV stat boxes
+        const activeKeys = this._activeSeries[ticker] || ['21d'];
         const boxes = this._hvWindows.map(w => {
             const val = hv[w.key];
             const pct = hvPcts[w.key];
             const reg = this._regime(pct);
+            const isActive = activeKeys.includes(w.key);
+            const activeClass = isActive ? ' active' : '';
             return `
-                <div class="vrm-hv-box" data-tooltip="${w.tooltip}${pct != null ? ' — currently ' + pct.toFixed(0) + 'th pct of full available history' : ''}">
+                <div class="vrm-hv-box${activeClass}" onclick="VolRegime._toggleSeries('${ticker}', '${w.key}')" data-tooltip="${w.tooltip}${pct != null ? ' — currently ' + pct.toFixed(0) + 'th pct of full available history' : ''}" style="cursor:pointer">
                     <div class="vrm-hv-label">${w.label}</div>
                     <div class="vrm-hv-val" style="color:${reg.color}">
                         ${val != null ? val.toFixed(1) + '%' : '--'}
@@ -254,7 +271,7 @@ const VolRegime = {
 
                 <div class="vrm-spark-wrap">
                     <div class="vrm-spark-label-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-                        <div class="vrm-spark-label" style="margin-bottom:0;">Rolling 21D HV
+                        <div class="vrm-spark-label" style="margin-bottom:0;">Rolling HV
                             <span class="vrm-spark-legend">
                                 <span class="vrm-leg-dot vrm-reg-low"></span>Low
                                 <span class="vrm-leg-dot vrm-reg-normal"></span>Normal
@@ -313,10 +330,25 @@ const VolRegime = {
             const histCloses = history.map(h => h.close ?? h[1]).filter(v => v != null);
             const histDates  = history.map(h => h.date  ?? h[0]);
             const vol = etfData.volatility || {};
-            const hvSeries21 = vol.hv_series21 || vol.hvSeries21
+            
+            const makeSeries = (win) => {
+                if (histCloses.length < win + 1) return [];
+                const s = Metrics.computeHVSeries(histCloses, win, histCloses.length);
+                return [...Array(histCloses.length - s.length).fill(null), ...s];
+            };
+            
+            const hvSeries5d   = makeSeries(5);
+            const hvSeries21   = vol.hv_series21 ? [...Array(histCloses.length - vol.hv_series21.length).fill(null), ...vol.hv_series21] : makeSeries(21);
+            const hvSeries63d  = makeSeries(63);
+            const hvSeries252d = makeSeries(252);
+            
+            const hvSeriesAll = { '5d': hvSeries5d, '21d': hvSeries21, '63d': hvSeries63d, '252d': hvSeries252d };
+            const hvDatesAll = histDates;
+            
+            // Legacy fallbacks just in case
+            const hvSeries21Legacy = vol.hv_series21 || vol.hvSeries21
                 || (histCloses.length >= 22 ? Metrics.computeHVSeries(histCloses, 21, histCloses.length) : []);
-            // Dates aligned to HV series: hvSeries21[j] corresponds to histDates[21 + j]
-            const hvDates21 = histDates.slice(21, 21 + hvSeries21.length);
+            const hvDates21Legacy = histDates.slice(21, 21 + hvSeries21Legacy.length);
             const hvPercentiles = vol.hv_percentiles || vol.hvPercentiles || {
                 '5d':   histCloses.length >= 6   ? Metrics.computeHVPercentile(histCloses, 5)   : null,
                 '21d':  histCloses.length >= 22  ? Metrics.computeHVPercentile(histCloses, 21)  : null,
@@ -330,8 +362,10 @@ const VolRegime = {
                 volatility: {
                     hv,
                     hvPercentiles,
-                    hvSeries21,
-                    hvDates21,
+                    hvSeriesAll,
+                    hvDatesAll,
+                    hvSeries21: hvSeries21Legacy,
+                    hvDates21: hvDates21Legacy,
                     hvTermStructure: vol.hv_term_structure ?? vol.hvTermStructure ?? null,
                     vov21:       vol.vov21       ?? null,
                     volRegimePct: vol.vol_regime_pct ?? vol.volRegimePct ?? null,
@@ -347,6 +381,14 @@ const VolRegime = {
         if (!liveData || !liveData.closes || liveData.closes.length < 22) return null;
         const closes = liveData.closes;
         const dates  = liveData.dates || [];
+        
+        const makeSeries = (win) => {
+            if (closes.length < win + 1) return [];
+            const s = Metrics.computeHVSeries(closes, win, closes.length);
+            return [...Array(closes.length - s.length).fill(null), ...s];
+        };
+        const hvSeriesAll = { '5d': makeSeries(5), '21d': makeSeries(21), '63d': makeSeries(63), '252d': makeSeries(252) };
+        const hvDatesAll = dates;
         const hvSeries21 = Metrics.computeHVSeries(closes, 21, closes.length);
         const hvDates21  = dates.slice(21, 21 + hvSeries21.length);
         return {
@@ -365,6 +407,8 @@ const VolRegime = {
                     '63d':  Metrics.computeHVPercentile(closes, 63),
                     '252d': Metrics.computeHVPercentile(closes, 252),
                 },
+                hvSeriesAll,
+                hvDatesAll,
                 hvSeries21,
                 hvDates21,
                 hvTermStructure: Metrics.computeHVTermStructure(closes),
@@ -378,7 +422,7 @@ const VolRegime = {
         this._horizonState[ticker] = range;
         const m = ticker === 'NG=F' ? this._ngVolMetrics : this._allMetrics?.[ticker];
         if (!m) return;
-        const fullDates = m?.volatility?.hvDates21 || [];
+        const fullDates = m?.volatility?.hvDatesAll || m?.volatility?.hvDates21 || [];
         const n = fullDates.length;
         if (!n) return;
 
@@ -424,7 +468,7 @@ const VolRegime = {
         const lbl = document.getElementById('vrm-rl-' + cid);
         if (!lbl) return;
         const rs = this._rangeState[ticker] || { start: 0, end: 100 };
-        const fullDates = m?.volatility?.hvDates21 || [];
+        const fullDates = m?.volatility?.hvDatesAll || m?.volatility?.hvDates21 || [];
         const n = fullDates.length;
         if (!n) { lbl.textContent = 'ALL HISTORY'; return; }
         const si = Math.floor(rs.start / 100 * n);
@@ -491,15 +535,15 @@ const VolRegime = {
             const getIdx = (e) => {
                 const rect = cvs.getBoundingClientRect();
                 const x = e.clientX - rect.left;
-                const fullSeries = m?.volatility?.hvSeries21 || [];
+                const fullDates = m?.volatility?.hvDatesAll || m?.volatility?.hvDates21 || [];
                 const rs  = this._rangeState[ticker] || { start: 0, end: 100 };
-                const si  = Math.floor(rs.start / 100 * fullSeries.length);
-                const ei  = Math.max(si + 2, Math.ceil(rs.end / 100 * fullSeries.length));
-                const series = fullSeries.slice(si, ei);
+                const si  = Math.floor(rs.start / 100 * fullDates.length);
+                const ei  = Math.max(si + 2, Math.ceil(rs.end / 100 * fullDates.length));
+                const viewDates = fullDates.slice(si, ei);
                 const padL = 60, padR = 54;
                 const cW   = rect.width - padL - padR;
-                if (x < padL || x > padL + cW || series.length < 2) return null;
-                return Math.round(((x - padL) / cW) * (series.length - 1));
+                if (x < padL || x > padL + cW || viewDates.length < 2) return null;
+                return Math.round(((x - padL) / cW) * (viewDates.length - 1));
             };
 
             cvs.addEventListener('mousemove', (e) => {
@@ -550,7 +594,9 @@ const VolRegime = {
         const cvs = document.getElementById(cid);
         if (!cvs) return;
 
-        const fullSeries = m?.volatility?.hvSeries21 || [];
+        const activeKeys = this._activeSeries[ticker] || ['21d'];
+        const fullDates = m?.volatility?.hvDatesAll || m?.volatility?.hvDates21 || [];
+        const allSeries = m?.volatility?.hvSeriesAll || { '21d': m?.volatility?.hvSeries21 || [] };
 
         // DPR-aware canvas (matches trough-peak chart)
         const dpr  = window.devicePixelRatio || 1;
@@ -563,7 +609,7 @@ const VolRegime = {
         ctx.scale(dpr, dpr);
         ctx.clearRect(0, 0, cssW, cssH);
 
-        if (fullSeries.length < 5) {
+        if (fullDates.length < 5) {
             ctx.fillStyle = 'rgba(255,255,255,0.12)';
             ctx.font      = '10px monospace';
             ctx.textAlign = 'center';
@@ -573,26 +619,42 @@ const VolRegime = {
 
         // ── Range slice ──────────────────────────────────────
         const rs  = this._rangeState[ticker] || { start: 0, end: 100 };
-        const si  = Math.floor(rs.start / 100 * fullSeries.length);
-        const ei  = Math.max(si + 2, Math.ceil(rs.end / 100 * fullSeries.length));
-        const series = fullSeries.slice(si, ei);
+        const len = fullDates.length;
+        const si  = Math.floor(rs.start / 100 * len);
+        const ei  = Math.max(si + 2, Math.ceil(rs.end / 100 * len));
         const atEnd  = rs.end >= 99;
 
-        // Percentile thresholds from FULL series (stable while panning)
-        const sorted = [...fullSeries].sort((a, b) => a - b);
-        const pctFn  = f => sorted[Math.max(0, Math.floor(sorted.length * f) - 1)];
+        // Collect slices for selected series
+        const slices = {};
+        for (const k of activeKeys) {
+            if (allSeries[k]) slices[k] = allSeries[k].slice(si, ei);
+        }
+        const primaryKey = activeKeys.includes('21d') ? '21d' : activeKeys[0];
+        const primarySeries = slices[primaryKey] || slices[Object.keys(slices)[0]] || [];
+        const fullPrimary = allSeries[primaryKey] || fullDates.map(() => 0); // fallback
+
+        // Gather all valid values for y-scale
+        const allVisValues = [];
+        for (const k in slices) {
+            for (const v of slices[k]) if (v != null) allVisValues.push(v);
+        }
+        if (allVisValues.length === 0) return; // Nothing to draw
+
+        // Percentile thresholds from FULL primary series
+        const sortedPrimary = [...fullPrimary].filter(v => v != null).sort((a, b) => a - b);
+        const pctFn  = f => sortedPrimary[Math.max(0, Math.floor(sortedPrimary.length * f) - 1)] || 0;
         const p25 = pctFn(0.25), p75 = pctFn(0.75), p90 = pctFn(0.90);
 
         const pad = { top: 20, right: 54, bottom: 28, left: 60 };
         const cW  = cssW - pad.left - pad.right;
         const cH  = cssH - pad.top  - pad.bottom;
 
-        const rawMin = Math.min(...series), rawMax = Math.max(...series);
+        const rawMin = Math.min(...allVisValues), rawMax = Math.max(...allVisValues);
         const vMin = rawMin * 0.90, vMax = rawMax * 1.06;
         const vRange = vMax - vMin || 1;
 
         const toY = v => pad.top + cH - ((v - vMin) / vRange) * cH;
-        const toX = i => pad.left + (i / Math.max(series.length - 1, 1)) * cW;
+        const toX = i => pad.left + (i / Math.max(primarySeries.length - 1, 1)) * cW;
         const toRgba = (hex, a) => {
             const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
             return `rgba(${r},${g},${b},${a})`;
@@ -629,7 +691,7 @@ const VolRegime = {
         ctx.fillStyle = 'rgba(255,255,255,0.28)';
         for (const tick of yTicks) ctx.fillText(tick.toFixed(0) + '%', pad.left + cW + 5, toY(tick) + 3.5);
 
-        // ── Background regime zones ──────────────────────────
+        // ── Background regime zones (using primary series thresholds) ──
         const zones = [
             { lo: p90,  hi: vMax, color: 'rgba(192,64,64,0.14)'  },
             { lo: p75,  hi: p90,  color: 'rgba(192,120,40,0.12)' },
@@ -641,19 +703,30 @@ const VolRegime = {
             if (y2 > y1) { ctx.fillStyle = z.color; ctx.fillRect(pad.left, y1, cW, y2 - y1); }
         }
 
-        // ── Area fill (gradient under line, like trough-peak) ─
-        const lastV    = series[series.length - 1];
-        const regColor = lastV >= p90 ? '#c04040' : lastV >= p75 ? '#c07828' : lastV >= p25 ? '#3db87a' : '#4a80b8';
-        const aGrad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
-        aGrad.addColorStop(0, toRgba(regColor, 0.22));
-        aGrad.addColorStop(1, toRgba(regColor, 0.01));
-        ctx.beginPath();
-        ctx.moveTo(toX(0), toY(series[0]));
-        for (let i = 1; i < series.length; i++) ctx.lineTo(toX(i), toY(series[i]));
-        ctx.lineTo(toX(series.length - 1), pad.top + cH);
-        ctx.lineTo(toX(0), pad.top + cH);
-        ctx.closePath();
-        ctx.fillStyle = aGrad; ctx.fill();
+        // ── Area fill for primary series only ─────────────────
+        let lastVPrimary = null;
+        for (let i = primarySeries.length - 1; i >= 0; i--) {
+            if (primarySeries[i] != null) { lastVPrimary = primarySeries[i]; break; }
+        }
+        if (lastVPrimary != null && primarySeries.length > 0) {
+            let startFillIdx = 0;
+            while(startFillIdx < primarySeries.length && primarySeries[startFillIdx] == null) startFillIdx++;
+            if (startFillIdx < primarySeries.length) {
+                const regColor = lastVPrimary >= p90 ? '#c04040' : lastVPrimary >= p75 ? '#c07828' : lastVPrimary >= p25 ? '#3db87a' : '#4a80b8';
+                const aGrad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+                aGrad.addColorStop(0, toRgba(regColor, 0.22));
+                aGrad.addColorStop(1, toRgba(regColor, 0.01));
+                ctx.beginPath();
+                ctx.moveTo(toX(startFillIdx), toY(primarySeries[startFillIdx]));
+                for (let i = startFillIdx + 1; i < primarySeries.length; i++) {
+                    if (primarySeries[i] != null) ctx.lineTo(toX(i), toY(primarySeries[i]));
+                }
+                ctx.lineTo(toX(primarySeries.length - 1), pad.top + cH);
+                ctx.lineTo(toX(startFillIdx), pad.top + cH);
+                ctx.closePath();
+                ctx.fillStyle = aGrad; ctx.fill();
+            }
+        }
 
         // ── Threshold dashes ─────────────────────────────────
         ctx.lineWidth = 0.6; ctx.setLineDash([3, 4]);
@@ -666,33 +739,70 @@ const VolRegime = {
         }
         ctx.setLineDash([]);
 
-        // ── HV line — colour-segmented ────────────────────────
-        ctx.lineWidth = 2;
-        for (let i = 1; i < series.length; i++) {
-            const v = series[i];
-            ctx.strokeStyle = v >= p90 ? '#c04040' : v >= p75 ? '#c07828' : v >= p25 ? '#3db87a' : '#4a80b8';
-            ctx.beginPath();
-            ctx.moveTo(toX(i - 1), toY(series[i - 1]));
-            ctx.lineTo(toX(i),     toY(v));
-            ctx.stroke();
+        // ── Multi-series drawing ──────────────────────────────
+        const colorsMap = { '5d': '#c951ea', '21d': null /* dynamic */, '63d': '#eab951', '252d': '#51d2ea' };
+        
+        // Draw non-primary lines first to keep primary on top
+        for (const k of activeKeys) {
+            const s = slices[k];
+            if (!s || s.length === 0) continue;
+            
+            ctx.lineWidth = k === primaryKey ? 2 : 1.5;
+            
+            let started = false;
+            for (let i = 1; i < s.length; i++) {
+                const prev = s[i - 1], curr = s[i];
+                if (curr == null || prev == null) continue;
+                if (!started) { ctx.beginPath(); ctx.moveTo(toX(i - 1), toY(prev)); started = true; }
+                
+                if (k === '21d') {
+                    // dynamic color
+                    ctx.strokeStyle = curr >= p90 ? '#c04040' : curr >= p75 ? '#c07828' : curr >= p25 ? '#3db87a' : '#4a80b8';
+                    ctx.beginPath();
+                    ctx.moveTo(toX(i - 1), toY(prev));
+                    ctx.lineTo(toX(i), toY(curr));
+                    ctx.stroke();
+                } else {
+                    ctx.strokeStyle = colorsMap[k] || '#aaaaaa';
+                    ctx.lineTo(toX(i), toY(curr));
+                }
+            }
+            if (k !== '21d' && started) ctx.stroke();
         }
 
-        // ── Current value dot + pulse ring (when viewing latest) ─
-        if (atEnd && series.length > 0) {
-            const lX = toX(series.length - 1), lY = toY(lastV);
-            const dc = lastV >= p90 ? '#c04040' : lastV >= p75 ? '#c07828' : lastV >= p25 ? '#3db87a' : '#4a80b8';
-            ctx.beginPath(); ctx.arc(lX, lY, 6.5, 0, Math.PI * 2);
-            ctx.strokeStyle = toRgba(dc, 0.35); ctx.lineWidth = 1.5; ctx.stroke();
-            ctx.beginPath(); ctx.arc(lX, lY, 3.5, 0, Math.PI * 2);
-            ctx.fillStyle = dc; ctx.fill();
-            ctx.beginPath(); ctx.arc(lX, lY, 1.5, 0, Math.PI * 2);
-            ctx.fillStyle = '#fff'; ctx.fill();
-            ctx.font = 'bold 9px monospace'; ctx.fillStyle = dc; ctx.textAlign = 'right';
-            ctx.fillText(lastV.toFixed(1) + '%', lX - 10, lY - 4);
+        // ── Current value dots ─────────────────────────────────
+        if (atEnd) {
+            let labelOffset = 0;
+            for (const k of activeKeys) {
+                const s = slices[k];
+                if (!s) continue;
+                let lastValid = null;
+                for (let i = s.length - 1; i >= 0; i--) if (s[i] != null) { lastValid = s[i]; break; }
+                if (lastValid == null) continue;
+                
+                const lX = toX(s.length - 1), lY = toY(lastValid);
+                let dc;
+                if (k === '21d') {
+                    dc = lastValid >= p90 ? '#c04040' : lastValid >= p75 ? '#c07828' : lastValid >= p25 ? '#3db87a' : '#4a80b8';
+                    ctx.beginPath(); ctx.arc(lX, lY, 6.5, 0, Math.PI * 2);
+                    ctx.strokeStyle = toRgba(dc, 0.35); ctx.lineWidth = 1.5; ctx.stroke();
+                } else {
+                    dc = colorsMap[k] || '#aaaaaa';
+                }
+                
+                ctx.beginPath(); ctx.arc(lX, lY, 3.5, 0, Math.PI * 2);
+                ctx.fillStyle = dc; ctx.fill();
+                ctx.beginPath(); ctx.arc(lX, lY, 1.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff'; ctx.fill();
+                
+                ctx.font = 'bold 9px monospace'; ctx.fillStyle = dc; ctx.textAlign = 'right';
+                // Adjust vertical placement minimally to avoid text overlap if possible
+                ctx.fillText(lastValid.toFixed(1) + '%', lX - 10, lY - 4 - labelOffset);
+                labelOffset += Math.random() < 0.5 ? -10 : 10; // simplistic spread
+            }
         }
 
         // ── X-axis date labels (matches Price & Cycle Map logic) ─
-        const fullDates = m?.volatility?.hvDates21 || [];
         const viewDates = fullDates.slice(si, ei);
         const count = viewDates.length;
         ctx.font = '9px monospace';
