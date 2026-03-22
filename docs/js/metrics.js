@@ -165,6 +165,35 @@ const Metrics = {
         return this.percentileRank(current, hvSeries);
     },
 
+    // Rolling HV series for the Vol Regime sparkline.
+    // Returns the last `seriesLength` daily values of the rolling HV-hvWindow series.
+    computeHVSeries(closes, hvWindow, seriesLength) {
+        const minNeeded = hvWindow + 1;
+        if (closes.length < minNeeded) return [];
+        const startIdx = Math.max(hvWindow, closes.length - seriesLength - hvWindow);
+        const series = [];
+        for (let i = startIdx; i < closes.length; i++) {
+            const hv = this.computeHV(closes.slice(0, i + 1), hvWindow);
+            if (hv != null) series.push(hv);
+        }
+        return series.slice(-seriesLength);
+    },
+
+    // Per-window HV percentile: where does the current HV-N sit in its own full available history?
+    // Returns 0–100. Uses ALL available closes as reference population.
+    computeHVPercentile(closes, hvWindow) {
+        const minNeeded = hvWindow + 5;
+        if (closes.length < minNeeded) return null;
+        // Build a series of HV values across all available history
+        const series = [];
+        for (let i = hvWindow; i < closes.length; i++) {
+            const hv = this.computeHV(closes.slice(0, i + 1), hvWindow);
+            if (hv != null) series.push(hv);
+        }
+        if (series.length < 5) return null;
+        return this.percentileRank(series[series.length - 1], series);
+    },
+
     // HV term structure: HV10 / HV63
     // < 0.65 = calming  |  ~1.0 = stable  |  > 1.35 = accelerating
     computeHVTermStructure(closes) {
@@ -276,10 +305,20 @@ const Metrics = {
 
         // ---- Volatility modelling ----
         const hv = {
+            '5d':  this.computeHV(closes, 5),
             '10d': this.computeHV(closes, 10),
             '21d': this.computeHV(closes, 21),
             '63d': this.computeHV(closes, 63),
             '252d': this.computeHV(closes, 252),
+        };
+        // Rolling 21D HV series for the Vol Regime sparkline (last 90 sessions)
+        const hvSeries21 = this.computeHVSeries(closes, 21, 90);
+        // Per-window HV percentiles vs full available history (for regime colouring)
+        const hvPercentiles = {
+            '5d':  this.computeHVPercentile(closes, 5),
+            '21d': this.computeHVPercentile(closes, 21),
+            '63d': this.computeHVPercentile(closes, 63),
+            '252d': this.computeHVPercentile(closes, 252),
         };
         const atr14Pct       = this.computeATR14pct(highs, lows, closes);
         const volRegimePct   = this.computeVolRegimePct(closes);
@@ -362,7 +401,7 @@ const Metrics = {
             rvol, zScore, vroc,
             volPercentile, pricePercentile,
             cvi, vcvi, vps, mwca, mwcaCount,
-            volatility: { hv, atr14Pct, volRegimePct, hvTermStructure, vov21 },
+            volatility: { hv, hvSeries21, hvPercentiles, atr14Pct, volRegimePct, hvTermStructure, vov21 },
             priceMAs, volumeMAs,
             rollingCorr,
             alerts, alertLevel,

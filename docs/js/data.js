@@ -136,6 +136,17 @@ const DataService = {
         return { etfs: output, marketState: marketState };
     },
 
+    // Fetch NG=F front-month futures for Vol Regime Monitor
+    async fetchNG() {
+        try {
+            const raw = await this.fetchETF('NG=F');
+            return raw;
+        } catch (err) {
+            console.warn('[DataService] NG=F fetch failed:', err);
+            return null;
+        }
+    },
+
     // Try to load pre-computed data from GitHub Actions pipeline
     async fetchPrecomputed() {
         try {
