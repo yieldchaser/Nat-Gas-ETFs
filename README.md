@@ -23,10 +23,12 @@ This project implements three interconnected analytical engines:
 - **HNU.TO** – BetaPro Natural Gas 2× Bull (2×, TSX)
 - **3NGL.L** – WisdomTree NG 3× Daily Long (3×, LSE)
 
-**SHORT SIDE** (Bear — profit when Nat Gas falls):
+**SHORT SIDE — Primary signal anchor** (Bear — profit when Nat Gas falls):
 - **KOLD** – ProShares UltraShort Bloomberg NG (2× inverse, NYSE)
 - **HND.TO** – BetaPro Natural Gas 2× Bear (2× inverse, TSX)
 - **3NGS.L** – WisdomTree NG 3× Daily Short (3× inverse, LSE)
+
+> Short ETF trough volume spikes are the strongest and most reliable turning-point signal in this system. Statistical validation across n=166 cycles: volume spikes at short ETF price troughs at median 1.55× baseline (z=5.4). A short ETF price trough = gas price peak candidate.
 
 **Underlying futures context:**
 - **NG=F** – NYMEX Henry Hub Natural Gas Futures (signal gate only — not traded)
@@ -154,6 +156,32 @@ When all 3 ETFs on either side spike within a 10-calendar-day window (SWVC `CONV
 - **GREEN** (long-side convergence): `⚡ LONG SIDE CONVERGED — ↑ LONG / LEVERAGED SETUP — gas BOTTOM candidate`
 
 Each banner shows the individual ETF spike dates, days-ago, and RVOL levels inline. Hidden entirely when no convergence is active — zero noise on normal days.
+
+#### Signal Column Layout (top to bottom)
+
+Panels are ordered by signal priority:
+
+1. **NG=F Price Context Bar** — seasonal Z-score gate (always visible)
+2. **Conviction Events** — strictest filter, shown first as the primary actionable signal
+3. **Elevated Watch** — softer pre-conviction filter
+4. **Active Alerts** — real-time feed (VCVI, MWCA, RVOL only — see below)
+5. **Stress Matrix** — per-pair IPSI, vol regime, status
+6. **Side-Wide Convergence (SWVC)** — cross-market tri-ETF spike tracker
+7. **Historical Echoes** — base-rate forward returns for past VCVI signals
+8. **Volume Heat Calendar** — 90-day volume heatmap
+9. **Multi-Window Convergence** — gauges across all 6 timeframes
+
+#### Active Alerts
+
+The alert feed fires on three signals only — all directly test the trough/peak volume spike hypothesis:
+
+| Alert | Trigger |
+|-------|---------|
+| **VCVI** | VCVI-21d ≥ 55 (watch) / 72 (critical) / 88 (extreme) |
+| **MWCA** | Volume ≥ 90th pct across **all 6 windows simultaneously** |
+| **RVOL** | 21d relative volume ≥ 1.5× (elevated) up to ≥ 5.0× (extreme) |
+
+CVI, VPS, ATR breakout, VoV-21, and vol-regime warnings are computed and visible on ETF cards but do not fire alerts — they were removed from the alert feed to reduce noise.
 
 #### Signal Command Center
 
