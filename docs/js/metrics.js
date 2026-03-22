@@ -388,18 +388,6 @@ const Metrics = {
             }
         }
 
-        // CVI alerts (retained for reference)
-        for (const [window, value] of Object.entries(metrics.cvi)) {
-            if (value == null) continue;
-            if (value >= t.cvi.extreme) {
-                alerts.push({ type: 'cvi', level: 'extreme', ticker, time: now,
-                    message: `CVI-${window} at ${value.toFixed(0)} — EXTREME CAPITULATION` });
-            } else if (value >= t.cvi.critical) {
-                alerts.push({ type: 'cvi', level: 'critical', ticker, time: now,
-                    message: `CVI-${window} crossed ${t.cvi.critical} — Capitulation watch` });
-            }
-        }
-
         // MWCA
         if (metrics.mwca) {
             alerts.push({ type: 'mwca', level: 'extreme', ticker, time: now,
@@ -412,41 +400,6 @@ const Metrics = {
                 alerts.push({ type: 'rvol', level: 'critical', ticker, time: now,
                     message: `RVOL-${window} at ${value.toFixed(1)}x — Major volume surge` });
             }
-        }
-
-        // VPS
-        if (metrics.vps >= t.vps.extreme) {
-            alerts.push({ type: 'vps', level: 'extreme', ticker, time: now,
-                message: `VPS at ${metrics.vps.toFixed(0)}/100 — Volume pressure extreme` });
-        }
-
-        // ATR breakout: today's move > 2× ATR-14 with elevated volume
-        if (metrics.atr14Pct != null && metrics.atr14Pct > 0) {
-            const absMoveP = Math.abs(metrics.changePct || 0);
-            const ratio = absMoveP / metrics.atr14Pct;
-            if (ratio >= t.atrBreakout.critical && (metrics.rvol['21d'] || 0) > 1.5) {
-                const level = ratio >= t.atrBreakout.extreme ? 'extreme' : 'critical';
-                alerts.push({ type: 'atr_breakout', level, ticker, time: now,
-                    message: `ATR breakout: ${absMoveP.toFixed(1)}% move = ${ratio.toFixed(1)}× ATR-14` });
-            }
-        }
-
-        // Vol-of-vol spike
-        if (metrics.vov21 != null) {
-            if (metrics.vov21 >= t.vov.extreme) {
-                alerts.push({ type: 'vov', level: 'extreme', ticker, time: now,
-                    message: `VoV-21 at ${metrics.vov21.toFixed(0)}% — extreme vol regime instability` });
-            } else if (metrics.vov21 >= t.vov.critical) {
-                alerts.push({ type: 'vov', level: 'critical', ticker, time: now,
-                    message: `VoV-21 at ${metrics.vov21.toFixed(0)}% — vol regime destabilising` });
-            }
-        }
-
-        // High vol regime warning
-        if (metrics.volRegimePct != null && metrics.volRegimePct >= t.volRegime.high) {
-            const level = metrics.volRegimePct >= t.volRegime.extreme ? 'critical' : 'elevated';
-            alerts.push({ type: 'vol_regime', level, ticker, time: now,
-                message: `Vol regime ${metrics.volRegimePct.toFixed(0)}th pct — volume signals discounted` });
         }
 
         return alerts;
