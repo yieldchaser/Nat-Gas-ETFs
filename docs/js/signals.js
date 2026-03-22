@@ -833,7 +833,49 @@ const Signals = {
             </div>`;
     },
 
+    // ---- TOP-OF-PAGE CONVERGENCE FLASH BANNER ----
+    // Shown when any side reaches CONVERGED status — hard to miss regardless
+    // of where the user is scrolled to.
+    renderConvergenceFlash(sideConvergence) {
+        const el = document.getElementById('convergence-flash');
+        if (!el) return;
+
+        if (!sideConvergence) { el.style.display = 'none'; return; }
+
+        const sides = [
+            { key: 'short', label: 'SHORT SIDE', direction: 'gas TOP', setupLabel: '↓ SHORT / INVERSE SETUP', cls: 'flash-short' },
+            { key: 'long',  label: 'LONG SIDE',  direction: 'gas BOTTOM', setupLabel: '↑ LONG / LEVERAGED SETUP', cls: 'flash-long' },
+        ];
+
+        const banners = sides
+            .filter(s => (sideConvergence[s.key] || {}).status === 'converged')
+            .map(s => {
+                const sc = sideConvergence[s.key];
+                const spread = sc.window_spread_days;
+                const etfList = Object.entries(sc.etfs || {})
+                    .filter(([, v]) => v.spiked)
+                    .map(([t, v]) => `${t} (${v.days_ago}d ago, ${v.peak_rvol?.toFixed(1)}×)`)
+                    .join(' · ');
+                return `<div class="convergence-flash-inner ${s.cls}">
+                    <span class="flash-icon">⚡</span>
+                    <span class="flash-body">
+                        <strong>${s.label} CONVERGED</strong> — all 3 ETFs spiked within ${spread} calendar days
+                        <span class="flash-etfs">${etfList}</span>
+                    </span>
+                    <span class="flash-setup">${s.setupLabel} — ${s.direction} candidate</span>
+                </div>`;
+            });
+
+        if (banners.length === 0) {
+            el.style.display = 'none';
+        } else {
+            el.innerHTML = banners.join('');
+            el.style.display = 'block';
+        }
+    },
+
     renderAll(allMetrics, sideConvergence, ngPriceContext) {
+        this.renderConvergenceFlash(sideConvergence);
         this.renderNgPriceBar(ngPriceContext);
         this.renderAlertFeed(allMetrics);
         this.renderStressMatrix(allMetrics);
