@@ -1226,8 +1226,8 @@ def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
             "timestamp": now_iso,
         })
 
-    # --- History (last 252 trading days of OHLCV) ---
-    hist_df = df.tail(252).copy()
+    # --- History (full lifetime OHLCV for HV sparkline scrolling) ---
+    hist_df = df.copy()
     history: List[dict] = []
     for dt, row in hist_df.iterrows():
         history.append({
