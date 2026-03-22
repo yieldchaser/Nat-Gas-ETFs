@@ -146,10 +146,26 @@ const App = {
 
             // Normalise volatility block (pipeline uses snake_case)
             const vol = etfData.volatility || {};
+
+            // Compute vol series / percentiles from stored history if not in pipeline JSON
+            const histCloses = (etfData.history || []).map(h => h.close ?? h[1]).filter(v => v != null);
+            const computedHvSeries21   = histCloses.length >= 22 ? Metrics.computeHVSeries(histCloses, 21, 90) : [];
+            const computedHvPercentiles = histCloses.length >= 6 ? {
+                '5d':  Metrics.computeHVPercentile(histCloses, 5),
+                '21d': Metrics.computeHVPercentile(histCloses, 21),
+                '63d': Metrics.computeHVPercentile(histCloses, 63),
+                '252d': Metrics.computeHVPercentile(histCloses, 252),
+            } : {};
+
+            // Merge pipeline hv with computed 5d (pipeline only has 10d/21d/63d/252d)
+            const hvBase = vol.hv || {};
+            const hv5d   = histCloses.length >= 6 ? Metrics.computeHV(histCloses, 5) : null;
+            const mergedHv = { '5d': hv5d, ...hvBase };
+
             const volatility = {
-                hv:              vol.hv              || {},
-                hvPercentiles:   vol.hv_percentiles  || vol.hvPercentiles  || {},
-                hvSeries21:      vol.hv_series21     || vol.hvSeries21     || [],
+                hv:              mergedHv,
+                hvPercentiles:   vol.hv_percentiles  || vol.hvPercentiles  || computedHvPercentiles,
+                hvSeries21:      vol.hv_series21     || vol.hvSeries21     || computedHvSeries21,
                 volRegimePct:    vol.vol_regime_pct  != null ? vol.vol_regime_pct  : (vol.volRegimePct    ?? null),
                 hvTermStructure: vol.hv_term_structure != null ? vol.hv_term_structure : (vol.hvTermStructure ?? null),
                 atr14Pct:        vol.atr14_pct       != null ? vol.atr14_pct       : (vol.atr14Pct        ?? null),
