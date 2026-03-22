@@ -5,6 +5,7 @@
 const App = {
     allMetrics: {},
     ngPriceContext: null,
+    ngVolMetrics: null,   // NG=F vol data for the Vol Regime Monitor
     refreshTimer: null,
     isLoading: false,
 
@@ -33,10 +34,21 @@ const App = {
             if (precomputed && precomputed.etfs) {
                 console.log('[MONITOR] Using pre-computed data');
                 this.processPrecomputed(precomputed);
+                // Fetch NG=F live for the Vol Regime Monitor (not in pipeline)
+                DataService.fetchNG().then(ngData => {
+                    if (ngData) {
+                        this.ngVolMetrics = Metrics.computeAllMetrics(ngData);
+                        VolRegime.render(this.allMetrics, this.ngVolMetrics);
+                    }
+                });
             } else {
                 // Fall back to live Yahoo Finance fetch
                 console.log('[MONITOR] Fetching live data from Yahoo Finance...');
-                const raw = await DataService.fetchAll();
+                const [raw, ngData] = await Promise.all([
+                    DataService.fetchAll(),
+                    DataService.fetchNG()
+                ]);
+                raw.ngData = ngData;
                 this.processLiveData(raw);
             }
         } catch (err) {
@@ -55,6 +67,11 @@ const App = {
             if (etfData) {
                 this.allMetrics[ticker] = Metrics.computeAllMetrics(etfData);
             }
+        }
+
+        // NG=F vol metrics (fetched separately, used only by Vol Regime Monitor)
+        if (raw.ngData) {
+            this.ngVolMetrics = Metrics.computeAllMetrics(raw.ngData);
         }
 
         this.updateMarketStatus(raw.marketState);
@@ -130,11 +147,13 @@ const App = {
             // Normalise volatility block (pipeline uses snake_case)
             const vol = etfData.volatility || {};
             const volatility = {
-                hv:             vol.hv             || {},
-                volRegimePct:   vol.vol_regime_pct  != null ? vol.vol_regime_pct  : (vol.volRegimePct   ?? null),
+                hv:              vol.hv              || {},
+                hvPercentiles:   vol.hv_percentiles  || vol.hvPercentiles  || {},
+                hvSeries21:      vol.hv_series21     || vol.hvSeries21     || [],
+                volRegimePct:    vol.vol_regime_pct  != null ? vol.vol_regime_pct  : (vol.volRegimePct    ?? null),
                 hvTermStructure: vol.hv_term_structure != null ? vol.hv_term_structure : (vol.hvTermStructure ?? null),
-                atr14Pct:       vol.atr14_pct       != null ? vol.atr14_pct       : (vol.atr14Pct       ?? null),
-                vov21:          vol.vov21           ?? null,
+                atr14Pct:        vol.atr14_pct       != null ? vol.atr14_pct       : (vol.atr14Pct        ?? null),
+                vov21:           vol.vov21           ?? null,
             };
 
             // Normalise alert level to also consider sharp_spike
@@ -189,6 +208,9 @@ const App = {
 
         // Section C: Signal Command Center
         Signals.renderAll(this.allMetrics, this.sideConvergence || null, this.ngPriceContext || null);
+
+        // Vol Regime Monitor (NG=F may arrive slightly later via async fetch)
+        VolRegime.render(this.allMetrics, this.ngVolMetrics);
     },
 
     // Returns NYSE session state based on the current wall-clock time.
