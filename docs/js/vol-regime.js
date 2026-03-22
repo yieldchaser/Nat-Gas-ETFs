@@ -16,8 +16,7 @@ const VolRegime = {
     selectedPair: 0,     // active pair index (0-2) in pair mode
     _allMetrics: null,
     _ngVolMetrics: null,
-    _viewOffset: {},      // ticker -> sessions offset from "now" (0 = latest, positive = older)
-    _VIEW_WINDOW: 90,     // sessions visible at once
+    _rangeState: {},      // ticker -> { start: 0, end: 100 } for range slider
 
     // ── Config ─────────────────────────────────────────────
     _instruments: ['NG=F', 'BOIL', 'HNU.TO', '3NGL.L', 'KOLD', 'HND.TO', '3NGS.L'],
@@ -111,7 +110,7 @@ const VolRegime = {
     },
 
     _pick1Up(ticker) {
-        if (this.selected !== ticker) delete this._viewOffset[ticker];
+        if (this.selected !== ticker) delete this._rangeState[ticker];
         this.selected = ticker;
         this._buildSelector();
         this._renderContent();
@@ -120,8 +119,8 @@ const VolRegime = {
     _pickPair(idx) {
         if (this.selectedPair !== idx) {
             const p = this._pairs[idx];
-            delete this._viewOffset[p.long];
-            delete this._viewOffset[p.short];
+            delete this._rangeState[p.long];
+            delete this._rangeState[p.short];
         }
         this.selectedPair = idx;
         this._buildSelector();
@@ -153,8 +152,8 @@ const VolRegime = {
                 </div>`;
         }
 
-        // Draw sparklines after DOM settles
-        requestAnimationFrame(() => this._drawAll());
+        // Draw sparklines + init range sliders after DOM settles
+        requestAnimationFrame(() => { this._drawAll(); this._initRangeSliders(); });
     },
 
     // ── Pair divider stats ─────────────────────────────────
@@ -251,16 +250,28 @@ const VolRegime = {
                 <div class="vrm-hv-boxes">${boxes}</div>
 
                 <div class="vrm-spark-wrap">
-                    <div class="vrm-spark-label">Rolling 21D HV — last 90 sessions
+                    <div class="vrm-spark-label">Rolling 21D HV
                         <span class="vrm-spark-legend">
                             <span class="vrm-leg-dot vrm-reg-low"></span>Low
                             <span class="vrm-leg-dot vrm-reg-normal"></span>Normal
                             <span class="vrm-leg-dot vrm-reg-elevated"></span>Elevated
                             <span class="vrm-leg-dot vrm-reg-spike"></span>Spike
                         </span>
-                        <span class="vrm-spark-scroll-hint">scroll to pan history</span>
                     </div>
                     <canvas class="vrm-spark-canvas" id="${canvasId}"></canvas>
+                    <div class="range-slider-container" style="margin:8px 0 0;">
+                        <div class="range-slider-wrap">
+                            <div class="range-inputs">
+                                <div class="range-slider-track"></div>
+                                <div id="vrm-hl-${canvasId}" class="range-slider-highlight"></div>
+                                <input type="range" id="vrm-rs-s-${canvasId}" min="0" max="100" value="${(this._rangeState[ticker]||{}).start||0}">
+                                <input type="range" id="vrm-rs-e-${canvasId}" min="0" max="100" value="${(this._rangeState[ticker]||{}).end||100}">
+                            </div>
+                        </div>
+                        <div class="range-labels" style="justify-content:center;">
+                            <span id="vrm-rl-${canvasId}" style="color:var(--text-bright);text-transform:uppercase;letter-spacing:2px;">ALL HISTORY</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="vrm-footer-stats">
@@ -282,6 +293,81 @@ const VolRegime = {
             </div>`;
     },
 
+    // ── Build metrics from raw dashboard_data.json ─────────
+    buildMetricsFromDashboard(data) {
+        const allMetrics = {};
+        for (const [ticker, etfData] of Object.entries(data.etfs || {})) {
+            if (!etfData) continue;
+            const histCloses = (etfData.history || []).map(h => h.close ?? h[1]).filter(v => v != null);
+            const vol = etfData.volatility || {};
+            const hvSeries21 = vol.hv_series21 || vol.hvSeries21
+                || (histCloses.length >= 22 ? Metrics.computeHVSeries(histCloses, 21, histCloses.length) : []);
+            const hvPercentiles = vol.hv_percentiles || vol.hvPercentiles || {
+                '5d':   histCloses.length >= 6   ? Metrics.computeHVPercentile(histCloses, 5)   : null,
+                '21d':  histCloses.length >= 22  ? Metrics.computeHVPercentile(histCloses, 21)  : null,
+                '63d':  histCloses.length >= 64  ? Metrics.computeHVPercentile(histCloses, 63)  : null,
+                '252d': histCloses.length >= 253 ? Metrics.computeHVPercentile(histCloses, 252) : null,
+            };
+            const hv5d = histCloses.length >= 6 ? Metrics.computeHV(histCloses, 5) : null;
+            const hv = { '5d': hv5d, ...(vol.hv || {}) };
+            allMetrics[ticker] = {
+                ticker,
+                volatility: {
+                    hv,
+                    hvPercentiles,
+                    hvSeries21,
+                    hvTermStructure: vol.hv_term_structure ?? vol.hvTermStructure ?? null,
+                    vov21:       vol.vov21       ?? null,
+                    volRegimePct: vol.vol_regime_pct ?? vol.volRegimePct ?? null,
+                    atr14Pct:    vol.atr14_pct   ?? vol.atr14Pct        ?? null,
+                },
+            };
+        }
+        return allMetrics;
+    },
+
+    // ── Range slider init ──────────────────────────────────
+    _initRangeSliders() {
+        const tickers = this.mode === '1up'
+            ? [this.selected]
+            : [this._pairs[this.selectedPair].long, this._pairs[this.selectedPair].short];
+        for (const ticker of tickers) {
+            const m = ticker === 'NG=F' ? this._ngVolMetrics : this._allMetrics?.[ticker];
+            if (!m) continue;
+            const cid    = 'vrm-spark-' + ticker.replace(/[^a-zA-Z0-9]/g, '_');
+            const sStart = document.getElementById('vrm-rs-s-' + cid);
+            const sEnd   = document.getElementById('vrm-rs-e-' + cid);
+            const hl     = document.getElementById('vrm-hl-'   + cid);
+            const lbl    = document.getElementById('vrm-rl-'   + cid);
+            if (!sStart || !sEnd) continue;
+
+            const updateHL = () => {
+                if (!hl) return;
+                const v1 = parseInt(sStart.value), v2 = parseInt(sEnd.value);
+                const p1 = v1 / 100, p2 = v2 / 100;
+                hl.style.left  = `calc(${p1 * 100}% + ${(10 - p1 * 20)}px)`;
+                hl.style.width = `calc(${(p2 - p1) * 100}% + ${(p1 - p2) * 20}px)`;
+            };
+
+            const onChange = (e) => {
+                let v1 = parseInt(sStart.value), v2 = parseInt(sEnd.value);
+                if (v1 >= v2) {
+                    if (e.target === sStart) sStart.value = Math.max(0, v2 - 1);
+                    else                     sEnd.value   = Math.min(100, v1 + 1);
+                    v1 = parseInt(sStart.value); v2 = parseInt(sEnd.value);
+                }
+                this._rangeState[ticker] = { start: v1, end: v2 };
+                if (lbl) lbl.textContent = (v1 === 0 && v2 === 100) ? 'ALL HISTORY' : 'CUSTOM';
+                updateHL();
+                this._drawSparkline(ticker, m);
+            };
+
+            sStart.addEventListener('input', onChange);
+            sEnd.addEventListener('input', onChange);
+            updateHL();
+        }
+    },
+
     // ── Sparkline drawing ──────────────────────────────────
     _drawAll() {
         if (this.mode === '1up') {
@@ -295,115 +381,111 @@ const VolRegime = {
     },
 
     _drawSparkline(ticker, m) {
-        const id  = 'vrm-spark-' + ticker.replace(/[^a-zA-Z0-9]/g, '_');
-        const cvs = document.getElementById(id);
+        const cid = 'vrm-spark-' + ticker.replace(/[^a-zA-Z0-9]/g, '_');
+        const cvs = document.getElementById(cid);
         if (!cvs) return;
 
         const fullSeries = m?.volatility?.hvSeries21 || [];
-        const ctx        = cvs.getContext('2d');
-        const W          = cvs.width  = cvs.parentElement.clientWidth || 300;
-        const H          = cvs.height = 130;
-        ctx.clearRect(0, 0, W, H);
+
+        // DPR-aware canvas (matches trough-peak chart)
+        const dpr  = window.devicePixelRatio || 1;
+        const rect = cvs.getBoundingClientRect();
+        const cssW = rect.width  || cvs.parentElement?.clientWidth || 400;
+        const cssH = rect.height || 200;
+        cvs.width  = Math.round(cssW * dpr);
+        cvs.height = Math.round(cssH * dpr);
+        const ctx  = cvs.getContext('2d');
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, cssW, cssH);
 
         if (fullSeries.length < 5) {
             ctx.fillStyle = 'rgba(255,255,255,0.12)';
-            ctx.font      = '9px monospace';
+            ctx.font      = '10px monospace';
             ctx.textAlign = 'center';
-            ctx.fillText('Insufficient history', W / 2, H / 2 + 4);
+            ctx.fillText('Insufficient history', cssW / 2, cssH / 2 + 4);
             return;
         }
 
-        // ── Attach scroll/drag handler (once per canvas instance) ──
-        if (!cvs._vrmScrollAttached) {
-            cvs._vrmScrollAttached = true;
-            cvs.style.cursor = 'ew-resize';
+        // ── Range slice ──────────────────────────────────────
+        const rs  = this._rangeState[ticker] || { start: 0, end: 100 };
+        const si  = Math.floor(rs.start / 100 * fullSeries.length);
+        const ei  = Math.max(si + 2, Math.ceil(rs.end / 100 * fullSeries.length));
+        const series = fullSeries.slice(si, ei);
+        const atEnd  = rs.end >= 99;
 
-            // Wheel pan
-            cvs.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                const full  = m?.volatility?.hvSeries21 || [];
-                const max   = Math.max(0, full.length - this._VIEW_WINDOW);
-                const delta = Math.sign(e.deltaX || e.deltaY);
-                this._viewOffset[ticker] = Math.max(0, Math.min(max, (this._viewOffset[ticker] || 0) + delta * 3));
-                this._drawSparkline(ticker, m);
-            }, { passive: false });
-
-            // Drag pan
-            let dragStart = null;
-            let dragOffset0 = 0;
-            cvs.addEventListener('mousedown', e => {
-                dragStart  = e.clientX;
-                dragOffset0 = this._viewOffset[ticker] || 0;
-            });
-            window.addEventListener('mousemove', e => {
-                if (dragStart == null) return;
-                const full  = m?.volatility?.hvSeries21 || [];
-                const max   = Math.max(0, full.length - this._VIEW_WINDOW);
-                const pxPerSession = (W - 36) / this._VIEW_WINDOW;
-                const delta = Math.round((dragStart - e.clientX) / pxPerSession);
-                this._viewOffset[ticker] = Math.max(0, Math.min(max, dragOffset0 + delta));
-                this._drawSparkline(ticker, m);
-            });
-            window.addEventListener('mouseup', () => { dragStart = null; });
-        }
-
-        // ── Viewport slice ───────────────────────────────────
-        const offset = this._viewOffset[ticker] || 0;
-        const end    = fullSeries.length - offset;
-        const start  = Math.max(0, end - this._VIEW_WINDOW);
-        const series = fullSeries.slice(start, end);
-        const atNow  = offset === 0;
-
-        // Percentile thresholds from FULL series (stable across scrolling)
+        // Percentile thresholds from FULL series (stable while panning)
         const sorted = [...fullSeries].sort((a, b) => a - b);
-        const pct    = f => sorted[Math.max(0, Math.floor(sorted.length * f) - 1)];
-        const p25 = pct(0.25), p75 = pct(0.75), p90 = pct(0.90);
+        const pctFn  = f => sorted[Math.max(0, Math.floor(sorted.length * f) - 1)];
+        const p25 = pctFn(0.25), p75 = pctFn(0.75), p90 = pctFn(0.90);
 
-        const padL = 32, padR = 8, padT = 8;
-        const mmH  = 7;   // minimap height
-        const xLblH = 14; // x-axis label row
-        const padB = mmH + xLblH + 4;
-        const cW   = W - padL - padR;
-        const cH   = H - padT - padB;
+        const pad = { top: 20, right: 54, bottom: 14, left: 10 };
+        const cW  = cssW - pad.left - pad.right;
+        const cH  = cssH - pad.top  - pad.bottom;
 
-        const rawMin = Math.min(...series);
-        const rawMax = Math.max(...series);
-        const vMin   = rawMin * 0.88;
-        const vMax   = rawMax * 1.08;
+        const rawMin = Math.min(...series), rawMax = Math.max(...series);
+        const vMin = rawMin * 0.90, vMax = rawMax * 1.06;
         const vRange = vMax - vMin || 1;
 
-        const toY = v => padT + cH - ((v - vMin) / vRange) * cH;
-        const toX = i => padL + (i / Math.max(series.length - 1, 1)) * cW;
+        const toY = v => pad.top + cH - ((v - vMin) / vRange) * cH;
+        const toX = i => pad.left + (i / Math.max(series.length - 1, 1)) * cW;
+        const toRgba = (hex, a) => {
+            const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+            return `rgba(${r},${g},${b},${a})`;
+        };
+
+        // ── Y-axis grid + right-side labels ──────────────────
+        ctx.setLineDash([3, 5]);
+        ctx.lineWidth = 0.8;
+        const yTicks = [p25, p75, p90].filter(v => v > vMin && v < vMax);
+        for (const tick of yTicks) {
+            const y = toY(tick);
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y);
+            ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.stroke();
+        }
+        ctx.setLineDash([]);
+        ctx.font = '9px monospace'; ctx.textAlign = 'left';
+        ctx.fillStyle = 'rgba(255,255,255,0.28)';
+        for (const tick of yTicks) ctx.fillText(tick.toFixed(0) + '%', pad.left + cW + 5, toY(tick) + 3.5);
 
         // ── Background regime zones ──────────────────────────
         const zones = [
-            { lo: p90,  hi: vMax, color: 'rgba(192,64,64,0.15)'  },
-            { lo: p75,  hi: p90,  color: 'rgba(192,120,40,0.13)' },
+            { lo: p90,  hi: vMax, color: 'rgba(192,64,64,0.14)'  },
+            { lo: p75,  hi: p90,  color: 'rgba(192,120,40,0.12)' },
             { lo: p25,  hi: p75,  color: 'rgba(61,184,122,0.09)' },
-            { lo: vMin, hi: p25,  color: 'rgba(74,128,184,0.13)' },
+            { lo: vMin, hi: p25,  color: 'rgba(74,128,184,0.12)' },
         ];
         for (const z of zones) {
-            const y1 = toY(Math.min(z.hi, vMax));
-            const y2 = toY(Math.max(z.lo, vMin));
-            if (y2 > y1) { ctx.fillStyle = z.color; ctx.fillRect(padL, y1, cW, y2 - y1); }
+            const y1 = toY(Math.min(z.hi, vMax)), y2 = toY(Math.max(z.lo, vMin));
+            if (y2 > y1) { ctx.fillStyle = z.color; ctx.fillRect(pad.left, y1, cW, y2 - y1); }
         }
 
-        // ── Threshold dashes ────────────────────────────────
-        ctx.lineWidth = 0.5;
-        ctx.setLineDash([3, 4]);
-        for (const [val, col] of [
-            [p25, 'rgba(74,128,184,0.55)'],
-            [p75, 'rgba(61,184,122,0.55)'],
-            [p90, 'rgba(192,64,64,0.55)'],
-        ]) {
+        // ── Area fill (gradient under line, like trough-peak) ─
+        const lastV    = series[series.length - 1];
+        const regColor = lastV >= p90 ? '#c04040' : lastV >= p75 ? '#c07828' : lastV >= p25 ? '#3db87a' : '#4a80b8';
+        const aGrad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+        aGrad.addColorStop(0, toRgba(regColor, 0.22));
+        aGrad.addColorStop(1, toRgba(regColor, 0.01));
+        ctx.beginPath();
+        ctx.moveTo(toX(0), toY(series[0]));
+        for (let i = 1; i < series.length; i++) ctx.lineTo(toX(i), toY(series[i]));
+        ctx.lineTo(toX(series.length - 1), pad.top + cH);
+        ctx.lineTo(toX(0), pad.top + cH);
+        ctx.closePath();
+        ctx.fillStyle = aGrad; ctx.fill();
+
+        // ── Threshold dashes ─────────────────────────────────
+        ctx.lineWidth = 0.6; ctx.setLineDash([3, 4]);
+        for (const [val, col] of [[p25,'rgba(74,128,184,0.45)'],[p75,'rgba(61,184,122,0.45)'],[p90,'rgba(192,64,64,0.45)']]) {
             const y = toY(val);
-            ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y);
-            ctx.strokeStyle = col; ctx.stroke();
+            if (y >= pad.top && y <= pad.top + cH) {
+                ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y);
+                ctx.strokeStyle = col; ctx.stroke();
+            }
         }
         ctx.setLineDash([]);
 
-        // ── HV line — colour-segmented by regime ─────────────
-        ctx.lineWidth = 1.8;
+        // ── HV line — colour-segmented ────────────────────────
+        ctx.lineWidth = 2;
         for (let i = 1; i < series.length; i++) {
             const v = series[i];
             ctx.strokeStyle = v >= p90 ? '#c04040' : v >= p75 ? '#c07828' : v >= p25 ? '#3db87a' : '#4a80b8';
@@ -413,57 +495,24 @@ const VolRegime = {
             ctx.stroke();
         }
 
-        // ── Current value dot + label (only when showing "now") ─
-        if (atNow && series.length > 0) {
-            const lastV    = series[series.length - 1];
-            const lastX    = toX(series.length - 1);
-            const lastY    = toY(lastV);
-            const dotColor = lastV >= p90 ? '#c04040' : lastV >= p75 ? '#c07828' : lastV >= p25 ? '#3db87a' : '#4a80b8';
-            ctx.beginPath();
-            ctx.arc(lastX, lastY, 3.5, 0, Math.PI * 2);
-            ctx.fillStyle = dotColor; ctx.fill();
-            ctx.font = 'bold 8px monospace';
-            ctx.fillStyle = dotColor;
-            ctx.textAlign = lastX > W * 0.85 ? 'right' : 'left';
-            ctx.fillText(lastV.toFixed(1) + '%', lastX > W * 0.85 ? lastX - 7 : lastX + 7, lastY + 3);
+        // ── Current value dot + pulse ring (when viewing latest) ─
+        if (atEnd && series.length > 0) {
+            const lX = toX(series.length - 1), lY = toY(lastV);
+            const dc = lastV >= p90 ? '#c04040' : lastV >= p75 ? '#c07828' : lastV >= p25 ? '#3db87a' : '#4a80b8';
+            ctx.beginPath(); ctx.arc(lX, lY, 6.5, 0, Math.PI * 2);
+            ctx.strokeStyle = toRgba(dc, 0.35); ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.beginPath(); ctx.arc(lX, lY, 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = dc; ctx.fill();
+            ctx.beginPath(); ctx.arc(lX, lY, 1.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff'; ctx.fill();
+            ctx.font = 'bold 9px monospace'; ctx.fillStyle = dc; ctx.textAlign = 'right';
+            ctx.fillText(lastV.toFixed(1) + '%', lX - 10, lY - 4);
         }
 
-        // ── Y-axis tick labels ───────────────────────────────
-        ctx.font = '7px monospace';
-        ctx.textAlign = 'right';
-        for (const tick of [p25, p75, p90]) {
-            if (tick >= vMin && tick <= vMax) {
-                ctx.fillStyle = 'rgba(255,255,255,0.30)';
-                ctx.fillText(tick.toFixed(0) + '%', padL - 3, toY(tick) + 3);
-            }
-        }
-
-        // ── X-axis labels ────────────────────────────────────
-        const xLblY  = padT + cH + xLblH - 2;
-        const leftLbl = offset > 0 ? `← ${start + 1}` : '← 90 sessions';
-        const rightLbl = atNow ? 'now →' : `${end} →`;
-        ctx.font = '7px monospace';
-        ctx.fillStyle = 'rgba(255,255,255,0.22)';
-        ctx.textAlign = 'left';  ctx.fillText(leftLbl,  padL,     xLblY);
-        ctx.textAlign = 'right'; ctx.fillText(rightLbl, W - padR, xLblY);
-
-        // ── Minimap scrollbar ────────────────────────────────
-        const mmY  = H - mmH - 1;
-        const mmW  = cW;
-        const total = fullSeries.length;
-        // background track
-        ctx.fillStyle = 'rgba(255,255,255,0.07)';
-        ctx.fillRect(padL, mmY, mmW, mmH);
-        // viewport handle
-        const hX1 = padL + (start / total) * mmW;
-        const hX2 = padL + (end   / total) * mmW;
-        ctx.fillStyle = atNow ? 'rgba(74,128,184,0.60)' : 'rgba(74,128,184,0.35)';
-        ctx.fillRect(hX1, mmY, Math.max(4, hX2 - hX1), mmH);
-        // "now" tick at right edge
-        if (!atNow) {
-            ctx.fillStyle = 'rgba(74,128,184,0.5)';
-            ctx.fillRect(padL + mmW - 2, mmY, 2, mmH);
-        }
+        // ── X-axis session labels ─────────────────────────────
+        ctx.font = '8px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.20)';
+        ctx.textAlign = 'left';  ctx.fillText(si === 0 ? '← start' : `← session ${si + 1}`, pad.left, cssH - 1);
+        ctx.textAlign = 'right'; ctx.fillText(atEnd ? 'now →' : `session ${ei} →`, pad.left + cW, cssH - 1);
     },
 
     // ── Label helpers ──────────────────────────────────────

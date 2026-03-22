@@ -6,6 +6,7 @@
 <title>Trough-to-Peak Analyzer · NAT GAS ETFs</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 <link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/signals.css">
 <style>
 /* ---- TP PAGE LAYOUT ---- */
 .tp-main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
@@ -540,6 +541,20 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
     </div>
 
+    <!-- VOL REGIME MONITOR -->
+    <div class="chart-container" id="vol-regime-panel">
+        <div class="chart-header">
+            <div style="flex:1">
+                <span style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;">Vol Regime Monitor</span>
+                <span style="font-size:0.65rem;color:var(--text-muted);margin-left:10px;">— 5D · 21D · 63D · 252D historical volatility</span>
+            </div>
+        </div>
+        <div id="vrm-selector"></div>
+        <div id="vrm-content">
+            <div class="vrm-loading">Loading volatility data…</div>
+        </div>
+    </div>
+
     <!-- CYCLE DETAIL TABLE -->
     <div class="table-panel">
         <div class="table-header">
@@ -567,6 +582,11 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     </div>
 
 </main>
+
+<!-- Vol Regime Monitor dependencies -->
+<script src="js/config.js"></script>
+<script src="js/metrics.js"></script>
+<script src="js/vol-regime.js"></script>
 
 <!-- Custom scripts only - No external charting libraries -->
 <script>
@@ -2099,6 +2119,11 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
             syncRangeSlidersToRange('all');
             renderAll();
             updateBadge();
+            // Init Vol Regime Monitor from precomputed data
+            if (typeof VolRegime !== 'undefined' && typeof Metrics !== 'undefined') {
+                const vrmMetrics = VolRegime.buildMetricsFromDashboard(staticAll);
+                VolRegime.render(vrmMetrics, null);
+            }
             return; // done — static data loaded for all tickers
         }
 
