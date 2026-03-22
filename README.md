@@ -83,6 +83,15 @@ Scans the active ETF's history for windows (3d / 5d / 10d) where price and flow 
 
 Filterable by lookback (90D / 6M / 1Y / ALL). Right-aligned numeric columns, alternating row tints.
 
+**Context flow columns** (relative to divergence end-date `i`, scan window `w` = 3 / 5 / 10):
+
+| Column | Window | Notes |
+|--------|--------|-------|
+| **±3D AVG** | days `i−3` → `i+3` (7 days, centered) | Smoothed local flow around the event. Shows `—` when fewer than 3 days of future data exist. |
+| **−3D AVG** | days `i−3` → `i−1` | Pre-event lead-in — was the imbalance already building? |
+| **+3D AVG** | days `i+1` → `i+3` | Post-event follow-through — did capital continue or reverse? |
+| **BASE-30D** | 30 days ending at `windowStart − 1` (i.e. days `i−(w+30)` → `i−(w+1)`) | Prevailing flow regime *before* the divergence window opened. **Not** the 30 days before the event date — there is a gap of `w` days between BASE-30D and −3D AVG (3 days for 3d rows, 5 for 5d rows, 10 for 10d rows). Compare AVG/DAY and ±3D AVG against this to judge whether the divergence is truly anomalous. |
+
 #### Flow Z-Score History Chart
 
 Full historical chart of the rolling flow Z-Score with:
