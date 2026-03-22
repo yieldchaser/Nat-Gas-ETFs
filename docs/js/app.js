@@ -34,11 +34,10 @@ const App = {
             if (precomputed && precomputed.etfs) {
                 console.log('[MONITOR] Using pre-computed data');
                 this.processPrecomputed(precomputed);
-                // Fetch NG=F live for the Vol Regime Monitor (not in pipeline)
+                // Fetch NG=F live (vol regime monitor now on trough-peak page)
                 DataService.fetchNG().then(ngData => {
                     if (ngData) {
                         this.ngVolMetrics = Metrics.computeAllMetrics(ngData);
-                        VolRegime.render(this.allMetrics, this.ngVolMetrics);
                     }
                 });
             } else {
@@ -225,8 +224,8 @@ const App = {
         // Section C: Signal Command Center
         Signals.renderAll(this.allMetrics, this.sideConvergence || null, this.ngPriceContext || null);
 
-        // Vol Regime Monitor (NG=F may arrive slightly later via async fetch)
-        VolRegime.render(this.allMetrics, this.ngVolMetrics);
+        // Vol Regime Monitor moved to trough-peak page
+        if (typeof VolRegime !== 'undefined') VolRegime.render(this.allMetrics, this.ngVolMetrics);
     },
 
     // Returns NYSE session state based on the current wall-clock time.
