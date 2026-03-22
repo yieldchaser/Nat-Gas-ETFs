@@ -1391,6 +1391,37 @@
     display: block;
 }
 
+/* ── Horizon quick-range buttons ───────────────────────────────── */
+.vrm-horizon-group {
+    display: flex;
+    gap: 4px;
+}
+
+.vrm-horizon-btn {
+    font-size: 0.58rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-primary);
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.15s;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.vrm-horizon-btn:hover {
+    background: rgba(255,255,255,0.07);
+    color: var(--text-primary);
+}
+
+.vrm-horizon-btn.active {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    background: rgba(0,255,255,0.06);
+}
+
 /* ── Footer stats row ──────────────────────────────────────────── */
 .vrm-footer-stats {
     display: flex;

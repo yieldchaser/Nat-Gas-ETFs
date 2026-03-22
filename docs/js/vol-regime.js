@@ -17,6 +17,9 @@ const VolRegime = {
     _allMetrics: null,
     _ngVolMetrics: null,
     _rangeState: {},      // ticker -> { start: 0, end: 100 } for range slider
+    _hoverState: {},      // ticker -> hovered series index (null = no hover)
+    _dragState:  {},      // ticker -> { active, startIdx, currentIdx }
+    _horizonState: {},    // ticker -> active horizon key ('all','1y','6m','3m','1m','1w')
 
     // ── Config ─────────────────────────────────────────────
     _instruments: ['NG=F', 'BOIL', 'HNU.TO', '3NGL.L', 'KOLD', 'HND.TO', '3NGS.L'],
@@ -152,8 +155,8 @@ const VolRegime = {
                 </div>`;
         }
 
-        // Draw sparklines + init range sliders after DOM settles
-        requestAnimationFrame(() => { this._drawAll(); this._initRangeSliders(); });
+        // Draw sparklines + init range sliders + hover after DOM settles
+        requestAnimationFrame(() => { this._drawAll(); this._initRangeSliders(); this._initHover(); });
     },
 
     // ── Pair divider stats ─────────────────────────────────
@@ -250,13 +253,21 @@ const VolRegime = {
                 <div class="vrm-hv-boxes">${boxes}</div>
 
                 <div class="vrm-spark-wrap">
-                    <div class="vrm-spark-label">Rolling 21D HV
-                        <span class="vrm-spark-legend">
-                            <span class="vrm-leg-dot vrm-reg-low"></span>Low
-                            <span class="vrm-leg-dot vrm-reg-normal"></span>Normal
-                            <span class="vrm-leg-dot vrm-reg-elevated"></span>Elevated
-                            <span class="vrm-leg-dot vrm-reg-spike"></span>Spike
-                        </span>
+                    <div class="vrm-spark-label-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                        <div class="vrm-spark-label" style="margin-bottom:0;">Rolling 21D HV
+                            <span class="vrm-spark-legend">
+                                <span class="vrm-leg-dot vrm-reg-low"></span>Low
+                                <span class="vrm-leg-dot vrm-reg-normal"></span>Normal
+                                <span class="vrm-leg-dot vrm-reg-elevated"></span>Elevated
+                                <span class="vrm-leg-dot vrm-reg-spike"></span>Spike
+                            </span>
+                        </div>
+                        <div class="vrm-horizon-group" id="vrm-hg-${canvasId}">
+                            ${['1W','1M','3M','6M','1Y','ALL'].map(r => {
+                                const active = (this._horizonState[ticker] || 'ALL') === r;
+                                return `<button class="vrm-horizon-btn${active?' active':''}" data-range="${r}" onclick="VolRegime._setHorizon('${ticker}','${r}')">${r}</button>`;
+                            }).join('')}
+                        </div>
                     </div>
                     <canvas class="vrm-spark-canvas" id="${canvasId}"></canvas>
                     <div class="range-slider-container" style="margin:8px 0 0;">
@@ -362,6 +373,70 @@ const VolRegime = {
         };
     },
 
+    // ── Horizon preset buttons ─────────────────────────────
+    _setHorizon(ticker, range) {
+        this._horizonState[ticker] = range;
+        const m = ticker === 'NG=F' ? this._ngVolMetrics : this._allMetrics?.[ticker];
+        if (!m) return;
+        const fullDates = m?.volatility?.hvDates21 || [];
+        const n = fullDates.length;
+        if (!n) return;
+
+        let startPct = 0;
+        if (range !== 'ALL') {
+            const days = { '1W': 7, '1M': 30, '3M': 90, '6M': 180, '1Y': 365 }[range] || 0;
+            if (days) {
+                const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+                const idx = fullDates.findIndex(d => d >= cutoff);
+                startPct = idx === -1 ? 0 : Math.round((idx / n) * 100);
+            }
+        }
+        this._rangeState[ticker] = { start: startPct, end: 100 };
+
+        // Sync slider UI
+        const cid    = 'vrm-spark-' + ticker.replace(/[^a-zA-Z0-9]/g, '_');
+        const sStart = document.getElementById('vrm-rs-s-' + cid);
+        const sEnd   = document.getElementById('vrm-rs-e-' + cid);
+        if (sStart) sStart.value = startPct;
+        if (sEnd)   sEnd.value   = 100;
+
+        // Update horizon button active state
+        const hg = document.getElementById('vrm-hg-' + cid);
+        if (hg) hg.querySelectorAll('.vrm-horizon-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.range === range);
+        });
+
+        this._updateRangeLabel(ticker, m);
+        this._updateHighlight(cid, startPct, 100);
+        this._drawSparkline(ticker, m);
+    },
+
+    _updateHighlight(cid, v1, v2) {
+        const hl = document.getElementById('vrm-hl-' + cid);
+        if (!hl) return;
+        const p1 = v1 / 100, p2 = v2 / 100;
+        hl.style.left  = `calc(${p1 * 100}% + ${(10 - p1 * 20)}px)`;
+        hl.style.width = `calc(${(p2 - p1) * 100}% + ${(p1 - p2) * 20}px)`;
+    },
+
+    _updateRangeLabel(ticker, m) {
+        const cid = 'vrm-spark-' + ticker.replace(/[^a-zA-Z0-9]/g, '_');
+        const lbl = document.getElementById('vrm-rl-' + cid);
+        if (!lbl) return;
+        const rs = this._rangeState[ticker] || { start: 0, end: 100 };
+        const fullDates = m?.volatility?.hvDates21 || [];
+        const n = fullDates.length;
+        if (!n) { lbl.textContent = 'ALL HISTORY'; return; }
+        const si = Math.floor(rs.start / 100 * n);
+        const ei = Math.max(si + 1, Math.ceil(rs.end / 100 * n) - 1);
+        const d1 = fullDates[si], d2 = fullDates[Math.min(ei, n - 1)];
+        const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const fmt = d => { const [y,mo,dd] = d.split('-').map(Number); return MONTHS[mo-1] + ' ' + dd + ', ' + y; };
+        lbl.textContent = (rs.start === 0 && rs.end === 100)
+            ? 'ALL HISTORY'
+            : (d1 && d2 ? fmt(d1) + ' – ' + fmt(d2) : 'CUSTOM');
+    },
+
     // ── Range slider init ──────────────────────────────────
     _initRangeSliders() {
         const tickers = this.mode === '1up'
@@ -373,17 +448,7 @@ const VolRegime = {
             const cid    = 'vrm-spark-' + ticker.replace(/[^a-zA-Z0-9]/g, '_');
             const sStart = document.getElementById('vrm-rs-s-' + cid);
             const sEnd   = document.getElementById('vrm-rs-e-' + cid);
-            const hl     = document.getElementById('vrm-hl-'   + cid);
-            const lbl    = document.getElementById('vrm-rl-'   + cid);
             if (!sStart || !sEnd) continue;
-
-            const updateHL = () => {
-                if (!hl) return;
-                const v1 = parseInt(sStart.value), v2 = parseInt(sEnd.value);
-                const p1 = v1 / 100, p2 = v2 / 100;
-                hl.style.left  = `calc(${p1 * 100}% + ${(10 - p1 * 20)}px)`;
-                hl.style.width = `calc(${(p2 - p1) * 100}% + ${(p1 - p2) * 20}px)`;
-            };
 
             const onChange = (e) => {
                 let v1 = parseInt(sStart.value), v2 = parseInt(sEnd.value);
@@ -393,14 +458,78 @@ const VolRegime = {
                     v1 = parseInt(sStart.value); v2 = parseInt(sEnd.value);
                 }
                 this._rangeState[ticker] = { start: v1, end: v2 };
-                if (lbl) lbl.textContent = (v1 === 0 && v2 === 100) ? 'ALL HISTORY' : 'CUSTOM';
-                updateHL();
+                // Deactivate horizon buttons when slider is dragged manually
+                this._horizonState[ticker] = null;
+                const hg = document.getElementById('vrm-hg-' + cid);
+                if (hg) hg.querySelectorAll('.vrm-horizon-btn').forEach(b => b.classList.remove('active'));
+                this._updateHighlight(cid, v1, v2);
+                this._updateRangeLabel(ticker, m);
                 this._drawSparkline(ticker, m);
             };
 
             sStart.addEventListener('input', onChange);
             sEnd.addEventListener('input', onChange);
-            updateHL();
+            this._updateHighlight(cid, parseInt(sStart.value), parseInt(sEnd.value));
+            this._updateRangeLabel(ticker, m);
+        }
+    },
+
+    // ── Hover / crosshair init ─────────────────────────────
+    _initHover() {
+        const tickers = this.mode === '1up'
+            ? [this.selected]
+            : [this._pairs[this.selectedPair].long, this._pairs[this.selectedPair].short];
+        for (const ticker of tickers) {
+            const m   = ticker === 'NG=F' ? this._ngVolMetrics : this._allMetrics?.[ticker];
+            if (!m) continue;
+            const cid = 'vrm-spark-' + ticker.replace(/[^a-zA-Z0-9]/g, '_');
+            const cvs = document.getElementById(cid);
+            if (!cvs) continue;
+
+            cvs.style.cursor = 'crosshair';
+
+            const getIdx = (e) => {
+                const rect = cvs.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const fullSeries = m?.volatility?.hvSeries21 || [];
+                const rs  = this._rangeState[ticker] || { start: 0, end: 100 };
+                const si  = Math.floor(rs.start / 100 * fullSeries.length);
+                const ei  = Math.max(si + 2, Math.ceil(rs.end / 100 * fullSeries.length));
+                const series = fullSeries.slice(si, ei);
+                const padL = 60, padR = 54;
+                const cW   = rect.width - padL - padR;
+                if (x < padL || x > padL + cW || series.length < 2) return null;
+                return Math.round(((x - padL) / cW) * (series.length - 1));
+            };
+
+            cvs.addEventListener('mousemove', (e) => {
+                const idx = getIdx(e);
+                this._hoverState[ticker] = idx;
+                const drag = this._dragState[ticker];
+                if (drag?.active && idx != null) drag.currentIdx = idx;
+                this._drawSparkline(ticker, m);
+            });
+
+            cvs.addEventListener('mousedown', (e) => {
+                const idx = getIdx(e);
+                if (idx != null) {
+                    this._dragState[ticker] = { active: true, startIdx: idx, currentIdx: idx };
+                    this._drawSparkline(ticker, m);
+                }
+            });
+
+            const endDrag = () => {
+                if (this._dragState[ticker]?.active) {
+                    this._dragState[ticker] = { active: false, startIdx: null, currentIdx: null };
+                    this._drawSparkline(ticker, m);
+                }
+            };
+
+            cvs.addEventListener('mouseup', endDrag);
+            cvs.addEventListener('mouseleave', () => {
+                this._hoverState[ticker] = null;
+                endDrag();
+            });
         }
     },
 
@@ -454,7 +583,7 @@ const VolRegime = {
         const pctFn  = f => sorted[Math.max(0, Math.floor(sorted.length * f) - 1)];
         const p25 = pctFn(0.25), p75 = pctFn(0.75), p90 = pctFn(0.90);
 
-        const pad = { top: 20, right: 54, bottom: 28, left: 10 };
+        const pad = { top: 20, right: 54, bottom: 28, left: 60 };
         const cW  = cssW - pad.left - pad.right;
         const cH  = cssH - pad.top  - pad.bottom;
 
@@ -469,14 +598,31 @@ const VolRegime = {
             return `rgba(${r},${g},${b},${a})`;
         };
 
-        // ── Y-axis grid + right-side labels ──────────────────
-        ctx.setLineDash([3, 5]);
-        ctx.lineWidth = 0.8;
+        // ── Y-axis: 5-level evenly-spaced grid + left labels ─
+        ctx.font = '9px monospace';
+        for (let i = 0; i <= 5; i++) {
+            const v = vMax - (i / 5) * (vMax - vMin);
+            const y = toY(v);
+            ctx.setLineDash([3, 5]);
+            ctx.lineWidth = 0.8;
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y);
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.stroke();
+            ctx.setLineDash([]);
+            // Left-side Y labels
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(v.toFixed(1) + '%', pad.left - 4, y + 3.5);
+        }
+
+        // ── Regime threshold dashes + right-side labels ──────
         const yTicks = [p25, p75, p90].filter(v => v > vMin && v < vMax);
+        ctx.setLineDash([3, 4]);
+        ctx.lineWidth = 0.7;
         for (const tick of yTicks) {
             const y = toY(tick);
             ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y);
-            ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.stroke();
+            ctx.strokeStyle = tick >= p90 ? 'rgba(192,64,64,0.4)' : tick >= p75 ? 'rgba(192,120,40,0.4)' : 'rgba(74,128,184,0.4)';
+            ctx.stroke();
         }
         ctx.setLineDash([]);
         ctx.font = '9px monospace'; ctx.textAlign = 'left';
@@ -559,7 +705,48 @@ const VolRegime = {
             const spansYears = new Date(viewDates[0]).getFullYear() !== new Date(viewDates[count-1]).getFullYear();
             let ticks = [];
 
-            if (monthsRange > 36) {
+            const getWeek = d => {
+                const d2 = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+                d2.setUTCDate(d2.getUTCDate() + 4 - (d2.getUTCDay() || 7));
+                return Math.ceil(((d2 - new Date(Date.UTC(d2.getUTCFullYear(),0,1))) / 86400000 + 1) / 7);
+            };
+
+            if (count <= 14) {
+                // Daily mode: every trading day, show month when it changes
+                let lastMo = -1;
+                viewDates.forEach((d, i) => {
+                    const [y, mo, dd] = d.split('-').map(Number);
+                    const lbl = mo !== lastMo ? MONTHS[mo-1] + ' ' + dd : String(dd);
+                    ticks.push({ i, label: lbl });
+                    lastMo = mo;
+                });
+            } else if (count <= 35) {
+                // Weekly mode: first trading day of each calendar week
+                let lastWk = -1;
+                viewDates.forEach((d, i) => {
+                    const dt = new Date(d);
+                    const wk = dt.getFullYear() * 100 + getWeek(dt);
+                    if (wk !== lastWk) {
+                        const [y, mo, dd] = d.split('-').map(Number);
+                        ticks.push({ i, label: MONTHS[mo-1] + ' ' + dd + (spansYears ? ' ' + y : '') });
+                        lastWk = wk;
+                    }
+                });
+            } else if (count <= 65) {
+                // Biweekly mode
+                let lastWk = -1, wkIdx = 0;
+                viewDates.forEach((d, i) => {
+                    const dt = new Date(d);
+                    const wk = dt.getFullYear() * 100 + getWeek(dt);
+                    if (wk !== lastWk) { lastWk = wk; wkIdx++; }
+                    if (wkIdx % 2 === 1 && i > 0) {
+                        const [y, mo, dd] = d.split('-').map(Number);
+                        if (!ticks.length || ticks[ticks.length-1].i !== i) {
+                            ticks.push({ i, label: MONTHS[mo-1] + ' ' + dd + (spansYears ? ' ' + y : '') });
+                        }
+                    }
+                });
+            } else if (monthsRange > 36) {
                 // Year-boundary mode: clean year numbers at Jan 1
                 const maxLabels = Math.floor(cW / 120);
                 const yearsRange = monthsRange / 12;
@@ -596,17 +783,134 @@ const VolRegime = {
                 });
             }
 
-            // Draw with collision avoidance
+            // Draw with collision avoidance + vertical grid lines (#8)
             let lastX = -999;
             for (const t of ticks) {
                 const x = toX(t.i);
                 if (x - lastX < 45) continue;
                 ctx.fillText(t.label, x, pad.top + cH + 16);
-                // Subtle tick mark
+                // Vertical grid line from x-axis tick
+                ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + cH);
+                ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1; ctx.stroke();
+                // Tick mark
                 ctx.beginPath(); ctx.moveTo(x, pad.top + cH); ctx.lineTo(x, pad.top + cH + 4);
-                ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1; ctx.stroke();
+                ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.stroke();
                 lastX = x;
             }
+        }
+
+        // ── Measurement drag band ─────────────────────────────
+        const drag = this._dragState[ticker];
+        if (drag?.active && drag.startIdx != null && drag.currentIdx != null && drag.startIdx !== drag.currentIdx) {
+            const i1 = Math.min(drag.startIdx, drag.currentIdx);
+            const i2 = Math.max(drag.startIdx, drag.currentIdx);
+            const x1 = toX(i1), x2 = toX(i2);
+            const v1 = series[i1], v2 = series[i2];
+            const diff   = v2 - v1;
+            const isPos  = diff >= 0;
+            const accent = isPos ? '#3db87a' : '#e06060';
+            const d1 = viewDates[i1] || '', d2 = viewDates[i2] || '';
+            const MONTHS_M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const fmtD = d => { if (!d) return ''; const [y,mo,dd] = d.split('-').map(Number); return MONTHS_M[mo-1]+' '+dd+', '+y; };
+
+            // Band fill
+            ctx.save();
+            ctx.fillStyle = isPos ? 'rgba(61,184,122,0.10)' : 'rgba(224,96,96,0.10)';
+            ctx.fillRect(x1, pad.top, x2 - x1, cH);
+
+            // Dashed boundary lines
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x1, pad.top); ctx.lineTo(x1, pad.top + cH); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x2, pad.top); ctx.lineTo(x2, pad.top + cH); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Measurement card
+            const sign = isPos ? '+' : '';
+            const line1 = `${isPos ? '↑' : '↓'} ${sign}${diff.toFixed(2)}% HV`;
+            const line2 = `${fmtD(d1)} – ${fmtD(d2)}`;
+            ctx.font = 'bold 11px monospace';
+            const w1 = ctx.measureText(line1).width;
+            ctx.font = '9px monospace';
+            const w2 = ctx.measureText(line2).width;
+            const cardW = Math.max(w1, w2) + 20;
+            const cardH = 44;
+            let cardX = x1 + (x2 - x1) / 2 - cardW / 2;
+            cardX = Math.max(pad.left + 2, Math.min(pad.left + cW - cardW - 2, cardX));
+            const cardY = pad.top + 8;
+
+            ctx.fillStyle = 'rgba(13,17,28,0.96)';
+            ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.roundRect(cardX, cardY, cardW, cardH, 4); ctx.fill(); ctx.stroke();
+            ctx.font = 'bold 11px monospace'; ctx.fillStyle = accent; ctx.textAlign = 'left';
+            ctx.fillText(line1, cardX + 8, cardY + 17);
+            ctx.font = '9px monospace'; ctx.fillStyle = 'rgba(148,163,184,0.9)';
+            ctx.fillText(line2, cardX + 8, cardY + 33);
+            ctx.restore();
+        }
+
+        // ── Crosshair + hover tooltip (hidden while dragging) ─
+        const hIdx = this._hoverState[ticker];
+        const isDragging = this._dragState[ticker]?.active;
+        if (!isDragging && hIdx != null && hIdx >= 0 && hIdx < series.length) {
+            const hx = toX(hIdx);
+            const hy = toY(series[hIdx]);
+            const hv = series[hIdx];
+            const hDate = viewDates[hIdx] || '';
+            const hColor = hv >= p90 ? '#c04040' : hv >= p75 ? '#c07828' : hv >= p25 ? '#3db87a' : '#4a80b8';
+
+            // Vertical dashed crosshair line
+            ctx.save();
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(hx, pad.top); ctx.lineTo(hx, pad.top + cH); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Highlight dot on line
+            ctx.beginPath(); ctx.arc(hx, hy, 4, 0, Math.PI * 2);
+            ctx.fillStyle = hColor; ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+
+            // Tooltip card
+            const MONTHS_TT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const [ty, tm, td] = hDate.split('-').map(Number);
+            const dateLabel = hDate ? MONTHS_TT[tm-1] + ' ' + td + ', ' + ty : '';
+            const prevV = hIdx > 0 ? series[hIdx - 1] : null;
+            const delta = prevV != null ? hv - prevV : null;
+            const deltaStr = delta != null ? (delta >= 0 ? '+' : '') + delta.toFixed(2) + '%' : '';
+            const line1 = dateLabel;
+            const line2 = 'HV-21: ' + hv.toFixed(2) + '%';
+            const line3 = delta != null ? 'Chg: ' + deltaStr : '';
+            ctx.font = '10px monospace';
+            const ttW = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width, ctx.measureText(line3).width) + 20;
+            const ttH = line3 ? 52 : 40;
+            let ttX = hx + 10;
+            if (ttX + ttW > pad.left + cW) ttX = hx - ttW - 10;
+            ttX = Math.max(pad.left, ttX);
+            const ttY = Math.max(pad.top + 4, hy - ttH / 2);
+
+            ctx.fillStyle = 'rgba(13,17,28,0.95)';
+            ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(ttX, ttY, ttW, ttH, 4);
+            ctx.fill(); ctx.stroke();
+
+            ctx.textAlign = 'left';
+            ctx.fillStyle = 'rgba(0,255,255,0.85)';
+            ctx.font = 'bold 9px monospace';
+            ctx.fillText(line1, ttX + 8, ttY + 13);
+            ctx.fillStyle = '#fff';
+            ctx.font = '10px monospace';
+            ctx.fillText(line2, ttX + 8, ttY + 27);
+            if (line3) {
+                ctx.fillStyle = delta >= 0 ? '#3db87a' : '#e06060';
+                ctx.fillText(line3, ttX + 8, ttY + 42);
+            }
+            ctx.restore();
         }
     },
 
