@@ -541,11 +541,11 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                         <th data-tooltip="Daily average flow over the window. Normalises for window length.">AVG/DAY</th>
                         <th data-tooltip="Flow Z-Score at the end of the window — how unusual that day's flow was vs. its 30-day rolling average.">Z-SCORE</th>
                         <th data-tooltip="Composite pressure score (−100 to +100) at the end of the window. Blends Z-Score, momentum, and streak bonus.">PRESS.</th>
-                        <th data-tooltip="Average daily flow across the symmetric 7-day window centred on the divergence date (3 days before + exact day + 3 days after). Provides a smoothed local flow baseline around the event. Shows — when fewer than 3 days of future data are available." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">±3D AVG</th>
-                        <th data-tooltip="Average daily flow for the 3 trading days after the divergence date. Measures post-signal flow follow-through — did capital continue in the same direction or reverse? Shows — for the most recent divergences.">+3D AVG</th>
-                        <th data-tooltip="Average daily flow for the 3 trading days immediately before the divergence date. Reveals pre-divergence flow momentum — was the imbalance already building or is this a sudden regime shift?">-3D AVG</th>
-                        <th data-tooltip="Net capital flow on the exact divergence end-date. Distinct from AVG/DAY (which averages across the full window); isolates whether the final day itself spiked or was ordinary.">DAY FLOW</th>
-                        <th data-tooltip="30-day flow baseline: average daily flow over the 30 trading days ending the day before the divergence window opened (i.e. days −(w+30) to −(w+1) relative to the divergence date, where w is the scan window). This is NOT the 30 days before the event date — there is a gap of w days between this baseline and −3D AVG. Use it as the pre-event flow regime reference to judge whether the divergence is truly anomalous.">BASE-30D</th>
+                        <th data-tooltip="LOCAL AVG: average daily flow from 3 days before window start to 3 days after window end (s−3 → e+3, length = w+6 days). Gives a broad local context around the entire event. Shows — when insufficient future data exist." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">LOCAL AVG</th>
+                        <th data-tooltip="POST-3D: average daily flow for the 3 trading days after the window ends (e+1 → e+3). Measures post-signal follow-through — did capital continue or reverse? Shows — for the most recent events.">POST-3D</th>
+                        <th data-tooltip="PRE-3D: average daily flow for the 3 trading days before the window opens (s−3 → s−1). No overlap with the event window. Reveals whether the imbalance was already building before the divergence started.">PRE-3D</th>
+                        <th data-tooltip="Net capital flow on the exact divergence end-date (e). Distinct from AVG/DAY (which averages across the full window); isolates whether the final day itself spiked or was ordinary.">DAY FLOW</th>
+                        <th data-tooltip="BASE-30D: average daily flow over the 30 trading days ending at s−1 (the day before the window opens). Computed as (cumulative_flow[s−1] − cumulative_flow[s−31]) ÷ 30. Use this as the prevailing flow regime reference — compare PRE-3D and AVG/DAY against it to judge whether the divergence is truly anomalous. Shows — when fewer than 30 days of history precede the window.">BASE-30D</th>
                         <th data-tooltip="Signal interpretation implied by the divergence pattern." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">SIGNAL</th>
                         <th data-tooltip="Divergence strength (0–100). Combines price magnitude × flow magnitude × window length. Higher = more significant.">STR</th>
                     </tr>
@@ -2093,42 +2093,42 @@ function renderDivergence() {
                 const strBar = `linear-gradient(90deg,rgba(${strRgb},0.18) ${strength}%,transparent ${strength}%)`;
 
                 // === Context flow metrics ===
-                const canPost3 = (i + 3) < recent.length;
-                const canPre3  = (i - 3) >= 0;
+                // Event window: s = i-w+1 (start), e = i (end)
+                const s = i - w + 1; // window start index in recent[]
+                const canPost3  = (i + 3) < recent.length;
+                const canPre3   = (s - 3) >= 0;  // s-3 must exist
+                const canLocal  = canPre3 && canPost3;
 
-                // 1. ±3D AVG: average daily flow over symmetric 7-day window centred on divergence date
+                // 1. LOCAL AVG: average daily flow from s-3 to e+3 (w+6 days)
                 let avgCenter7 = null;
-                if (canPre3 && canPost3) {
-                    let s = 0;
-                    for (let k = i - 3; k <= i + 3; k++) s += (recent[k].usd_flow || 0);
-                    avgCenter7 = s / 7;
+                if (canLocal) {
+                    let sum = 0;
+                    const localLen = w + 6;
+                    for (let k = s - 3; k <= i + 3; k++) sum += (recent[k].usd_flow || 0);
+                    avgCenter7 = sum / localLen;
                 }
 
-                // 2. +3D AVG: average daily flow for the 3 days after the divergence date
+                // 2. POST-3D: average daily flow for e+1 to e+3
                 let avgPost3 = null;
                 if (canPost3) {
                     avgPost3 = ((recent[i+1].usd_flow || 0) + (recent[i+2].usd_flow || 0) + (recent[i+3].usd_flow || 0)) / 3;
                 }
 
-                // 3. -3D AVG: average daily flow for the 3 days before the divergence date
+                // 3. PRE-3D: average daily flow for s-3 to s-1 (no overlap with event window)
                 let avgPre3 = null;
                 if (canPre3) {
-                    avgPre3 = ((recent[i-1].usd_flow || 0) + (recent[i-2].usd_flow || 0) + (recent[i-3].usd_flow || 0)) / 3;
+                    avgPre3 = ((recent[s-3].usd_flow || 0) + (recent[s-2].usd_flow || 0) + (recent[s-1].usd_flow || 0)) / 3;
                 }
 
                 // 4. DAY FLOW: net flow on the exact divergence end-date
                 const exactFlow = recent[i].usd_flow || 0;
 
-                // 5. BASE-30D: average daily flow over the 30 trading days before the divergence window start
-                //    Uses full data[] so history outside the current lookback slice is included.
-                const preEndFullIdx = dataOffset + i - w; // index of window-start day in data[]
-                const preStartFullIdx = Math.max(0, preEndFullIdx - 30);
-                const preCount = preEndFullIdx - preStartFullIdx;
+                // 5. BASE-30D: average daily flow over the 30 trading days ending at s-1
+                //    sIdx = index of s-1 in data[]; requires sIdx >= 30 for a full 30-day baseline.
+                const sIdx = dataOffset + i - w; // data[] index of s-1 (= recent[i-w])
                 let avgPrePeriod = null;
-                if (preCount > 0) {
-                    const sumEnd   = data[preEndFullIdx - 1].cumulative_flow;
-                    const sumStart = preStartFullIdx > 0 ? data[preStartFullIdx - 1].cumulative_flow : 0;
-                    avgPrePeriod = (sumEnd - sumStart) / preCount;
+                if (sIdx >= 30) {
+                    avgPrePeriod = (data[sIdx].cumulative_flow - data[sIdx - 30].cumulative_flow) / 30;
                 }
 
                 // Helper: format a nullable context flow value
@@ -2219,15 +2219,18 @@ function downloadDivCSV() {
                 const wNorm = w / 10;
                 const strength = Math.round(pNorm * 0.4 * 100 + fNorm * 0.4 * 100 + wNorm * 0.2 * 100);
 
-                // Context flow metrics for CSV
+                // Context flow metrics for CSV (same logic as renderDivergence)
+                const sc = i - w + 1; // window start index in recent[]
                 const canPost3c = (i + 3) < recent.length;
-                const canPre3c  = (i - 3) >= 0;
+                const canPre3c  = (sc - 3) >= 0;
+                const canLocalc = canPre3c && canPost3c;
 
                 let avgCenter7c = null;
-                if (canPre3c && canPost3c) {
-                    let s = 0;
-                    for (let k = i - 3; k <= i + 3; k++) s += (recent[k].usd_flow || 0);
-                    avgCenter7c = s / 7;
+                if (canLocalc) {
+                    let sum = 0;
+                    const localLenC = w + 6;
+                    for (let k = sc - 3; k <= i + 3; k++) sum += (recent[k].usd_flow || 0);
+                    avgCenter7c = sum / localLenC;
                 }
                 let avgPost3c = null;
                 if (canPost3c) {
@@ -2235,17 +2238,13 @@ function downloadDivCSV() {
                 }
                 let avgPre3c = null;
                 if (canPre3c) {
-                    avgPre3c = ((recent[i-1].usd_flow || 0) + (recent[i-2].usd_flow || 0) + (recent[i-3].usd_flow || 0)) / 3;
+                    avgPre3c = ((recent[sc-3].usd_flow || 0) + (recent[sc-2].usd_flow || 0) + (recent[sc-1].usd_flow || 0)) / 3;
                 }
                 const exactFlowC = recent[i].usd_flow || 0;
-                const preEndFullIdxC   = dataOffset + i - w;
-                const preStartFullIdxC = Math.max(0, preEndFullIdxC - 30);
-                const preCountC = preEndFullIdxC - preStartFullIdxC;
+                const sIdxC = dataOffset + i - w; // data[] index of s-1
                 let avgPrePeriodC = null;
-                if (preCountC > 0) {
-                    const sumEndC   = data[preEndFullIdxC - 1].cumulative_flow;
-                    const sumStartC = preStartFullIdxC > 0 ? data[preStartFullIdxC - 1].cumulative_flow : 0;
-                    avgPrePeriodC = (sumEndC - sumStartC) / preCountC;
+                if (sIdxC >= 30) {
+                    avgPrePeriodC = (data[sIdxC].cumulative_flow - data[sIdxC - 30].cumulative_flow) / 30;
                 }
 
                 results.push({
@@ -2275,7 +2274,7 @@ function downloadDivCSV() {
     if (!results.length) return alert('No significant divergences found.');
 
     const headers = ['Date', 'Window', 'Type', 'Price Change', 'Net Flow', 'Avg/Day', 'Z-Score', 'Pressure',
-                     'Avg Flow (+-3D)', 'Avg Flow (+3D After)', 'Avg Flow (-3D Before)', 'Exact Day Flow', 'Avg Flow (Pre-30D Baseline)',
+                     'Local Avg (s-3 to e+3)', 'Post-3D Avg (e+1 to e+3)', 'Pre-3D Avg (s-3 to s-1)', 'Day Flow (e)', 'Base-30D Avg (s-30 to s-1)',
                      'Signal', 'Strength'];
     const csvRows = results.map(r => [
         r.date, r.window, r.type, r.price_change, r.net_flow, r.avg_daily, r.z_score, r.pressure,
