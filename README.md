@@ -83,14 +83,17 @@ Scans the active ETF's history for windows (3d / 5d / 10d) where price and flow 
 
 Filterable by lookback (90D / 6M / 1Y / ALL). Right-aligned numeric columns, alternating row tints.
 
-**Context flow columns** (relative to divergence end-date `i`, scan window `w` = 3 / 5 / 10):
+Each divergence is defined as an event window `[s, e]` where `s = e − w + 1` (window start) and `e` is the end date, for `w` ∈ {3, 5, 10}.
+
+**Context flow columns:**
 
 | Column | Window | Notes |
 |--------|--------|-------|
-| **±3D AVG** | days `i−3` → `i+3` (7 days, centered) | Smoothed local flow around the event. Shows `—` when fewer than 3 days of future data exist. |
-| **−3D AVG** | days `i−3` → `i−1` | Pre-event lead-in — was the imbalance already building? |
-| **+3D AVG** | days `i+1` → `i+3` | Post-event follow-through — did capital continue or reverse? |
-| **BASE-30D** | 30 days ending at `windowStart − 1` (i.e. days `i−(w+30)` → `i−(w+1)`) | Prevailing flow regime *before* the divergence window opened. **Not** the 30 days before the event date — there is a gap of `w` days between BASE-30D and −3D AVG (3 days for 3d rows, 5 for 5d rows, 10 for 10d rows). Compare AVG/DAY and ±3D AVG against this to judge whether the divergence is truly anomalous. |
+| **LOCAL AVG** | `s−3` → `e+3` (`w+6` days total) | Broad local context spanning 3 days before the window opens through 3 days after it closes. Length varies by `w` (9 days for 3d, 11 for 5d, 16 for 10d). Shows `—` when insufficient future data exist. |
+| **PRE-3D** | `s−3` → `s−1` (3 days) | Average daily flow in the 3 days immediately before the window opens. No overlap with the event window — cleanly shows whether the imbalance was already building before the divergence started. |
+| **POST-3D** | `e+1` → `e+3` (3 days) | Average daily flow in the 3 days after the window closes. Measures follow-through — did capital continue or reverse? Shows `—` for the most recent events. |
+| **DAY FLOW** | `e` only | Net flow on the exact end-date. Distinct from AVG/DAY (full-window average); isolates whether the final day itself spiked or was ordinary. |
+| **BASE-30D** | `s−30` → `s−1` (30 days) | Prevailing flow regime before the divergence window opened. Computed as `(cumulative_flow[s−1] − cumulative_flow[s−31]) ÷ 30`. Compare PRE-3D and AVG/DAY against this to judge whether the divergence is truly anomalous. Shows `—` when fewer than 30 days of history precede the window. |
 
 #### Flow Z-Score History Chart
 
