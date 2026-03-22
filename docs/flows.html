@@ -2241,17 +2241,52 @@ function downloadDivCSV() {
                 const avgDaily  = flowSum / w;
                 const zAtEnd    = cur.flow_zscore ?? 0;
                 const presAtEnd = Math.round(cur.pressure ?? 0);
-                
+
                 const isBear = type === 'BEARISH DIV';
-                const zAgrees   = isBear ? zAtEnd <= -0.5 : zAtEnd >= 0.5;
-                const presAgrees = isBear ? presAtEnd < 0 : presAtEnd > 0;
-                const confirmed = zAgrees && presAgrees;
+
+                // PRE-3D acceleration (same gate as renderDivergence)
+                const sc2 = i - w + 1;
+                const canPre3c2 = (sc2 - 3) >= 0;
+                let avgPre3c2 = null;
+                if (canPre3c2) {
+                    avgPre3c2 = ((recent[sc2-3].usd_flow || 0) + (recent[sc2-2].usd_flow || 0) + (recent[sc2-1].usd_flow || 0)) / 3;
+                }
+
+                // Flow consistency: fraction of window days flowing in divergence direction
+                let consistentDays = 0;
+                for (let j = sc2; j <= i; j++) {
+                    const df = recent[j].usd_flow || 0;
+                    if (isBear ? df < 0 : df > 0) consistentDays++;
+                }
+                const flowConsistency = consistentDays / w;
+
+                // End-day flow agreement
+                const exactFlowC2 = recent[i].usd_flow || 0;
+                const exactFlowAgrees = isBear ? exactFlowC2 < 0 : exactFlowC2 > 0;
+
+                // 4-gate confirmation — identical to renderDivergence
+                const zAgrees        = isBear ? zAtEnd <= -0.5 : zAtEnd >= 0.5;
+                const presAgrees     = isBear ? presAtEnd < 0 : presAtEnd > 0;
+                const pre3dAgrees    = avgPre3c2 === null || (isBear ? avgDaily < avgPre3c2 : avgDaily > avgPre3c2);
+                const consistAgrees  = flowConsistency >= 0.5;
+                const confirmed      = zAgrees && presAgrees && pre3dAgrees && consistAgrees;
                 const sigLabel = confirmed ? (isBear ? 'CONFIRMED Dist.' : 'CONFIRMED Accum.') : (isBear ? 'Distribution' : 'Accumulation');
 
-                const pNorm = Math.min(Math.abs(priceMove) / (thresh * 5), 1);
-                const fNorm = maxAbsFlow > 0 ? Math.min(Math.abs(flowSum) / maxAbsFlow, 1) : 0;
-                const wNorm = w / 10;
-                const strength = Math.round(pNorm * 0.4 * 100 + fNorm * 0.4 * 100 + wNorm * 0.2 * 100);
+                // 5-factor strength — identical to renderDivergence (30/30/12/15/13)
+                const pNorm    = Math.min(Math.abs(priceMove) / (thresh * 5), 1);
+                const fNorm    = maxAbsFlow > 0 ? Math.min(Math.abs(flowSum) / maxAbsFlow, 1) : 0;
+                const wNorm    = w / 10;
+                const cNorm    = flowConsistency;
+                const eDayNorm = exactFlowAgrees
+                    ? Math.min(Math.abs(exactFlowC2) / (Math.abs(avgDaily) || 1), 1.5) / 1.5
+                    : 0;
+                const strength = Math.round(
+                    pNorm    * 0.30 * 100 +
+                    fNorm    * 0.30 * 100 +
+                    wNorm    * 0.12 * 100 +
+                    cNorm    * 0.15 * 100 +
+                    eDayNorm * 0.13 * 100
+                );
 
                 // Context flow metrics for CSV (same logic as renderDivergence)
                 const sc = i - w + 1; // window start index in recent[]
@@ -2290,6 +2325,7 @@ function downloadDivCSV() {
                     avg_daily: avgDaily.toFixed(2),
                     z_score: zAtEnd.toFixed(2),
                     pressure: presAtEnd,
+                    flow_consistency: (flowConsistency * 100).toFixed(0) + '%',
                     signal: sigLabel,
                     strength: strength,
                     avg_center7: avgCenter7c !== null ? avgCenter7c.toFixed(2) : 'N/A',
@@ -2307,11 +2343,11 @@ function downloadDivCSV() {
 
     if (!results.length) return alert('No significant divergences found.');
 
-    const headers = ['Date', 'Window', 'Type', 'Price Change', 'Net Flow', 'Avg/Day', 'Z-Score', 'Pressure',
+    const headers = ['Date', 'Window', 'Type', 'Price Change', 'Net Flow', 'Avg/Day', 'Z-Score', 'Pressure', 'Flow Consistency',
                      'Local Avg (s-3 to e+3)', 'Post-3D Avg (e+1 to e+3)', 'Pre-3D Avg (s-3 to s-1)', 'Day Flow (e)', 'Base-30D Avg (s-30 to s-1)',
                      'Signal', 'Strength'];
     const csvRows = results.map(r => [
-        r.date, r.window, r.type, r.price_change, r.net_flow, r.avg_daily, r.z_score, r.pressure,
+        r.date, r.window, r.type, r.price_change, r.net_flow, r.avg_daily, r.z_score, r.pressure, r.flow_consistency,
         r.avg_center7, r.avg_post3, r.avg_pre3, r.exact_flow, r.avg_pre_period,
         r.signal, r.strength
     ].join(','));
