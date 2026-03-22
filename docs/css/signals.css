@@ -1312,12 +1312,16 @@
     border-radius: 4px;
     padding: 8px 6px 6px;
     text-align: center;
-    cursor: default;
-    transition: border-color 0.15s;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
     position: relative;
 }
 
 .vrm-hv-box:hover { border-color: var(--border-accent); }
+.vrm-hv-box.active {
+    border-color: var(--border-accent);
+    background: rgba(255, 255, 255, 0.05);
+}
 
 .vrm-hv-label {
     font-size: 0.55rem;
