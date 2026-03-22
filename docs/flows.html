@@ -2076,22 +2076,40 @@ function renderDivergence() {
                 }
                 const flowConsistency = consistentDays / w; // 0–1
 
-                // Confirmation: Z-score, pressure, PRE-3D flow shift, and daily consistency all agree
+                // End-day flow (computed here so STR can use it)
+                const exactFlow = recent[i].usd_flow || 0;
+                const exactFlowAgreesDiv = isBear ? exactFlow < 0 : exactFlow > 0;
+
+                // Confirmation gates
                 const zAgrees           = isBear ? zAtEnd <= -0.5 : zAtEnd >= 0.5;
                 const presAgrees        = isBear ? presAtEnd < 0 : presAtEnd > 0;
-                // PRE-3D gate: pre-event flow should not already be moving in the divergence direction
-                const pre3dAgrees       = avgPre3 === null || (isBear ? avgPre3 >= 0 : avgPre3 <= 0);
+                // PRE-3D acceleration gate: event-window daily flow must be MORE extreme than pre-event.
+                // Detects intensification rather than blocking continuation — real distribution phases
+                // often begin before the window, so we want acceleration, not a clean start.
+                const pre3dAgrees       = avgPre3 === null || (isBear ? avgDaily < avgPre3 : avgDaily > avgPre3);
                 // Consistency gate: majority of event days must have flow matching divergence direction
                 const consistencyAgrees = flowConsistency >= 0.5;
                 const confirmed = zAgrees && presAgrees && pre3dAgrees && consistencyAgrees;
                 if (confirmed) sig = isBear ? '🔴 CONFIRMED Dist.' : '🟢 CONFIRMED Accum.';
 
-                // Strength score 0–100: price magnitude × flow magnitude × window weight × daily consistency
-                const pNorm = Math.min(Math.abs(priceMove) / (thresh * 5), 1); // cap at 5× threshold
-                const fNorm = maxAbsFlow > 0 ? Math.min(Math.abs(flowSum) / maxAbsFlow, 1) : 0;
-                const wNorm = w / 10; // 3d=0.3, 5d=0.5, 10d=1.0
-                const cNorm = flowConsistency; // daily flow consistency 0–1
-                const strength = Math.round(pNorm * 0.35 * 100 + fNorm * 0.35 * 100 + wNorm * 0.15 * 100 + cNorm * 0.15 * 100);
+                // Strength score 0–100: 5 factors
+                // eDayNorm: how strong is end-day flow relative to the window's daily average?
+                //   Agrees with divergence → 0–1 based on magnitude vs avgDaily (cap at 1.5×)
+                //   Disagrees → 0 (penalised by absence of the bonus, not a hard deduction)
+                const pNorm    = Math.min(Math.abs(priceMove) / (thresh * 5), 1);
+                const fNorm    = maxAbsFlow > 0 ? Math.min(Math.abs(flowSum) / maxAbsFlow, 1) : 0;
+                const wNorm    = w / 10; // 3d=0.3, 5d=0.5, 10d=1.0
+                const cNorm    = flowConsistency;
+                const eDayNorm = exactFlowAgreesDiv
+                    ? Math.min(Math.abs(exactFlow) / (Math.abs(avgDaily) || 1), 1.5) / 1.5
+                    : 0;
+                const strength = Math.round(
+                    pNorm    * 0.30 * 100 +
+                    fNorm    * 0.30 * 100 +
+                    wNorm    * 0.12 * 100 +
+                    cNorm    * 0.15 * 100 +
+                    eDayNorm * 0.13 * 100
+                );
                 const strCol = strength >= 70 ? 'val-green' : strength >= 40 ? 'val-muted' : 'val-red';
                 const strRgb = strength >= 70 ? '61,184,122' : strength >= 40 ? '148,163,184' : '192,64,64';
 
@@ -2135,10 +2153,7 @@ function renderDivergence() {
 
                 // 3. PRE-3D: already computed above (avgPre3)
 
-                // 4. DAY FLOW: net flow on the exact divergence end-date
-                const exactFlow = recent[i].usd_flow || 0;
-                // Color by agreement with divergence direction, not just sign
-                const exactFlowAgreesDiv = isBear ? exactFlow < 0 : exactFlow > 0;
+                // 4. DAY FLOW: exactFlow + exactFlowAgreesDiv already computed above for STR
                 const exactFlowCol = exactFlowAgreesDiv ? (isBear ? 'val-red' : 'val-green') : 'val-muted';
 
                 // 5. BASE-30D: average daily flow over the 30 trading days ending at s-1
