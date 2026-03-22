@@ -146,6 +146,15 @@ Each card shows:
 5. VCVI indicators: 5d fast, 21d (with decay-corrected †value), 63d
 6. VPS composite score + MWCA alarm
 
+#### Top-of-Page Convergence Flash Banner
+
+When all 3 ETFs on either side spike within a 10-calendar-day window (SWVC `CONVERGED` state), a full-width pulsing banner appears **immediately below the header** — visible without scrolling:
+
+- **RED** (short-side convergence): `⚡ SHORT SIDE CONVERGED — ↓ SHORT / INVERSE SETUP — gas TOP candidate`
+- **GREEN** (long-side convergence): `⚡ LONG SIDE CONVERGED — ↑ LONG / LEVERAGED SETUP — gas BOTTOM candidate`
+
+Each banner shows the individual ETF spike dates, days-ago, and RVOL levels inline. Hidden entirely when no convergence is active — zero noise on normal days.
+
 #### Signal Command Center
 
 **NG=F Price Context Bar** — Seasonal Z-score gate:
@@ -175,6 +184,8 @@ Each card shows:
 | 5 — NG Directional | Long: z ≤ −0.5σ · Short: z ≥ +0.2σ |
 
 **Elevated Watch (3-gate, ~4–8/ETF/year):** softer thresholds (VCVI ≥ 60, 2/75 breadth, 1.2× ATR), no vol-regime constraint.
+
+**Side-Wide Volume Convergence (SWVC):** scans the last 15 trading days for each of the 3 ETFs on a side. If all 3 hit RVOL ≥ 2× within any rolling 10-calendar-day window — even on different days — the side is marked `CONVERGED`. Spikes staggered 2–5 days apart across US/CA/UK exchanges fully qualify. Status ladder: `CONVERGED` → `PARTIAL` (2–3 ETFs, or all 3 outside window) → `SINGLE` → `QUIET`. When converged, the top-of-page flash banner fires automatically.
 
 **Historical Echoes:** forward return study (5/10/21/42/63/126/252d windows) for all past VCVI ≥ 55 signals, with median lead-time to peak, season tags, regime-stratified return tables.
 
