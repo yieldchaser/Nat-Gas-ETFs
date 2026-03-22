@@ -740,14 +740,20 @@ const VolRegime = {
         ctx.setLineDash([]);
 
         // ── Multi-series drawing ──────────────────────────────
-        const colorsMap = { '5d': '#c951ea', '21d': null /* dynamic */, '63d': '#eab951', '252d': '#51d2ea' };
-        
         // Draw non-primary lines first to keep primary on top
         for (const k of activeKeys) {
             const s = slices[k];
             if (!s || s.length === 0) continue;
             
-            ctx.lineWidth = k === primaryKey ? 2 : 1.5;
+            const isPrimary = k === primaryKey;
+            ctx.lineWidth = isPrimary ? 2 : 1.5;
+            const opacity = isPrimary ? 1.0 : 0.45;
+            
+            // Compute series-specific thresholds for coloring
+            const fullS = allSeries[k] || fullDates.map(() => 0);
+            const sortedS = [...fullS].filter(v => v != null).sort((a, b) => a - b);
+            const pFn = f => sortedS[Math.max(0, Math.floor(sortedS.length * f) - 1)] || 0;
+            const s25 = pFn(0.25), s75 = pFn(0.75), s90 = pFn(0.90);
             
             let started = false;
             for (let i = 1; i < s.length; i++) {
@@ -755,19 +761,15 @@ const VolRegime = {
                 if (curr == null || prev == null) continue;
                 if (!started) { ctx.beginPath(); ctx.moveTo(toX(i - 1), toY(prev)); started = true; }
                 
-                if (k === '21d') {
-                    // dynamic color
-                    ctx.strokeStyle = curr >= p90 ? '#c04040' : curr >= p75 ? '#c07828' : curr >= p25 ? '#3db87a' : '#4a80b8';
-                    ctx.beginPath();
-                    ctx.moveTo(toX(i - 1), toY(prev));
-                    ctx.lineTo(toX(i), toY(curr));
-                    ctx.stroke();
-                } else {
-                    ctx.strokeStyle = colorsMap[k] || '#aaaaaa';
-                    ctx.lineTo(toX(i), toY(curr));
-                }
+                // Regime coloring logic applied to ALL series with diff shading
+                const colorHex = curr >= s90 ? '#c04040' : curr >= s75 ? '#c07828' : curr >= s25 ? '#3db87a' : '#4a80b8';
+                ctx.strokeStyle = toRgba(colorHex, opacity);
+                
+                ctx.beginPath();
+                ctx.moveTo(toX(i - 1), toY(prev));
+                ctx.lineTo(toX(i), toY(curr));
+                ctx.stroke();
             }
-            if (k !== '21d' && started) ctx.stroke();
         }
 
         // ── Current value dots ─────────────────────────────────
@@ -780,25 +782,30 @@ const VolRegime = {
                 for (let i = s.length - 1; i >= 0; i--) if (s[i] != null) { lastValid = s[i]; break; }
                 if (lastValid == null) continue;
                 
+                // Compute series-specific thresholds for end dot
+                const fullS = allSeries[k] || fullDates.map(() => 0);
+                const sortedS = [...fullS].filter(v => v != null).sort((a, b) => a - b);
+                const pFn = f => sortedS[Math.max(0, Math.floor(sortedS.length * f) - 1)] || 0;
+                const s25 = pFn(0.25), s75 = pFn(0.75), s90 = pFn(0.90);
+                
                 const lX = toX(s.length - 1), lY = toY(lastValid);
-                let dc;
-                if (k === '21d') {
-                    dc = lastValid >= p90 ? '#c04040' : lastValid >= p75 ? '#c07828' : lastValid >= p25 ? '#3db87a' : '#4a80b8';
+                const dcHex = lastValid >= s90 ? '#c04040' : lastValid >= s75 ? '#c07828' : lastValid >= s25 ? '#3db87a' : '#4a80b8';
+                
+                if (k === primaryKey) {
                     ctx.beginPath(); ctx.arc(lX, lY, 6.5, 0, Math.PI * 2);
-                    ctx.strokeStyle = toRgba(dc, 0.35); ctx.lineWidth = 1.5; ctx.stroke();
-                } else {
-                    dc = colorsMap[k] || '#aaaaaa';
+                    ctx.strokeStyle = toRgba(dcHex, 0.35); ctx.lineWidth = 1.5; ctx.stroke();
                 }
                 
                 ctx.beginPath(); ctx.arc(lX, lY, 3.5, 0, Math.PI * 2);
-                ctx.fillStyle = dc; ctx.fill();
+                const opacity = k === primaryKey ? 1.0 : 0.6;
+                ctx.fillStyle = toRgba(dcHex, opacity); ctx.fill();
                 ctx.beginPath(); ctx.arc(lX, lY, 1.5, 0, Math.PI * 2);
                 ctx.fillStyle = '#fff'; ctx.fill();
                 
-                ctx.font = 'bold 9px monospace'; ctx.fillStyle = dc; ctx.textAlign = 'right';
+                ctx.font = 'bold 9px monospace'; ctx.fillStyle = toRgba(dcHex, opacity); ctx.textAlign = 'right';
                 // Adjust vertical placement minimally to avoid text overlap if possible
                 ctx.fillText(lastValid.toFixed(1) + '%', lX - 10, lY - 4 - labelOffset);
-                labelOffset += Math.random() < 0.5 ? -10 : 10; // simplistic spread
+                if (activeKeys.length > 1) labelOffset += 10;
             }
         }
 
@@ -911,6 +918,7 @@ const VolRegime = {
 
         // ── Measurement drag band ─────────────────────────────
         const drag = this._dragState[ticker];
+        const series = primarySeries; // Use primary series for measurement math
         if (drag?.active && drag.startIdx != null && drag.currentIdx != null && drag.startIdx !== drag.currentIdx) {
             const i1 = Math.min(drag.startIdx, drag.currentIdx);
             const i2 = Math.max(drag.startIdx, drag.currentIdx);
@@ -964,12 +972,9 @@ const VolRegime = {
         // ── Crosshair + hover tooltip (hidden while dragging) ─
         const hIdx = this._hoverState[ticker];
         const isDragging = this._dragState[ticker]?.active;
-        if (!isDragging && hIdx != null && hIdx >= 0 && hIdx < series.length) {
+        if (!isDragging && hIdx != null && hIdx >= 0 && hIdx < primarySeries.length) {
             const hx = toX(hIdx);
-            const hy = toY(series[hIdx]);
-            const hv = series[hIdx];
             const hDate = viewDates[hIdx] || '';
-            const hColor = hv >= p90 ? '#c04040' : hv >= p75 ? '#c07828' : hv >= p25 ? '#3db87a' : '#4a80b8';
 
             // Vertical dashed crosshair line
             ctx.save();
@@ -979,46 +984,79 @@ const VolRegime = {
             ctx.beginPath(); ctx.moveTo(hx, pad.top); ctx.lineTo(hx, pad.top + cH); ctx.stroke();
             ctx.setLineDash([]);
 
-            // Highlight dot on line
-            ctx.beginPath(); ctx.arc(hx, hy, 4, 0, Math.PI * 2);
-            ctx.fillStyle = hColor; ctx.fill();
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
-
-            // Tooltip card
+            // Gather tooltip data & draw dots
+            const lines = [];
             const MONTHS_TT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            const [ty, tm, td] = hDate.split('-').map(Number);
-            const dateLabel = hDate ? MONTHS_TT[tm-1] + ' ' + td + ', ' + ty : '';
-            const prevV = hIdx > 0 ? series[hIdx - 1] : null;
-            const delta = prevV != null ? hv - prevV : null;
-            const deltaStr = delta != null ? (delta >= 0 ? '+' : '') + delta.toFixed(2) + '%' : '';
-            const line1 = dateLabel;
-            const line2 = 'HV-21: ' + hv.toFixed(2) + '%';
-            const line3 = delta != null ? 'Chg: ' + deltaStr : '';
-            ctx.font = '10px monospace';
-            const ttW = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width, ctx.measureText(line3).width) + 20;
-            const ttH = line3 ? 52 : 40;
-            let ttX = hx + 10;
-            if (ttX + ttW > pad.left + cW) ttX = hx - ttW - 10;
-            ttX = Math.max(pad.left, ttX);
-            const ttY = Math.max(pad.top + 4, hy - ttH / 2);
+            if (hDate) {
+                const [ty, tm, td] = hDate.split('-').map(Number);
+                lines.push({ text: MONTHS_TT[tm-1] + ' ' + td + ', ' + ty, color: 'rgba(0,255,255,0.85)', isDate: true });
+            }
 
-            ctx.fillStyle = 'rgba(13,17,28,0.95)';
-            ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.roundRect(ttX, ttY, ttW, ttH, 4);
-            ctx.fill(); ctx.stroke();
+            for (const k of activeKeys) {
+                const s = slices[k];
+                if (s && s[hIdx] != null) {
+                    const hv = s[hIdx];
+                    const hy = toY(hv);
+                    const prevV = hIdx > 0 ? s[hIdx - 1] : null;
+                    const delta = prevV != null ? hv - prevV : null;
+                    const deltaStr = delta != null ? (delta >= 0 ? '+' : '') + delta.toFixed(2) + '%' : '';
+                    
+                    // Specific threshold for dot
+                    const fullS = allSeries[k] || fullDates.map(() => 0);
+                    const sortedS = [...fullS].filter(v => v != null).sort((a, b) => a - b);
+                    const pFn = f => sortedS[Math.max(0, Math.floor(sortedS.length * f) - 1)] || 0;
+                    const s25 = pFn(0.25), s75 = pFn(0.75), s90 = pFn(0.90);
+                    const hColorHex = hv >= s90 ? '#c04040' : hv >= s75 ? '#c07828' : hv >= s25 ? '#3db87a' : '#4a80b8';
+                    const isPri = k === primaryKey;
 
-            ctx.textAlign = 'left';
-            ctx.fillStyle = 'rgba(0,255,255,0.85)';
-            ctx.font = 'bold 9px monospace';
-            ctx.fillText(line1, ttX + 8, ttY + 13);
-            ctx.fillStyle = '#fff';
-            ctx.font = '10px monospace';
-            ctx.fillText(line2, ttX + 8, ttY + 27);
-            if (line3) {
-                ctx.fillStyle = delta >= 0 ? '#3db87a' : '#e06060';
-                ctx.fillText(line3, ttX + 8, ttY + 42);
+                    // Highlight dot on line
+                    ctx.beginPath(); ctx.arc(hx, hy, isPri ? 4 : 3, 0, Math.PI * 2);
+                    ctx.fillStyle = toRgba(hColorHex, isPri ? 1.0 : 0.6); ctx.fill();
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = isPri ? 1.5 : 1; ctx.stroke();
+                    
+                    lines.push({
+                        text: `${k.toUpperCase()}: ${hv.toFixed(1)}% ${deltaStr ? '('+deltaStr+')' : ''}`,
+                        color: hColorHex,
+                        isDate: false
+                    });
+                }
+            }
+
+            // Tooltip card metrics dynamically calculated
+            if (lines.length > 0) {
+                ctx.font = 'bold 9px monospace';
+                let ttW = 60; // minimum
+                let ttH = 8 + lines.length * 14;
+                for (const l of lines) {
+                    const w = ctx.measureText(l.text).width;
+                    if (w > ttW) ttW = w;
+                }
+                ttW += 20;
+                
+                let ttX = hx + 10;
+                if (ttX + ttW > pad.left + cW) ttX = hx - ttW - 10;
+                ttX = Math.max(pad.left, ttX);
+                // Try aligning vertically to the primary line if possible
+                const primaryHoverVal = primarySeries[hIdx];
+                const primaryHy = primaryHoverVal != null ? toY(primaryHoverVal) : (pad.top + cH/2);
+                let ttY = Math.max(pad.top + 4, primaryHy - ttH / 2);
+                if (ttY + ttH > pad.top + cH) ttY = pad.top + cH - ttH - 4; // prevent going below
+
+                ctx.fillStyle = 'rgba(13,17,28,0.95)';
+                ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.roundRect(ttX, ttY, ttW, ttH, 4);
+                ctx.fill(); ctx.stroke();
+
+                ctx.textAlign = 'left';
+                let yOff = ttY + 13;
+                for (const l of lines) {
+                    ctx.fillStyle = l.color;
+                    ctx.font = l.isDate ? 'bold 9px monospace' : '10px monospace';
+                    ctx.fillText(l.text, ttX + 8, yOff);
+                    yOff += 14;
+                }
             }
             ctx.restore();
         }
