@@ -32,10 +32,10 @@ const VolRegime = {
     ],
 
     _hvWindows: [
-        { key: '5d',   label: '5D HV',   tooltip: 'Ultra-short spike detector — catches weather events & storage shocks in leveraged NG products before the 21D window registers' },
-        { key: '21d',  label: '21D HV',  tooltip: 'Monthly realized HV — standard baseline for leveraged ETF sizing and risk' },
-        { key: '63d',  label: '63D HV',  tooltip: 'Seasonal-quarter HV — aligns with NG injection/withdrawal cycles (~3 months)' },
-        { key: '252d', label: '252D HV', tooltip: 'Full annual HV — complete NG seasonal cycle reference and long-run baseline' },
+        { key: '5d',   label: '5D HV',   tooltip: 'Ultra-short volatility — catches weather events & storage shocks in {T} before the longer windows react' },
+        { key: '21d',  label: '21D HV',  tooltip: 'Monthly baseline volatility — the standard reference for {T} structural risk and position sizing' },
+        { key: '63d',  label: '63D HV',  tooltip: 'Seasonal-quarter volatility — aligns with {T} injection/withdrawal macro cycles (~3 months)' },
+        { key: '252d', label: '252D HV', tooltip: 'Full annual volatility — the complete 1-year baseline for {T}' },
     ],
 
     // Regime buckets: percentile of current HV vs all available history
@@ -68,8 +68,10 @@ const VolRegime = {
             <div class="vrm-controls">
                 <div class="vrm-mode-toggle">
                     <button class="vrm-mode-btn${is1up  ? ' active' : ''}"
+                            data-tooltip="1-UP Mode: Analyze a single instrument's full historical volatility profile in deep detail."
                             onclick="VolRegime._setMode('1up')">1-UP</button>
                     <button class="vrm-mode-btn${isPair ? ' active' : ''}"
+                            data-tooltip="PAIR Mode: Compare identical-leverage long and short ETFs side-by-side to track structural spread anomalies."
                             onclick="VolRegime._setMode('pair')">PAIR</button>
                 </div>
                 <div class="vrm-chips">
@@ -87,7 +89,7 @@ const VolRegime = {
             return `<button
                 class="vrm-chip vrm-chip-${side}${isActive ? ' vrm-chip-active' : ''}"
                 onclick="VolRegime._pick1Up('${ticker}')"
-                data-tooltip="${cfg ? cfg.name + ' · ' + cfg.leverage + ' · ' + cfg.exchange : 'NYMEX Front-Month Natural Gas Futures'}"
+                data-tooltip="${cfg ? cfg.name + ' · ' + cfg.leverage + ' leverage · ' + cfg.exchange : 'NYMEX Front-Month Natural Gas Futures'}"
                 >${disp}</button>`;
         }).join('');
     },
@@ -97,6 +99,7 @@ const VolRegime = {
             const isActive = idx === this.selectedPair;
             return `<button
                 class="vrm-chip vrm-chip-pair${isActive ? ' vrm-chip-active' : ''}"
+                data-tooltip="Compare structural volatility differences between ${p.long} and ${p.short} over time."
                 onclick="VolRegime._pickPair(${idx})">
                 <span class="vrm-chip-long">${p.long.replace('.TO','').replace('.L','')}</span>
                 <span class="vrm-chip-arrow">↔</span>
@@ -242,13 +245,14 @@ const VolRegime = {
             const reg = this._regime(pct);
             const isActive = activeKeys.includes(w.key);
             const activeClass = isActive ? ' active' : '';
+            const tTip = w.tooltip.replace('{T}', ticker) + (pct != null ? ` — currently at the ${pct.toFixed(0)}th percentile of ${ticker}'s entire trading history` : '');
             return `
-                <div class="vrm-hv-box${activeClass}" onclick="VolRegime._toggleSeries('${ticker}', '${w.key}')" data-tooltip="${w.tooltip}${pct != null ? ' — currently ' + pct.toFixed(0) + 'th pct of full available history' : ''}" style="cursor:pointer">
+                <div class="vrm-hv-box${activeClass}" onclick="VolRegime._toggleSeries('${ticker}', '${w.key}')" data-tooltip="${tTip}" style="cursor:pointer">
                     <div class="vrm-hv-label">${w.label}</div>
                     <div class="vrm-hv-val" style="color:${reg.color}">
                         ${val != null ? val.toFixed(1) + '%' : '--'}
                     </div>
-                    <div class="vrm-hv-regime-pip ${reg.cls}" data-tooltip="${reg.label}"></div>
+                    <div class="vrm-hv-regime-pip ${reg.cls}" data-tooltip="${reg.label} REGIME"></div>
                 </div>`;
         }).join('');
 
@@ -260,11 +264,11 @@ const VolRegime = {
                     ${lev   ? `<span class="vrm-badge-lev">${lev}</span>` : ''}
                     ${exch  ? `<span class="vrm-badge-exch">${exch}</span>` : ''}
                     <span class="vrm-regime-badge ${regBadge.cls}"
-                          data-tooltip="Vol regime: 21D HV sits at the ${hvPcts['21d'] != null ? hvPcts['21d'].toFixed(0)+'th' : '--'} percentile of all available history">
+                          data-tooltip="${ticker} Vol Regime: 21D HV currently sits at the ${hvPcts['21d'] != null ? hvPcts['21d'].toFixed(0)+'th' : '--'} percentile of all available history">
                         ${regBadge.label}
                     </span>
                     ${spikeEvt ? `<span class="vrm-spike-badge"
-                        data-tooltip="SPIKE EVENT — 5D HV (${hv['5d'].toFixed(1)}%) exceeds 2× the 252D baseline (${hv['252d'].toFixed(1)}%). Near-term vol has broken from the annual norm.">⚡ SPIKE EVENT</span>` : ''}
+                        data-tooltip="SPIKE EVENT in ${ticker} — 5D HV (${hv['5d'].toFixed(1)}%) exceeds 2× the 252D baseline (${hv['252d'].toFixed(1)}%). Near-term vol has completely broken from the annual norm.">⚡ SPIKE EVENT</span>` : ''}
                 </div>
 
                 <div class="vrm-hv-boxes">${boxes}</div>
@@ -303,16 +307,16 @@ const VolRegime = {
                 </div>
 
                 <div class="vrm-footer-stats">
-                    <div class="vrm-stat-box" data-tooltip="5D/63D HV ratio — when >1.35× near-term vol is accelerating faster than the seasonal trend. Key risk signal for leveraged NG products.">
+                    <div class="vrm-stat-box" data-tooltip="5D/63D HV ratio — when over 1.35×, near-term ${ticker} volatility is accelerating faster than the seasonal trend. This is a key immediate risk signal.">
                         <span class="vrm-stat-lbl">TERM STRUCT</span>
                         <span class="vrm-stat-val ${tsInfo.cls}">${tsInfo.label}&nbsp;${tsInfo.arrow}</span>
                     </div>
-                    <div class="vrm-stat-box" data-tooltip="Vol-of-Vol (21-day std of rolling HV-10). High VoV means vol itself is volatile — a regime shift is likely imminent.">
+                    <div class="vrm-stat-box" data-tooltip="${ticker} Vol-of-Vol (21-day std of rolling HV-10). High VoV means volatility itself is volatile — structural regime shift is likely imminent.">
                         <span class="vrm-stat-lbl">VoV-21</span>
                         <span class="vrm-stat-val ${vovInfo.cls}">${vov != null ? vov.toFixed(1) + '%' : '--'}&nbsp;${vovInfo.label}</span>
                     </div>
                     ${effVol != null ? `
-                    <div class="vrm-stat-box" data-tooltip="Effective ETF vol = HV-21 × ${levMult}× leverage. This is the realistic annual swing band for this product — what you are actually exposed to.">
+                    <div class="vrm-stat-box" data-tooltip="Effective ETF volatility = HV-21 × ${levMult}× leverage. This represents the realistic annual swing scale for ${ticker} — expressing what you are actually mathematically exposed to.">
                         <span class="vrm-stat-lbl">EFF VOL ${levMult}×</span>
                         <span class="vrm-stat-val vrm-eff-vol">${effVol.toFixed(1)}%</span>
                     </div>` : ''}
