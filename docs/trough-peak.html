@@ -2119,10 +2119,14 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
             syncRangeSlidersToRange('all');
             renderAll();
             updateBadge();
-            // Init Vol Regime Monitor from precomputed data
+            // Init Vol Regime Monitor (needs dashboard_data.json, not trough_peak_data.json)
             if (typeof VolRegime !== 'undefined' && typeof Metrics !== 'undefined') {
-                const vrmMetrics = VolRegime.buildMetricsFromDashboard(staticAll);
-                VolRegime.render(vrmMetrics, null);
+                fetch('data/dashboard_data.json').then(r => r.ok ? r.json() : null).then(dd => {
+                    if (dd && dd.etfs) {
+                        const vrmMetrics = VolRegime.buildMetricsFromDashboard(dd);
+                        VolRegime.render(vrmMetrics, null);
+                    }
+                }).catch(() => {});
             }
             return; // done — static data loaded for all tickers
         }
