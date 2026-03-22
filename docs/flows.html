@@ -2770,6 +2770,10 @@ function collectConfluenceSignals() {
             }
         }
 
+        // Track last divergence type per window to emit only on ONSET (type change).
+        // Prevents flooding clusters with the same divergence repeated over many days.
+        const lastType = {}; // key: w → 'BEAR'|'BULL'|null
+
         for (let i = 10; i < data.length; i++) {
             for (const w of WINS) {
                 if (i < w) continue;
@@ -2780,7 +2784,11 @@ function collectConfluenceSignals() {
                 const flowSum   = (cur.cumulative_flow||0) - (prev.cumulative_flow||0);
                 const isBear    = priceMove >  thresh && flowSum < 0;
                 const isBull    = priceMove < -thresh && flowSum > 0;
-                if (!isBear && !isBull) continue;
+                const curType   = isBear ? 'BEAR' : isBull ? 'BULL' : null;
+                const prevType  = lastType[w] || null;
+                lastType[w]     = curType;
+                // Only emit on onset — when divergence type first appears or flips
+                if (curType === null || curType === prevType) continue;
 
                 const avgDaily  = flowSum / w;
                 const zAtEnd    = cur.flow_zscore ?? 0;
