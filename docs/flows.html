@@ -576,9 +576,10 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                         <th data-tooltip="Normalised directional score (−100% to +100%). Positive = bullish for NG.">SCORE</th>
                         <th data-tooltip="Combined directional bias derived from weighted ETF signals.">BIAS</th>
                         <th data-tooltip="Implied Natural Gas direction from confluence.">NG EXPECTED</th>
-                        <th data-tooltip="Implied NG cumulative return 10 trading days after window end.">NG +10D</th>
-                        <th data-tooltip="Implied NG cumulative return 22 trading days after window end.">NG +22D</th>
-                        <th data-tooltip="✓ correct  ✗ wrong  ~ flat  ⏳ pending. Left = 10d, Right = 22d.">10D / 22D</th>
+                        <th data-tooltip="Implied NG cumulative return ~1 month (22 trading days) after window end.">NG +1M</th>
+                        <th data-tooltip="Implied NG cumulative return ~2 months (44 trading days) after window end.">NG +2M</th>
+                        <th data-tooltip="Implied NG cumulative return ~3 months (66 trading days) after window end.">NG +3M</th>
+                        <th data-tooltip="Macro validation: ✓ correct  ✗ wrong  ~ insignificant (&lt;8%/12%/18%)  ⏳ pending. 1M / 2M / 3M.">1M / 2M / 3M</th>
                     </tr>
                 </thead>
                 <tbody id="conf-body">
@@ -2743,12 +2744,22 @@ function buildNGDailyMap() {
     return out;
 }
 
-// Run divergence scan for all 6 ETFs, collect confirmed or high-STR signals.
+// Run divergence scan for all 6 ETFs, collect high-conviction onset signals only.
 // Signal taxonomy (NG implication):
 //   LONG  + BEARISH DIV (ETF↑, flows out) → BEARISH NG  (distribution at top)
 //   LONG  + BULLISH DIV (ETF↓, flows in)  → BULLISH NG  (accumulation at dip)
 //   SHORT + BEARISH DIV (ETF↑, flows out) → BULLISH NG  (covering shorts = NG bullish)
 //   SHORT + BULLISH DIV (ETF↓, flows in)  → BEARISH NG  (adding shorts = NG bearish)
+//
+// Conviction gates (calibrated to 2–3 macro signals/year):
+//   1. Flow rarity  — |flowSum| must exceed the median historical flow magnitude for this
+//                     ETF+window pair. Filters out routine daily flow churn.
+//   2. Confirmation — z-score ≥ 0.75 (meaningful directional pressure), pressure sign agrees,
+//                     flow consistency ≥ 50% of days, pre-window acceleration present.
+//   3. Strength     — STR ≥ 55 on the 0–100 scale.
+//   4. AND gate     — BOTH confirmed AND STR ≥ 55 required (not OR). Eliminates weak
+//                     confirmed signals and strong unconfirmed signals equally.
+//   5. Onset only   — only the first day a divergence type appears; re-fires are suppressed.
 function collectConfluenceSignals() {
     const LEV  = { BOIL:3, HNU:2, '3NGL':3, KOLD:3, HND:2, '3NGS':3 };
     const SIDE = { BOIL:'L', HNU:'L', '3NGL':'L', KOLD:'S', HND:'S', '3NGS':'S' };
@@ -2770,8 +2781,18 @@ function collectConfluenceSignals() {
             }
         }
 
-        // Track last divergence type per window to emit only on ONSET (type change).
-        // Prevents flooding clusters with the same divergence repeated over many days.
+        // Pre-compute P50 (median) flow magnitude per window — the rarity gate threshold.
+        // Only signals with |flowSum| above the median for this ETF+window qualify.
+        const p50 = {};
+        for (const w of WINS) {
+            const vals = [];
+            for (let i = w; i < data.length; i++)
+                vals.push(Math.abs((data[i].cumulative_flow||0) - (data[i-w].cumulative_flow||0)));
+            vals.sort((a, b) => a - b);
+            p50[w] = vals[Math.floor(vals.length * 0.50)] || 0;
+        }
+
+        // Track last divergence type per window — emit only on ONSET (type change).
         const lastType = {}; // key: w → 'BEAR'|'BULL'|null
 
         for (let i = 10; i < data.length; i++) {
@@ -2787,8 +2808,10 @@ function collectConfluenceSignals() {
                 const curType   = isBear ? 'BEAR' : isBull ? 'BULL' : null;
                 const prevType  = lastType[w] || null;
                 lastType[w]     = curType;
-                // Only emit on onset — when divergence type first appears or flips
+                // Gate 5: onset only
                 if (curType === null || curType === prevType) continue;
+                // Gate 1: flow magnitude must be above median for this ETF+window
+                if (Math.abs(flowSum) < p50[w]) continue;
 
                 const avgDaily  = flowSum / w;
                 const zAtEnd    = cur.flow_zscore ?? 0;
@@ -2804,9 +2827,10 @@ function collectConfluenceSignals() {
                 const ef    = data[i].usd_flow || 0;
                 const efOk  = isBear ? ef < 0 : ef > 0;
 
+                // Gate 2: confirmed — z-score threshold raised 0.5 → 0.75
                 const confirmed =
-                    (isBear ? zAtEnd <= -0.5 : zAtEnd >= 0.5) &&
-                    (isBear ? presAtEnd < 0  : presAtEnd > 0)  &&
+                    (isBear ? zAtEnd <= -0.75 : zAtEnd >= 0.75) &&
+                    (isBear ? presAtEnd < 0   : presAtEnd > 0)  &&
                     (avgPre3 === null || (isBear ? avgDaily < avgPre3 : avgDaily > avgPre3)) &&
                     fc >= 0.5;
 
@@ -2817,7 +2841,8 @@ function collectConfluenceSignals() {
                 const eN  = efOk ? Math.min(Math.abs(ef) / (Math.abs(avgDaily)||1), 1.5) / 1.5 : 0;
                 const STR = Math.round(pN*30 + fN*30 + (w/10)*12 + cN*15 + eN*13);
 
-                if (!confirmed && STR < 50) continue;
+                // Gates 3+4: AND gate — both must pass (not OR)
+                if (!confirmed || STR < 55) continue;
 
                 // NG implication: LONG flips on isBear; SHORT flips the flip
                 const ngImpl = side === 'L' ? (isBear ? 'BEAR' : 'BULL') : (isBear ? 'BULL' : 'BEAR');
@@ -2829,8 +2854,17 @@ function collectConfluenceSignals() {
     return out;
 }
 
-// Cluster signals that are ≤3 TRADING DAYS apart (not calendar days).
-// Uses index distance in the sorted union of all trading dates.
+// Cluster signals that are ≤5 TRADING DAYS apart (not calendar days).
+// Widened from 3→5 to capture multi-day institutional positioning flows that unfold
+// over a week rather than a single day.
+//
+// Cluster qualification gates:
+//   A. Minimum 3 distinct ETFs must contribute (not 2 — coincidence threshold).
+//   B. Cross-side requirement: among signals voting for the cluster's majority NG
+//      direction, at least one LONG-side ETF (BOIL/HNU/3NGL) AND at least one
+//      SHORT-side ETF (KOLD/HND/3NGS) must agree. This is the core institutional
+//      alignment test — when both long and short instrument holders imply the same
+//      NG direction, it is genuine, not a single-instrument artefact.
 function clusterConfluenceSignals(signals) {
     if (!signals.length) return [];
     const allDates = [...new Set(
@@ -2838,21 +2872,42 @@ function clusterConfluenceSignals(signals) {
     )].sort();
     const dIdx = new Map(allDates.map((d, i) => [d, i]));
 
+    const LONG_SIDE  = new Set(['BOIL', 'HNU', '3NGL']);
+    const SHORT_SIDE = new Set(['KOLD', 'HND', '3NGS']);
+
     const clusters = [];
     let cur = [signals[0]];
     for (let i = 1; i < signals.length; i++) {
         const gap = (dIdx.get(signals[i].date)||0) - (dIdx.get(cur[cur.length-1].date)||0);
-        if (gap <= 3) cur.push(signals[i]);
+        if (gap <= 5) cur.push(signals[i]);
         else { clusters.push(cur); cur = [signals[i]]; }
     }
     clusters.push(cur);
-    return clusters.filter(c => new Set(c.map(s => s.tk)).size >= 2);
+
+    return clusters.filter(c => {
+        // Gate A: at least 3 distinct ETFs
+        if (new Set(c.map(s => s.tk)).size < 3) return false;
+        // Gate B: cross-side alignment — majority NG direction must have ≥1 long + ≥1 short
+        let bull = 0, bear = 0;
+        for (const s of c) s.ngImpl === 'BULL' ? bull++ : bear++;
+        const majorDir  = bull >= bear ? 'BULL' : 'BEAR';
+        const majorSigs = c.filter(s => s.ngImpl === majorDir);
+        const hasLong   = majorSigs.some(s => LONG_SIDE.has(s.tk));
+        const hasShort  = majorSigs.some(s => SHORT_SIDE.has(s.tk));
+        return hasLong && hasShort;
+    });
 }
 
-// Score a cluster → { best (per-ETF), norm (−1 to +1), bias }
+// Score a cluster → { best (per-ETF), norm (−1 to +1), bias, qualityTier }
 // Vote per ETF = ngSign × levWeight × (STR/100) × confirmationMultiplier
 // normScore = rawScore / Σ|vote|  — normalises by actual participation, not theoretical max.
 // Note: windowWeight is intentionally EXCLUDED — STR already encodes wNorm (w/10).
+//
+// qualityTier: number of distinct ETFs that contributed CONFIRMED signals.
+// Used in the table to signal institutional conviction level beyond the bare score.
+//
+// Bias thresholds raised (was ±0.35 / ±0.15) to match the new |norm|≥0.40 display floor.
+// LEAN labels removed — only BULLISH / BEARISH / NEUTRAL shown.
 function scoreCluster(cluster) {
     const LEV_W = { BOIL:1.5, HNU:1.0, '3NGL':1.5, KOLD:1.5, HND:1.0, '3NGS':1.5 };
     const best  = {};
@@ -2866,11 +2921,11 @@ function scoreCluster(cluster) {
         const w    = LEV_W[tk] * (s.STR / 100) * (s.confirmed ? 1.0 : 0.5);
         raw += sign * w; total += w;
     }
-    const norm  = total > 0 ? raw / total : 0;
-    const bias  = norm >  0.35 ? 'BULLISH'    : norm >  0.15 ? 'LEAN BULL'  :
-                  norm < -0.35 ? 'BEARISH'    : norm < -0.15 ? 'LEAN BEAR'  :
-                  norm === 0   ? 'CONFLICTED' : 'NEUTRAL';
-    return { best, norm, bias };
+    const norm         = total > 0 ? raw / total : 0;
+    const qualityTier  = Object.values(best).filter(s => s.confirmed).length;
+    const bias         = norm >  0.40 ? 'BULLISH' :
+                         norm < -0.40 ? 'BEARISH' : 'NEUTRAL';
+    return { best, norm, bias, qualityTier };
 }
 
 // Compound implied NG returns for `days` trading days after endDate.
@@ -2888,35 +2943,71 @@ function renderConfluenceTable() {
     const signals  = collectConfluenceSignals();
     const clusters = clusterConfluenceSignals(signals);
 
-    const COLORS = { BOIL:'#F5C542', HNU:'#E8924A', '3NGL':'#C4773A', KOLD:'#4A9CF5', HND:'#4DD4EA', '3NGS':'#A07AF5' };
     const TICKERS = ['BOIL','HNU','3NGL','KOLD','HND','3NGS'];
+
+    // Build trading-date index for the 30-day cooldown calculation.
+    const allDates = [...new Set(
+        TICKERS.flatMap(tk => (state.cache[tk]?.data||[]).map(d => d.date))
+    )].sort();
+    const dIdx = new Map(allDates.map((d, i) => [d, i]));
 
     const fmtMove = v => v === null
         ? `<span style="opacity:0.3;">—</span>`
         : `<span class="${v >= 0 ? 'val-green' : 'val-red'}">${v >= 0 ? '+' : ''}${(v * 100).toFixed(1)}%</span>`;
 
     // Accuracy cell: ✓ / ✗ / ~ / ⏳
+    // threshold = minimum meaningful NG move for this horizon (macro scale):
+    //   1M: ±8%   2M: ±12%   3M: ±18%
     const accCell = (move, threshold, isUp, isDn) => {
-        if (move === null)           return `<span style="opacity:0.35;font-size:0.7rem;">⏳</span>`;
-        if (!isUp && !isDn)         return `<span style="opacity:0.35;">—</span>`;
-        if (Math.abs(move) <= threshold) return `<span style="opacity:0.5;font-size:0.7rem;">~</span>`;
+        if (move === null)               return `<span style="opacity:0.35;font-size:0.7rem;">⏳</span>`;
+        if (!isUp && !isDn)             return `<span style="opacity:0.35;">—</span>`;
+        if (Math.abs(move) < threshold) return `<span style="opacity:0.5;font-size:0.7rem;">~</span>`;
         const correct = isUp ? move > threshold : move < -threshold;
         return correct
             ? `<span style="color:var(--green);font-weight:700;">✓</span>`
             : `<span style="color:var(--red);font-weight:700;">✗</span>`;
     };
 
+    // Filter: |norm| ≥ 0.40 — drop NEUTRAL/LEAN rows entirely.
+    // Filter: 30-trading-day cooldown — after a row fires, suppress the next cluster
+    //         unless it is ≥30 trading days after the previous row's END date.
+    //         Prevents rapid re-fire contradictions within the same NG move.
+    const SCORE_FLOOR   = 0.40;
+    const COOLDOWN_DAYS = 30;
+
+    const qualified = [...clusters]
+        .reverse()  // newest first for display
+        .filter(c => {
+            const { norm } = scoreCluster(c);
+            return Math.abs(norm) >= SCORE_FLOOR;
+        });
+
+    // Apply cooldown in chronological order, then re-reverse for display
+    const chronological = [...qualified].reverse();
+    const displayed = [];
+    let lastEndIdx = -Infinity;
+    for (const c of chronological) {
+        const startIdx = dIdx.get(c[0].date) ?? 0;
+        if (startIdx - lastEndIdx >= COOLDOWN_DAYS) {
+            displayed.push(c);
+            lastEndIdx = dIdx.get(c[c.length - 1].date) ?? startIdx;
+        }
+    }
+    displayed.reverse(); // back to newest-first for display
+
     let rows = '';
-    for (const cluster of [...clusters].reverse()) {
+    for (const cluster of displayed) {
         const startDate = cluster[0].date;
         const endDate   = cluster[cluster.length - 1].date;
-        const { best, norm, bias } = scoreCluster(cluster);
+        const { best, norm, bias, qualityTier } = scoreCluster(cluster);
 
-        const ng10 = ngFwdMove(endDate, ngMap, 10);
-        const ng22 = ngFwdMove(endDate, ngMap, 22);
+        // Validation: 1M ≈ 22 trading days, 2M ≈ 44, 3M ≈ 66
+        const ng1m = ngFwdMove(endDate, ngMap, 22);
+        const ng2m = ngFwdMove(endDate, ngMap, 44);
+        const ng3m = ngFwdMove(endDate, ngMap, 66);
 
-        const isUp  = bias === 'BULLISH' || bias === 'LEAN BULL';
-        const isDn  = bias === 'BEARISH' || bias === 'LEAN BEAR';
+        const isUp  = bias === 'BULLISH';
+        const isDn  = bias === 'BEARISH';
         const bCol  = isUp ? 'var(--green)' : isDn ? 'var(--red)' : 'var(--text-muted)';
         const bBg   = isUp ? 'rgba(61,184,122,0.12)' : isDn ? 'rgba(192,64,64,0.12)' : 'rgba(148,163,184,0.08)';
 
@@ -2924,6 +3015,9 @@ function renderConfluenceTable() {
         const ngDir     = isUp ? '↑ UP' : isDn ? '↓ DOWN' : '—';
         const windowStr = startDate === endDate ? startDate : `${startDate} – ${endDate}`;
         const etfCount  = Object.keys(best).length;
+
+        // Quality badge: confirmed ETF count / total ETF count
+        const qualBadge = `<span style="font-size:0.55rem;opacity:0.55;display:block;margin-top:1px;">${qualityTier}★ / ${etfCount} ETFs</span>`;
 
         // Per-ETF signal cell: ◆↑63 (confirmed bull) or ◇↓41 (unconfirmed bear)
         const etfCells = TICKERS.map(tk => {
@@ -2936,20 +3030,21 @@ function renderConfluenceTable() {
         }).join('</td><td style="text-align:center;">');
 
         rows += `<tr style="border-left:3px solid ${bCol};">
-            <td style="font-size:0.68rem;white-space:nowrap;color:var(--text-muted);">${windowStr}<br><span style="opacity:0.45;font-size:0.6rem;">${etfCount}/6 ETFs</span></td>
+            <td style="font-size:0.68rem;white-space:nowrap;color:var(--text-muted);">${windowStr}${qualBadge}</td>
             <td style="text-align:center;">${etfCells}</td>
             <td style="text-align:center;font-size:0.75rem;color:${bCol};font-weight:700;">${scoreStr}</td>
             <td><span style="display:inline-block;padding:1px 7px;border-radius:3px;font-size:0.63rem;font-weight:800;background:${bBg};color:${bCol};letter-spacing:0.5px;">${bias}</span></td>
             <td style="color:${bCol};font-weight:800;font-size:0.8rem;white-space:nowrap;">${ngDir}</td>
-            <td>${fmtMove(ng10)}</td>
-            <td>${fmtMove(ng22)}</td>
-            <td style="text-align:center;white-space:nowrap;">
-                ${accCell(ng10, 0.015, isUp, isDn)}&nbsp;/&nbsp;${accCell(ng22, 0.03, isUp, isDn)}
+            <td>${fmtMove(ng1m)}</td>
+            <td>${fmtMove(ng2m)}</td>
+            <td>${fmtMove(ng3m)}</td>
+            <td style="text-align:center;white-space:nowrap;font-size:0.7rem;">
+                ${accCell(ng1m, 0.08, isUp, isDn)}&nbsp;/&nbsp;${accCell(ng2m, 0.12, isUp, isDn)}&nbsp;/&nbsp;${accCell(ng3m, 0.18, isUp, isDn)}
             </td>
         </tr>`;
     }
 
-    if (!rows) rows = `<tr><td colspan="13" style="text-align:center;color:var(--text-dim);padding:20px;">No confluence windows detected in loaded data.</td></tr>`;
+    if (!rows) rows = `<tr><td colspan="13" style="text-align:center;color:var(--text-dim);padding:20px;">No high-conviction confluence windows detected in loaded data.</td></tr>`;
     document.getElementById('conf-body').innerHTML = rows;
 }
 
