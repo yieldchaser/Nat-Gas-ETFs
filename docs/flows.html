@@ -545,7 +545,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                         <th data-tooltip="Average daily flow for the 3 trading days after the divergence date. Measures post-signal flow follow-through — did capital continue in the same direction or reverse? Shows — for the most recent divergences.">+3D AVG</th>
                         <th data-tooltip="Average daily flow for the 3 trading days immediately before the divergence date. Reveals pre-divergence flow momentum — was the imbalance already building or is this a sudden regime shift?">-3D AVG</th>
                         <th data-tooltip="Net capital flow on the exact divergence end-date. Distinct from AVG/DAY (which averages across the full window); isolates whether the final day itself spiked or was ordinary.">DAY FLOW</th>
-                        <th data-tooltip="Average daily flow over the 30 trading days immediately before the divergence window started. Represents the prevailing flow regime entering the event — compare ±3D AVG and AVG/DAY against this to judge whether the divergence is truly anomalous.">PRE-30D</th>
+                        <th data-tooltip="30-day flow baseline: average daily flow over the 30 trading days ending the day before the divergence window opened (i.e. days −(w+30) to −(w+1) relative to the divergence date, where w is the scan window). This is NOT the 30 days before the event date — there is a gap of w days between this baseline and −3D AVG. Use it as the pre-event flow regime reference to judge whether the divergence is truly anomalous.">BASE-30D</th>
                         <th data-tooltip="Signal interpretation implied by the divergence pattern." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">SIGNAL</th>
                         <th data-tooltip="Divergence strength (0–100). Combines price magnitude × flow magnitude × window length. Higher = more significant.">STR</th>
                     </tr>
@@ -2119,7 +2119,7 @@ function renderDivergence() {
                 // 4. DAY FLOW: net flow on the exact divergence end-date
                 const exactFlow = recent[i].usd_flow || 0;
 
-                // 5. PRE-30D: average daily flow over the 30 trading days before the divergence window start
+                // 5. BASE-30D: average daily flow over the 30 trading days before the divergence window start
                 //    Uses full data[] so history outside the current lookback slice is included.
                 const preEndFullIdx = dataOffset + i - w; // index of window-start day in data[]
                 const preStartFullIdx = Math.max(0, preEndFullIdx - 30);
