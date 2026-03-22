@@ -2059,18 +2059,39 @@ function renderDivergence() {
                 const zAtEnd    = cur.flow_zscore ?? 0;
                 const presAtEnd = Math.round(cur.pressure ?? 0);
 
-                // Confirmation: Z-score and pressure both agree with divergence type
+                // Pre-compute s and PRE-3D here so confirmation can use them
+                const s = i - w + 1;
+                const canPre3 = (s - 3) >= 0;
+                let avgPre3 = null;
+                if (canPre3) {
+                    avgPre3 = ((recent[s-3].usd_flow || 0) + (recent[s-2].usd_flow || 0) + (recent[s-1].usd_flow || 0)) / 3;
+                }
+
+                // Daily flow consistency: fraction of event-window days with flow in divergence direction
                 const isBear = type === 'BEARISH DIV';
-                const zAgrees   = isBear ? zAtEnd <= -0.5 : zAtEnd >= 0.5;
-                const presAgrees = isBear ? presAtEnd < 0 : presAtEnd > 0;
-                const confirmed = zAgrees && presAgrees;
+                let consistentDays = 0;
+                for (let j = s; j <= i; j++) {
+                    const df = recent[j].usd_flow || 0;
+                    if (isBear ? df < 0 : df > 0) consistentDays++;
+                }
+                const flowConsistency = consistentDays / w; // 0–1
+
+                // Confirmation: Z-score, pressure, PRE-3D flow shift, and daily consistency all agree
+                const zAgrees           = isBear ? zAtEnd <= -0.5 : zAtEnd >= 0.5;
+                const presAgrees        = isBear ? presAtEnd < 0 : presAtEnd > 0;
+                // PRE-3D gate: pre-event flow should not already be moving in the divergence direction
+                const pre3dAgrees       = avgPre3 === null || (isBear ? avgPre3 >= 0 : avgPre3 <= 0);
+                // Consistency gate: majority of event days must have flow matching divergence direction
+                const consistencyAgrees = flowConsistency >= 0.5;
+                const confirmed = zAgrees && presAgrees && pre3dAgrees && consistencyAgrees;
                 if (confirmed) sig = isBear ? '🔴 CONFIRMED Dist.' : '🟢 CONFIRMED Accum.';
 
-                // Strength score 0–100: price magnitude × flow magnitude × window weight
+                // Strength score 0–100: price magnitude × flow magnitude × window weight × daily consistency
                 const pNorm = Math.min(Math.abs(priceMove) / (thresh * 5), 1); // cap at 5× threshold
                 const fNorm = maxAbsFlow > 0 ? Math.min(Math.abs(flowSum) / maxAbsFlow, 1) : 0;
                 const wNorm = w / 10; // 3d=0.3, 5d=0.5, 10d=1.0
-                const strength = Math.round(pNorm * 0.4 * 100 + fNorm * 0.4 * 100 + wNorm * 0.2 * 100);
+                const cNorm = flowConsistency; // daily flow consistency 0–1
+                const strength = Math.round(pNorm * 0.35 * 100 + fNorm * 0.35 * 100 + wNorm * 0.15 * 100 + cNorm * 0.15 * 100);
                 const strCol = strength >= 70 ? 'val-green' : strength >= 40 ? 'val-muted' : 'val-red';
                 const strRgb = strength >= 70 ? '61,184,122' : strength >= 40 ? '148,163,184' : '192,64,64';
 
@@ -2093,11 +2114,9 @@ function renderDivergence() {
                 const strBar = `linear-gradient(90deg,rgba(${strRgb},0.18) ${strength}%,transparent ${strength}%)`;
 
                 // === Context flow metrics ===
-                // Event window: s = i-w+1 (start), e = i (end)
-                const s = i - w + 1; // window start index in recent[]
-                const canPost3  = (i + 3) < recent.length;
-                const canPre3   = (s - 3) >= 0;  // s-3 must exist
-                const canLocal  = canPre3 && canPost3;
+                // s, canPre3, avgPre3 already computed above for confirmation logic
+                const canPost3 = (i + 3) < recent.length;
+                const canLocal = canPre3 && canPost3;
 
                 // 1. LOCAL AVG: average daily flow from s-3 to e+3 (w+6 days)
                 let avgCenter7 = null;
@@ -2114,11 +2133,7 @@ function renderDivergence() {
                     avgPost3 = ((recent[i+1].usd_flow || 0) + (recent[i+2].usd_flow || 0) + (recent[i+3].usd_flow || 0)) / 3;
                 }
 
-                // 3. PRE-3D: average daily flow for s-3 to s-1 (no overlap with event window)
-                let avgPre3 = null;
-                if (canPre3) {
-                    avgPre3 = ((recent[s-3].usd_flow || 0) + (recent[s-2].usd_flow || 0) + (recent[s-1].usd_flow || 0)) / 3;
-                }
+                // 3. PRE-3D: already computed above (avgPre3)
 
                 // 4. DAY FLOW: net flow on the exact divergence end-date
                 const exactFlow = recent[i].usd_flow || 0;
