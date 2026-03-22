@@ -31,19 +31,6 @@
         </div>
     </header>
 
-    <!-- PRICE-VOLUME CORRELATION BANNER -->
-    <div id="hypothesis-banner" class="hypothesis-banner collapsed">
-        <div class="banner-toggle" onclick="toggleBanner()">
-            <span class="banner-title">PRICE-VOLUME CORRELATION — 30-Day Spearman</span>
-            <span class="banner-arrow">&#x25BC;</span>
-        </div>
-        <div class="banner-content" id="banner-content">
-            <div class="validation-grid" id="validation-grid">
-                <!-- Filled dynamically -->
-            </div>
-        </div>
-    </div>
-
     <!-- MAIN 3-SECTION LAYOUT -->
     <main id="dashboard">
         <!-- SECTION A: LONG SIDE -->
@@ -64,11 +51,27 @@
                 <span class="section-label">Volume Intelligence</span>
             </div>
 
-            <!-- NG=F GAS PRICE CONTEXT BAR (Feature 2) -->
+            <!-- NG=F GAS PRICE CONTEXT BAR -->
             <div class="ng-price-bar-panel" id="ng-price-bar-panel">
                 <div id="ng-price-bar" class="ng-price-bar">
                     <span class="ng-bar-label">NG=F</span>
                     <span class="ng-bar-na">Loading gas price context…</span>
+                </div>
+            </div>
+
+            <!-- CONVICTION EVENTS — strict multi-gate anomaly filter -->
+            <div class="signal-panel" id="conviction-panel">
+                <h3 data-tooltip="Strict multi-gate filter requiring ALL conditions simultaneously: VCVI≥72, ≥3/5 vol windows≥85th pct, daily move>1.5×ATR, vol regime≤70th. Designed to flag only ~1-2 events per ETF per year.">CONVICTION EVENTS <span class="panel-subtitle">— multi-gate signal filter</span></h3>
+                <div id="conviction-container">
+                    <div class="conviction-loading">Scanning historical data…</div>
+                </div>
+            </div>
+
+            <!-- ELEVATED WATCH — 3-gate softer filter -->
+            <div class="signal-panel" id="elevated-watch-panel">
+                <h3 data-tooltip="3-gate softer filter: VCVI≥60, ≥2/N windows≥75th pct, move>1.2×ATR. No vol-regime gate — catches slow-building peaks. Designed for ~4-8 events per year. Excludes dates already flagged by full Conviction Events.">ELEVATED WATCH <span class="panel-subtitle">— 3-gate pre-conviction filter</span></h3>
+                <div id="elevated-watch-container">
+                    <div class="conviction-loading">Scanning watch events…</div>
                 </div>
             </div>
 
@@ -114,22 +117,6 @@
                 </div>
             </div>
 
-            <!-- CONVICTION EVENTS — strict multi-gate anomaly filter -->
-            <div class="signal-panel" id="conviction-panel">
-                <h3 data-tooltip="Strict multi-gate filter requiring ALL conditions simultaneously: VCVI≥72, ≥3/5 vol windows≥85th pct, daily move>1.5×ATR, vol regime≤70th. Designed to flag only ~1-2 events per ETF per year.">CONVICTION EVENTS <span class="panel-subtitle">— multi-gate signal filter</span></h3>
-                <div id="conviction-container">
-                    <div class="conviction-loading">Scanning historical data…</div>
-                </div>
-            </div>
-
-            <!-- ELEVATED WATCH — 3-gate softer filter (Feature 5) -->
-            <div class="signal-panel" id="elevated-watch-panel">
-                <h3 data-tooltip="3-gate softer filter: VCVI≥60, ≥2/N windows≥75th pct, move>1.2×ATR. No vol-regime gate — catches slow-building peaks. Designed for ~4-8 events per year. Excludes dates already flagged by full Conviction Events.">ELEVATED WATCH <span class="panel-subtitle">— 3-gate pre-conviction filter</span></h3>
-                <div id="elevated-watch-container">
-                    <div class="conviction-loading">Scanning watch events…</div>
-                </div>
-            </div>
-
             <!-- HISTORICAL ECHOES -->
             <div class="signal-panel" id="echoes-panel">
                 <h3 data-tooltip="When the same VCVI signal conditions existed in the past (VCVI≥55, VolRegime≤60th), what happened to prices over the next 5, 10, and 21 sessions? Base-rate statistics from full available history. Lead-time marker shows median days to peak.">HISTORICAL ECHOES <span class="panel-subtitle">— past VCVI signals &amp; outcomes</span></h3>
@@ -162,22 +149,14 @@
                     <!-- Filled dynamically -->
                 </div>
             </div>
-
-            <!-- ROLLING CORRELATION MONITOR -->
-            <div class="signal-panel" id="correlation-panel">
-                <h3>PRICE-VOLUME CORRELATION MONITOR</h3>
-                <div class="correlation-bars" id="correlation-bars">
-                    <!-- Filled dynamically -->
-                </div>
-                <div class="correlation-note">30-day rolling Spearman correlation. Negative = price drops coincide with volume spikes (inverse relationship active).</div>
-            </div>
         </section>
 
         <!-- SECTION B: SHORT SIDE -->
         <section class="dashboard-section section-short" id="section-short">
             <div class="section-header">
                 <h2>SHORT SIDE</h2>
-                <span class="section-label">2x / 3x Leveraged Short</span>
+                <span class="section-label">2x / 3x Leveraged Short — <strong>Primary signal anchor</strong></span>
+                <span class="section-sublabel" data-tooltip="Statistical validation (n=166 cycles): short ETF trough volume spikes at median 1.55× baseline (z=5.4). Volume spikes at short ETF price troughs = gas price peaks. This is the strongest and most reliable turning-point signal in this system.">Volume spikes at trough = gas TOP candidate</span>
             </div>
             <div class="etf-cards" id="short-cards">
                 <!-- KOLD, HND, 3NGS cards inserted here -->
