@@ -252,9 +252,10 @@ Embedded below the Price & Cycle Map. Displays full-lifetime historical volatili
 Each box shows the annualised HV %, its percentile vs full available history, and a colour-coded regime pip.
 
 **Chart features (matching Price & Cycle Map):**
-- Full-lifetime HV-21 line chart (3,300–4,500+ sessions depending on ETF) with colour-segmented line (Blue/Green/Orange/Red by regime)
+- Interactive multi-selection: Toggle any combination of 5D, 21D, 63D, and 252D HV series to view them overlaid
+- Full-lifetime HV line charts (3,300–4,500+ sessions depending on ETF) dynamically color-segmented by their respective regime percentiles
 - Background regime zones (Low / Normal / Elevated / Spike)
-- Area-fill gradient under line
+- Area-fill gradient under the primary selected line
 - 5-level evenly-spaced Y-axis grid with left-side HV% labels
 - Right-side percentile threshold labels (p25 / p75 / p90)
 - X-axis date labels — adaptive to zoom: daily (≤14 bars), weekly (≤35), biweekly (≤65), monthly, or yearly-boundary mode
