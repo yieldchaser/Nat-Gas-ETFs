@@ -149,7 +149,7 @@ const App = {
 
             // Compute vol series / percentiles from stored history if not in pipeline JSON
             const histCloses = (etfData.history || []).map(h => h.close ?? h[1]).filter(v => v != null);
-            const computedHvSeries21   = histCloses.length >= 22 ? Metrics.computeHVSeries(histCloses, 21, 252) : [];
+            const computedHvSeries21   = histCloses.length >= 22 ? Metrics.computeHVSeries(histCloses, 21, histCloses.length) : [];
             const computedHvPercentiles = histCloses.length >= 6 ? {
                 '5d':  Metrics.computeHVPercentile(histCloses, 5),
                 '21d': Metrics.computeHVPercentile(histCloses, 21),
