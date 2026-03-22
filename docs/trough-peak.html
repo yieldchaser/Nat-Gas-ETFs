@@ -2125,6 +2125,13 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
                     if (dd && dd.etfs) {
                         const vrmMetrics = VolRegime.buildMetricsFromDashboard(dd);
                         VolRegime.render(vrmMetrics, null);
+                        // Fetch NG=F live for VRM (not in dashboard_data.json)
+                        fetchTickerLive('NG=F').then(ngLive => {
+                            if (ngLive) {
+                                const ngM = VolRegime.buildMetricsFromLive('NG=F', ngLive);
+                                if (ngM) VolRegime.render(vrmMetrics, ngM);
+                            }
+                        }).catch(() => {});
                     }
                 }).catch(() => {});
             }
