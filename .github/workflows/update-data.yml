@@ -6,8 +6,8 @@ on:
     # UTC is ET + 5 (EST) or ET + 4 (EDT)
     # Using conservative window: 13:30 - 20:15 UTC (covers both EST and EDT)
     - cron: '*/15 13-20 * * 1-5'
-    # Run once at 21:00 UTC for end-of-day snapshot
-    - cron: '0 21 * * 1-5'
+    # Run once at 21:00 UTC for end-of-day snapshot (daily, incl. weekends to catch T+1 API lag)
+    - cron: '0 21 * * *'
   workflow_dispatch: # Allow manual triggers
 
 permissions:
