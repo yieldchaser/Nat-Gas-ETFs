@@ -569,7 +569,7 @@ def _fetch_ng_price_context() -> dict:
     Returns dict with price, seasonal_zscore, tier, and gate flags for both sides.
     """
     logger.info("Fetching NG=F for gas price level gate …")
-    df = _yahoo_fetch_one(NG_TICKER, {})
+    df, _ = _yahoo_fetch_one(NG_TICKER, {})
 
     if df is None or df.empty or len(df) < 60:
         logger.warning("Could not fetch NG=F — gas price gate unavailable")
@@ -701,11 +701,14 @@ def _market_status() -> str:
 def _yahoo_fetch_one(
     ticker: str,
     known_splits: Dict[str, List[Tuple[str, float]]],
-) -> Optional[pd.DataFrame]:
+) -> Tuple[Optional[pd.DataFrame], Optional[dict]]:
     """Fetch full daily OHLCV history for a single ticker via Yahoo Finance v8 chart API.
 
     Uses period1/period2 parameters to request the complete daily history
     (period1 set to 2007-01-01 to capture all available data for every ETF).
+
+    Returns (df, live_snapshot) where live_snapshot uses meta.regularMarketPrice
+    which is always the current real-time price, independent of the daily bar cadence.
     """
     period1 = int(datetime(2007, 1, 1).timestamp())
     period2 = int(datetime.now().timestamp())
@@ -725,6 +728,7 @@ def _yahoo_fetch_one(
             raw = json.loads(resp.read())
 
             result = raw["chart"]["result"][0]
+            meta = result.get("meta", {})
             timestamps = result["timestamp"]
             quote = result["indicators"]["quote"][0]
 
@@ -745,7 +749,26 @@ def _yahoo_fetch_one(
             # Apply known split adjustments (from data/known_splits.json)
             df = _apply_split_adjustments(df, ticker, known_splits)
 
-            return df
+            # Extract real-time snapshot from meta — regularMarketPrice updates
+            # continuously and is independent of the daily bar update cadence.
+            live_price = meta.get("regularMarketPrice")
+            live_vol   = meta.get("regularMarketVolume")
+            prev_close = meta.get("chartPreviousClose") or meta.get("previousClose")
+            live_snapshot: Optional[dict] = None
+            if live_price is not None:
+                change_pct = None
+                if prev_close and prev_close > 0:
+                    change_pct = round((live_price - prev_close) / prev_close * 100, 6)
+                live_snapshot = {
+                    "price":      round(float(live_price), 4),
+                    "volume":     int(live_vol) if live_vol is not None else None,
+                    "prev_close": round(float(prev_close), 4) if prev_close else None,
+                    "change_pct": change_pct,
+                }
+                logger.info("  → Live snapshot %s: price=%.4f chg=%.2f%%",
+                            ticker, live_price, change_pct or 0.0)
+
+            return df, live_snapshot
 
         except Exception as e:
             logger.warning("Attempt %d/%d for %s failed: %s", attempt, MAX_RETRIES, ticker, e)
@@ -753,10 +776,10 @@ def _yahoo_fetch_one(
                 import time
                 time.sleep(RETRY_DELAY_SECS * attempt)
 
-    return None
+    return None, None
 
 
-def _fetch_all() -> Tuple[Dict[str, pd.DataFrame], List[dict]]:
+def _fetch_all() -> Tuple[Dict[str, pd.DataFrame], Dict[str, dict], List[dict]]:
     """Download full daily OHLCV history for all 6 ETFs via Yahoo Finance v8 API.
 
     Two-pass split handling:
@@ -767,15 +790,18 @@ def _fetch_all() -> Tuple[Dict[str, pd.DataFrame], List[dict]]:
               the events so run_pipeline() can persist them back to
               known_splits.json and commit them alongside the data.
 
-    Returns (frames, newly_detected_splits).
+    Returns (frames, live_snapshots, newly_detected_splits).
+    live_snapshots maps ticker → {price, volume, prev_close, change_pct} from
+    meta.regularMarketPrice, which is real-time and always current.
     """
     known_splits = _load_known_splits()
     frames: Dict[str, pd.DataFrame] = {}
+    live_snapshots: Dict[str, dict] = {}
     all_detected: List[dict] = []
 
     for ticker in ETF_CONFIG:
         logger.info("Fetching %s from Yahoo Finance …", ticker)
-        df = _yahoo_fetch_one(ticker, known_splits)
+        df, snapshot = _yahoo_fetch_one(ticker, known_splits)
 
         if df is not None and not df.empty:
             # Pass 2: auto-detect splits not yet in known_splits.json
@@ -797,11 +823,14 @@ def _fetch_all() -> Tuple[Dict[str, pd.DataFrame], List[dict]]:
         else:
             logger.error("No data for %s after %d retries", ticker, MAX_RETRIES)
 
+        if snapshot:
+            live_snapshots[ticker] = snapshot
+
     # Persist updated splits dict so the next run treats new events as "known"
     if all_detected:
         _save_known_splits(known_splits)
 
-    return frames, all_detected
+    return frames, live_snapshots, all_detected
 
 
 # ---------------------------------------------------------------------------
@@ -2024,7 +2053,7 @@ def run_pipeline() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     # ---- 1. Fetch live data from Yahoo Finance ----
-    frames, auto_detected_splits = _fetch_all()
+    frames, live_snapshots, auto_detected_splits = _fetch_all()
 
     # ---- 1b. Fetch NG=F gas price context (Feature 2) ----
     ng_price_context = _fetch_ng_price_context()
@@ -2053,6 +2082,22 @@ def run_pipeline() -> None:
             all_metrics[ticker] = m
         except Exception:
             logger.exception("Metric computation failed for %s", ticker)
+
+    # ---- 2b. Overlay real-time prices from meta.regularMarketPrice ----
+    # meta.regularMarketPrice updates continuously; the daily bar updates ~hourly.
+    # This ensures current.price always reflects the live market price.
+    for ticker, snap in live_snapshots.items():
+        if ticker not in all_metrics:
+            continue
+        cur = all_metrics[ticker]["current"]
+        if snap.get("price") is not None:
+            cur["price"] = snap["price"]
+        if snap.get("volume") is not None:
+            cur["volume"] = snap["volume"]
+        if snap.get("change_pct") is not None:
+            cur["change_pct"] = snap["change_pct"]
+        if snap.get("price") is not None and snap.get("volume") is not None:
+            cur["dollar_volume"] = round(snap["price"] * snap["volume"], 4)
 
     # ---- 3. Cross-instrument metrics ----
     pairs_data = compute_pairs(all_metrics)
