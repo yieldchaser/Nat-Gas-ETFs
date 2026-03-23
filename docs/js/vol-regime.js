@@ -436,7 +436,7 @@ const VolRegime = {
             if (days) {
                 const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
                 const idx = fullDates.findIndex(d => d >= cutoff);
-                startPct = idx === -1 ? 0 : Math.round((idx / n) * 100);
+                startPct = idx === -1 ? 0 : Math.min(99, Math.floor((idx / n) * 100));
             }
         }
         this._rangeState[ticker] = { start: startPct, end: 100 };
