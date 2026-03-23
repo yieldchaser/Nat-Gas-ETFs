@@ -34,6 +34,9 @@ const App = {
             if (precomputed && precomputed.etfs) {
                 console.log('[MONITOR] Using pre-computed data');
                 this.processPrecomputed(precomputed);
+                // Overlay real-time prices on top of pre-computed signals/metrics.
+                // The JSON updates ~hourly; regularMarketPrice updates continuously.
+                this._overlayLivePrices();
                 // Fetch NG=F live (vol regime monitor now on trough-peak page)
                 DataService.fetchNG().then(ngData => {
                     if (ngData) {
@@ -57,6 +60,52 @@ const App = {
             this.isLoading = false;
             this.setLoading(false);
         }
+    },
+
+    // Fetch regularMarketPrice from Yahoo Finance (via CORS proxy) and overlay
+    // onto already-rendered cards. Runs in background after processPrecomputed.
+    _overlayLivePrices() {
+        const today = new Date().toISOString().split('T')[0];
+        DataService.fetchAll().then(liveData => {
+            let updated = false;
+            for (const [ticker, liveETF] of Object.entries(liveData.etfs)) {
+                if (!liveETF || !this.allMetrics[ticker]) continue;
+                const livePrice = liveETF.regularMarketPrice;
+                const prevClose = liveETF.previousClose;
+                if (livePrice == null) continue;
+
+                this.allMetrics[ticker].current.price = livePrice;
+                if (prevClose && prevClose > 0) {
+                    this.allMetrics[ticker].current.changePct =
+                        (livePrice - prevClose) / prevClose * 100;
+                }
+                // Update today's volume from the last bar if it's today's bar
+                const bars = liveETF.data;
+                if (bars && bars.length > 0) {
+                    const lastBar = bars[bars.length - 1];
+                    if (lastBar.date === today && lastBar.volume != null) {
+                        this.allMetrics[ticker].current.volume = lastBar.volume;
+                        this.allMetrics[ticker].current.dollarVolume =
+                            livePrice * lastBar.volume;
+                    }
+                }
+                updated = true;
+            }
+            if (updated) {
+                this.render();
+                // Show live price timestamp separate from JSON pipeline timestamp
+                const el = document.getElementById('last-updated');
+                if (el) {
+                    const t = new Date().toLocaleTimeString('en-US', {
+                        hour: '2-digit', minute: '2-digit', second: '2-digit'
+                    });
+                    el.textContent = `Prices: LIVE ${t}`;
+                }
+                console.log('[MONITOR] Live price overlay applied');
+            }
+        }).catch(err => {
+            console.warn('[MONITOR] Live price overlay failed (non-fatal):', err);
+        });
     },
 
     processLiveData(raw) {
