@@ -79,15 +79,21 @@ const App = {
                 // when market is closed meta.previousClose == regularMarketPrice
                 // (both = last official close) giving 0%, and chartPreviousClose
                 // is the base price of the full chart period (years-old price).
-                // Second-to-last bar is the correct prior-session close in all
-                // market states.
-                const bars = liveETF.data;
+                //
+                // Yahoo Finance also inserts a preliminary bar for today during
+                // pre-market/closed periods with close = previous session's price,
+                // which makes bars[-1] and bars[-2] identical → 0% change.
+                // Strip that preliminary bar when the market is not open.
+                const marketOpen = liveData.marketState === 'open';
+                let bars = liveETF.data;
+                if (bars && bars.length > 0 && !marketOpen && bars[bars.length - 1].date === today) {
+                    bars = bars.slice(0, -1);
+                }
                 if (bars && bars.length >= 2) {
                     const lastBar = bars[bars.length - 1];
                     const prevClose = bars[bars.length - 2].close;
-                    // Use livePrice if today's bar is present (intraday change);
-                    // otherwise use last bar's close (prior session's daily change).
-                    const currentForChange = (lastBar.date === today) ? livePrice : lastBar.close;
+                    // When market is open use livePrice (intraday); otherwise last bar's close.
+                    const currentForChange = marketOpen ? livePrice : lastBar.close;
                     if (prevClose && prevClose > 0) {
                         this.allMetrics[ticker].current.changePct =
                             (currentForChange - prevClose) / prevClose * 100;
