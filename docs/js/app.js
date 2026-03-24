@@ -64,7 +64,8 @@ const App = {
 
     // Fetch regularMarketPrice from Yahoo Finance (via CORS proxy) and overlay
     // onto already-rendered cards. Runs in background after processPrecomputed.
-    _overlayLivePrices() {
+    // Retries once after 10 s if all proxies fail.
+    _overlayLivePrices(retryCount = 0) {
         const today = new Date().toISOString().split('T')[0];
         DataService.fetchAll().then(liveData => {
             let updated = false;
@@ -124,6 +125,10 @@ const App = {
             }
         }).catch(err => {
             console.warn('[MONITOR] Live price overlay failed (non-fatal):', err);
+            if (retryCount < 1) {
+                console.log('[MONITOR] Retrying live overlay in 10 s...');
+                setTimeout(() => this._overlayLivePrices(retryCount + 1), 10000);
+            }
         });
     },
 
@@ -369,7 +374,18 @@ const App = {
         const el = document.getElementById('last-updated');
         if (!el) return;
         const t = iso ? new Date(iso) : new Date();
-        el.textContent = `Updated: ${t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+        const ageMs = Date.now() - t.getTime();
+        const stale = iso && ageMs > 2 * 60 * 60 * 1000; // > 2 hours old
+        const timeStr = t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        if (stale) {
+            const ageH = Math.floor(ageMs / 3600000);
+            const ageM = Math.floor((ageMs % 3600000) / 60000);
+            el.textContent = `Data: ${timeStr} — STALE (${ageH}h ${ageM}m ago)`;
+            el.classList.add('stale');
+        } else {
+            el.textContent = `Updated: ${timeStr}`;
+            el.classList.remove('stale');
+        }
     },
 
     setLoading(on) {
