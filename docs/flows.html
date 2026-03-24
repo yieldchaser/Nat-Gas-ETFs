@@ -809,7 +809,28 @@ async function init() {
     try {
         const res = await fetch('data/flows/all_flows_summary.json?t=' + Date.now());
         state.summary = await res.json();
-        el('last-updated').textContent = `Updated: ${state.summary.updated}`;
+        (function() {
+            const updatedStr = state.summary.updated; // "YYYY-MM-DD"
+            const todayStr = new Date().toISOString().slice(0, 10);
+            // Count business days elapsed since the data was updated
+            function bizDaysBetween(a, b) {
+                const from = new Date(a + 'T12:00:00Z'), to = new Date(b + 'T12:00:00Z');
+                let n = 0, d = new Date(from);
+                d.setDate(d.getDate() + 1);
+                while (d <= to) { if (d.getDay() !== 0 && d.getDay() !== 6) n++; d.setDate(d.getDate() + 1); }
+                return n;
+            }
+            const staleDays = bizDaysBetween(updatedStr, todayStr);
+            const stale = staleDays >= 2;
+            const luEl = el('last-updated');
+            if (stale) {
+                luEl.textContent = `Data: ${updatedStr} — STALE (${staleDays}d)`;
+                luEl.classList.add('stale');
+            } else {
+                luEl.textContent = `Updated: ${updatedStr}`;
+                luEl.classList.remove('stale');
+            }
+        })();
         renderSection1();
         renderSection2();
         
