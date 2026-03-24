@@ -335,8 +335,8 @@ docs/
 │   ├── cards.css        # ETF card styling
 │   └── signals.css      # Signal panel + Vol Regime Monitor styling
 └── js/
-    ├── app.js           # App controller, data loading
-    ├── data.js          # Yahoo Finance API
+    ├── app.js           # App controller, data loading, live overlay, auto-refresh
+    ├── data.js          # Yahoo Finance fetch layer (3-proxy CORS chain, parser)
     ├── cards.js         # Card rendering (decay-adj VCVI, season badge, spike)
     ├── charts.js        # Canvas charts (sparklines, forward return, trough-to-peak)
     ├── signals.js       # NG bar, stress matrix, SWVC, conviction, echoes
@@ -374,7 +374,11 @@ docs/data/                     # GitHub Pages copy (synced by Actions)
 
 ### Data Flow
 
-**Volume pipeline (nightly via GitHub Actions):**
+The dashboard uses a two-layer data architecture: a pre-computed pipeline layer for deep metrics, overlaid with a live browser-side price fetch for real-time accuracy.
+
+**Layer 1 — Pre-computed pipeline (GitHub Actions, every 15 min during market hours + daily at 21:00 UTC):**
+
+*Volume pipeline:*
 1. Fetch full-lifetime OHLCV for 6 ETFs + NG=F via Yahoo Finance (3,300–4,500+ sessions per ETF, back to 2008–2012 depending on listing date)
 2. Compute NG=F context: seasonal Z-score, HV percentile, regime series
 3. Compute per-ETF: volume metrics (6 windows), volatility, CVI/VCVI, VPS, decay-adj
@@ -385,7 +389,7 @@ docs/data/                     # GitHub Pages copy (synced by Actions)
 
 > Full-lifetime history is stored (not capped at 252 days) so the Vol Regime Monitor can render complete HV sparklines from each ETF's inception date, and percentile rankings are computed against the full available record.
 
-**Flow pipeline (nightly via GitHub Actions):**
+*Flow pipeline:*
 1. Fetch daily AUM snapshots for all 6 ETFs from TrackInsight
 2. Parse USD flow, NAV, and daily performance from snapshot fields
 3. Compute cumulative flow, 30-day rolling Z-Score, 5D/20D momentum
@@ -393,6 +397,20 @@ docs/data/                     # GitHub Pages copy (synced by Actions)
 5. Compute pressure score (Z + momentum + streak bonus, clamped ±100)
 6. Aggregate cross-ETF sentiment (bull vs bear 30d net flows, BULLISH/BEARISH/NEUTRAL)
 7. Write per-ticker JSON + summary JSON → sync to `docs/data/flows/`
+
+**Layer 2 — Live browser-side overlay (Volume Monitor only):**
+
+After the pre-computed JSON renders, `app.js` immediately fires a background fetch to Yahoo Finance for real-time prices and intraday change%:
+
+1. Fetch 2-year daily OHLCV for all 6 ETFs via Yahoo Finance v8 chart API
+2. Route through a 3-proxy CORS chain: `allorigins.win` → `corsproxy.io` → `api.codetabs.com` — each proxy is tried in sequence until one succeeds
+3. Derive daily change% from the last two completed sessions in the bar series (not from Yahoo's `previousClose` meta field, which is unreliable — equals `regularMarketPrice` when market is closed, and Yahoo's `chartPreviousClose` is the base price of the full chart period, not yesterday's close)
+4. Strip any preliminary today-bar that Yahoo inserts during pre-market/closed periods (close = previous session's price, which would yield 0% change)
+5. Overlay live price and corrected change% onto all rendered cards, then re-render
+6. If all 3 proxies fail, retry automatically after 10 seconds
+7. Auto-refresh repeats every **60 seconds** while market is open, **5 minutes** when closed
+
+The header timestamp shows the pipeline JSON age. If the pipeline data is more than 2 hours old (e.g. GitHub Actions stalled), the label turns amber and displays the exact age: `STALE (3h 12m ago)`.
 
 ---
 
