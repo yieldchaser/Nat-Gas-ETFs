@@ -753,7 +753,7 @@ def _yahoo_fetch_one(
             # continuously and is independent of the daily bar update cadence.
             live_price = meta.get("regularMarketPrice")
             live_vol   = meta.get("regularMarketVolume")
-            prev_close = meta.get("chartPreviousClose") or meta.get("previousClose")
+            prev_close = meta.get("previousClose") or meta.get("chartPreviousClose")
             live_snapshot: Optional[dict] = None
             if live_price is not None:
                 change_pct = None

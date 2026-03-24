@@ -71,10 +71,21 @@ const App = {
             for (const [ticker, liveETF] of Object.entries(liveData.etfs)) {
                 if (!liveETF || !this.allMetrics[ticker]) continue;
                 const livePrice = liveETF.regularMarketPrice;
-                const prevClose = liveETF.previousClose;
                 if (livePrice == null) continue;
 
                 this.allMetrics[ticker].current.price = livePrice;
+
+                // Prefer meta.previousClose (actual prior-session close).
+                // Fall back to second-to-last bar from the series when the meta
+                // field is absent — avoids the chartPreviousClose trap where Yahoo
+                // returns the base price of the full chart period (years-old price).
+                let prevClose = liveETF.previousClose;
+                if (!prevClose) {
+                    const bars = liveETF.data;
+                    if (bars && bars.length >= 2) {
+                        prevClose = bars[bars.length - 2].close;
+                    }
+                }
                 if (prevClose && prevClose > 0) {
                     this.allMetrics[ticker].current.changePct =
                         (livePrice - prevClose) / prevClose * 100;
