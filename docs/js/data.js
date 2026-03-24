@@ -35,16 +35,26 @@ const DataService = {
         const period2 = Math.floor(Date.now() / 1000);
         const period1 = period2 - (2 * 365 * 86400);
         const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${period1}&period2=${period2}&interval=1d`;
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`;
-        try {
-            const resp = await fetch(proxyUrl);
-            if (!resp.ok) throw new Error(`Fallback HTTP ${resp.status}`);
-            const json = await resp.json();
-            return this.parseYahooResponse(ticker, json);
-        } catch (err) {
-            console.error(`Fallback also failed for ${ticker}:`, err);
-            return null;
+
+        // Fallback proxy chain: try each in order
+        const fallbackProxies = [
+            `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`,
+            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`,
+        ];
+
+        for (const proxyUrl of fallbackProxies) {
+            try {
+                const resp = await fetch(proxyUrl);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const json = await resp.json();
+                return this.parseYahooResponse(ticker, json);
+            } catch (err) {
+                console.warn(`Proxy failed for ${ticker} (${proxyUrl}):`, err);
+            }
         }
+
+        console.error(`All proxies failed for ${ticker}`);
+        return null;
     },
 
     parseYahooResponse(ticker, json) {
