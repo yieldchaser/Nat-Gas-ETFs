@@ -1,0 +1,56 @@
+name: Update Flows Data
+
+on:
+  schedule:
+    # Morning window Mon-Fri: 12:00, 13:00, 14:00, 15:00 UTC (8-11 AM ET)
+    # TrackInsight publishes T+1 data during this window; we try every hour
+    # until the new date appears, then incremental merge keeps subsequent
+    # runs a no-op (no git commit if nothing changed).
+    - cron: '0 12 * * 1-5'
+    - cron: '0 13 * * 1-5'
+    - cron: '0 14 * * 1-5'
+    - cron: '0 15 * * 1-5'
+    # EOD safety net — daily (incl. weekends) at 21:00 UTC (5 PM ET)
+    - cron: '0 21 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  update-flows:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pandas numpy
+
+      - name: Fetch ETF Flows Data
+        run: python scripts/fetch_flows.py
+        env:
+          PYTHONUNBUFFERED: '1'
+
+      - name: Copy flows to docs folder
+        run: |
+          mkdir -p docs/data/flows
+          cp data/flows/*.json docs/data/flows/
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data/flows/ data/flows/
+          if git diff --staged --quiet; then
+            echo "No flow data changes — TrackInsight not yet updated"
+          else
+            git commit -m "Update flows data $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
