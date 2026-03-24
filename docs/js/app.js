@@ -75,23 +75,25 @@ const App = {
 
                 this.allMetrics[ticker].current.price = livePrice;
 
-                // Prefer meta.previousClose (actual prior-session close).
-                // Fall back to second-to-last bar from the series when the meta
-                // field is absent — avoids the chartPreviousClose trap where Yahoo
-                // returns the base price of the full chart period (years-old price).
-                let prevClose = liveETF.previousClose;
-                if (!prevClose) {
-                    const bars = liveETF.data;
-                    if (bars && bars.length >= 2) {
-                        prevClose = bars[bars.length - 2].close;
+                // Derive change% from bar series — meta fields are unreliable:
+                // when market is closed meta.previousClose == regularMarketPrice
+                // (both = last official close) giving 0%, and chartPreviousClose
+                // is the base price of the full chart period (years-old price).
+                // Second-to-last bar is the correct prior-session close in all
+                // market states.
+                const bars = liveETF.data;
+                if (bars && bars.length >= 2) {
+                    const lastBar = bars[bars.length - 1];
+                    const prevClose = bars[bars.length - 2].close;
+                    // Use livePrice if today's bar is present (intraday change);
+                    // otherwise use last bar's close (prior session's daily change).
+                    const currentForChange = (lastBar.date === today) ? livePrice : lastBar.close;
+                    if (prevClose && prevClose > 0) {
+                        this.allMetrics[ticker].current.changePct =
+                            (currentForChange - prevClose) / prevClose * 100;
                     }
                 }
-                if (prevClose && prevClose > 0) {
-                    this.allMetrics[ticker].current.changePct =
-                        (livePrice - prevClose) / prevClose * 100;
-                }
                 // Update today's volume from the last bar if it's today's bar
-                const bars = liveETF.data;
                 if (bars && bars.length > 0) {
                     const lastBar = bars[bars.length - 1];
                     if (lastBar.date === today && lastBar.volume != null) {
@@ -146,10 +148,21 @@ const App = {
 
             // Normalise current snapshot: pipeline uses snake_case, renderer expects camelCase
             const raw = etfData.current || {};
+            // Compute changePct from the two most recent history bars.
+            // The pipeline-stored change_pct can be poisoned by Yahoo's
+            // chartPreviousClose (base price of the full chart period, not
+            // yesterday's close), so we always derive it from the series.
+            let changePctFromHistory = raw.change_pct ?? raw.changePct ?? 0;
+            const hist = etfData.history;
+            if (hist && hist.length >= 2) {
+                const c1 = hist[hist.length - 1].close ?? hist[hist.length - 1][1];
+                const c0 = hist[hist.length - 2].close ?? hist[hist.length - 2][1];
+                if (c1 != null && c0 && c0 > 0) changePctFromHistory = (c1 - c0) / c0 * 100;
+            }
             const current = {
                 price:        raw.price       ?? null,
                 volume:       raw.volume      ?? 0,
-                changePct:    raw.change_pct  ?? raw.changePct    ?? 0,
+                changePct:    changePctFromHistory,
                 dollarVolume: raw.dollar_volume ?? raw.dollarVolume ?? 0,
             };
             if (etfData.history && etfData.history.length > 0) {
