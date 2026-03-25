@@ -894,11 +894,20 @@ const Signals = {
             const fillLeft  = Math.min(pct, centerPct);
             const fillWidth = Math.abs(pct - centerPct);
             const fillStart = pct < centerPct ? pct : centerPct;
+            // Symmetric colour scale around 1.0:
+            //   < 0.85  green  (strong capitulation — share vol surging vs dollar)
+            //   0.85–0.95  blue   (mild capitulation)
+            //   0.95–1.05  text-secondary (neutral — balanced; still visible)
+            //   1.05–1.15  yellow (mild momentum — dollar vol slightly ahead)
+            //   > 1.15  orange (strong momentum)
+            // Previously the 0.95–1.15 band used var(--text-dim) which is nearly
+            // invisible on the dark background — short ETFs at ~1.06–1.13 had no bar.
             const barColor = vdds == null ? 'var(--text-dim)'
                 : vdds < 0.85 ? 'var(--green)'
                 : vdds < 0.95 ? 'var(--blue)'
-                : vdds > 1.15 ? 'var(--orange)'
-                : 'var(--text-dim)';
+                : vdds <= 1.05 ? 'var(--text-secondary)'
+                : vdds <= 1.15 ? 'var(--yellow)'
+                : 'var(--orange)';
             const dvRvol = (m.dvRvol || {})['21d'];
             const sRvol  = (m.rvol   || {})['21d'];
             const tip = `VDDS for ${ticker}: DV-RVOL=${dvRvol!=null?dvRvol.toFixed(2):'--'} ÷ S-RVOL=${sRvol!=null?sRvol.toFixed(2):'--'} = ${vdds!=null?vdds.toFixed(2):'--'}x. ${vdds!=null&&vdds<0.90?'Capitulation pattern — share vol outpacing dollar vol.':vdds!=null&&vdds>1.10?'Momentum pattern — dollar vol outpacing share vol.':'Neutral — balanced flows.'}`;
