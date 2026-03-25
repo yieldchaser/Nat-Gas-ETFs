@@ -81,16 +81,17 @@ const App = {
                 // (both = last official close) giving 0%, and chartPreviousClose
                 // is the base price of the full chart period (years-old price).
                 //
-                // Yahoo Finance also inserts a preliminary bar for today during
-                // pre-market/closed periods with close = previous session's price,
-                // which makes bars[-1] and bars[-2] identical → 0% change.
-                // Strip that preliminary bar when the market is not open.
+                // Yahoo ALWAYS inserts a preliminary bar for today with close = yesterday's
+                // close, even when the market is open and no trades have occurred yet.
+                // This makes bars[-1] and bars[-2] identical → 0% change.
+                // Solution: always strip today's bar, then compare livePrice (when open)
+                // or bars[-1].close (when closed) vs bars[-2] (confirmed previous session).
+                //
                 // Use per-ETF market state — liveData.marketState is 'open' if ANY
-                // exchange is open (e.g. London ETFs open while NYSE is pre-market),
-                // which would incorrectly suppress stripping for US ETFs and yield 0%.
+                // exchange is open (e.g. London ETFs open while NYSE is pre-market).
                 const marketOpen = liveETF.marketState === 'open';
                 let bars = liveETF.data;
-                if (bars && bars.length > 0 && !marketOpen && bars[bars.length - 1].date === today) {
+                if (bars && bars.length > 0 && bars[bars.length - 1].date === today) {
                     bars = bars.slice(0, -1);
                 }
                 if (bars && bars.length >= 2) {
