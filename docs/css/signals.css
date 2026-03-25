@@ -1478,6 +1478,65 @@
 /* Effective vol */
 .vrm-stat-val.vrm-eff-vol { color: var(--orange); }
 
+/* ---- VDDS BAR ---- */
+.vdds-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 4px 0;
+}
+
+.vdds-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 44px;
+    align-items: center;
+    gap: 8px;
+}
+
+.vdds-ticker {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: help;
+}
+
+.vdds-track {
+    position: relative;
+    height: 8px;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.vdds-center-mark {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background: var(--border-accent);
+    opacity: 0.5;
+}
+
+.vdds-fill {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    border-radius: 2px;
+    opacity: 0.8;
+}
+
+.vdds-value {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-align: right;
+}
+
+.vdds-na {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
 /* ── Responsive overrides ──────────────────────────────────────── */
 @media (max-width: 900px) {
     .vrm-pair-layout { grid-template-columns: 1fr; }

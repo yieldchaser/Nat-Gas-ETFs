@@ -874,9 +874,51 @@ const Signals = {
         }
     },
 
+    // ---- VDDS CROSS-ETF COMPARISON BAR ----
+    renderVddsBar(allMetrics) {
+        const el = document.getElementById('vdds-bar');
+        if (!el) return;
+        const tickers = Object.keys(allMetrics);
+        if (!tickers.length) { el.innerHTML = '<span class="vdds-na">No data</span>'; return; }
+
+        const rows = tickers.map(ticker => {
+            const m = allMetrics[ticker];
+            if (!m) return '';
+            const vdds = m.vdds;
+            const side = (CONFIG.etfs[ticker] || {}).side || 'long';
+            const sideColor = side === 'long' ? 'var(--long-accent)' : 'var(--short-accent)';
+            // Bar: centre at 1.0, range 0.5–1.5 (100% width)
+            const clamped = Math.max(0.5, Math.min(1.5, vdds ?? 1.0));
+            const pct = ((clamped - 0.5) / 1.0) * 100;
+            const centerPct = 50; // 1.0 maps to center
+            const fillLeft  = Math.min(pct, centerPct);
+            const fillWidth = Math.abs(pct - centerPct);
+            const fillStart = pct < centerPct ? pct : centerPct;
+            const barColor = vdds == null ? 'var(--text-dim)'
+                : vdds < 0.85 ? 'var(--green)'
+                : vdds < 0.95 ? 'var(--blue)'
+                : vdds > 1.15 ? 'var(--orange)'
+                : 'var(--text-dim)';
+            const dvRvol = (m.dvRvol || {})['21d'];
+            const sRvol  = (m.rvol   || {})['21d'];
+            const tip = `VDDS for ${ticker}: DV-RVOL=${dvRvol!=null?dvRvol.toFixed(2):'--'} ÷ S-RVOL=${sRvol!=null?sRvol.toFixed(2):'--'} = ${vdds!=null?vdds.toFixed(2):'--'}x. ${vdds!=null&&vdds<0.90?'Capitulation pattern — share vol outpacing dollar vol.':vdds!=null&&vdds>1.10?'Momentum pattern — dollar vol outpacing share vol.':'Neutral — balanced flows.'}`;
+            return `
+                <div class="vdds-row">
+                    <span class="vdds-ticker" style="color:${sideColor}" data-tooltip="${tip}">${ticker}</span>
+                    <div class="vdds-track">
+                        <div class="vdds-center-mark"></div>
+                        <div class="vdds-fill" style="left:${fillStart}%;width:${fillWidth}%;background:${barColor}"></div>
+                    </div>
+                    <span class="vdds-value" style="color:${barColor}">${vdds != null ? vdds.toFixed(2) + 'x' : '--'}</span>
+                </div>`;
+        }).join('');
+        el.innerHTML = rows || '<span class="vdds-na">No VDDS data available</span>';
+    },
+
     renderAll(allMetrics, sideConvergence, ngPriceContext) {
         this.renderConvergenceFlash(sideConvergence);
         this.renderNgPriceBar(ngPriceContext);
+        this.renderVddsBar(allMetrics);
         this.renderAlertFeed(allMetrics);
         this.renderStressMatrix(allMetrics);
         this.renderSideConvergence(sideConvergence);
