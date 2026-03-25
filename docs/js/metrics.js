@@ -343,6 +343,38 @@ const Metrics = {
 
         // ---- end volatility block ----
 
+        // ---- Dollar Volume Metrics ----
+        const dvSeries = closes.map((c, i) => c * volumes[i]);
+        const dvRvol = {};
+        const dvZScore = {};
+        const dvPercentile = {};
+        const dvVroc = {};
+        for (const dw of CONFIG.windows.rvol) {
+            dvRvol[`${dw}d`] = this.computeRVOL(dvSeries, dw);
+            dvZScore[`${dw}d`] = this.computeZScore(dvSeries, dw);
+            dvPercentile[`${dw}d`] = this.computePercentile(dvSeries[dvSeries.length - 1], dvSeries, dw);
+        }
+        for (const dw of CONFIG.windows.vroc) {
+            dvVroc[`${dw}d`] = this.computeVROC(dvSeries, dw);
+        }
+        // DVCVI = dv_percentile × (1 − price_percentile / 100)
+        const dvcvi = {};
+        for (const dw of CONFIG.windows.percentile) {
+            dvcvi[`${dw}d`] = this.computeCVI(dvPercentile[`${dw}d`], pricePercentile[`${dw}d`]);
+        }
+        // VDDS = DV-RVOL-21d / S-RVOL-21d (current reading)
+        const dvRvol21 = dvRvol['21d'];
+        const sRvol21  = rvol['21d'];
+        const vdds = (dvRvol21 != null && sRvol21 != null && sRvol21 !== 0) ? dvRvol21 / sRvol21 : null;
+        // DV-VPS (same weights as VPS but using DV metrics)
+        const dvRvolNorm  = dvRvol['21d']         != null ? Math.min(100, Math.max(0, (Math.log2(Math.max(0.5, dvRvol['21d'])) + 1) * 33.3)) : 0;
+        const dvZNorm     = dvZScore['21d']        != null ? Math.min(100, Math.max(0, (dvZScore['21d'] + 2) * 12.5)) : 0;
+        const dvPctNorm   = dvPercentile['21d']    != null ? dvPercentile['21d'] : 0;
+        const dvVrocNorm  = dvVroc['10d']          != null ? Math.min(100, Math.max(0, (dvVroc['10d'] + 100) / 5)) : 0;
+        const dvVps = w.rvol * dvRvolNorm + w.zScore * dvZNorm + w.percentile * dvPctNorm
+                    + w.vroc * dvVrocNorm + w.volRegime * invVolReg;
+        // ---- end dollar volume block ----
+
         // Moving averages
         const priceMAs = {};
         const volumeMAs = {};
@@ -402,6 +434,7 @@ const Metrics = {
             volPercentile, pricePercentile,
             cvi, vcvi, vps, mwca, mwcaCount,
             volatility: { hv, hvSeries21, hvPercentiles, atr14Pct, volRegimePct, hvTermStructure, vov21 },
+            dvRvol, dvZScore, dvPercentile, dvVroc, dvcvi, dvVps, vdds,
             priceMAs, volumeMAs,
             rollingCorr,
             alerts, alertLevel,

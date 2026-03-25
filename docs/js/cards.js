@@ -168,70 +168,171 @@ const Cards = {
             ? '<span class="mwca-badge active">MWCA ACTIVE</span>'
             : `<span class="mwca-badge inactive">${metrics.mwcaCount}/${CONFIG.windows.percentile.length}</span>`;
 
+        // Dollar mode metrics
+        const dv = metrics.dvRvol || {};
+        const dvZ = metrics.dvZScore || {};
+        const dvP = metrics.dvPercentile || {};
+        const dvVr = metrics.dvVroc || {};
+        const dvcvi = metrics.dvcvi || {};
+        const dvVps = metrics.dvVps;
+        const vdds = metrics.vdds;
+
+        // DV-RVOL-21d colour
+        const dvRvol21Color = Metrics.getValueColor(dv['21d'], CONFIG.thresholds.rvol);
+        const dvZ21Color = Metrics.getValueColor(dvZ['21d'], CONFIG.thresholds.zScore);
+
+        // DV percentile bars
+        const dvPctBarsHtml = percentileWindows.map(w => {
+            const val = dvP[w];
+            const pctClass = Metrics.getPercentileClass(val);
+            const width = val != null ? Math.max(2, val) : 0;
+            return `
+                <div class="percentile-row ${pctClass}">
+                    <span class="percentile-label" data-tooltip="Dollar Volume percentile vs ${w} history — split-agnostic value flow">$${w}</span>
+                    <div class="percentile-bar-bg">
+                        <div class="percentile-bar-fill" style="width:${width}%"></div>
+                    </div>
+                    <span class="percentile-value">${val != null ? val.toFixed(0) + 'th' : '--'}</span>
+                </div>`;
+        }).join('');
+
+        // DVCVI entries
+        const dvcviEntries = ['5d', '21d', '63d'].map(w => {
+            const val = dvcvi[w];
+            const color = val != null ? Metrics.getValueColor(val, CONFIG.thresholds.vcvi) : 'var(--text-muted)';
+            return `
+                <div class="indicator-block">
+                    <span class="indicator-label" data-tooltip="Dollar-Volume Capitulation Index (${w}). Same formula as VCVI but uses dollar volume percentile — doubly penalised when price is low (cheap shares AND low dollar value). Stronger capitulation signal.">DVCVI-${w}</span>
+                    <span class="indicator-value" style="color:${color}">${val != null ? val.toFixed(0) : '--'}</span>
+                </div>`;
+        }).join('');
+
+        // VDDS colour — < 0.85 = capitulation, > 1.15 = momentum/accumulation
+        const vddsColor = vdds == null ? 'var(--text-muted)'
+            : vdds < 0.75 ? 'var(--green)'
+            : vdds < 0.90 ? 'var(--blue)'
+            : vdds > 1.25 ? 'var(--red)'
+            : vdds > 1.10 ? 'var(--orange)'
+            : 'var(--text-secondary)';
+        const vddsTip = `VDDS — Volume-Dollar Divergence Score: DV-RVOL-21d ÷ S-RVOL-21d. < 0.90: share volume outpacing dollar volume — price is low per unit, capitulation pattern. > 1.10: dollar value outpacing shares — price rising per unit, momentum/accumulation. Current: ${vdds != null ? vdds.toFixed(2) + 'x' : '--'}`;
+        const dvVpsColor = Metrics.getValueColor(dvVps, CONFIG.thresholds.vps);
+
+        const safeTicker = ticker.replace(/\./g, '-');
+
         return `
-            <div class="etf-card ${alertClass}" data-ticker="${ticker}">
+            <div class="etf-card ${alertClass}" data-ticker="${ticker}" data-mode="share">
                 <div class="card-header">
                     <div class="card-ticker-group">
                         <span class="card-ticker">${ticker}</span>
                         <span class="card-name">${config.name}</span>
                         ${seasonBadge}${spikeHtml}
                     </div>
-                    <div class="card-price-group">
-                        <span class="card-price">${this.formatPrice(c.price)}</span>
-                        <span class="card-change ${changeClass}">${changeSign}${c.changePct.toFixed(2)}%</span>
+                    <div class="card-header-right">
+                        <div class="mode-toggle" title="Toggle Share / Dollar Volume mode">
+                            <span class="mode-pill share-pill active-pill" onclick="Cards.setMode(this,'share')">S</span>
+                            <span class="mode-pill dollar-pill" onclick="Cards.setMode(this,'dollar')">$</span>
+                        </div>
+                        <div class="card-price-group">
+                            <span class="card-price">${this.formatPrice(c.price)}</span>
+                            <span class="card-change ${changeClass}">${changeSign}${c.changePct.toFixed(2)}%</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card-sparkline" id="spark-${ticker.replace(/\./g, '-')}">
+                <div class="card-sparkline" id="spark-${safeTicker}">
                     <canvas></canvas>
                 </div>
 
-                <div class="card-volume-bar" id="volbar-${ticker.replace(/\./g, '-')}">
+                <div class="card-volume-bar" id="volbar-${safeTicker}">
                     <canvas></canvas>
                 </div>
 
-                <div class="card-metrics">
+                <!-- SHARE MODE sections -->
+                <div class="card-metrics share-section">
                     <div class="metric-item">
                         <span class="metric-label" data-tooltip="Today's raw share volume traded">VOL</span>
                         <span class="metric-value">${this.formatNumber(c.volume, 0)}</span>
                     </div>
                     <div class="metric-item">
-                        <span class="metric-label" data-tooltip="Relative Volume — today's volume ÷ 21-day average. 2x = twice normal. The primary raw volume signal." data-tt-pos="right">RVOL-21d</span>
+                        <span class="metric-label" data-tooltip="Relative Volume — today's share volume ÷ 21-day average. 2x = twice normal." data-tt-pos="right">RVOL-21d</span>
                         <span class="metric-value" style="color:${Metrics.getValueColor(metrics.rvol['21d'], CONFIG.thresholds.rvol)}">${metrics.rvol['21d'] != null ? metrics.rvol['21d'].toFixed(1) + 'x' : '--'}</span>
                     </div>
                     <div class="metric-item">
-                        <span class="metric-label" data-tooltip="Z-Score — standard deviations above/below the 21-day mean volume. &gt;2σ is statistically unusual (top ~2.5% of observations).">Z-SCORE</span>
+                        <span class="metric-label" data-tooltip="Z-Score — standard deviations above/below the 21-day mean share volume. &gt;2σ is statistically unusual.">Z-SCORE</span>
                         <span class="metric-value" style="color:${Metrics.getValueColor(metrics.zScore['21d'], CONFIG.thresholds.zScore)}">${metrics.zScore['21d'] != null ? (metrics.zScore['21d'] > 0 ? '+' : '') + metrics.zScore['21d'].toFixed(1) + '\u03C3' : '--'}</span>
                     </div>
                     <div class="metric-item">
-                        <span class="metric-label" data-tooltip="Volume Rate of Change — % change in volume vs 10 sessions ago. Captures sudden acceleration in participation." data-tt-pos="right">VROC-10d</span>
+                        <span class="metric-label" data-tooltip="Volume Rate of Change — % change in share volume vs 10 sessions ago." data-tt-pos="right">VROC-10d</span>
                         <span class="metric-value">${metrics.vroc['10d'] != null ? (metrics.vroc['10d'] > 0 ? '+' : '') + metrics.vroc['10d'].toFixed(0) + '%' : '--'}</span>
                     </div>
                 </div>
-
-                <div class="card-percentiles">
-                    ${pctBarsHtml}
-                </div>
-
-                ${volatilityPanelHtml}
-
-                <div class="card-indicators">
+                <div class="card-percentiles share-section">${pctBarsHtml}</div>
+                <div class="card-indicators share-section">
                     ${vcviEntries}
                     <div class="indicator-block">
-                        <span class="indicator-label" data-tooltip="Volume Pressure Score — 5-component composite: RVOL (25%) + Z-Score (20%) + Vol Percentile (25%) + VROC (10%) + Inv. Vol Regime (20%). Synthesises all signals into 0–100. Higher = stronger pressure." data-tt-pos="right">VPS</span>
+                        <span class="indicator-label" data-tooltip="Volume Pressure Score — 5-component composite: RVOL (25%) + Z-Score (20%) + Vol Percentile (25%) + VROC (10%) + Inv. Vol Regime (20%). 0–100." data-tt-pos="right">VPS</span>
                         <span class="indicator-value" style="color:${vpsColor}">${metrics.vps != null ? metrics.vps.toFixed(0) : '--'}</span>
                     </div>
                     <div class="indicator-block">
-                        <span class="indicator-label" data-tooltip="Multi-Window Convergence Alarm — fires when volume exceeds the 90th percentile simultaneously across ALL 5 time windows (10/21/63/126/252d). Extremely rare multi-timeframe confirmation of a volume anomaly." data-tt-pos="right">MWCA</span>
+                        <span class="indicator-label" data-tooltip="Multi-Window Convergence Alarm — fires when share volume exceeds the 90th percentile simultaneously across ALL 5 windows." data-tt-pos="right">MWCA</span>
                         ${mwcaHtml}
                     </div>
                 </div>
+
+                <!-- DOLLAR MODE sections (hidden by default) -->
+                <div class="card-metrics dollar-section" style="display:none">
+                    <div class="metric-item">
+                        <span class="metric-label" data-tooltip="Today's dollar volume traded (price × shares). Split-agnostic capital flow metric.">$ VOL</span>
+                        <span class="metric-value">${this.formatNumber(c.dollarVolume, 0)}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label" data-tooltip="Dollar Volume RVOL — today's dollar volume ÷ 21-day average. Measures capital flow intensity." data-tt-pos="right">DV-RVOL</span>
+                        <span class="metric-value" style="color:${dvRvol21Color}">${dv['21d'] != null ? dv['21d'].toFixed(1) + 'x' : '--'}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label" data-tooltip="Dollar Volume Z-Score — σ from 21-day mean dollar volume. Measures statistical significance of capital flow.">DV-Z</span>
+                        <span class="metric-value" style="color:${dvZ21Color}">${dvZ['21d'] != null ? (dvZ['21d'] > 0 ? '+' : '') + dvZ['21d'].toFixed(1) + '\u03C3' : '--'}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label" data-tooltip="Dollar Volume Rate of Change — % change vs 10 sessions ago. Catches capital flow acceleration." data-tt-pos="right">DV-VROC</span>
+                        <span class="metric-value">${dvVr['10d'] != null ? (dvVr['10d'] > 0 ? '+' : '') + dvVr['10d'].toFixed(0) + '%' : '--'}</span>
+                    </div>
+                </div>
+                <div class="card-percentiles dollar-section" style="display:none">${dvPctBarsHtml}</div>
+                <div class="card-indicators dollar-section" style="display:none">
+                    ${dvcviEntries}
+                    <div class="indicator-block">
+                        <span class="indicator-label" data-tooltip="Dollar Volume Pressure Score — parallel to VPS but uses dollar volume metrics. Measures intensity of capital flow pressure. 0–100." data-tt-pos="right">DV-VPS</span>
+                        <span class="indicator-value" style="color:${dvVpsColor}">${dvVps != null ? dvVps.toFixed(0) : '--'}</span>
+                    </div>
+                    <div class="indicator-block">
+                        <span class="indicator-label" data-tooltip="${vddsTip}" data-tt-pos="right">VDDS</span>
+                        <span class="indicator-value" style="color:${vddsColor}">${vdds != null ? vdds.toFixed(2) + 'x' : '--'}</span>
+                    </div>
+                </div>
+
+                ${volatilityPanelHtml}
 
                 <div class="card-dollar-volume">
                     <span class="dv-label">$ VOL TRADED</span>
                     <span class="dv-value">${this.formatNumber(c.dollarVolume, 0)}</span>
                 </div>
             </div>`;
+    },
+
+    // Toggle between share-volume mode (S) and dollar-volume mode ($)
+    setMode(pillEl, mode) {
+        const card = pillEl.closest('.etf-card');
+        if (!card) return;
+        card.dataset.mode = mode;
+        // Swap pill active state
+        card.querySelectorAll('.mode-pill').forEach(p => p.classList.remove('active-pill'));
+        pillEl.classList.add('active-pill');
+        // Show/hide sections
+        const show = mode === 'share' ? 'share-section' : 'dollar-section';
+        const hide = mode === 'share' ? 'dollar-section' : 'share-section';
+        card.querySelectorAll('.' + show).forEach(el => el.style.display = '');
+        card.querySelectorAll('.' + hide).forEach(el => el.style.display = 'none');
     },
 
     renderAllCards(allMetrics, container, side) {
