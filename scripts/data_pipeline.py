@@ -746,6 +746,14 @@ def _yahoo_fetch_one(
             df["volume"] = df["volume"].astype(float)
             df.sort_index(inplace=True)
 
+            # Yahoo sometimes returns two rows for the same calendar date (e.g. the
+            # official session bar + an updated intraday snapshot with revised volume).
+            # Both have the same date string and close, causing hist[-1] == hist[-2]
+            # which makes processPrecomputed() compute 0% daily change.
+            # Keep only the last (most up-to-date) row per calendar date.
+            df = df.groupby(df.index.date).last()
+            df.index = pd.DatetimeIndex(df.index)
+
             # Apply known split adjustments (from data/known_splits.json)
             df = _apply_split_adjustments(df, ticker, known_splits)
 
