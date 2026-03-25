@@ -90,23 +90,26 @@ const App = {
                 // Use per-ETF market state — liveData.marketState is 'open' if ANY
                 // exchange is open (e.g. London ETFs open while NYSE is pre-market).
                 const marketOpen = liveETF.marketState === 'open';
-                let bars = liveETF.data;
-                if (bars && bars.length > 0 && bars[bars.length - 1].date === today) {
-                    bars = bars.slice(0, -1);
-                }
-                if (bars && bars.length >= 2) {
-                    const lastBar = bars[bars.length - 1];
+                const allBars = liveETF.data || [];
+                // Strip today's bar for change% calc — Yahoo pre-populates it with
+                // yesterday's close even before any trading occurs, making bars[-1]
+                // identical to bars[-2] and producing 0% change.
+                const bars = allBars.length > 0 && allBars[allBars.length - 1].date === today
+                    ? allBars.slice(0, -1)
+                    : allBars;
+                if (bars.length >= 2) {
                     const prevClose = bars[bars.length - 2].close;
-                    // When market is open use livePrice (intraday); otherwise last bar's close.
-                    const currentForChange = marketOpen ? livePrice : lastBar.close;
+                    // When market is open use livePrice (intraday); otherwise last confirmed close.
+                    const currentForChange = marketOpen ? livePrice : bars[bars.length - 1].close;
                     if (prevClose && prevClose > 0) {
                         this.allMetrics[ticker].current.changePct =
                             (currentForChange - prevClose) / prevClose * 100;
                     }
                 }
-                // Update today's volume from the last bar if it's today's bar
-                if (bars && bars.length > 0) {
-                    const lastBar = bars[bars.length - 1];
+                // Volume update: use today's bar from allBars (pre-strip), but only when
+                // market is open — preliminary bars carry yesterday's volume, not today's.
+                if (marketOpen && allBars.length > 0) {
+                    const lastBar = allBars[allBars.length - 1];
                     if (lastBar.date === today && lastBar.volume != null) {
                         this.allMetrics[ticker].current.volume = lastBar.volume;
                         this.allMetrics[ticker].current.dollarVolume =
