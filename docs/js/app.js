@@ -90,7 +90,13 @@ const App = {
                 // Use per-ETF market state — liveData.marketState is 'open' if ANY
                 // exchange is open (e.g. London ETFs open while NYSE is pre-market).
                 const marketOpen = liveETF.marketState === 'open';
-                const allBars = liveETF.data || [];
+                // Deduplicate live bars by date — Yahoo sometimes returns two rows for the
+                // same calendar day (intraday snapshot + confirmed session bar). Same root
+                // cause as processPrecomputed dedup: without this, after stripping today's
+                // preliminary bar, bars[-1] and bars[-2] are both yesterday → 0% change.
+                const seenDates = new Map();
+                for (const b of liveETF.data || []) { seenDates.set(b.date, b); }
+                const allBars = [...seenDates.values()];
                 // Strip today's bar for change% calc — Yahoo pre-populates it with
                 // yesterday's close even before any trading occurs, making bars[-1]
                 // identical to bars[-2] and producing 0% change.
