@@ -72,7 +72,7 @@ const Cards = {
         const seasonality = metrics.seasonality || {};
         const seasonCfg = seasonality.season ? (CONFIG.seasonDisplay[seasonality.season] || {}) : {};
         const seasonBadge = seasonality.season
-            ? `<span class="season-badge" style="color:${seasonCfg.color||'var(--text-muted)'}" data-tooltip="Seasonal weight: ${seasonality.season} × ${(seasonality.weight||1).toFixed(2)} — affects vol signal reliability. Seasonally-adj VCVI-21d: ${seasonality.adj_vcvi_21d != null ? seasonality.adj_vcvi_21d.toFixed(0) : '--'}">${seasonCfg.emoji||''} ×${(seasonality.weight||1).toFixed(2)}</span>`
+            ? `<span class="season-badge" style="color:${seasonCfg.color||'var(--text-muted)'}" data-tooltip="Seasonal weight: ${seasonality.season} × ${(seasonality.weight||1).toFixed(2)} — amplifies vol signals in high-demand seasons. Seasonally-adj VCVI-21d: ${seasonality.adj_vcvi_21d != null ? seasonality.adj_vcvi_21d.toFixed(0) : '--'} (share-vol mode only)">${seasonCfg.emoji||''} ×${(seasonality.weight||1).toFixed(2)}</span>`
             : '';
 
         const spikeHtml = metrics.sharpSpike
@@ -337,8 +337,29 @@ const Cards = {
 
     renderAllCards(allMetrics, container, side) {
         const tickers = Object.keys(CONFIG.etfs).filter(t => CONFIG.etfs[t].side === side);
+
+        // Snapshot current toggle mode per card before regenerating DOM.
+        // Without this, every refresh resets all cards to default 'share' mode,
+        // silently discarding the user's toggle choice.
+        const savedModes = {};
+        for (const card of container.querySelectorAll('.etf-card[data-ticker]')) {
+            savedModes[card.dataset.ticker] = card.dataset.mode || 'share';
+        }
+
         const html = tickers.map(t => this.renderCard(t, allMetrics[t], CONFIG.etfs[t])).join('');
         container.innerHTML = html;
+
+        // Re-apply saved modes — re-triggers section visibility without re-rendering.
+        for (const t of tickers) {
+            const mode = savedModes[t];
+            if (mode && mode !== 'share') {
+                const card = container.querySelector(`.etf-card[data-ticker="${t}"]`);
+                if (card) {
+                    const pill = card.querySelector('.dollar-pill');
+                    if (pill) this.setMode(pill, mode);
+                }
+            }
+        }
 
         // Draw charts after DOM update
         requestAnimationFrame(() => {
