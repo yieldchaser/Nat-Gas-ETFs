@@ -180,9 +180,13 @@ const App = {
                 const c0 = hist[hist.length - 2].close ?? hist[hist.length - 2][1];
                 if (c1 != null && c0 && c0 > 0) changePctFromHistory = (c1 - c0) / c0 * 100;
             }
+            // For some TSX tickers (HNU.TO / HND.TO) Yahoo doesn't return
+            // regularMarketPrice / regularMarketVolume in the meta, so the pipeline
+            // stores null. Fall back to the last confirmed history bar in that case.
+            const lastBar = hist.length > 0 ? hist[hist.length - 1] : null;
             const current = {
-                price:        raw.price       ?? null,
-                volume:       raw.volume      ?? 0,
+                price:        raw.price       ?? lastBar?.close  ?? lastBar?.[1] ?? null,
+                volume:       raw.volume      ?? lastBar?.volume ?? lastBar?.[2] ?? 0,
                 changePct:    changePctFromHistory,
                 dollarVolume: raw.dollar_volume ?? raw.dollarVolume ?? 0,
             };
