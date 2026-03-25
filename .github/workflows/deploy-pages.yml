@@ -1,6 +1,18 @@
 name: Deploy to GitHub Pages
 
 on:
+  # Fires when the data pipeline or flows workflow completes.
+  # NOTE: GITHUB_TOKEN pushes (from scheduled workflows) cannot trigger
+  # other workflows via the normal `push` event — `workflow_run` is the
+  # correct mechanism to chain them.
+  workflow_run:
+    workflows:
+      - "Update Dashboard Data"
+      - "Update Flows Data"
+    types:
+      - completed
+  # Also fire on direct pushes to main that touch docs/ (code/template changes
+  # pushed by a developer will still land here).
   push:
     branches:
       - main
