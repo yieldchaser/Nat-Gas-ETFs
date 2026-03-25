@@ -1,4 +1,4 @@
-# Nat Gas ETF Volume Monitor
+# Stratum Meridian
 
 A real-time dashboard for tracking volume flow and price-volume dynamics across natural gas ETFs. Combines daily pipeline data from Yahoo Finance and TrackInsight with a multi-timeframe volatility engine to surface statistically significant volume and capital flow events.
 
@@ -385,7 +385,8 @@ The dashboard uses a two-layer data architecture: a pre-computed pipeline layer 
 4. Detect conviction events (5-gate + extreme override + momentum guard)
 5. Detect elevated watch events (3-gate)
 6. Generate historical echoes with regime-stratified forward return tables
-7. Write `dashboard_data.json` + `latest_signals.json` → sync to `docs/data/`
+7. Deduplicate bars by calendar date (Yahoo v8 occasionally returns two rows for the same date with different volumes — keep the last/most-updated row only)
+8. Write `dashboard_data.json` + `latest_signals.json` → sync to `docs/data/`
 
 > Full-lifetime history is stored (not capped at 252 days) so the Vol Regime Monitor can render complete HV sparklines from each ETF's inception date, and percentile rankings are computed against the full available record.
 
@@ -404,11 +405,14 @@ After the pre-computed JSON renders, `app.js` immediately fires a background fet
 
 1. Fetch 2-year daily OHLCV for all 6 ETFs via Yahoo Finance v8 chart API
 2. Route through a 3-proxy CORS chain: `allorigins.win` → `corsproxy.io` → `api.codetabs.com` — each proxy is tried in sequence until one succeeds
-3. Derive daily change% from the last two completed sessions in the bar series (not from Yahoo's `previousClose` meta field, which is unreliable — equals `regularMarketPrice` when market is closed, and Yahoo's `chartPreviousClose` is the base price of the full chart period, not yesterday's close)
-4. Strip any preliminary today-bar that Yahoo inserts during pre-market/closed periods (close = previous session's price, which would yield 0% change)
-5. Overlay live price and corrected change% onto all rendered cards, then re-render
-6. If all 3 proxies fail, retry automatically after 10 seconds
-7. Auto-refresh repeats every **60 seconds** while market is open, **5 minutes** when closed
+3. Derive daily change% per-ETF using that ETF's own exchange market state (not a global flag — London ETFs being open must not affect NYSE/TSX logic)
+4. Always strip Yahoo's preliminary today-bar (Yahoo pre-populates it with the previous session's close even before trading starts, which would make bars[-1] = bars[-2] and yield 0% change). After stripping: compare `livePrice` vs confirmed previous session when market is open; confirmed previous session vs the one before when closed
+5. Update intraday volume only when the ETF's own market is open (preliminary bars carry yesterday's volume, not today's)
+6. Overlay live price, corrected change%, and intraday volume onto all rendered cards, then re-render
+7. If all 3 proxies fail, retry automatically after 10 seconds
+8. Auto-refresh repeats every **60 seconds** while market is open, **5 minutes** when closed
+
+**Initial render resilience:** `processPrecomputed()` also deduplicates the JSON history by date (Yahoo occasionally returns two rows for the same calendar day with different volumes — identical closes produce 0% change). For TSX tickers (HNU.TO / HND.TO) where Yahoo omits `regularMarketPrice` / `regularMarketVolume` from the meta outside trading hours, the pipeline and JS both fall back to the last confirmed history bar's close and volume.
 
 The header timestamp shows the pipeline JSON age. If the pipeline data is more than 2 hours old (e.g. GitHub Actions stalled), the label turns amber and displays the exact age: `STALE (3h 12m ago)`.
 
@@ -479,7 +483,7 @@ PRESSURE_MAX = 100  # Pressure score clamp
 - **Frontend:** Vanilla JS (ES6+), Canvas API, CSS3 Grid/Flexbox
 - **Backend:** Python 3, Pandas, NumPy
 - **Data:** Yahoo Finance v8 chart API + TrackInsight snapshot API
-- **Deployment:** GitHub Pages (`docs/`) + GitHub Actions (nightly pipeline)
+- **Deployment:** GitHub Pages (`docs/`) + GitHub Actions (pipeline every 15 min; Pages redeploys automatically via `workflow_run` trigger after each data push)
 - **No frameworks** — lightweight, fast, single-page load
 
 ---
