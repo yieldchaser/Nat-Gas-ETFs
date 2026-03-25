@@ -929,6 +929,64 @@ def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
         else:
             cvi[f"{w}d"] = None
 
+    # --- Dollar Volume Metrics (DV) ---
+    # All metrics parallel their share-volume counterparts — same windows, same formulas.
+    # dollar_volume = close × volume (split-agnostic; no adjustments needed — already applied).
+    dv_rvol: Dict[str, Optional[float]] = {}
+    dv_zscore: Dict[str, Optional[float]] = {}
+    dv_percentile: Dict[str, Optional[float]] = {}
+    dv_vroc: Dict[str, Optional[float]] = {}
+    dv_pct_series: Dict[int, pd.Series] = {}
+
+    for w in RVOL_WINDOWS:
+        avg_dv = dollar_volume.rolling(w, min_periods=max(1, w // 2)).mean()
+        dv_rvol[f"{w}d"] = _safe_float(
+            (dollar_volume.iloc[-1] / avg_dv.iloc[-1]) if avg_dv.iloc[-1] != 0 else np.nan
+        )
+        std_dv = dollar_volume.rolling(w, min_periods=max(1, w // 2)).std()
+        dz = (
+            (dollar_volume.iloc[-1] - avg_dv.iloc[-1]) / std_dv.iloc[-1]
+            if std_dv.iloc[-1] != 0 else np.nan
+        )
+        dv_zscore[f"{w}d"] = _safe_float(dz)
+        s_dv = _percentile_rank(dollar_volume, w)
+        dv_pct_series[w] = s_dv
+        dv_percentile[f"{w}d"] = _safe_float(s_dv.iloc[-1])
+
+    for w in VROC_WINDOWS:
+        if len(dollar_volume) > w:
+            old_dv = dollar_volume.iloc[-w - 1]
+            cur_dv = dollar_volume.iloc[-1]
+            dv_vroc[f"{w}d"] = _safe_float(
+                ((cur_dv - old_dv) / old_dv) * 100 if old_dv != 0 else np.nan
+            )
+        else:
+            dv_vroc[f"{w}d"] = None
+
+    # DVCVI = dv_percentile × (1 − price_percentile / 100)
+    # Spikes when dollar volume is high AND price is low — sharper capitulation signal
+    # because dollar volume is naturally suppressed when price is low (double confirmation).
+    dvcvi: Dict[str, Optional[float]] = {}
+    for w in VOL_PCT_WINDOWS:
+        dp = dv_percentile.get(f"{w}d")
+        pp = price_pct.get(f"{w}d")
+        if dp is not None and pp is not None:
+            dvcvi[f"{w}d"] = _safe_float(dp * (1.0 - pp / 100.0))
+        else:
+            dvcvi[f"{w}d"] = None
+
+    # VDDS rolling series (21d) — used for Gate 6 annotation on conviction events.
+    # VDDS = DV-RVOL-21d / S-RVOL-21d:
+    #   < 1 → share volume rising faster than dollar volume → price suppression (capitulation)
+    #   > 1 → dollar value rising faster → price acceleration (momentum / accumulation)
+    _dv_ma21 = dollar_volume.rolling(21, min_periods=1).mean()
+    _sv_ma21 = volume.rolling(21, min_periods=1).mean()
+    _dv_rvol21_series = dollar_volume / _dv_ma21.replace(0, np.nan)
+    _sv_rvol21_series = volume / _sv_ma21.replace(0, np.nan)
+    vdds_21_series = (
+        _dv_rvol21_series / _sv_rvol21_series.replace(0, np.nan)
+    ).replace([np.inf, -np.inf], np.nan)
+
     # =========================================================================
     # VOLATILITY MODELLING BLOCK
     # =========================================================================
@@ -1024,6 +1082,7 @@ def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
         etf_side=side,
         ng_seasonal_z_series=ng_seasonal_z_series,
         ng_regime_series=ng_regime_series,
+        vdds_series=vdds_21_series,  # Gate 6: VDDS advisory annotation
     )
 
     # --- Elevated Watch Events (3-gate softer filter, Feature 5) ---
@@ -1126,6 +1185,26 @@ def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
         + VPS_W_VROC * vroc_norm
         + VPS_W_VOLREGIME * inv_vol_regime_norm
     )
+
+    # --- DV-VPS (Dollar Volume Pressure Score) — parallel to VPS, uses DV metrics ---
+    dv_rvol_21_val = dv_rvol.get("21d")
+    dv_zscore_21_val = dv_zscore.get("21d")
+    dv_pct_21_val = dv_percentile.get("21d")
+    dv_vroc_10_val = dv_vroc.get("10d")
+    dv_rvol_norm  = _norm_0_100(dv_rvol_21_val, 0.3, 3.0)
+    dv_zscore_norm = _norm_0_100(dv_zscore_21_val, -2.0, 4.0)
+    dv_pct_norm   = dv_pct_21_val if dv_pct_21_val is not None else 50.0
+    dv_vroc_norm  = _norm_0_100(dv_vroc_10_val, -80, 200)
+    dv_vps = _safe_float(
+        VPS_W_RVOL * dv_rvol_norm
+        + VPS_W_ZSCORE * dv_zscore_norm
+        + VPS_W_PCT * dv_pct_norm
+        + VPS_W_VROC * dv_vroc_norm
+        + VPS_W_VOLREGIME * inv_vol_regime_norm
+    )
+
+    # VDDS scalar (current reading of the 21d VDDS series)
+    vdds = _safe_float(vdds_21_series.iloc[-1])
 
     # --- MWCA (Multi-Window Convergence Alarm) ---
     mwca = all(
@@ -1324,6 +1403,14 @@ def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
         "history": history,
         "alerts": alerts,
         "_rvol_21_last": _safe_float(rvol_21_series.iloc[-1]),
+        # --- Dollar Volume Metrics ---
+        "dv_rvol": dv_rvol,
+        "dv_zscore": dv_zscore,
+        "dv_percentile": dv_percentile,
+        "dv_vroc": dv_vroc,
+        "dvcvi": dvcvi,
+        "dv_vps": dv_vps,
+        "vdds": vdds,
     }
 
 
@@ -1547,6 +1634,7 @@ def _detect_conviction_events(
     etf_side: str = "long",
     ng_seasonal_z_series: "Optional[pd.Series]" = None,
     ng_regime_series: "Optional[pd.Series]" = None,
+    vdds_series: "Optional[pd.Series]" = None,  # Gate 6: VDDS advisory annotation
 ) -> dict:
     """
     Scan full history for Conviction Events — dates where ALL gates fire:
@@ -1592,6 +1680,12 @@ def _detect_conviction_events(
         ).ffill().reindex(df_work.index).fillna("unknown")
     else:
         df_work["ng_regime"] = "unknown"
+
+    # Add VDDS series (Gate 6 annotation — advisory only, not a blocking filter)
+    if vdds_series is not None and not vdds_series.empty:
+        df_work["vdds"] = vdds_series.reindex(df_work.index)
+    else:
+        df_work["vdds"] = np.nan
 
     df_work = df_work.dropna(subset=["close", "vcvi_21", "vol_regime", "atr14", "pct_change"])
     if df_work.empty:
@@ -1687,6 +1781,7 @@ def _detect_conviction_events(
         is_momentum_guard = bool(momentum_guard_active.loc[dt]) if dt in momentum_guard_active.index else False
         ng_z_val = _safe_float(row.get("ng_seasonal_z")) if "ng_seasonal_z" in row.index else None
         ng_reg = row.get("ng_regime", "unknown") if "ng_regime" in row.index else "unknown"
+        vdds_val = _safe_float(row.get("vdds")) if "vdds" in row.index else None
         events.append({
             "date": dt.strftime("%Y-%m-%d"),
             "vcvi": _safe_float(row["vcvi_21"]),
@@ -1702,6 +1797,7 @@ def _detect_conviction_events(
             "momentum_guard_active": is_momentum_guard,
             "ng_seasonal_z":         ng_z_val,
             "ng_regime":             ng_reg,
+            "vdds":                  vdds_val,   # Gate 6 annotation
         })
 
     # Aggregate forward return statistics
@@ -2178,6 +2274,14 @@ def run_pipeline() -> None:
             "moving_averages": m["moving_averages"],
             "history": m["history"],
             "alerts": m["alerts"],
+            # Dollar Volume Metrics
+            "dv_rvol": m.get("dv_rvol", {}),
+            "dv_zscore": m.get("dv_zscore", {}),
+            "dv_percentile": m.get("dv_percentile", {}),
+            "dv_vroc": m.get("dv_vroc", {}),
+            "dvcvi": m.get("dvcvi", {}),
+            "dv_vps": m.get("dv_vps"),
+            "vdds": m.get("vdds"),
         }
         etfs_out[ticker] = _safe_dict(entry)
 
