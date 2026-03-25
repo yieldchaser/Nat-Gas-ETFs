@@ -1779,9 +1779,11 @@ def _detect_conviction_events(
         occ_month = dt.month
         is_extreme_override = bool(extreme_override.loc[dt]) if dt in extreme_override.index else False
         is_momentum_guard = bool(momentum_guard_active.loc[dt]) if dt in momentum_guard_active.index else False
-        ng_z_val = _safe_float(row.get("ng_seasonal_z")) if "ng_seasonal_z" in row.index else None
-        ng_reg = row.get("ng_regime", "unknown") if "ng_regime" in row.index else "unknown"
-        vdds_val = _safe_float(row.get("vdds")) if "vdds" in row.index else None
+        # Use direct index access (not .get()) — pandas Series.get() default handling
+        # differs from dict.get() across versions; the 'in row.index' guard is sufficient.
+        ng_z_val = _safe_float(row["ng_seasonal_z"]) if "ng_seasonal_z" in row.index else None
+        ng_reg = str(row["ng_regime"]) if "ng_regime" in row.index else "unknown"
+        vdds_val = _safe_float(row["vdds"]) if "vdds" in row.index else None
         events.append({
             "date": dt.strftime("%Y-%m-%d"),
             "vcvi": _safe_float(row["vcvi_21"]),
