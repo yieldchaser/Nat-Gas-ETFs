@@ -125,29 +125,47 @@ Heatmap-style table showing the count of significant flow events (|Z-Score| ≥ 
 
 ### 2. Volume Monitor (`index.html`)
 
-Multi-timeframe volume anomaly detection engine:
+Multi-timeframe volume anomaly detection engine covering both **share volume** and **dollar volume** (capital flow intensity):
 
 - **Detects volume anomalies** across 6 windows (5d/10d/21d/63d/126d/252d) using percentile ranking and Z-scores
 - **Models volatility** with HV, vol regime percentiles, ATR, and VoV
 - **Synthesizes signals** via the **VPS (Volume Pressure Score)** — a 5-component composite
 - **Tracks historical echoes** — patterns showing price action following capitulation signals, with lead-time calibration and regime-stratified forward returns
 - **Monitors capitulation** with **VCVI** (Vol-Adjusted Capitulation Volume Index)
+- **Monitors dollar-flow capitulation** with **DVCVI** — same formula as VCVI but using dollar volume percentile; doubly penalised in capitulation because low price already suppresses dollar volume
+- **Scores capital flow intensity** with **DV-VPS** — parallel to VPS but computed on dollar volume metrics
+- **Tracks flow divergence** with **VDDS** (Volume-Dollar Divergence Score) — DV-RVOL ÷ S-RVOL per ETF and cross-ETF comparison bar
 - **Detects weather spikes** via 5d fast-window VCVI + ATR sharp-spike flag
 - **Gates signals** with a seasonally-adjusted NG=F price Z-score
 - **Corrects for leveraged ETF decay** to prevent structural price drift contaminating percentile signals
 - **Weights by season** (winter ×1.3, summer ×0.85)
 - **Classifies NG=F volatility regime** (normal / elevated / extreme)
 
-#### ETF Cards
+#### ETF Cards — Share / Dollar Toggle
 
-Each card shows:
+Each card has an **`[S] [$]`** pill in the header. **S mode** (default) shows share-volume metrics; **`$` mode** swaps all three data sections in-place with dollar-volume equivalents at zero added card height.
+
+**S mode (share volume):**
 
 1. Price & daily change, season badge, ⚡ SPIKE badge
-2. Volume metrics: RVOL-21d, Z-Score, VROC-10d
-3. Volume percentile bars: 6 timeframes (5/10/21/63/126/252d)
+2. Share metrics: VOL, RVOL-21d, Z-Score, VROC-10d
+3. Share volume percentile bars: 5 timeframes (10/21/63/126/252d)
 4. Volatility panel: HV-10/21/63d, vol regime, ATR-14, term structure, VoV-21
 5. VCVI indicators: 5d fast, 21d (with decay-corrected †value), 63d
 6. VPS composite score + MWCA alarm
+7. $ VOL TRADED footer
+
+**`$` mode (dollar volume):**
+
+1. Price & daily change, season badge, ⚡ SPIKE badge (unchanged)
+2. Dollar metrics: $ VOL, DV-RVOL-21d, DV-Z, DV-VROC-10d
+3. Dollar volume percentile bars: 5 timeframes (10/21/63/126/252d)
+4. Volatility panel (unchanged — regime context is the same for both modes)
+5. DVCVI indicators: 5d, 21d, 63d
+6. DV-VPS composite score + VDDS ratio
+7. $ VOL TRADED footer
+
+> Toggle state is preserved across data refreshes and live price overlays — switching to `$` mode persists until the user switches back.
 
 #### Top-of-Page Convergence Flash Banner
 
@@ -162,15 +180,16 @@ Each banner shows the individual ETF spike dates, days-ago, and RVOL levels inli
 
 Panels are ordered by signal priority:
 
-1. **NG=F Price Context Bar** — seasonal Z-score gate (always visible)
-2. **Conviction Events** — strictest filter, shown first as the primary actionable signal
-3. **Elevated Watch** — softer pre-conviction filter
-4. **Active Alerts** — real-time feed (VCVI, MWCA, RVOL only — see below)
-5. **Stress Matrix** — per-pair IPSI, vol regime, status
-6. **Side-Wide Convergence (SWVC)** — cross-market tri-ETF spike tracker
-7. **Historical Echoes** — base-rate forward returns for past VCVI signals
-8. **Volume Heat Calendar** — 90-day volume heatmap
-9. **Multi-Window Convergence** — gauges across all 6 timeframes
+1. **VDDS Bar** — per-ETF volume-dollar divergence (DV-RVOL ÷ S-RVOL), always visible
+2. **NG=F Price Context Bar** — seasonal Z-score gate (always visible)
+3. **Conviction Events** — strictest filter, shown first as the primary actionable signal
+4. **Elevated Watch** — softer pre-conviction filter
+5. **Active Alerts** — real-time feed (VCVI, MWCA, RVOL only — see below)
+6. **Stress Matrix** — per-pair IPSI, vol regime, status
+7. **Side-Wide Convergence (SWVC)** — cross-market tri-ETF spike tracker
+8. **Historical Echoes** — base-rate forward returns for past VCVI signals
+9. **Volume Heat Calendar** — 90-day volume heatmap
+10. **Multi-Window Convergence** — gauges across all 6 timeframes
 
 #### Active Alerts
 
@@ -202,7 +221,7 @@ CVI, VPS, ATR breakout, VoV-21, and vol-regime warnings are computed and visible
 | **⚠ ELEVATED** | Price > $4.5 OR \|z\| ≥ 1.5σ OR HV ≥ 70th pct | Interpret with caution |
 | **🚨 EXTREME** | Price > $7.0 OR \|z\| ≥ 2.5σ OR HV ≥ 90th pct | Outlier environment — historical patterns may invert |
 
-**Conviction Events (5-gate filter, ~1–2/ETF/year):**
+**Conviction Events (5-gate filter + advisory annotation, ~1–2/ETF/year):**
 
 | Gate | Condition |
 |------|-----------|
@@ -211,6 +230,7 @@ CVI, VPS, ATR breakout, VoV-21, and vol-regime warnings are computed and visible
 | 3 — Price Dislocation | \|Daily move\| > 1.5× ATR-14 |
 | 4 — Regime Context | Vol regime ≤ 70th percentile |
 | 5 — NG Directional | Long: z ≤ −0.5σ · Short: z ≥ +0.2σ |
+| Gate 6 — VDDS Advisory | Non-blocking: VDDS at event date annotated on each conviction event for context (can be tightened to a hard gate after validation) |
 
 **Elevated Watch (3-gate, ~4–8/ETF/year):** softer thresholds (VCVI ≥ 60, 2/75 breadth, 1.2× ATR), no vol-regime constraint.
 
@@ -300,6 +320,8 @@ Percentiles computed against the full available history for each instrument.
 
 ### Volume Metrics (`data_pipeline.py`)
 
+**Share-volume metrics:**
+
 | Metric | Description |
 |--------|-------------|
 | **RVOL** | Relative volume: today ÷ N-day avg |
@@ -310,6 +332,18 @@ Percentiles computed against the full available history for each instrument.
 | **VCVI** | `CVI × (1.5 − vol_regime_pct/100)` |
 | **VPS** | RVOL (25%) + Z (20%) + Vol% (25%) + VROC (10%) + Inv Vol Regime (20%) |
 | **MWCA** | Volume ≥90th pct across all 6 windows simultaneously |
+
+**Dollar-volume metrics ($ mode):**
+
+| Metric | Description |
+|--------|-------------|
+| **DV-RVOL** | `dollar_volume ÷ N-day rolling avg dollar_volume`; split-agnostic capital flow intensity |
+| **DV-ZScore** | Std deviations of dollar volume from rolling mean |
+| **DV-Percentile** | Rank of dollar volume vs own rolling history |
+| **DV-VROC** | Dollar volume rate of change |
+| **DVCVI** | `dv_percentile × (1 − price_pct/100)`; doubly penalised in capitulation because low price already suppresses dollar volume |
+| **DV-VPS** | Parallel VPS composite computed on dollar-volume metrics (same weights as VPS) |
+| **VDDS** | Volume-Dollar Divergence Score: `DV-RVOL-21d ÷ S-RVOL-21d`; `< 1` = share vol outpacing dollar vol (capitulation); `> 1` = dollar vol outpacing share vol (momentum/accumulation) |
 
 ### Leveraged ETF Decay Correction
 
@@ -382,11 +416,12 @@ The dashboard uses a two-layer data architecture: a pre-computed pipeline layer 
 1. Fetch full-lifetime OHLCV for 6 ETFs + NG=F via Yahoo Finance (3,300–4,500+ sessions per ETF, back to 2008–2012 depending on listing date)
 2. Compute NG=F context: seasonal Z-score, HV percentile, regime series
 3. Compute per-ETF: volume metrics (6 windows), volatility, CVI/VCVI, VPS, decay-adj
-4. Detect conviction events (5-gate + extreme override + momentum guard)
-5. Detect elevated watch events (3-gate)
-6. Generate historical echoes with regime-stratified forward return tables
-7. Deduplicate bars by calendar date (Yahoo v8 occasionally returns two rows for the same date with different volumes — keep the last/most-updated row only)
-8. Write `dashboard_data.json` + `latest_signals.json` → sync to `docs/data/`
+4. Compute per-ETF dollar-volume metrics: DV-RVOL, DV-ZScore, DV-Percentile, DV-VROC, DVCVI, DV-VPS, and VDDS series (DV-RVOL-21d ÷ S-RVOL-21d per bar)
+5. Detect conviction events (5-gate + extreme override + momentum guard); annotate each event with VDDS value at that date (Gate 6 advisory)
+6. Detect elevated watch events (3-gate)
+7. Generate historical echoes with regime-stratified forward return tables
+8. Deduplicate bars by calendar date (Yahoo v8 occasionally returns two rows for the same date with different volumes — keep the last/most-updated row only)
+9. Write `dashboard_data.json` + `latest_signals.json` → sync to `docs/data/`
 
 > Full-lifetime history is stored (not capped at 252 days) so the Vol Regime Monitor can render complete HV sparklines from each ETF's inception date, and percentile rankings are computed against the full available record.
 
