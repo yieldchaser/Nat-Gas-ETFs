@@ -759,8 +759,14 @@ def _yahoo_fetch_one(
 
             # Extract real-time snapshot from meta — regularMarketPrice updates
             # continuously and is independent of the daily bar update cadence.
+            # Some TSX tickers (HNU.TO / HND.TO) don't return regularMarketPrice or
+            # regularMarketVolume in Yahoo's meta; fall back to the last bar in df.
             live_price = meta.get("regularMarketPrice")
             live_vol   = meta.get("regularMarketVolume")
+            if live_price is None and not df.empty:
+                live_price = float(df["close"].iloc[-1])
+            if live_vol is None and not df.empty:
+                live_vol = int(df["volume"].iloc[-1])
             prev_close = meta.get("previousClose") or meta.get("chartPreviousClose")
             live_snapshot: Optional[dict] = None
             if live_price is not None:
