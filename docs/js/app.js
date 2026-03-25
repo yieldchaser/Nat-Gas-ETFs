@@ -163,13 +163,16 @@ const App = {
 
             // Normalise current snapshot: pipeline uses snake_case, renderer expects camelCase
             const raw = etfData.current || {};
-            // Compute changePct from the two most recent history bars.
-            // The pipeline-stored change_pct can be poisoned by Yahoo's
-            // chartPreviousClose (base price of the full chart period, not
-            // yesterday's close), so we always derive it from the series.
+            // Compute changePct from the two most recent CONFIRMED history bars.
+            // Strip any same-date duplicates (Yahoo sometimes returns two rows for
+            // the same calendar day with different volumes) — they produce 0% change.
             let changePctFromHistory = raw.change_pct ?? raw.changePct ?? 0;
-            const hist = etfData.history;
-            if (hist && hist.length >= 2) {
+            const histRaw = etfData.history || [];
+            // Deduplicate by date, keeping last entry per date
+            const seen = new Map();
+            for (const h of histRaw) { seen.set(h.date ?? h[0], h); }
+            const hist = [...seen.values()];
+            if (hist.length >= 2) {
                 const c1 = hist[hist.length - 1].close ?? hist[hist.length - 1][1];
                 const c0 = hist[hist.length - 2].close ?? hist[hist.length - 2][1];
                 if (c1 != null && c0 && c0 > 0) changePctFromHistory = (c1 - c0) / c0 * 100;
