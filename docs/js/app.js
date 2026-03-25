@@ -96,7 +96,10 @@ const App = {
                 // preliminary bar, bars[-1] and bars[-2] are both yesterday → 0% change.
                 const seenDates = new Map();
                 for (const b of liveETF.data || []) { seenDates.set(b.date, b); }
-                const allBars = [...seenDates.values()];
+                // Sort ascending by date string after dedup — guards against Yahoo
+                // returning bars in descending order, which would make Map.values()
+                // return dates old→new (last insert wins = oldest bar per date).
+                const allBars = [...seenDates.values()].sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
                 // Strip today's bar for change% calc — Yahoo pre-populates it with
                 // yesterday's close even before any trading occurs, making bars[-1]
                 // identical to bars[-2] and producing 0% change.
@@ -177,10 +180,14 @@ const App = {
             // the same calendar day with different volumes) — they produce 0% change.
             let changePctFromHistory = raw.change_pct ?? raw.changePct ?? 0;
             const histRaw = etfData.history || [];
-            // Deduplicate by date, keeping last entry per date
+            // Deduplicate by date, keeping last entry per date; sort ascending
+            // so hist[-1] is always the most recent bar regardless of source order.
             const seen = new Map();
             for (const h of histRaw) { seen.set(h.date ?? h[0], h); }
-            const hist = [...seen.values()];
+            const hist = [...seen.values()].sort((a, b) => {
+                const da = a.date ?? a[0], db = b.date ?? b[0];
+                return da < db ? -1 : da > db ? 1 : 0;
+            });
             if (hist.length >= 2) {
                 const c1 = hist[hist.length - 1].close ?? hist[hist.length - 1][1];
                 const c0 = hist[hist.length - 2].close ?? hist[hist.length - 2][1];
@@ -196,13 +203,15 @@ const App = {
                 changePct:    changePctFromHistory,
                 dollarVolume: raw.dollar_volume ?? raw.dollarVolume ?? 0,
             };
-            if (etfData.history && etfData.history.length > 0) {
-                sparkData = etfData.history.slice(-CONFIG.sparklineDays).map(h => ({
+            // Always declare sparkData locally — avoids implicit global that would bleed
+            // stale values from a previous ticker into the next when history is empty.
+            const sparkData = (etfData.history && etfData.history.length > 0)
+                ? etfData.history.slice(-CONFIG.sparklineDays).map(h => ({
                     date: h.date || h[0],
                     close: h.close != null ? h.close : h[1],
                     volume: h.volume != null ? h.volume : h[2]
-                }));
-            }
+                  }))
+                : [];
 
             // Build metrics object from pre-computed data
             // Alert level uses VCVI when available (vol-adjusted is primary signal)
