@@ -85,7 +85,10 @@ const App = {
                 // pre-market/closed periods with close = previous session's price,
                 // which makes bars[-1] and bars[-2] identical → 0% change.
                 // Strip that preliminary bar when the market is not open.
-                const marketOpen = liveData.marketState === 'open';
+                // Use per-ETF market state — liveData.marketState is 'open' if ANY
+                // exchange is open (e.g. London ETFs open while NYSE is pre-market),
+                // which would incorrectly suppress stripping for US ETFs and yield 0%.
+                const marketOpen = liveETF.marketState === 'open';
                 let bars = liveETF.data;
                 if (bars && bars.length > 0 && !marketOpen && bars[bars.length - 1].date === today) {
                     bars = bars.slice(0, -1);
