@@ -41,6 +41,12 @@ function renderKpiCards(data, comp) {
     var d1 = n > 1 ? (last.ngvl - data[n-2].ngvl) : null;
     var roc5 = n > 5 ? (last.ngvl / data[n-6].ngvl - 1) * 100 : null;
     var med90 = comp.atmMed90 ? comp.atmMed90[n-1] : null;
+    
+    // Shared formatting helpers
+    var skDir = ''; if (data.length > 5) { var prev = data[data.length - 6].skewRatio; skDir = last.skewRatio > prev ? '▲ RISING' : '▼ FALLING'; }
+    var convLabel = last.convexity > 1.1 ? 'ELEVATED' : last.convexity > 0.95 ? 'NORMAL' : 'LOW';
+    var convColor = last.convexity > 1.1 ? '#f59e0b' : last.convexity > 0.95 ? '#3db87a' : '#60a8f8';
+    
     // 252-day high/low distance for NGVL
     var ngvlHi = -Infinity, ngvlLo = Infinity;
     var lookback = Math.min(252, n);
