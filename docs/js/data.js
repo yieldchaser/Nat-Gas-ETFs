@@ -88,6 +88,7 @@ const DataService = {
                 currency: meta.currency,
                 exchangeName: meta.exchangeName,
                 regularMarketPrice: meta.regularMarketPrice,
+                regularMarketVolume: meta.regularMarketVolume != null ? meta.regularMarketVolume : null,
                 previousClose: meta.previousClose || null,
                 regularMarketTime: meta.regularMarketTime,
                 marketState: meta.currentTradingPeriod ? this.getMarketState(meta.currentTradingPeriod) : 'unknown',
