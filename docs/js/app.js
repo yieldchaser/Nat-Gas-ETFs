@@ -125,16 +125,14 @@ const App = {
                             (currentForChange - prevClose) / prevClose * 100;
                     }
                 }
-                // Volume update: use today's bar from allBars (pre-strip), but only when
-                // market is open — preliminary bars carry yesterday's volume, not today's.
-                if (marketOpen && allBars.length > 0) {
-                    const lastBar = allBars[allBars.length - 1];
-                    if (lastBar.date === today && lastBar.volume != null) {
-                        this.allMetrics[ticker].current.volume = lastBar.volume;
-                        this.allMetrics[ticker].current.dollarVolume =
-                            livePrice * lastBar.volume;
-                    }
+                // Volume update: use Yahoo's live intraday quote volume directly.
+                // This bypasses "ghost" chart bars and tracks the official live feed.
+                if (marketOpen && liveETF.regularMarketVolume != null) {
+                    this.allMetrics[ticker].current.volume = liveETF.regularMarketVolume;
+                    this.allMetrics[ticker].current.dollarVolume =
+                        livePrice * liveETF.regularMarketVolume;
                 }
+                
                 updated = true;
             }
             if (updated) {
