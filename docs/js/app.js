@@ -107,7 +107,8 @@ const App = {
                     ? allBars.slice(0, -1)
                     : allBars;
                 if (bars.length >= 2) {
-                    const prevClose = bars[bars.length - 2].close;
+                    // Fix: bars array already has 'today' stripped, so bars[-1] is exactly yesterday's close.
+                    const prevClose = bars[bars.length - 1].close;
                     // When market is open use livePrice (intraday); otherwise last confirmed close.
                     const currentForChange = marketOpen ? livePrice : bars[bars.length - 1].close;
                     if (prevClose && prevClose > 0) {
