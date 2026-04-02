@@ -7,7 +7,10 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 <link rel="stylesheet" href="css/styles.css">
 <style>
+/* ---- UNIVERSAL TOOLTIP ---- */
+#tt { position: fixed; display: none; background: rgba(16,16,28,0.96); border: 1px solid rgba(0,255,255,0.15); border-radius: 6px; padding: 7px 12px; font-size: 0.72rem; color: #ccd6e0; pointer-events: none; z-index: 99999; max-width: 340px; line-height: 1.55; letter-spacing: 0.3px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); transition: opacity 0.12s; }
 /* ---- CVOL PAGE LAYOUT ---- */
+:root { --text-dim: #444455; }
 .cvol-main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .cvol-title-block { margin-bottom: 24px; }
 .cvol-title-row { display: flex; align-items: baseline; gap: 16px; }
@@ -23,13 +26,13 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 .sb-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.sb-lbl { font-size: 0.6rem; letter-spacing: 2px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; cursor: default; }
+.sb-lbl { font-size: 0.6rem; letter-spacing: 2px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; cursor: help; }
 .sb-val { font-size: 1.3rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
 .sb-sub { font-size: 0.6rem; color: var(--text-dim); font-weight: 700; }
 .sb-badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .flash-badge {
     font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; padding: 4px 10px;
-    border-radius: 4px; animation: flashPulse 2s ease-in-out infinite;
+    border-radius: 4px; animation: flashPulse 2s ease-in-out infinite; cursor: help;
 }
 .flash-ci { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
 .flash-rds { background: rgba(236,72,153,0.15); color: #ec4899; border: 1px solid rgba(236,72,153,0.3); }
@@ -54,6 +57,9 @@
 .cvol-kpi-stat { display: flex; flex-direction: column; gap: 2px; }
 .cvol-kpi-slbl { font-size: 0.5rem; letter-spacing: 1px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; }
 .cvol-kpi-sval { font-size: 0.75rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-bright); }
+.kpi-progress { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.06); margin-top: 6px; overflow: hidden; }
+.kpi-progress-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+.soft-green { color: #3db87a; } .soft-red { color: #ef4444; }
 
 /* ---- CHART PANEL ---- */
 .chart-container {
@@ -87,26 +93,72 @@ input[type=range]:hover::-webkit-slider-thumb { background: var(--cyan); border-
 input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-color: #fff; }
 .range-labels { display: flex; justify-content: center; font-size: 0.65rem; color: var(--text-dim); font-weight: 700; margin-top: 8px; letter-spacing: 1px; }
 
-/* ---- TOOLTIP ---- */
+/* ---- CHART HOVER TOOLTIP ---- */
 #cvol-tooltip { position: absolute; display: none; background: rgba(22,22,36,0.95); border: 1px solid var(--border-primary); border-radius: 6px; padding: 10px 14px; font-size: 0.75rem; color: var(--text-bright); pointer-events: none; z-index: 1000; box-shadow: 0 8px 24px rgba(0,0,0,0.5); min-width: 160px; }
 .tooltip-date { color: var(--cyan); font-weight: 800; margin-bottom: 4px; font-size: 0.65rem; letter-spacing: 1px; }
 .tooltip-row { display: flex; justify-content: space-between; gap: 16px; margin-top: 2px; }
 .tooltip-lbl { font-weight: 700; text-transform: uppercase; font-size: 0.55rem; }
 .tooltip-val { font-weight: 700; font-family: 'JetBrains Mono', monospace; }
 
-/* ---- ETF CHIPS (series toggle) ---- */
+/* ---- ETF CHIPS ---- */
 .etf-chip { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.5px; padding: 4px 10px; border-radius: 4px; border: 1px solid; cursor: pointer; transition: all 0.2s; user-select: none; font-family: 'JetBrains Mono', monospace; }
 .etf-chip.active { opacity: 1; }
 .etf-chip.inactive { opacity: 0.3; background: transparent !important; }
 
-/* ---- COMPOSITE SPARKLINES ---- */
+/* ---- VARIANCE DECOMP CHART ---- */
+.var-decomp-wrap { position: relative; height: 220px; width: 100%; margin-bottom: 12px; }
+#var-decomp-canvas { width: 100%; height: 100%; cursor: crosshair; }
+#var-decomp-tooltip { position: absolute; display: none; background: rgba(22,22,36,0.95); border: 1px solid var(--border-primary); border-radius: 6px; padding: 8px 12px; font-size: 0.7rem; color: var(--text-bright); pointer-events: none; z-index: 1000; box-shadow: 0 6px 18px rgba(0,0,0,0.5); min-width: 140px; }
+
+/* ---- COMPOSITE SIGNAL CARDS (expanded) ---- */
 .composite-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
-.composite-card { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 6px; padding: 14px; }
-.comp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.composite-card { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 6px; padding: 14px; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; position: relative; }
+.composite-card:hover { border-color: var(--border-accent); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+.comp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .comp-name { font-size: 0.65rem; font-weight: 800; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; }
 .comp-val { font-size: 0.9rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
-.comp-spark { width: 100%; height: 60px; }
+.comp-spark-wrap { position: relative; width: 100%; height: 110px; }
+.comp-spark { width: 100%; height: 100%; }
+.comp-spark-tt { position: absolute; display: none; background: rgba(22,22,36,0.95); border: 1px solid var(--border-primary); border-radius: 4px; padding: 5px 8px; font-size: 0.6rem; color: var(--text-bright); pointer-events: none; z-index: 10; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
 .comp-footer { display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.55rem; color: var(--text-dim); font-weight: 700; letter-spacing: 0.5px; }
+.comp-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; }
+.comp-stat { font-size: 0.5rem; color: var(--text-dim); font-weight: 700; letter-spacing: 0.5px; }
+.comp-stat-val { display: block; font-size: 0.7rem; color: var(--text-bright); font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+.comp-expand-icon { position: absolute; top: 8px; right: 8px; font-size: 0.5rem; color: var(--text-dim); letter-spacing: 1px; opacity: 0; transition: opacity 0.2s; }
+.composite-card:hover .comp-expand-icon { opacity: 1; }
+
+/* ---- EXPANDED COMPOSITE MODAL ---- */
+.comp-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9000; backdrop-filter: blur(4px); }
+.comp-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(90vw, 900px); max-height: 80vh; background: var(--bg-panel); border: 1px solid var(--border-accent); border-radius: 10px; padding: 28px; z-index: 9001; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.comp-modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.comp-modal-title { font-size: 1rem; font-weight: 800; letter-spacing: 2px; color: var(--text-bright); text-transform: uppercase; }
+.comp-modal-close { background: none; border: 1px solid var(--border-primary); color: var(--text-muted); font-size: 0.7rem; padding: 4px 12px; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+.comp-modal-close:hover { border-color: var(--cyan); color: var(--cyan); }
+.comp-modal-chart { position: relative; height: 300px; width: 100%; margin-bottom: 16px; }
+.comp-modal-chart canvas { width: 100%; height: 100%; cursor: crosshair; }
+
+/* ---- REGIME HEATMAP ---- */
+.heatmap-panel { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
+.heatmap-grid { display: grid; gap: 2px; }
+.heatmap-cell { width: 100%; aspect-ratio: 1.6; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; transition: transform 0.15s, box-shadow 0.15s; cursor: help; }
+.heatmap-cell:hover { transform: scale(1.15); box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 10; position: relative; }
+.heatmap-label { font-size: 0.55rem; font-weight: 700; color: var(--text-dim); letter-spacing: 1px; text-align: center; }
+.heatmap-year-label { font-size: 0.6rem; font-weight: 700; color: var(--text-muted); text-align: right; padding-right: 6px; display: flex; align-items: center; justify-content: flex-end; }
+
+/* ---- CORRELATION MATRIX ---- */
+.corr-panel { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
+.corr-grid { display: grid; gap: 2px; }
+.corr-cell { display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; border-radius: 3px; cursor: help; aspect-ratio: 1; transition: transform 0.15s; }
+.corr-cell:hover { transform: scale(1.1); z-index: 5; position: relative; }
+.corr-header { font-size: 0.5rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; }
+
+/* ---- BACKTEST SCORECARD ---- */
+.scorecard-panel { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
+table.scorecard-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.75rem; }
+.scorecard-table th { text-align: center; padding: 10px 12px; font-size: 0.55rem; letter-spacing: 2px; color: var(--text-muted); font-weight: 700; border-bottom: 2px solid var(--bg-secondary); text-transform: uppercase; }
+.scorecard-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; }
+.scorecard-table tr:hover td { background: rgba(255,255,255,0.04) !important; }
+.score-bar { display: inline-block; height: 4px; border-radius: 2px; vertical-align: middle; margin-left: 6px; }
 
 /* ---- EVENT TIMELINE ---- */
 .event-panel { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
@@ -117,14 +169,17 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 .tab-btn { font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; padding: 6px 14px; border-radius: 4px; border: none; background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
 .tab-btn:hover { color: var(--text-primary); }
 .tab-btn.active { background: var(--bg-secondary); color: var(--cyan); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
-
 table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.78rem; }
 .event-table th { text-align: center; padding: 10px 12px; font-size: 0.6rem; letter-spacing: 2px; color: var(--text-muted); font-weight: 700; border-bottom: 2px solid var(--bg-secondary); text-transform: uppercase; }
 .event-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; }
 .event-table tr:hover td { background: rgba(255,255,255,0.04) !important; }
 .sig-badge { display: inline-block; font-size: 0.6rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid; letter-spacing: 0.8px; }
 
-/* ---- LEGEND ---- */
+/* ---- SECTION TITLE ---- */
+.section-title-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.section-title-text { font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-bright); border-left: 3px solid rgba(0,255,255,0.45); padding-left: 8px; }
+
+/* ---- CHART LEGEND ---- */
 .chart-legend { display: flex; gap: 24px; flex-wrap: wrap; }
 .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.62rem; color: var(--text-dim); font-weight: 600; }
 .legend-line { width: 16px; height: 2px; }
@@ -132,8 +187,11 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 /* ---- LOADING ---- */
 .cvol-loading { display: flex; justify-content: center; align-items: center; height: 400px; color: var(--text-dim); font-size: 1rem; letter-spacing: 2px; font-weight: 700; }
 
+/* ---- TWO-COL GRID ---- */
+.two-col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+
 /* ---- RESPONSIVE ---- */
-@media (max-width: 1200px) { .cvol-kpi-grid { grid-template-columns: repeat(2, 1fr); } .composite-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 1200px) { .cvol-kpi-grid { grid-template-columns: repeat(2, 1fr); } .composite-grid { grid-template-columns: repeat(3, 1fr); } .two-col-grid { grid-template-columns: 1fr; } }
 @media (max-width: 768px) {
     .cvol-main { padding: 14px 12px 40px; }
     .cvol-title { font-size: 1.2rem; }
@@ -141,6 +199,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     .cvol-kpi-grid { grid-template-columns: 1fr; }
     .composite-grid { grid-template-columns: 1fr 1fr; }
     .chart-canvas-wrap { height: 260px; }
+    .var-decomp-wrap { height: 180px; }
     .chart-header { flex-direction: column; align-items: flex-start; gap: 10px; }
     .event-header { flex-direction: column; align-items: flex-start; gap: 10px; }
     #event-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -164,10 +223,10 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     </div>
     <div class="top-bar-right">
         <nav class="page-nav">
-            <a href="index.html" class="nav-link">Volume Monitor</a>
-            <a href="trough-peak.html" class="nav-link">Trough-to-Peak</a>
-            <a href="flows.html" class="nav-link">FLOW MONITOR</a>
-            <a href="cvol.html" class="nav-link active">CVOL</a>
+            <a href="index.html" class="nav-link" data-tooltip="ETF Volume Monitor dashboard">Volume Monitor</a>
+            <a href="trough-peak.html" class="nav-link" data-tooltip="Trough-to-Peak cycle analysis">Trough-to-Peak</a>
+            <a href="flows.html" class="nav-link" data-tooltip="ETF fund flow tracking">FLOW MONITOR</a>
+            <a href="cvol.html" class="nav-link active" data-tooltip="CME CVOL volatility intelligence">CVOL</a>
         </nav>
     </div>
 </header>
@@ -175,148 +234,217 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 <!-- LOADING STATE -->
 <div class="cvol-loading" id="cvol-loading">LOADING CVOL DATA...</div>
 
-<!-- MAIN DASHBOARD (hidden until data loads) -->
+<!-- EXPANDED COMPOSITE MODAL -->
+<div class="comp-modal-overlay" id="comp-modal-overlay"></div>
+<div class="comp-modal" id="comp-modal" style="display:none;">
+    <div class="comp-modal-head">
+        <span class="comp-modal-title" id="comp-modal-title"></span>
+        <button class="comp-modal-close" id="comp-modal-close">CLOSE ✕</button>
+    </div>
+    <div class="comp-modal-desc" id="comp-modal-desc" style="font-size:0.7rem;color:var(--text-muted);margin-bottom:16px;line-height:1.5;"></div>
+    <div class="comp-modal-chart">
+        <canvas id="comp-modal-canvas"></canvas>
+    </div>
+    <div id="comp-modal-stats" style="font-size:0.7rem;color:var(--text-primary);"></div>
+</div>
+
+<!-- MAIN DASHBOARD -->
 <main class="cvol-main" id="cvol-dashboard" style="display:none">
 
     <!-- TITLE -->
     <div class="cvol-title-block">
         <div class="cvol-title-row">
-            <span class="cvol-title">CVOL Volatility Intelligence</span>
+            <span class="cvol-title" data-tooltip="Options-derived volatility intelligence for Natural Gas, powered by CME CVOL data.">CVOL Volatility Intelligence</span>
             <span class="cvol-badge">CME NGVL · OPTIONS-DERIVED</span>
         </div>
         <div class="cvol-desc">Options-market derived volatility analytics for Natural Gas. Tracks CME CVOL index, skew ratio, convexity, and variance decomposition to identify directional inflection points before price moves. Composite signals (SAD, CVC, CI, RDS) synthesize cross-column divergences into actionable regime alerts.</div>
     </div>
 
-    <!-- PANEL 1: STATUS BANNER -->
-    <div class="cvol-status-banner" id="cvol-status-banner">
-        <!-- Populated by JS -->
-    </div>
+    <!-- PANEL 1: STATUS BANNER (populated by JS with data-tooltip on every item) -->
+    <div class="cvol-status-banner" id="cvol-status-banner"></div>
 
-    <!-- PANEL 2: KPI CARDS -->
-    <div class="cvol-kpi-grid" id="cvol-kpi-grid">
-        <!-- Populated by JS -->
-    </div>
+    <!-- PANEL 2: KPI CARDS (populated by JS with data-tooltip on every stat) -->
+    <div class="cvol-kpi-grid" id="cvol-kpi-grid"></div>
 
     <!-- PANEL 3: MAIN TIME CHART -->
     <div class="chart-container">
         <div class="chart-header">
             <div style="flex:1">
-                <span style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;" data-tooltip="Multi-series time chart of CME CVOL indices overlaid with NG futures price. Toggle series with the chips below. Background color bands show NGVL's 252-day percentile regime.">CVOL Time Series</span>
+                <span class="section-title-text" data-tooltip="Multi-series time chart of CME CVOL indices overlaid with NG futures price. Toggle series with the chips below. Background color bands show NGVL's 252-day percentile regime (Low/Normal/Elevated/Extreme).">CVOL Time Series</span>
             </div>
             <div class="horizon-group" id="cvol-horizon-controls">
-                <button class="horizon-btn" data-range="1W" data-tooltip="Last 7 calendar days">1W</button>
-                <button class="horizon-btn" data-range="1M" data-tooltip="Last 30 days">1M</button>
-                <button class="horizon-btn" data-range="3M" data-tooltip="Last 3 months">3M</button>
-                <button class="horizon-btn" data-range="6M" data-tooltip="Last 6 months">6M</button>
-                <button class="horizon-btn" data-range="1Y" data-tooltip="Last 12 months">1Y</button>
-                <button class="horizon-btn" data-range="3Y" data-tooltip="Last 3 years">3Y</button>
-                <button class="horizon-btn active" data-range="ALL" data-tooltip="Full available history">ALL</button>
+                <button class="horizon-btn" data-range="1W" data-tooltip="Show last 7 calendar days of CVOL data">1W</button>
+                <button class="horizon-btn" data-range="1M" data-tooltip="Show last 30 calendar days">1M</button>
+                <button class="horizon-btn" data-range="3M" data-tooltip="Show last 3 months — captures seasonal swings">3M</button>
+                <button class="horizon-btn" data-range="6M" data-tooltip="Show last 6 months — one injection/withdrawal cycle">6M</button>
+                <button class="horizon-btn" data-range="1Y" data-tooltip="Show last 12 months — full seasonal cycle">1Y</button>
+                <button class="horizon-btn" data-range="3Y" data-tooltip="Show last 3 years — captures macro regime shifts">3Y</button>
+                <button class="horizon-btn active" data-range="ALL" data-tooltip="Show full available CVOL history since 2013">ALL</button>
             </div>
         </div>
-
         <div class="chart-canvas-wrap">
             <canvas id="cvol-canvas"></canvas>
             <div id="cvol-tooltip"></div>
         </div>
-
-        <!-- Series Toggle Chips -->
         <div id="cvol-series-chips" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin:8px 0;"></div>
-
-        <!-- Range Slider -->
         <div class="range-slider-container">
             <div class="range-slider-wrap">
                 <div class="range-inputs">
                     <div class="range-slider-track"></div>
                     <div id="cvol-range-highlight" class="range-slider-highlight" style="left:0%;width:100%"></div>
-                    <input type="range" id="cvol-range-start" min="0" max="100" value="0" data-tooltip="Start of visible date range">
-                    <input type="range" id="cvol-range-end" min="0" max="100" value="100" data-tooltip="End of visible date range">
+                    <input type="range" id="cvol-range-start" min="0" max="100" value="0" data-tooltip="Drag to set the start of the visible date range">
+                    <input type="range" id="cvol-range-end" min="0" max="100" value="100" data-tooltip="Drag to set the end of the visible date range">
                 </div>
             </div>
             <div class="range-labels">
                 <span id="cvol-range-label" style="color:var(--text-bright);text-transform:uppercase;letter-spacing:2px;">ALL DATA</span>
             </div>
         </div>
-
-        <!-- Legend -->
         <div style="display:flex;justify-content:center;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05);">
             <div class="chart-legend">
-                <div class="legend-item"><span class="legend-line" style="background:rgba(74,128,184,0.3)"></span> LOW (≤25th)</div>
-                <div class="legend-item"><span class="legend-line" style="background:rgba(61,184,122,0.3)"></span> NORMAL</div>
-                <div class="legend-item"><span class="legend-line" style="background:rgba(192,120,40,0.3)"></span> ELEVATED (≥75th)</div>
-                <div class="legend-item"><span class="legend-line" style="background:rgba(192,64,64,0.3)"></span> EXTREME (≥90th)</div>
+                <div class="legend-item" data-tooltip="NGVL 252-day percentile ≤ 25th — vol historically suppressed"><span class="legend-line" style="background:rgba(74,128,184,0.3)"></span> LOW (≤25th)</div>
+                <div class="legend-item" data-tooltip="NGVL 252-day percentile 25th–75th — typical vol environment"><span class="legend-line" style="background:rgba(61,184,122,0.3)"></span> NORMAL</div>
+                <div class="legend-item" data-tooltip="NGVL 252-day percentile ≥ 75th — above-average vol"><span class="legend-line" style="background:rgba(192,120,40,0.3)"></span> ELEVATED (≥75th)</div>
+                <div class="legend-item" data-tooltip="NGVL 252-day percentile ≥ 90th — extreme vol, historically rare"><span class="legend-line" style="background:rgba(192,64,64,0.3)"></span> EXTREME (≥90th)</div>
             </div>
         </div>
     </div>
 
-    <!-- PANEL 4: COMPOSITE SIGNAL DASHBOARD -->
+    <!-- PANEL 4: VARIANCE DECOMPOSITION CHART -->
+    <div class="chart-container">
+        <div class="chart-header">
+            <div style="flex:1">
+                <span class="section-title-text" data-tooltip="Stacked area of UP VAR (call-side vol) vs DOWN VAR (put-side vol) with skew ratio overlaid. When the areas diverge, the options market is pricing directional risk — the foundation of every signal we build.">Variance Decomposition</span>
+            </div>
+        </div>
+        <div class="var-decomp-wrap">
+            <canvas id="var-decomp-canvas"></canvas>
+            <div id="var-decomp-tooltip"></div>
+        </div>
+    </div>
+
+    <!-- PANEL 5: COMPOSITE SIGNAL DASHBOARD (expanded with axes, hover, stats) -->
+    <div style="margin-bottom:16px;">
+        <span class="section-title-text" data-tooltip="Five proprietary composite signals derived from cross-column CVOL relationships. Click any card to expand to full interactive chart. Each sparkline shows 90 trading days with threshold lines and hover values.">Composite Signal Dashboard</span>
+        <span style="font-size:0.55rem;color:var(--text-dim);margin-left:12px;letter-spacing:1px;font-weight:700;">CLICK TO EXPAND</span>
+    </div>
     <div class="composite-grid">
-        <div class="composite-card">
+        <div class="composite-card" data-comp="sad">
+            <span class="comp-expand-icon">⤢ EXPAND</span>
             <div class="comp-head">
-                <span class="comp-name" data-tooltip="Skew-ATM Divergence: SkewRatio − (ATM / ATM_90d_median). Positive = directional skew without broad vol expansion = stealth repositioning.">SAD</span>
+                <span class="comp-name" data-tooltip="Skew-ATM Divergence: SkewRatio − (ATM / ATM_90d_median). Positive = directional skew rising without broad vol expansion = stealth repositioning by informed flow. Z > 1.5 = signal fires.">SAD</span>
                 <span class="comp-val" style="color:#f59e0b" id="sad-current">—</span>
             </div>
-            <canvas class="comp-spark" id="spark-sad"></canvas>
-            <div class="comp-footer"><span>Z-SCORE</span><span id="sad-zscore">—</span></div>
+            <div class="comp-spark-wrap">
+                <canvas class="comp-spark" id="spark-sad"></canvas>
+                <div class="comp-spark-tt" id="spark-sad-tt"></div>
+            </div>
+            <div class="comp-footer" data-tooltip="63-day Z-score of SAD — measures how unusual current divergence is vs. recent history"><span>Z-SCORE</span><span id="sad-zscore">—</span></div>
+            <div class="comp-stats" id="sad-stats"></div>
         </div>
-        <div class="composite-card">
+        <div class="composite-card" data-comp="ci">
+            <span class="comp-expand-icon">⤢ EXPAND</span>
             <div class="comp-head">
-                <span class="comp-name" data-tooltip="Complacency Index: 100 − ATM_252d_percentile. Higher = market more complacent about vol. >82 = historically fragile calm.">CI</span>
+                <span class="comp-name" data-tooltip="Complacency Index: 100 − ATM_252d_percentile. Higher = market more complacent about vol. > 82 = historically fragile calm — vol is cheap relative to its own history, but NG can snap violently from these levels.">CI</span>
                 <span class="comp-val" style="color:#60a8f8" id="ci-current">—</span>
             </div>
-            <canvas class="comp-spark" id="spark-ci"></canvas>
-            <div class="comp-footer"><span>THRESHOLD</span><span>82</span></div>
+            <div class="comp-spark-wrap">
+                <canvas class="comp-spark" id="spark-ci"></canvas>
+                <div class="comp-spark-tt" id="spark-ci-tt"></div>
+            </div>
+            <div class="comp-footer" data-tooltip="Signal fires when CI exceeds 82 — historically a fragile-calm precursor"><span>THRESHOLD</span><span>82</span></div>
+            <div class="comp-stats" id="ci-stats"></div>
         </div>
-        <div class="composite-card">
+        <div class="composite-card" data-comp="cvcDown">
+            <span class="comp-expand-icon">⤢ EXPAND</span>
             <div class="comp-head">
-                <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Downside): ConvPct63 × max(0, DnVarZ21). High = market pricing a top.">CVC ↓</span>
+                <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Downside): ConvPct63 × max(0, DnVarZ21). High convexity + high downside variance = market aggressively buying OTM puts = pricing a top. > 1.20 = signal fires.">CVC ↓</span>
                 <span class="comp-val" style="color:#ef4444" id="cvc-down-current">—</span>
             </div>
-            <canvas class="comp-spark" id="spark-cvc-down"></canvas>
-            <div class="comp-footer"><span>THRESHOLD</span><span>1.20</span></div>
+            <div class="comp-spark-wrap">
+                <canvas class="comp-spark" id="spark-cvc-down"></canvas>
+                <div class="comp-spark-tt" id="spark-cvc-down-tt"></div>
+            </div>
+            <div class="comp-footer" data-tooltip="Signal fires when CVC↓ exceeds 1.20 — confirms top formation setup"><span>THRESHOLD</span><span>1.20</span></div>
+            <div class="comp-stats" id="cvcDown-stats"></div>
         </div>
-        <div class="composite-card">
+        <div class="composite-card" data-comp="cvcUp">
+            <span class="comp-expand-icon">⤢ EXPAND</span>
             <div class="comp-head">
-                <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Upside): ConvPct63 × max(0, UpVarZ21). High = market pricing a bottom.">CVC ↑</span>
+                <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Upside): ConvPct63 × max(0, UpVarZ21). High convexity + high upside variance = market aggressively buying OTM calls = pricing a bottom. > 1.20 = signal fires.">CVC ↑</span>
                 <span class="comp-val" style="color:#3db87a" id="cvc-up-current">—</span>
             </div>
-            <canvas class="comp-spark" id="spark-cvc-up"></canvas>
-            <div class="comp-footer"><span>THRESHOLD</span><span>1.20</span></div>
+            <div class="comp-spark-wrap">
+                <canvas class="comp-spark" id="spark-cvc-up"></canvas>
+                <div class="comp-spark-tt" id="spark-cvc-up-tt"></div>
+            </div>
+            <div class="comp-footer" data-tooltip="Signal fires when CVC↑ exceeds 1.20 — confirms bottom formation setup"><span>THRESHOLD</span><span>1.20</span></div>
+            <div class="comp-stats" id="cvcUp-stats"></div>
         </div>
-        <div class="composite-card">
+        <div class="composite-card" data-comp="rds">
+            <span class="comp-expand-icon">⤢ EXPAND</span>
             <div class="comp-head">
-                <span class="comp-name" data-tooltip="Regime Divergence Score: |ΔSkewRatio_5d| × Convexity × (1 − ATM_pctile/100). The trifecta: rapid skew shift + fat tails + low ATM = explosive setup.">RDS</span>
+                <span class="comp-name" data-tooltip="Regime Divergence Score: |ΔSkewRatio_5d| × Convexity × (1 − ATM_pctile/100). The trifecta setup: rapid skew shift + fat tails + low ATM vol = explosive directional move imminent. Z > 1.8 = signal fires.">RDS</span>
                 <span class="comp-val" style="color:#ec4899" id="rds-current">—</span>
             </div>
-            <canvas class="comp-spark" id="spark-rds"></canvas>
-            <div class="comp-footer"><span>Z-SCORE</span><span id="rds-zscore">—</span></div>
+            <div class="comp-spark-wrap">
+                <canvas class="comp-spark" id="spark-rds"></canvas>
+                <div class="comp-spark-tt" id="spark-rds-tt"></div>
+            </div>
+            <div class="comp-footer" data-tooltip="63-day Z-score of RDS — measures how extreme current regime divergence is"><span>Z-SCORE</span><span id="rds-zscore">—</span></div>
+            <div class="comp-stats" id="rds-stats"></div>
         </div>
     </div>
 
-    <!-- PANEL 5: SIGNAL EVENT TIMELINE -->
+    <!-- PANEL 6 & 7: HEATMAP + CORRELATION MATRIX (side by side) -->
+    <div class="two-col-grid">
+        <div class="heatmap-panel">
+            <div class="section-title-bar">
+                <span class="section-title-text" data-tooltip="Monthly NGVL regime heatmap — color-coded by 252-day percentile for each month across all available years. Reveals seasonal volatility patterns: winter typically elevated, shoulder months complacent. Hover for details.">Regime Heatmap</span>
+            </div>
+            <div id="cvol-heatmap"></div>
+        </div>
+        <div class="corr-panel">
+            <div class="section-title-bar">
+                <span class="section-title-text" data-tooltip="Rolling correlation matrix across all 8 CVOL columns computed from the visible date range. When historically correlated columns diverge (e.g., NGVL rising but ATM falling), a structural shift is underway. Hover cells for r-values.">Correlation Matrix</span>
+            </div>
+            <div id="cvol-corr-matrix"></div>
+        </div>
+    </div>
+
+    <!-- PANEL 8: BACKTEST SCORECARD -->
+    <div class="scorecard-panel">
+        <div class="section-title-bar">
+            <span class="section-title-text" data-tooltip="Aggregate predictive performance of each composite signal. Hit rate = % of signals where NG moved in the predicted direction. Avg return = mean NG price change after signal. Calculated from all available history.">Signal Backtest Scorecard</span>
+        </div>
+        <div id="cvol-scorecard" style="overflow-x:auto; -webkit-overflow-scrolling:touch;"></div>
+    </div>
+
+    <!-- PANEL 9: SIGNAL EVENT TIMELINE -->
     <div class="event-panel">
         <div class="event-header">
             <div style="display:flex;align-items:center;gap:12px;">
-                <span class="event-title" style="border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;" data-tooltip="All dates where any composite signal exceeded its calibrated threshold. Forward returns show NG price change 5 and 21 sessions after the signal.">Signal Event Timeline</span>
+                <span class="event-title" style="border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;" data-tooltip="All dates where any composite signal exceeded its calibrated threshold. Forward returns show NG price change 5 and 21 sessions after the signal. Use filters to narrow by time period.">Signal Event Timeline</span>
                 <span class="event-count" id="cvol-event-count">--</span>
             </div>
             <div class="tab-group" id="cvol-event-filter">
-                <button class="tab-btn active" data-filter="all">ALL TIME</button>
-                <button class="tab-btn" data-filter="year">YEAR</button>
-                <button class="tab-btn" data-filter="6m">6 MONTHS</button>
+                <button class="tab-btn active" data-filter="all" data-tooltip="Show all signal events across full CVOL history">ALL TIME</button>
+                <button class="tab-btn" data-filter="year" data-tooltip="Show only events from the current calendar year">YEAR</button>
+                <button class="tab-btn" data-filter="6m" data-tooltip="Show only events from the last 6 months">6 MONTHS</button>
             </div>
         </div>
         <div id="event-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
         <table class="event-table">
             <thead>
                 <tr>
-                    <th data-tooltip="Date the signal fired.">DATE</th>
-                    <th data-tooltip="Which composite signal triggered.">SIGNAL</th>
-                    <th data-tooltip="Directional interpretation.">DIRECTION</th>
-                    <th data-tooltip="Raw signal value at trigger.">VALUE</th>
-                    <th data-tooltip="NG front-month futures price on signal date.">NG PRICE</th>
-                    <th data-tooltip="NG price change 5 sessions after signal.">NG Δ 5D</th>
-                    <th data-tooltip="NG price change 21 sessions after signal.">NG Δ 21D</th>
-                    <th data-tooltip="Season when the signal fired.">SEASON</th>
+                    <th data-tooltip="Calendar date the composite signal crossed its threshold.">DATE</th>
+                    <th data-tooltip="Which composite signal triggered: SAD (skew divergence), CI (complacency), CVC↓/↑ (convexity-variance), RDS (regime divergence).">SIGNAL</th>
+                    <th data-tooltip="Directional interpretation of the signal. UPSIDE = NG expected to rise. DOWNSIDE/TOP = NG expected to fall. COMPLACENCY = vol about to spike.">DIRECTION</th>
+                    <th data-tooltip="Raw composite signal value on the trigger date.">VALUE</th>
+                    <th data-tooltip="NG front-month futures settlement price on the signal date.">NG PRICE</th>
+                    <th data-tooltip="NG price change 5 trading sessions (1 week) after the signal fired. Green = profitable signal direction.">NG Δ 5D</th>
+                    <th data-tooltip="NG price change 21 trading sessions (1 month) after the signal fired. This is the primary validation window.">NG Δ 21D</th>
+                    <th data-tooltip="Seasonality of the signal: Winter (Nov-Feb), Spring (Mar-May), Summer (Jun-Aug), Fall (Sep-Oct).">SEASON</th>
                 </tr>
             </thead>
             <tbody id="cvol-event-body">
@@ -331,9 +459,45 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 <footer>
     <div class="footer-content">
         <span>Stratum Meridian | CME CVOL Data via QuikStrike</span>
-        <span>SAD, CVC, CI, RDS are proprietary composite indicators</span>
+        <span data-tooltip="Proprietary composite indicators not affiliated with CME Group">SAD, CVC, CI, RDS are proprietary composite indicators</span>
     </div>
 </footer>
+
+<!-- Universal Tooltip Singleton (mirrors trough-peak.html) -->
+<script>
+(function () {
+    var tt = document.createElement('div');
+    tt.id = 'tt';
+    document.body.appendChild(tt);
+    var active = null;
+    function show(el) {
+        if (el === active) return;
+        active = el;
+        tt.textContent = el.getAttribute('data-tooltip');
+        tt.style.display = 'block';
+        tt.style.opacity = '0';
+        requestAnimationFrame(function () {
+            var r = el.getBoundingClientRect();
+            var tw = tt.offsetWidth;
+            var th = tt.offsetHeight;
+            var pad = 8;
+            var x = r.left + r.width / 2 - tw / 2;
+            var y = r.top - th - 8;
+            if (y < pad) y = r.bottom + 8;
+            x = Math.max(pad, Math.min(x, window.innerWidth - tw - pad));
+            tt.style.left = x + 'px';
+            tt.style.top = y + 'px';
+            tt.style.opacity = '1';
+        });
+    }
+    function hide() { tt.style.opacity = '0'; tt.style.display = 'none'; active = null; }
+    document.addEventListener('mouseover', function (e) {
+        var el = e.target.closest('[data-tooltip]');
+        if (el) show(el); else hide();
+    });
+    document.addEventListener('mouseleave', function () { hide(); }, true);
+}());
+</script>
 
 <script src="js/cvol.js"></script>
 <script src="js/cvol-render.js"></script>
