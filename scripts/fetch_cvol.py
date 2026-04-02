@@ -154,7 +154,10 @@ def build_all_series(parsed: dict) -> pd.DataFrame:
 def incremental_update(new_df: pd.DataFrame, csv_path: Path) -> tuple[pd.DataFrame, int]:
     """Append only rows newer than what's already in the CSV."""
     if csv_path.exists():
-        existing = pd.read_csv(csv_path, index_col="Timestamp", parse_dates=True)
+        # Explicitly handle day-first date format (DD-MM-YYYY)
+        existing = pd.read_csv(csv_path, index_col="Timestamp")
+        existing.index = pd.to_datetime(existing.index, dayfirst=True)
+
         if existing.index.tzinfo is None:
             existing.index = existing.index.tz_localize("UTC")
         last_date = existing.index.max()
@@ -197,11 +200,13 @@ def main():
 
     print("\n[5/5] Incremental CSV update…")
     df_final, new_rows = incremental_update(df_new, OUTPUT_CSV)
-    df_final.to_csv(OUTPUT_CSV)
+    
+    # Save with clean DD-MM-YYYY date format
+    df_final.to_csv(OUTPUT_CSV, date_format='%d-%m-%Y')
 
     # Sync to docs/data/ for GitHub Pages
     DOCS_CSV.parent.mkdir(parents=True, exist_ok=True)
-    df_final.to_csv(DOCS_CSV)
+    df_final.to_csv(DOCS_CSV, date_format='%d-%m-%Y')
 
     print(f"\n{'='*60}")
     print(f"  New rows appended : {new_rows}")
