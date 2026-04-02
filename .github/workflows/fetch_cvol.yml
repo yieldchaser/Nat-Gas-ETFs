@@ -1,0 +1,44 @@
+name: Fetch CVOL Data
+
+on:
+  schedule:
+    # 16:00 UTC = 21:30 IST, Monday–Friday
+    # Runs after CME settlement so end-of-day data is final
+    - cron: '0 16 * * 1-5'
+  workflow_dispatch:
+    # Allows manual trigger from the Actions tab at any time
+
+jobs:
+  fetch-cvol:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests pandas
+
+      - name: Fetch NGVL CVOL data
+        env:
+          CME_TOKEN:    ${{ secrets.CME_TOKEN }}
+          CME_USERINFO: ${{ secrets.CME_USERINFO }}
+        run: python scripts/fetch_cvol.py
+
+      - name: Commit and push new data (if any)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/cvol/ngvl_cvol_history.csv
+          git add docs/data/cvol/ngvl_cvol_history.csv
+          # Only commit if something actually changed
+          git diff --staged --quiet || \
+            git commit -m "chore: update CVOL data $(date -u '+%Y-%m-%d')"
+          git push
