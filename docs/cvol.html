@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CVOL · Volatility Intelligence · Stratum Meridian</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+/* ---- CVOL PAGE LAYOUT ---- */
+.cvol-main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
+.cvol-title-block { margin-bottom: 24px; }
+.cvol-title-row { display: flex; align-items: baseline; gap: 16px; }
+.cvol-title { font-size: 1.6rem; font-weight: 800; letter-spacing: 1px; color: var(--text-bright); text-transform: uppercase; }
+.cvol-badge { font-size: 0.75rem; color: var(--cyan); letter-spacing: 2px; font-weight: 600; }
+.cvol-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; line-height: 1.6; max-width: 900px; }
+
+/* ---- STATUS BANNER ---- */
+.cvol-status-banner {
+    background: var(--bg-panel); border: 1px solid var(--border-primary);
+    border-radius: 8px; padding: 16px 24px; margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.sb-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.sb-lbl { font-size: 0.6rem; letter-spacing: 2px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; cursor: default; }
+.sb-val { font-size: 1.3rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.sb-sub { font-size: 0.6rem; color: var(--text-dim); font-weight: 700; }
+.sb-badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.flash-badge {
+    font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; padding: 4px 10px;
+    border-radius: 4px; animation: flashPulse 2s ease-in-out infinite;
+}
+.flash-ci { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+.flash-rds { background: rgba(236,72,153,0.15); color: #ec4899; border: 1px solid rgba(236,72,153,0.3); }
+.flash-sad { background: rgba(139,92,246,0.15); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.3); }
+@keyframes flashPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+/* ---- KPI CARDS ---- */
+.cvol-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.cvol-kpi-card {
+    background: var(--bg-panel); border: 1px solid var(--border-primary);
+    border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 10px;
+    transition: border-color 0.2s;
+}
+.cvol-kpi-card:hover { border-color: var(--border-accent); }
+.cvol-kpi-head { display: flex; justify-content: space-between; align-items: center; }
+.cvol-kpi-ticker { font-size: 0.9rem; font-weight: 800; letter-spacing: 1px; }
+.cvol-kpi-regime { font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; }
+.cvol-kpi-main { margin: 2px 0; }
+.cvol-kpi-lbl { font-size: 0.55rem; letter-spacing: 1.5px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+.cvol-kpi-val { font-size: 1.3rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; display: block; line-height: 1.2; }
+.cvol-kpi-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
+.cvol-kpi-stat { display: flex; flex-direction: column; gap: 2px; }
+.cvol-kpi-slbl { font-size: 0.5rem; letter-spacing: 1px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; }
+.cvol-kpi-sval { font-size: 0.75rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-bright); }
+
+/* ---- CHART PANEL ---- */
+.chart-container {
+    background: var(--bg-panel); border: 1px solid var(--border-primary);
+    border-radius: 8px; padding: 24px; margin-bottom: 24px;
+}
+.chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.horizon-group { display: flex; gap: 6px; }
+.horizon-btn {
+    font-size: 0.6rem; font-weight: 700; padding: 4px 10px; border-radius: 4px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary);
+    color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+}
+.horizon-btn:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+.horizon-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,255,255,0.05); }
+.chart-canvas-wrap { position: relative; height: 400px; width: 100%; margin-bottom: 12px; }
+#cvol-canvas { width: 100%; height: 100%; cursor: crosshair; }
+
+/* ---- RANGE SLIDER ---- */
+.range-slider-container { margin: 10px 0 16px; }
+.range-slider-wrap { position: relative; height: 48px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary); border-radius: 8px; padding: 0 12px; }
+.range-slider-track { position: absolute; top: 21px; left: 0; right: 0; height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; z-index: 1; }
+.range-slider-highlight { position: absolute; top: 21px; height: 6px; background: var(--cyan); border-radius: 3px; z-index: 2; box-shadow: 0 0 10px rgba(0,255,255,0.3); }
+.range-inputs { position: relative; width: 100%; }
+.range-inputs input[type=range] { position: absolute; width: 100%; top: 8px; left: 0; pointer-events: none; -webkit-appearance: none; appearance: none; background: none; height: 32px; margin: 0; z-index: 3; }
+.range-inputs input[type=range]::-webkit-slider-thumb { pointer-events: auto; -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 5px; background: #fff; border: 2px solid var(--cyan); box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer; margin-top: -7px; }
+.range-inputs input[type=range]::-moz-range-thumb { pointer-events: auto; width: 20px; height: 20px; border-radius: 5px; background: #fff; border: 2px solid var(--cyan); box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer; }
+.range-inputs input[type=range]::-webkit-slider-runnable-track { background: none !important; border: none !important; }
+.range-inputs input[type=range]::-moz-range-track { background: none !important; border: none !important; }
+input[type=range]:hover::-webkit-slider-thumb { background: var(--cyan); border-color: #fff; }
+input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-color: #fff; }
+.range-labels { display: flex; justify-content: center; font-size: 0.65rem; color: var(--text-dim); font-weight: 700; margin-top: 8px; letter-spacing: 1px; }
+
+/* ---- TOOLTIP ---- */
+#cvol-tooltip { position: absolute; display: none; background: rgba(22,22,36,0.95); border: 1px solid var(--border-primary); border-radius: 6px; padding: 10px 14px; font-size: 0.75rem; color: var(--text-bright); pointer-events: none; z-index: 1000; box-shadow: 0 8px 24px rgba(0,0,0,0.5); min-width: 160px; }
+.tooltip-date { color: var(--cyan); font-weight: 800; margin-bottom: 4px; font-size: 0.65rem; letter-spacing: 1px; }
+.tooltip-row { display: flex; justify-content: space-between; gap: 16px; margin-top: 2px; }
+.tooltip-lbl { font-weight: 700; text-transform: uppercase; font-size: 0.55rem; }
+.tooltip-val { font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+
+/* ---- ETF CHIPS (series toggle) ---- */
+.etf-chip { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.5px; padding: 4px 10px; border-radius: 4px; border: 1px solid; cursor: pointer; transition: all 0.2s; user-select: none; font-family: 'JetBrains Mono', monospace; }
+.etf-chip.active { opacity: 1; }
+.etf-chip.inactive { opacity: 0.3; background: transparent !important; }
+
+/* ---- COMPOSITE SPARKLINES ---- */
+.composite-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+.composite-card { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 6px; padding: 14px; }
+.comp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.comp-name { font-size: 0.65rem; font-weight: 800; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; }
+.comp-val { font-size: 0.9rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.comp-spark { width: 100%; height: 60px; }
+.comp-footer { display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.55rem; color: var(--text-dim); font-weight: 700; letter-spacing: 0.5px; }
+
+/* ---- EVENT TIMELINE ---- */
+.event-panel { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
+.event-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.event-title { font-size: 0.85rem; font-weight: 800; letter-spacing: 1.5px; color: var(--text-bright); text-transform: uppercase; }
+.event-count { font-size: 0.6rem; color: var(--cyan); font-weight: 700; letter-spacing: 1px; }
+.tab-group { display: flex; background: #1a1a28; padding: 3px; border-radius: 6px; }
+.tab-btn { font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; padding: 6px 14px; border-radius: 4px; border: none; background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
+.tab-btn:hover { color: var(--text-primary); }
+.tab-btn.active { background: var(--bg-secondary); color: var(--cyan); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
+table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.78rem; }
+.event-table th { text-align: center; padding: 10px 12px; font-size: 0.6rem; letter-spacing: 2px; color: var(--text-muted); font-weight: 700; border-bottom: 2px solid var(--bg-secondary); text-transform: uppercase; }
+.event-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; }
+.event-table tr:hover td { background: rgba(255,255,255,0.04) !important; }
+.sig-badge { display: inline-block; font-size: 0.6rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid; letter-spacing: 0.8px; }
+
+/* ---- LEGEND ---- */
+.chart-legend { display: flex; gap: 24px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.62rem; color: var(--text-dim); font-weight: 600; }
+.legend-line { width: 16px; height: 2px; }
+
+/* ---- LOADING ---- */
+.cvol-loading { display: flex; justify-content: center; align-items: center; height: 400px; color: var(--text-dim); font-size: 1rem; letter-spacing: 2px; font-weight: 700; }
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 1200px) { .cvol-kpi-grid { grid-template-columns: repeat(2, 1fr); } .composite-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 768px) {
+    .cvol-main { padding: 14px 12px 40px; }
+    .cvol-title { font-size: 1.2rem; }
+    .cvol-status-banner { flex-wrap: wrap; gap: 12px; padding: 14px; }
+    .cvol-kpi-grid { grid-template-columns: 1fr; }
+    .composite-grid { grid-template-columns: 1fr 1fr; }
+    .chart-canvas-wrap { height: 260px; }
+    .chart-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .event-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    #event-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table.event-table { min-width: 700px; }
+}
+@media (max-width: 420px) {
+    .cvol-main { padding: 10px 8px 32px; }
+    .chart-canvas-wrap { height: 220px; }
+    .composite-grid { grid-template-columns: 1fr; }
+    .sb-val { font-size: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header id="top-bar">
+    <div class="top-bar-left">
+        <h1>STRATUM MERIDIAN</h1>
+        <span class="subtitle">Volume Flow Analytics</span>
+    </div>
+    <div class="top-bar-right">
+        <nav class="page-nav">
+            <a href="index.html" class="nav-link">Volume Monitor</a>
+            <a href="trough-peak.html" class="nav-link">Trough-to-Peak</a>
+            <a href="flows.html" class="nav-link">FLOW MONITOR</a>
+            <a href="cvol.html" class="nav-link active">CVOL</a>
+        </nav>
+    </div>
+</header>
+
+<!-- LOADING STATE -->
+<div class="cvol-loading" id="cvol-loading">LOADING CVOL DATA...</div>
+
+<!-- MAIN DASHBOARD (hidden until data loads) -->
+<main class="cvol-main" id="cvol-dashboard" style="display:none">
+
+    <!-- TITLE -->
+    <div class="cvol-title-block">
+        <div class="cvol-title-row">
+            <span class="cvol-title">CVOL Volatility Intelligence</span>
+            <span class="cvol-badge">CME NGVL · OPTIONS-DERIVED</span>
+        </div>
+        <div class="cvol-desc">Options-market derived volatility analytics for Natural Gas. Tracks CME CVOL index, skew ratio, convexity, and variance decomposition to identify directional inflection points before price moves. Composite signals (SAD, CVC, CI, RDS) synthesize cross-column divergences into actionable regime alerts.</div>
+    </div>
+
+    <!-- PANEL 1: STATUS BANNER -->
+    <div class="cvol-status-banner" id="cvol-status-banner">
+        <!-- Populated by JS -->
+    </div>
+
+    <!-- PANEL 2: KPI CARDS -->
+    <div class="cvol-kpi-grid" id="cvol-kpi-grid">
+        <!-- Populated by JS -->
+    </div>
+
+    <!-- PANEL 3: MAIN TIME CHART -->
+    <div class="chart-container">
+        <div class="chart-header">
+            <div style="flex:1">
+                <span style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;" data-tooltip="Multi-series time chart of CME CVOL indices overlaid with NG futures price. Toggle series with the chips below. Background color bands show NGVL's 252-day percentile regime.">CVOL Time Series</span>
+            </div>
+            <div class="horizon-group" id="cvol-horizon-controls">
+                <button class="horizon-btn" data-range="1W" data-tooltip="Last 7 calendar days">1W</button>
+                <button class="horizon-btn" data-range="1M" data-tooltip="Last 30 days">1M</button>
+                <button class="horizon-btn" data-range="3M" data-tooltip="Last 3 months">3M</button>
+                <button class="horizon-btn" data-range="6M" data-tooltip="Last 6 months">6M</button>
+                <button class="horizon-btn" data-range="1Y" data-tooltip="Last 12 months">1Y</button>
+                <button class="horizon-btn" data-range="3Y" data-tooltip="Last 3 years">3Y</button>
+                <button class="horizon-btn active" data-range="ALL" data-tooltip="Full available history">ALL</button>
+            </div>
+        </div>
+
+        <div class="chart-canvas-wrap">
+            <canvas id="cvol-canvas"></canvas>
+            <div id="cvol-tooltip"></div>
+        </div>
+
+        <!-- Series Toggle Chips -->
+        <div id="cvol-series-chips" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin:8px 0;"></div>
+
+        <!-- Range Slider -->
+        <div class="range-slider-container">
+            <div class="range-slider-wrap">
+                <div class="range-inputs">
+                    <div class="range-slider-track"></div>
+                    <div id="cvol-range-highlight" class="range-slider-highlight" style="left:0%;width:100%"></div>
+                    <input type="range" id="cvol-range-start" min="0" max="100" value="0" data-tooltip="Start of visible date range">
+                    <input type="range" id="cvol-range-end" min="0" max="100" value="100" data-tooltip="End of visible date range">
+                </div>
+            </div>
+            <div class="range-labels">
+                <span id="cvol-range-label" style="color:var(--text-bright);text-transform:uppercase;letter-spacing:2px;">ALL DATA</span>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div style="display:flex;justify-content:center;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05);">
+            <div class="chart-legend">
+                <div class="legend-item"><span class="legend-line" style="background:rgba(74,128,184,0.3)"></span> LOW (≤25th)</div>
+                <div class="legend-item"><span class="legend-line" style="background:rgba(61,184,122,0.3)"></span> NORMAL</div>
+                <div class="legend-item"><span class="legend-line" style="background:rgba(192,120,40,0.3)"></span> ELEVATED (≥75th)</div>
+                <div class="legend-item"><span class="legend-line" style="background:rgba(192,64,64,0.3)"></span> EXTREME (≥90th)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL 4: COMPOSITE SIGNAL DASHBOARD -->
+    <div class="composite-grid">
+        <div class="composite-card">
+            <div class="comp-head">
+                <span class="comp-name" data-tooltip="Skew-ATM Divergence: SkewRatio − (ATM / ATM_90d_median). Positive = directional skew without broad vol expansion = stealth repositioning.">SAD</span>
+                <span class="comp-val" style="color:#f59e0b" id="sad-current">—</span>
+            </div>
+            <canvas class="comp-spark" id="spark-sad"></canvas>
+            <div class="comp-footer"><span>Z-SCORE</span><span id="sad-zscore">—</span></div>
+        </div>
+        <div class="composite-card">
+            <div class="comp-head">
+                <span class="comp-name" data-tooltip="Complacency Index: 100 − ATM_252d_percentile. Higher = market more complacent about vol. >82 = historically fragile calm.">CI</span>
+                <span class="comp-val" style="color:#60a8f8" id="ci-current">—</span>
+            </div>
+            <canvas class="comp-spark" id="spark-ci"></canvas>
+            <div class="comp-footer"><span>THRESHOLD</span><span>82</span></div>
+        </div>
+        <div class="composite-card">
+            <div class="comp-head">
+                <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Downside): ConvPct63 × max(0, DnVarZ21). High = market pricing a top.">CVC ↓</span>
+                <span class="comp-val" style="color:#ef4444" id="cvc-down-current">—</span>
+            </div>
+            <canvas class="comp-spark" id="spark-cvc-down"></canvas>
+            <div class="comp-footer"><span>THRESHOLD</span><span>1.20</span></div>
+        </div>
+        <div class="composite-card">
+            <div class="comp-head">
+                <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Upside): ConvPct63 × max(0, UpVarZ21). High = market pricing a bottom.">CVC ↑</span>
+                <span class="comp-val" style="color:#3db87a" id="cvc-up-current">—</span>
+            </div>
+            <canvas class="comp-spark" id="spark-cvc-up"></canvas>
+            <div class="comp-footer"><span>THRESHOLD</span><span>1.20</span></div>
+        </div>
+        <div class="composite-card">
+            <div class="comp-head">
+                <span class="comp-name" data-tooltip="Regime Divergence Score: |ΔSkewRatio_5d| × Convexity × (1 − ATM_pctile/100). The trifecta: rapid skew shift + fat tails + low ATM = explosive setup.">RDS</span>
+                <span class="comp-val" style="color:#ec4899" id="rds-current">—</span>
+            </div>
+            <canvas class="comp-spark" id="spark-rds"></canvas>
+            <div class="comp-footer"><span>Z-SCORE</span><span id="rds-zscore">—</span></div>
+        </div>
+    </div>
+
+    <!-- PANEL 5: SIGNAL EVENT TIMELINE -->
+    <div class="event-panel">
+        <div class="event-header">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span class="event-title" style="border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;" data-tooltip="All dates where any composite signal exceeded its calibrated threshold. Forward returns show NG price change 5 and 21 sessions after the signal.">Signal Event Timeline</span>
+                <span class="event-count" id="cvol-event-count">--</span>
+            </div>
+            <div class="tab-group" id="cvol-event-filter">
+                <button class="tab-btn active" data-filter="all">ALL TIME</button>
+                <button class="tab-btn" data-filter="year">YEAR</button>
+                <button class="tab-btn" data-filter="6m">6 MONTHS</button>
+            </div>
+        </div>
+        <div id="event-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <table class="event-table">
+            <thead>
+                <tr>
+                    <th data-tooltip="Date the signal fired.">DATE</th>
+                    <th data-tooltip="Which composite signal triggered.">SIGNAL</th>
+                    <th data-tooltip="Directional interpretation.">DIRECTION</th>
+                    <th data-tooltip="Raw signal value at trigger.">VALUE</th>
+                    <th data-tooltip="NG front-month futures price on signal date.">NG PRICE</th>
+                    <th data-tooltip="NG price change 5 sessions after signal.">NG Δ 5D</th>
+                    <th data-tooltip="NG price change 21 sessions after signal.">NG Δ 21D</th>
+                    <th data-tooltip="Season when the signal fired.">SEASON</th>
+                </tr>
+            </thead>
+            <tbody id="cvol-event-body">
+                <tr><td colspan="8" style="text-align:center;color:var(--text-dim);">Computing signals...</td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+</main>
+
+<footer>
+    <div class="footer-content">
+        <span>Stratum Meridian | CME CVOL Data via QuikStrike</span>
+        <span>SAD, CVC, CI, RDS are proprietary composite indicators</span>
+    </div>
+</footer>
+
+<script src="js/cvol.js"></script>
+<script src="js/cvol-render.js"></script>
+<script src="js/cvol-ui.js"></script>
+</body>
+</html>
