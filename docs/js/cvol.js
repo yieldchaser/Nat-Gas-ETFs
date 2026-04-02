@@ -350,3 +350,118 @@ function toRgba(hex, a) {
     const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
     return `rgba(${r},${g},${b},${a})`;
 }
+
+// ── Composite Meta (for expanded cards) ───────────────────────
+var COMP_META = {
+    sad:     { label: 'SAD — Skew-ATM Divergence', color: '#f59e0b', desc: 'SkewRatio − (ATM / ATM_90d_median). Positive = directional skew rising without broad vol expansion. This is the stealth repositioning signal — informed options flow is building directional exposure before ATM vol confirms it.',     threshold: null, thresholdType: 'z', thresholdVal: 1.5 },
+    ci:      { label: 'CI — Complacency Index',     color: '#60a8f8', desc: '100 − ATM_252d_percentile. Ranges 0–100. High values mean ATM vol is cheap relative to all history. >82 = fragile calm. Historically, NG snaps violently from complacent states. This is not a directional signal — it is a regime fragility warning.',       threshold: 82, thresholdType: 'raw', thresholdVal: 82 },
+    cvcDown: { label: 'CVC↓ — Convexity-Variance (Down)', color: '#ef4444', desc: 'ConvPct63 × max(0, DnVarZ21). When convexity is elevated AND downside variance is spiking, the options market is aggressively buying OTM puts — pricing a top. >1.20 = market structurally expects a downward reversal.',       threshold: 1.2, thresholdType: 'raw', thresholdVal: 1.2 },
+    cvcUp:   { label: 'CVC↑ — Convexity-Variance (Up)',   color: '#3db87a', desc: 'ConvPct63 × max(0, UpVarZ21). When convexity is elevated AND upside variance is spiking, the options market is aggressively buying OTM calls — pricing a bottom. >1.20 = market structurally expects an upward reversal.',     threshold: 1.2, thresholdType: 'raw', thresholdVal: 1.2 },
+    rds:     { label: 'RDS — Regime Divergence Score', color: '#ec4899', desc: '|ΔSkewRatio_5d| × Convexity × (1 − ATM_pctile/100). The trifecta: rapid skew shift + fat tails + low ATM vol. This combination has historically preceded the largest NG directional moves. Z > 1.8 = explosive setup.',   threshold: null, thresholdType: 'z', thresholdVal: 1.8 },
+};
+
+// ── Correlation Matrix ────────────────────────────────────────
+var CORR_KEYS = ['ngvl','dnVar','upVar','skew','skewRatio','atm','convexity','underlying'];
+var CORR_LABELS = ['NGVL','DN VAR','UP VAR','SKEW','SK RATIO','ATM','CONV','NG $'];
+
+function computeCorrelation(xArr, yArr) {
+    var n = 0, sx = 0, sy = 0, sxy = 0, sx2 = 0, sy2 = 0;
+    for (var i = 0; i < xArr.length; i++) {
+        if (xArr[i] == null || yArr[i] == null) continue;
+        n++; sx += xArr[i]; sy += yArr[i]; sxy += xArr[i] * yArr[i];
+        sx2 += xArr[i] * xArr[i]; sy2 += yArr[i] * yArr[i];
+    }
+    if (n < 10) return null;
+    var num = n * sxy - sx * sy;
+    var den = Math.sqrt((n * sx2 - sx * sx) * (n * sy2 - sy * sy));
+    return den > 0 ? num / den : 0;
+}
+
+function computeCorrMatrix(data) {
+    var cols = {};
+    CORR_KEYS.forEach(function(k) { cols[k] = data.map(function(r) { return r[k]; }); });
+    var matrix = [];
+    for (var i = 0; i < CORR_KEYS.length; i++) {
+        var row = [];
+        for (var j = 0; j < CORR_KEYS.length; j++) {
+            row.push(i === j ? 1.0 : computeCorrelation(cols[CORR_KEYS[i]], cols[CORR_KEYS[j]]));
+        }
+        matrix.push(row);
+    }
+    return matrix;
+}
+
+// ── Backtest Scorecard ────────────────────────────────────────
+function computeScorecard(composites) {
+    var events = composites.events || [];
+    var signals = {};
+    events.forEach(function(ev) {
+        var key = ev.signal.replace('↓','Down').replace('↑','Up');
+        if (!signals[key]) signals[key] = { count: 0, hit5: 0, hit21: 0, ret5: [], ret21: [], name: ev.signal };
+        signals[key].count++;
+        if (ev.fwd5 != null) {
+            signals[key].ret5.push(ev.fwd5);
+            var isDown = ev.direction.indexOf('TOP') >= 0 || ev.direction.indexOf('DOWNSIDE') >= 0;
+            if ((isDown && ev.fwd5 < 0) || (!isDown && ev.fwd5 > 0)) signals[key].hit5++;
+        }
+        if (ev.fwd21 != null) {
+            signals[key].ret21.push(ev.fwd21);
+            var isDown21 = ev.direction.indexOf('TOP') >= 0 || ev.direction.indexOf('DOWNSIDE') >= 0;
+            if ((isDown21 && ev.fwd21 < 0) || (!isDown21 && ev.fwd21 > 0)) signals[key].hit21++;
+        }
+    });
+    var rows = [];
+    Object.keys(signals).forEach(function(key) {
+        var s = signals[key];
+        var avg5 = s.ret5.length ? s.ret5.reduce(function(a,b){return a+b;},0) / s.ret5.length : null;
+        var avg21 = s.ret21.length ? s.ret21.reduce(function(a,b){return a+b;},0) / s.ret21.length : null;
+        var std21 = null;
+        if (s.ret21.length > 2) {
+            var m = avg21;
+            var ss = s.ret21.reduce(function(a,b){return a + (b-m)*(b-m);},0) / s.ret21.length;
+            std21 = Math.sqrt(ss);
+        }
+        rows.push({
+            signal: s.name,
+            count: s.count,
+            hitRate5: s.ret5.length > 0 ? (s.hit5 / s.ret5.length * 100) : null,
+            hitRate21: s.ret21.length > 0 ? (s.hit21 / s.ret21.length * 100) : null,
+            avgRet5: avg5,
+            avgRet21: avg21,
+            best21: s.ret21.length ? Math.max.apply(null, s.ret21) : null,
+            worst21: s.ret21.length ? Math.min.apply(null, s.ret21) : null,
+            sharpe: (avg21 != null && std21 != null && std21 > 0) ? (avg21 / std21) : null,
+        });
+    });
+    return rows;
+}
+
+// ── Regime Heatmap Data ───────────────────────────────────────
+function computeHeatmapData(data) {
+    // Group by year-month, compute mean NGVL & regime
+    var months = {};
+    data.forEach(function(r) {
+        var parts = r.date.split('-');
+        var key = parts[0] + '-' + parts[1]; // YYYY-MM
+        if (!months[key]) months[key] = { ngvl: [], underlying: [], skewRatio: [] };
+        if (r.ngvl != null) months[key].ngvl.push(r.ngvl);
+        if (r.underlying != null) months[key].underlying.push(r.underlying);
+        if (r.skewRatio != null) months[key].skewRatio.push(r.skewRatio);
+    });
+    // Full-history NGVL values for percentile ranking
+    var allNgvl = data.map(function(r) { return r.ngvl; }).filter(function(v) { return v != null; });
+    allNgvl.sort(function(a,b) { return a - b; });
+    var result = {};
+    Object.keys(months).sort().forEach(function(key) {
+        var m = months[key];
+        var avgNgvl = m.ngvl.reduce(function(a,b){return a+b;},0) / m.ngvl.length;
+        var avgUnd = m.underlying.reduce(function(a,b){return a+b;},0) / m.underlying.length;
+        var avgSk = m.skewRatio.length ? m.skewRatio.reduce(function(a,b){return a+b;},0) / m.skewRatio.length : null;
+        // Percentile of avgNgvl in full history
+        var rank = 0;
+        for (var i = 0; i < allNgvl.length; i++) { if (allNgvl[i] <= avgNgvl) rank++; }
+        var pct = (rank / allNgvl.length) * 100;
+        result[key] = { avgNgvl: avgNgvl, avgUnderlying: avgUnd, avgSkewRatio: avgSk, pct: pct, regime: ngvlRegime(pct) };
+    });
+    return result;
+}
