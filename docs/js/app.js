@@ -100,17 +100,26 @@ const App = {
                 // returning bars in descending order, which would make Map.values()
                 // return dates old→new (last insert wins = oldest bar per date).
                 const allBars = [...seenDates.values()].sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
-                // Strip today's bar for change% calc — Yahoo pre-populates it with
-                // yesterday's close even before any trading occurs, making bars[-1]
-                // identical to bars[-2] and producing 0% change.
-                const bars = allBars.length > 0 && allBars[allBars.length - 1].date === today
-                    ? allBars.slice(0, -1)
-                    : allBars;
-                if (bars.length >= 2) {
-                    // Fix: bars array already has 'today' stripped, so bars[-1] is exactly yesterday's close.
-                    const prevClose = bars[bars.length - 1].close;
-                    // When market is open use livePrice (intraday); otherwise last confirmed close.
-                    const currentForChange = marketOpen ? livePrice : bars[bars.length - 1].close;
+                if (allBars.length >= 2) {
+                    let prevClose, currentForChange;
+                    
+                    const lastBarIsToday = allBars[allBars.length - 1].date === today;
+                    
+                    if (marketOpen) {
+                        // Market is open: current is live intraday price.
+                        currentForChange = livePrice;
+                        // Yahoo creates a preliminary bar for 'today'. If present, the baseline 
+                        // is the bar before it (yesterday). If absent, the last bar IS yesterday.
+                        prevClose = lastBarIsToday 
+                            ? allBars[allBars.length - 2].close 
+                            : allBars[allBars.length - 1].close;
+                    } else {
+                        // Market is closed (after hours or weekend).
+                        // The last available bar is the confirmed most recent close.
+                        currentForChange = allBars[allBars.length - 1].close;
+                        prevClose = allBars[allBars.length - 2].close;
+                    }
+
                     if (prevClose && prevClose > 0) {
                         this.allMetrics[ticker].current.changePct =
                             (currentForChange - prevClose) / prevClose * 100;
