@@ -284,7 +284,7 @@ function renderVarDecomp() {
     var W = rect.width, H = rect.height;
     ctx.clearRect(0, 0, W, H);
 
-    var pad = { top: 16, bottom: 30, left: 55, right: 55 };
+    var pad = { top: 16, bottom: 30, left: 55, right: 70 };
     var chartW = W - pad.left - pad.right;
     var chartH = H - pad.top - pad.bottom;
     var range = getVarVisibleRange();
@@ -298,17 +298,21 @@ function renderVarDecomp() {
     // Compute ranges
     var varMin = Infinity, varMax = -Infinity;
     var skMin = Infinity, skMax = -Infinity;
+    var prMin = Infinity, prMax = -Infinity;
     for (var i = 0; i < n; i++) {
-        var up = visData[i].upVar, dn = visData[i].dnVar, sk = visData[i].skewRatio;
-        if (up != null) { varMin = Math.min(varMin, up); varMax = Math.max(varMax, up); }
-        if (dn != null) { varMin = Math.min(varMin, dn); varMax = Math.max(varMax, dn); }
-        if (sk != null) { skMin = Math.min(skMin, sk); skMax = Math.max(skMax, sk); }
+        var r = visData[i];
+        if (r.upVar != null) { varMin = Math.min(varMin, r.upVar); varMax = Math.max(varMax, r.upVar); }
+        if (r.dnVar != null) { varMin = Math.min(varMin, r.dnVar); varMax = Math.max(varMax, r.dnVar); }
+        if (r.skewRatio != null) { skMin = Math.min(skMin, r.skewRatio); skMax = Math.max(skMax, r.skewRatio); }
+        if (r.underlying != null) { prMin = Math.min(prMin, r.underlying); prMax = Math.max(prMax, r.underlying); }
     }
     var vm = (varMax - varMin) * 0.08 || 1; varMin -= vm; varMax += vm;
     var sm = (skMax - skMin) * 0.08 || 0.1; skMin -= sm; skMax += sm;
+    var pm = (prMax - prMin) * 0.08 || 0.1; prMin -= pm; prMax += pm;
 
     var getVY = function(v) { return pad.top + chartH - ((v - varMin) / (varMax - varMin)) * chartH; };
     var getSY = function(v) { return pad.top + chartH - ((v - skMin) / (skMax - skMin)) * chartH; };
+    var getPY = function(v) { return pad.top + chartH - ((v - prMin) / (prMax - prMin)) * chartH; };
 
     // Grid
     ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
@@ -324,10 +328,16 @@ function renderVarDecomp() {
         ctx.fillText(v.toFixed(0) + '%', pad.left - 5, pad.top + (i / 4) * chartH + 3);
     }
     // Y-axis labels right (skew ratio)
-    ctx.textAlign = 'left';
+    ctx.textAlign = 'left'; ctx.fillStyle = '#f59e0b';
     for (var i = 0; i <= 4; i++) {
         var v = skMin + (1 - i / 4) * (skMax - skMin);
         ctx.fillText(v.toFixed(2), pad.left + chartW + 5, pad.top + (i / 4) * chartH + 3);
+    }
+    // Y-axis labels right 2 (price)
+    ctx.textAlign = 'left'; ctx.fillStyle = '#94a3b8';
+    for (var i = 0; i <= 4; i++) {
+        var v = prMin + (1 - i / 4) * (prMax - prMin);
+        ctx.fillText('$' + v.toFixed(2), pad.left + chartW + 36, pad.top + (i / 4) * chartH + 3);
     }
 
     // UP VAR area fill
@@ -364,7 +374,7 @@ function renderVarDecomp() {
 
     // DN VAR line
     if (CvolState.varActiveSeries.indexOf('dnVar') >= 0) {
-        ctx.beginPath(); started = false;
+        ctx.beginPath(); var started = false;
         for (var i = 0; i < n; i++) {
             var v = visData[i].dnVar; if (v == null) continue;
             if (!started) { ctx.moveTo(getX(i), getVY(v)); started = true; } else ctx.lineTo(getX(i), getVY(v));
@@ -374,12 +384,22 @@ function renderVarDecomp() {
 
     // Skew Ratio overlay
     if (CvolState.varActiveSeries.indexOf('skewRatio') >= 0) {
-        ctx.beginPath(); started = false;
+        ctx.beginPath(); var started = false;
         for (var i = 0; i < n; i++) {
             var v = visData[i].skewRatio; if (v == null) continue;
             if (!started) { ctx.moveTo(getX(i), getSY(v)); started = true; } else ctx.lineTo(getX(i), getSY(v));
         }
         ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 1.8; ctx.stroke();
+    }
+
+    // NG Price overlay
+    if (CvolState.varActiveSeries.indexOf('underlying') >= 0) {
+        ctx.beginPath(); var started = false;
+        for (var i = 0; i < n; i++) {
+            var v = visData[i].underlying; if (v == null) continue;
+            if (!started) { ctx.moveTo(getX(i), getPY(v)); started = true; } else ctx.lineTo(getX(i), getPY(v));
+        }
+        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.stroke();
     }
 
     // Skew = 1.0 reference line
@@ -396,13 +416,16 @@ function renderVarDecomp() {
     ctx.font = '9px sans-serif'; ctx.textAlign = 'left';
     var lx = pad.left + 8;
     if (CvolState.varActiveSeries.indexOf('upVar') >= 0) {
-        ctx.fillStyle = '#3db87a'; ctx.fillText('▬ UP VAR', lx, pad.top + 12);
+        ctx.fillStyle = '#3db87a'; ctx.fillText('▬ UP VAR', lx, pad.top + 12); lx += 65;
     }
     if (CvolState.varActiveSeries.indexOf('dnVar') >= 0) {
-        ctx.fillStyle = '#ef4444'; ctx.fillText('▬ DN VAR', lx + 65, pad.top + 12);
+        ctx.fillStyle = '#ef4444'; ctx.fillText('▬ DN VAR', lx, pad.top + 12); lx += 65;
     }
     if (CvolState.varActiveSeries.indexOf('skewRatio') >= 0) {
-        ctx.fillStyle = '#f59e0b'; ctx.fillText('▬ SKEW RATIO', lx + 130, pad.top + 12);
+        ctx.fillStyle = '#f59e0b'; ctx.fillText('▬ SKEW', lx, pad.top + 12); lx += 55;
+    }
+    if (CvolState.varActiveSeries.indexOf('underlying') >= 0) {
+        ctx.fillStyle = '#94a3b8'; ctx.fillText('▬ PRICE', lx, pad.top + 12);
     }
 
     // Hover
@@ -426,6 +449,8 @@ function renderVarDecomp() {
                     ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#ef4444">DN VAR</span><span class="tooltip-val">' + fmt(row.dnVar) + '%</span></div>';
                 if (CvolState.varActiveSeries.indexOf('skewRatio') >= 0)
                     ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#f59e0b">SKEW RATIO</span><span class="tooltip-val">' + fmt(row.skewRatio, 3) + '</span></div>';
+                if (CvolState.varActiveSeries.indexOf('underlying') >= 0)
+                    ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#94a3b8">NG PRICE</span><span class="tooltip-val">$' + fmt(row.underlying, 2) + '</span></div>';
                 
                 tip.innerHTML = ttHtml;
                 tip.style.display = 'block';
