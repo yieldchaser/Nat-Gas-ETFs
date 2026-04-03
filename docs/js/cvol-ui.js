@@ -338,13 +338,13 @@ function renderScorecard(composites) {
     if (rows.length > 1) {
         var combinedSharpe = totalWeightCount > 0 ? totalWeightedSharpe / totalWeightCount : null;
         html += '<tr class="scorecard-summary">' +
-            '<td colspan="2" style="text-align:left;padding-left:16px;letter-spacing:2px;">SUMMARY</td>' +
-            '<td colspan="8" style="font-size:0.55rem;text-align:center;letter-spacing:1px;">' +
+            '<td style="text-align:left; letter-spacing:2px; font-size:0.75rem;">SUMMARY</td>' +
+            '<td colspan="9" style="font-size:0.65rem; text-align:center; letter-spacing:1px; vertical-align:middle;">' +
                 'BEST: <span style="color:'+(sigColors[bestSig]||'')+'">'+bestSig+' ('+fmt(bestSharpe,2)+')</span>' +
-                '<span style="margin:0 20px;opacity:0.3">|</span>' +
+                '<span style="margin:0 24px; opacity:0.3">|</span>' +
                 'WORST: <span style="color:'+(sigColors[worstSig]||'')+'">'+worstSig+' ('+fmt(worstSharpe,2)+')</span>' +
             '</td>' +
-            '<td style="font-size:0.6rem;text-align:center;color:'+(combinedSharpe!=null&&combinedSharpe>0?'#3db87a':'#ef4444')+'" data-tooltip="Combined institutional Sharpe for the active signal regime.">'+fmt(combinedSharpe,2)+'</td>' +
+            '<td style="text-align:center; font-size:0.75rem; color:'+(combinedSharpe!=null&&combinedSharpe>0?'#3db87a':'#ef4444')+'" data-tooltip="Combined institutional Sharpe for the active signal regime.">'+fmt(combinedSharpe,2)+'</td>' +
             '</tr>';
     }
     html += '</tbody></table>';
