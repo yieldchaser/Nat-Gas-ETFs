@@ -336,6 +336,11 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <canvas id="var-decomp-canvas"></canvas>
             <div id="var-decomp-tooltip"></div>
         </div>
+        <div style="display:flex;gap:18px;justify-content:center;padding:4px 0 2px;font-size:0.55rem;font-weight:700;letter-spacing:0.5px;">
+            <span data-tooltip="Call-side (upside) variance — OTM call implied vol component. When rising vs DN VAR, market prices upside risk."><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(61,184,122,0.5);vertical-align:middle;margin-right:4px;"></span><span style="color:#3db87a;">UP VAR</span></span>
+            <span data-tooltip="Put-side (downside) variance — OTM put implied vol component. When rising vs UP VAR, market prices downside tail risk."><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(239,68,68,0.5);vertical-align:middle;margin-right:4px;"></span><span style="color:#ef4444;">DN VAR</span></span>
+            <span data-tooltip="Skew Ratio overlay (right axis) — OTM Put Vol / OTM Call Vol. >1 = puts are more expensive = bearish skew. <1 = calls are more expensive = bullish skew."><span style="display:inline-block;width:10px;height:3px;background:#f59e0b;vertical-align:middle;margin-right:4px;"></span><span style="color:#f59e0b;">SKEW RATIO</span></span>
+        </div>
     </div>
 
     <!-- PANEL 5: COMPOSITE SIGNAL DASHBOARD (expanded with axes, hover, stats) -->

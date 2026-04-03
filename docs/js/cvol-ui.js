@@ -142,18 +142,75 @@ function renderKpiCards(data, comp) {
 }
 
 
-// ── Composite Stats Footer ────────────────────────────────────
+// ── Composite Stats Footer (micro-analytics layout + regime + seasonal) ──
 function renderCompStats(compKey, values, events) {
     var el = document.getElementById(compKey + '-stats'); if (!el) return;
     var valid = values.filter(function(v){return v!=null;});
     var last90 = valid.slice(-90);
     var count252 = 0;
-    if (events) { var cutoff252 = CvolState.data.length - 252; events.forEach(function(ev){ var k=ev.signal.replace('↓','Down').replace('↑','Up').replace('CVC','cvc').replace('SAD','sad').replace('CI','ci').replace('RDS','rds'); if(k.toLowerCase().indexOf(compKey.toLowerCase())>=0 && ev.idx>=cutoff252) count252++; }); }
+    var matchList = [];
+    if (events) {
+        var cutoff252 = CvolState.data.length - 252;
+        events.forEach(function(ev){
+            var k = ev.signal.replace('↓','Down').replace('↑','Up').replace('CVC','cvc').replace('SAD','sad').replace('CI','ci').replace('RDS','rds');
+            if (k.toLowerCase().indexOf(compKey.toLowerCase()) >= 0) {
+                if (ev.idx >= cutoff252) count252++;
+                matchList.push(ev);
+            }
+        });
+    }
     var d21 = valid.length > 21 ? valid[valid.length-1] - valid[valid.length-22] : null;
+    // Current regime: active/neutral/cooling based on threshold
+    var meta = COMP_META[compKey];
+    var currentVal = valid.length ? valid[valid.length-1] : null;
+    var regimeLabel = 'NEUTRAL', regimeColor = 'var(--text-dim)';
+    if (meta && currentVal != null) {
+        if (meta.thresholdType === 'raw' && meta.threshold != null) {
+            if (currentVal >= meta.threshold) { regimeLabel = 'ACTIVE'; regimeColor = meta.color; }
+            else if (currentVal >= meta.threshold * 0.8) { regimeLabel = 'WARMING'; regimeColor = '#f59e0b'; }
+        } else if (meta.thresholdType === 'z') {
+            // For z-score based signals use absolute value
+            var absVal = Math.abs(currentVal);
+            if (absVal >= (meta.thresholdVal || 1.5)) { regimeLabel = 'ACTIVE'; regimeColor = meta.color; }
+            else if (absVal >= (meta.thresholdVal || 1.5) * 0.7) { regimeLabel = 'WARMING'; regimeColor = '#f59e0b'; }
+        }
+    }
+    // Seasonal hit rate: W (Nov-Feb) vs S (Jun-Aug)
+    var wHits = 0, wTotal = 0, sHits = 0, sTotal = 0;
+    matchList.forEach(function(ev) {
+        if (ev.fwd21 == null) return;
+        var mo = parseInt(ev.date.split('-')[1]);
+        var isDown = ev.direction.indexOf('TOP') >= 0 || ev.direction.indexOf('DOWNSIDE') >= 0;
+        var hit = (isDown && ev.fwd21 < 0) || (!isDown && ev.fwd21 > 0);
+        if (mo >= 11 || mo <= 2) { wTotal++; if (hit) wHits++; }
+        else if (mo >= 6 && mo <= 8) { sTotal++; if (hit) sHits++; }
+    });
+    var wPct = wTotal >= 3 ? Math.round(wHits / wTotal * 100) : null;
+    var sPct = sTotal >= 3 ? Math.round(sHits / sTotal * 100) : null;
+    var seasonHtml = '';
+    if (wPct != null || sPct != null) {
+        seasonHtml = '<div class="cvol-micro-line" data-tooltip="Seasonal hit rate: Winter (Nov-Feb) vs Summer (Jun-Aug). NG is profoundly seasonal \u2014 a signal that works in winter may fail in summer.">' +
+            '<span class="cvol-micro-lbl">SEASON</span>' +
+            '<span class="cvol-micro-val" style="font-size:0.55rem;">' +
+            (wPct != null ? '<span style="color:' + (wPct > 55 ? '#3db87a' : '#ef4444') + '">W:' + wPct + '%</span>' : '') +
+            (wPct != null && sPct != null ? ' · ' : '') +
+            (sPct != null ? '<span style="color:' + (sPct > 55 ? '#3db87a' : '#ef4444') + '">S:' + sPct + '%</span>' : '') +
+            '</span></div>';
+    }
+    // Replace flat grid with micro-analytics layout
+    el.className = 'cvol-kpi-micro';
+    el.style.marginTop = '6px';
     el.innerHTML =
-        '<div class="comp-stat" data-tooltip="21-day change in this composite value.">Δ21D<span class="comp-stat-val" style="color:'+pctColor(d21)+'">'+((d21!=null&&d21>0)?'+':'')+fmt(d21,3)+'</span></div>' +
-        '<div class="comp-stat" data-tooltip="Number of signal fires in the last 252 trading days.">252D FIRES<span class="comp-stat-val">'+count252+'</span></div>' +
-        '<div class="comp-stat" data-tooltip="90-day median of this composite value.">90D MED<span class="comp-stat-val">'+fmt(last90.length?last90.sort(function(a,b){return a-b;})[Math.floor(last90.length/2)]:null,3)+'</span></div>';
+        '<div class="cvol-micro-line" data-tooltip="21-day change in this composite value.">' +
+            '<span class="cvol-micro-lbl">Δ21D</span>' +
+            '<span class="cvol-micro-val" style="color:'+pctColor(d21)+'">'+((d21!=null&&d21>0)?'+':'')+fmt(d21,3)+'</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Number of signal fires in the last 252 trading days (1 year).">' +
+            '<span class="cvol-micro-lbl">252D FIRES</span>' +
+            '<span class="cvol-micro-val">'+count252+'</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Current signal regime: ACTIVE (above threshold), WARMING (approaching), or NEUTRAL.">' +
+            '<span class="cvol-micro-lbl">REGIME</span>' +
+            '<span class="cvol-micro-val" style="color:'+regimeColor+';font-weight:800;">'+regimeLabel+'</span></div>' +
+        seasonHtml;
 }
 
 // ── Regime Heatmap ────────────────────────────────────────────
@@ -182,27 +239,36 @@ function renderHeatmap(data) {
     el.innerHTML = html;
 }
 
-// ── Correlation Matrix ────────────────────────────────────────
+// ── Correlation Matrix (range-synced) ─────────────────────────
 function renderCorrMatrix(data) {
     var el = document.getElementById('cvol-corr-matrix'); if (!el) return;
-    var matrix = computeCorrMatrix(data);
+    var r = getVisibleRange();
+    var matrix = computeCorrMatrix(data, r.s, r.e);
     var n = CORR_LABELS.length;
-    var html = '<div class="corr-grid" style="grid-template-columns:55px repeat('+n+', 1fr);">';
+    // Show the range used for correlation
+    var rangeNote = '';
+    if (data.length) {
+        var d0 = data[r.s] ? fmtDate(data[r.s].date) : '';
+        var d1 = data[r.e] ? fmtDate(data[r.e].date) : '';
+        var days = r.e - r.s + 1;
+        rangeNote = '<div style="font-size:0.5rem;color:var(--text-dim);letter-spacing:0.5px;margin-bottom:8px;text-align:right;" data-tooltip="Correlation is computed from the visible date range. Adjust the range slider above to see how correlations shift across regimes.">' + d0 + ' → ' + d1 + ' (' + days + ' days)</div>';
+    }
+    var html = rangeNote + '<div class="corr-grid" style="grid-template-columns:55px repeat('+n+', 1fr);">';
     html += '<div></div>';
     for (var j = 0; j < n; j++) html += '<div class="corr-header" style="font-size:0.45rem;">'+CORR_LABELS[j]+'</div>';
     for (var i = 0; i < n; i++) {
         html += '<div class="corr-header" style="font-size:0.45rem;justify-content:flex-end;padding-right:4px;">'+CORR_LABELS[i]+'</div>';
         for (var j = 0; j < n; j++) {
-            var r = matrix[i][j];
+            var rv = matrix[i][j];
             var bg, fg;
-            if (r == null) { bg = 'rgba(255,255,255,0.02)'; fg = 'var(--text-dim)'; }
+            if (rv == null) { bg = 'rgba(255,255,255,0.02)'; fg = 'var(--text-dim)'; }
             else if (i === j) { bg = 'rgba(255,255,255,0.05)'; fg = 'var(--text-bright)'; }
-            else if (r > 0.7) { bg = 'rgba(61,184,122,'+((r-0.5)*0.5)+')'; fg = '#fff'; }
-            else if (r > 0.3) { bg = 'rgba(61,184,122,0.08)'; fg = '#3db87a'; }
-            else if (r < -0.3) { bg = 'rgba(239,68,68,'+((Math.abs(r)-0.2)*0.4)+')'; fg = '#ef4444'; }
+            else if (rv > 0.7) { bg = 'rgba(61,184,122,'+((rv-0.5)*0.5)+')'; fg = '#fff'; }
+            else if (rv > 0.3) { bg = 'rgba(61,184,122,0.08)'; fg = '#3db87a'; }
+            else if (rv < -0.3) { bg = 'rgba(239,68,68,'+((Math.abs(rv)-0.2)*0.4)+')'; fg = '#ef4444'; }
             else { bg = 'rgba(255,255,255,0.02)'; fg = 'var(--text-muted)'; }
-            var interp = r == null ? 'Insufficient data' : r > 0.7 ? 'Strong positive — move together' : r > 0.3 ? 'Moderate positive' : r < -0.3 ? 'Negative — divergent' : 'Weak / no correlation';
-            html += '<div class="corr-cell" style="background:'+bg+';color:'+fg+';" data-tooltip="'+CORR_LABELS[i]+' vs '+CORR_LABELS[j]+': r = '+(r!=null?r.toFixed(3):'—')+' — '+interp+'">'+(r!=null?r.toFixed(2):'—')+'</div>';
+            var interp = rv == null ? 'Insufficient data' : rv > 0.7 ? 'Strong positive — move together' : rv > 0.3 ? 'Moderate positive' : rv < -0.3 ? 'Negative — divergent' : 'Weak / no correlation';
+            html += '<div class="corr-cell" style="background:'+bg+';color:'+fg+';" data-tooltip="'+CORR_LABELS[i]+' vs '+CORR_LABELS[j]+': r = '+(rv!=null?rv.toFixed(3):'—')+' — '+interp+'">'+( rv!=null?rv.toFixed(2):'—')+'</div>';
         }
     }
     html += '</div>';
@@ -499,7 +565,7 @@ function renderSeriesChips() {
             document.getElementById('cvol-range-start').value = CvolState.rangeState.start;
             document.getElementById('cvol-range-end').value = CvolState.rangeState.end;
             updateRangeHighlight();
-            renderMainChart(); renderVarDecomp();
+            renderMainChart(); renderVarDecomp(); renderCorrMatrix(CvolState.data);
         });
 
         // Range slider
@@ -510,7 +576,7 @@ function renderSeriesChips() {
                 if (s > e - 1) { if (id === 'cvol-range-start') s = e - 1; else e = s + 1; document.getElementById(id).value = id === 'cvol-range-start' ? s : e; }
                 CvolState.rangeState = { start: s, end: e };
                 updateRangeHighlight();
-                renderMainChart(); renderVarDecomp();
+                renderMainChart(); renderVarDecomp(); renderCorrMatrix(CvolState.data);
             });
         });
 

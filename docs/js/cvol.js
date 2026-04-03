@@ -378,9 +378,11 @@ function computeCorrelation(xArr, yArr) {
     return den > 0 ? num / den : 0;
 }
 
-function computeCorrMatrix(data) {
+function computeCorrMatrix(data, startIdx, endIdx) {
+    var sliced = data;
+    if (startIdx != null && endIdx != null) sliced = data.slice(startIdx, endIdx + 1);
     var cols = {};
-    CORR_KEYS.forEach(function(k) { cols[k] = data.map(function(r) { return r[k]; }); });
+    CORR_KEYS.forEach(function(k) { cols[k] = sliced.map(function(r) { return r[k]; }); });
     var matrix = [];
     for (var i = 0; i < CORR_KEYS.length; i++) {
         var row = [];
