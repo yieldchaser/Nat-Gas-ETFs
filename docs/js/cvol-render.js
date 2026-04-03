@@ -494,10 +494,48 @@ function renderModalChart(compKey) {
     });
     events.forEach(function(ev) {
         if (values[ev.idx] == null) return;
+        var r = ev.fwd21;
+        var isDown = ev.direction.indexOf('TOP')>=0||ev.direction.indexOf('DOWNSIDE')>=0;
+        var color = meta.color;
+        if (r != null) {
+            color = ((isDown && r < 0) || (!isDown && r > 0)) ? '#3db87a' : '#ef4444';
+        } else {
+            color = 'var(--text-muted)';
+        }
         var x = getX(ev.idx), y = getVY(values[ev.idx]);
-        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = meta.color; ctx.globalAlpha = 0.6; ctx.fill(); ctx.globalAlpha = 1;
+        ctx.beginPath(); ctx.arc(x, y, (r!=null?4:3), 0, Math.PI * 2);
+        ctx.fillStyle = color; ctx.fill();
+        if (r != null) { ctx.lineWidth=1; ctx.strokeStyle='#000'; ctx.stroke(); }
     });
 
     drawXAxis(ctx, dates, getX, cW, H - 5, pad);
+
+    // Hover state
+    var idx = CvolState.modalHoverIdx;
+    var tt = document.getElementById('comp-modal-tooltip');
+    if (idx != null && dates[idx] && tt && CvolState.modalCompKey === compKey) {
+        var event = events.find(function(e) { return e.idx === idx; });
+        var hx = getX(idx);
+        ctx.beginPath(); ctx.moveTo(hx, pad.top); ctx.lineTo(hx, pad.top + cH);
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+        
+        var v = values[idx], p = underlying[idx];
+        if (v != null) { ctx.beginPath(); ctx.arc(hx, getVY(v), 5, 0, Math.PI*2); ctx.fillStyle=meta.color; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); }
+        if (p != null) { ctx.beginPath(); ctx.arc(hx, getPY(p), 4, 0, Math.PI*2); ctx.fillStyle='#94a3b8'; ctx.fill(); ctx.lineWidth=1; ctx.strokeStyle='#fff'; ctx.stroke(); }
+
+        var html = '<div style="font-weight:800;margin-bottom:6px;border-bottom:1px solid var(--border-primary);padding-bottom:4px;color:var(--text-muted);">'+fmtDate(dates[idx])+'</div>';
+        if (p != null) html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;"><span style="color:#94a3b8;">NG Price</span><span style="font-weight:700;">$'+p.toFixed(2)+'</span></div>';
+        if (v != null) html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:6px;"><span style="color:'+meta.color+';">'+meta.label.split('—')[0].trim()+'</span><span style="font-weight:700;color:'+meta.color+';">'+v.toFixed(3)+'</span></div>';
+        if (event) {
+            html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border-primary);">';
+            html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;"><span style="color:var(--text-dim);">Confluence</span><span style="font-weight:700;">'+(getConfluence(event)||0)+' signals</span></div>';
+            html += '<div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:var(--text-dim);">21D Return</span><span style="font-weight:700;color:'+pctColor(event.fwd21)+';">'+(event.fwd21!=null?pctFmt(event.fwd21):'PENDING')+'</span></div>';
+            html += '</div>';
+        }
+        
+        tt.innerHTML = html;
+        tt.style.display = 'block';
+        tt.style.left = (Math.min(hx + 15, W - 160)) + 'px';
+        tt.style.top = Math.max(20, (v != null ? getVY(v) : pad.top) - 20) + 'px';
+    }
 }

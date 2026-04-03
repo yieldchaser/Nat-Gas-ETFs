@@ -415,21 +415,86 @@ function openCompModal(compKey) {
         return k.toLowerCase().indexOf(compKey.toLowerCase()) >= 0;
     });
     var totalFires = events.length;
-    var hit21 = 0; events.forEach(function(ev) {
+    var totalFires = events.length;
+    var hit21 = 0, fwd21s = [], wHits = 0, wTotal = 0, sHits = 0, sTotal = 0, confTotal = 0;
+    events.forEach(function(ev) {
+        confTotal += getConfluence(ev) || 0;
         if (ev.fwd21 == null) return;
+        var r = ev.fwd21;
         var isDown = ev.direction.indexOf('TOP')>=0||ev.direction.indexOf('DOWNSIDE')>=0;
-        if ((isDown && ev.fwd21 < 0) || (!isDown && ev.fwd21 > 0)) hit21++;
+        var hit = (isDown && r < 0) || (!isDown && r > 0);
+        if (hit) hit21++;
+        // Seasonality
+        var mo = parseInt(ev.date.split('-')[1]);
+        if (mo >= 11 || mo <= 2) { wTotal++; if (hit) wHits++; }
+        else if (mo >= 6 && mo <= 8) { sTotal++; if (hit) sHits++; }
+        // For stats, we care about the *directionally adjusted* return if we are a directional signal
+        // Wait, for RDS/SAD/CVC, the actual return matters. We can just store raw NG return, but magnitude/best/worst are easier to think about directionally.
+        // Actually, let's keep it standard: Median 21D (raw), MAG 21D (abs), Best (raw max), Worst (raw min).
+        // If it's a Downside signal (isDown), then Best is negative, Worst is positive?
+        // Let's stick perfectly to the Scorecard methodology for consistency.
+        fwd21s.push(r);
     });
+    
+    // Sort for median and min/max
+    var sorted21 = fwd21s.slice().sort(function(a,b){return a-b;});
+    var med21 = sorted21.length ? (sorted21.length % 2 === 0 ? (sorted21[sorted21.length/2 - 1] + sorted21[sorted21.length/2]) / 2 : sorted21[Math.floor(sorted21.length/2)]) : 0;
+    var abs21 = fwd21s.slice().map(function(x){return Math.abs(x);}).sort(function(a,b){return a-b;});
+    var mag21 = abs21.length ? abs21.reduce(function(sum, x){return sum + x;}, 0) / abs21.length : 0;
+    var best21 = sorted21.length ? sorted21[sorted21.length-1] : 0;
+    var worst21 = sorted21.length ? sorted21[0] : 0;
+    var hitRate = Math.round(hit21 / Math.max(1, events.length) * 100);
+    var avgConf = events.length ? (confTotal / events.length).toFixed(1) : '0.0';
+    var wPct = wTotal >= 3 ? Math.round(wHits / wTotal * 100) + '%' : 'N/A';
+    var sPct = sTotal >= 3 ? Math.round(sHits / sTotal * 100) + '%' : 'N/A';
+
     var statsEl = document.getElementById('comp-modal-stats');
-    statsEl.innerHTML = '<div style="display:flex;gap:24px;flex-wrap:wrap;">' +
-        '<div data-tooltip="Total number of times this signal fired across history."><span style="color:var(--text-dim);font-size:0.6rem;letter-spacing:1px;">TOTAL FIRES</span><br><span style="font-size:1.1rem;font-weight:800;color:'+meta.color+'">'+totalFires+'</span></div>' +
-        '<div data-tooltip="21-day directional hit rate."><span style="color:var(--text-dim);font-size:0.6rem;letter-spacing:1px;">HIT RATE 21D</span><br><span style="font-size:1.1rem;font-weight:800;color:'+(hit21/Math.max(1,events.length)*100>55?'#3db87a':'#ef4444')+'">'+Math.round(hit21/Math.max(1,events.length)*100)+'%</span></div>' +
-        '</div>';
+    var stHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:16px;">';
+    var mkStat = function(label, val, tooltip, valColor) {
+        return '<div class="cvol-kpi" style="padding:12px;background:var(--bg-panel);border:1px solid var(--border-primary);border-radius:6px;" data-tooltip="'+tooltip+'">' +
+            '<div style="color:var(--text-dim);font-size:0.6rem;letter-spacing:1px;margin-bottom:6px;">'+label+'</div>' +
+            '<div style="font-size:1.1rem;font-weight:800;color:'+(valColor||'var(--text-bright)')+';">'+val+'</div></div>';
+    };
+    stHtml += mkStat('TOTAL FIRES', totalFires, 'Total times this signal fired', meta.color);
+    stHtml += mkStat('21D HIT RATE', hitRate + '%', 'Directional hit rate over 21 days', hitRate > 55 ? '#3db87a' : (hitRate < 45 ? '#ef4444' : 'var(--text-bright)'));
+    stHtml += mkStat('MEDIAN 21D', pctFmt(med21), 'Median 21-day NG return', pctColor(med21));
+    stHtml += mkStat('MAGNITUDE 21D', pctFmt(mag21), 'Average absolute 21-day NG move', pctColor(mag21));
+    stHtml += mkStat('BEST 21D', pctFmt(best21), 'Maximum 21-day positive move', pctColor(best21));
+    stHtml += mkStat('WORST 21D', pctFmt(worst21), 'Maximum 21-day negative move', pctColor(worst21));
+    stHtml += mkStat('AVG CONFLUENCE', avgConf, 'Average number of other signals firing within ±5 days', 'var(--text-bright)');
+    stHtml += mkStat('SEASON (W / S)', '<span style="color:'+(wPct.indexOf('N/A')<0&&(parseInt(wPct)>55)?'#3db87a':'var(--text-muted)')+'">'+wPct+'</span> <span style="color:var(--text-dim);font-weight:400;">/</span> <span style="color:'+(sPct.indexOf('N/A')<0&&(parseInt(sPct)>55)?'#3db87a':'var(--text-muted)')+'">'+sPct+'</span>', 'Winter vs Summer hit rate', '');
+    stHtml += '</div>';
+    statsEl.innerHTML = stHtml;
+
+    // Attach hover listener to canvas
+    var canvas = document.getElementById('comp-modal-canvas');
+    if (canvas) {
+        canvas.onmousemove = function(ev) {
+            var rect = canvas.getBoundingClientRect();
+            var x = ev.clientX - rect.left;
+            var pad = { left: 55, right: 55 }; var cW = rect.width - pad.left - pad.right;
+            var frac = (x - pad.left) / cW;
+            var n = (CvolState.data || []).length;
+            if (n === 0) return;
+            var idx = Math.max(0, Math.min(n - 1, Math.round(frac * (n - 1))));
+            CvolState.modalHoverIdx = idx;
+            CvolState.modalCompKey = compKey;
+            renderModalChart(compKey);
+        };
+        canvas.onmouseleave = function() {
+            CvolState.modalHoverIdx = null;
+            document.getElementById('comp-modal-tooltip').style.display = 'none';
+            renderModalChart(compKey);
+        };
+    }
+    
     setTimeout(function() { renderModalChart(compKey); }, 50);
 }
 function closeCompModal() {
+    CvolState.modalHoverIdx = null;
     document.getElementById('comp-modal-overlay').style.display = 'none';
     document.getElementById('comp-modal').style.display = 'none';
+    var tt = document.getElementById('comp-modal-tooltip'); if (tt) tt.style.display = 'none';
 }
 
 // ── Full Render Orchestrator ──────────────────────────────────

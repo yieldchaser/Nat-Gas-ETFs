@@ -256,11 +256,12 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <span class="comp-modal-title" id="comp-modal-title"></span>
         <button class="comp-modal-close" id="comp-modal-close">CLOSE ✕</button>
     </div>
-    <div class="comp-modal-desc" id="comp-modal-desc" style="font-size:0.7rem;color:var(--text-muted);margin-bottom:16px;line-height:1.5;"></div>
+    <div class="comp-modal-desc" id="comp-modal-desc" style="font-size:0.7rem;color:var(--text-muted);margin-bottom:24px;line-height:1.5;"></div>
+    <div id="comp-modal-stats" style="font-size:0.7rem;color:var(--text-primary);margin-bottom:32px;"></div>
     <div class="comp-modal-chart">
         <canvas id="comp-modal-canvas"></canvas>
+        <div id="comp-modal-tooltip" style="position:absolute;display:none;background:rgba(22,22,36,0.95);border:1px solid var(--border-primary);border-radius:6px;padding:8px 12px;font-size:0.7rem;color:var(--text-bright);pointer-events:none;z-index:1000;box-shadow:0 6px 18px rgba(0,0,0,0.5);min-width:140px;"></div>
     </div>
-    <div id="comp-modal-stats" style="font-size:0.7rem;color:var(--text-primary);"></div>
 </div>
 
 <!-- MAIN DASHBOARD -->
