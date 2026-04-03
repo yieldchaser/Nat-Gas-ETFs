@@ -335,23 +335,7 @@ function renderScorecard(composites) {
     el.innerHTML = html;
 }
 
-// ── Event Timeline (with confluence, PENDING, signal-type filter) ──
-function renderTimeline(composites, filter) {
-    var body = document.getElementById('cvol-event-body');
-    var countEl = document.getElementById('cvol-event-count');
-    if (!body) return;
-    var allEvents = (composites.events || []).slice().reverse();
-    // Time filter
-    var now = new Date(); var yearStr = now.getFullYear().toString();
-    var sixMonthsAgo = new Date(now); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    if (filter === 'year') allEvents = allEvents.filter(function(e) { return e.date.startsWith(yearStr); });
-    else if (filter === '6m') allEvents = allEvents.filter(function(e) { return new Date(e.date) >= sixMonthsAgo; });
-    // Signal type filter
-    var stf = CvolState.signalTypeFilter;
-    var events = stf !== 'all' ? allEvents.filter(function(e) { return e.signal === stf; }) : allEvents;
-    if (countEl) countEl.textContent = events.length + ' EVENTS';
-// ── Global Confluence Helper ────────────────────────────────────
-// Pre-compute cross-signal confluence (counts signals within ±5 sessions)
+// ── Global Confluence and Formatting Helpers ────────────────────
 function getGlobalConfluence(ev) {
     if (!CvolState.composites || !CvolState.composites.events) return 0;
     if (!CvolState._confCache) {
@@ -372,11 +356,24 @@ function getGlobalConfluence(ev) {
     }
     return count;
 }
-
 function pctFmt(n) { return n != null ? (n > 0 ? '+' : '') + (n * 100).toFixed(1) + '%' : '—'; }
 function pctColor(n) { return n > 0 ? '#3db87a' : (n < 0 ? '#ef4444' : 'var(--text-bright)'); }
 
-// ── Event Timeline ────────────────────────────────────────────
+// ── Event Timeline (with confluence, PENDING, signal-type filter) ──
+function renderTimeline(composites, filter) {
+    var body = document.getElementById('cvol-event-body');
+    var countEl = document.getElementById('cvol-event-count');
+    if (!body) return;
+    var allEvents = (composites.events || []).slice().reverse();
+    // Time filter
+    var now = new Date(); var yearStr = now.getFullYear().toString();
+    var sixMonthsAgo = new Date(now); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    if (filter === 'year') allEvents = allEvents.filter(function(e) { return e.date.startsWith(yearStr); });
+    else if (filter === '6m') allEvents = allEvents.filter(function(e) { return new Date(e.date) >= sixMonthsAgo; });
+    // Signal type filter
+    var stf = CvolState.signalTypeFilter;
+    var events = stf !== 'all' ? allEvents.filter(function(e) { return e.signal === stf; }) : allEvents;
+    if (countEl) countEl.textContent = events.length + ' EVENTS';
     // Determine "recent" threshold for PENDING state (last 21 sessions)
     var dataLen = CvolState.data ? CvolState.data.length : 0;
     var recentCutoffDate = null;
