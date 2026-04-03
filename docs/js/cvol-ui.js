@@ -373,6 +373,9 @@ function getGlobalConfluence(ev) {
     return count;
 }
 
+function pctFmt(n) { return n != null ? (n > 0 ? '+' : '') + (n * 100).toFixed(1) + '%' : '—'; }
+function pctColor(n) { return n > 0 ? '#3db87a' : (n < 0 ? '#ef4444' : 'var(--text-bright)'); }
+
 // ── Event Timeline ────────────────────────────────────────────
     // Determine "recent" threshold for PENDING state (last 21 sessions)
     var dataLen = CvolState.data ? CvolState.data.length : 0;
