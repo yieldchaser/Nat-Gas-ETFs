@@ -529,8 +529,31 @@ function openCompModal(compKey) {
         var sVal = CvolState.modalRange.s, eVal = CvolState.modalRange.e;
         hl.style.left = (sVal / (dataLen - 1) * 100) + '%';
         hl.style.width = ((eVal - sVal) / (dataLen - 1) * 100) + '%';
-        var dFmt = function(dStr) { return dStr ? new Date(dStr).toLocaleDateString('en-US', {month:'short', year:'numeric'}) : ''; };
         lbl.textContent = 'ALL DATA';
+
+        // Modal Horizon Buttons
+        var hGroup = document.getElementById('comp-modal-horizon-controls');
+        if (hGroup) {
+            // Reset to ALL on open
+            hGroup.querySelectorAll('.horizon-btn').forEach(function(b) { b.classList.remove('active'); if (b.dataset.range === 'ALL') b.classList.add('active'); });
+            
+            hGroup.onclick = function(ev) {
+                var btn = ev.target.closest('.horizon-btn'); if (!btn) return;
+                hGroup.querySelectorAll('.horizon-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                
+                var period = btn.dataset.range;
+                var daysMap = {'1W':7,'1M':21,'3M':63,'6M':126,'1Y':252,'3Y':756,'ALL':0};
+                var days = daysMap[period] || 0;
+                
+                if (days === 0) {
+                    mStart.value = 0; mEnd.value = dataLen - 1;
+                } else {
+                    mStart.value = Math.max(0, dataLen - 1 - days); mEnd.value = dataLen - 1;
+                }
+                updateModalSlider();
+            };
+        }
     }
 
     // Attach hover listener to canvas
@@ -728,22 +751,40 @@ function renderVarSeriesChips() {
             });
         }
 
-        // Horizon buttons
+        // Horizon buttons (General purpose helper)
+        function setHorizon(period, targetKey) {
+            var n = CvolState.data.length;
+            var daysMap = {'1W':7,'1M':21,'3M':63,'6M':126,'1Y':252,'3Y':756,'ALL':0};
+            var days = daysMap[period] || 0;
+            var state = (days === 0) ? {start:0, end:100} : {start: Math.max(0, Math.round((1 - days / n) * 100)), end: 100};
+            
+            if (targetKey === 'main') {
+                CvolState.rangeState = state;
+                document.getElementById('cvol-range-start').value = state.start;
+                document.getElementById('cvol-range-end').value = state.end;
+                updateRangeHighlight();
+                renderMainChart(); renderCorrMatrix(CvolState.data);
+            } else if (targetKey === 'var') {
+                CvolState.varRangeState = state;
+                document.getElementById('var-range-start').value = state.start;
+                document.getElementById('var-range-end').value = state.end;
+                updateVarRangeHighlight();
+                renderVarDecomp();
+            }
+        }
+
         document.getElementById('cvol-horizon-controls').addEventListener('click', function(ev) {
             var btn = ev.target.closest('.horizon-btn'); if (!btn) return;
-            var range = btn.dataset.range;
             document.querySelectorAll('#cvol-horizon-controls .horizon-btn').forEach(function(b) { b.classList.remove('active'); });
             btn.classList.add('active');
-            CvolState.horizonState = range;
-            var n = CvolState.data.length;
-            var daysMap = {'1W':7,'1M':30,'3M':90,'6M':180,'1Y':365,'3Y':1095,'ALL':0};
-            var days = daysMap[range] || 0;
-            if (days === 0) { CvolState.rangeState = {start:0, end:100}; }
-            else { var s = Math.max(0, Math.round((1 - days / n) * 100)); CvolState.rangeState = {start: s, end: 100}; }
-            document.getElementById('cvol-range-start').value = CvolState.rangeState.start;
-            document.getElementById('cvol-range-end').value = CvolState.rangeState.end;
-            updateRangeHighlight();
-            renderMainChart(); renderVarDecomp(); renderCorrMatrix(CvolState.data);
+            setHorizon(btn.dataset.range, 'main');
+        });
+
+        document.getElementById('var-horizon-controls').addEventListener('click', function(ev) {
+            var btn = ev.target.closest('.horizon-btn'); if (!btn) return;
+            document.querySelectorAll('#var-horizon-controls .horizon-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            setHorizon(btn.dataset.range, 'var');
         });
 
         // Range slider (Main Chart)
