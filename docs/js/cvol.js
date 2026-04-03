@@ -9,6 +9,7 @@ const CvolState = {
     dates: [],
     activeSeries: ['ngvl','underlying'],
     rangeState: { start: 0, end: 100 },
+    varRangeState: { start: 0, end: 100 },
     horizonState: 'ALL',
     hoverState: null,
     dragState: { active: false, startIdx: null, currentIdx: null },
@@ -17,6 +18,7 @@ const CvolState = {
     composites: {},       // computed composite signal arrays
     percentiles: {},      // rolling percentile caches
     zscores: {},          // rolling z-score caches
+    modalRange: null,     // shared for composite modals
 };
 
 // ── CSV Parser ────────────────────────────────────────────────
