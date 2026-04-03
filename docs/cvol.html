@@ -358,6 +358,20 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <span data-tooltip="Put-side (downside) variance — OTM put implied vol component. When rising vs UP VAR, market prices downside tail risk."><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(239,68,68,0.5);vertical-align:middle;margin-right:4px;"></span><span style="color:#ef4444;">DN VAR</span></span>
             <span data-tooltip="Skew Ratio overlay (right axis) — OTM Put Vol / OTM Call Vol. >1 = puts are more expensive = bearish skew. <1 = calls are more expensive = bullish skew."><span style="display:inline-block;width:10px;height:3px;background:#f59e0b;vertical-align:middle;margin-right:4px;"></span><span style="color:#f59e0b;">SKEW RATIO</span></span>
         </div>
+        <!-- Variance Decomposition Range Slider -->
+        <div class="range-slider-container">
+            <div class="range-slider-wrap">
+                <div class="range-inputs">
+                    <div class="range-slider-track"></div>
+                    <div id="var-range-highlight" class="range-slider-highlight" style="left:0%;width:100%"></div>
+                    <input type="range" id="var-range-start" min="0" max="100" value="0" data-tooltip="Drag to set the start of the visible date range for Variance Decomposition">
+                    <input type="range" id="var-range-end" min="0" max="100" value="100" data-tooltip="Drag to set the end of the visible date range for Variance Decomposition">
+                </div>
+            </div>
+            <div class="range-labels">
+                <span id="var-range-label" style="color:var(--text-bright);text-transform:uppercase;letter-spacing:2px;">ALL DATA</span>
+            </div>
+        </div>
     </div>
 
     <!-- PANEL 5: COMPOSITE SIGNAL DASHBOARD (expanded with axes, hover, stats) -->

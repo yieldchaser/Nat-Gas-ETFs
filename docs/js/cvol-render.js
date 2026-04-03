@@ -283,7 +283,7 @@ function renderVarDecomp() {
     var pad = { top: 16, bottom: 30, left: 55, right: 55 };
     var chartW = W - pad.left - pad.right;
     var chartH = H - pad.top - pad.bottom;
-    var range = getVisibleRange();
+    var range = getVarVisibleRange();
     var visData = CvolState.data.slice(range.s, range.e + 1);
     var visDates = visData.map(function(r) { return r.date; });
     var n = visData.length;

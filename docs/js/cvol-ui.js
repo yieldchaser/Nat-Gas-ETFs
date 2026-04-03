@@ -667,9 +667,10 @@ function renderSeriesChips() {
             varCanvas.addEventListener('mousemove', function(ev) {
                 var rect = varCanvas.getBoundingClientRect();
                 var x = ev.clientX - rect.left;
-                var r = getVisibleRange(); var n = r.e - r.s + 1;
+                var r = getVarVisibleRange(); var n = r.e - r.s + 1;
                 var pad = 55; var cW = rect.width - pad - 55;
                 var frac = (x - pad) / cW;
+                if (frac < 0) frac = 0; else if (frac > 1) frac = 1;
                 var idx = r.s + Math.round(frac * (n - 1));
                 CvolState.hoverState = Math.max(r.s, Math.min(r.e, idx));
                 renderMainChart(); renderVarDecomp();
@@ -699,7 +700,7 @@ function renderSeriesChips() {
             renderMainChart(); renderVarDecomp(); renderCorrMatrix(CvolState.data);
         });
 
-        // Range slider
+        // Range slider (Main Chart)
         ['cvol-range-start', 'cvol-range-end'].forEach(function(id) {
             document.getElementById(id).addEventListener('input', function() {
                 var s = parseInt(document.getElementById('cvol-range-start').value);
@@ -707,7 +708,21 @@ function renderSeriesChips() {
                 if (s > e - 1) { if (id === 'cvol-range-start') s = e - 1; else e = s + 1; document.getElementById(id).value = id === 'cvol-range-start' ? s : e; }
                 CvolState.rangeState = { start: s, end: e };
                 updateRangeHighlight();
-                renderMainChart(); renderVarDecomp(); renderCorrMatrix(CvolState.data);
+                renderMainChart(); renderCorrMatrix(CvolState.data);
+            });
+        });
+
+        // Range slider (Variance Decomposition)
+        ['var-range-start', 'var-range-end'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', function() {
+                var s = parseInt(document.getElementById('var-range-start').value);
+                var e = parseInt(document.getElementById('var-range-end').value);
+                if (s > e - 1) { if (id === 'var-range-start') s = e - 1; else e = s + 1; document.getElementById(id).value = id === 'var-range-start' ? s : e; }
+                CvolState.varRangeState = { start: s, end: e };
+                updateVarRangeHighlight();
+                renderVarDecomp();
             });
         });
 
@@ -755,5 +770,26 @@ function updateRangeHighlight() {
         var r = getVisibleRange();
         var d0 = CvolState.data[r.s].date, d1 = CvolState.data[r.e].date;
         lbl.textContent = fmtDate(d0) + ' → ' + fmtDate(d1);
+    }
+}
+
+function getVarVisibleRange() {
+    var data = CvolState.data;
+    if (!data || !data.length) return { s: 0, e: 0 };
+    var n = data.length;
+    var s = Math.floor(CvolState.varRangeState.start / 100 * (n - 1));
+    var e = Math.ceil(CvolState.varRangeState.end / 100 * (n - 1));
+    return { s: Math.max(0, s), e: Math.min(n - 1, Math.max(s + 1, e)) };
+}
+
+function updateVarRangeHighlight() {
+    var s = CvolState.varRangeState.start, e = CvolState.varRangeState.end;
+    var hl = document.getElementById('var-range-highlight');
+    if (hl) { hl.style.left = s + '%'; hl.style.width = (e - s) + '%'; }
+    var lbl = document.getElementById('var-range-label');
+    if (lbl && CvolState.data) {
+        var r = getVarVisibleRange();
+        var d0 = CvolState.data[r.s].date, d1 = CvolState.data[r.e].date;
+        lbl.textContent = (s === 0 && e === 100) ? 'ALL DATA' : fmtDate(d0) + ' → ' + fmtDate(d1);
     }
 }
