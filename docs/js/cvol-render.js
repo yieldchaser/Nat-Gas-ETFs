@@ -327,46 +327,56 @@ function renderVarDecomp() {
     }
 
     // UP VAR area fill
-    ctx.beginPath(); ctx.moveTo(getX(0), pad.top + chartH);
-    for (var i = 0; i < n; i++) {
-        var v = visData[i].upVar; if (v == null) continue;
-        ctx.lineTo(getX(i), getVY(v));
+    if (CvolState.varActiveSeries.indexOf('upVar') >= 0) {
+        ctx.beginPath(); ctx.moveTo(getX(0), pad.top + chartH);
+        for (var i = 0; i < n; i++) {
+            var v = visData[i].upVar; if (v == null) continue;
+            ctx.lineTo(getX(i), getVY(v));
+        }
+        ctx.lineTo(getX(n - 1), pad.top + chartH); ctx.closePath();
+        ctx.fillStyle = 'rgba(61,184,122,0.08)'; ctx.fill();
     }
-    ctx.lineTo(getX(n - 1), pad.top + chartH); ctx.closePath();
-    ctx.fillStyle = 'rgba(61,184,122,0.08)'; ctx.fill();
 
     // DN VAR area fill
-    ctx.beginPath(); ctx.moveTo(getX(0), pad.top + chartH);
-    for (var i = 0; i < n; i++) {
-        var v = visData[i].dnVar; if (v == null) continue;
-        ctx.lineTo(getX(i), getVY(v));
+    if (CvolState.varActiveSeries.indexOf('dnVar') >= 0) {
+        ctx.beginPath(); ctx.moveTo(getX(0), pad.top + chartH);
+        for (var i = 0; i < n; i++) {
+            var v = visData[i].dnVar; if (v == null) continue;
+            ctx.lineTo(getX(i), getVY(v));
+        }
+        ctx.lineTo(getX(n - 1), pad.top + chartH); ctx.closePath();
+        ctx.fillStyle = 'rgba(239,68,68,0.08)'; ctx.fill();
     }
-    ctx.lineTo(getX(n - 1), pad.top + chartH); ctx.closePath();
-    ctx.fillStyle = 'rgba(239,68,68,0.08)'; ctx.fill();
 
     // UP VAR line
-    ctx.beginPath(); var started = false;
-    for (var i = 0; i < n; i++) {
-        var v = visData[i].upVar; if (v == null) continue;
-        if (!started) { ctx.moveTo(getX(i), getVY(v)); started = true; } else ctx.lineTo(getX(i), getVY(v));
+    if (CvolState.varActiveSeries.indexOf('upVar') >= 0) {
+        ctx.beginPath(); var started = false;
+        for (var i = 0; i < n; i++) {
+            var v = visData[i].upVar; if (v == null) continue;
+            if (!started) { ctx.moveTo(getX(i), getVY(v)); started = true; } else ctx.lineTo(getX(i), getVY(v));
+        }
+        ctx.strokeStyle = '#3db87a'; ctx.lineWidth = 1.3; ctx.stroke();
     }
-    ctx.strokeStyle = '#3db87a'; ctx.lineWidth = 1.3; ctx.stroke();
 
     // DN VAR line
-    ctx.beginPath(); started = false;
-    for (var i = 0; i < n; i++) {
-        var v = visData[i].dnVar; if (v == null) continue;
-        if (!started) { ctx.moveTo(getX(i), getVY(v)); started = true; } else ctx.lineTo(getX(i), getVY(v));
+    if (CvolState.varActiveSeries.indexOf('dnVar') >= 0) {
+        ctx.beginPath(); started = false;
+        for (var i = 0; i < n; i++) {
+            var v = visData[i].dnVar; if (v == null) continue;
+            if (!started) { ctx.moveTo(getX(i), getVY(v)); started = true; } else ctx.lineTo(getX(i), getVY(v));
+        }
+        ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.3; ctx.stroke();
     }
-    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.3; ctx.stroke();
 
     // Skew Ratio overlay
-    ctx.beginPath(); started = false;
-    for (var i = 0; i < n; i++) {
-        var v = visData[i].skewRatio; if (v == null) continue;
-        if (!started) { ctx.moveTo(getX(i), getSY(v)); started = true; } else ctx.lineTo(getX(i), getSY(v));
+    if (CvolState.varActiveSeries.indexOf('skewRatio') >= 0) {
+        ctx.beginPath(); started = false;
+        for (var i = 0; i < n; i++) {
+            var v = visData[i].skewRatio; if (v == null) continue;
+            if (!started) { ctx.moveTo(getX(i), getSY(v)); started = true; } else ctx.lineTo(getX(i), getSY(v));
+        }
+        ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 1.8; ctx.stroke();
     }
-    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 1.8; ctx.stroke();
 
     // Skew = 1.0 reference line
     if (1.0 >= skMin && 1.0 <= skMax) {
@@ -381,9 +391,15 @@ function renderVarDecomp() {
     // Inline legend
     ctx.font = '9px sans-serif'; ctx.textAlign = 'left';
     var lx = pad.left + 8;
-    ctx.fillStyle = '#3db87a'; ctx.fillText('▬ UP VAR', lx, pad.top + 12);
-    ctx.fillStyle = '#ef4444'; ctx.fillText('▬ DN VAR', lx + 65, pad.top + 12);
-    ctx.fillStyle = '#f59e0b'; ctx.fillText('▬ SKEW RATIO', lx + 130, pad.top + 12);
+    if (CvolState.varActiveSeries.indexOf('upVar') >= 0) {
+        ctx.fillStyle = '#3db87a'; ctx.fillText('▬ UP VAR', lx, pad.top + 12);
+    }
+    if (CvolState.varActiveSeries.indexOf('dnVar') >= 0) {
+        ctx.fillStyle = '#ef4444'; ctx.fillText('▬ DN VAR', lx + 65, pad.top + 12);
+    }
+    if (CvolState.varActiveSeries.indexOf('skewRatio') >= 0) {
+        ctx.fillStyle = '#f59e0b'; ctx.fillText('▬ SKEW RATIO', lx + 130, pad.top + 12);
+    }
 
     // Hover
     if (CvolState.hoverState != null) {
@@ -395,10 +411,15 @@ function renderVarDecomp() {
             var tip = document.getElementById('var-decomp-tooltip');
             if (tip) {
                 var row = visData[hi];
-                tip.innerHTML = '<div style="color:var(--cyan);font-weight:800;font-size:0.6rem;letter-spacing:1px;margin-bottom:3px;">' + fmtDate(row.date) + '</div>' +
-                    '<div style="color:#3db87a">UP: ' + fmt(row.upVar) + '%</div>' +
-                    '<div style="color:#ef4444">DN: ' + fmt(row.dnVar) + '%</div>' +
-                    '<div style="color:#f59e0b">SKEW: ' + fmt(row.skewRatio, 3) + '</div>';
+                var ttHtml = '<div style="color:var(--cyan);font-weight:800;font-size:0.6rem;letter-spacing:1px;margin-bottom:3px;">' + fmtDate(row.date) + '</div>';
+                if (CvolState.varActiveSeries.indexOf('upVar') >= 0) 
+                    ttHtml += '<div style="color:#3db87a">UP: ' + fmt(row.upVar) + '%</div>';
+                if (CvolState.varActiveSeries.indexOf('dnVar') >= 0)
+                    ttHtml += '<div style="color:#ef4444">DN: ' + fmt(row.dnVar) + '%</div>';
+                if (CvolState.varActiveSeries.indexOf('skewRatio') >= 0)
+                    ttHtml += '<div style="color:#f59e0b">SKEW: ' + fmt(row.skewRatio, 3) + '</div>';
+                
+                tip.innerHTML = ttHtml;
                 tip.style.display = 'block';
                 tip.style.left = (x + pad.left > W / 2 ? x - 140 : x + 15) + 'px';
                 tip.style.top = '10px';

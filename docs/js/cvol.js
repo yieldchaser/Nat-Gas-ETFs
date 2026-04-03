@@ -8,6 +8,7 @@ const CvolState = {
     data: null,           // parsed CSV rows [{date, ngvl, dnVar, upVar, skew, skewRatio, atm, convexity, underlying}]
     dates: [],
     activeSeries: ['ngvl','underlying'],
+    varActiveSeries: ['upVar','dnVar','skewRatio'],
     rangeState: { start: 0, end: 100 },
     varRangeState: { start: 0, end: 100 },
     horizonState: 'ALL',
@@ -285,6 +286,12 @@ const SERIES_CFG = {
     convexity:  { label: 'CONVEXITY',  color: '#ec4899', axis: 'right2',unit: 'x',   key: 'convexity' },
     underlying: { label: 'NG PRICE',   color: '#94a3b8', axis: 'right', unit: '$',   key: 'underlying' },
     skew:       { label: 'SKEW (pts)', color: '#a78bfa', axis: 'left',  unit: 'pts', key: 'skew' },
+};
+
+const VAR_SERIES_CFG = {
+    upVar:     { label: 'UP VAR',     color: '#3db87a', key: 'upVar',  desc: 'Call-side (upside) variance — OTM call implied vol component.' },
+    dnVar:     { label: 'DN VAR',     color: '#ef4444', key: 'dnVar',  desc: 'Put-side (downside) variance — OTM put implied vol component.' },
+    skewRatio: { label: 'SKEW RATIO', color: '#f59e0b', key: 'skewRatio', desc: 'Skew Ratio overlay — OTM Put Vol / OTM Call Vol.' },
 };
 
 // ── X-Axis engine (reused from flows.html pattern) ────────────
