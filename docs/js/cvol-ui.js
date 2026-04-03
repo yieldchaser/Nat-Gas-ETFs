@@ -72,6 +72,9 @@ function renderKpiCards(data, comp) {
     var ci = comp.ci ? comp.ci[n-1] : null;
     // ATM 5d direction
     var atm5dir = n > 5 ? (last.atm > data[n-6].atm ? '▲ RISING' : '▼ FALLING') : '';
+    // SAD status
+    var sadZ = comp.sadZ ? comp.sadZ[n-1] : null;
+    var sadActive = (sadZ != null && Math.abs(sadZ) > 1.5);
     // NGVL pct position
     var ngvlPctPos = p252 != null ? p252 : 50;
 
