@@ -253,7 +253,17 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 <div class="comp-modal-overlay" id="comp-modal-overlay"></div>
 <div class="comp-modal" id="comp-modal" style="display:none;">
     <div class="comp-modal-head">
-        <span class="comp-modal-title" id="comp-modal-title"></span>
+        <div style="display:flex; align-items:center; gap:16px;">
+            <span class="comp-modal-title" id="comp-modal-title"></span>
+            <div class="horizon-group" id="comp-modal-horizon-controls">
+                <button class="horizon-btn" data-range="1W" data-tooltip="Tactical week-over-week signal drift.">1W</button>
+                <button class="horizon-btn" data-range="1M" data-tooltip="Institutional Signal Benchmark (21 trading days).">1M</button>
+                <button class="horizon-btn" data-range="3M" data-tooltip="Quarterly signal consistency check.">3M</button>
+                <button class="horizon-btn" data-range="6M" data-tooltip="Semi-annual structural view.">6M</button>
+                <button class="horizon-btn" data-range="1Y" data-tooltip="Annual signal performance context.">1Y</button>
+                <button class="horizon-btn active" data-range="ALL" data-tooltip="Full historical lookback.">ALL</button>
+            </div>
+        </div>
         <button class="comp-modal-close" id="comp-modal-close">CLOSE ✕</button>
     </div>
     <div class="comp-modal-desc" id="comp-modal-desc" style="font-size:0.7rem;color:var(--text-muted);margin-bottom:24px;line-height:1.5;"></div>
@@ -347,6 +357,14 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <div class="chart-header">
             <div style="flex:1">
                 <span class="section-title-text" data-tooltip="Stacked area of UP VAR (call-side vol) vs DOWN VAR (put-side vol) with skew ratio overlaid. When the areas diverge, the options market is pricing directional risk — the foundation of every signal we build.">Variance Decomposition</span>
+            </div>
+            <div class="horizon-group" id="var-horizon-controls">
+                <button class="horizon-btn" data-range="1W" data-tooltip="Tactical weekly flow decomposition.">1W</button>
+                <button class="horizon-btn" data-range="1M" data-tooltip="Monthly structural variance shifts (21 trading days).">1M</button>
+                <button class="horizon-btn" data-range="3M" data-tooltip="Quarterly variance context — tracks seasonal shift patterns.">3M</button>
+                <button class="horizon-btn" data-range="6M" data-tooltip="Withdrawal/Injection cycle variance decomposition.">6M</button>
+                <button class="horizon-btn" data-range="1Y" data-tooltip="Annual macro-volatility structure.">1Y</button>
+                <button class="horizon-btn active" data-range="ALL" data-tooltip="Full historical variance record since 2013.">ALL</button>
             </div>
         </div>
         <div class="var-decomp-wrap">
