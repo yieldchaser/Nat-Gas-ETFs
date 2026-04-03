@@ -420,9 +420,17 @@ function renderModalChart(compKey) {
     ctx.clearRect(0, 0, W, H);
 
     var c = CvolState.composites;
-    var values = c[compKey] || [];
-    var underlying = CvolState.data.map(function(r) { return r.underlying; });
-    var dates = CvolState.data.map(function(r) { return r.date; });
+    var fullValues = c[compKey] || [];
+    var fullUnderlying = CvolState.data.map(function(r) { return r.underlying; });
+    var fullDates = CvolState.data.map(function(r) { return r.date; });
+    
+    // Slice according to slider range
+    var sIdx = CvolState.modalRange && CvolState.modalRange.s != null ? CvolState.modalRange.s : 0;
+    var eIdx = CvolState.modalRange && CvolState.modalRange.e != null ? CvolState.modalRange.e : fullValues.length - 1;
+    
+    var values = fullValues.slice(sIdx, eIdx + 1);
+    var underlying = fullUnderlying.slice(sIdx, eIdx + 1);
+    var dates = fullDates.slice(sIdx, eIdx + 1);
     var n = values.length;
     if (n < 10) return;
 
@@ -493,7 +501,9 @@ function renderModalChart(compKey) {
         return k.toLowerCase().indexOf(compKey.toLowerCase()) >= 0;
     });
     events.forEach(function(ev) {
-        if (values[ev.idx] == null) return;
+        if (ev.idx < sIdx || ev.idx > eIdx) return;
+        var localIdx = ev.idx - sIdx;
+        if (values[localIdx] == null) return;
         var r = ev.fwd21;
         var isDown = ev.direction.indexOf('TOP')>=0||ev.direction.indexOf('DOWNSIDE')>=0;
         var color = meta.color;
@@ -502,7 +512,7 @@ function renderModalChart(compKey) {
         } else {
             color = 'var(--text-muted)';
         }
-        var x = getX(ev.idx), y = getVY(values[ev.idx]);
+        var x = getX(localIdx), y = getVY(values[localIdx]);
         ctx.beginPath(); ctx.arc(x, y, (r!=null?4:3), 0, Math.PI * 2);
         ctx.fillStyle = color; ctx.fill();
         if (r != null) { ctx.lineWidth=1; ctx.strokeStyle='#000'; ctx.stroke(); }
@@ -511,19 +521,23 @@ function renderModalChart(compKey) {
     drawXAxis(ctx, dates, getX, cW, H - 5, pad);
 
     // Hover state
-    var idx = CvolState.modalHoverIdx;
+    var idx = CvolState.modalHoverIdx; // Global index
     var tt = document.getElementById('comp-modal-tooltip');
-    if (idx != null && dates[idx] && tt && CvolState.modalCompKey === compKey) {
+    
+    // Check if hovered global index is within our current zoomed range
+    if (idx != null && idx >= sIdx && idx <= eIdx && dates[idx - sIdx] && tt && CvolState.modalCompKey === compKey) {
+        var localIdx = idx - sIdx;
         var event = events.find(function(e) { return e.idx === idx; });
-        var hx = getX(idx);
+        var hx = getX(localIdx);
+        
         ctx.beginPath(); ctx.moveTo(hx, pad.top); ctx.lineTo(hx, pad.top + cH);
         ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
         
-        var v = values[idx], p = underlying[idx];
+        var v = values[localIdx], p = underlying[localIdx];
         if (v != null) { ctx.beginPath(); ctx.arc(hx, getVY(v), 5, 0, Math.PI*2); ctx.fillStyle=meta.color; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); }
         if (p != null) { ctx.beginPath(); ctx.arc(hx, getPY(p), 4, 0, Math.PI*2); ctx.fillStyle='#94a3b8'; ctx.fill(); ctx.lineWidth=1; ctx.strokeStyle='#fff'; ctx.stroke(); }
 
-        var html = '<div style="font-weight:800;margin-bottom:6px;border-bottom:1px solid var(--border-primary);padding-bottom:4px;color:var(--text-muted);">'+fmtDate(dates[idx])+'</div>';
+        var html = '<div style="font-weight:800;margin-bottom:6px;border-bottom:1px solid var(--border-primary);padding-bottom:4px;color:var(--text-muted);">'+fmtDate(dates[localIdx])+'</div>';
         if (p != null) html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;"><span style="color:#94a3b8;">NG Price</span><span style="font-weight:700;">$'+p.toFixed(2)+'</span></div>';
         if (v != null) html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:6px;"><span style="color:'+meta.color+';">'+meta.label.split('—')[0].trim()+'</span><span style="font-weight:700;color:'+meta.color+';">'+v.toFixed(3)+'</span></div>';
         if (event) {

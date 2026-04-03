@@ -474,6 +474,41 @@ function openCompModal(compKey) {
     stHtml += '</div>';
     statsEl.innerHTML = stHtml;
 
+    // Setup modal slider and attach listener
+    var mStart = document.getElementById('comp-modal-range-start');
+    var mEnd = document.getElementById('comp-modal-range-end');
+    var hl = document.getElementById('comp-modal-range-highlight');
+    var lbl = document.getElementById('comp-modal-range-label');
+    if (mStart && mEnd && CvolState.data) {
+        var dataLen = CvolState.data.length;
+        mStart.max = dataLen - 1; mEnd.max = dataLen - 1;
+        if (CvolState.modalRange == null) CvolState.modalRange = { s: 0, e: dataLen - 1 };
+        mStart.value = CvolState.modalRange.s;
+        mEnd.value = CvolState.modalRange.e;
+        
+        var updateModalSlider = function() {
+            var sVal = parseInt(mStart.value), eVal = parseInt(mEnd.value);
+            if (sVal > eVal) { var tmp = sVal; sVal = eVal; eVal = tmp; mStart.value = sVal; mEnd.value = eVal; }
+            CvolState.modalRange = { s: sVal, e: eVal };
+            hl.style.left = (sVal / (dataLen - 1) * 100) + '%';
+            hl.style.width = ((eVal - sVal) / (dataLen - 1) * 100) + '%';
+            var dFmt = function(dStr) { return dStr ? new Date(dStr).toLocaleDateString('en-US', {month:'short', year:'numeric'}) : ''; };
+            var sD = dFmt(CvolState.dates[sVal]);
+            var eD = dFmt(CvolState.dates[eVal]);
+            lbl.textContent = sVal === 0 && eVal === dataLen - 1 ? 'ALL DATA' : (sD + ' TO ' + eD);
+            renderModalChart(compKey);
+        };
+        mStart.addEventListener('input', updateModalSlider);
+        mEnd.addEventListener('input', updateModalSlider);
+        
+        // Initial ui sync (but don't recursively renderModalChart initially if it will be called at the bottom)
+        var sVal = CvolState.modalRange.s, eVal = CvolState.modalRange.e;
+        hl.style.left = (sVal / (dataLen - 1) * 100) + '%';
+        hl.style.width = ((eVal - sVal) / (dataLen - 1) * 100) + '%';
+        var dFmt = function(dStr) { return dStr ? new Date(dStr).toLocaleDateString('en-US', {month:'short', year:'numeric'}) : ''; };
+        lbl.textContent = sVal === 0 && eVal === dataLen - 1 ? 'ALL DATA' : (dFmt(CvolState.dates[sVal]) + ' TO ' + dFmt(CvolState.dates[eVal]));
+    }
+
     // Attach hover listener to canvas
     var canvas = document.getElementById('comp-modal-canvas');
     if (canvas) {
