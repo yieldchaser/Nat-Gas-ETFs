@@ -654,7 +654,7 @@ function renderVarSeriesChips() {
         chip.style.cssText = 'display:flex; align-items:center; cursor:pointer; padding:2px 6px; border-radius:4px; transition:all 0.2s; opacity:' + (active ? '1' : '0.4') + '; border: 1px solid ' + (active ? cfg.color : 'transparent');
         
         var dot = document.createElement('span');
-        dot.style.cssText = 'display:inline-block; width:8px; height:8px; border-radius:1px; margin-right:6px; background:' + cfg.color + (k === 'skewRatio' ? '; height:2px; border-radius:0' : '');
+        dot.style.cssText = 'display:inline-block; width:8px; height:8px; border-radius:1px; margin-right:6px; background:' + cfg.color + (['skewRatio','underlying'].indexOf(k) >= 0 ? '; height:2px; border-radius:0' : '');
         
         var label = document.createElement('span');
         label.style.color = cfg.color;
