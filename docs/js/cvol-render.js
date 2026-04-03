@@ -134,7 +134,11 @@ function renderMainChart() {
             var tooltip = document.getElementById('cvol-tooltip');
             if (tooltip) {
                 var row = visData[hi];
+                var pct252 = (comp.ngvlPct252 && comp.ngvlPct252[r.s + hi]) ? comp.ngvlPct252[r.s + hi] : null;
+                var reg = ngvlRegime(pct252);
                 var html = '<div class="tooltip-date">' + fmtDate(row.date) + '</div>';
+                html += '<div class="tooltip-regime" style="color:'+reg.color+';font-size:0.55rem;font-weight:800;margin-bottom:6px;letter-spacing:1px;">REGIME: '+reg.label+' ('+fmt(pct252,0)+'th)</div>';
+                
                 CvolState.activeSeries.forEach(function(k) {
                     var cfg = SERIES_CFG[k]; var v = row[cfg.key];
                     html += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:' + cfg.color + '">' + cfg.label + '</span><span class="tooltip-val">' + (v != null ? (cfg.unit === '$' ? '$' + v.toFixed(2) : v.toFixed(2) + cfg.unit) : '—') + '</span></div>';
@@ -411,17 +415,21 @@ function renderVarDecomp() {
             var tip = document.getElementById('var-decomp-tooltip');
             if (tip) {
                 var row = visData[hi];
-                var ttHtml = '<div style="color:var(--cyan);font-weight:800;font-size:0.6rem;letter-spacing:1px;margin-bottom:3px;">' + fmtDate(row.date) + '</div>';
+                var sk = row.skewRatio;
+                var sentiment = sk > 1.1 ? 'EXTREME BULLISH' : sk > 1.02 ? 'BULLISH BIAS' : sk < 0.9 ? 'EXTREME BEARISH' : sk < 0.98 ? 'BEARISH BIAS' : 'NEUTRAL';
+                var ttHtml = '<div style="color:var(--cyan);font-weight:800;font-size:0.6rem;letter-spacing:1.5px;margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:3px;">' + fmtDate(row.date) + '</div>';
+                ttHtml += '<div style="color:#f59e0b;font-weight:800;font-size:0.55rem;margin-bottom:6px;">SENTIMENT: '+sentiment+'</div>';
+                
                 if (CvolState.varActiveSeries.indexOf('upVar') >= 0) 
-                    ttHtml += '<div style="color:#3db87a">UP: ' + fmt(row.upVar) + '%</div>';
+                    ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#3db87a">UP VAR</span><span class="tooltip-val">' + fmt(row.upVar) + '%</span></div>';
                 if (CvolState.varActiveSeries.indexOf('dnVar') >= 0)
-                    ttHtml += '<div style="color:#ef4444">DN: ' + fmt(row.dnVar) + '%</div>';
+                    ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#ef4444">DN VAR</span><span class="tooltip-val">' + fmt(row.dnVar) + '%</span></div>';
                 if (CvolState.varActiveSeries.indexOf('skewRatio') >= 0)
-                    ttHtml += '<div style="color:#f59e0b">SKEW: ' + fmt(row.skewRatio, 3) + '</div>';
+                    ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#f59e0b">SKEW RATIO</span><span class="tooltip-val">' + fmt(row.skewRatio, 3) + '</span></div>';
                 
                 tip.innerHTML = ttHtml;
                 tip.style.display = 'block';
-                tip.style.left = (x + pad.left > W / 2 ? x - 140 : x + 15) + 'px';
+                tip.style.left = (x + pad.left > W / 2 ? x - 150 : x + 15) + 'px';
                 tip.style.top = '10px';
             }
         }

@@ -289,9 +289,9 @@ const SERIES_CFG = {
 };
 
 const VAR_SERIES_CFG = {
-    upVar:     { label: 'UP VAR',     color: '#3db87a', key: 'upVar',  desc: 'Call-side (upside) variance — OTM call implied vol component.' },
-    dnVar:     { label: 'DN VAR',     color: '#ef4444', key: 'dnVar',  desc: 'Put-side (downside) variance — OTM put implied vol component.' },
-    skewRatio: { label: 'SKEW RATIO', color: '#f59e0b', key: 'skewRatio', desc: 'Skew Ratio overlay — OTM Put Vol / OTM Call Vol.' },
+    upVar:     { label: 'UP VAR',     color: '#3db87a', key: 'upVar',  desc: 'Bullish Demand Check: Measures the premium paid for upside protection (OTM calls). Rising green area signals aggressive institutional buying often seen before explosive short-gamma breakouts.' },
+    dnVar:     { label: 'DN VAR',     color: '#ef4444', key: 'dnVar',  desc: 'Bearish Fear Check: Tracks the cost of downside tail-risk insurance. When the red area expands, the market is bracing for a violent gap-down or capitulation event.' },
+    skewRatio: { label: 'SKEW RATIO', color: '#f59e0b', key: 'skewRatio', desc: 'Directional Pressure Gauge: The ratio of Bear Fear (Puts) vs. Bull Greed (Calls). >1.0 means downside protection is expensive; <1.0 means the market is foaming for upside.' },
 };
 
 // ── X-Axis engine (reused from flows.html pattern) ────────────
@@ -363,11 +363,11 @@ function toRgba(hex, a) {
 
 // ── Composite Meta (for expanded cards) ───────────────────────
 var COMP_META = {
-    sad:     { label: 'SAD — Skew-ATM Divergence', color: '#f59e0b', desc: 'SkewRatio − (ATM / ATM_90d_median). Positive = directional skew rising without broad vol expansion. This is the stealth repositioning signal — informed options flow is building directional exposure before ATM vol confirms it.',     threshold: null, thresholdType: 'z', thresholdVal: 1.5 },
-    ci:      { label: 'CI — Complacency Index',     color: '#60a8f8', desc: '100 − ATM_252d_percentile. Ranges 0–100. High values mean ATM vol is cheap relative to all history. >82 = fragile calm. Historically, NG snaps violently from complacent states. This is not a directional signal — it is a regime fragility warning.',       threshold: 82, thresholdType: 'raw', thresholdVal: 82 },
-    cvcDown: { label: 'CVC↓ — Convexity-Variance (Down)', color: '#ef4444', desc: 'ConvPct63 × max(0, DnVarZ21). When convexity is elevated AND downside variance is spiking, the options market is aggressively buying OTM puts — pricing a top. >1.20 = market structurally expects a downward reversal.',       threshold: 1.2, thresholdType: 'raw', thresholdVal: 1.2 },
-    cvcUp:   { label: 'CVC↑ — Convexity-Variance (Up)',   color: '#3db87a', desc: 'ConvPct63 × max(0, UpVarZ21). When convexity is elevated AND upside variance is spiking, the options market is aggressively buying OTM calls — pricing a bottom. >1.20 = market structurally expects an upward reversal.',     threshold: 1.2, thresholdType: 'raw', thresholdVal: 1.2 },
-    rds:     { label: 'RDS — Regime Divergence Score', color: '#ec4899', desc: '|ΔSkewRatio_5d| × Convexity × (1 − ATM_pctile/100). The trifecta: rapid skew shift + fat tails + low ATM vol. This combination has historically preceded the largest NG directional moves. Z > 1.8 = explosive setup.',   threshold: null, thresholdType: 'z', thresholdVal: 1.8 },
+    sad:     { label: 'SAD — Skew-ATM Divergence', color: '#f59e0b', desc: 'Proprietary Divergence Signal: Measures the spread between SkewRatio and ATM Volatility. When Skew rises while ATM Vol remains suppressed, it reveals "Informed Flow" building directional exposure ahead of a major price expansion. Z-Score > 1.5 indicates high-conviction stealth positioning.',     threshold: null, thresholdType: 'z', thresholdVal: 1.5 },
+    ci:      { label: 'CI — Complacency Index',     color: '#60a8f8', desc: 'Regime Fragility Benchmark: Inverse of the 1-year ATM volatility percentile. A reading > 82 represents "Extreme Complacency" (Vol Bottoming). Historically, these "Fragile Calm" regimes are precursors to violent, gap-up volatility spikes as hedges are cheaply under-owned across the street.',       threshold: 82, thresholdType: 'raw', thresholdVal: 82 },
+    cvcDown: { label: 'CVC↓ — Convexity-Variance (Down)', color: '#ef4444', desc: 'Top Formation Confirmation: Synchronizes Tail-Risk (Convexity) with Downside Fear (DnVar). An active signal (>1.20) indicates institutions are aggressively layering deep OTM Put protection, physically pricing a significant correction or peak in the Natural Gas cycle.',       threshold: 1.2, thresholdType: 'raw', thresholdVal: 1.2 },
+    cvcUp:   { label: 'CVC↑ — Convexity-Variance (Up)',   color: '#3db87a', desc: 'Bottom Formation Confirmation: Synchronizes Tail-Risk (Convexity) with Bullish Demand (UpVar). An active signal (>1.20) indicates a "Panic for Calls" as traders chase a bottom or hedge a sudden upside gap. High-probability signal for trend reversals.',     threshold: 1.2, thresholdType: 'raw', thresholdVal: 1.2 },
+    rds:     { label: 'RDS — Regime Divergence Score', color: '#ec4899', desc: 'Explosive Momentum Lead: The "Trifecta" signal combining 5-day Skew momentum, Fat-Tail pricing, and ATM Volatility ranking. High RDS readings (>1.8 Z) occur at major ecological shifts in the volatility surface, often preceding the largest directional moves in the asset.',   threshold: null, thresholdType: 'z', thresholdVal: 1.8 },
 };
 
 // ── Correlation Matrix ────────────────────────────────────────
