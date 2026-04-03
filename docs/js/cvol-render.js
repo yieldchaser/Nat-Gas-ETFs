@@ -528,7 +528,7 @@ function renderModalChart(compKey) {
         if (v != null) html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:6px;"><span style="color:'+meta.color+';">'+meta.label.split('—')[0].trim()+'</span><span style="font-weight:700;color:'+meta.color+';">'+v.toFixed(3)+'</span></div>';
         if (event) {
             html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border-primary);">';
-            html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;"><span style="color:var(--text-dim);">Confluence</span><span style="font-weight:700;">'+(getConfluence(event)||0)+' signals</span></div>';
+            html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;"><span style="color:var(--text-dim);">Confluence</span><span style="font-weight:700;">'+(getGlobalConfluence(event)||0)+' signals</span></div>';
             html += '<div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:var(--text-dim);">21D Return</span><span style="font-weight:700;color:'+pctColor(event.fwd21)+';">'+(event.fwd21!=null?pctFmt(event.fwd21):'PENDING')+'</span></div>';
             html += '</div>';
         }

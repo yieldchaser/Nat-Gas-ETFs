@@ -350,22 +350,30 @@ function renderTimeline(composites, filter) {
     var stf = CvolState.signalTypeFilter;
     var events = stf !== 'all' ? allEvents.filter(function(e) { return e.signal === stf; }) : allEvents;
     if (countEl) countEl.textContent = events.length + ' EVENTS';
-    // Pre-compute confluence: for each event, count other events within ±5 sessions
-    // Use allEvents (before signal-type filter) to compute cross-signal confluence
-    var allDates = {};
-    allEvents.forEach(function(e, i) { if (!allDates[e.date]) allDates[e.date] = []; allDates[e.date].push(e); });
-    var allDateKeys = Object.keys(allDates).sort();
-    function getConfluence(ev) {
-        var di = allDateKeys.indexOf(ev.date);
-        if (di < 0) return 0;
-        var count = 0;
-        for (var j = Math.max(0, di - 5); j <= Math.min(allDateKeys.length - 1, di + 5); j++) {
-            allDates[allDateKeys[j]].forEach(function(e2) {
-                if (e2 !== ev && e2.signal !== ev.signal) count++;
-            });
-        }
-        return count;
+// ── Global Confluence Helper ────────────────────────────────────
+// Pre-compute cross-signal confluence (counts signals within ±5 sessions)
+function getGlobalConfluence(ev) {
+    if (!CvolState.composites || !CvolState.composites.events) return 0;
+    if (!CvolState._confCache) {
+        var allEvents = CvolState.composites.events.slice().reverse();
+        var allDates = {};
+        allEvents.forEach(function(e) { if (!allDates[e.date]) allDates[e.date] = []; allDates[e.date].push(e); });
+        var keys = Object.keys(allDates).sort();
+        CvolState._confCache = { dates: allDates, keys: keys };
     }
+    var cache = CvolState._confCache;
+    var di = cache.keys.indexOf(ev.date);
+    if (di < 0) return 0;
+    var count = 0;
+    for (var j = Math.max(0, di - 5); j <= Math.min(cache.keys.length - 1, di + 5); j++) {
+        cache.dates[cache.keys[j]].forEach(function(e2) {
+            if (e2 !== ev && e2.signal !== ev.signal) count++;
+        });
+    }
+    return count;
+}
+
+// ── Event Timeline ────────────────────────────────────────────
     // Determine "recent" threshold for PENDING state (last 21 sessions)
     var dataLen = CvolState.data ? CvolState.data.length : 0;
     var recentCutoffDate = null;
@@ -377,7 +385,7 @@ function renderTimeline(composites, filter) {
         var s = uiGetSeason(e.date);
         var dirColor = (e.direction.indexOf('TOP')>=0||e.direction.indexOf('DOWNSIDE')>=0)?'#ef4444':'#3db87a';
         if (e.direction==='COMPLACENCY') dirColor = '#f59e0b';
-        var conf = getConfluence(e);
+        var conf = getGlobalConfluence(e);
         var confHtml = conf >= 3 ? '<span class="confluence-badge" style="background:rgba(239,68,68,0.2);color:#ef4444;" data-tooltip="' + conf + ' other signals within ±5 sessions — EXTREME confluence">' + conf + '</span>'
             : conf >= 2 ? '<span class="confluence-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;" data-tooltip="' + conf + ' other signals within ±5 sessions — strong confluence">' + conf + '</span>'
             : conf >= 1 ? '<span class="confluence-badge" style="background:rgba(96,168,248,0.1);color:#60a8f8;" data-tooltip="' + conf + ' other signal within ±5 sessions">' + conf + '</span>'
@@ -418,7 +426,7 @@ function openCompModal(compKey) {
     var totalFires = events.length;
     var hit21 = 0, fwd21s = [], wHits = 0, wTotal = 0, sHits = 0, sTotal = 0, confTotal = 0;
     events.forEach(function(ev) {
-        confTotal += getConfluence(ev) || 0;
+        confTotal += getGlobalConfluence(ev) || 0;
         if (ev.fwd21 == null) return;
         var r = ev.fwd21;
         var isDown = ev.direction.indexOf('TOP')>=0||ev.direction.indexOf('DOWNSIDE')>=0;
