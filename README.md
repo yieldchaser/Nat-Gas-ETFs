@@ -8,12 +8,13 @@ A real-time dashboard for tracking volume flow and price-volume dynamics across 
 
 ## Overview
 
-This project implements four interconnected analytical engines:
+This project implements five interconnected analytical engines:
 
 1. **Volume Monitor** (`index.html`) — Multi-timeframe volume anomaly detection, volatility modeling, and conviction event filtering across 6 leveraged ETFs.
 2. **Flow Monitor** (`flows.html`) — Daily capital flow tracking (AUM in/out), Z-Score history, pressure scoring, divergence detection, and cross-ETF comparison.
 3. **Trough-to-Peak Analyzer** (`trough-peak.html`) — Parameterized ZigZag recovery cycle identification with micro-analytics and forward-return context.
-4. **Vol Regime Monitor** (embedded in `trough-peak.html`) — Full-lifetime historical volatility chart (5D/21D/63D/252D HV) with regime classification, crosshair tooltips, measurement tool, and side-by-side pair comparison.
+4. **Volatility Intelligence** (`cvol.html`) — Institutional convexity analysis, variance decomposition (UpVar vs DnVar), and Proprietary Composite Signals (SAD, CI, CVC, RDS) with integrated backtest scoring.
+5. **Vol Regime Monitor** (embedded in `trough-peak.html`) — Full-lifetime historical volatility chart (5D/21D/63D/252D HV) with regime classification.
 
 ---
 
@@ -302,6 +303,38 @@ Each box shows the annualised HV %, its percentile vs full available history, an
 
 Percentiles computed against the full available history for each instrument.
 
+### 4. Volatility Intelligence (`cvol.html`)
+
+An institutional-grade volatility surface research terminal. This dashboard decomposes the natural gas options surface (via CME NGVL proxy) into predictive signals using convexity-variance and skew-divergence modeling.
+
+#### Proprietary Composite Signals
+
+A multi-factor "Confidence Layer" that aggregates volatility regime, skew bias, and convexity dynamics into actionable signals:
+
+| Signal | Full Name | Logic / Alpha Source |
+|--------|-----------|---------------------|
+| **SAD** | **Skew-ATM Divergence** | Flags stealth repositioning where skew (tail-risk) diverges from ATM (linear) volatility. |
+| **CI** | **Complacency Index** | A "Fragile Calm" warning; identifies periods of underpriced tail-risk in trending markets. |
+| **CVC↓** | **Convexity-Var DOWN** | High-conviction **TOP** formation signal; flags when convexity-adjusted volatility implies exhaustive demand. |
+| **CVC↑** | **Convexity-Var UP** | High-conviction **BOTTOM** formation signal; identifies "Volatility Capitulation" where convexity turns positive. |
+| **RDS** | **Regime Divergence Score** | An explosive setup signal; flags when 5D/21D/252D volatility regimes are in extreme conflict. |
+
+#### Variance Decomposition Engine
+
+Deconstructs the NGVL index into its directional "Up" and "Down" variance components to isolate whether price action is driven by fear (downward) or demand-spikes (upward):
+
+- **UpVar / DnVar** — Is volatility being driven by rally-panic or sell-off panic?
+- **Skew Ratio** — Real-time measurement of the volatility surface's asymmetry.
+- **Independent Horizons** — Standardized institutional trading windows (1W / 1M / 3M / 6M / 1Y / ALL) with synchronized range-brush control.
+
+#### Backtest Scorecard & Event Timeline
+
+Every proprietary signal is automatically backtested against historical forward returns:
+
+- **Signal Backtest Scorecard** — 5D/21D Hit Rates, Average/Median returns, Max Upside (Best), Max Drawdown (Worst), and Annualized Sharpe (Portflio consistency).
+- **Confluence Scoring** — A signal's strength is weighted by the number of other proprietary signals firing within a ±5 session window.
+- **Institutional Benchmarks** — "Gold Standard" 21-day (1 trading month) validation for all options-based signaling.
+
 ---
 
 ## Core Metrics
@@ -363,19 +396,23 @@ Adjusted price: `adj_price[t] = raw_price[t] × (1 + decay/252)^t`
 docs/
 ├── index.html           # Volume Monitor dashboard
 ├── flows.html           # Flow Monitor (capital flow analytics)
-├── trough-peak.html     # Trough-to-Peak analyzer + Vol Regime Monitor
+├── trough-peak.html     # Trough-to-Peak analyzer
+├── cvol.html            # Volatility Intelligence (CVOL) dashboard
 ├── css/
 │   ├── styles.css       # Shared global theme, grid, tooltips
 │   ├── cards.css        # ETF card styling
-│   └── signals.css      # Signal panel + Vol Regime Monitor styling
+│   └── signals.css      # Volume Signal panels
 └── js/
     ├── app.js           # App controller, data loading, live overlay, auto-refresh
     ├── data.js          # Yahoo Finance fetch layer (3-proxy CORS chain, parser)
+    ├── cvol-ui.js       # Volatility Intelligence UI, Scorecard & Backtester
+    ├── cvol-render.js   # Volatility Intelligence canvas rendering engine
+    ├── cvol.js          # Volatility Surface & Composite Signal computation
     ├── cards.js         # Card rendering (decay-adj VCVI, season badge, spike)
     ├── charts.js        # Canvas charts (sparklines, forward return, trough-to-peak)
-    ├── signals.js       # NG bar, stress matrix, SWVC, conviction, echoes
-    ├── metrics.js       # Live metric calculations (HV, percentiles, VoV, term structure)
-    ├── vol-regime.js    # Vol Regime Monitor (HV chart, 1-UP/PAIR modes, crosshair, drag)
+    ├── signals.js       # Volume Signal logic (MWCA, SWVC, echoes)
+    ├── metrics.js       # Volatility & percentile calcs (HV, VoV, term structure)
+    ├── vol-regime.js    # Vol Regime Monitor (HV/Trough-Peak chart logic)
     └── config.js        # Thresholds, windows, ETF metadata, decay rates
 ```
 
