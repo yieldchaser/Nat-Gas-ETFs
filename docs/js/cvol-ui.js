@@ -479,34 +479,44 @@ function openCompModal(compKey) {
     var mEnd = document.getElementById('comp-modal-range-end');
     var hl = document.getElementById('comp-modal-range-highlight');
     var lbl = document.getElementById('comp-modal-range-label');
+    
     if (mStart && mEnd && CvolState.data) {
         var dataLen = CvolState.data.length;
         mStart.max = dataLen - 1; mEnd.max = dataLen - 1;
-        if (CvolState.modalRange == null) CvolState.modalRange = { s: 0, e: dataLen - 1 };
-        mStart.value = CvolState.modalRange.s;
-        mEnd.value = CvolState.modalRange.e;
         
-        var updateModalSlider = function() {
+        // ALWAYS RESET to full range when opening a new modal signal
+        CvolState.modalRange = { s: 0, e: dataLen - 1 };
+        mStart.value = 0;
+        mEnd.value = dataLen - 1;
+        
+        var updateModalSlider = function(e) {
             var sVal = parseInt(mStart.value), eVal = parseInt(mEnd.value);
-            if (sVal > eVal) { var tmp = sVal; sVal = eVal; eVal = tmp; mStart.value = sVal; mEnd.value = eVal; }
+            // One thumb cannot pass the other
+            if (sVal > eVal - 1) {
+                if (e && e.target && e.target.id === 'comp-modal-range-start') {
+                    sVal = eVal - 1; mStart.value = sVal;
+                } else {
+                    eVal = sVal + 1; mEnd.value = eVal;
+                }
+            }
             CvolState.modalRange = { s: sVal, e: eVal };
             hl.style.left = (sVal / (dataLen - 1) * 100) + '%';
             hl.style.width = ((eVal - sVal) / (dataLen - 1) * 100) + '%';
+            
             var dFmt = function(dStr) { return dStr ? new Date(dStr).toLocaleDateString('en-US', {month:'short', year:'numeric'}) : ''; };
-            var sD = dFmt(CvolState.dates[sVal]);
-            var eD = dFmt(CvolState.dates[eVal]);
+            var sD = dFmt(CvolState.dates[sVal]), eD = dFmt(CvolState.dates[eVal]);
             lbl.textContent = sVal === 0 && eVal === dataLen - 1 ? 'ALL DATA' : (sD + ' TO ' + eD);
             renderModalChart(compKey);
         };
-        mStart.addEventListener('input', updateModalSlider);
-        mEnd.addEventListener('input', updateModalSlider);
+        mStart.oninput = updateModalSlider;
+        mEnd.oninput = updateModalSlider;
         
-        // Initial ui sync (but don't recursively renderModalChart initially if it will be called at the bottom)
+        // Initial ui sync
         var sVal = CvolState.modalRange.s, eVal = CvolState.modalRange.e;
         hl.style.left = (sVal / (dataLen - 1) * 100) + '%';
         hl.style.width = ((eVal - sVal) / (dataLen - 1) * 100) + '%';
         var dFmt = function(dStr) { return dStr ? new Date(dStr).toLocaleDateString('en-US', {month:'short', year:'numeric'}) : ''; };
-        lbl.textContent = sVal === 0 && eVal === dataLen - 1 ? 'ALL DATA' : (dFmt(CvolState.dates[sVal]) + ' TO ' + dFmt(CvolState.dates[eVal]));
+        lbl.textContent = 'ALL DATA';
     }
 
     // Attach hover listener to canvas
@@ -517,16 +527,29 @@ function openCompModal(compKey) {
             var x = ev.clientX - rect.left;
             var pad = { left: 55, right: 55 }; var cW = rect.width - pad.left - pad.right;
             var frac = (x - pad.left) / cW;
-            var n = (CvolState.data || []).length;
-            if (n === 0) return;
-            var idx = Math.max(0, Math.min(n - 1, Math.round(frac * (n - 1))));
-            CvolState.modalHoverIdx = idx;
+            if (frac < 0) frac = 0; else if (frac > 1) frac = 1;
+
+            var dataLen = (CvolState.data || []).length;
+            var sIdx = CvolState.modalRange ? CvolState.modalRange.s : 0;
+            var eIdx = CvolState.modalRange ? CvolState.modalRange.e : (dataLen - 1);
+            var localN = eIdx - sIdx + 1;
+            
+            var localIdx = Math.round(frac * (localN - 1));
+            CvolState.modalHoverIdx = sIdx + localIdx;
             CvolState.modalCompKey = compKey;
+            
+            var tt = document.getElementById('comp-modal-tooltip');
+            if (tt) {
+                tt.style.display = 'block';
+                tt.style.left = (ev.clientX - rect.left + 15) + 'px';
+                tt.style.top = (ev.clientY - rect.top + 15) + 'px';
+            }
             renderModalChart(compKey);
         };
         canvas.onmouseleave = function() {
             CvolState.modalHoverIdx = null;
-            document.getElementById('comp-modal-tooltip').style.display = 'none';
+            var tt = document.getElementById('comp-modal-tooltip');
+            if (tt) tt.style.display = 'none';
             renderModalChart(compKey);
         };
     }
