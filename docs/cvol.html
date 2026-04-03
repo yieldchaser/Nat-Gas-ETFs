@@ -43,10 +43,11 @@
 .cvol-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
 .cvol-kpi-card {
     background: var(--bg-panel); border: 1px solid var(--border-primary);
+    border-left: 3px solid var(--card-accent, var(--border-primary));
     border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 10px;
-    transition: border-color 0.2s;
+    transition: border-color 0.25s, box-shadow 0.25s;
 }
-.cvol-kpi-card:hover { border-color: var(--border-accent); }
+.cvol-kpi-card:hover { border-color: var(--card-accent, var(--border-accent)); box-shadow: 0 4px 20px rgba(0,0,0,0.25), inset 0 0 0 1px var(--card-accent, transparent); }
 .cvol-kpi-head { display: flex; justify-content: space-between; align-items: center; }
 .cvol-kpi-ticker { font-size: 0.9rem; font-weight: 800; letter-spacing: 1px; }
 .cvol-kpi-regime { font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; }
@@ -57,6 +58,11 @@
 .cvol-kpi-stat { display: flex; flex-direction: column; gap: 2px; }
 .cvol-kpi-slbl { font-size: 0.5rem; letter-spacing: 1px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; }
 .cvol-kpi-sval { font-size: 0.75rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-bright); }
+/* Micro-analytics secondary section (matches T2P .micro-analytics) */
+.cvol-kpi-micro { margin-top: 2px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 5px; }
+.cvol-micro-line { display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; font-weight: 700; color: var(--text-dim); letter-spacing: 0.1px; white-space: nowrap; }
+.cvol-micro-lbl { color: var(--text-muted); text-transform: uppercase; font-size: 0.55rem; opacity: 0.7; letter-spacing: 0.5px; }
+.cvol-micro-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
 .kpi-progress { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.06); margin-top: 6px; overflow: hidden; }
 .kpi-progress-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
 .soft-green { color: #3db87a; } .soft-red { color: #ef4444; }

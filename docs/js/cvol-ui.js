@@ -79,56 +79,68 @@ function renderKpiCards(data, comp) {
 
     el.innerHTML =
     // NGVL Card
-    '<div class="cvol-kpi-card"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:'+ngvlReg.color+'" data-tooltip="CVOL Index (NGVL) — CME\'s composite forward implied volatility for Natural Gas. Derived from the full options surface.">NGVL</span><span class="cvol-kpi-regime" style="color:'+ngvlReg.color+'" data-tooltip="Regime based on 252-day rolling percentile: Low ≤25th, Normal 25-75th, Elevated ≥75th, Extreme ≥90th.">'+ngvlReg.label+'</span></div>' +
+    '<div class="cvol-kpi-card" style="--card-accent:'+ngvlReg.color+'"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:'+ngvlReg.color+'" data-tooltip="CVOL Index (NGVL) — CME\'s composite forward implied volatility for Natural Gas. Derived from the full options surface.">NGVL</span><span class="cvol-kpi-regime" style="color:'+ngvlReg.color+'" data-tooltip="Regime based on 252-day rolling percentile: Low ≤25th, Normal 25-75th, Elevated ≥75th, Extreme ≥90th.">'+ngvlReg.label+'</span></div>' +
     '<div class="cvol-kpi-main" data-tooltip="Current NGVL reading as a percentage of annualized implied volatility."><div class="cvol-kpi-lbl">CURRENT</div><div class="cvol-kpi-val" style="color:'+ngvlReg.color+'">'+fmt(last.ngvl)+'%</div></div>' +
     '<div class="cvol-kpi-stats">' +
         '<div class="cvol-kpi-stat" data-tooltip="21-day rolling percentile rank of current NGVL — where vol sits vs. the last month."><div class="cvol-kpi-slbl">21D PCT</div><div class="cvol-kpi-sval">'+fmt(p21,0)+'th</div></div>' +
         '<div class="cvol-kpi-stat" data-tooltip="63-day rolling percentile rank — seasonal-quarter context."><div class="cvol-kpi-slbl">63D PCT</div><div class="cvol-kpi-sval">'+fmt(p63,0)+'th</div></div>' +
         '<div class="cvol-kpi-stat" data-tooltip="252-day (1-year) rolling percentile rank — full annual context."><div class="cvol-kpi-slbl">252D PCT</div><div class="cvol-kpi-sval">'+fmt(p252,0)+'th</div></div>' +
         '<div class="cvol-kpi-stat" data-tooltip="Day-over-day change in NGVL."><div class="cvol-kpi-slbl">Δ 1D</div><div class="cvol-kpi-sval" style="color:'+pctColor(d1)+'">'+((d1!=null&&d1>0)?'+':'')+fmt(d1)+'</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="5-day rate of change — momentum indicator for vol expansion/contraction."><div class="cvol-kpi-slbl">5D ROC</div><div class="cvol-kpi-sval" style="color:'+pctColor(roc5)+'">'+((roc5!=null&&roc5>0)?'+':'')+fmt(roc5)+'%</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="Distance from 252-day high — how far below the annual vol ceiling. Near 0% = approaching extreme."><div class="cvol-kpi-slbl">↓ 252D HI</div><div class="cvol-kpi-sval" style="color:'+(distHi!=null&&distHi>-10?'#ef4444':'var(--text-bright)')+'">'+fmt(distHi)+'%</div></div>' +
+    '</div>' +
+    '<div class="cvol-kpi-micro">' +
+        '<div class="cvol-micro-line" data-tooltip="5-day rate of change — momentum indicator for vol expansion/contraction."><span class="cvol-micro-lbl">5D ROC</span><span class="cvol-micro-val" style="color:'+pctColor(roc5)+'">'+((roc5!=null&&roc5>0)?'+':'')+fmt(roc5)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Distance from 252-day high — how far below the annual vol ceiling. Near 0% = approaching extreme."><span class="cvol-micro-lbl">↓ 252D HIGH</span><span class="cvol-micro-val" style="color:'+(distHi!=null&&distHi>-10?'#ef4444':'var(--text-bright)')+'">'+fmt(distHi)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Distance from 252-day low — how far above the annual vol floor. Near 0% = approaching suppressed."><span class="cvol-micro-lbl">↑ 252D LOW</span><span class="cvol-micro-val" style="color:'+(distLo!=null&&distLo<10?'#3db87a':'var(--text-bright)')+'">+'+fmt(distLo)+'%</span></div>' +
     '</div>' +
     '<div class="kpi-progress" data-tooltip="Regime gauge: 0% = 252-day low, 100% = 252-day high."><div class="kpi-progress-fill" style="width:'+ngvlPctPos+'%;background:'+ngvlReg.color+'"></div></div></div>' +
 
     // SKEW RATIO Card
-    '<div class="cvol-kpi-card"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#f59e0b" data-tooltip="Skew Ratio = UpVar / DnVar. Measures directional bias in the options surface. >1 = upside skew (call premium). <1 = downside skew (put premium).">SKEW RATIO</span><span class="cvol-kpi-regime" style="color:'+(last.skewRatio>1?'#3db87a':'#ef4444')+'" data-tooltip="Direction based on 5-day trend.">'+skDir+'</span></div>' +
+    '<div class="cvol-kpi-card" style="--card-accent:#f59e0b"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#f59e0b" data-tooltip="Skew Ratio = UpVar / DnVar. Measures directional bias in the options surface. >1 = upside skew (call premium). <1 = downside skew (put premium).">SKEW RATIO</span><span class="cvol-kpi-regime" style="color:'+(last.skewRatio>1?'#3db87a':'#ef4444')+'" data-tooltip="Direction based on 5-day trend.">'+skDir+'</span></div>' +
     '<div class="cvol-kpi-main" data-tooltip="Current skew ratio value."><div class="cvol-kpi-lbl">CURRENT</div><div class="cvol-kpi-val">'+fmt(last.skewRatio,3)+'</div></div>' +
     '<div class="cvol-kpi-stats">' +
         '<div class="cvol-kpi-stat" data-tooltip="63-day percentile of skew ratio."><div class="cvol-kpi-slbl">63D PCT</div><div class="cvol-kpi-sval">'+fmt(comp.skewRatioPct63?comp.skewRatioPct63[n-1]:null,0)+'th</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="Z-score of skew ratio vs. 63-day rolling mean/std."><div class="cvol-kpi-slbl">Z-SCORE</div><div class="cvol-kpi-sval">'+fmt(comp.skewRatioZ21?comp.skewRatioZ21[n-1]:null)+'</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="5-day rate of change of skew ratio."><div class="cvol-kpi-slbl">5D ROC</div><div class="cvol-kpi-sval">'+fmt(comp.skewRatioRoc5?comp.skewRatioRoc5[n-1]:null,3)+'</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Z-score of skew ratio vs. 21-day rolling mean/std."><div class="cvol-kpi-slbl">Z-SCORE</div><div class="cvol-kpi-sval">'+fmt(comp.skewRatioZ21?comp.skewRatioZ21[n-1]:null)+'σ</div></div>' +
         '<div class="cvol-kpi-stat" data-tooltip="Raw skew value (NGSK) — absolute volatility difference between up and down variance."><div class="cvol-kpi-slbl">RAW SKEW</div><div class="cvol-kpi-sval">'+fmt(last.skew)+' pts</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="Up Variance (NGUP) — call-side implied vol."><div class="cvol-kpi-slbl">UP VAR</div><div class="cvol-kpi-sval" style="color:#3db87a">'+fmt(last.upVar)+'%</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="Down Variance (NGDN) — put-side implied vol."><div class="cvol-kpi-slbl">DN VAR</div><div class="cvol-kpi-sval" style="color:#ef4444">'+fmt(last.dnVar)+'%</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="SAD status — is skew currently diverging from ATM vol?"><div class="cvol-kpi-slbl">SAD</div><div class="cvol-kpi-sval">'+(sadActive?'<span style="color:#8b5cf6">ACTIVE</span>':'<span style="color:var(--text-dim)">NEUTRAL</span>')+'</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="63-day rolling correlation between Skew Ratio and NG price. Divergence = signal."><div class="cvol-kpi-slbl">NG CORR</div><div class="cvol-kpi-sval">'+fmt(skCorr,2)+'</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="5-day rate of change of skew ratio."><div class="cvol-kpi-slbl">5D ROC</div><div class="cvol-kpi-sval">'+fmt(comp.skewRatioRoc5?comp.skewRatioRoc5[n-1]:null,3)+'</div></div>' +
+    '</div>' +
+    '<div class="cvol-kpi-micro">' +
+        '<div class="cvol-micro-line" data-tooltip="Up Variance (NGUP) — call-side implied vol."><span class="cvol-micro-lbl">UP VAR</span><span class="cvol-micro-val" style="color:#3db87a">'+fmt(last.upVar)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Down Variance (NGDN) — put-side implied vol."><span class="cvol-micro-lbl">DN VAR</span><span class="cvol-micro-val" style="color:#ef4444">'+fmt(last.dnVar)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="SAD status — is skew currently diverging from ATM vol?"><span class="cvol-micro-lbl">SAD</span><span class="cvol-micro-val">'+(sadActive?'<span style="color:#8b5cf6">ACTIVE</span>':'<span style="color:var(--text-dim)">NEUTRAL</span>')+'</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="63-day rolling correlation between Skew Ratio and NG price. Divergence = signal."><span class="cvol-micro-lbl">NG CORR</span><span class="cvol-micro-val">'+fmt(skCorr,2)+'</span></div>' +
     '</div></div>' +
 
     // CONVEXITY Card
-    '<div class="cvol-kpi-card"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#ec4899" data-tooltip="Convexity = CVOL / ATM. Measures the premium on OTM options relative to ATM. High convexity = market buying tail risk protection.">CONVEXITY</span><span class="cvol-kpi-regime" style="color:'+convColor+'" data-tooltip="ELEVATED (>1.10): OTM actively bought. NORMAL (0.95-1.10): typical. LOW (<0.95): OTM being sold.">'+convLabel+'</span></div>' +
+    '<div class="cvol-kpi-card" style="--card-accent:#ec4899"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#ec4899" data-tooltip="Convexity = CVOL / ATM. Measures the premium on OTM options relative to ATM. High convexity = market buying tail risk protection.">CONVEXITY</span><span class="cvol-kpi-regime" style="color:'+convColor+'" data-tooltip="ELEVATED (>1.10): OTM actively bought. NORMAL (0.95-1.10): typical. LOW (<0.95): OTM being sold.">'+convLabel+'</span></div>' +
     '<div class="cvol-kpi-main" data-tooltip="CVOL / ATM ratio. Values above 1.0 = OTM options more expensive than ATM."><div class="cvol-kpi-lbl">CVOL / ATM</div><div class="cvol-kpi-val" style="color:'+convColor+'">'+fmt(last.convexity,4)+'</div></div>' +
     '<div class="cvol-kpi-stats">' +
         '<div class="cvol-kpi-stat" data-tooltip="63-day percentile rank of convexity."><div class="cvol-kpi-slbl">63D PCT</div><div class="cvol-kpi-sval">'+fmt(comp.convPct63?comp.convPct63[n-1]:null,0)+'th</div></div>' +
         '<div class="cvol-kpi-stat" data-tooltip="ATM implied vol — the at-the-money baseline volatility."><div class="cvol-kpi-slbl">ATM VOL</div><div class="cvol-kpi-sval">'+fmt(last.atm)+'%</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="Up Variance (NGUP) — call-side implied vol. High = market expects upside."><div class="cvol-kpi-slbl">UP VAR</div><div class="cvol-kpi-sval" style="color:#3db87a">'+fmt(last.upVar)+'%</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="Down Variance (NGDN) — put-side implied vol. High = market expects downside."><div class="cvol-kpi-slbl">DN VAR</div><div class="cvol-kpi-sval" style="color:#ef4444">'+fmt(last.dnVar)+'%</div></div>' +
         '<div class="cvol-kpi-stat" data-tooltip="21-day Z-score of convexity — how unusual current convexity is vs. recent history."><div class="cvol-kpi-slbl">CONV Z</div><div class="cvol-kpi-sval">'+fmt(convZ)+'σ</div></div>' +
         '<div class="cvol-kpi-stat" data-tooltip="CVC signal status — whether the convexity-variance confirmation signal is currently active."><div class="cvol-kpi-slbl">CVC</div><div class="cvol-kpi-sval">'+cvcStatus+'</div></div>' +
+    '</div>' +
+    '<div class="cvol-kpi-micro">' +
+        '<div class="cvol-micro-line" data-tooltip="Up Variance (NGUP) — call-side implied vol. High = market expects upside."><span class="cvol-micro-lbl">UP VAR</span><span class="cvol-micro-val" style="color:#3db87a">'+fmt(last.upVar)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Down Variance (NGDN) — put-side implied vol. High = market expects downside."><span class="cvol-micro-lbl">DN VAR</span><span class="cvol-micro-val" style="color:#ef4444">'+fmt(last.dnVar)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Variance spread: UpVar − DnVar. Positive = market expects more upside than downside."><span class="cvol-micro-lbl">VAR SPREAD</span><span class="cvol-micro-val" style="color:'+pctColor(last.upVar - last.dnVar)+'">'+((last.upVar-last.dnVar>0)?'+':'')+fmt(last.upVar - last.dnVar)+'%</span></div>' +
     '</div></div>' +
 
     // COMPLACENCY Card
-    '<div class="cvol-kpi-card"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#60a8f8" data-tooltip="Complacency Index: 100 − ATM_252d_percentile. Measures how cheap implied vol is relative to history. Higher = more complacent = more fragile.">COMPLACENCY</span><span class="cvol-kpi-regime" style="color:'+(ci>82?'#f59e0b':ci>60?'#60a8f8':'#3db87a')+'" data-tooltip="HIGH (>82): fragile calm. MODERATE (60-82): normal. LOW (<60): vol appropriately elevated.">'+(ci>82?'▲ HIGH':ci>60?'MODERATE':'LOW')+'</span></div>' +
+    '<div class="cvol-kpi-card" style="--card-accent:#60a8f8"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#60a8f8" data-tooltip="Complacency Index: 100 − ATM_252d_percentile. Measures how cheap implied vol is relative to history. Higher = more complacent = more fragile.">COMPLACENCY</span><span class="cvol-kpi-regime" style="color:'+(ci>82?'#f59e0b':ci>60?'#60a8f8':'#3db87a')+'" data-tooltip="HIGH (>82): fragile calm. MODERATE (60-82): normal. LOW (<60): vol appropriately elevated.">'+(ci>82?'▲ HIGH':ci>60?'MODERATE':'LOW')+'</span></div>' +
     '<div class="cvol-kpi-main" data-tooltip="CI value from 0 (max vol, zero complacency) to 100 (vol at all-time lows, max complacency)."><div class="cvol-kpi-lbl">INDEX (0-100)</div><div class="cvol-kpi-val" style="color:'+(ci>82?'#f59e0b':'#60a8f8')+'">'+fmt(ci,0)+'</div></div>' +
     '<div class="cvol-kpi-stats">' +
         '<div class="cvol-kpi-stat" data-tooltip="ATM vol\'s percentile rank over 252 trading days."><div class="cvol-kpi-slbl">ATM PCT</div><div class="cvol-kpi-sval">'+fmt(comp.atmPct252?comp.atmPct252[n-1]:null,0)+'th</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="Z-score of ATM vol — negative = vol cheap, positive = vol rich."><div class="cvol-kpi-slbl">ATM Z</div><div class="cvol-kpi-sval">'+fmt(comp.atmZ21?comp.atmZ21[n-1]:null)+'</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Z-score of ATM vol — negative = vol cheap, positive = vol rich."><div class="cvol-kpi-slbl">ATM Z</div><div class="cvol-kpi-sval">'+fmt(comp.atmZ21?comp.atmZ21[n-1]:null)+'σ</div></div>' +
         '<div class="cvol-kpi-stat" data-tooltip="90-day median ATM vol — structural baseline."><div class="cvol-kpi-slbl">ATM MED90</div><div class="cvol-kpi-sval">'+fmt(med90)+'%</div></div>' +
         '<div class="cvol-kpi-stat" data-tooltip="Current NG settlement price."><div class="cvol-kpi-slbl">NG PRICE</div><div class="cvol-kpi-sval">$'+fmt(last.underlying,2)+'</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="Trading days since CI last exceeded the 82 threshold."><div class="cvol-kpi-slbl">DAYS &gt;82</div><div class="cvol-kpi-sval">'+(daysSinceCI!=null?daysSinceCI+'D':'—')+'</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="ATM vol direction over the last 5 trading days."><div class="cvol-kpi-slbl">ATM 5D</div><div class="cvol-kpi-sval" style="color:'+(atm5dir.indexOf('RISING')>=0?'#ef4444':'#3db87a')+'">'+atm5dir+'</div></div>' +
+    '</div>' +
+    '<div class="cvol-kpi-micro">' +
+        '<div class="cvol-micro-line" data-tooltip="Trading days since CI last exceeded the 82 threshold."><span class="cvol-micro-lbl">DAYS >82</span><span class="cvol-micro-val">'+(daysSinceCI!=null?daysSinceCI+'D':'—')+'</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="ATM vol direction over the last 5 trading days."><span class="cvol-micro-lbl">ATM 5D</span><span class="cvol-micro-val" style="color:'+(atm5dir.indexOf('RISING')>=0?'#ef4444':'#3db87a')+'">'+atm5dir+'</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="CVOL signals are most powerful when confirmed by the Trough-to-Peak cycle position. A CVC↓ TOP SIGNAL at >85% of T2P cycle avg = maximum conviction short. Check the Trough-to-Peak tab for current cycle position."><span class="cvol-micro-lbl">T2P CROSS-REF</span><span class="cvol-micro-val" style="color:var(--text-dim);font-size:0.55rem;">SEE T2P TAB →</span></div>' +
     '</div></div>';
 }
+
 
 // ── Composite Stats Footer ────────────────────────────────────
 function renderCompStats(compKey, values, events) {
