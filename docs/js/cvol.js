@@ -13,6 +13,7 @@ const CvolState = {
     hoverState: null,
     dragState: { active: false, startIdx: null, currentIdx: null },
     signalFilter: 'all',
+    signalTypeFilter: 'all', // 'all', 'SAD', 'CI', 'CVC↓', 'CVC↑', 'RDS'
     composites: {},       // computed composite signal arrays
     percentiles: {},      // rolling percentile caches
     zscores: {},          // rolling z-score caches
@@ -421,6 +422,15 @@ function computeScorecard(composites) {
             var ss = s.ret21.reduce(function(a,b){return a + (b-m)*(b-m);},0) / s.ret21.length;
             std21 = Math.sqrt(ss);
         }
+        // Median 21D — robust to outlier NG spikes
+        var sorted21 = s.ret21.slice().sort(function(a,b){return a-b;});
+        var median21 = null;
+        if (sorted21.length) {
+            var mid = Math.floor(sorted21.length / 2);
+            median21 = sorted21.length % 2 !== 0 ? sorted21[mid] : (sorted21[mid-1] + sorted21[mid]) / 2;
+        }
+        // MAG 21D — avg absolute return (measures vol prediction regardless of direction)
+        var mag21 = s.ret21.length ? s.ret21.reduce(function(a,b){return a+Math.abs(b);},0) / s.ret21.length : null;
         rows.push({
             signal: s.name,
             count: s.count,
@@ -428,6 +438,8 @@ function computeScorecard(composites) {
             hitRate21: s.ret21.length > 0 ? (s.hit21 / s.ret21.length * 100) : null,
             avgRet5: avg5,
             avgRet21: avg21,
+            median21: median21,
+            mag21: mag21,
             best21: s.ret21.length ? Math.max.apply(null, s.ret21) : null,
             worst21: s.ret21.length ? Math.min.apply(null, s.ret21) : null,
             sharpe: (avg21 != null && std21 != null && std21 > 0) ? (avg21 / std21) : null,

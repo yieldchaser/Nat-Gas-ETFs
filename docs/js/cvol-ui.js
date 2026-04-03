@@ -209,27 +209,37 @@ function renderCorrMatrix(data) {
     el.innerHTML = html;
 }
 
-// ── Backtest Scorecard ────────────────────────────────────────
+// ── Backtest Scorecard (with filter, annualized Sharpe, median, MAG, summary) ──
 function renderScorecard(composites) {
     var el = document.getElementById('cvol-scorecard'); if (!el) return;
     var rows = computeScorecard(composites);
-    if (!rows.length) { el.innerHTML = '<div style="color:var(--text-dim);text-align:center;">No signal data</div>'; return; }
+    // Apply signal type filter
+    var stf = CvolState.signalTypeFilter;
+    if (stf !== 'all') rows = rows.filter(function(r) { return r.signal === stf; });
+    if (!rows.length) { el.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">No signal data' + (stf !== 'all' ? ' for ' + stf : '') + '</div>'; return; }
     var sigColors = {'SAD':'#f59e0b','CI':'#60a8f8','CVC↓':'#ef4444','CVC↑':'#3db87a','RDS':'#ec4899'};
+    var annFactor = Math.sqrt(252 / 21); // Annualization factor for 21-day holding period
     var html = '<table class="scorecard-table"><thead><tr>' +
         '<th data-tooltip="Which composite signal.">SIGNAL</th>' +
-        '<th data-tooltip="Total number of times this signal fired across full history.">COUNT</th>' +
+        '<th data-tooltip="Total number of times this signal fired across history.">COUNT</th>' +
         '<th data-tooltip="Hit rate at 5 trading days — % of signals where NG moved in the predicted direction.">HIT 5D</th>' +
         '<th data-tooltip="Hit rate at 21 trading days (1 month) — the primary validation window.">HIT 21D</th>' +
         '<th data-tooltip="Average NG price change 5 days after signal.">AVG 5D</th>' +
         '<th data-tooltip="Average NG price change 21 days after signal.">AVG 21D</th>' +
+        '<th data-tooltip="Median NG price change 21 days after signal — more robust to outlier NG spikes than average.">MED 21D</th>' +
+        '<th data-tooltip="Average ABSOLUTE NG price change 21 days after signal — measures magnitude regardless of direction.">MAG 21D</th>' +
         '<th data-tooltip="Best single 21-day forward return after this signal.">BEST 21D</th>' +
         '<th data-tooltip="Worst single 21-day forward return after this signal.">WORST 21D</th>' +
-        '<th data-tooltip="Signal Sharpe: avg_return / std_return over 21d. Higher = more consistent edge.">SHARPE</th>' +
+        '<th data-tooltip="Annualized Sharpe: (avg_return / std_return) × √(252/21). Higher = more consistent edge. >0.5 = usable.">SHARPE</th>' +
         '</tr></thead><tbody>';
+    var bestSharpe = -Infinity, worstSharpe = Infinity, bestSig = '', worstSig = '';
+    var totalWeightedSharpe = 0, totalWeightCount = 0;
     rows.forEach(function(r) {
         var sc = sigColors[r.signal] || 'var(--text-primary)';
         var hr21 = r.hitRate21; var hrColor = hr21 != null ? (hr21 > 55 ? '#3db87a' : hr21 < 45 ? '#ef4444' : 'var(--text-primary)') : 'var(--text-dim)';
         var barW = hr21 != null ? Math.min(100, hr21) : 0;
+        var annSharpe = r.sharpe != null ? r.sharpe * annFactor : null;
+        if (annSharpe != null) { if (annSharpe > bestSharpe) { bestSharpe = annSharpe; bestSig = r.signal; } if (annSharpe < worstSharpe) { worstSharpe = annSharpe; worstSig = r.signal; } totalWeightedSharpe += annSharpe * r.count; totalWeightCount += r.count; }
         html += '<tr>' +
             '<td style="color:'+sc+';font-weight:800;">'+r.signal+'</td>' +
             '<td>'+r.count+'</td>' +
@@ -237,26 +247,63 @@ function renderScorecard(composites) {
             '<td style="color:'+hrColor+'">'+fmt(r.hitRate21,0)+'%<span class="score-bar" style="width:'+barW+'px;background:'+hrColor+';"></span></td>' +
             '<td style="color:'+pctColor(r.avgRet5)+'">'+((r.avgRet5!=null&&r.avgRet5>0)?'+':'')+fmt(r.avgRet5)+'%</td>' +
             '<td style="color:'+pctColor(r.avgRet21)+'">'+((r.avgRet21!=null&&r.avgRet21>0)?'+':'')+fmt(r.avgRet21)+'%</td>' +
+            '<td style="color:'+pctColor(r.median21)+'">'+((r.median21!=null&&r.median21>0)?'+':'')+fmt(r.median21)+'%</td>' +
+            '<td style="color:var(--text-bright)">'+fmt(r.mag21)+'%</td>' +
             '<td style="color:#3db87a">'+((r.best21!=null&&r.best21>0)?'+':'')+fmt(r.best21)+'%</td>' +
             '<td style="color:#ef4444">'+fmt(r.worst21)+'%</td>' +
-            '<td style="color:'+(r.sharpe!=null?(r.sharpe>0?'#3db87a':'#ef4444'):'var(--text-dim)')+'">'+fmt(r.sharpe,2)+'</td>' +
+            '<td style="color:'+(annSharpe!=null?(annSharpe>0?'#3db87a':'#ef4444'):'var(--text-dim)')+'">'+fmt(annSharpe,2)+'</td>' +
             '</tr>';
     });
+    // Summary row
+    if (rows.length > 1) {
+        var combinedSharpe = totalWeightCount > 0 ? totalWeightedSharpe / totalWeightCount : null;
+        html += '<tr class="scorecard-summary">' +
+            '<td colspan="2" style="text-align:left;padding-left:16px;">SUMMARY</td>' +
+            '<td colspan="2" style="font-size:0.55rem;">BEST: <span style="color:'+(sigColors[bestSig]||'')+'">'+bestSig+' ('+fmt(bestSharpe,2)+')</span></td>' +
+            '<td colspan="2" style="font-size:0.55rem;">WORST: <span style="color:'+(sigColors[worstSig]||'')+'">'+worstSig+' ('+fmt(worstSharpe,2)+')</span></td>' +
+            '<td colspan="2"></td>' +
+            '<td colspan="3" style="font-size:0.55rem;">COMBINED: <span style="color:'+(combinedSharpe!=null&&combinedSharpe>0?'#3db87a':'#ef4444')+'">'+fmt(combinedSharpe,2)+'</span></td>' +
+            '</tr>';
+    }
     html += '</tbody></table>';
     el.innerHTML = html;
 }
 
-// ── Event Timeline ────────────────────────────────────────────
+// ── Event Timeline (with confluence, PENDING, signal-type filter) ──
 function renderTimeline(composites, filter) {
     var body = document.getElementById('cvol-event-body');
     var countEl = document.getElementById('cvol-event-count');
     if (!body) return;
-    var events = (composites.events || []).slice().reverse();
+    var allEvents = (composites.events || []).slice().reverse();
+    // Time filter
     var now = new Date(); var yearStr = now.getFullYear().toString();
     var sixMonthsAgo = new Date(now); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    if (filter === 'year') events = events.filter(function(e) { return e.date.startsWith(yearStr); });
-    else if (filter === '6m') events = events.filter(function(e) { return new Date(e.date) >= sixMonthsAgo; });
+    if (filter === 'year') allEvents = allEvents.filter(function(e) { return e.date.startsWith(yearStr); });
+    else if (filter === '6m') allEvents = allEvents.filter(function(e) { return new Date(e.date) >= sixMonthsAgo; });
+    // Signal type filter
+    var stf = CvolState.signalTypeFilter;
+    var events = stf !== 'all' ? allEvents.filter(function(e) { return e.signal === stf; }) : allEvents;
     if (countEl) countEl.textContent = events.length + ' EVENTS';
+    // Pre-compute confluence: for each event, count other events within ±5 sessions
+    // Use allEvents (before signal-type filter) to compute cross-signal confluence
+    var allDates = {};
+    allEvents.forEach(function(e, i) { if (!allDates[e.date]) allDates[e.date] = []; allDates[e.date].push(e); });
+    var allDateKeys = Object.keys(allDates).sort();
+    function getConfluence(ev) {
+        var di = allDateKeys.indexOf(ev.date);
+        if (di < 0) return 0;
+        var count = 0;
+        for (var j = Math.max(0, di - 5); j <= Math.min(allDateKeys.length - 1, di + 5); j++) {
+            allDates[allDateKeys[j]].forEach(function(e2) {
+                if (e2 !== ev && e2.signal !== ev.signal) count++;
+            });
+        }
+        return count;
+    }
+    // Determine "recent" threshold for PENDING state (last 21 sessions)
+    var dataLen = CvolState.data ? CvolState.data.length : 0;
+    var recentCutoffDate = null;
+    if (CvolState.data && dataLen > 21) recentCutoffDate = CvolState.data[dataLen - 21].date;
     var sigColors = {'SAD':'border-color:#f59e0b;color:#f59e0b;background:rgba(245,158,11,0.1)','CI':'border-color:#60a8f8;color:#60a8f8;background:rgba(96,168,248,0.1)','CVC↓':'border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,0.1)','CVC↑':'border-color:#3db87a;color:#3db87a;background:rgba(61,184,122,0.1)','RDS':'border-color:#ec4899;color:#ec4899;background:rgba(236,72,153,0.1)'};
     var sigTooltips = {'SAD':'Skew-ATM Divergence — stealth repositioning signal','CI':'Complacency Index — fragile calm warning','CVC↓':'Convexity-Variance down — top formation signal','CVC↑':'Convexity-Variance up — bottom formation signal','RDS':'Regime Divergence Score — explosive setup signal'};
     var html = '';
@@ -264,18 +311,30 @@ function renderTimeline(composites, filter) {
         var s = uiGetSeason(e.date);
         var dirColor = (e.direction.indexOf('TOP')>=0||e.direction.indexOf('DOWNSIDE')>=0)?'#ef4444':'#3db87a';
         if (e.direction==='COMPLACENCY') dirColor = '#f59e0b';
-        html += '<tr>' +
+        var conf = getConfluence(e);
+        var confHtml = conf >= 3 ? '<span class="confluence-badge" style="background:rgba(239,68,68,0.2);color:#ef4444;" data-tooltip="' + conf + ' other signals within ±5 sessions — EXTREME confluence">' + conf + '</span>'
+            : conf >= 2 ? '<span class="confluence-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;" data-tooltip="' + conf + ' other signals within ±5 sessions — strong confluence">' + conf + '</span>'
+            : conf >= 1 ? '<span class="confluence-badge" style="background:rgba(96,168,248,0.1);color:#60a8f8;" data-tooltip="' + conf + ' other signal within ±5 sessions">' + conf + '</span>'
+            : '<span style="color:var(--text-dim);opacity:0.3">0</span>';
+        // PENDING state for recent events where forward returns aren't measurable yet
+        var isRecent = recentCutoffDate && e.date > recentCutoffDate;
+        var fwd5Html = e.fwd5 != null ? '<span style="color:' + pctColor(e.fwd5) + '">' + ((e.fwd5>0?'+':'') + fmt(e.fwd5) + '%') + '</span>'
+            : isRecent ? '<span class="pending-label" data-tooltip="Forward return not yet measurable — signal fired less than 5 sessions ago">PENDING</span>' : '—';
+        var fwd21Html = e.fwd21 != null ? '<span style="color:' + pctColor(e.fwd21) + '">' + ((e.fwd21>0?'+':'') + fmt(e.fwd21) + '%') + '</span>'
+            : isRecent ? '<span class="pending-label" data-tooltip="Forward return not yet measurable — signal fired less than 21 sessions ago">PENDING</span>' : '—';
+        html += '<tr' + (conf >= 2 ? ' style="border-left:2px solid rgba(245,158,11,0.3);"' : '') + '>' +
             '<td style="color:var(--text-muted);">'+fmtDate(e.date)+'</td>' +
             '<td><span class="sig-badge" style="'+(sigColors[e.signal]||'')+'" data-tooltip="'+(sigTooltips[e.signal]||'')+'">'+e.signal+'</span></td>' +
             '<td style="color:'+dirColor+';font-weight:700;">'+e.direction+'</td>' +
             '<td>'+fmt(e.value,3)+'</td>' +
             '<td>$'+fmt(e.underlying,2)+'</td>' +
-            '<td style="color:'+pctColor(e.fwd5)+'">'+((e.fwd5!=null)?((e.fwd5>0?'+':'')+fmt(e.fwd5)+'%'):'—')+'</td>' +
-            '<td style="color:'+pctColor(e.fwd21)+'">'+((e.fwd21!=null)?((e.fwd21>0?'+':'')+fmt(e.fwd21)+'%'):'—')+'</td>' +
+            '<td>'+fwd5Html+'</td>' +
+            '<td>'+fwd21Html+'</td>' +
+            '<td>'+confHtml+'</td>' +
             '<td><span style="color:'+s.c+'" data-tooltip="'+s.n+' season">'+s.e+' '+s.n+'</span></td>' +
             '</tr>';
     });
-    body.innerHTML = html || '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);">No events in range</td></tr>';
+    body.innerHTML = html || '<tr><td colspan="9" style="text-align:center;color:var(--text-dim);">No events in range</td></tr>';
 }
 
 // ── Composite Expand Modal ────────────────────────────────────
@@ -455,12 +514,22 @@ function renderSeriesChips() {
             });
         });
 
-        // Event filter buttons
+        // Event filter buttons (time range)
         document.getElementById('cvol-event-filter').addEventListener('click', function(ev) {
             var btn = ev.target.closest('.tab-btn'); if (!btn) return;
             document.querySelectorAll('#cvol-event-filter .tab-btn').forEach(function(b) { b.classList.remove('active'); });
             btn.classList.add('active');
             CvolState.signalFilter = btn.dataset.filter;
+            renderTimeline(CvolState.composites, CvolState.signalFilter);
+        });
+
+        // Signal type filter chips (syncs scorecard + timeline)
+        document.getElementById('cvol-signal-type-filter').addEventListener('click', function(ev) {
+            var chip = ev.target.closest('.signal-chip'); if (!chip) return;
+            document.querySelectorAll('#cvol-signal-type-filter .signal-chip').forEach(function(c) { c.classList.remove('active'); });
+            chip.classList.add('active');
+            CvolState.signalTypeFilter = chip.dataset.signal;
+            renderScorecard(CvolState.composites);
             renderTimeline(CvolState.composites, CvolState.signalFilter);
         });
 
