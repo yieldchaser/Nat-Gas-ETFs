@@ -16,17 +16,17 @@ function renderBanner(data, comp) {
     var convColor = last.convexity > 1.1 ? '#f59e0b' : last.convexity > 0.95 ? '#3db87a' : '#60a8f8';
     var badges = '';
     var ci = comp.ci ? comp.ci[data.length - 1] : null;
-    if (ci != null && ci > 82) badges += '<span class="flash-badge flash-ci" data-tooltip="Complacency Index at '+ci.toFixed(0)+' — ATM vol is cheap relative to history. Historically fragile calm.">COMPLACENCY HIGH</span>';
+    if (ci != null && ci > 82) badges += '<span class="flash-badge flash-ci" data-tooltip="Fragile Calm Trigger: ATM volatility is historically suppressed (CI > 82). Historically, this is a spring-loaded setup for a violent spike in volatility.">COMPLACENCY HIGH</span>';
     var sad = comp.sad ? comp.sad[data.length - 1] : null;
     var sadZ = comp.sadZ ? comp.sadZ[data.length - 1] : null;
-    if (sadZ != null && Math.abs(sadZ) > 1.5) badges += '<span class="flash-badge flash-sad" data-tooltip="SAD Z-score at '+sadZ.toFixed(2)+' — skew is diverging from ATM vol, stealth repositioning detected.">SKEW DIVERGENCE</span>';
+    if (sadZ != null && Math.abs(sadZ) > 1.5) badges += '<span class="flash-badge flash-sad" data-tooltip="Stealth Skew Shift: Skew is diverging significantly from ATM volatility. Indicates \'Smart Money\' is quietly placing directional bets ahead of price.">SKEW DIVERGENCE</span>';
     var rdsZ = comp.rdsZ ? comp.rdsZ[data.length - 1] : null;
-    if (rdsZ != null && rdsZ > 1.8) badges += '<span class="flash-badge flash-rds" data-tooltip="RDS Z-score at '+rdsZ.toFixed(2)+' — regime trifecta (skew shift + convexity + low ATM) active.">REGIME SHIFT</span>';
+    if (rdsZ != null && rdsZ > 1.8) badges += '<span class="flash-badge flash-rds" data-tooltip="Explosive Regime Shift: RDS Z-score > 1.8 indicates a rare trifecta of rapid skew shift, low vol, and fat tails \u2014 often seen at major trend inflections.">REGIME SHIFT</span>';
     el.innerHTML =
-        '<div class="sb-item" data-tooltip="CME NGVL: 30-day forward implied volatility for Natural Gas. Composite of ATM + OTM options across the vol surface."><div class="sb-lbl">NGVL</div><div class="sb-val" style="color:'+ngvlReg.color+'">'+fmt(last.ngvl)+'%</div><div class="sb-sub">'+fmt(comp.ngvlPct252?comp.ngvlPct252[data.length-1]:null,0)+'th · '+ngvlReg.label+'</div></div>' +
-        '<div class="sb-item" data-tooltip="Skew Ratio: UpVar/DnVar. >1 = market pricing more upside tail risk (calls expensive). <1 = downside fear dominant (puts expensive). Direction shows 5-day trend."><div class="sb-lbl">SKEW RATIO</div><div class="sb-val">'+fmt(last.skewRatio,3)+'</div><div class="sb-sub" style="color:'+(skDir.indexOf('RISING')>=0?'#3db87a':'#ef4444')+'">Z: '+fmt(comp.skewRatioZ21?comp.skewRatioZ21[data.length-1]:null)+ ' · '+skDir+'</div></div>' +
-        '<div class="sb-item" data-tooltip="Convexity: CVOL/ATM ratio. Measures OTM option pricing premium. >1.10 = fat tails actively bought. <0.95 = OTM selling dominant."><div class="sb-lbl">CONVEXITY</div><div class="sb-val" style="color:'+convColor+'">'+fmt(last.convexity,4)+'</div><div class="sb-sub" style="color:'+convColor+'">'+convLabel+'</div></div>' +
-        '<div class="sb-item" data-tooltip="Front-month NG futures settlement price on the latest data date."><div class="sb-lbl">NG PRICE</div><div class="sb-val">$'+fmt(last.underlying,3)+'</div><div class="sb-sub">'+fmtDate(last.date)+'</div></div>' +
+        '<div class="sb-item" data-tooltip="CME NGVL: 30-day forward implied volatility for Natural Gas. This is the institutional benchmark for market uncertainty."><div class="sb-lbl">NGVL</div><div class="sb-val" style="color:'+ngvlReg.color+'">'+fmt(last.ngvl)+'%</div><div class="sb-sub">'+fmt(comp.ngvlPct252?comp.ngvlPct252[data.length-1]:null,0)+'th · '+ngvlReg.label+'</div></div>' +
+        '<div class="sb-item" data-tooltip="Sentiment Barometer: Correlates Call vs Put demand. >1.0 means the market is pricing more upside tail-risk; <1.0 means downside fear is dominant."><div class="sb-lbl">SKEW RATIO</div><div class="sb-val">'+fmt(last.skewRatio,3)+'</div><div class="sb-sub" style="color:'+(skDir.indexOf('RISING')>=0?'#3db87a':'#ef4444')+'">Z: '+fmt(comp.skewRatioZ21?comp.skewRatioZ21[data.length-1]:null)+ ' · '+skDir+'</div></div>' +
+        '<div class="sb-item" data-tooltip="Tail Sensitivity: Measures the cost of deep OTM protection relative to ATM. >1.10 = speculators are aggressively buying \'lottery ticket\' tail hedges."><div class="sb-lbl">CONVEXITY</div><div class="sb-val" style="color:'+convColor+'">'+fmt(last.convexity,4)+'</div><div class="sb-sub" style="color:'+convColor+'">'+convLabel+'</div></div>' +
+        '<div class="sb-item" data-tooltip="Current front-month futures settlement."><div class="sb-lbl">NG PRICE</div><div class="sb-val">$'+fmt(last.underlying,3)+'</div><div class="sb-sub">'+fmtDate(last.date)+'</div></div>' +
         '<div class="sb-badges">'+badges+'</div>';
 }
 
@@ -69,8 +69,6 @@ function renderKpiCards(data, comp) {
     var cvcDown = comp.cvcDown ? comp.cvcDown[n-1] : null;
     var cvcUp = comp.cvcUp ? comp.cvcUp[n-1] : null;
     var cvcStatus = (cvcDown != null && cvcDown > 1.2) ? '<span style="color:#ef4444">CVC↓ ACTIVE</span>' : (cvcUp != null && cvcUp > 1.2) ? '<span style="color:#3db87a">CVC↑ ACTIVE</span>' : '<span style="color:var(--text-dim)">NEUTRAL</span>';
-    // SAD status
-    var sadActive = (comp.sadZ && comp.sadZ[n-1] != null && Math.abs(comp.sadZ[n-1]) > 1.5);
     var ci = comp.ci ? comp.ci[n-1] : null;
     // ATM 5d direction
     var atm5dir = n > 5 ? (last.atm > data[n-6].atm ? '▲ RISING' : '▼ FALLING') : '';
@@ -79,65 +77,65 @@ function renderKpiCards(data, comp) {
 
     el.innerHTML =
     // NGVL Card
-    '<div class="cvol-kpi-card" style="--card-accent:'+ngvlReg.color+'"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:'+ngvlReg.color+'" data-tooltip="CVOL Index (NGVL) — CME\'s composite forward implied volatility for Natural Gas. Derived from the full options surface.">NGVL</span><span class="cvol-kpi-regime" style="color:'+ngvlReg.color+'" data-tooltip="Regime based on 252-day rolling percentile: Low ≤25th, Normal 25-75th, Elevated ≥75th, Extreme ≥90th.">'+ngvlReg.label+'</span></div>' +
-    '<div class="cvol-kpi-main" data-tooltip="Current NGVL reading as a percentage of annualized implied volatility."><div class="cvol-kpi-lbl">CURRENT</div><div class="cvol-kpi-val" style="color:'+ngvlReg.color+'">'+fmt(last.ngvl)+'%</div></div>' +
+    '<div class="cvol-kpi-card" style="--card-accent:'+ngvlReg.color+'"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:'+ngvlReg.color+'" data-tooltip="CME Natural Gas CVOL: The authoritative forward-looking gauge of market uncertainty. Uses the full option series to calculate the 30-day implied volatility surface.">NGVL</span><span class="cvol-kpi-regime" style="color:'+ngvlReg.color+'" data-tooltip="Regime Classification: Profiling current volatility against its own 1-year history. EXTREME (≥90th) readings are historically unsustainable and often mark major tops/bottoms.">'+ngvlReg.label+'</span></div>' +
+    '<div class="cvol-kpi-main" data-tooltip="The current annualized percentage of implied volatility."><div class="cvol-kpi-lbl">CURRENT</div><div class="cvol-kpi-val" style="color:'+ngvlReg.color+'">'+fmt(last.ngvl)+'%</div></div>' +
     '<div class="cvol-kpi-stats">' +
-        '<div class="cvol-kpi-stat" data-tooltip="21-day rolling percentile rank of current NGVL — where vol sits vs. the last month."><div class="cvol-kpi-slbl">21D PCT</div><div class="cvol-kpi-sval">'+fmt(p21,0)+'th</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="63-day rolling percentile rank — seasonal-quarter context."><div class="cvol-kpi-slbl">63D PCT</div><div class="cvol-kpi-sval">'+fmt(p63,0)+'th</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="252-day (1-year) rolling percentile rank — full annual context."><div class="cvol-kpi-slbl">252D PCT</div><div class="cvol-kpi-sval">'+fmt(p252,0)+'th</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="Day-over-day change in NGVL."><div class="cvol-kpi-slbl">Δ 1D</div><div class="cvol-kpi-sval" style="color:'+pctColor(d1)+'">'+((d1!=null&&d1>0)?'+':'')+fmt(d1)+'</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Tactical Ranking (1 month): How expensive is volatility vs. the last 21 trading days?"><div class="cvol-kpi-slbl">21D PCT</div><div class="cvol-kpi-sval">'+fmt(p21,0)+'th</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Quarterly Ranking (3 months): Measures current uncertainty against the seasonal cycle."><div class="cvol-kpi-slbl">63D PCT</div><div class="cvol-kpi-sval">'+fmt(p63,0)+'th</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Annual Ranking (1 year): The structural benchmark. Low readings signal extreme complacency; High readings signal panic."><div class="cvol-kpi-slbl">252D PCT</div><div class="cvol-kpi-sval">'+fmt(p252,0)+'th</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Day-over-Day Absolute Change in volatility points."><div class="cvol-kpi-slbl">Δ 1D</div><div class="cvol-kpi-sval" style="color:'+pctColor(d1)+'">'+((d1!=null&&d1>0)?'+':'')+fmt(d1)+'</div></div>' +
     '</div>' +
     '<div class="cvol-kpi-micro">' +
-        '<div class="cvol-micro-line" data-tooltip="5-day rate of change — momentum indicator for vol expansion/contraction."><span class="cvol-micro-lbl">5D ROC</span><span class="cvol-micro-val" style="color:'+pctColor(roc5)+'">'+((roc5!=null&&roc5>0)?'+':'')+fmt(roc5)+'%</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="Distance from 252-day high — how far below the annual vol ceiling. Near 0% = approaching extreme."><span class="cvol-micro-lbl">↓ 252D HIGH</span><span class="cvol-micro-val" style="color:'+(distHi!=null&&distHi>-10?'#ef4444':'var(--text-bright)')+'">'+fmt(distHi)+'%</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="Distance from 252-day low — how far above the annual vol floor. Near 0% = approaching suppressed."><span class="cvol-micro-lbl">↑ 252D LOW</span><span class="cvol-micro-val" style="color:'+(distLo!=null&&distLo<10?'#3db87a':'var(--text-bright)')+'">+'+fmt(distLo)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="5-day Volatility Momentum: Measures how fast the options market is repricing risk. Rapid expansion often precedes a violent price move."><span class="cvol-micro-lbl">5D ROC</span><span class="cvol-micro-val" style="color:'+pctColor(roc5)+'">'+((roc5!=null&&roc5>0)?'+':'')+fmt(roc5)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="The distance to the 1-year volatility ceiling. Proximity to 0% means the market is in a state of maximum historical uncertainty."><span class="cvol-micro-lbl">↓ 252D HIGH</span><span class="cvol-micro-val" style="color:'+(distHi!=null&&distHi>-10?'#ef4444':'var(--text-bright)')+'">'+fmt(distHi)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="The cushion above the 1-year volatility floor. Proximity to 0% indicates suppressed, spring-loaded market conditions."><span class="cvol-micro-lbl">↑ 252D LOW</span><span class="cvol-micro-val" style="color:'+(distLo!=null&&distLo<10?'#3db87a':'var(--text-bright)')+'">+'+fmt(distLo)+'%</span></div>' +
     '</div>' +
-    '<div class="kpi-progress" data-tooltip="Regime gauge: 0% = 252-day low, 100% = 252-day high."><div class="kpi-progress-fill" style="width:'+ngvlPctPos+'%;background:'+ngvlReg.color+'"></div></div></div>' +
-
+    '<div class="kpi-progress" data-tooltip="1-Year Regime Gauge: Positioning current volatility relative to its historical range (0% = Min, 100% = Max)."><div class="kpi-progress-fill" style="width:'+ngvlPctPos+'%;background:'+ngvlReg.color+'"></div></div></div>' +
+ 
     // SKEW RATIO Card
-    '<div class="cvol-kpi-card" style="--card-accent:#f59e0b"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#f59e0b" data-tooltip="Skew Ratio = UpVar / DnVar. Measures directional bias in the options surface. >1 = upside skew (call premium). <1 = downside skew (put premium).">SKEW RATIO</span><span class="cvol-kpi-regime" style="color:'+(last.skewRatio>1?'#3db87a':'#ef4444')+'" data-tooltip="Direction based on 5-day trend.">'+skDir+'</span></div>' +
-    '<div class="cvol-kpi-main" data-tooltip="Current skew ratio value."><div class="cvol-kpi-lbl">CURRENT</div><div class="cvol-kpi-val">'+fmt(last.skewRatio,3)+'</div></div>' +
+    '<div class="cvol-kpi-card" style="--card-accent:#f59e0b"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#f59e0b" data-tooltip="Sentiment Barometer: Comparing the premium of upside calls vs downside puts. >1.0 = Traders buying upside protection; <1.0 = Traders bracing for a price crash.">SKEW RATIO</span><span class="cvol-kpi-regime" style="color:'+(last.skewRatio>1?'#3db87a':'#ef4444')+'" data-tooltip="Five-day trend in directional demand.">'+skDir+'</span></div>' +
+    '<div class="cvol-kpi-main" data-tooltip="Current ratio of UpVar to DnVar. Divergence from 1.0 indicates strong directional conviction in the options surface."><div class="cvol-kpi-lbl">CURRENT</div><div class="cvol-kpi-val">'+fmt(last.skewRatio,3)+'</div></div>' +
     '<div class="cvol-kpi-stats">' +
-        '<div class="cvol-kpi-stat" data-tooltip="63-day percentile of skew ratio."><div class="cvol-kpi-slbl">63D PCT</div><div class="cvol-kpi-sval">'+fmt(comp.skewRatioPct63?comp.skewRatioPct63[n-1]:null,0)+'th</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="Z-score of skew ratio vs. 21-day rolling mean/std."><div class="cvol-kpi-slbl">Z-SCORE</div><div class="cvol-kpi-sval">'+fmt(comp.skewRatioZ21?comp.skewRatioZ21[n-1]:null)+'σ</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="Raw skew value (NGSK) — absolute volatility difference between up and down variance."><div class="cvol-kpi-slbl">RAW SKEW</div><div class="cvol-kpi-sval">'+fmt(last.skew)+' pts</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="5-day rate of change of skew ratio."><div class="cvol-kpi-slbl">5D ROC</div><div class="cvol-kpi-sval">'+fmt(comp.skewRatioRoc5?comp.skewRatioRoc5[n-1]:null,3)+'</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Ranking of current skew bias over the last 3 months."><div class="cvol-kpi-slbl">63D PCT</div><div class="cvol-kpi-sval">'+fmt(comp.skewRatioPct63?comp.skewRatioPct63[n-1]:null,0)+'th</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Skew Z-Score (21d): Measures how unusual the current sentiment bias is vs. the recent mean."><div class="cvol-kpi-slbl">Z-SCORE</div><div class="cvol-kpi-sval">'+fmt(comp.skewRatioZ21?comp.skewRatioZ21[n-1]:null)+'σ</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="The absolute spread in volatility points between call and put implied vol."><div class="cvol-kpi-slbl">RAW SKEW</div><div class="cvol-kpi-sval">'+fmt(last.skew)+' pts</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Momentum in skew shift. Rapid moves higher often signal panic re-positioning."><div class="cvol-kpi-slbl">5D ROC</div><div class="cvol-kpi-sval">'+fmt(comp.skewRatioRoc5?comp.skewRatioRoc5[n-1]:null,3)+'</div></div>' +
     '</div>' +
     '<div class="cvol-kpi-micro">' +
-        '<div class="cvol-micro-line" data-tooltip="Up Variance (NGUP) — call-side implied vol."><span class="cvol-micro-lbl">UP VAR</span><span class="cvol-micro-val" style="color:#3db87a">'+fmt(last.upVar)+'%</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="Down Variance (NGDN) — put-side implied vol."><span class="cvol-micro-lbl">DN VAR</span><span class="cvol-micro-val" style="color:#ef4444">'+fmt(last.dnVar)+'%</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="SAD status — is skew currently diverging from ATM vol?"><span class="cvol-micro-lbl">SAD</span><span class="cvol-micro-val">'+(sadActive?'<span style="color:#8b5cf6">ACTIVE</span>':'<span style="color:var(--text-dim)">NEUTRAL</span>')+'</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="63-day rolling correlation between Skew Ratio and NG price. Divergence = signal."><span class="cvol-micro-lbl">NG CORR</span><span class="cvol-micro-val">'+fmt(skCorr,2)+'</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Bullish Demand (UpVar): The volatility premium for upside Natural Gas calls."><span class="cvol-micro-lbl">UP VAR</span><span class="cvol-micro-val" style="color:#3db87a">'+fmt(last.upVar)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Bearish Fear (DnVar): The volatility premium for downside Natural Gas puts."><span class="cvol-micro-lbl">DN VAR</span><span class="cvol-micro-val" style="color:#ef4444">'+fmt(last.dnVar)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Stealth Skew Check: Divergence between Skew and ATM vol. Signal Active = Institutions placing directional bets."><span class="cvol-micro-lbl">SAD</span><span class="cvol-micro-val">'+(sadActive?'<span style="color:#8b5cf6">ACTIVE</span>':'<span style="color:var(--text-dim)">NEUTRAL</span>')+'</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Relational Check: Does price normally follow skew? Positive correlation means price typically rises when skew rises."><span class="cvol-micro-lbl">NG CORR</span><span class="cvol-micro-val">'+fmt(skCorr,2)+'</span></div>' +
     '</div></div>' +
-
+ 
     // CONVEXITY Card
-    '<div class="cvol-kpi-card" style="--card-accent:#ec4899"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#ec4899" data-tooltip="Convexity = CVOL / ATM. Measures the premium on OTM options relative to ATM. High convexity = market buying tail risk protection.">CONVEXITY</span><span class="cvol-kpi-regime" style="color:'+convColor+'" data-tooltip="ELEVATED (>1.10): OTM actively bought. NORMAL (0.95-1.10): typical. LOW (<0.95): OTM being sold.">'+convLabel+'</span></div>' +
-    '<div class="cvol-kpi-main" data-tooltip="CVOL / ATM ratio. Values above 1.0 = OTM options more expensive than ATM."><div class="cvol-kpi-lbl">CVOL / ATM</div><div class="cvol-kpi-val" style="color:'+convColor+'">'+fmt(last.convexity,4)+'</div></div>' +
+    '<div class="cvol-kpi-card" style="--card-accent:#ec4899"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#ec4899" data-tooltip="Tail Sensitivity: Measuring the \'Black Swan\' premium. If traders are paying much more for OTM tail-hedges than for ATM baseline protection, convexity expands.">CONVEXITY</span><span class="cvol-kpi-regime" style="color:'+convColor+'" data-tooltip="ELEVATED (>1.10): Market is pricing extreme tail-events. NORMAL (0.95-1.10): Typical price distribution. LOW (<0.95): Market is complacent about outliers.">'+convLabel+'</span></div>' +
+    '<div class="cvol-kpi-main" data-tooltip="CVOL / ATM ratio. >1.0 means the wings of the vol surface (tail-risk) are being bid relative to the belly."><div class="cvol-kpi-lbl">CVOL / ATM</div><div class="cvol-kpi-val" style="color:'+convColor+'">'+fmt(last.convexity,4)+'</div></div>' +
     '<div class="cvol-kpi-stats">' +
-        '<div class="cvol-kpi-stat" data-tooltip="63-day percentile rank of convexity."><div class="cvol-kpi-slbl">63D PCT</div><div class="cvol-kpi-sval">'+fmt(comp.convPct63?comp.convPct63[n-1]:null,0)+'th</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="ATM implied vol — the at-the-money baseline volatility."><div class="cvol-kpi-slbl">ATM VOL</div><div class="cvol-kpi-sval">'+fmt(last.atm)+'%</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="21-day Z-score of convexity — how unusual current convexity is vs. recent history."><div class="cvol-kpi-slbl">CONV Z</div><div class="cvol-kpi-sval">'+fmt(convZ)+'σ</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="CVC signal status — whether the convexity-variance confirmation signal is currently active."><div class="cvol-kpi-slbl">CVC</div><div class="cvol-kpi-sval">'+cvcStatus+'</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Ranking of current tail-pricing relative to the last 3 months."><div class="cvol-kpi-slbl">63D PCT</div><div class="cvol-kpi-sval">'+fmt(comp.convPct63?comp.convPct63[n-1]:null,0)+'th</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="At-The-Money (ATM) Implied Volatility: The baseline cost of protection for the current price."><div class="cvol-kpi-slbl">ATM VOL</div><div class="cvol-kpi-sval">'+fmt(last.atm)+'%</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Measures how unusual current tail-risk pricing is vs. its own 1-month average."><div class="cvol-kpi-slbl">CONV Z</div><div class="cvol-kpi-sval">'+fmt(convZ)+'σ</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Status of the Convexity-Variance Confirmation signal. ACTIVE = Maximum conviction for a trend reversal."><div class="cvol-kpi-slbl">CVC</div><div class="cvol-kpi-sval">'+cvcStatus+'</div></div>' +
     '</div>' +
     '<div class="cvol-kpi-micro">' +
-        '<div class="cvol-micro-line" data-tooltip="Up Variance (NGUP) — call-side implied vol. High = market expects upside."><span class="cvol-micro-lbl">UP VAR</span><span class="cvol-micro-val" style="color:#3db87a">'+fmt(last.upVar)+'%</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="Down Variance (NGDN) — put-side implied vol. High = market expects downside."><span class="cvol-micro-lbl">DN VAR</span><span class="cvol-micro-val" style="color:#ef4444">'+fmt(last.dnVar)+'%</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="Variance spread: UpVar − DnVar. Positive = market expects more upside than downside."><span class="cvol-micro-lbl">VAR SPREAD</span><span class="cvol-micro-val" style="color:'+pctColor(last.upVar - last.dnVar)+'">'+((last.upVar-last.dnVar>0)?'+':'')+fmt(last.upVar - last.dnVar)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Bullish Demand (UpVar): Premium paid for upside Natural Gas calls."><span class="cvol-micro-lbl">UP VAR</span><span class="cvol-micro-val" style="color:#3db87a">'+fmt(last.upVar)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Bearish Fear (DnVar): Premium paid for downside Natural Gas puts."><span class="cvol-micro-lbl">DN VAR</span><span class="cvol-micro-val" style="color:#ef4444">'+fmt(last.dnVar)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="The directional bias between bullish and bearish protection. + = Bullish; - = Bearish."><span class="cvol-micro-lbl">VAR SPREAD</span><span class="cvol-micro-val" style="color:'+pctColor(last.upVar - last.dnVar)+'">'+((last.upVar-last.dnVar>0)?'+':'')+fmt(last.upVar - last.dnVar)+'%</span></div>' +
     '</div></div>' +
-
+ 
     // COMPLACENCY Card
-    '<div class="cvol-kpi-card" style="--card-accent:#60a8f8"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#60a8f8" data-tooltip="Complacency Index: 100 − ATM_252d_percentile. Measures how cheap implied vol is relative to history. Higher = more complacent = more fragile.">COMPLACENCY</span><span class="cvol-kpi-regime" style="color:'+(ci>82?'#f59e0b':ci>60?'#60a8f8':'#3db87a')+'" data-tooltip="HIGH (>82): fragile calm. MODERATE (60-82): normal. LOW (<60): vol appropriately elevated.">'+(ci>82?'▲ HIGH':ci>60?'MODERATE':'LOW')+'</span></div>' +
-    '<div class="cvol-kpi-main" data-tooltip="CI value from 0 (max vol, zero complacency) to 100 (vol at all-time lows, max complacency)."><div class="cvol-kpi-lbl">INDEX (0-100)</div><div class="cvol-kpi-val" style="color:'+(ci>82?'#f59e0b':'#60a8f8')+'">'+fmt(ci,0)+'</div></div>' +
+    '<div class="cvol-kpi-card" style="--card-accent:#60a8f8"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#60a8f8" data-tooltip="Fragile Calm Gauge: Measures how \'cheap\' volatility is relative to its structural 1-year history. Higher = more complacent market.">COMPLACENCY</span><span class="cvol-kpi-regime" style="color:'+(ci>82?'#f59e0b':ci>60?'#60a8f8':'#3db87a')+'" data-tooltip="HIGH (>82) signals a spring-loaded setup for a volatility spike. MODERATE is typical. LOW signals a market that is appropriately fearful.">'+(ci>82?'▲ HIGH':ci>60?'MODERATE':'LOW')+'</span></div>' +
+    '<div class="cvol-kpi-main" data-tooltip="Scale of 0 (Extreme Fear) to 100 (Extreme Complacency). Based on inverse ATM percentile."><div class="cvol-kpi-lbl">INDEX (0-100)</div><div class="cvol-kpi-val" style="color:'+(ci>82?'#f59e0b':'#60a8f8')+'">'+fmt(ci,0)+'</div></div>' +
     '<div class="cvol-kpi-stats">' +
-        '<div class="cvol-kpi-stat" data-tooltip="ATM vol\'s percentile rank over 252 trading days."><div class="cvol-kpi-slbl">ATM PCT</div><div class="cvol-kpi-sval">'+fmt(comp.atmPct252?comp.atmPct252[n-1]:null,0)+'th</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="Z-score of ATM vol — negative = vol cheap, positive = vol rich."><div class="cvol-kpi-slbl">ATM Z</div><div class="cvol-kpi-sval">'+fmt(comp.atmZ21?comp.atmZ21[n-1]:null)+'σ</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="90-day median ATM vol — structural baseline."><div class="cvol-kpi-slbl">ATM MED90</div><div class="cvol-kpi-sval">'+fmt(med90)+'%</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="Current NG settlement price."><div class="cvol-kpi-slbl">NG PRICE</div><div class="cvol-kpi-sval">$'+fmt(last.underlying,2)+'</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Annual Ranking of ATM volatility. Structural baseline for current pricing."><div class="cvol-kpi-slbl">ATM PCT</div><div class="cvol-kpi-sval">'+fmt(comp.atmPct252?comp.atmPct252[n-1]:null,0)+'th</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Statistical measure of vol cheapness. Negative Z = vol is cheap; Positive Z = vol is rich."><div class="cvol-kpi-slbl">ATM Z</div><div class="cvol-kpi-sval">'+fmt(comp.atmZ21?comp.atmZ21[n-1]:null)+'σ</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Standard 3-month baseline for at-the-money volatility."><div class="cvol-kpi-slbl">ATM MED90</div><div class="cvol-kpi-sval">'+fmt(med90)+'%</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Latest Natural Gas front-month settlement price."><div class="cvol-kpi-slbl">NG PRICE</div><div class="cvol-kpi-sval">$'+fmt(last.underlying,2)+'</div></div>' +
     '</div>' +
     '<div class="cvol-kpi-micro">' +
-        '<div class="cvol-micro-line" data-tooltip="Trading days since CI last exceeded the 82 threshold."><span class="cvol-micro-lbl">DAYS >82</span><span class="cvol-micro-val">'+(daysSinceCI!=null?daysSinceCI+'D':'—')+'</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="ATM vol direction over the last 5 trading days."><span class="cvol-micro-lbl">ATM 5D</span><span class="cvol-micro-val" style="color:'+(atm5dir.indexOf('RISING')>=0?'#ef4444':'#3db87a')+'">'+atm5dir+'</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="CVOL signals are most powerful when confirmed by the Trough-to-Peak cycle position. A CVC↓ TOP SIGNAL at >85% of T2P cycle avg = maximum conviction short. Check the Trough-to-Peak tab for current cycle position."><span class="cvol-micro-lbl">T2P CROSS-REF</span><span class="cvol-micro-val" style="color:var(--text-dim);font-size:0.55rem;">SEE T2P TAB →</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="The longevity of the current tranquil regime. Extended periods above 82 often end with violent volatility gap-ups."><span class="cvol-micro-lbl">DAYS >82</span><span class="cvol-micro-val">'+(daysSinceCI!=null?daysSinceCI+'D':'—')+'</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Intermediate momentum in baseline volatility."><span class="cvol-micro-lbl">ATM 5D</span><span class="cvol-micro-val" style="color:'+(atm5dir.indexOf('RISING')>=0?'#ef4444':'#3db87a')+'">'+atm5dir+'</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Cross-Reference Check: CVOL signals gain maximum conviction when they align with the Trough-to-Peak cycle. A top signal here confirmed by >85% T2P cycle position is high-conviction."><span class="cvol-micro-lbl">T2P CROSS-REF</span><span class="cvol-micro-val" style="color:var(--text-dim);font-size:0.55rem;">SEE T2P TAB →</span></div>' +
     '</div></div>';
 }
 
@@ -189,12 +187,12 @@ function renderCompStats(compKey, values, events) {
     var sPct = sTotal >= 3 ? Math.round(sHits / sTotal * 100) : null;
     var seasonHtml = '';
     if (wPct != null || sPct != null) {
-        seasonHtml = '<div class="cvol-micro-line" data-tooltip="Seasonal hit rate: Winter (Nov-Feb) vs Summer (Jun-Aug). NG is profoundly seasonal \u2014 a signal that works in winter may fail in summer.">' +
-            '<span class="cvol-micro-lbl">SEASON</span>' +
+        seasonHtml = '<div class="cvol-micro-line" data-tooltip="Predictive Seasonality Check: Winning probability in Winter (Nov-Feb) vs. Summer (Jun-Aug). Natural Gas is profoundly seasonal \u2014 a signal with a 75% edge in winter may fail during the summer shoulder months.">' +
+            '<span class="cvol-micro-lbl">S. WIN RATE</span>' +
             '<span class="cvol-micro-val" style="font-size:0.55rem;">' +
-            (wPct != null ? '<span style="color:' + (wPct > 55 ? '#3db87a' : '#ef4444') + '">W:' + wPct + '%</span>' : '') +
+            (wPct != null ? '<span style="color:' + (wPct > 55 ? '#3db87a' : '#ef4444') + '">❄:' + wPct + '%</span>' : '') +
             (wPct != null && sPct != null ? ' · ' : '') +
-            (sPct != null ? '<span style="color:' + (sPct > 55 ? '#3db87a' : '#ef4444') + '">S:' + sPct + '%</span>' : '') +
+            (sPct != null ? '<span style="color:' + (sPct > 55 ? '#3db87a' : '#ef4444') + '">☀:' + sPct + '%</span>' : '') +
             '</span></div>';
     }
     // Replace flat grid with micro-analytics layout
@@ -231,7 +229,12 @@ function renderHeatmap(data) {
             if (!cell) { html += '<div class="heatmap-cell" style="background:rgba(255,255,255,0.02);color:var(--text-dim);">—</div>'; }
             else {
                 var bg = cell.regime.color;
-                html += '<div class="heatmap-cell" style="background:'+toRgba(bg,0.2)+';color:'+bg+';" data-tooltip="'+MONTHS[m-1]+' '+y+': NGVL='+cell.avgNgvl.toFixed(1)+'% ('+cell.regime.label+') | NG=$'+cell.avgUnderlying.toFixed(2)+(cell.avgSkewRatio!=null?' | Skew='+cell.avgSkewRatio.toFixed(2):'')+'">'+cell.avgNgvl.toFixed(0)+'</div>';
+                var tt = MONTHS[m-1]+' '+y+' Volatility Audit:\n' +
+                         '• NGVL Avg: '+cell.avgNgvl.toFixed(1)+'% ('+cell.regime.label+')\n' +
+                         '• NG Price Avg: $'+cell.avgUnderlying.toFixed(2)+'\n' +
+                         (cell.avgSkewRatio!=null ? '• Skew Ratio Avg: '+cell.avgSkewRatio.toFixed(2)+'\n' : '') +
+                         'Historical Context: ' + (m >= 11 || m <= 2 ? 'Winter withdrawal peak - high vol common.' : m >= 6 && m <= 8 ? 'Summer cooling demand peak.' : 'Shoulder month - injection season.');
+                html += '<div class="heatmap-cell" style="background:'+toRgba(bg,0.2)+';color:'+bg+';" data-tooltip="'+tt+'">'+cell.avgNgvl.toFixed(0)+'</div>';
             }
         }
     });
@@ -267,8 +270,16 @@ function renderCorrMatrix(data) {
             else if (rv > 0.3) { bg = 'rgba(61,184,122,0.08)'; fg = '#3db87a'; }
             else if (rv < -0.3) { bg = 'rgba(239,68,68,'+((Math.abs(rv)-0.2)*0.4)+')'; fg = '#ef4444'; }
             else { bg = 'rgba(255,255,255,0.02)'; fg = 'var(--text-muted)'; }
-            var interp = rv == null ? 'Insufficient data' : rv > 0.7 ? 'Strong positive — move together' : rv > 0.3 ? 'Moderate positive' : rv < -0.3 ? 'Negative — divergent' : 'Weak / no correlation';
-            html += '<div class="corr-cell" style="background:'+bg+';color:'+fg+';" data-tooltip="'+CORR_LABELS[i]+' vs '+CORR_LABELS[j]+': r = '+(rv!=null?rv.toFixed(3):'—')+' — '+interp+'">'+( rv!=null?rv.toFixed(2):'—')+'</div>';
+            var interp = '';
+            if (rv == null) interp = 'Insufficient data for correlation.';
+            else if (i === j) interp = 'Perfect Correlation (Self)';
+            else if (rv > 0.8) interp = 'Strong Positive Correlation: These indices typically peak and trough simultaneously.';
+            else if (rv > 0.5) interp = 'Moderate Positive: General directional alignment.';
+            else if (rv < -0.6) interp = 'Strong Negative: One index typically expands as the other contracts — a primary divergence signal.';
+            else if (rv < -0.3) interp = 'Moderate Negative: Diverging volatility characteristics.';
+            else interp = 'Weak/Uncorrelated: These metrics operate independently in the current regime.';
+            
+            html += '<div class="corr-cell" style="background:'+bg+';color:'+fg+';" data-tooltip="'+CORR_LABELS[i]+' vs '+CORR_LABELS[j]+': r = '+(rv!=null?rv.toFixed(3):'—')+'\n' + interp + '">'+( rv!=null?rv.toFixed(2):'—')+'</div>';
         }
     }
     html += '</div>';
@@ -286,17 +297,17 @@ function renderScorecard(composites) {
     var sigColors = {'SAD':'#f59e0b','CI':'#60a8f8','CVC↓':'#ef4444','CVC↑':'#3db87a','RDS':'#ec4899'};
     var annFactor = Math.sqrt(252 / 21); // Annualization factor for 21-day holding period
     var html = '<table class="scorecard-table"><thead><tr>' +
-        '<th data-tooltip="Which composite signal.">SIGNAL</th>' +
-        '<th data-tooltip="Total number of times this signal fired across history.">COUNT</th>' +
-        '<th data-tooltip="Hit rate at 5 trading days — % of signals where NG moved in the predicted direction.">HIT 5D</th>' +
-        '<th data-tooltip="Hit rate at 21 trading days (1 month) — the primary validation window.">HIT 21D</th>' +
-        '<th data-tooltip="Average NG price change 5 days after signal.">AVG 5D</th>' +
-        '<th data-tooltip="Average NG price change 21 days after signal.">AVG 21D</th>' +
-        '<th data-tooltip="Median NG price change 21 days after signal — more robust to outlier NG spikes than average.">MED 21D</th>' +
-        '<th data-tooltip="Average ABSOLUTE NG price change 21 days after signal — measures magnitude regardless of direction.">MAG 21D</th>' +
-        '<th data-tooltip="Best single 21-day forward return after this signal.">BEST 21D</th>' +
-        '<th data-tooltip="Worst single 21-day forward return after this signal.">WORST 21D</th>' +
-        '<th data-tooltip="Annualized Sharpe: (avg_return / std_return) × √(252/21). Higher = more consistent edge. >0.5 = usable.">SHARPE</th>' +
+        '<th data-tooltip="Aggregate Composite Signal: SAD, CI, CVC, or RDS.">SIGNAL</th>' +
+        '<th data-tooltip="Sample Size: Total number of validated signals in the lookback period.">COUNT</th>' +
+        '<th data-tooltip="Short-Term Hit Rate: Probability that NG moves in the predicted direction within 5 trading sessions.">HIT 5D</th>' +
+        '<th data-tooltip="Medium-Term Hit Rate (Gold Standard): Probability that NG moves in the predicted direction within 21 trading sessions (1 month). The primary benchmark for option-based signaling.">HIT 21D</th>' +
+        '<th data-tooltip="Tactical Return: The average percentage change in NG price 1 week after the signal fires.">AVG 5D</th>' +
+        '<th data-tooltip="Strategic Return: The average percentage change in NG price 1 month after the signal fires.">AVG 21D</th>' +
+        '<th data-tooltip="Reliability Check: The median 21-day return. Compared to the Average, this shows if the signal is driven by consistent performance or rare outliers.">MED 21D</th>' +
+        '<th data-tooltip="Volatility Potential: The average absolute price move after a signal, regardless of direction. Measures the \'power\' of the signal.">MAG 21D</th>' +
+        '<th data-tooltip="Maximum historical upside potential captured by this signal.">BEST 21D</th>' +
+        '<th data-tooltip="Maximum historical downside risk experienced after this signal.">WORST 21D</th>' +
+        '<th data-tooltip="Consistency Score: Annualized Sharpe measures the risk-adjusted return of the signal. >0.50 is the institutional benchmark for a scalable edge.">SHARPE</th>' +
         '</tr></thead><tbody>';
     var bestSharpe = -Infinity, worstSharpe = Infinity, bestSig = '', worstSig = '';
     var totalWeightedSharpe = 0, totalWeightCount = 0;
@@ -393,9 +404,9 @@ function renderTimeline(composites, filter) {
         // PENDING state for recent events where forward returns aren't measurable yet
         var isRecent = recentCutoffDate && e.date > recentCutoffDate;
         var fwd5Html = e.fwd5 != null ? '<span style="color:' + pctColor(e.fwd5) + '">' + ((e.fwd5>0?'+':'') + fmt(e.fwd5) + '%') + '</span>'
-            : isRecent ? '<span class="pending-label" data-tooltip="Forward return not yet measurable — signal fired less than 5 sessions ago">PENDING</span>' : '—';
+            : isRecent ? '<span class="pending-label" data-tooltip="Market Validation Pending: This signal fired less than 5 sessions ago. Volatility signals often require 3-5 days of \'digestion\' before price reflects the options-market bias.">PENDING</span>' : '—';
         var fwd21Html = e.fwd21 != null ? '<span style="color:' + pctColor(e.fwd21) + '">' + ((e.fwd21>0?'+':'') + fmt(e.fwd21) + '%') + '</span>'
-            : isRecent ? '<span class="pending-label" data-tooltip="Forward return not yet measurable — signal fired less than 21 sessions ago">PENDING</span>' : '—';
+            : isRecent ? '<span class="pending-label" data-tooltip="Institutional Alpha Window Pending: This signal fired less than 21 sessions ago. We use a full trading month (21 days) as the Gold Standard for validating options-surface predictive power.">PENDING</span>' : '—';
         html += '<tr' + (conf >= 2 ? ' style="border-left:2px solid rgba(245,158,11,0.3);"' : '') + '>' +
             '<td style="color:var(--text-muted);">'+fmtDate(e.date)+'</td>' +
             '<td><span class="sig-badge" style="'+(sigColors[e.signal]||'')+'" data-tooltip="'+(sigTooltips[e.signal]||'')+'">'+e.signal+'</span></td>' +

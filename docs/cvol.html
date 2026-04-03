@@ -286,10 +286,10 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- TITLE -->
     <div class="cvol-title-block">
         <div class="cvol-title-row">
-            <span class="cvol-title" data-tooltip="Options-derived volatility intelligence for Natural Gas, powered by CME CVOL data.">CVOL Volatility Intelligence</span>
+            <span class="cvol-title" data-tooltip="Institutional-Grade Volatility Intelligence: Powered by CME CVOL. This dashboard decodes the options market to identify 'hidden' institutional positioning before it hits the price tape.">CVOL Volatility Intelligence</span>
             <span class="cvol-badge">CME NGVL · OPTIONS-DERIVED</span>
         </div>
-        <div class="cvol-desc">Options-market derived volatility analytics for Natural Gas. Tracks CME CVOL index, skew ratio, convexity, and variance decomposition to identify directional inflection points before price moves. Composite signals (SAD, CVC, CI, RDS) synthesize cross-column divergences into actionable regime alerts.</div>
+        <div class="cvol-desc">Natural Gas Volatility Analytics: Tracks CME CVOL (30-day forward implied vol), skew ratio, and convexity to identify directional inflection points. Our proprietary composite signals (SAD, CVC, RDS) synthesize these cross-column divergences into high-conviction regime alerts.</div>
     </div>
 
     <!-- PANEL 1: STATUS BANNER (populated by JS with data-tooltip on every item) -->
@@ -302,16 +302,16 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <div class="chart-container">
         <div class="chart-header">
             <div style="flex:1">
-                <span class="section-title-text" data-tooltip="Multi-series time chart of CME CVOL indices overlaid with NG futures price. Toggle series with the chips below. Background color bands show NGVL's 252-day percentile regime (Low/Normal/Elevated/Extreme).">CVOL Time Series</span>
+                <span class="section-title-text" data-tooltip="Volatility Environment: Overlays CME CVOL (forward vol) with NG price. Background bands represent 252-day (1-year) percentile regimes. Volatility is mean-reverting: EXTREME readings often signal cycle exhaustion; LOW readings signal dangerous 'spring-loaded' calm.">CVOL Time Series</span>
             </div>
             <div class="horizon-group" id="cvol-horizon-controls">
-                <button class="horizon-btn" data-range="1W" data-tooltip="Show last 7 calendar days of CVOL data">1W</button>
-                <button class="horizon-btn" data-range="1M" data-tooltip="Show last 30 calendar days">1M</button>
-                <button class="horizon-btn" data-range="3M" data-tooltip="Show last 3 months — captures seasonal swings">3M</button>
-                <button class="horizon-btn" data-range="6M" data-tooltip="Show last 6 months — one injection/withdrawal cycle">6M</button>
-                <button class="horizon-btn" data-range="1Y" data-tooltip="Show last 12 months — full seasonal cycle">1Y</button>
-                <button class="horizon-btn" data-range="3Y" data-tooltip="Show last 3 years — captures macro regime shifts">3Y</button>
-                <button class="horizon-btn active" data-range="ALL" data-tooltip="Show full available CVOL history since 2013">ALL</button>
+                <button class="horizon-btn" data-range="1W" data-tooltip="Short-term tactical view.">1W</button>
+                <button class="horizon-btn" data-range="1M" data-tooltip="The 'Gold Standard' institutional window (21 trading days).">1M</button>
+                <button class="horizon-btn" data-range="3M" data-tooltip="Quarterly context — ideal for identifying seasonal volatility shifts.">3M</button>
+                <button class="horizon-btn" data-range="6M" data-tooltip="Full withdrawal/injection cycle context.">6M</button>
+                <button class="horizon-btn" data-range="1Y" data-tooltip="Annual context — filters seasonal noise for macro regime shifts.">1Y</button>
+                <button class="horizon-btn" data-range="3Y" data-tooltip="Structural context — compares current volatility to multi-year cycles.">3Y</button>
+                <button class="horizon-btn active" data-range="ALL" data-tooltip="Full historical lookback since 2013.">ALL</button>
             </div>
         </div>
         <div class="chart-canvas-wrap">
@@ -334,10 +334,10 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
         <div style="display:flex;justify-content:center;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05);">
             <div class="chart-legend">
-                <div class="legend-item" data-tooltip="NGVL 252-day percentile ≤ 25th — vol historically suppressed"><span class="legend-line" style="background:rgba(74,128,184,0.3)"></span> LOW (≤25th)</div>
-                <div class="legend-item" data-tooltip="NGVL 252-day percentile 25th–75th — typical vol environment"><span class="legend-line" style="background:rgba(61,184,122,0.3)"></span> NORMAL</div>
-                <div class="legend-item" data-tooltip="NGVL 252-day percentile ≥ 75th — above-average vol"><span class="legend-line" style="background:rgba(192,120,40,0.3)"></span> ELEVATED (≥75th)</div>
-                <div class="legend-item" data-tooltip="NGVL 252-day percentile ≥ 90th — extreme vol, historically rare"><span class="legend-line" style="background:rgba(192,64,64,0.3)"></span> EXTREME (≥90th)</div>
+                <div class="legend-item" data-tooltip="NGVL ≤ 25th percentile: Volatility is historically 'cheap'. This is often a precursor to violent, explosive price moves after a period of consolidation."><span class="legend-line" style="background:rgba(74,128,184,0.3)"></span> LOW (≤25th)</div>
+                <div class="legend-item" data-tooltip="Typical volatility environment for the trailing 252-day period."><span class="legend-line" style="background:rgba(61,184,122,0.3)"></span> NORMAL</div>
+                <div class="legend-item" data-tooltip="NGVL ≥ 75th percentile: Above-average options activity. Market is pricing high uncertainty or significant upcoming event risk."><span class="legend-line" style="background:rgba(192,120,40,0.3)"></span> ELEVATED (≥75th)</div>
+                <div class="legend-item" data-tooltip="NGVL ≥ 90th percentile: Historically rare volatility levels. Often marks a cycle top or a final capitulation 'washout' before mean reversion begins."><span class="legend-line" style="background:rgba(192,64,64,0.3)"></span> EXTREME (≥90th)</div>
             </div>
         </div>
     </div>
@@ -372,7 +372,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 
     <!-- PANEL 5: COMPOSITE SIGNAL DASHBOARD (expanded with axes, hover, stats) -->
     <div style="margin-bottom:16px;">
-        <span class="section-title-text" data-tooltip="Five proprietary composite signals derived from cross-column CVOL relationships. Click any card to expand to full interactive chart. Each sparkline shows 90 trading days with threshold lines and hover values.">Composite Signal Dashboard</span>
+        <span class="section-title-text" data-tooltip="Predictive Signal Array: Five proprietary composite indicators that decode the options-surface into actionable regime alerts. SAD (Stealth Re-positioning), CI (Fragile Calm), CVC (Trend Confirmation), and RDS (Explosive Divergence). Click any card for the full interactive timeline.">Proprietary Composite Signals</span>
         <span style="font-size:0.55rem;color:var(--text-dim);margin-left:12px;letter-spacing:1px;font-weight:700;">CLICK TO EXPAND</span>
     </div>
     <div class="composite-grid">
@@ -472,7 +472,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- PANEL 8: BACKTEST SCORECARD -->
     <div class="scorecard-panel">
         <div class="section-title-bar">
-            <span class="section-title-text" data-tooltip="Aggregate predictive performance of each composite signal. Hit rate = % of signals where NG moved in the predicted direction. Avg return = mean NG price change after signal. Filtered by signal type above.">Signal Backtest Scorecard</span>
+            <span class="section-title-text" data-tooltip="Signal Reliability Audit: Aggregate predictive performance of each composite signal. Hits represent signals where NG moved in the predicted direction. Annualized Sharpe measures the 'Return-per-unit-of-Risk' consistency of each alert.">Signal Backtest Scorecard</span>
         </div>
         <div id="cvol-scorecard" style="overflow-x:auto; -webkit-overflow-scrolling:touch;"></div>
     </div>
@@ -494,15 +494,15 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <table class="event-table">
             <thead>
                 <tr>
-                    <th data-tooltip="Calendar date the composite signal crossed its threshold.">DATE</th>
-                    <th data-tooltip="Which composite signal triggered: SAD (skew divergence), CI (complacency), CVC↓/↑ (convexity-variance), RDS (regime divergence).">SIGNAL</th>
-                    <th data-tooltip="Directional interpretation of the signal. UPSIDE = NG expected to rise. DOWNSIDE/TOP = NG expected to fall. COMPLACENCY = vol about to spike.">DIRECTION</th>
-                    <th data-tooltip="Raw composite signal value on the trigger date.">VALUE</th>
-                    <th data-tooltip="NG front-month futures settlement price on the signal date.">NG PRICE</th>
-                    <th data-tooltip="NG price change 5 trading sessions (1 week) after the signal fired. Green = profitable signal direction.">NG Δ 5D</th>
-                    <th data-tooltip="NG price change 21 trading sessions (1 month) after the signal fired. This is the primary validation window.">NG Δ 21D</th>
-                    <th data-tooltip="Number of OTHER signals that fired within ±5 sessions of this event. Higher confluence = stronger conviction.">CONF</th>
-                    <th data-tooltip="Seasonality of the signal: Winter (Nov-Feb), Spring (Mar-May), Summer (Jun-Aug), Fall (Sep-Oct).">SEASON</th>
+                    <th data-tooltip="The 'Moment of Truth': Date the composite calculation breached its institutional-grade threshold.">DATE</th>
+                    <th data-tooltip="Signal Type: SAD (Stealth Skew), CI (Fragile Calm), CVC (Trend Confirm), RDS (Explosive Divergence).">SIGNAL</th>
+                    <th data-tooltip="Bullish Demand (UPSIDE) vs Bearish Fear (DOWNSIDE/TOP). Complacency signals a vol-spike after fragile calm.">SENTIMENT</th>
+                    <th data-tooltip="The intensity of the signal on the day it fired.">VALUE</th>
+                    <th data-tooltip="NG Futures settlement price on the trigger date.">NG PRICE</th>
+                    <th data-tooltip="Predictive Performance (Short-Term): Price change 5 trading sessions (1 week) after fire.">NG Δ 5D</th>
+                    <th data-tooltip="Predictive Performance (Medium-Term): Price change 21 trading sessions (1 month) after fire. The primary benchmark for signal validation.">NG Δ 21D</th>
+                    <th data-tooltip="Confluence Score: Number of OTHER signals firing within ±5 sessions. Higher scores signal 'Trifecta' regimes with maximum conviction.">CONF</th>
+                    <th data-tooltip="Seasonal Context: Natural Gas is profoundly seasonal; signals firing in Winter (withdrawal) have different risk profiles than Fall (injection).">SEASON</th>
                 </tr>
             </thead>
             <tbody id="cvol-event-body">
