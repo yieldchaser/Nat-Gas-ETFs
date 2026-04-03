@@ -338,11 +338,13 @@ function renderScorecard(composites) {
     if (rows.length > 1) {
         var combinedSharpe = totalWeightCount > 0 ? totalWeightedSharpe / totalWeightCount : null;
         html += '<tr class="scorecard-summary">' +
-            '<td colspan="2" style="text-align:left;padding-left:16px;">SUMMARY</td>' +
-            '<td colspan="2" style="font-size:0.55rem;">BEST: <span style="color:'+(sigColors[bestSig]||'')+'">'+bestSig+' ('+fmt(bestSharpe,2)+')</span></td>' +
-            '<td colspan="2" style="font-size:0.55rem;">WORST: <span style="color:'+(sigColors[worstSig]||'')+'">'+worstSig+' ('+fmt(worstSharpe,2)+')</span></td>' +
-            '<td colspan="2"></td>' +
-            '<td colspan="3" style="font-size:0.55rem;">COMBINED: <span style="color:'+(combinedSharpe!=null&&combinedSharpe>0?'#3db87a':'#ef4444')+'">'+fmt(combinedSharpe,2)+'</span></td>' +
+            '<td colspan="2" style="text-align:left;padding-left:16px;letter-spacing:2px;">SUMMARY</td>' +
+            '<td colspan="8" style="font-size:0.55rem;text-align:center;letter-spacing:1px;">' +
+                'BEST: <span style="color:'+(sigColors[bestSig]||'')+'">'+bestSig+' ('+fmt(bestSharpe,2)+')</span>' +
+                '<span style="margin:0 20px;opacity:0.3">|</span>' +
+                'WORST: <span style="color:'+(sigColors[worstSig]||'')+'">'+worstSig+' ('+fmt(worstSharpe,2)+')</span>' +
+            '</td>' +
+            '<td style="font-size:0.6rem;text-align:center;color:'+(combinedSharpe!=null&&combinedSharpe>0?'#3db87a':'#ef4444')+'" data-tooltip="Combined institutional Sharpe for the active signal regime.">'+fmt(combinedSharpe,2)+'</td>' +
             '</tr>';
     }
     html += '</tbody></table>';
