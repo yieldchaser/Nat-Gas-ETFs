@@ -571,6 +571,7 @@ function renderAll() {
     renderKpiCards(data, comp);
     renderMainChart();
     renderVarDecomp();
+    renderVarSeriesChips();
     // Sparklines
     renderSparkline('spark-sad', comp.sad || [], '#f59e0b', null);
     renderSparkline('spark-ci', comp.ci || [], '#60a8f8', 82);
@@ -611,6 +612,7 @@ function renderSeriesChips() {
     el.innerHTML = '';
     Object.keys(SERIES_CFG).forEach(function(k) {
         var cfg = SERIES_CFG[k];
+        if (['upVar','dnVar','skewRatio'].indexOf(k) >= 0) return; // Skip these here
         var chip = document.createElement('span');
         chip.className = 'etf-chip ' + (CvolState.activeSeries.indexOf(k) >= 0 ? 'active' : 'inactive');
         chip.style.borderColor = cfg.color;
@@ -622,6 +624,36 @@ function renderSeriesChips() {
             var idx = CvolState.activeSeries.indexOf(k);
             if (idx >= 0) CvolState.activeSeries.splice(idx, 1); else CvolState.activeSeries.push(k);
             renderSeriesChips(); renderMainChart();
+        };
+        el.appendChild(chip);
+    });
+}
+
+function renderVarSeriesChips() {
+    var el = document.getElementById('var-series-chips'); if (!el) return;
+    el.innerHTML = '';
+    Object.keys(VAR_SERIES_CFG).forEach(function(k) {
+        var cfg = VAR_SERIES_CFG[k];
+        var active = CvolState.varActiveSeries.indexOf(k) >= 0;
+        var chip = document.createElement('span');
+        chip.className = 'var-chip ' + (active ? 'active' : 'inactive');
+        chip.style.cssText = 'display:flex; align-items:center; cursor:pointer; padding:2px 6px; border-radius:4px; transition:all 0.2s; opacity:' + (active ? '1' : '0.4') + '; border: 1px solid ' + (active ? cfg.color : 'transparent');
+        
+        var dot = document.createElement('span');
+        dot.style.cssText = 'display:inline-block; width:8px; height:8px; border-radius:1px; margin-right:6px; background:' + cfg.color + (k === 'skewRatio' ? '; height:2px; border-radius:0' : '');
+        
+        var label = document.createElement('span');
+        label.style.color = cfg.color;
+        label.textContent = cfg.label;
+        
+        chip.appendChild(dot);
+        chip.appendChild(label);
+        chip.setAttribute('data-tooltip', cfg.desc);
+        
+        chip.onclick = function() {
+            var idx = CvolState.varActiveSeries.indexOf(k);
+            if (idx >= 0) CvolState.varActiveSeries.splice(idx, 1); else CvolState.varActiveSeries.push(k);
+            renderVarSeriesChips(); renderVarDecomp();
         };
         el.appendChild(chip);
     });
