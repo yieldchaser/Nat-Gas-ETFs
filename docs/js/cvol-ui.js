@@ -514,6 +514,13 @@ function openCompModal(compKey) {
                 }
             }
             CvolState.modalRange = { s: sVal, e: eVal };
+            
+            // Deactivate horizon buttons if this is a manual "input" event
+            if (e && e.type === 'input') {
+                var hG = document.getElementById('comp-modal-horizon-controls');
+                if (hG) hG.querySelectorAll('.horizon-btn').forEach(function(b) { b.classList.remove('active'); });
+            }
+
             hl.style.left = (sVal / (dataLen - 1) * 100) + '%';
             hl.style.width = ((eVal - sVal) / (dataLen - 1) * 100) + '%';
             
@@ -546,11 +553,17 @@ function openCompModal(compKey) {
                 var daysMap = {'1W':7,'1M':21,'3M':63,'6M':126,'1Y':252,'3Y':756,'ALL':0};
                 var days = daysMap[period] || 0;
                 
+                var sNew, eNew = dataLen - 1;
                 if (days === 0) {
-                    mStart.value = 0; mEnd.value = dataLen - 1;
+                    sNew = 0;
                 } else {
-                    mStart.value = Math.max(0, dataLen - 1 - days); mEnd.value = dataLen - 1;
+                    sNew = Math.max(0, dataLen - 1 - days);
                 }
+                
+                mStart.value = sNew;
+                mEnd.value = eNew;
+                
+                // Explicitly trigger update without needing a fake event
                 updateModalSlider();
             };
         }
@@ -751,8 +764,9 @@ function renderVarSeriesChips() {
             });
         }
 
-        // Horizon buttons (General purpose helper)
-        function setHorizon(period, targetKey) {
+        // --- Horizon Control Shared Utility ---
+        function setHorizonEx(period, targetKey) {
+            if (!CvolState.data || !CvolState.data.length) return;
             var n = CvolState.data.length;
             var daysMap = {'1W':7,'1M':21,'3M':63,'6M':126,'1Y':252,'3Y':756,'ALL':0};
             var days = daysMap[period] || 0;
@@ -760,54 +774,76 @@ function renderVarSeriesChips() {
             
             if (targetKey === 'main') {
                 CvolState.rangeState = state;
-                document.getElementById('cvol-range-start').value = state.start;
-                document.getElementById('cvol-range-end').value = state.end;
+                var sInp = document.getElementById('cvol-range-start');
+                var eInp = document.getElementById('cvol-range-end');
+                if (sInp) sInp.value = state.start;
+                if (eInp) eInp.value = state.end;
                 updateRangeHighlight();
                 renderMainChart(); renderCorrMatrix(CvolState.data);
             } else if (targetKey === 'var') {
                 CvolState.varRangeState = state;
-                document.getElementById('var-range-start').value = state.start;
-                document.getElementById('var-range-end').value = state.end;
+                var sInp = document.getElementById('var-range-start');
+                var eInp = document.getElementById('var-range-end');
+                if (sInp) sInp.value = state.start;
+                if (eInp) eInp.value = state.end;
                 updateVarRangeHighlight();
                 renderVarDecomp();
             }
         }
 
-        document.getElementById('cvol-horizon-controls').addEventListener('click', function(ev) {
-            var btn = ev.target.closest('.horizon-btn'); if (!btn) return;
-            document.querySelectorAll('#cvol-horizon-controls .horizon-btn').forEach(function(b) { b.classList.remove('active'); });
-            btn.classList.add('active');
-            setHorizon(btn.dataset.range, 'main');
-        });
+        // --- Main Horizon Listeners ---
+        var cvolHorizon = document.getElementById('cvol-horizon-controls');
+        if (cvolHorizon) {
+            cvolHorizon.addEventListener('click', function(ev) {
+                var btn = ev.target.closest('.horizon-btn'); if (!btn) return;
+                cvolHorizon.querySelectorAll('.horizon-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                setHorizonEx(btn.dataset.range, 'main');
+            });
+        }
 
-        document.getElementById('var-horizon-controls').addEventListener('click', function(ev) {
-            var btn = ev.target.closest('.horizon-btn'); if (!btn) return;
-            document.querySelectorAll('#var-horizon-controls .horizon-btn').forEach(function(b) { b.classList.remove('active'); });
-            btn.classList.add('active');
-            setHorizon(btn.dataset.range, 'var');
-        });
+        // --- Variance Horizon Listeners ---
+        var varHorizon = document.getElementById('var-horizon-controls');
+        if (varHorizon) {
+            varHorizon.addEventListener('click', function(ev) {
+                var btn = ev.target.closest('.horizon-btn'); if (!btn) return;
+                varHorizon.querySelectorAll('.horizon-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                setHorizonEx(btn.dataset.range, 'var');
+            });
+        }
 
-        // Range slider (Main Chart)
+        // --- Range Sliders (Main Chart) ---
         ['cvol-range-start', 'cvol-range-end'].forEach(function(id) {
-            document.getElementById(id).addEventListener('input', function() {
-                var s = parseInt(document.getElementById('cvol-range-start').value);
-                var e = parseInt(document.getElementById('cvol-range-end').value);
-                if (s > e - 1) { if (id === 'cvol-range-start') s = e - 1; else e = s + 1; document.getElementById(id).value = id === 'cvol-range-start' ? s : e; }
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', function() {
+                var sInp = document.getElementById('cvol-range-start');
+                var eInp = document.getElementById('cvol-range-end');
+                var s = parseInt(sInp.value);
+                var e = parseInt(eInp.value);
+                if (s > e - 1) { if (id === 'cvol-range-start') s = e - 1; else e = s + 1; sInp.value = s; eInp.value = e; }
                 CvolState.rangeState = { start: s, end: e };
+                // Deactivate horizon buttons on manual drag
+                if (cvolHorizon) cvolHorizon.querySelectorAll('.horizon-btn').forEach(function(b) { b.classList.remove('active'); });
                 updateRangeHighlight();
                 renderMainChart(); renderCorrMatrix(CvolState.data);
             });
         });
 
-        // Range slider (Variance Decomposition)
+        // --- Range Sliders (Variance Decomposition) ---
         ['var-range-start', 'var-range-end'].forEach(function(id) {
             var el = document.getElementById(id);
             if (!el) return;
             el.addEventListener('input', function() {
-                var s = parseInt(document.getElementById('var-range-start').value);
-                var e = parseInt(document.getElementById('var-range-end').value);
-                if (s > e - 1) { if (id === 'var-range-start') s = e - 1; else e = s + 1; document.getElementById(id).value = id === 'var-range-start' ? s : e; }
+                var sInp = document.getElementById('var-range-start');
+                var eInp = document.getElementById('var-range-end');
+                var s = parseInt(sInp.value);
+                var e = parseInt(eInp.value);
+                if (s > e - 1) { if (id === 'var-range-start') s = e - 1; else e = s + 1; sInp.value = s; eInp.value = e; }
                 CvolState.varRangeState = { start: s, end: e };
+                 // Deactivate horizon buttons on manual drag
+                if (varHorizon) varHorizon.querySelectorAll('.horizon-btn').forEach(function(b) { b.classList.remove('active'); });
                 updateVarRangeHighlight();
                 renderVarDecomp();
             });
