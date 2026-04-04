@@ -363,7 +363,7 @@ function renderScorecard(composites) {
             seaBadge = '<div style="font-size:0.45rem;font-weight:600;color:'+shrColor+';margin-top:2px;" data-tooltip="'+curSeason.toUpperCase()+' hit rate: '+Math.round(shr)+'% (n='+sh.total+')">'+(seasonEmoji[curSeason]||'')+' '+Math.round(shr)+'%</div>';
         }
         html += '<tr' + (r.isEnsemble ? ' style="background:rgba(0,229,255,0.04);border-top:2px solid rgba(0,229,255,0.15);"' : '') + '>' +
-            '<td style="color:'+sc+';font-weight:800;"' + (r.isEnsemble ? ' data-tooltip="Ensemble: combined performance for ALL events where '+r.signal.replace('CONF ','')+' other signals also fired within \\u00b15 sessions. Higher confluence = higher conviction."' : '') + '>' + (r.isEnsemble ? '\\ud83d\\udd17 ' : '') + r.signal + seaBadge + '</td>' +
+            '<td style="color:'+sc+';font-weight:800;"' + (r.isEnsemble ? ' data-tooltip="Ensemble: combined performance for ALL events where '+r.signal.replace('CONF ','')+' other signals also fired within ±5 sessions. Higher confluence = higher conviction."' : '') + '>' + (r.isEnsemble ? '🔗 ' : '') + r.signal + seaBadge + '</td>' +
             '<td>'+r.count+'</td>' +
             '<td style="color:'+(r.hitRate5!=null?(r.hitRate5>55?'#3db87a':'#ef4444'):'var(--text-dim)')+'">'+fmt(r.hitRate5,0)+'%</td>' +
             '<td style="color:'+hrColor+'">'+fmt(r.hitRate21,0)+'%<span class="score-bar" style="width:'+barW+'px;background:'+hrColor+';"></span></td>' +
@@ -383,9 +383,9 @@ function renderScorecard(composites) {
         html += '<tr class="scorecard-summary">' +
             '<td style="text-align:left; letter-spacing:2px; font-size:0.75rem;">SUMMARY</td>' +
             '<td colspan="10" style="font-size:0.65rem; text-align:center; letter-spacing:1px; vertical-align:middle;">' +
-                'BEST: <span style="color:'+(sigColors[bestSig]||'')+'">'+bestSig+' ('+fmt(bestSharpe,2)+')</span>' +
+                'BEST: <span style="color:'+(sigColors[bestSig]||'')+'">'+(bestSig.indexOf('CONF')>=0?'🔗 ':'')+bestSig+' ('+fmt(bestSharpe,2)+')</span>' +
                 '<span style="margin:0 24px; opacity:0.3">|</span>' +
-                'WORST: <span style="color:'+(sigColors[worstSig]||'')+'">'+worstSig+' ('+fmt(worstSharpe,2)+')</span>' +
+                'WORST: <span style="color:'+(sigColors[worstSig]||'')+'">'+(worstSig.indexOf('CONF')>=0?'🔗 ':'')+worstSig+' ('+fmt(worstSharpe,2)+')</span>' +
             '</td>' +
             '<td style="text-align:center; font-size:0.75rem; color:'+(combinedSharpe!=null&&combinedSharpe>0?'#3db87a':'#ef4444')+'" data-tooltip="Combined institutional Sharpe for the active signal regime.">'+fmt(combinedSharpe,2)+'</td>' +
             '</tr>';
