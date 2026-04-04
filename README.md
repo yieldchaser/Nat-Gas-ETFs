@@ -305,11 +305,26 @@ Percentiles computed against the full available history for each instrument.
 
 ### 4. Volatility Intelligence (`cvol.html`)
 
-An institutional-grade volatility surface research terminal. This dashboard decomposes the natural gas options surface (via CME NGVL proxy) into predictive signals using convexity-variance and skew-divergence modeling.
+An institutional-grade volatility research terminal and decision-support system. This dashboard decomposes the natural gas options surface (via CME NGVL proxy) into actionable signals using ensemble confluence, regime-conditional backtesting, and realized-vs-implied divergence modeling.
+
+#### Regime Dashboard (Decision Synthesis)
+
+A central "at-a-glance" panel that aggregates all volatility surface dimensions into a single actionable assessment:
+
+| Dimension | Description |
+|-----------|-------------|
+| **NGVL REGIME** | Current 252D percentile ranking (Low / Normal / High / Extreme). |
+| **VOL TREND** | 5-day Rate of Change (ROC) in NGVL; identifies expansion/contraction. |
+| **SKEW BIAS** | Directional pressure gauge (Bullish / Bearish / Neutral). |
+| **VRP STATE** | Vol Risk Premium assessment (Overpriced Fear / Underpriced Risk). |
+| **TERM STRUCT** | 5D/63D NGVL ratio; identifies Backwardation (Stress) vs Contango (Normal). |
+| **VOL STABILITY** | VoV-21 metric; determines if current signals are reliable or prone to whipsaw. |
+| **SIGNALS/SEASON** | Count of active signals in last 10 sessions + current seasonal context. |
+| **CONVICTION** | Weighted synthesis of the above 6 inputs (High / Moderate / Low). |
 
 #### Proprietary Composite Signals
 
-A multi-factor "Confidence Layer" that aggregates volatility regime, skew bias, and convexity dynamics into actionable signals:
+A multi-factor predictive array that identifies structural shifts in the options surface:
 
 | Signal | Full Name | Logic / Alpha Source |
 |--------|-----------|---------------------|
@@ -319,21 +334,21 @@ A multi-factor "Confidence Layer" that aggregates volatility regime, skew bias, 
 | **CVC↑** | **Convexity-Var UP** | High-conviction **BOTTOM** formation signal; identifies "Volatility Capitulation" where convexity turns positive. |
 | **RDS** | **Regime Divergence Score** | An explosive setup signal; flags when 5D/21D/252D volatility regimes are in extreme conflict. |
 
-#### Variance Decomposition Engine
+#### Realized vs Implied Volatility Divergence (The "Crown Jewel")
 
-Deconstructs the NGVL index into its directional "Up" and "Down" variance components to isolate whether price action is driven by fear (downward) or demand-spikes (upward):
+Measures the **Vol Risk Premium (VRP)** to identify market mispricing:
+- **Realized Volatility (21D)** — Annualized standard deviation of actual NG price returns.
+- **VRP Area Fill** — The main NGVL chart features a dynamic spread area (Green for Implied > Realized, Red for reversed).
+- **VRP Z-Score** — Identifies statistically significant divergence windows where options are anomalously expensive or cheap.
 
-- **UpVar / DnVar** — Is volatility being driven by rally-panic or sell-off panic?
-- **Skew Ratio** — Real-time measurement of the volatility surface's asymmetry.
-- **Independent Horizons** — Standardized institutional trading windows (1W / 1M / 3M / 6M / 1Y / ALL) with synchronized range-brush control.
+#### Backtest Scorecard & Tactical Framework
 
-#### Backtest Scorecard & Event Timeline
-
-Every proprietary signal is automatically backtested against historical forward returns:
-
-- **Signal Backtest Scorecard** — 5D/21D Hit Rates, Average/Median returns, Max Upside (Best), Max Drawdown (Worst), and Annualized Sharpe (Portflio consistency).
-- **Confluence Scoring** — A signal's strength is weighted by the number of other proprietary signals firing within a ±5 session window.
-- **Institutional Benchmarks** — "Gold Standard" 21-day (1 trading month) validation for all options-based signaling.
+Every signal is subjected to rigorous statistical validation:
+- **Regime-Conditional Backtesting** — Filter results by NGVL regime to identify which signals perform best in complacent vs trending markets.
+- **Statistical Significance Badges** — Binomial p-values (★★★ / ★★ / ★) test the null hypothesis (50% hit rate) to ensure signal edge is not random noise.
+- **Ensemble Confluence Rows** — Combined performance metrics for **CONF ≥2** and **CONF ≥3** clusters.
+- **Seasonality Bias** — Per-signal seasonal hit rates (❄️🌱☀️🍂) identify signals with historical seasonal tailwinds.
+- **Conviction Weighting** — Individual events in the timeline are rated 1-3 stars based on confluence, regime, and significance.
 
 ---
 
@@ -386,6 +401,18 @@ Every proprietary signal is automatically backtested against historical forward 
 | 3× long/short (3NGL.L, 3NGS.L) | ~55%/yr |
 
 Adjusted price: `adj_price[t] = raw_price[t] × (1 + decay/252)^t`
+
+### Volatility Intelligence Metrics (`cvol.js`)
+
+| Metric | Formula / Description |
+|--------|-----------------------|
+| **Realized Vol (21D)** | `std(log_returns) × sqrt(252)` over a rolling 21-day window. Annualized baseline for price movement. |
+| **VRP (Vol Risk Premium)** | `NGVL − Realized_Vol_21D`. Positive = Implied vol is richer than realized price action (Overpriced fear). |
+| **VRP Z-Score** | `(VRP − 21d_mean_VRP) / 21d_std_VRP`. Identifies statistically extreme divergence events. |
+| **VoV-21 (Vol-of-Vol)** | `std(NGVL) / 21` or rolling standard deviation of the NGVL index. Measures volatility regime stability. |
+| **Term Struct Proxy** | `5D_NGVL_EMA / 63D_NGVL_EMA`. `> 1.03` = Short-term vol spiking relative to baseline (Backwardation/Stress). |
+| **Binomial p-value** | `P(X ≥ hits)` where `X ~ Binomial(total, 0.5)`. Tests if signal hit rate is significantly better than a coin flip. |
+| **Confluence Score** | Count of distinct proprietary signals (SAD, CI, CVC, RDS) firing within a `[t-5, t+5]` session window. |
 
 ---
 
