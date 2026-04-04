@@ -16,6 +16,7 @@ const CvolState = {
     dragState: { active: false, startIdx: null, currentIdx: null },
     signalFilter: 'all',
     signalTypeFilter: 'all', // 'all', 'SAD', 'CI', 'CVC↓', 'CVC↑', 'RDS'
+    regimeFilter: 'all',  // 'all', 'low', 'normal', 'high'
     composites: {},       // computed composite signal arrays
     percentiles: {},      // rolling percentile caches
     zscores: {},          // rolling z-score caches
@@ -105,6 +106,16 @@ function rateOfChange(arr, window) {
     return out;
 }
 
+function rollingAvg(arr, window) {
+    const out = new Array(arr.length).fill(null);
+    for (let i = window - 1; i < arr.length; i++) {
+        let sum = 0, count = 0;
+        for (let j = i - window + 1; j <= i; j++) { if (arr[j] != null) { sum += arr[j]; count++; } }
+        if (count >= Math.floor(window * 0.7)) out[i] = sum / count;
+    }
+    return out;
+}
+
 function fullPercentile(arr, value) {
     if (value == null) return null;
     const valid = arr.filter(v => v != null);
@@ -147,6 +158,49 @@ function computeComposites(data) {
 
     // Rate of change
     const skewRatioRoc5 = rateOfChange(skewRatio, 5);
+
+    // ── Realized Vol (21D annualized) ──
+    const realVol = new Array(n).fill(null);
+    for (let i = 21; i < n; i++) {
+        let sumSq = 0, cnt = 0;
+        for (let j = i - 20; j <= i; j++) {
+            if (underlying[j] != null && underlying[j-1] != null && underlying[j-1] > 0) {
+                var lr = Math.log(underlying[j] / underlying[j-1]);
+                sumSq += lr * lr;
+                cnt++;
+            }
+        }
+        if (cnt >= 15) realVol[i] = Math.sqrt(sumSq / cnt * 252) * 100; // annualized %
+    }
+
+    // ── Vol Risk Premium (VRP) = Implied - Realized ──
+    const vrp = new Array(n).fill(null);
+    for (let i = 0; i < n; i++) {
+        if (ngvl[i] != null && realVol[i] != null) vrp[i] = ngvl[i] - realVol[i];
+    }
+    const vrpZ21 = rollingZScore(vrp, 21);
+
+    // ── Convexity Term Structure Proxy (5D avg / 63D avg NGVL) ──
+    const ngvlAvg5 = rollingAvg(ngvl, 5);
+    const ngvlAvg63 = rollingAvg(ngvl, 63);
+    const termStructure = new Array(n).fill(null);
+    for (let i = 0; i < n; i++) {
+        if (ngvlAvg5[i] != null && ngvlAvg63[i] != null && ngvlAvg63[i] > 0)
+            termStructure[i] = ngvlAvg5[i] / ngvlAvg63[i];
+    }
+
+    // ── Vol-of-Vol (VoV): 21D rolling std of NGVL ──
+    const vov = new Array(n).fill(null);
+    for (let i = 20; i < n; i++) {
+        let sum = 0, cnt = 0;
+        for (let j = i - 20; j <= i; j++) { if (ngvl[j] != null) { sum += ngvl[j]; cnt++; } }
+        if (cnt >= 15) {
+            var mean = sum / cnt;
+            var sumSq = 0;
+            for (let j = i - 20; j <= i; j++) { if (ngvl[j] != null) sumSq += (ngvl[j] - mean) * (ngvl[j] - mean); }
+            vov[i] = Math.sqrt(sumSq / cnt);
+        }
+    }
 
     // ── SAD (Skew-ATM Divergence) ──
     const sad = new Array(n).fill(null);
@@ -237,6 +291,7 @@ function computeComposites(data) {
         skewRatioRoc5, atmMed90,
         sad, ci, cvcDown, cvcUp, rds,
         sadZ, rdsZ,
+        realVol, vrp, vrpZ21, termStructure, vov,
         events,
     };
 }
@@ -282,6 +337,7 @@ const SERIES_CFG = {
     atm:        { label: 'ATM',        color: '#8b5cf6', axis: 'left',  unit: '%',   key: 'atm' },
     upVar:      { label: 'UP VAR',     color: '#3db87a', axis: 'left',  unit: '%',   key: 'upVar' },
     dnVar:      { label: 'DOWN VAR',   color: '#ef4444', axis: 'left',  unit: '%',   key: 'dnVar' },
+    realVol:    { label: 'REALIZED',   color: '#a78bfa', axis: 'left',  unit: '%',   key: 'realVol', dashed: true },
     skewRatio:  { label: 'SKEW RATIO', color: '#f59e0b', axis: 'right2',unit: 'x',   key: 'skewRatio' },
     convexity:  { label: 'CONVEXITY',  color: '#ec4899', axis: 'right2',unit: 'x',   key: 'convexity' },
     underlying: { label: 'NG PRICE',   color: '#94a3b8', axis: 'right', unit: '$',   key: 'underlying' },
@@ -293,6 +349,7 @@ const VAR_SERIES_CFG = {
     dnVar:     { label: 'DN VAR',     color: '#ef4444', key: 'dnVar',  desc: 'Bearish Fear Check: Tracks the cost of downside tail-risk insurance. When the red area expands, the market is bracing for a violent gap-down or capitulation event.' },
     skewRatio: { label: 'SKEW RATIO', color: '#f59e0b', key: 'skewRatio', desc: 'Directional Pressure Gauge: The ratio of Bear Fear (Puts) vs. Bull Greed (Calls). >1.0 means downside protection is expensive; <1.0 means the market is foaming for upside.' },
     underlying:{ label: 'NG PRICE',   color: '#94a3b8', key: 'underlying', desc: 'Price Correlation Context: Overlays the absolute front-month Natural Gas settlement price. Vital for identifying if directional volatility spikes are leading or lagging absolute price pivots.' },
+    skewRoc5:  { label: 'SKEW MOM',   color: '#818cf8', key: 'skewRoc5', desc: 'Skew Momentum (5D ROC): Rate of change in skew ratio over 5 sessions. Positive = skew accelerating bullish. Negative = skew accelerating bearish. Sharp moves precede directional breakouts.' },
 };
 
 // ── X-Axis engine (reused from flows.html pattern) ────────────
@@ -404,13 +461,39 @@ function computeCorrMatrix(data, startIdx, endIdx) {
     return matrix;
 }
 
+// ── Event Confluence Scoring ──────────────────────────────────
+function computeEventConfluence(events) {
+    var confMap = {};
+    for (var i = 0; i < events.length; i++) {
+        var count = 0;
+        for (var j = 0; j < events.length; j++) {
+            if (i === j || events[j].signal === events[i].signal) continue;
+            if (Math.abs(events[j].idx - events[i].idx) <= 5) count++;
+        }
+        confMap[events[i].idx] = count;
+    }
+    return confMap;
+}
+
 // ── Backtest Scorecard ────────────────────────────────────────
-function computeScorecard(composites) {
+function computeScorecard(composites, regimeFilter) {
     var events = composites.events || [];
+    var pct252 = composites.ngvlPct252 || [];
+    // Apply regime filter
+    if (regimeFilter && regimeFilter !== 'all') {
+        events = events.filter(function(ev) {
+            var p = pct252[ev.idx];
+            if (p == null) return false;
+            if (regimeFilter === 'low') return p < 25;
+            if (regimeFilter === 'normal') return p >= 25 && p < 75;
+            if (regimeFilter === 'high') return p >= 75;
+            return true;
+        });
+    }
     var signals = {};
     events.forEach(function(ev) {
         var key = ev.signal.replace('↓','Down').replace('↑','Up');
-        if (!signals[key]) signals[key] = { count: 0, hit5: 0, hit21: 0, ret5: [], ret21: [], name: ev.signal };
+        if (!signals[key]) signals[key] = { count: 0, hit5: 0, hit21: 0, ret5: [], ret21: [], name: ev.signal, seasonHit: {} };
         signals[key].count++;
         if (ev.fwd5 != null) {
             signals[key].ret5.push(ev.fwd5);
@@ -420,7 +503,13 @@ function computeScorecard(composites) {
         if (ev.fwd21 != null) {
             signals[key].ret21.push(ev.fwd21);
             var isDown21 = ev.direction.indexOf('TOP') >= 0 || ev.direction.indexOf('DOWNSIDE') >= 0;
-            if ((isDown21 && ev.fwd21 < 0) || (!isDown21 && ev.fwd21 > 0)) signals[key].hit21++;
+            var hit = (isDown21 && ev.fwd21 < 0) || (!isDown21 && ev.fwd21 > 0);
+            if (hit) signals[key].hit21++;
+            // Track per-season hit rates
+            var ssn = ev.season || 'unknown';
+            if (!signals[key].seasonHit[ssn]) signals[key].seasonHit[ssn] = { hits: 0, total: 0 };
+            signals[key].seasonHit[ssn].total++;
+            if (hit) signals[key].seasonHit[ssn].hits++;
         }
     });
     var rows = [];
@@ -455,6 +544,36 @@ function computeScorecard(composites) {
             best21: s.ret21.length ? Math.max.apply(null, s.ret21) : null,
             worst21: s.ret21.length ? Math.min.apply(null, s.ret21) : null,
             sharpe: (avg21 != null && std21 != null && std21 > 0) ? (avg21 / std21) : null,
+            seasonalHit21: s.seasonHit,
+        });
+    });
+    // ── Ensemble Confluence Rows ──
+    var confMap = computeEventConfluence(events);
+    [2, 3].forEach(function(minConf) {
+        var confEvents = events.filter(function(ev) { return (confMap[ev.idx] || 0) >= minConf; });
+        if (confEvents.length < 2) return;
+        var h5 = 0, h21 = 0, r5 = [], r21 = [];
+        confEvents.forEach(function(ev) {
+            var isDown = ev.direction.indexOf('TOP') >= 0 || ev.direction.indexOf('DOWNSIDE') >= 0;
+            if (ev.fwd5 != null) { r5.push(ev.fwd5); if ((isDown && ev.fwd5 < 0) || (!isDown && ev.fwd5 > 0)) h5++; }
+            if (ev.fwd21 != null) { r21.push(ev.fwd21); if ((isDown && ev.fwd21 < 0) || (!isDown && ev.fwd21 > 0)) h21++; }
+        });
+        var a5 = r5.length ? r5.reduce(function(a,b){return a+b;},0)/r5.length : null;
+        var a21 = r21.length ? r21.reduce(function(a,b){return a+b;},0)/r21.length : null;
+        var sd21 = null;
+        if (r21.length > 2) { var m21 = a21; sd21 = Math.sqrt(r21.reduce(function(a,b){return a+(b-m21)*(b-m21);},0)/r21.length); }
+        var s21 = r21.slice().sort(function(a,b){return a-b;});
+        var med = null;
+        if (s21.length) { var mid = Math.floor(s21.length/2); med = s21.length%2!==0 ? s21[mid] : (s21[mid-1]+s21[mid])/2; }
+        var mag = r21.length ? r21.reduce(function(a,b){return a+Math.abs(b);},0)/r21.length : null;
+        rows.push({
+            signal: 'CONF ≥' + minConf, isEnsemble: true, count: confEvents.length,
+            hitRate5: r5.length > 0 ? (h5/r5.length*100) : null,
+            hitRate21: r21.length > 0 ? (h21/r21.length*100) : null,
+            avgRet5: a5, avgRet21: a21, median21: med, mag21: mag,
+            best21: s21.length ? Math.max.apply(null, s21) : null,
+            worst21: s21.length ? Math.min.apply(null, s21) : null,
+            sharpe: (a21 != null && sd21 != null && sd21 > 0) ? (a21/sd21) : null,
         });
     });
     return rows;

@@ -205,8 +205,15 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 /* ---- TWO-COL GRID ---- */
 .two-col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
 
+/* ---- REGIME DASHBOARD ---- */
+.reg-cell { background: rgba(255,255,255,0.02); border: 1px solid var(--border-primary); border-radius: 6px; padding: 12px 14px; border-left: 3px solid var(--border-primary); transition: border-color 0.2s; }
+.reg-cell:hover { border-color: var(--border-accent); }
+.reg-cell-lbl { font-size: 0.5rem; letter-spacing: 1.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; cursor: help; }
+.reg-cell-val { font-size: 1.05rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1.2; }
+.reg-cell-sub { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.5px; margin-top: 4px; }
+
 /* ---- RESPONSIVE ---- */
-@media (max-width: 1200px) { .cvol-kpi-grid { grid-template-columns: repeat(2, 1fr); } .composite-grid { grid-template-columns: repeat(3, 1fr); } .two-col-grid { grid-template-columns: 1fr; } }
+@media (max-width: 1200px) { .cvol-kpi-grid { grid-template-columns: repeat(2, 1fr); } .composite-grid { grid-template-columns: repeat(3, 1fr); } .two-col-grid { grid-template-columns: 1fr; } #regime-dashboard-grid { grid-template-columns: repeat(3, 1fr) !important; } }
 @media (max-width: 768px) {
     .cvol-main { padding: 14px 12px 40px; }
     .cvol-title { font-size: 1.2rem; }
@@ -388,6 +395,15 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
     </div>
 
+    <!-- PANEL 4.5: REGIME DASHBOARD (Decision Synthesis) -->
+    <div class="chart-container" id="regime-dashboard-panel" style="padding:20px 24px;">
+        <div class="section-title-bar" style="margin-bottom:14px;">
+            <span class="section-title-text" data-tooltip="Decision Synthesis: Aggregates all vol surface dimensions into a single actionable regime assessment. This is your 'at-a-glance' conviction framework — it tells you WHAT the market is doing, HOW confident we are, and WHAT to expect next.">Regime Dashboard</span>
+            <span style="font-size:0.5rem;color:var(--text-dim);margin-left:12px;letter-spacing:1.5px;font-weight:700;">DECISION FRAMEWORK</span>
+        </div>
+        <div id="regime-dashboard-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;"></div>
+    </div>
+
     <!-- PANEL 5: COMPOSITE SIGNAL DASHBOARD (expanded with axes, hover, stats) -->
     <div style="margin-bottom:16px;">
         <span class="section-title-text" data-tooltip="Predictive Signal Array: Five proprietary composite indicators that decode the options-surface into actionable regime alerts. SAD (Stealth Re-positioning), CI (Fragile Calm), CVC (Trend Confirmation), and RDS (Explosive Divergence). Click any card for the full interactive timeline.">Proprietary Composite Signals</span>
@@ -491,6 +507,12 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <div class="scorecard-panel">
         <div class="section-title-bar">
             <span class="section-title-text" data-tooltip="Signal Reliability Audit: Aggregate predictive performance of each composite signal. Hits represent signals where NG moved in the predicted direction. Annualized Sharpe measures the 'Return-per-unit-of-Risk' consistency of each alert.">Signal Backtest Scorecard</span>
+        </div>
+        <div class="signal-type-chips" id="cvol-regime-filter" style="margin-bottom:12px;">
+            <button class="signal-chip active" data-regime="all" style="border-color:var(--cyan);color:var(--cyan);" data-tooltip="Show signal performance across ALL vol regimes">ALL REGIMES</button>
+            <button class="signal-chip" data-regime="low" style="border-color:#4a80b8;color:#4a80b8;" data-tooltip="NGVL &lt;25th percentile: Low-vol, complacent regime. Signals firing here often precede explosive breakouts from compressed ranges.">LOW (&lt;25th)</button>
+            <button class="signal-chip" data-regime="normal" style="border-color:#3db87a;color:#3db87a;" data-tooltip="NGVL 25th-75th percentile: Normal vol regime. Standard signal behavior — baseline hit rates.">NORMAL</button>
+            <button class="signal-chip" data-regime="high" style="border-color:#c07828;color:#c07828;" data-tooltip="NGVL &ge;75th percentile: Elevated/Extreme vol. Signal behavior may invert — historical patterns less reliable in panic regimes.">HIGH (&ge;75th)</button>
         </div>
         <div id="cvol-scorecard" style="overflow-x:auto; -webkit-overflow-scrolling:touch;"></div>
     </div>
