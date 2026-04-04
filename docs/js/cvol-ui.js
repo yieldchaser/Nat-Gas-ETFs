@@ -30,6 +30,68 @@ function renderBanner(data, comp) {
         '<div class="sb-badges">'+badges+'</div>';
 }
 
+// ── Traffic Light Conviction Banner ───────────────────────────
+function renderConvictionBanner(data, comp) {
+    var el = document.getElementById('cvol-conviction-banner'); if (!el) return;
+    var n = data.length; if (n < 63) { el.style.display = 'none'; return; }
+    var last = data[n-1];
+
+    // Replicate conviction computation from renderRegimePanel (single source of truth)
+    var pct252 = comp.ngvlPct252 ? comp.ngvlPct252[n-1] : null;
+    var sk = last.skewRatio;
+    var skBias = sk == null ? 'UNKNOWN' : (sk > 1.08 ? 'BULLISH' : sk < 0.92 ? 'BEARISH' : 'NEUTRAL');
+    var vrpVal = comp.vrp ? comp.vrp[n-1] : null;
+    var vrpState = vrpVal == null ? 'UNKNOWN' : (vrpVal > 5 ? 'OVERPRICED' : vrpVal < -3 ? 'UNDERPRICED' : 'FAIR');
+    var activeSignals = (comp.events || []).filter(function(ev) { return ev.idx >= n - 10; });
+    var activeCnt = activeSignals.length;
+    var ts = comp.termStructure ? comp.termStructure[n-1] : null;
+    var vovVal = comp.vov ? comp.vov[n-1] : null;
+
+    var convScore = 0, convLen = 0;
+    if (pct252 != null) { var regScore = pct252 > 90 ? 3 : pct252 > 75 ? 2 : pct252 < 10 ? 3 : pct252 < 25 ? 2 : 1; convScore += regScore; convLen++; }
+    if (sk != null) { var skScore = Math.abs(sk - 1) > 0.08 ? 2 : 1; convScore += skScore; convLen++; }
+    if (vrpVal != null) { var vrpScore = Math.abs(vrpVal) > 5 ? 3 : Math.abs(vrpVal) > 3 ? 2 : 1; convScore += vrpScore; convLen++; }
+    if (activeCnt >= 3) { convScore += 3; convLen++; } else if (activeCnt >= 1) { convScore += 1; convLen++; }
+    if (ts != null) { convScore += (ts > 1.03 || ts < 0.97) ? 2 : 1; convLen++; }
+    if (vovVal != null) { convScore += vovVal > 5 ? 1 : vovVal > 2.5 ? 2 : 3; convLen++; }
+    var avgConv = convLen > 0 ? convScore / convLen : 0;
+    var convLabel = avgConv >= 2.5 ? 'HIGH' : avgConv >= 1.5 ? 'MODERATE' : (activeCnt === 0 ? 'NO SIGNAL' : 'LOW');
+
+    // Tactical read
+    function bannerTactical(conv, skB, vrpS, aCnt) {
+        if (conv === 'HIGH') {
+            if (skB === 'BEARISH' && vrpS === 'OVERPRICED') return 'Favor short NG bias \u2014 vol pricing exhaustion';
+            if (skB === 'BULLISH' && vrpS === 'UNDERPRICED') return 'Favor long NG bias \u2014 tail-risk underpriced';
+            if (skB === 'BEARISH') return 'Short bias \u2014 skew pricing downside protection';
+            if (skB === 'BULLISH') return 'Long bias \u2014 skew pricing upside';
+            if (vrpS === 'OVERPRICED') return 'Vol sellers favored \u2014 options overpriced';
+            return 'High conviction \u2014 confirm with T2P / Volume signals';
+        }
+        if (conv === 'MODERATE') {
+            if (aCnt >= 1) return 'Monitor \u2014 signals active but regime not extreme';
+            return 'No clear edge \u2014 wait for vol surface extremes';
+        }
+        if (conv === 'NO SIGNAL') return 'No vol-surface signals firing \u2014 defer to T2P / Flow tabs';
+        return 'No edge from vol alone \u2014 defer to T2P / Flow tabs';
+    }
+    var tactical = bannerTactical(convLabel, skBias, vrpState, activeCnt);
+
+    // Color config
+    var colorMap = { 'HIGH': '#ef4444', 'MODERATE': '#f59e0b', 'LOW': '#3db87a', 'NO SIGNAL': '#6b7280' };
+    var circleMap = { 'HIGH': '\ud83d\udd34', 'MODERATE': '\ud83d\udfe1', 'LOW': '\ud83d\udfe2', 'NO SIGNAL': '\u26aa' };
+    var cc = colorMap[convLabel] || '#6b7280';
+    var circle = circleMap[convLabel] || '\u26aa';
+
+    el.style.display = 'flex';
+    el.style.alignItems = 'center';
+    el.style.gap = '14px';
+    el.style.background = 'rgba(' + (convLabel === 'HIGH' ? '239,68,68' : convLabel === 'MODERATE' ? '245,158,11' : convLabel === 'LOW' ? '61,184,122' : '107,114,128') + ',0.06)';
+    el.innerHTML =
+        '<span style="font-size:1.4rem;line-height:1;">' + circle + '</span>' +
+        '<span style="font-size:0.75rem;font-weight:900;letter-spacing:2px;color:' + cc + ';">' + convLabel + '</span>' +
+        '<span style="font-size:0.65rem;color:var(--text-muted);letter-spacing:0.5px;font-weight:500;">' + tactical + '</span>';
+}
+
 // ── KPI Cards (expanded) ─────────────────────────────────────
 function renderKpiCards(data, comp) {
     var el = document.getElementById('cvol-kpi-grid'); if (!el) return;
@@ -508,7 +570,7 @@ function renderTimeline(composites, filter) {
             : isRecent ? '<span class="pending-label" data-tooltip="Market Validation Pending: This signal fired less than 5 sessions ago. Volatility signals often require 3-5 days of \'digestion\' before price reflects the options-market bias.">PENDING</span>' : '—';
         var fwd21Html = e.fwd21 != null ? '<span style="color:' + pctColor(e.fwd21) + '">' + ((e.fwd21>0?'+':'') + fmt(e.fwd21) + '%') + '</span>'
             : isRecent ? '<span class="pending-label" data-tooltip="Institutional Alpha Window Pending: This signal fired less than 21 sessions ago. We use a full trading month (21 days) as the Gold Standard for validating options-surface predictive power.">PENDING</span>' : '—';
-        html += '<tr' + (conf >= 2 ? ' style="border-left:2px solid rgba(245,158,11,0.3);"' : '') + '>' +
+        html += '<tr data-evt-idx="' + e.idx + '"' + (conf >= 2 ? ' style="border-left:2px solid rgba(245,158,11,0.3);"' : '') + '>' +
             '<td style="color:var(--text-muted);">'+fmtDate(e.date)+'</td>' +
             '<td><span class="sig-badge" style="'+(sigColors[e.signal]||'')+'" data-tooltip="'+(sigTooltips[e.signal]||'')+'">'+e.signal+'</span></td>' +
             '<td style="color:'+dirColor+';font-weight:700;">'+e.direction+'</td>' +
@@ -521,6 +583,101 @@ function renderTimeline(composites, filter) {
             '</tr>';
     });
     body.innerHTML = html || '<tr><td colspan="9" style="text-align:center;color:var(--text-dim);">No events in range</td></tr>';
+
+    // ── Forward Path Sparkline Popover ──
+    // Create or reuse floating popover
+    var popId = 'cvol-fwd-sparkline-pop';
+    var pop = document.getElementById(popId);
+    if (!pop) {
+        pop = document.createElement('div');
+        pop.id = popId;
+        pop.style.cssText = 'position:fixed;display:none;z-index:9999;background:rgba(12,15,25,0.95);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 8px;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,0.5);';
+        pop.innerHTML = '<div id="cvol-fwd-spark-label" style="font-size:0.55rem;font-weight:700;letter-spacing:1px;color:var(--text-dim);margin-bottom:4px;" data-tooltip="21-day forward NG price path from signal fire date. Green = positive return, Red = negative. Dashed = incomplete (PENDING)."></div><canvas id="cvol-fwd-spark-canvas" width="280" height="96" style="width:140px;height:48px;"></canvas>';
+        document.body.appendChild(pop);
+    }
+    var sparkCanvas = document.getElementById('cvol-fwd-spark-canvas');
+    var sparkLabel = document.getElementById('cvol-fwd-spark-label');
+    if (!sparkCanvas || !CvolState.data) return;
+
+    var rows = body.querySelectorAll('tr[data-evt-idx]');
+    rows.forEach(function(row) {
+        row.addEventListener('mouseenter', function(me) {
+            var evIdx = parseInt(row.getAttribute('data-evt-idx'));
+            if (isNaN(evIdx)) return;
+            var data = CvolState.data;
+            var n = data.length;
+            // Extract up to 21 sessions forward from fire date
+            var path = [];
+            var basePrice = data[evIdx] ? data[evIdx].underlying : null;
+            if (basePrice == null || basePrice === 0) return;
+            for (var k = 0; k <= 21 && evIdx + k < n; k++) {
+                var p = data[evIdx + k].underlying;
+                if (p != null) path.push((p / basePrice - 1) * 100);
+            }
+            if (path.length < 2) return;
+            var isPending = path.length < 22;
+            var finalRet = path[path.length - 1];
+            var lineColor = finalRet >= 0 ? '#3db87a' : '#ef4444';
+
+            // Draw sparkline
+            var dpr = window.devicePixelRatio || 1;
+            sparkCanvas.width = 140 * dpr; sparkCanvas.height = 48 * dpr;
+            var ctx = sparkCanvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            var sw = 140, sh = 48;
+            ctx.clearRect(0, 0, sw, sh);
+
+            var pMin = Math.min.apply(null, path);
+            var pMax = Math.max.apply(null, path);
+            var pm = (pMax - pMin) * 0.15 || 0.5; pMin -= pm; pMax += pm;
+            var getSpX = function(i) { return (i / 21) * sw; };
+            var getSpY = function(v) { return sh - ((v - pMin) / (pMax - pMin)) * sh; };
+
+            // Zero line
+            if (0 >= pMin && 0 <= pMax) {
+                var zy = getSpY(0);
+                ctx.beginPath(); ctx.moveTo(0, zy); ctx.lineTo(sw, zy);
+                ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+                ctx.setLineDash([2, 2]); ctx.stroke(); ctx.setLineDash([]);
+            }
+
+            // Path line (solid portion)
+            ctx.beginPath();
+            for (var i = 0; i < path.length; i++) {
+                i === 0 ? ctx.moveTo(getSpX(i), getSpY(path[i])) : ctx.lineTo(getSpX(i), getSpY(path[i]));
+            }
+            ctx.strokeStyle = lineColor; ctx.lineWidth = 1.5; ctx.stroke();
+
+            // Dashed continuation for PENDING
+            if (isPending && path.length > 1) {
+                var lastX = getSpX(path.length - 1), lastY = getSpY(path[path.length - 1]);
+                ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(sw, lastY);
+                ctx.strokeStyle = lineColor; ctx.lineWidth = 1;
+                ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+            }
+
+            // End dot
+            ctx.beginPath(); ctx.arc(getSpX(path.length - 1), getSpY(path[path.length - 1]), 2.5, 0, Math.PI * 2);
+            ctx.fillStyle = lineColor; ctx.fill();
+
+            // Label
+            sparkLabel.textContent = '21D FWD PATH: ' + (finalRet >= 0 ? '+' : '') + finalRet.toFixed(1) + '%' + (isPending ? ' (PARTIAL)' : '');
+            sparkLabel.style.color = lineColor;
+
+            // Position popover
+            var rect = row.getBoundingClientRect();
+            pop.style.display = 'block';
+            pop.style.left = (rect.right + 8) + 'px';
+            pop.style.top = Math.max(8, rect.top - 10) + 'px';
+            // If it would overflow right side, put it left of row
+            if (rect.right + 170 > window.innerWidth) {
+                pop.style.left = (rect.left - 170) + 'px';
+            }
+        });
+        row.addEventListener('mouseleave', function() {
+            pop.style.display = 'none';
+        });
+    });
 }
 
 // ── Composite Expand Modal ────────────────────────────────────
@@ -851,6 +1008,7 @@ function renderAll() {
     var data = CvolState.data; var comp = CvolState.composites;
     if (!data || !data.length) return;
     renderBanner(data, comp);
+    renderConvictionBanner(data, comp);
     renderKpiCards(data, comp);
     renderRegimePanel(data, comp);
     renderMainChart();
