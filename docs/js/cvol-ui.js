@@ -361,7 +361,7 @@ function renderScorecard(composites) {
             var sh = r.seasonalHit21[curSeason];
             var shr = (sh.hits / sh.total * 100);
             var shrColor = shr > 55 ? '#3db87a' : shr < 45 ? '#ef4444' : 'var(--text-dim)';
-            seaBadge = '<div style="font-size:0.45rem;font-weight:600;color:'+shrColor+';margin-top:2px;" data-tooltip="'+curSeason.toUpperCase()+' hit rate: '+Math.round(shr)+'% (n='+sh.total+')">'+(seasonEmoji[curSeason]||'')+' '+Math.round(shr)+'%</div>';
+            seaBadge = '<div style="font-size:0.58rem;font-weight:600;color:'+shrColor+';margin-top:2px;" data-tooltip="'+curSeason.toUpperCase()+' hit rate: '+Math.round(shr)+'% (n='+sh.total+')">'+(seasonEmoji[curSeason]||'')+' '+Math.round(shr)+'%</div>';
         }
         // Low-sample warning badge
         var countCell = r.count < 20
@@ -405,9 +405,9 @@ function renderScorecard(composites) {
     var horizonRows = rows.filter(function(r) { return r.horizons && !r.isEnsemble; });
     if (horizonRows.length > 0) {
         html += '<div style="margin-top:18px;">' +
-            '<div style="font-size:0.6rem;letter-spacing:2px;color:var(--text-dim);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:10px;">MULTI-HORIZON ANALYSIS' +
-            '<span style="font-size:0.5rem;font-weight:400;color:var(--text-dim);letter-spacing:1px;">Optimal window highlighted in gold — signals may have edge at a different horizon than 21D</span></div>' +
-            '<table class="scorecard-table" style="font-size:0.6rem;"><thead><tr>' +
+            '<div style="font-size:0.72rem;letter-spacing:2px;color:var(--text-dim);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:10px;">MULTI-HORIZON ANALYSIS' +
+            '<span style="font-size:0.62rem;font-weight:400;color:var(--text-dim);letter-spacing:1px;">Optimal window highlighted in gold \u2014 signals may have edge at a different horizon than 21D</span></div>' +
+            '<table class="scorecard-table" style="font-size:0.72rem;"><thead><tr>' +
             '<th>SIGNAL</th>' +
             '<th data-tooltip="5-day forward return hit rate and annualized Sharpe">5D HIT / SHARPE</th>' +
             '<th data-tooltip="10-day forward return hit rate and annualized Sharpe">10D HIT / SHARPE</th>' +
@@ -426,7 +426,7 @@ function renderScorecard(composites) {
                 var cellStyle = isOpt
                     ? 'background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:4px;padding:4px 8px;'
                     : '';
-                var lowSampleNote = h.n < 20 ? '<span style="color:#f59e0b;font-size:0.45rem;"> \u26a0n=' + h.n + '</span>' : '';
+                var lowSampleNote = h.n < 20 ? '<span style="color:#f59e0b;font-size:0.55rem;"> \u26a0n=' + h.n + '</span>' : '';
                 html += '<td style="' + cellStyle + 'text-align:center;" data-tooltip="' + h.label + ': Hit ' + (h.hr!=null?Math.round(h.hr)+'%':'\u2014') + ', Sharpe ' + (ann!=null?fmt(ann,2):'\u2014') + ', n=' + h.n + (isOpt?' \u2014 OPTIMAL HORIZON for this signal':'') + '">' +
                     '<span style="color:'+hrC+';font-weight:700;">' + (h.hr != null ? Math.round(h.hr)+'%' : '—') + '</span>' +
                     '<span style="color:var(--text-dim);margin:0 3px;">/</span>' +
@@ -821,7 +821,7 @@ function renderSensitivityPanel(sensitivity) {
     var annFactor = Math.sqrt(252 / 21);
     var sigColors = { 'SAD':'#60a8f8','CI':'#f59e0b','CVC↓':'#ef4444','CVC↑':'#3db87a','RDS':'#ec4899','CVC\u2193':'#ef4444','CVC\u2191':'#3db87a' };
     var fmt = function(v, d) { if (v == null || isNaN(v)) return '\u2014'; return v.toFixed(d != null ? d : 1); };
-    var html = '<table class="scorecard-table" style="font-size:0.58rem;"><thead><tr>' +
+    var html = '<table class="scorecard-table" style="font-size:0.68rem;"><thead><tr>' +
         '<th data-tooltip="Signal name">SIGNAL</th>' +
         '<th data-tooltip="Threshold level: TIGHTER = higher bar for firing (fewer events, higher quality). BASELINE = current threshold. LOOSER = lower bar (more events, potentially lower quality).">LEVEL</th>' +
         '<th data-tooltip="The threshold value used for this test">THRESHOLD</th>' +
@@ -833,7 +833,7 @@ function renderSensitivityPanel(sensitivity) {
         sig.rows.forEach(function(row, i) {
             var isBase = row.label === 'BASELINE';
             var hrC = row.hitRate != null ? (row.hitRate > 55 ? '#3db87a' : row.hitRate < 45 ? '#ef4444' : 'var(--text-muted)') : 'var(--text-dim)';
-            var lowSample = row.count < 20 ? ' <span style="color:#f59e0b;font-size:0.45rem;">\u26a0LOW SAMPLE</span>' : '';
+            var lowSample = row.count < 20 ? ' <span style="color:#f59e0b;font-size:0.55rem;">\u26a0LOW SAMPLE</span>' : '';
             html += '<tr' + (isBase ? ' style="background:rgba(255,255,255,0.04);"' : '') + '>' +
                 (i === 0 ? '<td rowspan="3" style="color:'+sc+';font-weight:800;border-right:1px solid rgba(255,255,255,0.07);">' + sig.signal + '</td>' : '') +
                 '<td style="color:' + (row.label==='TIGHTER (+0.5)'?'var(--text-muted)':isBase?'var(--text-bright)':'var(--text-dim)') + ';font-style:' + (row.label==='LOOSER (-0.5)'?'italic':'normal') + ';">' + row.label + '</td>' +
