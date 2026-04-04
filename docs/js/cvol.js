@@ -537,8 +537,8 @@ function computeScorecard(composites, regimeFilter) {
             { label: '42D', sharpe: sharpe42, hr: s.ret42.length > 0 ? s.hit42 / s.ret42.length * 100 : null, avg: avg42, n: s.ret42.length },
         ];
         var optHorizon = horizons.reduce(function(best, h) {
-            if (h.sharpe == null || h.n < 5) return best;
-            if (best == null || Math.abs(h.sharpe) > Math.abs(best.sharpe)) return h;
+            if (h.sharpe == null || h.sharpe <= 0 || h.n < 5) return best;
+            if (best == null || h.sharpe > best.sharpe) return h;
             return best;
         }, null);
         var sorted21 = s.ret21.slice().sort(function(a,b){return a-b;});
@@ -591,8 +591,8 @@ function computeScorecard(composites, regimeFilter) {
             { label: '42D', sharpe: sh42, hr: r42.length > 0 ? h42 / r42.length * 100 : null, avg: a42, n: r42.length },
         ];
         var eOpt = eHorizons.reduce(function(best, h) {
-            if (h.sharpe == null || h.n < 5) return best;
-            if (best == null || Math.abs(h.sharpe) > Math.abs(best.sharpe)) return h;
+            if (h.sharpe == null || h.sharpe <= 0 || h.n < 5) return best;
+            if (best == null || h.sharpe > best.sharpe) return h;
             return best;
         }, null);
         var s21 = r21.slice().sort(function(a,b){return a-b;});

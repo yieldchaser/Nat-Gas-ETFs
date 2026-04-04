@@ -370,7 +370,7 @@ function renderScorecard(composites) {
         // Optimal horizon badge
         var optCell = r.optHorizon
             ? '<span style="color:#f59e0b;font-weight:800;letter-spacing:0.5px;" data-tooltip="Optimal Holding Period: ' + r.optHorizon.label + ' (Sharpe ' + fmt(r.optHorizon.sharpe * annFactor, 2) + ', Hit ' + Math.round(r.optHorizon.hr) + '%, n=' + r.optHorizon.n + '). This is the window where this signal has historically produced the best risk-adjusted return.">' + r.optHorizon.label + '</span>'
-            : '<span style="color:var(--text-dim)">—</span>';
+            : (r.count > 0 ? '<span style="color:#ef4444;font-weight:800;" data-tooltip="No directional edge detected at any measured timeframe (5D/10D/21D/42D) for this regime. Hit rates are \u226450% or Sharpe \u22640. Do not rely on this signal for trend-following entries.">NONE</span>' : '<span style="color:var(--text-dim)">\u2014</span>');
         html += '<tr' + (r.isEnsemble ? ' style="background:rgba(0,229,255,0.04);border-top:2px solid rgba(0,229,255,0.15);"' : '') + '>' +
             '<td style="color:'+sc+';font-weight:800;"' + (r.isEnsemble ? ' data-tooltip="Ensemble: combined performance for ALL events where '+r.signal.replace('CONF ','')+' other signals also fired within ±5 sessions. Higher confluence = higher conviction."' : '') + '>' + (r.isEnsemble ? '🔗 ' : '') + r.signal + seaBadge + '</td>' +
             '<td>' + countCell + '</td>' +
@@ -419,15 +419,15 @@ function renderScorecard(composites) {
             html += '<tr>';
             html += '<td style="color:'+sc+';font-weight:800;">' + r.signal + '</td>';
             r.horizons.forEach(function(h) {
-                var isOpt = r.optHorizon && h.label === r.optHorizon.label;
+                var isOpt = r.optHorizon && h.label === r.optHorizon.label && h.sharpe > 0;
                 var hrC = h.hr != null ? (h.hr > 55 ? '#3db87a' : h.hr < 45 ? '#ef4444' : 'var(--text-muted)') : 'var(--text-dim)';
                 var shC = h.sharpe != null ? (h.sharpe > 0 ? '#3db87a' : '#ef4444') : 'var(--text-dim)';
                 var ann = h.sharpe != null ? h.sharpe * annFactor : null;
                 var cellStyle = isOpt
                     ? 'background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:4px;padding:4px 8px;'
                     : '';
-                var lowSampleNote = h.n < 20 ? '<span style="color:#f59e0b;font-size:0.45rem;"> ⚠n=' + h.n + '</span>' : '';
-                html += '<td style="' + cellStyle + 'text-align:center;" data-tooltip="' + h.label + ': Hit ' + (h.hr!=null?Math.round(h.hr)+'%':'—') + ', Sharpe ' + (ann!=null?fmt(ann,2):'—') + ', n=' + h.n + (isOpt?' — OPTIMAL HORIZON for this signal':'') + '">' +
+                var lowSampleNote = h.n < 20 ? '<span style="color:#f59e0b;font-size:0.45rem;"> \u26a0n=' + h.n + '</span>' : '';
+                html += '<td style="' + cellStyle + 'text-align:center;" data-tooltip="' + h.label + ': Hit ' + (h.hr!=null?Math.round(h.hr)+'%':'\u2014') + ', Sharpe ' + (ann!=null?fmt(ann,2):'\u2014') + ', n=' + h.n + (isOpt?' \u2014 OPTIMAL HORIZON for this signal':'') + '">' +
                     '<span style="color:'+hrC+';font-weight:700;">' + (h.hr != null ? Math.round(h.hr)+'%' : '—') + '</span>' +
                     '<span style="color:var(--text-dim);margin:0 3px;">/</span>' +
                     '<span style="color:'+shC+';">' + (ann != null ? fmt(ann, 2) : '—') + '</span>' +
