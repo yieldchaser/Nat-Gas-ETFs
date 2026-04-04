@@ -1061,7 +1061,15 @@ function renderSeriesChips() {
         chip.style.color = cfg.color;
         if (CvolState.activeSeries.indexOf(k) >= 0) chip.style.background = toRgba(cfg.color, 0.15);
         chip.textContent = cfg.label;
-        chip.setAttribute('data-tooltip', 'Toggle ' + cfg.label + ' series on/off');
+        var seriesDescs = {
+            ngvl: 'NGVL (CME Natural Gas Volatility Index): 30-day forward implied volatility for NG options. The primary benchmark for market uncertainty — rising NGVL = growing fear/hedging demand.',
+            atm: 'ATM (At-The-Money Implied Vol): The linear, non-skew component of implied volatility. Tracks the "core" price of options without directional bias. Divergence from NGVL reveals skew-driven positioning.',
+            realVol: 'Realized Volatility (21D): Annualized standard deviation of actual NG log-returns over 21 trading days. Compare vs NGVL to identify the Vol Risk Premium — when implied significantly exceeds realized, options are overpriced.',
+            convexity: 'Convexity (Tail Sensitivity): Measures the cost of deep OTM protection relative to ATM. >1.10 = speculators aggressively buying tail hedges. <0.95 = complacency, potential spring-loaded setup.',
+            underlying: 'NG Price (Front-Month Futures): Henry Hub Natural Gas settlement price. Overlaid for correlation context — identifies whether vol signals are leading or lagging absolute price pivots.',
+            skew: 'Skew (pts): Raw put-call skew in volatility points. Positive = puts more expensive (downside fear). Negative = calls more expensive (upside speculation). Use alongside Skew Ratio for directional reads.'
+        };
+        chip.setAttribute('data-tooltip', seriesDescs[k] || ('Toggle ' + cfg.label + ' series on/off'));
         chip.onclick = function() {
             var idx = CvolState.activeSeries.indexOf(k);
             if (idx >= 0) CvolState.activeSeries.splice(idx, 1); else CvolState.activeSeries.push(k);
