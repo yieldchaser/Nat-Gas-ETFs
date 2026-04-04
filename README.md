@@ -320,7 +320,7 @@ A central "at-a-glance" panel that aggregates all volatility surface dimensions 
 | **TERM STRUCT** | 5D/63D NGVL ratio; identifies Backwardation (Stress) vs Contango (Normal). |
 | **VOL STABILITY** | VoV-21 metric; determines if current signals are reliable or prone to whipsaw. |
 | **SIGNALS/SEASON** | Count of active signals in last 10 sessions + current seasonal context. |
-| **CONVICTION** | Weighted synthesis of the above 6 inputs (High / Moderate / Low). |
+| **CONVICTION** | Weighted synthesis of the above 6 inputs (High / Moderate / Low) with **prescriptive tactical reads** (actionable one-line directives). |
 
 #### Proprietary Composite Signals
 
@@ -343,12 +343,28 @@ Measures the **Vol Risk Premium (VRP)** to identify market mispricing:
 
 #### Backtest Scorecard & Tactical Framework
 
-Every signal is subjected to rigorous statistical validation:
+Every signal is subjected to rigorous institutional-grade validation:
+- **Multi-Horizon Performance Analysis** — Tracks hit rates and annualized Sharpe across 5D, 10D, 21D, and 42D windows side-by-side.
+- **Optimal Horizon (OPT HZ)** — Automatically identifies the specific forward-return window where each signal historically has the highest risk-adjusted edge.
+- **Low-Sample Warnings** — Signals with fewer than 20 validated events are flagged with an amber `⚠ LOW SAMPLE` badge to prevent over-reliance on statistically noisy readings.
 - **Regime-Conditional Backtesting** — Filter results by NGVL regime to identify which signals perform best in complacent vs trending markets.
-- **Statistical Significance Badges** — Binomial p-values (★★★ / ★★ / ★) test the null hypothesis (50% hit rate) to ensure signal edge is not random noise.
-- **Ensemble Confluence Rows** — Combined performance metrics for **CONF ≥2** and **CONF ≥3** clusters.
-- **Seasonality Bias** — Per-signal seasonal hit rates (❄️🌱☀️🍂) identify signals with historical seasonal tailwinds.
-- **Conviction Weighting** — Individual events in the timeline are rated 1-3 stars based on confluence, regime, and significance.
+- **Statistical Significance Badges** — Binomial p-values (★★★ / ★★ / ★) test the null hypothesis (50% hit rate).
+- **Ensemble Confluence Rows** — Metrics for **CONF ≥2** and **CONF ≥3** clusters.
+- **Seasonality Bias** — Per-signal seasonal hit rates (❄️🌱☀️🍂) identify structural tailwinds.
+
+#### Cross-Signal Framework (Integration Matrix)
+
+A strategic reference panel that explains how to use CVOL conviction as a multiplier for other dashboards:
+- **CVOL + T2P** — How vol surface extremes align with Trough-to-Peak cycle maturity.
+- **CVOL + Volume** — Using Volume Monitor conviction events as a trade trigger once CVOL reaches a high-conviction regime.
+- **Action Hierarchies** — Categorizes setups from `MAXIMUM CONVICTION` to `CONFLICTED`.
+
+#### Threshold Sensitivity Analysis
+
+A collapsible diagnostic panel for every signal that compares performance across three calibration levels:
+- **TIGHTER** — Higher barrier for firing; higher quality but fewer events.
+- **BASELINE** — Current institutional settings.
+- **LOOSER** — Lower barrier; identifies if the signal is "near-miss" or if quality degrades rapidly with higher frequency.
 
 ---
 
