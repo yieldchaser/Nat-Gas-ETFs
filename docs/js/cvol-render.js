@@ -101,6 +101,7 @@ function renderMainChart() {
     // Draw lines
     function drawLine(key, range, lw) {
         var cfg = SERIES_CFG[key]; ctx.strokeStyle = cfg.color; ctx.lineWidth = lw;
+        if (cfg.dashed) ctx.setLineDash([6, 4]);
         ctx.beginPath(); var started = false;
         for (var i = 0; i < n; i++) {
             var v = visData[i][cfg.key]; if (v == null) continue;
@@ -108,7 +109,28 @@ function renderMainChart() {
             if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
         }
         ctx.stroke();
+        if (cfg.dashed) ctx.setLineDash([]);
     }
+
+    // VRP Spread Fill (between NGVL and Realized when both active)
+    if (CvolState.activeSeries.indexOf('ngvl') >= 0 && CvolState.activeSeries.indexOf('realVol') >= 0) {
+        for (var i = 1; i < n; i++) {
+            var nv = visData[i].ngvl, rv = visData[i].realVol;
+            var nv0 = visData[i-1].ngvl, rv0 = visData[i-1].realVol;
+            if (nv == null || rv == null || nv0 == null || rv0 == null) continue;
+            var x0 = getX(i-1), x1 = getX(i);
+            var ny0 = getY(nv0, leftR), ny1 = getY(nv, leftR);
+            var ry0 = getY(rv0, leftR), ry1 = getY(rv, leftR);
+            ctx.beginPath();
+            ctx.moveTo(x0, ny0); ctx.lineTo(x1, ny1);
+            ctx.lineTo(x1, ry1); ctx.lineTo(x0, ry0);
+            ctx.closePath();
+            // Green when implied > realized (market overpricing fear), red when reversed
+            ctx.fillStyle = (nv + nv0) / 2 > (rv + rv0) / 2 ? 'rgba(61,184,122,0.08)' : 'rgba(239,68,68,0.08)';
+            ctx.fill();
+        }
+    }
+
     leftSeries.forEach(function(k) { drawLine(k, leftR, k === 'ngvl' ? 2 : 1.2); });
     if (rightR) rightSeries.forEach(function(k) { drawLine(k, rightR, 1.5); });
     if (right2R) right2Series.forEach(function(k) { drawLine(k, right2R, 1.2); });
@@ -143,6 +165,19 @@ function renderMainChart() {
                     var cfg = SERIES_CFG[k]; var v = row[cfg.key];
                     html += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:' + cfg.color + '">' + cfg.label + '</span><span class="tooltip-val">' + (v != null ? (cfg.unit === '$' ? '$' + v.toFixed(2) : v.toFixed(2) + cfg.unit) : '—') + '</span></div>';
                 });
+                // VRP context
+                var vrpH = comp.vrp ? comp.vrp[r.s + hi] : null;
+                var rvH = comp.realVol ? comp.realVol[r.s + hi] : null;
+                if (vrpH != null) html += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#a78bfa">VRP</span><span class="tooltip-val">'+(vrpH>0?'+':'')+vrpH.toFixed(1)+'</span></div>';
+                // Signal event nearby (±2 sessions)
+                var absIdx = r.s + hi;
+                var nearbyEvt = (comp.events || []).filter(function(ev) { return Math.abs(ev.idx - absIdx) <= 2; });
+                if (nearbyEvt.length > 0) {
+                    nearbyEvt.forEach(function(ev) {
+                        var sigC = {'SAD':'#f59e0b','CI':'#60a8f8','CVC↓':'#ef4444','CVC↑':'#3db87a','RDS':'#ec4899'};
+                        html += '<div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.55rem;font-weight:800;color:'+(sigC[ev.signal]||'var(--cyan)')+'">⚡ '+ev.signal+' — '+ev.direction+'</div>';
+                    });
+                }
                 tooltip.innerHTML = html; tooltip.style.display = 'block';
                 tooltip.style.left = (x + pad.left > W / 2 ? x - 180 : x + 20) + 'px';
                 tooltip.style.top = (pad.top + 10) + 'px';
@@ -402,6 +437,26 @@ function renderVarDecomp() {
         ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.stroke();
     }
 
+    // Skew Momentum (5D ROC) overlay
+    if (CvolState.varActiveSeries.indexOf('skewRoc5') >= 0) {
+        var smMin = Infinity, smMax = -Infinity;
+        for (var i = 0; i < n; i++) { var v = visData[i].skewRoc5; if (v != null) { smMin = Math.min(smMin, v); smMax = Math.max(smMax, v); } }
+        if (isFinite(smMin)) {
+            var sm = (smMax - smMin) * 0.1 || 0.1; smMin -= sm; smMax += sm;
+            var getSMY = function(v) { return pad.top + chartH - ((v - smMin) / (smMax - smMin)) * chartH; };
+            // Zero reference line
+            if (0 >= smMin && 0 <= smMax) {
+                var zy = getSMY(0);
+                ctx.beginPath(); ctx.moveTo(pad.left, zy); ctx.lineTo(pad.left + chartW, zy);
+                ctx.strokeStyle = 'rgba(129,140,248,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+            }
+            // Line
+            ctx.beginPath(); var started = false;
+            for (var i = 0; i < n; i++) { var v = visData[i].skewRoc5; if (v == null) continue; if (!started) { ctx.moveTo(getX(i), getSMY(v)); started = true; } else ctx.lineTo(getX(i), getSMY(v)); }
+            ctx.strokeStyle = '#818cf8'; ctx.lineWidth = 1.3; ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]);
+        }
+    }
+
     // Skew = 1.0 reference line
     if (1.0 >= skMin && 1.0 <= skMax) {
         var refY = getSY(1.0);
@@ -425,7 +480,10 @@ function renderVarDecomp() {
         ctx.fillStyle = '#f59e0b'; ctx.fillText('▬ SKEW', lx, pad.top + 12); lx += 55;
     }
     if (CvolState.varActiveSeries.indexOf('underlying') >= 0) {
-        ctx.fillStyle = '#94a3b8'; ctx.fillText('▬ PRICE', lx, pad.top + 12);
+        ctx.fillStyle = '#94a3b8'; ctx.fillText('▬ PRICE', lx, pad.top + 12); lx += 55;
+    }
+    if (CvolState.varActiveSeries.indexOf('skewRoc5') >= 0) {
+        ctx.fillStyle = '#818cf8'; ctx.fillText('╌ SKEW MOM', lx, pad.top + 12);
     }
 
     // Hover
