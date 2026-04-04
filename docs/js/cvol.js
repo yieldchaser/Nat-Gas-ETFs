@@ -272,13 +272,15 @@ function computeComposites(data) {
             // Deduplicate: skip if same signal within last 10 sessions
             const recent = events.filter(e => e.signal === signal && i - e.idx < 10);
             if (recent.length === 0) {
-                const fwd5 = i + 5 < n ? ((underlying[i + 5] - underlying[i]) / underlying[i] * 100) : null;
+                const fwd5  = i +  5 < n ? ((underlying[i +  5] - underlying[i]) / underlying[i] * 100) : null;
+                const fwd10 = i + 10 < n ? ((underlying[i + 10] - underlying[i]) / underlying[i] * 100) : null;
                 const fwd21 = i + 21 < n ? ((underlying[i + 21] - underlying[i]) / underlying[i] * 100) : null;
+                const fwd42 = i + 42 < n ? ((underlying[i + 42] - underlying[i]) / underlying[i] * 100) : null;
                 events.push({
                     idx: i, date: data[i].date, signal, direction, value, composite,
                     underlying: underlying[i],
                     ngvl: ngvl[i], skewRatio: skewRatio[i], convexity: convexity[i], atm: atm[i],
-                    fwd5, fwd21,
+                    fwd5, fwd10, fwd21, fwd42,
                     season: getSeason(data[i].date),
                 });
             }
@@ -493,57 +495,71 @@ function computeScorecard(composites, regimeFilter) {
     var signals = {};
     events.forEach(function(ev) {
         var key = ev.signal.replace('↓','Down').replace('↑','Up');
-        if (!signals[key]) signals[key] = { count: 0, hit5: 0, hit21: 0, ret5: [], ret21: [], name: ev.signal, seasonHit: {} };
+        if (!signals[key]) signals[key] = { count: 0, hit5: 0, hit10: 0, hit21: 0, hit42: 0, ret5: [], ret10: [], ret21: [], ret42: [], name: ev.signal, seasonHit: {} };
         signals[key].count++;
-        if (ev.fwd5 != null) {
-            signals[key].ret5.push(ev.fwd5);
-            var isDown = ev.direction.indexOf('TOP') >= 0 || ev.direction.indexOf('DOWNSIDE') >= 0;
-            if ((isDown && ev.fwd5 < 0) || (!isDown && ev.fwd5 > 0)) signals[key].hit5++;
-        }
+        var isDown = ev.direction.indexOf('TOP') >= 0 || ev.direction.indexOf('DOWNSIDE') >= 0;
+        if (ev.fwd5  != null) { signals[key].ret5.push(ev.fwd5);   if ((isDown && ev.fwd5  < 0) || (!isDown && ev.fwd5  > 0)) signals[key].hit5++; }
+        if (ev.fwd10 != null) { signals[key].ret10.push(ev.fwd10); if ((isDown && ev.fwd10 < 0) || (!isDown && ev.fwd10 > 0)) signals[key].hit10++; }
         if (ev.fwd21 != null) {
             signals[key].ret21.push(ev.fwd21);
-            var isDown21 = ev.direction.indexOf('TOP') >= 0 || ev.direction.indexOf('DOWNSIDE') >= 0;
-            var hit = (isDown21 && ev.fwd21 < 0) || (!isDown21 && ev.fwd21 > 0);
-            if (hit) signals[key].hit21++;
-            // Track per-season hit rates
+            var hit21 = (isDown && ev.fwd21 < 0) || (!isDown && ev.fwd21 > 0);
+            if (hit21) signals[key].hit21++;
             var ssn = ev.season || 'unknown';
             if (!signals[key].seasonHit[ssn]) signals[key].seasonHit[ssn] = { hits: 0, total: 0 };
             signals[key].seasonHit[ssn].total++;
-            if (hit) signals[key].seasonHit[ssn].hits++;
+            if (hit21) signals[key].seasonHit[ssn].hits++;
         }
+        if (ev.fwd42 != null) { signals[key].ret42.push(ev.fwd42); if ((isDown && ev.fwd42 < 0) || (!isDown && ev.fwd42 > 0)) signals[key].hit42++; }
     });
+    // helper: sharpe from a return array
+    function calcSharpe(arr) {
+        if (arr.length < 3) return null;
+        var mean = arr.reduce(function(a,b){return a+b;},0) / arr.length;
+        var std = Math.sqrt(arr.reduce(function(a,b){return a+(b-mean)*(b-mean);},0) / arr.length);
+        return std > 0 ? mean / std : null;
+    }
     var rows = [];
     Object.keys(signals).forEach(function(key) {
         var s = signals[key];
-        var avg5 = s.ret5.length ? s.ret5.reduce(function(a,b){return a+b;},0) / s.ret5.length : null;
+        var avg5  = s.ret5.length  ? s.ret5.reduce(function(a,b){return a+b;},0)  / s.ret5.length  : null;
+        var avg10 = s.ret10.length ? s.ret10.reduce(function(a,b){return a+b;},0) / s.ret10.length : null;
         var avg21 = s.ret21.length ? s.ret21.reduce(function(a,b){return a+b;},0) / s.ret21.length : null;
-        var std21 = null;
-        if (s.ret21.length > 2) {
-            var m = avg21;
-            var ss = s.ret21.reduce(function(a,b){return a + (b-m)*(b-m);},0) / s.ret21.length;
-            std21 = Math.sqrt(ss);
-        }
-        // Median 21D — robust to outlier NG spikes
+        var avg42 = s.ret42.length ? s.ret42.reduce(function(a,b){return a+b;},0) / s.ret42.length : null;
+        var sharpe5  = calcSharpe(s.ret5);
+        var sharpe10 = calcSharpe(s.ret10);
+        var sharpe21 = calcSharpe(s.ret21);
+        var sharpe42 = calcSharpe(s.ret42);
+        // Optimal horizon: horizon with best absolute Sharpe (needs ≥3 samples)
+        var horizons = [
+            { label: '5D',  sharpe: sharpe5,  hr: s.ret5.length  > 0 ? s.hit5  / s.ret5.length  * 100 : null, avg: avg5,  n: s.ret5.length  },
+            { label: '10D', sharpe: sharpe10, hr: s.ret10.length > 0 ? s.hit10 / s.ret10.length * 100 : null, avg: avg10, n: s.ret10.length },
+            { label: '21D', sharpe: sharpe21, hr: s.ret21.length > 0 ? s.hit21 / s.ret21.length * 100 : null, avg: avg21, n: s.ret21.length },
+            { label: '42D', sharpe: sharpe42, hr: s.ret42.length > 0 ? s.hit42 / s.ret42.length * 100 : null, avg: avg42, n: s.ret42.length },
+        ];
+        var optHorizon = horizons.reduce(function(best, h) {
+            if (h.sharpe == null || h.n < 5) return best;
+            if (best == null || Math.abs(h.sharpe) > Math.abs(best.sharpe)) return h;
+            return best;
+        }, null);
         var sorted21 = s.ret21.slice().sort(function(a,b){return a-b;});
         var median21 = null;
-        if (sorted21.length) {
-            var mid = Math.floor(sorted21.length / 2);
-            median21 = sorted21.length % 2 !== 0 ? sorted21[mid] : (sorted21[mid-1] + sorted21[mid]) / 2;
-        }
-        // MAG 21D — avg absolute return (measures vol prediction regardless of direction)
-        var mag21 = s.ret21.length ? s.ret21.reduce(function(a,b){return a+Math.abs(b);},0) / s.ret21.length : null;
+        if (sorted21.length) { var mid = Math.floor(sorted21.length/2); median21 = sorted21.length%2!==0 ? sorted21[mid] : (sorted21[mid-1]+sorted21[mid])/2; }
+        var mag21 = s.ret21.length ? s.ret21.reduce(function(a,b){return a+Math.abs(b);},0)/s.ret21.length : null;
         rows.push({
             signal: s.name,
             count: s.count,
-            hitRate5: s.ret5.length > 0 ? (s.hit5 / s.ret5.length * 100) : null,
+            hitRate5:  s.ret5.length  > 0 ? (s.hit5  / s.ret5.length  * 100) : null,
+            hitRate10: s.ret10.length > 0 ? (s.hit10 / s.ret10.length * 100) : null,
             hitRate21: s.ret21.length > 0 ? (s.hit21 / s.ret21.length * 100) : null,
-            avgRet5: avg5,
-            avgRet21: avg21,
-            median21: median21,
-            mag21: mag21,
-            best21: s.ret21.length ? Math.max.apply(null, s.ret21) : null,
+            hitRate42: s.ret42.length > 0 ? (s.hit42 / s.ret42.length * 100) : null,
+            avgRet5: avg5, avgRet10: avg10, avgRet21: avg21, avgRet42: avg42,
+            median21: median21, mag21: mag21,
+            best21:  s.ret21.length ? Math.max.apply(null, s.ret21) : null,
             worst21: s.ret21.length ? Math.min.apply(null, s.ret21) : null,
-            sharpe: (avg21 != null && std21 != null && std21 > 0) ? (avg21 / std21) : null,
+            sharpe5: sharpe5, sharpe10: sharpe10, sharpe21: sharpe21, sharpe42: sharpe42,
+            sharpe: sharpe21,  // keep existing field for summary row compat
+            horizons: horizons,
+            optHorizon: optHorizon,
             seasonalHit21: s.seasonHit,
         });
     });
@@ -552,28 +568,51 @@ function computeScorecard(composites, regimeFilter) {
     [2, 3].forEach(function(minConf) {
         var confEvents = events.filter(function(ev) { return (confMap[ev.idx] || 0) >= minConf; });
         if (confEvents.length < 2) return;
-        var h5 = 0, h21 = 0, r5 = [], r21 = [];
+        var h5=0, h10=0, h21=0, h42=0, r5=[], r10=[], r21=[], r42=[];
         confEvents.forEach(function(ev) {
             var isDown = ev.direction.indexOf('TOP') >= 0 || ev.direction.indexOf('DOWNSIDE') >= 0;
-            if (ev.fwd5 != null) { r5.push(ev.fwd5); if ((isDown && ev.fwd5 < 0) || (!isDown && ev.fwd5 > 0)) h5++; }
+            if (ev.fwd5  != null) { r5.push(ev.fwd5);   if ((isDown && ev.fwd5  < 0) || (!isDown && ev.fwd5  > 0)) h5++;  }
+            if (ev.fwd10 != null) { r10.push(ev.fwd10); if ((isDown && ev.fwd10 < 0) || (!isDown && ev.fwd10 > 0)) h10++; }
             if (ev.fwd21 != null) { r21.push(ev.fwd21); if ((isDown && ev.fwd21 < 0) || (!isDown && ev.fwd21 > 0)) h21++; }
+            if (ev.fwd42 != null) { r42.push(ev.fwd42); if ((isDown && ev.fwd42 < 0) || (!isDown && ev.fwd42 > 0)) h42++; }
         });
-        var a5 = r5.length ? r5.reduce(function(a,b){return a+b;},0)/r5.length : null;
+        var a5  = r5.length  ? r5.reduce(function(a,b){return a+b;},0)/r5.length   : null;
+        var a10 = r10.length ? r10.reduce(function(a,b){return a+b;},0)/r10.length : null;
         var a21 = r21.length ? r21.reduce(function(a,b){return a+b;},0)/r21.length : null;
-        var sd21 = null;
-        if (r21.length > 2) { var m21 = a21; sd21 = Math.sqrt(r21.reduce(function(a,b){return a+(b-m21)*(b-m21);},0)/r21.length); }
+        var a42 = r42.length ? r42.reduce(function(a,b){return a+b;},0)/r42.length : null;
+        var sh5  = calcSharpe(r5);
+        var sh10 = calcSharpe(r10);
+        var sh21 = calcSharpe(r21);
+        var sh42 = calcSharpe(r42);
+        var eHorizons = [
+            { label: '5D',  sharpe: sh5,  hr: r5.length  > 0 ? h5  / r5.length  * 100 : null, avg: a5,  n: r5.length  },
+            { label: '10D', sharpe: sh10, hr: r10.length > 0 ? h10 / r10.length * 100 : null, avg: a10, n: r10.length },
+            { label: '21D', sharpe: sh21, hr: r21.length > 0 ? h21 / r21.length * 100 : null, avg: a21, n: r21.length },
+            { label: '42D', sharpe: sh42, hr: r42.length > 0 ? h42 / r42.length * 100 : null, avg: a42, n: r42.length },
+        ];
+        var eOpt = eHorizons.reduce(function(best, h) {
+            if (h.sharpe == null || h.n < 5) return best;
+            if (best == null || Math.abs(h.sharpe) > Math.abs(best.sharpe)) return h;
+            return best;
+        }, null);
         var s21 = r21.slice().sort(function(a,b){return a-b;});
         var med = null;
         if (s21.length) { var mid = Math.floor(s21.length/2); med = s21.length%2!==0 ? s21[mid] : (s21[mid-1]+s21[mid])/2; }
         var mag = r21.length ? r21.reduce(function(a,b){return a+Math.abs(b);},0)/r21.length : null;
         rows.push({
-            signal: 'CONF ≥' + minConf, isEnsemble: true, count: confEvents.length,
+            signal: 'CONF \u2265' + minConf, isEnsemble: true, count: confEvents.length,
             hitRate5: r5.length > 0 ? (h5/r5.length*100) : null,
+            hitRate10: r10.length > 0 ? (h10/r10.length*100) : null,
             hitRate21: r21.length > 0 ? (h21/r21.length*100) : null,
-            avgRet5: a5, avgRet21: a21, median21: med, mag21: mag,
+            hitRate42: r42.length > 0 ? (h42/r42.length*100) : null,
+            avgRet5: a5, avgRet10: a10, avgRet21: a21, avgRet42: a42,
+            median21: med, mag21: mag,
             best21: s21.length ? Math.max.apply(null, s21) : null,
             worst21: s21.length ? Math.min.apply(null, s21) : null,
-            sharpe: (a21 != null && sd21 != null && sd21 > 0) ? (a21/sd21) : null,
+            sharpe5: sh5, sharpe10: sh10, sharpe21: sh21, sharpe42: sh42,
+            sharpe: sh21,
+            horizons: eHorizons,
+            optHorizon: eOpt,
         });
     });
     return rows;
@@ -605,6 +644,81 @@ function computeHeatmapData(data) {
         for (var i = 0; i < allNgvl.length; i++) { if (allNgvl[i] <= avgNgvl) rank++; }
         var pct = (rank / allNgvl.length) * 100;
         result[key] = { avgNgvl: avgNgvl, avgUnderlying: avgUnd, avgSkewRatio: avgSk, pct: pct, regime: ngvlRegime(pct) };
+    });
+    return result;
+}
+
+// ── Threshold Sensitivity ─────────────────────────────────────
+// For each signal, re-detect events at 3 threshold levels and report count + hit rate.
+function computeThresholdSensitivity(composites, data) {
+    var n = data.length;
+    var underlying = data.map(function(r) { return r.underlying; });
+    var sadZ = composites.sadZ;
+    var rdsZ = composites.rdsZ;
+    var ci   = composites.ci ? null : null; // ci is direct value, not a Z
+    // Reconstruct component arrays
+    var ciArr = [], cvcDownArr = [], cvcUpArr = [];
+    data.forEach(function(r) {
+        ciArr.push(r.ci != null ? r.ci : (composites.ci ? composites.ci[data.indexOf(r)] : null));
+        cvcDownArr.push(r.cvcDown != null ? r.cvcDown : null);
+        cvcUpArr.push(r.cvcUp != null ? r.cvcUp : null);
+    });
+    // Use composites arrays directly
+    var ciA    = composites.ci    || data.map(function(r){ return r.ci || null; });
+    var cvcDA  = composites.cvcDown || data.map(function(r){ return r.cvcDown || null; });
+    var cvcUA  = composites.cvcUp   || data.map(function(r){ return r.cvcUp || null; });
+    var sadZA  = composites.sadZ  || [];
+    var rdsZA  = composites.rdsZ  || [];
+
+    // Signal configs: { name, key, thresholds: [tight, base, loose], getVal, isAbove }
+    var configs = [
+        { name: 'RDS',  getVal: function(i) { return rdsZA[i]; }, thresholds: [2.3, 1.8, 1.3], isAbove: true,
+          dirFn: function(i) { return composites.skewRatioRoc5 && composites.skewRatioRoc5[i] > 0 ? 'UPSIDE SETUP' : 'DOWNSIDE SETUP'; } },
+        { name: 'SAD',  getVal: function(i) { return sadZA[i] != null ? Math.abs(sadZA[i]) : null; }, thresholds: [2.0, 1.5, 1.0], isAbove: true,
+          dirFn: function(i) { return sadZA[i] != null && sadZA[i] > 0 ? 'UPSIDE SKEW' : 'DOWNSIDE SKEW'; } },
+        { name: 'CI',   getVal: function(i) { return ciA[i]; }, thresholds: [87, 82, 77], isAbove: true,
+          dirFn: function() { return 'COMPLACENCY'; } },
+        { name: 'CVC\u2193', getVal: function(i) { return cvcDA[i]; }, thresholds: [1.7, 1.2, 0.8], isAbove: true,
+          dirFn: function() { return 'TOP SIGNAL'; } },
+        { name: 'CVC\u2191', getVal: function(i) { return cvcUA[i]; }, thresholds: [1.7, 1.2, 0.8], isAbove: true,
+          dirFn: function() { return 'BOTTOM SIGNAL'; } },
+    ];
+
+    function hitRateAtThreshold(cfg, threshold) {
+        var events = [], lastFire = {};
+        for (var i = 63; i < n; i++) {
+            var val = cfg.getVal(i);
+            if (val == null) continue;
+            var triggered = cfg.isAbove ? val > threshold : val < threshold;
+            if (!triggered) continue;
+            var lastIdx = lastFire[cfg.name] || -999;
+            if (i - lastIdx < 10) continue;
+            lastFire[cfg.name] = i;
+            var dir = cfg.dirFn(i);
+            var isDown = dir.indexOf('TOP') >= 0 || dir.indexOf('DOWNSIDE') >= 0;
+            var fwd21 = i + 21 < n ? ((underlying[i+21] - underlying[i]) / underlying[i] * 100) : null;
+            if (fwd21 != null) {
+                var hit = (isDown && fwd21 < 0) || (!isDown && fwd21 > 0);
+                events.push({ hit: hit });
+            }
+        }
+        if (events.length === 0) return { count: 0, hitRate: null };
+        var hits = events.filter(function(e) { return e.hit; }).length;
+        return { count: events.length, hitRate: hits / events.length * 100 };
+    }
+
+    var result = [];
+    configs.forEach(function(cfg) {
+        var levels = [
+            { label: 'TIGHTER (+0.5)', threshold: cfg.thresholds[0] },
+            { label: 'BASELINE', threshold: cfg.thresholds[1] },
+            { label: 'LOOSER (-0.5)', threshold: cfg.thresholds[2] },
+        ];
+        var rows = levels.map(function(lv) {
+            var r = hitRateAtThreshold(cfg, lv.threshold);
+            return { label: lv.label, threshold: lv.threshold, count: r.count, hitRate: r.hitRate };
+        });
+        result.push({ signal: cfg.name, rows: rows });
     });
     return result;
 }
