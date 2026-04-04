@@ -503,7 +503,54 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <button class="signal-chip" data-signal="RDS" style="border-color:#ec4899;color:#ec4899;" data-tooltip="Regime Divergence Score — explosive setup signal">RDS</button>
     </div>
 
+    <!-- PANEL 7.5: CROSS-SIGNAL FRAMEWORK -->
+    <div class="scorecard-panel" style="padding:0;">
+        <div id="csf-header" style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer;user-select:none;" onclick="document.getElementById('csf-body').style.display=(document.getElementById('csf-body').style.display==='none'?'block':'none');this.querySelector('.csf-arrow').textContent=(document.getElementById('csf-body').style.display==='none'?'▶':'▼');">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:0.6rem;letter-spacing:2px;font-weight:700;color:var(--text-primary);" data-tooltip="How to use CVOL conviction as a regime filter and conviction multiplier for signals from other tabs.">CROSS-SIGNAL FRAMEWORK</span>
+                <span style="font-size:0.5rem;color:var(--text-dim);letter-spacing:1px;">How CVOL conviction combines with T2P &amp; Volume signals</span>
+            </div>
+            <span class="csf-arrow" style="font-size:0.6rem;color:var(--text-dim);">▶</span>
+        </div>
+        <div id="csf-body" style="display:none;padding:0 20px 20px;">
+            <p style="font-size:0.58rem;color:var(--text-dim);line-height:1.7;margin:0 0 16px;" data-tooltip="CVOL signals are confirmation/filter signals — not standalone alpha generators. Their highest value is as a REGIME FILTER that multiplies the reliability of signals from other tabs.">
+                CVOL signals are <strong style="color:var(--text-primary);">confirmation signals, not standalone alpha</strong>. Their highest value is as a regime filter that multiplies the reliability of
+                volume spikes (Volume Monitor) and cycle position (Trough-to-Peak). Use this matrix to interpret combined signals.
+            </p>
+            <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.55rem;">
+                <thead>
+                    <tr>
+                        <th style="padding:8px 12px;text-align:left;color:var(--text-dim);font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Current CVOL Conviction Level from the Regime Dashboard">CVOL CONVICTION</th>
+                        <th style="padding:8px 12px;text-align:center;color:#3db87a;font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Trough-to-Peak cycle position above 75th percentile — late cycle, elevated risk">T2P &gt; 75th pct<br><span style="font-weight:400;font-size:0.48rem;color:var(--text-dim);">Late-cycle / frothy</span></th>
+                        <th style="padding:8px 12px;text-align:center;color:var(--text-muted);font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Trough-to-Peak cycle position in the middle range — no clear cycle signal">T2P 25–75th<br><span style="font-weight:400;font-size:0.48rem;color:var(--text-dim);">Mid-cycle</span></th>
+                        <th style="padding:8px 12px;text-align:center;color:#60a8f8;font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Trough-to-Peak cycle position below 25th percentile — early cycle, recovery phase">T2P &lt; 25th pct<br><span style="font-weight:400;font-size:0.48rem;color:var(--text-dim);">Early-cycle / recovery</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding:10px 12px;color:#f59e0b;font-weight:800;border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="HIGH conviction means the vol surface is showing extreme readings. Combined with a vol spike, this is the highest-quality setup the system can generate.">HIGH</td>
+                        <td style="padding:10px 12px;text-align:center;background:rgba(245,158,11,0.08);border-bottom:1px solid rgba(255,255,255,0.05);border-radius:4px;" data-tooltip="MAXIMUM CONVICTION: Vol surface extremes align with late-cycle position. Historical combined hit rate outperforms any individual signal. Size up.">⚡ <strong style="color:#f59e0b;">MAXIMUM CONVICTION</strong><br><span style="color:var(--text-dim);font-size:0.48rem;">Vol + cycle both signal reversal</span></td>
+                        <td style="padding:10px 12px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="Vol surface is extreme but cycle position is ambiguous. Lean toward the CVOL directional bias, but reduce size."><strong style="color:var(--cyan);">LEAN + MONITOR</strong><br><span style="color:var(--text-dim);font-size:0.48rem;">Vol bias, cycle indeterminate</span></td>
+                        <td style="padding:10px 12px;text-align:center;background:rgba(239,68,68,0.06);border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="Vol surface and cycle are conflicted. CVOL may be early — the recovery cycle argues against the vol signal."><strong style="color:#ef4444;">CONFLICTED</strong><br><span style="color:var(--text-dim);font-size:0.48rem;">Vol extreme but early-cycle recovery</span></td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px 12px;color:var(--cyan);font-weight:800;" data-tooltip="MODERATE conviction means some vol surface signals are elevated but no full extreme. Use other tabs as primary.">MODERATE</td>
+                        <td style="padding:10px 12px;text-align:center;" data-tooltip="Vol is moderately elevated and cycle is late — watch for a volume spike as the catalyst. Vol confirmation adds value here."><strong style="color:var(--cyan);">WATCH</strong><br><span style="color:var(--text-dim);font-size:0.48rem;">Wait for volume catalyst</span></td>
+                        <td style="padding:10px 12px;text-align:center;" data-tooltip="No clear signal from either source. Wait for one of them to register an extreme reading."><strong style="color:var(--text-dim);">WAIT</strong><br><span style="color:var(--text-dim);font-size:0.48rem;">Neither tab at an extreme</span></td>
+                        <td style="padding:10px 12px;text-align:center;" data-tooltip="Cycle says early recovery, CVOL is not at an extreme. Lean long on T2P signal alone."><strong style="color:#60a8f8;">FOLLOW T2P</strong><br><span style="color:var(--text-dim);font-size:0.48rem;">T2P recovery bias</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+            <p style="font-size:0.5rem;color:var(--text-dim);margin:14px 0 0;line-height:1.6;" data-tooltip="The Volume Monitor's conviction events (VCVI ≥72, multi-window convergence) can substitute for T2P cycle position as the trigger signal when T2P data is unavailable.">
+                💡 <strong style="color:var(--text-primary);">Volume Monitor note:</strong> A Volume Monitor Conviction Event (VCVI ≥72 + multi-window breadth) can substitute for T2P &gt;75th pct as the trigger signal — both represent extremes of fear/capitulation that historically precede reversals. When both fire simultaneously with CVOL HIGH, that is the highest-quality setup this system can produce.
+            </p>
+        </div>
+    </div>
+
     <!-- PANEL 8: BACKTEST SCORECARD -->
+
     <div class="scorecard-panel">
         <div class="section-title-bar">
             <span class="section-title-text" data-tooltip="Signal Reliability Audit: Aggregate predictive performance of each composite signal. Hits represent signals where NG moved in the predicted direction. Annualized Sharpe measures the 'Return-per-unit-of-Risk' consistency of each alert.">Signal Backtest Scorecard</span>
@@ -515,6 +562,19 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <button class="signal-chip" data-regime="high" style="border-color:#c07828;color:#c07828;" data-tooltip="NGVL &ge;75th percentile: Elevated/Extreme vol. Signal behavior may invert — historical patterns less reliable in panic regimes.">HIGH (&ge;75th)</button>
         </div>
         <div id="cvol-scorecard" style="overflow-x:auto; -webkit-overflow-scrolling:touch;"></div>
+        <!-- Threshold Sensitivity panel (collapsible) -->
+        <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
+            <div id="tsa-header" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;padding:4px 0;" onclick="var b=document.getElementById('tsa-body');b.style.display=b.style.display==='none'?'block':'none';this.querySelector('.tsa-arrow').textContent=b.style.display==='none'?'▶':'▼';">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:0.55rem;letter-spacing:2px;font-weight:700;color:var(--text-dim);" data-tooltip="Shows how hit rate and event count change if signal thresholds are tightened or loosened. Helps identify whether current thresholds are too loose (too many low-quality fires) or too tight (missing valid setups).">THRESHOLD SENSITIVITY</span>
+                    <span style="font-size:0.48rem;color:var(--text-dim);letter-spacing:1px;">Are triggers too loose? Does tightening improve quality?</span>
+                </div>
+                <span class="tsa-arrow" style="font-size:0.55rem;color:var(--text-dim);">▶</span>
+            </div>
+            <div id="tsa-body" style="display:none;margin-top:10px;overflow-x:auto;">
+                <div id="cvol-sensitivity-panel"></div>
+            </div>
+        </div>
     </div>
 
     <!-- PANEL 9: SIGNAL EVENT TIMELINE -->
