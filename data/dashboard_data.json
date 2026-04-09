@@ -1,16 +1,16 @@
 {
-  "last_updated": "2026-04-09T20:59:58.089014+00:00",
+  "last_updated": "2026-04-09T21:44:03.782369+00:00",
   "market_status": "after_hours",
   "ng_price_context": {
-    "price": 2.67,
+    "price": 2.673,
     "seasonal_zscore": -0.52,
-    "percentile_2yr": 23.0,
+    "percentile_2yr": 23.4,
     "tier": "seasonal_mid",
     "gate_short": false,
     "gate_long": false,
     "history_days": 504,
     "seasonal_note": "vs 400 spring-month obs (\u03bc=$3.80, \u03c3=$2.19)",
-    "ng_hv_21d": 52.844736,
+    "ng_hv_21d": 52.808249,
     "ng_hv_pct": 11.9,
     "regime": "normal"
   },
@@ -21,38 +21,38 @@
       "name": "ProShares Ultra Bloomberg Natural Gas",
       "current": {
         "price": 13.87,
-        "volume": 12189014,
+        "volume": 12294451,
         "change_pct": -99.99964,
-        "dollar_volume": 169061624.18
+        "dollar_volume": 170524035.37
       },
       "rvol": {
-        "5d": 0.911404,
-        "10d": 0.947683,
-        "21d": 0.94162,
-        "63d": 0.787727,
-        "126d": 1.008374,
-        "252d": 1.484838
+        "5d": 0.917841,
+        "10d": 0.955098,
+        "21d": 0.949396,
+        "63d": 0.794455,
+        "126d": 1.017026,
+        "252d": 1.497605
       },
       "z_score": {
-        "5d": -0.39934,
-        "10d": -0.305568,
-        "21d": -0.229538,
-        "63d": -0.521734,
-        "126d": 0.01742,
-        "252d": 0.679927
+        "5d": -0.372187,
+        "10d": -0.262873,
+        "21d": -0.199107,
+        "63d": -0.505322,
+        "126d": 0.035421,
+        "252d": 0.697833
       },
       "vroc": {
-        "5d": -13.33366,
-        "10d": 30.054992,
-        "21d": -18.522634
+        "5d": -12.583982,
+        "10d": 31.17999,
+        "21d": -17.817841
       },
       "vol_percentile": {
-        "5d": 25.0,
-        "10d": 33.333333,
-        "21d": 50.0,
-        "63d": 40.322581,
-        "126d": 67.2,
-        "252d": 83.665339
+        "5d": 50.0,
+        "10d": 44.444444,
+        "21d": 55.0,
+        "63d": 41.935484,
+        "126d": 68.0,
+        "252d": 84.063745
       },
       "price_percentile": {
         "5d": 0.0,
@@ -63,20 +63,20 @@
         "252d": 0.0
       },
       "cvi": {
-        "5d": 25.0,
-        "10d": 33.333333,
-        "21d": 50.0,
-        "63d": 40.322581,
-        "126d": 67.2,
-        "252d": 83.665339
+        "5d": 50.0,
+        "10d": 44.444444,
+        "21d": 55.0,
+        "63d": 41.935484,
+        "126d": 68.0,
+        "252d": 84.063745
       },
       "vcvi": {
-        "5d": 29.332669,
-        "10d": 39.110225,
-        "21d": 58.665338,
-        "63d": 47.310757,
-        "126d": 78.846215,
-        "252d": 98.165109
+        "5d": 58.665338,
+        "10d": 52.146967,
+        "21d": 64.531872,
+        "63d": 49.203187,
+        "126d": 79.78486,
+        "252d": 98.632561
       },
       "volatility": {
         "hv": {
@@ -1147,20 +1147,20 @@
       "decay": {
         "annual_rate": 0.35,
         "adj_price_pct": 0.0,
-        "adj_vcvi_21d": 58.665338,
+        "adj_vcvi_21d": 64.531872,
         "correction_active": true
       },
       "seasonality": {
         "month": 4,
         "season": "spring",
         "weight": 1.0,
-        "adj_vcvi_21d": 58.665338
+        "adj_vcvi_21d": 64.531872
       },
       "sharp_spike": false,
       "fast_signal": null,
-      "vps": 41.739137,
+      "vps": 43.202752,
       "mwca": false,
-      "rolling_correlation": 0.250973,
+      "rolling_correlation": 0.249481,
       "moving_averages": {
         "price": {
           "10d": 15.56,
@@ -1169,10 +1169,10 @@
           "200d": 28.4768
         },
         "volume": {
-          "10d": 12861911.4,
-          "21d": 12944734.0,
-          "50d": 13991976.28,
-          "200d": 9643241.57
+          "10d": 12872455.1,
+          "21d": 12949754.809524,
+          "50d": 13994085.02,
+          "200d": 9643768.755
         }
       },
       "history": [
@@ -30350,56 +30350,62 @@
           "high": 14.295,
           "low": 13.61,
           "close": 13.87,
-          "volume": 12189014
+          "volume": 12294451
         }
       ],
       "alerts": [
         {
           "type": "vcvi_warning",
           "side": "long",
-          "message": "VCVI (21d) = 58.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:54.098586+00:00"
+          "message": "VCVI (5d) = 58.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-04-09T21:44:00.553413+00:00"
+        },
+        {
+          "type": "vcvi_warning",
+          "side": "long",
+          "message": "VCVI (21d) = 64.5 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-04-09T21:44:00.553413+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
-          "message": "VCVI (126d) = 78.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:54.098586+00:00"
+          "message": "VCVI (126d) = 79.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-04-09T21:44:00.553413+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
-          "message": "VCVI (252d) = 98.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:54.098586+00:00"
+          "message": "VCVI (252d) = 98.6 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-04-09T21:44:00.553413+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
-          "message": "CVI (126d) = 67.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:54.098586+00:00"
+          "message": "CVI (126d) = 68.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-04-09T21:44:00.553413+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
-          "message": "CVI (252d) = 83.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:54.098586+00:00"
+          "message": "CVI (252d) = 84.1 \u2014 potential gas bottom \u2014 long/leveraged setup",
+          "timestamp": "2026-04-09T21:44:00.553413+00:00"
         }
       ],
       "dv_rvol": {
-        "5d": 0.854627,
-        "10d": 0.847549,
-        "21d": 0.774728,
-        "63d": 0.536341,
-        "126d": 0.590632,
-        "252d": 0.740029
+        "5d": 0.860747,
+        "10d": 0.854254,
+        "21d": 0.78118,
+        "63d": 0.540941,
+        "126d": 0.595717,
+        "252d": 0.746411
       },
       "dv_zscore": {
-        "5d": -0.676003,
-        "10d": -0.972107,
-        "21d": -0.85286,
-        "63d": -0.753736,
-        "126d": -0.777244,
-        "252d": -0.461818
+        "5d": -0.652225,
+        "10d": -0.934661,
+        "21d": -0.829582,
+        "63d": -0.746382,
+        "126d": -0.767666,
+        "252d": -0.450501
       },
       "dv_percentile": {
         "5d": 25.0,
@@ -30407,12 +30413,12 @@
         "21d": 20.0,
         "63d": 14.516129,
         "126d": 8.8,
-        "252d": 35.856574
+        "252d": 36.25498
       },
       "dv_vroc": {
-        "5d": -21.227909,
-        "10d": 8.994732,
-        "21d": -38.009266
+        "5d": -20.546518,
+        "10d": 9.937554,
+        "21d": -37.473035
       },
       "dvcvi": {
         "5d": 25.0,
@@ -30420,10 +30426,10 @@
         "21d": 20.0,
         "63d": 14.516129,
         "126d": 8.8,
-        "252d": 35.856574
+        "252d": 36.25498
       },
-      "dv_vps": 29.863948,
-      "vdds": 0.822761
+      "dv_vps": 30.034955,
+      "vdds": 0.822818
     },
     "HNU.TO": {
       "side": "long",
@@ -68422,55 +68428,55 @@
           "type": "vcvi_warning",
           "side": "long",
           "message": "VCVI (5d) = 61.1 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:54.931110+00:00"
+          "timestamp": "2026-04-09T21:44:01.228179+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (21d) = 79.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:54.931110+00:00"
+          "timestamp": "2026-04-09T21:44:01.228179+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (63d) = 80.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:54.931110+00:00"
+          "timestamp": "2026-04-09T21:44:01.228179+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (126d) = 98.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:54.931110+00:00"
+          "timestamp": "2026-04-09T21:44:01.228179+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (252d) = 110.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:54.931110+00:00"
+          "timestamp": "2026-04-09T21:44:01.228179+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
           "message": "CVI (21d) = 65.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:54.931110+00:00"
+          "timestamp": "2026-04-09T21:44:01.228179+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
           "message": "CVI (63d) = 66.1 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:54.931110+00:00"
+          "timestamp": "2026-04-09T21:44:01.228179+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (126d) = 80.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:54.931110+00:00"
+          "timestamp": "2026-04-09T21:44:01.228179+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (252d) = 90.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:54.931110+00:00"
+          "timestamp": "2026-04-09T21:44:01.228179+00:00"
         }
       ],
       "dv_rvol": {
@@ -96483,49 +96489,49 @@
           "type": "vcvi_warning",
           "side": "long",
           "message": "VCVI (10d) = 58.3 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:55.619314+00:00"
+          "timestamp": "2026-04-09T21:44:01.782311+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (21d) = 72.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:55.619314+00:00"
+          "timestamp": "2026-04-09T21:44:01.782311+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (63d) = 80.5 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:55.619314+00:00"
+          "timestamp": "2026-04-09T21:44:01.782311+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (126d) = 99.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:55.619314+00:00"
+          "timestamp": "2026-04-09T21:44:01.782311+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (252d) = 115.6 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:55.619314+00:00"
+          "timestamp": "2026-04-09T21:44:01.782311+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
           "message": "CVI (63d) = 61.3 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:55.619314+00:00"
+          "timestamp": "2026-04-09T21:44:01.782311+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
           "message": "CVI (126d) = 76.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:55.619314+00:00"
+          "timestamp": "2026-04-09T21:44:01.782311+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (252d) = 88.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
-          "timestamp": "2026-04-09T20:59:55.619314+00:00"
+          "timestamp": "2026-04-09T21:44:01.782311+00:00"
         }
       ],
       "dv_rvol": {
@@ -96574,30 +96580,30 @@
       "name": "ProShares UltraShort Bloomberg Natural Gas",
       "current": {
         "price": 24.86,
-        "volume": 3413928,
+        "volume": 3430260,
         "change_pct": -86.498889,
-        "dollar_volume": 84870250.08
+        "dollar_volume": 85276263.6
       },
       "rvol": {
-        "5d": 0.771142,
-        "10d": 0.675497,
-        "21d": 0.529705,
-        "63d": 0.316183,
-        "126d": 0.408377,
-        "252d": 0.50215
+        "5d": 0.77426,
+        "10d": 0.678509,
+        "21d": 0.532175,
+        "63d": 0.317688,
+        "126d": 0.410324,
+        "252d": 0.504548
       },
       "z_score": {
-        "5d": -1.058775,
-        "10d": -1.587308,
-        "21d": -1.462566,
-        "63d": -0.724563,
-        "126d": -0.629851,
-        "252d": -0.568041
+        "5d": -1.049844,
+        "10d": -1.577466,
+        "21d": -1.455898,
+        "63d": -0.722999,
+        "126d": -0.627794,
+        "252d": -0.565314
       },
       "vroc": {
-        "5d": -25.690479,
-        "10d": -40.450243,
-        "21d": -50.42579
+        "5d": -25.334988,
+        "10d": -40.165361,
+        "21d": -50.18863
       },
       "vol_percentile": {
         "5d": 25.0,
@@ -96605,7 +96611,7 @@
         "21d": 5.0,
         "63d": 8.064516,
         "126d": 10.4,
-        "252d": 15.139442
+        "252d": 15.537849
       },
       "price_percentile": {
         "5d": 100.0,
@@ -96621,7 +96627,7 @@
         "21d": 0.0,
         "63d": 1.040583,
         "126d": 5.4912,
-        "252d": 9.107792
+        "252d": 9.347471
       },
       "vcvi": {
         "5d": 0.0,
@@ -96629,7 +96635,7 @@
         "21d": 0.0,
         "63d": 1.287255,
         "126d": 6.792899,
-        "252d": 11.26681
+        "252d": 11.563306
       },
       "volatility": {
         "hv": {
@@ -97481,9 +97487,9 @@
       },
       "sharp_spike": false,
       "fast_signal": null,
-      "vps": 21.321872,
+      "vps": 21.377143,
       "mwca": false,
-      "rolling_correlation": -0.738548,
+      "rolling_correlation": -0.738314,
       "moving_averages": {
         "price": {
           "10d": 22.517,
@@ -97492,10 +97498,10 @@
           "200d": 29.43045
         },
         "volume": {
-          "10d": 5053952.8,
-          "21d": 6444963.238095,
-          "50d": 10105458.56,
-          "200d": 6766625.64
+          "10d": 5055586.0,
+          "21d": 6445740.952381,
+          "50d": 10105785.2,
+          "200d": 6766707.3
         }
       },
       "history": [
@@ -126673,25 +126679,25 @@
           "high": 25.305,
           "low": 24.1278,
           "close": 24.860001,
-          "volume": 3413928
+          "volume": 3430260
         }
       ],
       "alerts": [],
       "dv_rvol": {
-        "5d": 0.820446,
-        "10d": 0.752408,
-        "21d": 0.635154,
-        "63d": 0.377337,
-        "126d": 0.422252,
-        "252d": 0.492588
+        "5d": 0.823724,
+        "10d": 0.755735,
+        "21d": 0.6381,
+        "63d": 0.379131,
+        "126d": 0.424265,
+        "252d": 0.49494
       },
       "dv_zscore": {
-        "5d": -0.920182,
-        "10d": -1.48895,
-        "21d": -1.411147,
-        "63d": -0.787365,
-        "126d": -0.871083,
-        "252d": -0.847999
+        "5d": -0.908266,
+        "10d": -1.474725,
+        "21d": -1.401112,
+        "63d": -0.785141,
+        "126d": -0.86808,
+        "252d": -0.844088
       },
       "dv_percentile": {
         "5d": 25.0,
@@ -126702,9 +126708,9 @@
         "252d": 4.780876
       },
       "dv_vroc": {
-        "5d": -19.118445,
-        "10d": -30.724992,
-        "21d": -39.140005
+        "5d": -18.731513,
+        "10d": -30.393585,
+        "21d": -38.848855
       },
       "dvcvi": {
         "5d": 0.0,
@@ -126714,8 +126720,8 @@
         "126d": 0.4224,
         "252d": 2.876145
       },
-      "dv_vps": 22.816979,
-      "vdds": 1.199072
+      "dv_vps": 22.889542,
+      "vdds": 1.199043
     },
     "HND.TO": {
       "side": "short",
@@ -192049,9 +192055,9 @@
   },
   "pairs": {
     "BOIL_KOLD": {
-      "ipsi": 0.562546,
-      "long_rvol": 0.94162,
-      "short_rvol": 0.529705,
+      "ipsi": 0.560541,
+      "long_rvol": 0.949396,
+      "short_rvol": 0.532175,
       "status": "quiet"
     },
     "HNU.TO_HND.TO": {
@@ -192131,155 +192137,162 @@
     {
       "type": "vcvi_warning",
       "side": "long",
-      "message": "VCVI (21d) = 58.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:54.098586+00:00",
+      "message": "VCVI (5d) = 58.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-04-09T21:44:00.553413+00:00",
+      "ticker": "BOIL"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "long",
+      "message": "VCVI (21d) = 64.5 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-04-09T21:44:00.553413+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
-      "message": "VCVI (126d) = 78.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:54.098586+00:00",
+      "message": "VCVI (126d) = 79.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-04-09T21:44:00.553413+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
-      "message": "VCVI (252d) = 98.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:54.098586+00:00",
+      "message": "VCVI (252d) = 98.6 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-04-09T21:44:00.553413+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_warning",
       "side": "long",
-      "message": "CVI (126d) = 67.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:54.098586+00:00",
+      "message": "CVI (126d) = 68.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-04-09T21:44:00.553413+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_critical",
       "side": "long",
-      "message": "CVI (252d) = 83.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:54.098586+00:00",
+      "message": "CVI (252d) = 84.1 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-04-09T21:44:00.553413+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vcvi_warning",
       "side": "long",
       "message": "VCVI (5d) = 61.1 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:54.931110+00:00",
+      "timestamp": "2026-04-09T21:44:01.228179+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (21d) = 79.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:54.931110+00:00",
+      "timestamp": "2026-04-09T21:44:01.228179+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (63d) = 80.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:54.931110+00:00",
+      "timestamp": "2026-04-09T21:44:01.228179+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (126d) = 98.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:54.931110+00:00",
+      "timestamp": "2026-04-09T21:44:01.228179+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (252d) = 110.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:54.931110+00:00",
+      "timestamp": "2026-04-09T21:44:01.228179+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_warning",
       "side": "long",
       "message": "CVI (21d) = 65.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:54.931110+00:00",
+      "timestamp": "2026-04-09T21:44:01.228179+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_warning",
       "side": "long",
       "message": "CVI (63d) = 66.1 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:54.931110+00:00",
+      "timestamp": "2026-04-09T21:44:01.228179+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (126d) = 80.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:54.931110+00:00",
+      "timestamp": "2026-04-09T21:44:01.228179+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (252d) = 90.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:54.931110+00:00",
+      "timestamp": "2026-04-09T21:44:01.228179+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_warning",
       "side": "long",
       "message": "VCVI (10d) = 58.3 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:55.619314+00:00",
+      "timestamp": "2026-04-09T21:44:01.782311+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (21d) = 72.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:55.619314+00:00",
+      "timestamp": "2026-04-09T21:44:01.782311+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (63d) = 80.5 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:55.619314+00:00",
+      "timestamp": "2026-04-09T21:44:01.782311+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (126d) = 99.8 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:55.619314+00:00",
+      "timestamp": "2026-04-09T21:44:01.782311+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (252d) = 115.6 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:55.619314+00:00",
+      "timestamp": "2026-04-09T21:44:01.782311+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "cvi_warning",
       "side": "long",
       "message": "CVI (63d) = 61.3 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:55.619314+00:00",
+      "timestamp": "2026-04-09T21:44:01.782311+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "cvi_warning",
       "side": "long",
       "message": "CVI (126d) = 76.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:55.619314+00:00",
+      "timestamp": "2026-04-09T21:44:01.782311+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (252d) = 88.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-09T20:59:55.619314+00:00",
+      "timestamp": "2026-04-09T21:44:01.782311+00:00",
       "ticker": "3NGL.L"
     }
   ]
