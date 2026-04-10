@@ -395,12 +395,12 @@ function renderScorecard(composites) {
         '<th data-tooltip="Sample Size: Total number of validated signals in the lookback period.">COUNT</th>' +
         '<th data-tooltip="Short-Term Hit Rate: Probability that NG moves in the predicted direction within 5 trading sessions.">HIT 5D</th>' +
         '<th data-tooltip="Medium-Term Hit Rate (Gold Standard): Probability that NG moves in the predicted direction within 21 trading sessions (1 month). The primary benchmark for option-based signaling.">HIT 21D</th>' +
-        '<th data-tooltip="Tactical Return: The average percentage change in NG price 1 week after the signal fires.">AVG 5D</th>' +
-        '<th data-tooltip="Strategic Return: The average percentage change in NG price 1 month after the signal fires.">AVG 21D</th>' +
-        '<th data-tooltip="Reliability Check: The median 21-day return. Compared to the Average, this shows if the signal is driven by consistent performance or rare outliers.">MED 21D</th>' +
-        '<th data-tooltip="Volatility Potential: The average absolute price move after a signal, regardless of direction. Measures the \'power\' of the signal.">MAG 21D</th>' +
-        '<th data-tooltip="Maximum historical upside potential captured by this signal.">BEST 21D</th>' +
-        '<th data-tooltip="Maximum historical downside risk experienced after this signal.">WORST 21D</th>' +
+        '<th data-tooltip="Tactical Signal Return (direction-adjusted): average return 5 days after signal, where positive = NG moved in the predicted direction. For bearish signals, NG falling counts as positive.">AVG 5D</th>' +
+        '<th data-tooltip="Strategic Signal Return (direction-adjusted): average return 21 days after signal, where positive = NG moved in the predicted direction. For bearish signals, NG falling counts as positive.">AVG 21D</th>' +
+        '<th data-tooltip="Reliability Check: Median direction-adjusted 21D return. Compared to Average, shows whether performance is driven by consistency or rare outliers.">MED 21D</th>' +
+        '<th data-tooltip="Volatility Potential: Average absolute NG move after a signal, regardless of direction. Measures the raw \'power\' of the signal.">MAG 21D</th>' +
+        '<th data-tooltip="Best 21D signal outcome (direction-adjusted): the largest NG move in the predicted direction across all events. Positive = biggest win.">BEST 21D</th>' +
+        '<th data-tooltip="Worst 21D signal outcome (direction-adjusted): the largest adverse NG move against the predicted direction. Should not exceed -100% for unlevered NG.">WORST 21D</th>' +
         '<th data-tooltip="Consistency Score: Annualized Sharpe measures the risk-adjusted return of the signal. >0.50 is the institutional benchmark for a scalable edge.">SHARPE</th>' +
         '<th data-tooltip="Statistical Confidence: Binomial test of 21D hit rate vs 50% null. ★★★ = p<0.05 (significant), ★★ = p<0.10 (marginal), ★ = not significant.">CONF</th>' +
         '<th data-tooltip="Optimal Holding Period: The forward-return window (5D/10D/21D/42D) with the best risk-adjusted return (Sharpe) for this signal. Signals may degrade or improve significantly at different time horizons — see the Multi-Horizon table below.">OPT HZ</th>' +
