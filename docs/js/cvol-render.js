@@ -581,7 +581,7 @@ function renderModalChart(compKey) {
     var underlying = fullUnderlying.slice(sIdx, eIdx + 1);
     var dates = fullDates.slice(sIdx, eIdx + 1);
     var n = values.length;
-    if (n < 10) return;
+    if (n < 2) return;
 
     var pad = { top: 20, bottom: 32, left: 55, right: 55 };
     var cW = W - pad.left - pad.right, cH = H - pad.top - pad.bottom;
