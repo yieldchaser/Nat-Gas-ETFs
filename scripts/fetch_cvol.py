@@ -198,6 +198,14 @@ def main():
     print("\n[4/5] Building DataFrame (all series)…")
     df_new = build_all_series(parsed)
 
+    # Deduplicate: keep only the last intraday observation per calendar day
+    # (the new insid returns intraday granularity; we want end-of-day only)
+    before = len(df_new)
+    df_new = df_new.groupby(df_new.index.date).last()
+    df_new.index = pd.to_datetime(df_new.index, utc=True)
+    df_new.index.name = "Timestamp"
+    print(f"      Deduplicated: {before:,} intraday -> {len(df_new):,} daily rows")
+
     print("\n[5/5] Incremental CSV update…")
     df_final, new_rows = incremental_update(df_new, OUTPUT_CSV)
     
