@@ -499,10 +499,11 @@ function computeScorecard(composites, regimeFilter) {
         if (!signals[key]) signals[key] = { count: 0, hit5: 0, hit10: 0, hit21: 0, hit42: 0, ret5: [], ret10: [], ret21: [], ret42: [], name: ev.signal, seasonHit: {} };
         signals[key].count++;
         var isDown = ev.direction.indexOf('TOP') >= 0 || ev.direction.indexOf('DOWNSIDE') >= 0;
-        if (ev.fwd5  != null) { signals[key].ret5.push(ev.fwd5);   if ((isDown && ev.fwd5  < 0) || (!isDown && ev.fwd5  > 0)) signals[key].hit5++; }
-        if (ev.fwd10 != null) { signals[key].ret10.push(ev.fwd10); if ((isDown && ev.fwd10 < 0) || (!isDown && ev.fwd10 > 0)) signals[key].hit10++; }
+        var dir = isDown ? -1 : 1; // direction multiplier: makes all ret arrays signal-P&L (positive = signal was right)
+        if (ev.fwd5  != null) { signals[key].ret5.push(ev.fwd5  * dir); if ((isDown && ev.fwd5  < 0) || (!isDown && ev.fwd5  > 0)) signals[key].hit5++; }
+        if (ev.fwd10 != null) { signals[key].ret10.push(ev.fwd10 * dir); if ((isDown && ev.fwd10 < 0) || (!isDown && ev.fwd10 > 0)) signals[key].hit10++; }
         if (ev.fwd21 != null) {
-            signals[key].ret21.push(ev.fwd21);
+            signals[key].ret21.push(ev.fwd21 * dir);
             var hit21 = (isDown && ev.fwd21 < 0) || (!isDown && ev.fwd21 > 0);
             if (hit21) signals[key].hit21++;
             var ssn = ev.season || 'unknown';
@@ -510,7 +511,7 @@ function computeScorecard(composites, regimeFilter) {
             signals[key].seasonHit[ssn].total++;
             if (hit21) signals[key].seasonHit[ssn].hits++;
         }
-        if (ev.fwd42 != null) { signals[key].ret42.push(ev.fwd42); if ((isDown && ev.fwd42 < 0) || (!isDown && ev.fwd42 > 0)) signals[key].hit42++; }
+        if (ev.fwd42 != null) { signals[key].ret42.push(ev.fwd42 * dir); if ((isDown && ev.fwd42 < 0) || (!isDown && ev.fwd42 > 0)) signals[key].hit42++; }
     });
     // helper: sharpe from a return array
     function calcSharpe(arr) {
@@ -572,10 +573,11 @@ function computeScorecard(composites, regimeFilter) {
         var h5=0, h10=0, h21=0, h42=0, r5=[], r10=[], r21=[], r42=[];
         confEvents.forEach(function(ev) {
             var isDown = ev.direction.indexOf('TOP') >= 0 || ev.direction.indexOf('DOWNSIDE') >= 0;
-            if (ev.fwd5  != null) { r5.push(ev.fwd5);   if ((isDown && ev.fwd5  < 0) || (!isDown && ev.fwd5  > 0)) h5++;  }
-            if (ev.fwd10 != null) { r10.push(ev.fwd10); if ((isDown && ev.fwd10 < 0) || (!isDown && ev.fwd10 > 0)) h10++; }
-            if (ev.fwd21 != null) { r21.push(ev.fwd21); if ((isDown && ev.fwd21 < 0) || (!isDown && ev.fwd21 > 0)) h21++; }
-            if (ev.fwd42 != null) { r42.push(ev.fwd42); if ((isDown && ev.fwd42 < 0) || (!isDown && ev.fwd42 > 0)) h42++; }
+            var dir = isDown ? -1 : 1;
+            if (ev.fwd5  != null) { r5.push(ev.fwd5   * dir); if ((isDown && ev.fwd5  < 0) || (!isDown && ev.fwd5  > 0)) h5++;  }
+            if (ev.fwd10 != null) { r10.push(ev.fwd10  * dir); if ((isDown && ev.fwd10 < 0) || (!isDown && ev.fwd10 > 0)) h10++; }
+            if (ev.fwd21 != null) { r21.push(ev.fwd21  * dir); if ((isDown && ev.fwd21 < 0) || (!isDown && ev.fwd21 > 0)) h21++; }
+            if (ev.fwd42 != null) { r42.push(ev.fwd42  * dir); if ((isDown && ev.fwd42 < 0) || (!isDown && ev.fwd42 > 0)) h42++; }
         });
         var a5  = r5.length  ? r5.reduce(function(a,b){return a+b;},0)/r5.length   : null;
         var a10 = r10.length ? r10.reduce(function(a,b){return a+b;},0)/r10.length : null;
