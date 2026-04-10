@@ -12,6 +12,7 @@ const CvolState = {
     rangeState: { start: 0, end: 100 },
     varRangeState: { start: 0, end: 100 },
     horizonState: 'ALL',
+    varHorizonState: 'ALL',
     hoverState: null,
     dragState: { active: false, startIdx: null, currentIdx: null },
     signalFilter: 'all',
