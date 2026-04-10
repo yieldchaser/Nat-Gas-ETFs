@@ -1180,9 +1180,11 @@ function renderVarSeriesChips() {
             var n = CvolState.data.length;
             var daysMap = {'1W':7,'1M':21,'3M':63,'6M':126,'1Y':252,'3Y':756,'ALL':0};
             var days = daysMap[period] || 0;
-            var state = (days === 0) ? {start:0, end:100} : {start: Math.max(0, Math.round((1 - days / n) * 100)), end: 100};
-            
+            // Use min(99,...) to prevent start==end on large datasets (e.g. 1W on 3155 rows rounds to 100%)
+            var state = (days === 0) ? {start:0, end:100} : {start: Math.min(99, Math.max(0, Math.round((1 - days / n) * 100))), end: 100};
+
             if (targetKey === 'main') {
+                CvolState.horizonState = period;
                 CvolState.rangeState = state;
                 var sInp = document.getElementById('cvol-range-start');
                 var eInp = document.getElementById('cvol-range-end');
@@ -1191,6 +1193,7 @@ function renderVarSeriesChips() {
                 updateRangeHighlight();
                 renderMainChart(); renderCorrMatrix(CvolState.data);
             } else if (targetKey === 'var') {
+                CvolState.varHorizonState = period;
                 CvolState.varRangeState = state;
                 var sInp = document.getElementById('var-range-start');
                 var eInp = document.getElementById('var-range-end');
@@ -1234,6 +1237,7 @@ function renderVarSeriesChips() {
                 var e = parseInt(eInp.value);
                 if (s > e - 1) { if (id === 'cvol-range-start') s = e - 1; else e = s + 1; sInp.value = s; eInp.value = e; }
                 CvolState.rangeState = { start: s, end: e };
+                CvolState.horizonState = null;
                 // Deactivate horizon buttons on manual drag
                 if (cvolHorizon) cvolHorizon.querySelectorAll('.horizon-btn').forEach(function(b) { b.classList.remove('active'); });
                 updateRangeHighlight();
@@ -1252,7 +1256,8 @@ function renderVarSeriesChips() {
                 var e = parseInt(eInp.value);
                 if (s > e - 1) { if (id === 'var-range-start') s = e - 1; else e = s + 1; sInp.value = s; eInp.value = e; }
                 CvolState.varRangeState = { start: s, end: e };
-                 // Deactivate horizon buttons on manual drag
+                CvolState.varHorizonState = null;
+                // Deactivate horizon buttons on manual drag
                 if (varHorizon) varHorizon.querySelectorAll('.horizon-btn').forEach(function(b) { b.classList.remove('active'); });
                 updateVarRangeHighlight();
                 renderVarDecomp();
@@ -1319,6 +1324,12 @@ function getVarVisibleRange() {
     var data = CvolState.data;
     if (!data || !data.length) return { s: 0, e: 0 };
     var n = data.length;
+    var hs = CvolState.varHorizonState;
+    if (hs && hs !== 'ALL') {
+        var daysMap = {'1W':7,'1M':21,'3M':63,'6M':126,'1Y':252,'3Y':756};
+        var days = daysMap[hs];
+        if (days != null) return { s: Math.max(0, n - 1 - days), e: n - 1 };
+    }
     var s = Math.floor(CvolState.varRangeState.start / 100 * (n - 1));
     var e = Math.ceil(CvolState.varRangeState.end / 100 * (n - 1));
     return { s: Math.max(0, s), e: Math.min(n - 1, Math.max(s + 1, e)) };
