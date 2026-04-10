@@ -8,6 +8,12 @@ function getVisibleRange() {
     var data = CvolState.data;
     if (!data || !data.length) return { s: 0, e: 0 };
     var n = data.length;
+    var hs = CvolState.horizonState;
+    if (hs && hs !== 'ALL') {
+        var daysMap = {'1W':7,'1M':21,'3M':63,'6M':126,'1Y':252,'3Y':756};
+        var days = daysMap[hs];
+        if (days != null) return { s: Math.max(0, n - 1 - days), e: n - 1 };
+    }
     var s = Math.floor(CvolState.rangeState.start / 100 * (n - 1));
     var e = Math.ceil(CvolState.rangeState.end / 100 * (n - 1));
     return { s: Math.max(0, s), e: Math.min(n - 1, Math.max(s + 1, e)) };
