@@ -705,12 +705,8 @@ function openCompModal(compKey) {
         var mo = parseInt(ev.date.split('-')[1]);
         if (mo >= 11 || mo <= 2) { wTotal++; if (hit) wHits++; }
         else if (mo >= 6 && mo <= 8) { sTotal++; if (hit) sHits++; }
-        // For stats, we care about the *directionally adjusted* return if we are a directional signal
-        // Wait, for RDS/SAD/CVC, the actual return matters. We can just store raw NG return, but magnitude/best/worst are easier to think about directionally.
-        // Actually, let's keep it standard: Median 21D (raw), MAG 21D (abs), Best (raw max), Worst (raw min).
-        // If it's a Downside signal (isDown), then Best is negative, Worst is positive?
-        // Let's stick perfectly to the Scorecard methodology for consistency.
-        fwd21s.push(r);
+        // Direction-adjust: positive = signal was right, negative = signal was wrong (matches scorecard)
+        fwd21s.push(r * (isDown ? -1 : 1));
     });
     
     // Sort for median and min/max
@@ -734,10 +730,10 @@ function openCompModal(compKey) {
     };
     stHtml += mkStat('TOTAL FIRES', totalFires, 'Total times this signal fired', meta.color);
     stHtml += mkStat('21D HIT RATE', hitRate + '%', 'Directional hit rate over 21 days', hitRate > 55 ? '#3db87a' : (hitRate < 45 ? '#ef4444' : 'var(--text-bright)'));
-    stHtml += mkStat('MEDIAN 21D', pctFmt(med21), 'Median 21-day NG return', pctColor(med21));
-    stHtml += mkStat('MAGNITUDE 21D', pctFmt(mag21), 'Average absolute 21-day NG move', pctColor(mag21));
-    stHtml += mkStat('BEST 21D', pctFmt(best21), 'Maximum 21-day positive move', pctColor(best21));
-    stHtml += mkStat('WORST 21D', pctFmt(worst21), 'Maximum 21-day negative move', pctColor(worst21));
+    stHtml += mkStat('MEDIAN 21D', fmtSign(med21), 'Median direction-adjusted 21D signal return (positive = signal was right)', pctColor(med21));
+    stHtml += mkStat('MAGNITUDE 21D', fmt(mag21) + '%', 'Average absolute 21-day NG move', 'var(--text-bright)');
+    stHtml += mkStat('BEST 21D', fmtSign(best21), 'Best direction-adjusted 21D outcome (largest win)', pctColor(best21));
+    stHtml += mkStat('WORST 21D', fmtSign(worst21), 'Worst direction-adjusted 21D outcome (largest adverse move)', pctColor(worst21));
     stHtml += mkStat('AVG CONFLUENCE', avgConf, 'Average number of other signals firing within ±5 days', 'var(--text-bright)');
     stHtml += mkStat('SEASON (W / S)', '<span style="color:'+(wPct.indexOf('N/A')<0&&(parseInt(wPct)>55)?'#3db87a':'var(--text-muted)')+'">'+wPct+'</span> <span style="color:var(--text-dim);font-weight:400;">/</span> <span style="color:'+(sPct.indexOf('N/A')<0&&(parseInt(sPct)>55)?'#3db87a':'var(--text-muted)')+'">'+sPct+'</span>', 'Winter vs Summer hit rate', '');
     stHtml += '</div>';
