@@ -692,7 +692,9 @@ function renderModalChart(compKey) {
         if (event) {
             html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border-primary);">';
             html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;"><span style="color:var(--text-dim);">Confluence</span><span style="font-weight:700;">'+(getGlobalConfluence(event)||0)+' signals</span></div>';
-            html += '<div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:var(--text-dim);">21D Return</span><span style="font-weight:700;color:'+pctColor(event.fwd21)+';">'+(event.fwd21!=null?pctFmt(event.fwd21):'PENDING')+'</span></div>';
+            var _isDown = event.direction.indexOf('TOP')>=0||event.direction.indexOf('DOWNSIDE')>=0;
+            var _adjRet = event.fwd21 != null ? event.fwd21 * (_isDown ? -1 : 1) : null;
+            html += '<div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:var(--text-dim);">21D Return</span><span style="font-weight:700;color:'+pctColor(_adjRet)+';">'+(_adjRet!=null?fmtSign(_adjRet):'PENDING')+'</span></div>';
             html += '</div>';
         }
         
