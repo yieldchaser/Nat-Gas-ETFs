@@ -542,19 +542,6 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
     </div>
 
-    <!-- VOL REGIME MONITOR -->
-    <div class="chart-container" id="vol-regime-panel">
-        <div class="chart-header">
-            <div style="flex:1">
-                <span style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;">Vol Regime Monitor</span>
-                <span style="font-size:0.65rem;color:var(--text-muted);margin-left:10px;">— 5D · 21D · 63D · 252D historical volatility</span>
-            </div>
-        </div>
-        <div id="vrm-selector"></div>
-        <div id="vrm-content">
-            <div class="vrm-loading">Loading volatility data…</div>
-        </div>
-    </div>
 
     <!-- CYCLE DETAIL TABLE -->
     <div class="table-panel">
@@ -584,10 +571,6 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 
 </main>
 
-<!-- Vol Regime Monitor dependencies -->
-<script src="js/config.js"></script>
-<script src="js/metrics.js"></script>
-<script src="js/vol-regime.js"></script>
 
 <!-- Custom scripts only - No external charting libraries -->
 <script>
