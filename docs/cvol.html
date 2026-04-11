@@ -682,14 +682,38 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 <script src="js/cvol-render.js"></script>
 <script src="js/cvol-ui.js"></script>
 <script>
+    // ── Vol Regime Monitor init ──────────────────────────────────
+    // Waits for both dashboard_data.json (ETF metrics) AND CvolState.data
+    // (already fetched by cvol-ui.js from ngvl_cvol_history.csv) to be ready.
+    // The CVOL CSV's `underlying` column IS the NG=F front-month price series,
+    // so we use it to build ngVolMetrics without needing a separate live fetch.
     if (typeof VolRegime !== 'undefined') {
         fetch('data/dashboard_data.json')
             .then(res => res.json())
             .then(dd => {
                 const vrmMetrics = VolRegime.buildMetricsFromDashboard(dd);
+                // First render immediately with ETF data (NG=F shows loading state)
                 VolRegime.render(vrmMetrics, null);
+
+                // Poll until CvolState.data is populated by cvol-ui.js
+                function tryInjectNg(attempts) {
+                    if (typeof CvolState !== 'undefined' && CvolState.data && CvolState.data.length >= 22) {
+                        // Extract NG=F closes + dates from the CVOL underlying series
+                        const closes = CvolState.data.map(r => r.underlying).filter(v => v != null && !isNaN(v));
+                        const dates  = CvolState.data
+                            .filter(r => r.underlying != null && !isNaN(r.underlying))
+                            .map(r => r.date);
+                        if (closes.length >= 22) {
+                            const ngM = VolRegime.buildMetricsFromLive('NG=F', { closes, dates });
+                            if (ngM) VolRegime.render(vrmMetrics, ngM);
+                        }
+                    } else if (attempts > 0) {
+                        setTimeout(() => tryInjectNg(attempts - 1), 300);
+                    }
+                }
+                tryInjectNg(30); // retry for up to ~9 seconds
             })
-            .catch(err => console.error('Failed to load dashboard_data for VRM', err));
+            .catch(err => console.error('VRM: failed to load dashboard_data', err));
     }
 </script>
 </body>
