@@ -398,6 +398,20 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
     </div>
 
+    <!-- VOL REGIME MONITOR -->
+    <div class="chart-container" id="vol-regime-panel" style="margin-bottom:24px;">
+        <div class="chart-header">
+            <div style="flex:1">
+                <span style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;">Vol Regime Monitor</span>
+                <span style="font-size:0.65rem;color:var(--text-muted);margin-left:10px;">— 5D · 21D · 63D · 252D historical volatility</span>
+            </div>
+        </div>
+        <div id="vrm-selector"></div>
+        <div id="vrm-content">
+            <div class="vrm-loading">Loading volatility data…</div>
+        </div>
+    </div>
+
     <!-- PANEL 4.5: REGIME DASHBOARD (Decision Synthesis) -->
     <div class="chart-container" id="regime-dashboard-panel" style="padding:20px 24px;">
         <div class="section-title-bar" style="margin-bottom:14px;">
@@ -660,8 +674,22 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 }());
 </script>
 
+<script src="js/config.js"></script>
+<script src="js/metrics.js"></script>
+<script src="js/vol-regime.js"></script>
 <script src="js/cvol.js"></script>
 <script src="js/cvol-render.js"></script>
 <script src="js/cvol-ui.js"></script>
+<script>
+    if (typeof VolRegime !== 'undefined') {
+        fetch('data/dashboard_data.json')
+            .then(res => res.json())
+            .then(dd => {
+                const vrmMetrics = VolRegime.buildMetricsFromDashboard(dd);
+                VolRegime.render(vrmMetrics, null);
+            })
+            .catch(err => console.error('Failed to load dashboard_data for VRM', err));
+    }
+</script>
 </body>
 </html>
