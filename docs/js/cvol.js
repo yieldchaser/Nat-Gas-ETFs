@@ -1,6 +1,6 @@
 /* ============================================================
    CVOL Volatility Intelligence Engine
-   4th Tab of Stratum Meridian
+   4th Tab of Blue Meridian
    ============================================================ */
 'use strict';
 
