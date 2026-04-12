@@ -1,4 +1,4 @@
-# Stratum Meridian
+# Blue Meridian
 
 A real-time dashboard for tracking volume flow and price-volume dynamics across natural gas ETFs. Combines daily pipeline data from Yahoo Finance and TrackInsight with a multi-timeframe volatility engine to surface statistically significant volume and capital flow events.
 
