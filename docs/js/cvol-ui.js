@@ -664,16 +664,12 @@ function renderTimeline(composites, filter) {
             sparkLabel.textContent = '21D FWD PATH: ' + (finalRet >= 0 ? '+' : '') + finalRet.toFixed(1) + '%' + (isPending ? ' (PARTIAL)' : '');
             sparkLabel.style.color = lineColor;
 
-            // Position popover — try right side first, fall back to left, clamp to viewport
+            // Position popover — always on the right; if no room, pin to right viewport edge
             var rect = row.getBoundingClientRect();
             var popW = 158; // canvas 140 + padding 2×8 + border 2
             pop.style.display = 'block';
-            var tryRight = rect.right + 8;
-            if (tryRight + popW <= window.innerWidth) {
-                pop.style.left = tryRight + 'px';
-            } else {
-                pop.style.left = Math.max(4, rect.left - popW - 8) + 'px';
-            }
+            var leftPos = Math.min(rect.right + 8, window.innerWidth - popW - 8);
+            pop.style.left = Math.max(4, leftPos) + 'px';
             pop.style.top = Math.max(8, rect.top - 10) + 'px';
         });
         row.addEventListener('mouseleave', function() {
