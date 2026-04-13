@@ -213,12 +213,16 @@ const App = {
             };
             // Always declare sparkData locally — avoids implicit global that would bleed
             // stale values from a previous ticker into the next when history is empty.
+            const mapBar = h => ({
+                date: h.date || h[0],
+                close: h.close != null ? h.close : h[1],
+                volume: h.volume != null ? h.volume : h[2]
+            });
             const sparkData = (etfData.history && etfData.history.length > 0)
-                ? etfData.history.slice(-CONFIG.sparklineDays).map(h => ({
-                    date: h.date || h[0],
-                    close: h.close != null ? h.close : h[1],
-                    volume: h.volume != null ? h.volume : h[2]
-                  }))
+                ? etfData.history.slice(-CONFIG.sparklineDays).map(mapBar)
+                : [];
+            const heatmapData = (etfData.history && etfData.history.length > 0)
+                ? etfData.history.slice(-CONFIG.heatmapDays).map(mapBar)
                 : [];
 
             // Build metrics object from pre-computed data
@@ -330,6 +334,7 @@ const App = {
                 alerts: alerts,
                 alertLevel: alertLevel,
                 sparkData: sparkData,
+                heatmapData: heatmapData,
                 historyLength: (etfData.history || []).length
             };
         }

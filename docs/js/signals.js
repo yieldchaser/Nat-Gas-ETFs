@@ -137,7 +137,7 @@ const Signals = {
         // Find ETF with most data to get date index
         let longestData = [];
         for (const t of allTickers) {
-            const data = allMetrics[t].sparkData;
+            const data = allMetrics[t].heatmapData;
             if (data && data.length > longestData.length) longestData = data;
         }
 
@@ -151,7 +151,7 @@ const Signals = {
             const date = longestData[i]?.date || '';
 
             for (const t of allTickers) {
-                const sd = allMetrics[t].sparkData;
+                const sd = allMetrics[t].heatmapData;
                 if (!sd || i >= sd.length) continue;
 
                 // Quick CVI proxy: how extreme is volume relative to recent mean
