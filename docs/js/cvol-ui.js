@@ -664,15 +664,17 @@ function renderTimeline(composites, filter) {
             sparkLabel.textContent = '21D FWD PATH: ' + (finalRet >= 0 ? '+' : '') + finalRet.toFixed(1) + '%' + (isPending ? ' (PARTIAL)' : '');
             sparkLabel.style.color = lineColor;
 
-            // Position popover
+            // Position popover — try right side first, fall back to left, clamp to viewport
             var rect = row.getBoundingClientRect();
+            var popW = 158; // canvas 140 + padding 2×8 + border 2
             pop.style.display = 'block';
-            pop.style.left = (rect.right + 8) + 'px';
-            pop.style.top = Math.max(8, rect.top - 10) + 'px';
-            // If it would overflow right side, put it left of row
-            if (rect.right + 170 > window.innerWidth) {
-                pop.style.left = (rect.left - 170) + 'px';
+            var tryRight = rect.right + 8;
+            if (tryRight + popW <= window.innerWidth) {
+                pop.style.left = tryRight + 'px';
+            } else {
+                pop.style.left = Math.max(4, rect.left - popW - 8) + 'px';
             }
+            pop.style.top = Math.max(8, rect.top - 10) + 'px';
         });
         row.addEventListener('mouseleave', function() {
             pop.style.display = 'none';
