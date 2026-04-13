@@ -534,7 +534,7 @@ function renderVarDecomp() {
             if (tip) {
                 var row = visData[hi];
                 var sk = row.skewRatio;
-                var sentiment = sk > 1.1 ? 'EXTREME BULLISH' : sk > 1.02 ? 'BULLISH BIAS' : sk < 0.9 ? 'EXTREME BEARISH' : sk < 0.98 ? 'BEARISH BIAS' : 'NEUTRAL';
+                var sentiment = sk > 1.45 ? 'EXTREME BULLISH' : sk > 1.25 ? 'BULLISH BIAS' : sk < 0.97 ? 'EXTREME BEARISH' : sk < 1.05 ? 'BEARISH BIAS' : 'NEUTRAL';
                 var ttHtml = '<div style="color:var(--cyan);font-weight:800;font-size:0.6rem;letter-spacing:1.5px;margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:3px;">' + fmtDate(row.date) + '</div>';
                 ttHtml += '<div style="color:#f59e0b;font-weight:800;font-size:0.55rem;margin-bottom:6px;">SENTIMENT: '+sentiment+'</div>';
                 
