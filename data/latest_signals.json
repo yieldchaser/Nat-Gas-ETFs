@@ -1,81 +1,60 @@
 {
-  "last_updated": "2026-04-21T21:43:25.946565+00:00",
-  "market_status": "after_hours",
-  "signals": [
-    {
-      "type": "vcvi_warning",
-      "side": "long",
-      "message": "VCVI (252d) = 69.0 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-21T21:43:23.427548+00:00",
-      "ticker": "HNU.TO"
-    },
-    {
-      "type": "vcvi_critical",
-      "side": "short",
-      "message": "VCVI (5d) = 73.6 \u2014 potential gas top \u2014 short/inverse setup",
-      "timestamp": "2026-04-21T21:43:25.713098+00:00",
-      "ticker": "3NGS.L"
-    },
-    {
-      "type": "ipsi_stress",
-      "ticker": "3NGL.L_3NGS.L",
-      "message": "IPSI stress for 3NGL.L_3NGS.L \u2014 ratio 2.48",
-      "timestamp": "2026-04-21T21:43:25.826204+00:00"
-    }
-  ],
+  "last_updated": "2026-04-22T14:51:12.750598+00:00",
+  "market_status": "open",
+  "signals": [],
   "pair_status": {
     "BOIL_KOLD": "quiet",
-    "HNU.TO_HND.TO": "elevated",
-    "3NGL.L_3NGS.L": "stress"
+    "HNU.TO_HND.TO": "quiet",
+    "3NGL.L_3NGS.L": "quiet"
   },
   "etf_summary": {
     "BOIL": {
-      "price": 13.74,
-      "change_pct": -99.999643,
-      "vps": 22.038893,
+      "price": 14.0,
+      "change_pct": -99.999637,
+      "vps": 19.282869,
       "mwca": false,
-      "vol_regime_pct": 11.155378,
-      "hv_term_structure": 0.272792
+      "vol_regime_pct": 3.585657,
+      "hv_term_structure": 0.175359
     },
     "HNU.TO": {
-      "price": 10.48,
+      "price": 10.73,
       "change_pct": -99.999998,
-      "vps": 22.600168,
+      "vps": 20.326443,
       "mwca": false,
-      "vol_regime_pct": 7.968127,
-      "hv_term_structure": 0.28543
+      "vol_regime_pct": 0.0,
+      "hv_term_structure": 0.199741
     },
     "3NGL.L": {
-      "price": 1.166,
-      "change_pct": -99.999986,
-      "vps": 20.736325,
-      "mwca": false,
-      "vol_regime_pct": 4.780876,
-      "hv_term_structure": 0.339468
-    },
-    "KOLD": {
-      "price": 25.0,
-      "change_pct": -86.422857,
-      "vps": 25.869331,
-      "mwca": false,
-      "vol_regime_pct": 8.366534,
-      "hv_term_structure": 0.323655
-    },
-    "HND.TO": {
-      "price": 4.8,
-      "change_pct": -90.509145,
-      "vps": 31.353134,
+      "price": 1.196,
+      "change_pct": -99.999985,
+      "vps": 22.45843,
       "mwca": false,
       "vol_regime_pct": 5.179283,
-      "hv_term_structure": 0.333946
+      "hv_term_structure": 0.256028
+    },
+    "KOLD": {
+      "price": 24.555,
+      "change_pct": -86.664531,
+      "vps": 19.840637,
+      "mwca": false,
+      "vol_regime_pct": 0.796813,
+      "hv_term_structure": 0.231034
+    },
+    "HND.TO": {
+      "price": 4.69,
+      "change_pct": -90.726644,
+      "vps": 21.325017,
+      "mwca": false,
+      "vol_regime_pct": 0.0,
+      "hv_term_structure": 0.253
     },
     "3NGS.L": {
-      "price": 15.275,
-      "change_pct": -83.126208,
-      "vps": 31.685466,
+      "price": 14.9,
+      "change_pct": -83.540458,
+      "vps": 23.311773,
       "mwca": false,
-      "vol_regime_pct": 2.788845,
-      "hv_term_structure": 0.357156
+      "vol_regime_pct": 3.187251,
+      "hv_term_structure": 0.297727
     }
   }
 }
