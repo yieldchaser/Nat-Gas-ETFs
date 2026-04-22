@@ -1,13 +1,20 @@
 {
-  "last_updated": "2026-04-22T19:54:43.289960+00:00",
-  "market_status": "open",
+  "last_updated": "2026-04-22T21:03:50.561066+00:00",
+  "market_status": "after_hours",
   "signals": [
     {
       "type": "vcvi_critical",
       "side": "long",
-      "message": "VCVI (252d) = 87.9 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-04-22T19:54:40.088667+00:00",
+      "message": "VCVI (252d) = 89.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-04-22T21:03:47.759134+00:00",
       "ticker": "HNU.TO"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "short",
+      "message": "VCVI (5d) = 56.0 \u2014 potential gas top \u2014 short/inverse setup",
+      "timestamp": "2026-04-22T21:03:48.976403+00:00",
+      "ticker": "KOLD"
     }
   ],
   "pair_status": {
@@ -17,20 +24,20 @@
   },
   "etf_summary": {
     "BOIL": {
-      "price": 13.725,
-      "change_pct": -99.999644,
-      "vps": 22.905173,
+      "price": 13.76,
+      "change_pct": -99.999643,
+      "vps": 23.236122,
       "mwca": false,
       "vol_regime_pct": 3.585657,
-      "hv_term_structure": 0.161502
+      "hv_term_structure": 0.162186
     },
     "HNU.TO": {
-      "price": 10.46,
+      "price": 10.48,
       "change_pct": -99.999998,
-      "vps": 30.224367,
+      "vps": 31.886239,
       "mwca": false,
       "vol_regime_pct": 0.0,
-      "hv_term_structure": 0.185024
+      "hv_term_structure": 0.185139
     },
     "3NGL.L": {
       "price": 1.211,
@@ -41,17 +48,17 @@
       "hv_term_structure": 0.266009
     },
     "KOLD": {
-      "price": 25.09,
-      "change_pct": -86.37398,
-      "vps": 28.145091,
+      "price": 25.02,
+      "change_pct": -86.411996,
+      "vps": 32.281737,
       "mwca": false,
       "vol_regime_pct": 0.796813,
-      "hv_term_structure": 0.213955
+      "hv_term_structure": 0.21441
     },
     "HND.TO": {
       "price": 4.8,
       "change_pct": -90.509145,
-      "vps": 28.097708,
+      "vps": 29.545935,
       "mwca": false,
       "vol_regime_pct": 0.0,
       "hv_term_structure": 0.234608
