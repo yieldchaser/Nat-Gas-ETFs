@@ -311,8 +311,8 @@ function renderSignalHeatCalendar(data, comp) {
         var ev = evByDate[r.date];
         var day = r.date ? r.date.split('-')[2] : '';
 
-        // Alpha: 0.22 at pct=0 → 0.65 at pct=100. Ensures LOW regime cells are clearly visible.
-        var alpha = pct != null ? (0.22 + (pct / 100) * 0.43).toFixed(3) : '0.15';
+        // Alpha: 0.22 at pct=0 → 0.55 at pct=100. Balanced visibility without visual alarm.
+        var alpha = pct != null ? Math.min(0.55, 0.22 + (pct / 100) * 0.33).toFixed(3) : '0.15';
         var rColor = regimeColors[regime.label] || '#4a80b8';
         var bg = toRgba(rColor, parseFloat(alpha));
         var border = toRgba(rColor, Math.min(1, parseFloat(alpha) + 0.18).toFixed(3));
@@ -344,6 +344,7 @@ function renderSignalHeatCalendar(data, comp) {
     Object.keys(sigColors).forEach(function(sig) {
         html += '<div class="sig-heat-leg-item"><div class="sig-heat-leg-dot" style="background:' + sigColors[sig] + ';"></div>' + sig + '</div>';
     });
+    html += '<span style="font-size:0.40rem;color:var(--text-dim);margin-left:12px;letter-spacing:0.3px;">Percentiles ranked within 252D rolling window. Signal dots mark composite signal fires.</span>';
     html += '</div>';
 
     el.innerHTML = html;
