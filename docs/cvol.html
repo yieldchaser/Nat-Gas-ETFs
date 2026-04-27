@@ -61,8 +61,8 @@
 .cvol-kpi-sval { font-size: 0.75rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-bright); }
 /* Micro-analytics secondary section (matches T2P .micro-analytics) */
 .cvol-kpi-micro { margin-top: 2px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 5px; }
-.cvol-micro-line { display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; font-weight: 700; color: var(--text-dim); letter-spacing: 0.1px; white-space: nowrap; }
-.cvol-micro-lbl { color: var(--text-muted); text-transform: uppercase; font-size: 0.55rem; opacity: 0.7; letter-spacing: 0.5px; }
+.cvol-micro-line { display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; font-weight: 700; color: var(--text-bright); letter-spacing: 0.1px; white-space: nowrap; }
+.cvol-micro-lbl { color: #fff; text-transform: uppercase; font-size: 0.65rem; opacity: 0.85; letter-spacing: 0.5px; }
 .cvol-micro-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
 .kpi-progress { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.06); margin-top: 6px; overflow: hidden; }
 .kpi-progress-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
@@ -150,13 +150,13 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 .heatmap-cell { width: 100%; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 4px 2px; font-family: 'JetBrains Mono', monospace; transition: transform 0.15s, box-shadow 0.15s, filter 0.15s; cursor: help; min-height: 34px; }
 .heatmap-cell:hover { transform: scale(1.18); box-shadow: 0 4px 16px rgba(0,0,0,0.5); z-index: 10; position: relative; filter: brightness(1.25); }
 .hm-val { font-size: 0.68rem; font-weight: 800; line-height: 1; }
-.hm-pct { font-size: 0.38rem; font-weight: 600; letter-spacing: 0.5px; opacity: 0.75; line-height: 1; }
-.heatmap-label { font-size: 0.5rem; font-weight: 700; letter-spacing: 0.8px; text-align: center; padding: 2px 0 5px; }
+.hm-pct { font-size: 0.45rem; font-weight: 600; letter-spacing: 0.5px; opacity: 0.85; line-height: 1; }
+.heatmap-label { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.8px; text-align: center; padding: 2px 0 5px; }
 .heatmap-year-label { font-size: 0.55rem; font-weight: 700; color: var(--text-muted); text-align: right; padding-right: 6px; display: flex; align-items: center; justify-content: flex-end; }
 .heatmap-legend { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap; }
-.hm-leg-item { display: flex; align-items: center; gap: 4px; font-size: 0.42rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; }
+.hm-leg-item { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; color: #fff; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; }
 .hm-leg-swatch { width: 18px; height: 8px; border-radius: 2px; }
-.hm-leg-note { font-size: 0.38rem; color: var(--text-dim); margin-left: auto; letter-spacing: 0.3px; }
+.hm-leg-note { font-size: 0.55rem; color: #fff; margin-left: auto; letter-spacing: 0.3px; opacity: 0.85; }
 
 /* ---- SIGNAL HEAT CALENDAR ---- */
 .sig-heat-grid { display: grid; grid-template-columns: repeat(18, 1fr); gap: 2px; margin: 8px 0; }
@@ -165,7 +165,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 .sig-heat-badge { position: absolute; top: 2px; right: 2px; width: 4px; height: 4px; border-radius: 50%; pointer-events: none; }
 .sig-heat-month { position: absolute; top: 2px; left: 3px; font-size: 0.29rem; font-weight: 800; letter-spacing: 0.4px; color: rgba(255,255,255,0.75); line-height: 1; pointer-events: none; text-transform: uppercase; }
 .sig-heat-legend { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-.sig-heat-leg-item { display: flex; align-items: center; gap: 4px; font-size: 0.45rem; letter-spacing: 0.5px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.sig-heat-leg-item { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; letter-spacing: 0.5px; color: #fff; font-family: 'JetBrains Mono', monospace; }
 .sig-heat-leg-swatch { width: 10px; height: 10px; border-radius: 2px; }
 .sig-heat-leg-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 
@@ -181,7 +181,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 .corr-range-note { font-size: 0.46rem; color: var(--text-dim); letter-spacing: 0.4px; margin-bottom: 10px; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
 .corr-legend { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
 .corr-grad-swatch { height: 8px; flex: 1; border-radius: 3px; }
-.corr-leg-label { font-size: 0.40rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; white-space: nowrap; }
+.corr-leg-label { font-size: 0.55rem; color: #fff; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; white-space: nowrap; opacity: 0.85; }
 
 /* ---- BACKTEST SCORECARD ---- */
 .scorecard-panel { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
