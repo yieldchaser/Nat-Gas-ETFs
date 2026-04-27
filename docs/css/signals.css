@@ -32,7 +32,7 @@
 .alert-item.alert-rbc { border-left-color: var(--cyan); }
 
 .alert-time {
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     font-size: 0.65rem;
     white-space: nowrap;
     min-width: 40px;
@@ -50,7 +50,7 @@
 
 .no-alerts {
     text-align: center;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     font-size: 0.72rem;
     padding: 20px;
 }
@@ -65,7 +65,7 @@
 .stress-matrix th {
     text-align: left;
     padding: 6px 8px;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     font-size: 0.6rem;
     font-weight: 600;
     letter-spacing: 1px;
@@ -166,7 +166,7 @@
 
 .heat-label {
     font-size: 0.6rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     margin: 0 4px;
 }
 
@@ -234,7 +234,7 @@
 
 .gauge-label {
     font-size: 0.55rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 /* ---- CORRELATION BARS ---- */
@@ -272,7 +272,7 @@
     bottom: 0;
     left: 50%;
     width: 1px;
-    background: var(--text-muted);
+    background: rgba(255, 255, 255, 0.85);
 }
 
 .corr-bar-fill {
@@ -303,7 +303,7 @@
 
 .correlation-note {
     font-size: 0.6rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     margin-top: 8px;
     line-height: 1.5;
 }
@@ -313,14 +313,14 @@
    ============================================ */
 .panel-subtitle {
     font-size: 0.6rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     font-weight: 400;
     letter-spacing: 0.3px;
 }
 
 .echoes-loading {
     font-size: 0.65rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     text-align: center;
     padding: 12px 0;
 }
@@ -332,7 +332,7 @@
 .echoes-pair-label {
     font-size: 0.55rem;
     letter-spacing: 1px;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     text-transform: uppercase;
     margin-bottom: 6px;
     padding-bottom: 3px;
@@ -373,7 +373,7 @@
 
 .echo-count {
     font-size: 0.55rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     cursor: help;
 }
 
@@ -386,7 +386,7 @@
 }
 
 .echo-table th {
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     font-weight: 500;
     text-align: right;
     padding: 1px 3px;
@@ -403,8 +403,8 @@
     font-weight: 600;
 }
 
-.echo-window { color: var(--text-muted); font-weight: 500 !important; }
-.echo-range  { color: var(--text-muted); font-size: 0.58rem !important; font-weight: 400 !important; }
+.echo-window { color: rgba(255, 255, 255, 0.85); font-weight: 500 !important; }
+.echo-range  { color: rgba(255, 255, 255, 0.85); font-size: 0.58rem !important; font-weight: 400 !important; }
 
 /* Directional bias line */
 .echo-bias {
@@ -431,7 +431,7 @@
 
 .echo-recent-label {
     font-size: 0.52rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     flex-shrink: 0;
 }
 
@@ -451,7 +451,7 @@
 
 .echo-empty {
     font-size: 0.6rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     padding: 8px 0;
     text-align: center;
 }
@@ -488,7 +488,7 @@
 .conviction-loading,
 .conviction-empty {
     font-size: 0.65rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     text-align: center;
     padding: 12px 0;
 }
@@ -500,7 +500,7 @@
 .conviction-pair-label {
     font-size: 0.55rem;
     letter-spacing: 1px;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     text-transform: uppercase;
     margin-bottom: 6px;
     padding-bottom: 3px;
@@ -541,7 +541,7 @@
 
 .conviction-count {
     font-size: 0.55rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .conviction-rate {
@@ -553,7 +553,7 @@
 
 .conviction-gates {
     font-size: 0.5rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     padding: 3px 5px;
     background: rgba(255,255,255,0.03);
     border-radius: 3px;
@@ -569,7 +569,7 @@
 }
 
 .conviction-table th {
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     font-weight: 500;
     text-align: right;
     padding: 1px 2px;
@@ -586,7 +586,7 @@
     font-weight: 600;
 }
 
-.ce-date { color: var(--text-muted); font-weight: 500 !important; text-align: left !important; }
+.ce-date { color: rgba(255, 255, 255, 0.85); font-weight: 500 !important; text-align: left !important; }
 .ce-breadth { color: var(--text-secondary); }
 
 /* Forward returns summary below conviction table */
@@ -597,7 +597,7 @@
 }
 .ce-fwd-label {
     font-size: 0.5rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 3px;
@@ -608,7 +608,7 @@
     font-size: 0.6rem;
 }
 .ce-fwd-table th {
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     font-weight: 500;
     text-align: center;
     padding: 1px 3px;
@@ -631,7 +631,7 @@
 .swvc-loading,
 .swvc-empty {
     font-size: 0.65rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     text-align: center;
     padding: 12px 0;
 }
@@ -668,7 +668,7 @@
 
 .swvc-spread-txt {
     font-size: 0.55rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     margin-left: auto;
 }
 
@@ -701,7 +701,7 @@
 
 .swvc-pill-days {
     font-size: 0.55rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     margin-top: 2px;
 }
 
@@ -744,7 +744,7 @@
     display: flex;
     justify-content: space-between;
     font-size: 0.48rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     padding: 0 1px;
 }
 
@@ -870,7 +870,7 @@
     flex-wrap: wrap;
 }
 .ng-bar-label {
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     font-weight: 600;
     letter-spacing: 0.08em;
     font-size: 0.58rem;
@@ -885,7 +885,7 @@
     font-size: 0.65rem;
 }
 .ng-bar-na {
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     font-size: 0.58rem;
 }
 .ng-bar-track {
@@ -919,8 +919,8 @@
     letter-spacing: 0.03em;
 }
 .ng-gate.active   { color: #3db87a; background: rgba(61,184,122,0.12); border: 1px solid rgba(61,184,122,0.3); }
-.ng-gate.inactive { color: var(--text-muted); background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary); text-decoration: line-through; opacity: 0.7; }
-.ng-gate.unknown  { color: var(--text-muted); opacity: 0.5; }
+.ng-gate.inactive { color: rgba(255, 255, 255, 0.85); background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary); text-decoration: line-through; opacity: 0.7; }
+.ng-gate.unknown  { color: rgba(255, 255, 255, 0.85); opacity: 0.5; }
 
 /* ---- Sharp Spike Badge ---- */
 .spike-badge {
@@ -969,7 +969,7 @@
     font-size: 0.55rem;
     font-weight: 700;
     letter-spacing: 0.1em;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     text-transform: uppercase;
     margin-bottom: 4px;
     padding: 2px 4px;
@@ -989,7 +989,7 @@
     opacity: 0.75;
 }
 .watch-empty {
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     font-size: 0.6rem;
     padding: 8px 4px;
 }
@@ -1095,7 +1095,7 @@
     padding: 4px 14px;
     background: transparent;
     border: none;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     font-family: var(--font-mono);
     font-size: 0.65rem;
     font-weight: 700;
@@ -1129,7 +1129,7 @@
     letter-spacing: 0.5px;
     cursor: pointer;
     transition: border-color 0.15s, background 0.15s, color 0.15s;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .vrm-chip:hover { background: var(--bg-hover); border-color: var(--border-accent); }
@@ -1177,13 +1177,13 @@
 }
 .vrm-chip-long  { color: var(--green); }
 .vrm-chip-short { color: var(--red);   }
-.vrm-chip-arrow { color: var(--text-muted); font-size: 0.6rem; }
-.vrm-chip-sub   { color: var(--text-muted); font-size: 0.55rem; letter-spacing: 0.3px; }
+.vrm-chip-arrow { color: rgba(255, 255, 255, 0.85); font-size: 0.6rem; }
+.vrm-chip-sub   { color: rgba(255, 255, 255, 0.85); font-size: 0.55rem; letter-spacing: 0.3px; }
 
 /* ── Loading state ─────────────────────────────────────────────── */
 .vrm-loading {
     text-align: center;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     font-size: 0.72rem;
     padding: 20px;
 }
@@ -1210,7 +1210,7 @@
     font-size: 0.6rem;
     font-weight: 700;
     letter-spacing: 1px;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     border: 1px solid var(--border-primary);
     border-radius: 3px;
     padding: 2px 6px;
@@ -1220,7 +1220,7 @@
     text-align: center;
     margin-top: 4px;
 }
-.vrm-spread-key  { font-size: 0.55rem; color: var(--text-muted); letter-spacing: 0.5px; }
+.vrm-spread-key  { font-size: 0.55rem; color: rgba(255, 255, 255, 0.85); letter-spacing: 0.5px; }
 .vrm-spread-val  { font-size: 0.9rem; font-weight: 700; }
 .vrm-spread-note { font-size: 0.55rem; color: var(--orange); }
 
@@ -1240,7 +1240,7 @@
 .vrm-card-ng    { border-left: 2px solid rgba(74,128,184,0.4);  }
 .vrm-card-empty { opacity: 0.5; }
 
-.vrm-no-data { color: var(--text-muted); font-size: 0.72rem; text-align: center; padding: 12px 0; }
+.vrm-no-data { color: rgba(255, 255, 255, 0.85); font-size: 0.72rem; text-align: center; padding: 12px 0; }
 
 /* ── Card header ───────────────────────────────────────────────── */
 .vrm-card-hdr {
@@ -1261,7 +1261,7 @@
     padding: 1px 5px;
     border-radius: 3px;
     border: 1px solid var(--border-primary);
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     font-weight: 600;
     letter-spacing: 0.5px;
 }
@@ -1280,7 +1280,7 @@
 .vrm-reg-elevated { background: rgba(192,120,40,0.18);  color: #d08840; border: 1px solid rgba(192,120,40,0.4); }
 .vrm-reg-normal   { background: rgba(61,184,122,0.14);  color: #3db87a; border: 1px solid rgba(61,184,122,0.35); }
 .vrm-reg-low      { background: rgba(74,128,184,0.14);  color: #5a90c8; border: 1px solid rgba(74,128,184,0.35); }
-.vrm-reg-unknown  { background: transparent;            color: var(--text-muted); border: 1px solid var(--border-primary); }
+.vrm-reg-unknown  { background: transparent;            color: rgba(255, 255, 255, 0.85); border: 1px solid var(--border-primary); }
 
 /* ── Spike event badge ─────────────────────────────────────────── */
 .vrm-spike-badge {
@@ -1325,7 +1325,7 @@
 
 .vrm-hv-label {
     font-size: 0.55rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     letter-spacing: 0.8px;
     font-weight: 600;
     margin-bottom: 4px;
@@ -1361,7 +1361,7 @@
 
 .vrm-spark-label {
     font-size: 0.58rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     letter-spacing: 0.3px;
     display: flex;
     align-items: center;
@@ -1374,7 +1374,7 @@
     align-items: center;
     gap: 5px;
     font-size: 0.55rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .vrm-leg-dot {
@@ -1408,7 +1408,7 @@
     border-radius: 4px;
     background: rgba(255,255,255,0.03);
     border: 1px solid var(--border-primary);
-    color: var(--text-dim);
+    color: rgba(255, 255, 255, 0.85);
     cursor: pointer;
     letter-spacing: 0.5px;
     transition: all 0.15s;
@@ -1449,7 +1449,7 @@
 .vrm-stat-lbl {
     display: block;
     font-size: 0.52rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     letter-spacing: 0.8px;
     font-weight: 600;
     margin-bottom: 3px;
@@ -1534,7 +1534,7 @@
 
 .vdds-na {
     font-size: 0.7rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 /* ── Responsive overrides ──────────────────────────────────────── */

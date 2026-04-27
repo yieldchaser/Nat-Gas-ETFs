@@ -80,10 +80,10 @@ const Signals = {
             const volReg = longM?.volatility?.volRegimePct ?? shortM?.volatility?.volRegimePct;
             const regInfo = Metrics.getVolRegimeLabel(volReg);
 
-            const rvolColor  = v => v != null ? Metrics.getValueColor(v, CONFIG.thresholds.rvol) : 'var(--text-muted)';
-            const lCapColor  = longVcvi  != null ? Metrics.getValueColor(longVcvi,  CONFIG.thresholds.vcvi) : 'var(--text-muted)';
-            const sCapColor  = shortVcvi != null ? Metrics.getValueColor(shortVcvi, CONFIG.thresholds.vcvi) : 'var(--text-muted)';
-            const ipsiColor  = ipsi != null ? Metrics.getValueColor(ipsi, CONFIG.thresholds.ipsi) : 'var(--text-muted)';
+            const rvolColor  = v => v != null ? Metrics.getValueColor(v, CONFIG.thresholds.rvol) : 'rgba(255, 255, 255, 0.85)';
+            const lCapColor  = longVcvi  != null ? Metrics.getValueColor(longVcvi,  CONFIG.thresholds.vcvi) : 'rgba(255, 255, 255, 0.85)';
+            const sCapColor  = shortVcvi != null ? Metrics.getValueColor(shortVcvi, CONFIG.thresholds.vcvi) : 'rgba(255, 255, 255, 0.85)';
+            const ipsiColor  = ipsi != null ? Metrics.getValueColor(ipsi, CONFIG.thresholds.ipsi) : 'rgba(255, 255, 255, 0.85)';
 
             // 5d fast-window VCVI for both sides (Feature 1)
             const longVcvi5  = longM?.vcvi?.['5d']  ?? longM?.cvi?.['5d'];
@@ -92,11 +92,11 @@ const Signals = {
             const spikeTicker = longM?.sharpSpike ? pair.long : shortM?.sharpSpike ? pair.short : null;
 
             const fastColor = v => {
-                if (v == null) return 'var(--text-muted)';
+                if (v == null) return 'rgba(255, 255, 255, 0.85)';
                 if (v >= 65) return 'var(--purple)';
                 if (v >= 45) return 'var(--orange)';
                 if (v >= 30) return 'var(--yellow)';
-                return 'var(--text-dim)';
+                return 'rgba(255,255,255,0.85)';
             };
 
             const ipsiTip = ipsi != null ? `IPSI ${ipsi.toFixed(2)}x — short RVOL ÷ long RVOL for this pair` : 'IPSI unavailable';
@@ -214,8 +214,8 @@ const Signals = {
             const side = CONFIG.etfs[t].side;
             // Negative correlation = inverse relationship active (green); positive = co-directional (red)
             const color = corr != null
-                ? (corr < -0.2 ? 'var(--green)' : corr < -0.1 ? 'var(--text-secondary)' : corr > 0.1 ? 'var(--red)' : 'var(--text-muted)')
-                : 'var(--text-muted)';
+                ? (corr < -0.2 ? 'var(--green)' : corr < -0.1 ? 'var(--text-secondary)' : corr > 0.1 ? 'var(--red)' : 'rgba(255,255,255,0.85)')
+                : 'rgba(255,255,255,0.85)';
             const tickerColor = side === 'long' ? 'var(--green)' : 'var(--red)';
 
             return `
@@ -314,14 +314,14 @@ const Signals = {
         // Lead-time annotation (Feature 4)
         const lt = echoes.lead_time;
         const leadTimeHtml = lt && lt.median_days != null
-            ? `<div class="echo-lead-time" data-tooltip="Days from VCVI signal to peak forward return (n=${lt.count}). IQR: ${lt.p25_days}–${lt.p75_days}d">⏱ Peak ~${lt.median_days}d  <span style="color:var(--text-dim)">(IQR ${lt.p25_days}–${lt.p75_days}d)</span></div>`
+            ? `<div class="echo-lead-time" data-tooltip="Days from VCVI signal to peak forward return (n=${lt.count}). IQR: ${lt.p25_days}–${lt.p75_days}d">⏱ Peak ~${lt.median_days}d  <span style="color:rgba(255,255,255,0.85)">(IQR ${lt.p25_days}–${lt.p75_days}d)</span></div>`
             : '';
 
         // Recent occurrences — last 5 with edge-window return, season tag, and lead-time
         const recent = (echoes.occurrences || []).slice(0, 5);
         const recentHtml = recent.map(o => {
             const retEdge = o.fwd?.[edgeW] ?? o.fwd?.['21d'];
-            const retColor = retEdge == null ? 'var(--text-muted)'
+            const retColor = retEdge == null ? 'rgba(255,255,255,0.85)'
                 : retEdge > 0 ? 'var(--green)' : 'var(--red)';
             const retLabel = retEdge != null
                 ? `${retEdge >= 0 ? '+' : ''}${retEdge.toFixed(1)}% over ${edgeW}`
@@ -363,7 +363,7 @@ const Signals = {
                 ${leadTimeHtml}
                 <div class="echo-recent">
                     <span class="echo-recent-label">Recent:</span>
-                    ${recentHtml || '<span style="color:var(--text-muted)">—</span>'}
+                    ${recentHtml || '<span style="color:rgba(255,255,255,0.85)">—</span>'}
                 </div>
                 ${this._echoRegimeBlock(echoes)}
             </div>`;
@@ -383,7 +383,7 @@ const Signals = {
             const s  = rd.forward_returns?.[displayWindow];
             if (!s) return '';
             const cfg = regimeCfg[r] || {};
-            const color = cfg.color || 'var(--text-dim)';
+            const color = cfg.color || 'rgba(255,255,255,0.85)';
             const icon  = r === 'extreme' ? '🚨' : r === 'elevated' ? '⚠' : '●';
             const med   = s.median;
             const medColor = med > 2 ? 'var(--green)' : med < -2 ? 'var(--red)' : 'var(--text-secondary)';
@@ -391,7 +391,7 @@ const Signals = {
             const tip = `${cfg.label || r}: n=${rd.count} instances, median ${med >= 0 ? '+' : ''}${med?.toFixed(1)}% over ${displayWindow}, ${s.win_rate?.toFixed(0)}% win rate`;
             return `<tr data-tooltip="${tip}">
                 <td style="color:${color}">${icon} ${(cfg.label || r).toLowerCase()}</td>
-                <td class="echo-regime-n" style="color:var(--text-dim)">n=${rd.count}</td>
+                <td class="echo-regime-n" style="color:rgba(255,255,255,0.85)">n=${rd.count}</td>
                 <td style="color:${medColor}">${med >= 0 ? '+' : ''}${med?.toFixed(1)}%</td>
                 <td style="color:${wrColor}">${s.win_rate?.toFixed(0)}% win</td>
             </tr>`;
@@ -467,11 +467,11 @@ const Signals = {
                 : '';
             const ngZStr = e.ng_seasonal_z != null ? e.ng_seasonal_z.toFixed(2) : '—';
             const ngZColor = e.ng_seasonal_z != null
-                ? (e.ng_seasonal_z <= -1 ? 'var(--green)' : e.ng_seasonal_z >= 1 ? 'var(--red)' : 'var(--text-dim)')
+                ? (e.ng_seasonal_z <= -1 ? 'var(--green)' : e.ng_seasonal_z >= 1 ? 'var(--red)' : 'rgba(255,255,255,0.85)')
                 : '';
             const evRegime = e.ng_regime || 'unknown';
             const evRegimeCfg = (CONFIG.thresholds?.ngRegime || {})[evRegime] || {};
-            const evRegimeColor = evRegimeCfg.color || 'var(--text-dim)';
+            const evRegimeColor = evRegimeCfg.color || 'rgba(255,255,255,0.85)';
             const evRegimeTip = evRegimeCfg.note || evRegime;
             const evRegimeBadge = evRegime !== 'unknown'
                 ? `<span class="ce-regime-badge ce-regime-${evRegime}" style="color:${evRegimeColor}" data-tooltip="NG regime on signal date: ${evRegimeTip}">${evRegime === 'extreme' ? '🚨' : evRegime === 'elevated' ? '⚠' : '●'}</span>`
@@ -513,7 +513,7 @@ const Signals = {
                             const s = fwd[k];
                             if (!s) return '<td>—</td>';
                             const wr = s.win_rate;
-                            const c = wr >= 55 ? 'var(--green)' : wr <= 45 ? 'var(--red)' : 'var(--text-dim)';
+                            const c = wr >= 55 ? 'var(--green)' : wr <= 45 ? 'var(--red)' : 'rgba(255,255,255,0.85)';
                             return `<td style="color:${c}" data-tooltip="Win rate: % of events with positive return">${wr.toFixed(0)}% win</td>`;
                         }).join('')}</tr>
                     </tbody>
@@ -579,7 +579,7 @@ const Signals = {
                 converged: 'var(--red)',
                 partial:   'var(--orange)',
                 single:    'var(--yellow)',
-                quiet:     'var(--text-muted)',
+                quiet:     'rgba(255,255,255,0.85)',
             };
             const statusLabels = {
                 converged: 'CONVERGED',
@@ -587,7 +587,7 @@ const Signals = {
                 single:    'SINGLE',
                 quiet:     'QUIET',
             };
-            const statusColor = statusColors[status] || 'var(--text-muted)';
+            const statusColor = statusColors[status] || 'rgba(255,255,255,0.85)';
             const statusLabel = statusLabels[status] || 'QUIET';
 
             // Score pills: one circle per ETF
@@ -713,7 +713,7 @@ const Signals = {
         // Regime badge
         const regime = ngPriceContext.regime || 'normal';
         const regimeCfg = (CONFIG.thresholds.ngRegime || {})[regime] || CONFIG.thresholds.ngRegime?.normal || {};
-        const regimeColor = regimeCfg.color || 'var(--text-dim)';
+        const regimeColor = regimeCfg.color || 'rgba(255,255,255,0.85)';
         const regimeLabel = regimeCfg.label || regime.toUpperCase();
         const regimeNote  = regimeCfg.note  || '';
         const hvPct = ngPriceContext.ng_hv_pct;
@@ -790,7 +790,7 @@ const Signals = {
             const moveColor = e.daily_move_pct > 0 ? 'var(--green)' : 'var(--red)';
             const sign = e.daily_move_pct >= 0 ? '+' : '';
             const seasonCfg = e.season ? (CONFIG.seasonDisplay[e.season] || {}) : {};
-            const seasonTag = e.season ? `<span style="color:${seasonCfg.color||'var(--text-muted)'};" data-tooltip="Season: ${e.season}, weight: ×${(e.seasonality_weight||1).toFixed(2)}">${seasonCfg.emoji||''}</span>` : '';
+            const seasonTag = e.season ? `<span style="color:${seasonCfg.color||'rgba(255,255,255,0.85)'};" data-tooltip="Season: ${e.season}, weight: ×${(e.seasonality_weight||1).toFixed(2)}">${seasonCfg.emoji||''}</span>` : '';
             return `
                 <tr>
                     <td class="ce-date">${e.date} ${seasonTag}</td>
@@ -811,7 +811,7 @@ const Signals = {
                     <thead><tr>${fwdKeys.map(l=>`<th>${l}</th>`).join('')}</tr></thead>
                     <tbody>
                         <tr>${fwdKeys.map(k=>{const s=fwd[k];if(!s)return'<td>—</td>';const v=s.median;const c=v>0?'var(--green)':v<0?'var(--red)':'';return`<td style="color:${c}" data-tooltip="${s.count} samples">${v>=0?'+':''}${v.toFixed(1)}%</td>`}).join('')}</tr>
-                        <tr>${fwdKeys.map(k=>{const s=fwd[k];if(!s)return'<td>—</td>';const wr=s.win_rate;const c=wr>=55?'var(--green)':wr<=45?'var(--red)':'var(--text-dim)';return`<td style="color:${c}">${wr.toFixed(0)}%</td>`}).join('')}</tr>
+                        <tr>${fwdKeys.map(k=>{const s=fwd[k];if(!s)return'<td>—</td>';const wr=s.win_rate;const c=wr>=55?'var(--green)':wr<=45?'var(--red)':'rgba(255,255,255,0.85)';return`<td style="color:${c}">${wr.toFixed(0)}%</td>`}).join('')}</tr>
                     </tbody>
                 </table>
             </div>` : '';
@@ -901,7 +901,7 @@ const Signals = {
             //   1.05–1.15  orange  (mild anti-capitulation — dollar vol slightly ahead)
             //   > 1.15   red     (strong anti-capitulation / momentum environment)
             // Green ↔ Red symmetry matches the rest of the dashboard's alert language.
-            const barColor = vdds == null ? 'var(--text-dim)'
+            const barColor = vdds == null ? 'rgba(255,255,255,0.85)'
                 : vdds < 0.85 ? 'var(--green)'
                 : vdds < 0.95 ? 'var(--blue)'
                 : vdds <= 1.05 ? 'var(--text-secondary)'

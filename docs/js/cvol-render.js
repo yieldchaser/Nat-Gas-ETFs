@@ -205,13 +205,13 @@ function renderMainChart() {
                     nearbyEvt.forEach(function(ev) {
                         var sigC = {'SAD':'#f59e0b','CI':'#60a8f8','CVC\u2193':'#ef4444','CVC\u2191':'#3db87a','RDS':'#ec4899'};
                         html += '<div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.6rem;font-weight:800;color:'+(sigC[ev.signal]||'var(--cyan)')+'">⚡ '+ev.signal+' — '+ev.direction+'</div>';
-                        html += '<div style="font-size:0.55rem;color:var(--text-muted);">NG $'+(ev.underlying!=null?ev.underlying.toFixed(2):'—')+'</div>';
+                        html += '<div style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);">NG $'+(ev.underlying!=null?ev.underlying.toFixed(2):'—')+'</div>';
                         var fwdLabel = '21D'; var fwdVal = ev.fwd21;
                         if (ev.fwd5 != null && ev.fwd21 == null) { fwdLabel = '5D'; fwdVal = ev.fwd5; }
                         if (fwdVal != null) {
                             html += '<div style="font-size:0.55rem;color:'+(fwdVal>0?'#3db87a':'#ef4444')+'">' + fwdLabel + ': '+(fwdVal>0?'+':'')+fwdVal.toFixed(1)+'%</div>';
                         } else {
-                            html += '<div style="font-size:0.55rem;color:var(--text-dim);">PENDING</div>';
+                            html += '<div style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);">PENDING</div>';
                         }
                     });
                 }
@@ -659,7 +659,7 @@ function renderModalChart(compKey) {
         if (r != null) {
             color = ((isDown && r < 0) || (!isDown && r > 0)) ? '#3db87a' : '#ef4444';
         } else {
-            color = 'var(--text-muted)';
+            color = 'rgba(255, 255, 255, 0.85)';
         }
         var x = getX(localIdx), y = getVY(values[localIdx]);
         ctx.beginPath(); ctx.arc(x, y, (r!=null?4:3), 0, Math.PI * 2);
@@ -686,15 +686,15 @@ function renderModalChart(compKey) {
         if (v != null) { ctx.beginPath(); ctx.arc(hx, getVY(v), 5, 0, Math.PI*2); ctx.fillStyle=meta.color; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); }
         if (p != null) { ctx.beginPath(); ctx.arc(hx, getPY(p), 4, 0, Math.PI*2); ctx.fillStyle='#94a3b8'; ctx.fill(); ctx.lineWidth=1; ctx.strokeStyle='#fff'; ctx.stroke(); }
 
-        var html = '<div style="font-weight:800;margin-bottom:6px;border-bottom:1px solid var(--border-primary);padding-bottom:4px;color:var(--text-muted);">'+fmtDate(dates[localIdx])+'</div>';
+        var html = '<div style="font-weight:800;margin-bottom:6px;border-bottom:1px solid var(--border-primary);padding-bottom:4px;color:rgba(255, 255, 255, 0.85);">'+fmtDate(dates[localIdx])+'</div>';
         if (p != null) html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;"><span style="color:#94a3b8;">NG Price</span><span style="font-weight:700;">$'+p.toFixed(2)+'</span></div>';
         if (v != null) html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:6px;"><span style="color:'+meta.color+';">'+meta.label.split('—')[0].trim()+'</span><span style="font-weight:700;color:'+meta.color+';">'+v.toFixed(3)+'</span></div>';
         if (event) {
             html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border-primary);">';
-            html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;"><span style="color:var(--text-dim);">Confluence</span><span style="font-weight:700;">'+(getGlobalConfluence(event)||0)+' signals</span></div>';
+            html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;"><span style="color:rgba(255, 255, 255, 0.85);">Confluence</span><span style="font-weight:700;">'+(getGlobalConfluence(event)||0)+' signals</span></div>';
             var _isDown = event.direction.indexOf('TOP')>=0||event.direction.indexOf('DOWNSIDE')>=0;
             var _adjRet = event.fwd21 != null ? event.fwd21 * (_isDown ? -1 : 1) : null;
-            html += '<div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:var(--text-dim);">21D Return</span><span style="font-weight:700;color:'+pctColor(_adjRet)+';">'+(_adjRet!=null?fmtSign(_adjRet):'PENDING')+'</span></div>';
+            html += '<div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:rgba(255, 255, 255, 0.85);">21D Return</span><span style="font-weight:700;color:'+pctColor(_adjRet)+';">'+(_adjRet!=null?fmtSign(_adjRet):'PENDING')+'</span></div>';
             html += '</div>';
         }
         

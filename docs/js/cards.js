@@ -72,7 +72,7 @@ const Cards = {
         const seasonality = metrics.seasonality || {};
         const seasonCfg = seasonality.season ? (CONFIG.seasonDisplay[seasonality.season] || {}) : {};
         const seasonBadge = seasonality.season
-            ? `<span class="season-badge" style="color:${seasonCfg.color||'var(--text-muted)'}" data-tooltip="Seasonal weight: ${seasonality.season} × ${(seasonality.weight||1).toFixed(2)} — amplifies vol signals in high-demand seasons. Seasonally-adj VCVI-21d: ${seasonality.adj_vcvi_21d != null ? seasonality.adj_vcvi_21d.toFixed(0) : '--'} (share-vol mode only)">${seasonCfg.emoji||''} ×${(seasonality.weight||1).toFixed(2)}</span>`
+            ? `<span class="season-badge" style="color:${seasonCfg.color||'rgba(255, 255, 255, 0.85)'}" data-tooltip="Seasonal weight: ${seasonality.season} × ${(seasonality.weight||1).toFixed(2)} — amplifies vol signals in high-demand seasons. Seasonally-adj VCVI-21d: ${seasonality.adj_vcvi_21d != null ? seasonality.adj_vcvi_21d.toFixed(0) : '--'} (share-vol mode only)">${seasonCfg.emoji||''} ×${(seasonality.weight||1).toFixed(2)}</span>`
             : '';
 
         const spikeHtml = metrics.sharpSpike
@@ -81,7 +81,7 @@ const Cards = {
 
         const vcviEntries = ['5d', '21d', '63d'].map(w => {
             const val = (metrics.vcvi || {})[w];
-            const color = val != null ? Metrics.getValueColor(val, CONFIG.thresholds.vcvi) : 'var(--text-muted)';
+            const color = val != null ? Metrics.getValueColor(val, CONFIG.thresholds.vcvi) : 'rgba(255, 255, 255, 0.85)';
             // Show decay-adjusted value alongside 21d if available
             let decayNote = '';
             if (w === '21d' && decay.correction_active && decay.adj_vcvi_21d != null) {
@@ -130,7 +130,7 @@ const Cards = {
         }).join('');
 
         // VoV colour
-        const vovColor = vov21 == null ? 'var(--text-muted)'
+        const vovColor = vov21 == null ? 'rgba(255, 255, 255, 0.85)'
             : vov21 >= CONFIG.thresholds.vov.extreme  ? 'var(--purple)'
             : vov21 >= CONFIG.thresholds.vov.critical ? 'var(--red)'
             : vov21 >= CONFIG.thresholds.vov.high     ? 'var(--orange)'
@@ -199,7 +199,7 @@ const Cards = {
         // DVCVI entries
         const dvcviEntries = ['5d', '21d', '63d'].map(w => {
             const val = dvcvi[w];
-            const color = val != null ? Metrics.getValueColor(val, CONFIG.thresholds.vcvi) : 'var(--text-muted)';
+            const color = val != null ? Metrics.getValueColor(val, CONFIG.thresholds.vcvi) : 'rgba(255, 255, 255, 0.85)';
             return `
                 <div class="indicator-block">
                     <span class="indicator-label" data-tooltip="Dollar-Volume Capitulation Index (${w}). Same formula as VCVI but uses dollar volume percentile — doubly penalised when price is low (cheap shares AND low dollar value). Stronger capitulation signal.">DVCVI-${w}</span>
@@ -208,7 +208,7 @@ const Cards = {
         }).join('');
 
         // VDDS colour — < 0.85 = capitulation, > 1.15 = momentum/accumulation
-        const vddsColor = vdds == null ? 'var(--text-muted)'
+        const vddsColor = vdds == null ? 'rgba(255, 255, 255, 0.85)'
             : vdds < 0.75 ? 'var(--green)'
             : vdds < 0.90 ? 'var(--blue)'
             : vdds > 1.25 ? 'var(--red)'

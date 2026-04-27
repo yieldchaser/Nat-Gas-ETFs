@@ -89,7 +89,7 @@ function renderConvictionBanner(data, comp) {
     el.innerHTML =
         '<span style="font-size:1.4rem;line-height:1;">' + circle + '</span>' +
         '<span style="font-size:0.75rem;font-weight:900;letter-spacing:2px;color:' + cc + ';">' + convLabel + '</span>' +
-        '<span style="font-size:0.65rem;color:var(--text-muted);letter-spacing:0.5px;font-weight:500;">' + tactical + '</span>';
+        '<span style="font-size:0.65rem;color:rgba(255, 255, 255, 0.85);letter-spacing:0.5px;font-weight:500;">' + tactical + '</span>';
 }
 
 // ── KPI Cards (expanded) ─────────────────────────────────────
@@ -130,7 +130,7 @@ function renderKpiCards(data, comp) {
     // CVC status
     var cvcDown = comp.cvcDown ? comp.cvcDown[n-1] : null;
     var cvcUp = comp.cvcUp ? comp.cvcUp[n-1] : null;
-    var cvcStatus = (cvcDown != null && cvcDown > 1.2) ? '<span style="color:#ef4444">CVC↓ ACTIVE</span>' : (cvcUp != null && cvcUp > 1.2) ? '<span style="color:#3db87a">CVC↑ ACTIVE</span>' : '<span style="color:var(--text-dim)">NEUTRAL</span>';
+    var cvcStatus = (cvcDown != null && cvcDown > 1.2) ? '<span style="color:#ef4444">CVC↓ ACTIVE</span>' : (cvcUp != null && cvcUp > 1.2) ? '<span style="color:#3db87a">CVC↑ ACTIVE</span>' : '<span style="color:rgba(255, 255, 255, 0.85)">NEUTRAL</span>';
     var ci = comp.ci ? comp.ci[n-1] : null;
     // ATM 5d direction
     var atm5dir = n > 5 ? (last.atm > data[n-6].atm ? '▲ RISING' : '▼ FALLING') : '';
@@ -144,7 +144,7 @@ function renderKpiCards(data, comp) {
     var vrpZ = comp.vrpZ21 ? comp.vrpZ21[n-1] : null;
     var rvVal = comp.realVol ? comp.realVol[n-1] : null;
     var vrpLabel = vrpVal != null ? (vrpVal > 5 ? 'OVERPRICED FEAR' : vrpVal < -3 ? 'UNDERPRICED RISK' : 'FAIR') : '—';
-    var vrpLabelColor = vrpVal != null ? (vrpVal > 5 ? '#3db87a' : vrpVal < -3 ? '#ef4444' : 'var(--text-dim)') : 'var(--text-dim)';
+    var vrpLabelColor = vrpVal != null ? (vrpVal > 5 ? '#3db87a' : vrpVal < -3 ? '#ef4444' : 'rgba(255, 255, 255, 0.85)') : 'rgba(255, 255, 255, 0.85)';
 
     el.innerHTML =
     // NGVL Card
@@ -161,9 +161,9 @@ function renderKpiCards(data, comp) {
         '<div class="cvol-micro-line" data-tooltip="The distance to the 1-year volatility ceiling. Proximity to 0% means the market is in a state of maximum historical uncertainty."><span class="cvol-micro-lbl">↓ 252D HIGH</span><span class="cvol-micro-val" style="color:'+(distHi!=null&&distHi>-10?'#ef4444':'var(--text-bright)')+'">'+fmt(distHi)+'%</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="The cushion above the 1-year volatility floor. Proximity to 0% indicates suppressed, spring-loaded market conditions."><span class="cvol-micro-lbl">↑ 252D LOW</span><span class="cvol-micro-val" style="color:'+(distLo!=null&&distLo<10?'#3db87a':'var(--text-bright)')+'">+'+fmt(distLo)+'%</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="Vol Risk Premium: Implied (NGVL) minus 21D Realized Vol. Positive = market overpricing fear (mean-reversion setup). Negative = market underpricing actual risk (breakout imminent). This is THE classic vol trade."><span class="cvol-micro-lbl">VRP</span><span class="cvol-micro-val" style="color:'+vrpLabelColor+'">'+((vrpVal!=null&&vrpVal>0)?'+':'')+fmt(vrpVal)+' <span style="font-size:0.55rem;opacity:0.85">'+vrpLabel+'</span></span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="VRP Z-Score (21D): How unusual is the current vol risk premium vs. recent history. Extreme readings (|z| > 2) precede the largest directional moves."><span class="cvol-micro-lbl">VRP Z</span><span class="cvol-micro-val" style="color:'+(vrpZ!=null?(Math.abs(vrpZ)>1.5?'#f59e0b':'var(--text-bright)'):'var(--text-dim)')+'">'+fmt(vrpZ)+'σ</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="VRP Z-Score (21D): How unusual is the current vol risk premium vs. recent history. Extreme readings (|z| > 2) precede the largest directional moves."><span class="cvol-micro-lbl">VRP Z</span><span class="cvol-micro-val" style="color:'+(vrpZ!=null?(Math.abs(vrpZ)>1.5?'#f59e0b':'var(--text-bright)'):'rgba(255, 255, 255, 0.85)')+'">'+fmt(vrpZ)+'σ</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="21-Day Realized Volatility: Annualized standard deviation of NG log returns over the last month. Compare to NGVL (implied) above to gauge the vol risk premium."><span class="cvol-micro-lbl">REAL VOL</span><span class="cvol-micro-val" style="color:#a78bfa">'+fmt(rvVal)+'%</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="Vol-of-Vol (21D): How volatile is volatility itself. High VoV = unstable regime, signals may whipsaw. Low VoV = stable vol environment, signals are more reliable."><span class="cvol-micro-lbl">VOV</span><span class="cvol-micro-val" style="color:'+(comp.vov&&comp.vov[n-1]!=null?(comp.vov[n-1]>5?'#ef4444':comp.vov[n-1]>2.5?'#f59e0b':'var(--text-bright)'):'var(--text-dim)')+'">'+fmt(comp.vov?comp.vov[n-1]:null)+'</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Vol-of-Vol (21D): How volatile is volatility itself. High VoV = unstable regime, signals may whipsaw. Low VoV = stable vol environment, signals are more reliable."><span class="cvol-micro-lbl">VOV</span><span class="cvol-micro-val" style="color:'+(comp.vov&&comp.vov[n-1]!=null?(comp.vov[n-1]>5?'#ef4444':comp.vov[n-1]>2.5?'#f59e0b':'var(--text-bright)'):'rgba(255, 255, 255, 0.85)')+'">'+fmt(comp.vov?comp.vov[n-1]:null)+'</span></div>' +
     '</div>' +
     '<div class="kpi-progress" data-tooltip="1-Year Regime Gauge: Positioning current volatility relative to its historical range (0% = Min, 100% = Max)."><div class="kpi-progress-fill" style="width:'+ngvlPctPos+'%;background:'+ngvlReg.color+'"></div></div></div>' +
  
@@ -179,7 +179,7 @@ function renderKpiCards(data, comp) {
     '<div class="cvol-kpi-micro">' +
         '<div class="cvol-micro-line" data-tooltip="Bullish Demand (UpVar): The volatility premium for upside Natural Gas calls."><span class="cvol-micro-lbl">UP VAR</span><span class="cvol-micro-val" style="color:#3db87a">'+fmt(last.upVar)+'%</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="Bearish Fear (DnVar): The volatility premium for downside Natural Gas puts."><span class="cvol-micro-lbl">DN VAR</span><span class="cvol-micro-val" style="color:#ef4444">'+fmt(last.dnVar)+'%</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="Stealth Skew Check: Divergence between Skew and ATM vol. Signal Active = Institutions placing directional bets."><span class="cvol-micro-lbl">SAD</span><span class="cvol-micro-val">'+(sadActive?'<span style="color:#8b5cf6">ACTIVE</span>':'<span style="color:var(--text-dim)">NEUTRAL</span>')+'</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Stealth Skew Check: Divergence between Skew and ATM vol. Signal Active = Institutions placing directional bets."><span class="cvol-micro-lbl">SAD</span><span class="cvol-micro-val">'+(sadActive?'<span style="color:#8b5cf6">ACTIVE</span>':'<span style="color:rgba(255, 255, 255, 0.85)">NEUTRAL</span>')+'</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="Relational Check: Does price normally follow skew? Positive correlation means price typically rises when skew rises."><span class="cvol-micro-lbl">NG CORR</span><span class="cvol-micro-val">'+fmt(skCorr,2)+'</span></div>' +
     '</div></div>' +
  
@@ -196,7 +196,7 @@ function renderKpiCards(data, comp) {
         '<div class="cvol-micro-line" data-tooltip="Bullish Demand (UpVar): Premium paid for upside Natural Gas calls."><span class="cvol-micro-lbl">UP VAR</span><span class="cvol-micro-val" style="color:#3db87a">'+fmt(last.upVar)+'%</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="Bearish Fear (DnVar): Premium paid for downside Natural Gas puts."><span class="cvol-micro-lbl">DN VAR</span><span class="cvol-micro-val" style="color:#ef4444">'+fmt(last.dnVar)+'%</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="The directional bias between bullish and bearish protection. + = Bullish; - = Bearish."><span class="cvol-micro-lbl">VAR SPREAD</span><span class="cvol-micro-val" style="color:'+pctColor(last.upVar - last.dnVar)+'">'+((last.upVar-last.dnVar>0)?'+':'')+fmt(last.upVar - last.dnVar)+'%</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="Term Structure Proxy: 5D avg NGVL / 63D avg NGVL. >1.0 = backwardation (short-term vol exceeds long-term = market stress). <1.0 = contango (normal, calm). Cross-overs from <1 to >1 signal regime shifts."><span class="cvol-micro-lbl">TERM STRUCT</span><span class="cvol-micro-val" style="color:'+(comp.termStructure&&comp.termStructure[n-1]!=null?(comp.termStructure[n-1]>1.03?'#ef4444':comp.termStructure[n-1]<0.97?'#3db87a':'var(--text-bright)'):'var(--text-dim)')+'">'+fmt(comp.termStructure?comp.termStructure[n-1]:null,3)+'x</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Term Structure Proxy: 5D avg NGVL / 63D avg NGVL. >1.0 = backwardation (short-term vol exceeds long-term = market stress). <1.0 = contango (normal, calm). Cross-overs from <1 to >1 signal regime shifts."><span class="cvol-micro-lbl">TERM STRUCT</span><span class="cvol-micro-val" style="color:'+(comp.termStructure&&comp.termStructure[n-1]!=null?(comp.termStructure[n-1]>1.03?'#ef4444':comp.termStructure[n-1]<0.97?'#3db87a':'var(--text-bright)'):'rgba(255, 255, 255, 0.85)')+'">'+fmt(comp.termStructure?comp.termStructure[n-1]:null,3)+'x</span></div>' +
     '</div></div>' +
  
     // COMPLACENCY Card
@@ -237,7 +237,7 @@ function renderCompStats(compKey, values, events) {
     // Current regime: active/neutral/cooling based on threshold
     var meta = COMP_META[compKey];
     var currentVal = valid.length ? valid[valid.length-1] : null;
-    var regimeLabel = 'NEUTRAL', regimeColor = 'var(--text-dim)';
+    var regimeLabel = 'NEUTRAL', regimeColor = 'rgba(255, 255, 255, 0.85)';
     if (meta && currentVal != null) {
         if (meta.thresholdType === 'raw' && meta.threshold != null) {
             if (currentVal >= meta.threshold) { regimeLabel = 'ACTIVE'; regimeColor = meta.color; }
@@ -531,7 +531,7 @@ function renderScorecard(composites) {
     var stf = CvolState.signalTypeFilter;
     if (stf !== 'all') rows = rows.filter(function(r) { return r.signal === stf; });
     var regLabel = CvolState.regimeFilter !== 'all' ? ' in ' + CvolState.regimeFilter.toUpperCase() + ' regime' : '';
-    if (!rows.length) { el.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">No signal data' + (stf !== 'all' ? ' for ' + stf : '') + regLabel + '</div>'; return; }
+    if (!rows.length) { el.innerHTML = '<div style="color:rgba(255, 255, 255, 0.85);text-align:center;padding:20px;">No signal data' + (stf !== 'all' ? ' for ' + stf : '') + regLabel + '</div>'; return; }
     var sigColors = {'SAD':'#f59e0b','CI':'#60a8f8','CVC↓':'#ef4444','CVC↑':'#3db87a','RDS':'#ec4899'};
     var annFactor = Math.sqrt(252 / 21);
     // Binomial p-value (normal approx, one-sided test vs 50%)
@@ -545,11 +545,11 @@ function renderScorecard(composites) {
         return z > 0 ? p : 1-p;
     }
     function confBadge(hits, n) {
-        if (n < 3 || hits == null) return '<span style="color:var(--text-dim)">—</span>';
+        if (n < 3 || hits == null) return '<span style="color:rgba(255, 255, 255, 0.85)">—</span>';
         var p = binomPval(hits, n);
         if (p < 0.05) return '<span style="color:#3db87a" data-tooltip="p < 0.05 — statistically significant at 95% confidence. This hit rate is very unlikely due to chance alone.">★★★</span>';
         if (p < 0.10) return '<span style="color:#f59e0b" data-tooltip="p < 0.10 — marginally significant. Suggestive but not conclusive.">★★</span>';
-        return '<span style="color:var(--text-dim)" data-tooltip="p ≥ 0.10 — not statistically significant. Hit rate could be due to chance.">★</span>';
+        return '<span style="color:rgba(255, 255, 255, 0.85)" data-tooltip="p ≥ 0.10 — not statistically significant. Hit rate could be due to chance.">★</span>';
     }
     var html = '<table class="scorecard-table"><thead><tr>' +
         '<th data-tooltip="Aggregate Composite Signal: SAD, CI, CVC, or RDS.">SIGNAL</th>' +
@@ -574,7 +574,7 @@ function renderScorecard(composites) {
     var seasonEmoji = {winter:'❄️',spring:'🌱',summer:'☀️',fall:'🍂'};
     rows.forEach(function(r) {
         var sc = r.isEnsemble ? '#00e5ff' : (sigColors[r.signal] || 'var(--text-primary)');
-        var hr21 = r.hitRate21; var hrColor = hr21 != null ? (hr21 > 55 ? '#3db87a' : hr21 < 45 ? '#ef4444' : 'var(--text-primary)') : 'var(--text-dim)';
+        var hr21 = r.hitRate21; var hrColor = hr21 != null ? (hr21 > 55 ? '#3db87a' : hr21 < 45 ? '#ef4444' : 'var(--text-primary)') : 'rgba(255, 255, 255, 0.85)';
         var barW = hr21 != null ? Math.min(100, hr21) : 0;
         var annSharpe = r.sharpe != null ? r.sharpe * annFactor : null;
         if (annSharpe != null) { if (annSharpe > bestSharpe) { bestSharpe = annSharpe; bestSig = r.signal; } if (annSharpe < worstSharpe) { worstSharpe = annSharpe; worstSig = r.signal; } totalWeightedSharpe += annSharpe * r.count; totalWeightCount += r.count; }
@@ -583,7 +583,7 @@ function renderScorecard(composites) {
         if (r.seasonalHit21 && r.seasonalHit21[curSeason] && r.seasonalHit21[curSeason].total >= 3) {
             var sh = r.seasonalHit21[curSeason];
             var shr = (sh.hits / sh.total * 100);
-            var shrColor = shr > 55 ? '#3db87a' : shr < 45 ? '#ef4444' : 'var(--text-dim)';
+            var shrColor = shr > 55 ? '#3db87a' : shr < 45 ? '#ef4444' : 'rgba(255, 255, 255, 0.85)';
             seaBadge = '<div style="font-size:0.58rem;font-weight:600;color:'+shrColor+';margin-top:2px;" data-tooltip="'+curSeason.toUpperCase()+' hit rate: '+Math.round(shr)+'% (n='+sh.total+')">'+(seasonEmoji[curSeason]||'')+' '+Math.round(shr)+'%</div>';
         }
         // Low-sample warning badge
@@ -593,11 +593,11 @@ function renderScorecard(composites) {
         // Optimal horizon badge
         var optCell = r.optHorizon
             ? '<span style="color:#f59e0b;font-weight:800;letter-spacing:0.5px;" data-tooltip="Optimal Holding Period: ' + r.optHorizon.label + ' (Sharpe ' + fmt(r.optHorizon.sharpe * annFactor, 2) + ', Hit ' + Math.round(r.optHorizon.hr) + '%, n=' + r.optHorizon.n + '). This is the window where this signal has historically produced the best risk-adjusted return.">' + r.optHorizon.label + '</span>'
-            : (r.count > 0 ? '<span style="color:#ef4444;font-weight:800;" data-tooltip="No directional edge detected at any measured timeframe (5D/10D/21D/42D) for this regime. Hit rates are \u226450% or Sharpe \u22640. Do not rely on this signal for trend-following entries.">NONE</span>' : '<span style="color:var(--text-dim)">\u2014</span>');
+            : (r.count > 0 ? '<span style="color:#ef4444;font-weight:800;" data-tooltip="No directional edge detected at any measured timeframe (5D/10D/21D/42D) for this regime. Hit rates are \u226450% or Sharpe \u22640. Do not rely on this signal for trend-following entries.">NONE</span>' : '<span style="color:rgba(255, 255, 255, 0.85)">\u2014</span>');
         html += '<tr' + (r.isEnsemble ? ' style="background:rgba(0,229,255,0.04);border-top:2px solid rgba(0,229,255,0.15);"' : '') + '>' +
             '<td style="color:'+sc+';font-weight:800;"' + (r.isEnsemble ? ' data-tooltip="Ensemble: combined performance for ALL events where '+r.signal.replace('CONF ','')+' other signals also fired within ±5 sessions. Higher confluence = higher conviction."' : '') + '>' + (r.isEnsemble ? '🔗 ' : '') + r.signal + seaBadge + '</td>' +
             '<td>' + countCell + '</td>' +
-            '<td style="color:'+(r.hitRate5!=null?(r.hitRate5>55?'#3db87a':'#ef4444'):'var(--text-dim)')+'">'+fmt(r.hitRate5,0)+'%</td>' +
+            '<td style="color:'+(r.hitRate5!=null?(r.hitRate5>55?'#3db87a':'#ef4444'):'rgba(255, 255, 255, 0.85)')+'">'+fmt(r.hitRate5,0)+'%</td>' +
             '<td style="color:'+hrColor+'">'+fmt(r.hitRate21,0)+'%<span class="score-bar" style="width:'+barW+'px;background:'+hrColor+';"></span></td>' +
             '<td style="color:'+pctColor(r.avgRet5)+'">'+((r.avgRet5!=null&&r.avgRet5>0)?'+':'')+fmt(r.avgRet5)+'%</td>' +
             '<td style="color:'+pctColor(r.avgRet21)+'">'+((r.avgRet21!=null&&r.avgRet21>0)?'+':'')+fmt(r.avgRet21)+'%</td>' +
@@ -605,7 +605,7 @@ function renderScorecard(composites) {
             '<td style="color:var(--text-bright)">'+fmt(r.mag21)+'%</td>' +
             '<td style="color:#3db87a">'+((r.best21!=null&&r.best21>0)?'+':'')+fmt(r.best21)+'%</td>' +
             '<td style="color:#ef4444">'+fmt(r.worst21)+'%</td>' +
-            '<td style="color:'+(annSharpe!=null?(annSharpe>0?'#3db87a':'#ef4444'):'var(--text-dim)')+'">'+fmt(annSharpe,2)+'</td>' +
+            '<td style="color:'+(annSharpe!=null?(annSharpe>0?'#3db87a':'#ef4444'):'rgba(255, 255, 255, 0.85)')+'">'+fmt(annSharpe,2)+'</td>' +
             '<td style="text-align:center">'+confBadge(r.hitRate21!=null?Math.round(r.hitRate21/100*r.count):null,r.count)+'</td>' +
             '<td style="text-align:center">' + optCell + '</td>' +
             '</tr>';
@@ -628,8 +628,8 @@ function renderScorecard(composites) {
     var horizonRows = rows.filter(function(r) { return r.horizons && !r.isEnsemble; });
     if (horizonRows.length > 0) {
         html += '<div style="margin-top:18px;">' +
-            '<div style="font-size:0.72rem;letter-spacing:2px;color:var(--text-dim);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:10px;">MULTI-HORIZON ANALYSIS' +
-            '<span style="font-size:0.62rem;font-weight:400;color:var(--text-dim);letter-spacing:1px;">Optimal window highlighted in gold \u2014 signals may have edge at a different horizon than 21D</span></div>' +
+            '<div style="font-size:0.72rem;letter-spacing:2px;color:rgba(255, 255, 255, 0.85);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:10px;">MULTI-HORIZON ANALYSIS' +
+            '<span style="font-size:0.62rem;font-weight:400;color:rgba(255, 255, 255, 0.85);letter-spacing:1px;">Optimal window highlighted in gold \u2014 signals may have edge at a different horizon than 21D</span></div>' +
             '<table class="scorecard-table" style="font-size:0.72rem;"><thead><tr>' +
             '<th>SIGNAL</th>' +
             '<th data-tooltip="5-day forward return hit rate and annualized Sharpe">5D HIT / SHARPE</th>' +
@@ -643,8 +643,8 @@ function renderScorecard(composites) {
             html += '<td style="color:'+sc+';font-weight:800;">' + r.signal + '</td>';
             r.horizons.forEach(function(h) {
                 var isOpt = r.optHorizon && h.label === r.optHorizon.label && h.sharpe > 0;
-                var hrC = h.hr != null ? (h.hr > 55 ? '#3db87a' : h.hr < 45 ? '#ef4444' : 'var(--text-muted)') : 'var(--text-dim)';
-                var shC = h.sharpe != null ? (h.sharpe > 0 ? '#3db87a' : '#ef4444') : 'var(--text-dim)';
+                var hrC = h.hr != null ? (h.hr > 55 ? '#3db87a' : h.hr < 45 ? '#ef4444' : 'rgba(255, 255, 255, 0.85)') : 'rgba(255, 255, 255, 0.85)';
+                var shC = h.sharpe != null ? (h.sharpe > 0 ? '#3db87a' : '#ef4444') : 'rgba(255, 255, 255, 0.85)';
                 var ann = h.sharpe != null ? h.sharpe * annFactor : null;
                 var cellStyle = isOpt
                     ? 'background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:4px;padding:4px 8px;'
@@ -652,7 +652,7 @@ function renderScorecard(composites) {
                 var lowSampleNote = h.n < 20 ? '<span style="color:#f59e0b;font-size:0.55rem;"> \u26a0n=' + h.n + '</span>' : '';
                 html += '<td style="' + cellStyle + 'text-align:center;" data-tooltip="' + h.label + ': Hit ' + (h.hr!=null?Math.round(h.hr)+'%':'\u2014') + ', Sharpe ' + (ann!=null?fmt(ann,2):'\u2014') + ', n=' + h.n + (isOpt?' \u2014 OPTIMAL HORIZON for this signal':'') + '">' +
                     '<span style="color:'+hrC+';font-weight:700;">' + (h.hr != null ? Math.round(h.hr)+'%' : '—') + '</span>' +
-                    '<span style="color:var(--text-dim);margin:0 3px;">/</span>' +
+                    '<span style="color:rgba(255, 255, 255, 0.85);margin:0 3px;">/</span>' +
                     '<span style="color:'+shC+';">' + (ann != null ? fmt(ann, 2) : '—') + '</span>' +
                     lowSampleNote + '</td>';
             });
@@ -717,14 +717,14 @@ function renderTimeline(composites, filter) {
         var confHtml = conf >= 3 ? '<span class="confluence-badge" style="background:rgba(239,68,68,0.2);color:#ef4444;" data-tooltip="' + conf + ' other signals within ±5 sessions — EXTREME confluence">' + conf + '</span>'
             : conf >= 2 ? '<span class="confluence-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;" data-tooltip="' + conf + ' other signals within ±5 sessions — strong confluence">' + conf + '</span>'
             : conf >= 1 ? '<span class="confluence-badge" style="background:rgba(96,168,248,0.1);color:#60a8f8;" data-tooltip="' + conf + ' other signal within ±5 sessions">' + conf + '</span>'
-            : '<span style="color:var(--text-dim);opacity:0.3">0</span>';
+            : '<span style="color:rgba(255, 255, 255, 0.85);opacity:0.3">0</span>';
         // Conviction weight (1-3 stars)
         var cw = 1;
         if (conf >= 2) cw++;
         var pct = composites.ngvlPct252 ? composites.ngvlPct252[e.idx] : null;
         if (pct != null && (pct > 75 || pct < 25)) cw++;
         cw = Math.min(cw, 3);
-        var cwHtml = '<span style="color:'+(cw>=3?'#f59e0b':cw>=2?'#60a8f8':'var(--text-dim)')+'" data-tooltip="Conviction: '+cw+'/3. Based on confluence ('+conf+'), regime ('+fmt(pct,0)+'th pct)">'+'★'.repeat(cw)+'</span>';
+        var cwHtml = '<span style="color:'+(cw>=3?'#f59e0b':cw>=2?'#60a8f8':'rgba(255, 255, 255, 0.85)')+'" data-tooltip="Conviction: '+cw+'/3. Based on confluence ('+conf+'), regime ('+fmt(pct,0)+'th pct)">'+'★'.repeat(cw)+'</span>';
         // PENDING state for recent events where forward returns aren't measurable yet
         var isRecent = recentCutoffDate && e.date > recentCutoffDate;
         var fwd5Html = e.fwd5 != null ? '<span style="color:' + pctColor(e.fwd5) + '">' + ((e.fwd5>0?'+':'') + fmt(e.fwd5) + '%') + '</span>'
@@ -732,7 +732,7 @@ function renderTimeline(composites, filter) {
         var fwd21Html = e.fwd21 != null ? '<span style="color:' + pctColor(e.fwd21) + '">' + ((e.fwd21>0?'+':'') + fmt(e.fwd21) + '%') + '</span>'
             : isRecent ? '<span class="pending-label" data-tooltip="Institutional Alpha Window Pending: This signal fired less than 21 sessions ago. We use a full trading month (21 days) as the Gold Standard for validating options-surface predictive power.">PENDING</span>' : '—';
         html += '<tr data-evt-idx="' + e.idx + '"' + (conf >= 2 ? ' style="border-left:2px solid rgba(245,158,11,0.3);"' : '') + '>' +
-            '<td style="color:var(--text-muted);">'+fmtDate(e.date)+'</td>' +
+            '<td style="color:rgba(255, 255, 255, 0.85);">'+fmtDate(e.date)+'</td>' +
             '<td><span class="sig-badge" style="'+(sigColors[e.signal]||'')+'" data-tooltip="'+(sigTooltips[e.signal]||'')+'">'+e.signal+'</span></td>' +
             '<td style="color:'+dirColor+';font-weight:700;">'+e.direction+'</td>' +
             '<td>'+fmt(e.value,3)+'</td>' +
@@ -743,7 +743,7 @@ function renderTimeline(composites, filter) {
             '<td><span style="color:'+s.c+'" data-tooltip="'+s.n+' season">'+s.e+' '+s.n+'</span></td>' +
             '</tr>';
     });
-    body.innerHTML = html || '<tr><td colspan="9" style="text-align:center;color:var(--text-dim);">No events in range</td></tr>';
+    body.innerHTML = html || '<tr><td colspan="9" style="text-align:center;color:rgba(255, 255, 255, 0.85);">No events in range</td></tr>';
 
     // ── Forward Path Sparkline Popover ──
     // Create or reuse floating popover
@@ -753,7 +753,7 @@ function renderTimeline(composites, filter) {
         pop = document.createElement('div');
         pop.id = popId;
         pop.style.cssText = 'position:fixed;display:none;z-index:9999;background:rgba(12,15,25,0.95);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 8px;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,0.5);';
-        pop.innerHTML = '<div id="cvol-fwd-spark-label" style="font-size:0.55rem;font-weight:700;letter-spacing:1px;color:var(--text-dim);margin-bottom:4px;" data-tooltip="21-day forward NG price path from signal fire date. Green = positive return, Red = negative. Dashed = incomplete (PENDING)."></div><canvas id="cvol-fwd-spark-canvas" width="280" height="96" style="width:140px;height:48px;"></canvas>';
+        pop.innerHTML = '<div id="cvol-fwd-spark-label" style="font-size:0.55rem;font-weight:700;letter-spacing:1px;color:rgba(255, 255, 255, 0.85);margin-bottom:4px;" data-tooltip="21-day forward NG price path from signal fire date. Green = positive return, Red = negative. Dashed = incomplete (PENDING)."></div><canvas id="cvol-fwd-spark-canvas" width="280" height="96" style="width:140px;height:48px;"></canvas>';
         document.body.appendChild(pop);
     }
     var sparkCanvas = document.getElementById('cvol-fwd-spark-canvas');
@@ -884,7 +884,7 @@ function openCompModal(compKey) {
     var stHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:16px;">';
     var mkStat = function(label, val, tooltip, valColor) {
         return '<div class="cvol-kpi" style="padding:12px;background:var(--bg-panel);border:1px solid var(--border-primary);border-radius:6px;" data-tooltip="'+tooltip+'">' +
-            '<div style="color:var(--text-dim);font-size:0.6rem;letter-spacing:1px;margin-bottom:6px;">'+label+'</div>' +
+            '<div style="color:rgba(255, 255, 255, 0.85);font-size:0.6rem;letter-spacing:1px;margin-bottom:6px;">'+label+'</div>' +
             '<div style="font-size:1.1rem;font-weight:800;color:'+(valColor||'var(--text-bright)')+';">'+val+'</div></div>';
     };
     stHtml += mkStat('TOTAL FIRES', totalFires, 'Total times this signal fired', meta.color);
@@ -894,7 +894,7 @@ function openCompModal(compKey) {
     stHtml += mkStat('BEST 21D', fmtSign(best21), 'Best direction-adjusted 21D outcome (largest win)', pctColor(best21));
     stHtml += mkStat('WORST 21D', fmtSign(worst21), 'Worst direction-adjusted 21D outcome (largest adverse move)', pctColor(worst21));
     stHtml += mkStat('AVG CONFLUENCE', avgConf, 'Average number of other signals firing within ±5 days', 'var(--text-bright)');
-    stHtml += mkStat('SEASON (W / S)', '<span style="color:'+(wPct.indexOf('N/A')<0&&(parseInt(wPct)>55)?'#3db87a':'var(--text-muted)')+'">'+wPct+'</span> <span style="color:var(--text-dim);font-weight:400;">/</span> <span style="color:'+(sPct.indexOf('N/A')<0&&(parseInt(sPct)>55)?'#3db87a':'var(--text-muted)')+'">'+sPct+'</span>', 'Winter vs Summer hit rate', '');
+    stHtml += mkStat('SEASON (W / S)', '<span style="color:'+(wPct.indexOf('N/A')<0&&(parseInt(wPct)>55)?'#3db87a':'rgba(255, 255, 255, 0.85)')+'">'+wPct+'</span> <span style="color:rgba(255, 255, 255, 0.85);font-weight:400;">/</span> <span style="color:'+(sPct.indexOf('N/A')<0&&(parseInt(sPct)>55)?'#3db87a':'rgba(255, 255, 255, 0.85)')+'">'+sPct+'</span>', 'Winter vs Summer hit rate', '');
     stHtml += '</div>';
     statsEl.innerHTML = stHtml;
 
@@ -1040,24 +1040,24 @@ function renderRegimePanel(data, comp) {
         roc5 = ((last.ngvl - data[n-6].ngvl) / data[n-6].ngvl) * 100;
     }
     var volTrend = roc5 == null ? 'UNKNOWN' : (roc5 > 3 ? 'RISING' : roc5 < -3 ? 'FALLING' : 'FLAT');
-    var volTrendColor = roc5 == null ? 'var(--text-dim)' : (roc5 > 3 ? '#ef4444' : roc5 < -3 ? '#3db87a' : 'var(--text-muted)');
+    var volTrendColor = roc5 == null ? 'rgba(255, 255, 255, 0.85)' : (roc5 > 3 ? '#ef4444' : roc5 < -3 ? '#3db87a' : 'rgba(255, 255, 255, 0.85)');
     var volTrendIcon = roc5 == null ? '' : (roc5 > 3 ? '▲' : roc5 < -3 ? '▼' : '→');
 
     // 3. Skew Bias
     var sk = last.skewRatio;
     var skBias = sk == null ? 'UNKNOWN' : (sk > 1.08 ? 'BULLISH' : sk < 0.92 ? 'BEARISH' : 'NEUTRAL');
-    var skColor = sk == null ? 'var(--text-dim)' : (sk > 1.08 ? '#3db87a' : sk < 0.92 ? '#ef4444' : '#f59e0b');
+    var skColor = sk == null ? 'rgba(255, 255, 255, 0.85)' : (sk > 1.08 ? '#3db87a' : sk < 0.92 ? '#ef4444' : '#f59e0b');
 
     // 4. VRP State
     var vrpVal = comp.vrp ? comp.vrp[n-1] : null;
     var vrpZ = comp.vrpZ21 ? comp.vrpZ21[n-1] : null;
     var vrpState = vrpVal == null ? 'UNKNOWN' : (vrpVal > 5 ? 'OVERPRICED' : vrpVal < -3 ? 'UNDERPRICED' : 'FAIR');
-    var vrpColor = vrpVal == null ? 'var(--text-dim)' : (vrpVal > 5 ? '#3db87a' : vrpVal < -3 ? '#ef4444' : 'var(--text-muted)');
+    var vrpColor = vrpVal == null ? 'rgba(255, 255, 255, 0.85)' : (vrpVal > 5 ? '#3db87a' : vrpVal < -3 ? '#ef4444' : 'rgba(255, 255, 255, 0.85)');
 
     // 5. Active Signals (count of signals in last 10 sessions)
     var activeSignals = (comp.events || []).filter(function(ev) { return ev.idx >= n - 10; });
     var activeCnt = activeSignals.length;
-    var activeColor = activeCnt >= 3 ? '#f59e0b' : activeCnt >= 1 ? 'var(--cyan)' : 'var(--text-dim)';
+    var activeColor = activeCnt >= 3 ? '#f59e0b' : activeCnt >= 1 ? 'var(--cyan)' : 'rgba(255, 255, 255, 0.85)';
     // Season
     var curMo = parseInt(last.date.split('-')[1]);
     var curSeason = curMo >= 11 || curMo <= 2 ? 'WINTER' : curMo <= 5 ? 'SPRING' : curMo <= 8 ? 'SUMMER' : 'FALL';
@@ -1065,7 +1065,7 @@ function renderRegimePanel(data, comp) {
     // 6. Term Structure & VoV
     var ts = comp.termStructure ? comp.termStructure[n-1] : null;
     var tsLabel = ts == null ? 'UNKNOWN' : (ts > 1.03 ? 'BACKWARDATION' : ts < 0.97 ? 'CONTANGO' : 'FLAT');
-    var tsColor = ts == null ? 'var(--text-dim)' : (ts > 1.03 ? '#ef4444' : ts < 0.97 ? '#3db87a' : 'var(--text-muted)');
+    var tsColor = ts == null ? 'rgba(255, 255, 255, 0.85)' : (ts > 1.03 ? '#ef4444' : ts < 0.97 ? '#3db87a' : 'rgba(255, 255, 255, 0.85)');
     var vovVal = comp.vov ? comp.vov[n-1] : null;
 
     // 7. Overall Conviction (weighted synthesis — 6 inputs)
@@ -1080,13 +1080,13 @@ function renderRegimePanel(data, comp) {
     if (vovVal != null) { convScore += vovVal > 5 ? 1 : vovVal > 2.5 ? 2 : 3; convLen++; }
     var avgConv = convLen > 0 ? convScore / convLen : 0;
     var convLabel = avgConv >= 2.5 ? 'HIGH' : avgConv >= 1.5 ? 'MODERATE' : 'LOW';
-    var convColor = avgConv >= 2.5 ? '#f59e0b' : avgConv >= 1.5 ? 'var(--cyan)' : 'var(--text-dim)';
+    var convColor = avgConv >= 2.5 ? '#f59e0b' : avgConv >= 1.5 ? 'var(--cyan)' : 'rgba(255, 255, 255, 0.85)';
 
     function cell(lbl, val, color, sub, accentColor, tooltip) {
         return '<div class="reg-cell" style="border-left-color:'+accentColor+'" data-tooltip="'+tooltip+'">' +
             '<div class="reg-cell-lbl">'+lbl+'</div>' +
             '<div class="reg-cell-val" style="color:'+color+'">'+val+'</div>' +
-            (sub ? '<div class="reg-cell-sub" style="color:var(--text-dim)">'+sub+'</div>' : '') +
+            (sub ? '<div class="reg-cell-sub" style="color:rgba(255, 255, 255, 0.85)">'+sub+'</div>' : '') +
             '</div>';
     }
     // Tactical read — prescriptive one-liner based on current state
@@ -1118,7 +1118,7 @@ function renderRegimePanel(data, comp) {
             'Vol Risk Premium: OVERPRICED = fear overpriced. UNDERPRICED = risk underestimated.') +
         cell('TERM STRUCT', tsLabel, tsColor, fmt(ts,3)+'x', tsColor,
             'Vol term structure (5D/63D ratio). BACKWARDATION (>1.03) = stress. CONTANGO (<0.97) = calm.') +
-        cell('VOL STABILITY', vovVal!=null?(vovVal>5?'UNSTABLE':vovVal>2.5?'MIXED':'STABLE'):'UNKNOWN', vovVal!=null?(vovVal>5?'#ef4444':vovVal>2.5?'#f59e0b':'#3db87a'):'var(--text-dim)', 'VoV: '+fmt(vovVal,1), vovVal!=null?(vovVal>5?'#ef4444':'#3db87a'):'var(--text-dim)',
+        cell('VOL STABILITY', vovVal!=null?(vovVal>5?'UNSTABLE':vovVal>2.5?'MIXED':'STABLE'):'UNKNOWN', vovVal!=null?(vovVal>5?'#ef4444':vovVal>2.5?'#f59e0b':'#3db87a'):'rgba(255, 255, 255, 0.85)', 'VoV: '+fmt(vovVal,1), vovVal!=null?(vovVal>5?'#ef4444':'#3db87a'):'rgba(255, 255, 255, 0.85)',
             'Vol-of-Vol: STABLE = signals reliable. UNSTABLE = signals may whipsaw.') +
         cell('SIGNALS / SEASON', activeCnt+' \u2022 '+curSeason, activeColor, activeCnt > 0 ? activeSignals.map(function(s){return s.signal;}).join(', ') : 'QUIET', activeColor,
             'Active signals in last 10 sessions + current season.') +
@@ -1144,12 +1144,12 @@ function renderSensitivityPanel(sensitivity) {
         var sc = sigColors[sig.signal] || 'var(--text-primary)';
         sig.rows.forEach(function(row, i) {
             var isBase = row.label === 'BASELINE';
-            var hrC = row.hitRate != null ? (row.hitRate > 55 ? '#3db87a' : row.hitRate < 45 ? '#ef4444' : 'var(--text-muted)') : 'var(--text-dim)';
+            var hrC = row.hitRate != null ? (row.hitRate > 55 ? '#3db87a' : row.hitRate < 45 ? '#ef4444' : 'rgba(255, 255, 255, 0.85)') : 'rgba(255, 255, 255, 0.85)';
             var lowSample = row.count < 20 ? ' <span style="color:#f59e0b;font-size:0.55rem;">\u26a0LOW SAMPLE</span>' : '';
             html += '<tr' + (isBase ? ' style="background:rgba(255,255,255,0.04);"' : '') + '>' +
                 (i === 0 ? '<td rowspan="3" style="color:'+sc+';font-weight:800;border-right:1px solid rgba(255,255,255,0.07);">' + sig.signal + '</td>' : '') +
-                '<td style="color:' + (row.label==='TIGHTER (+0.5)'?'var(--text-muted)':isBase?'var(--text-bright)':'var(--text-dim)') + ';font-style:' + (row.label==='LOOSER (-0.5)'?'italic':'normal') + ';">' + row.label + '</td>' +
-                '<td style="color:var(--text-dim);">' + fmt(row.threshold, 2) + '</td>' +
+                '<td style="color:' + (row.label==='TIGHTER (+0.5)'?'rgba(255, 255, 255, 0.85)':isBase?'var(--text-bright)':'rgba(255, 255, 255, 0.85)') + ';font-style:' + (row.label==='LOOSER (-0.5)'?'italic':'normal') + ';">' + row.label + '</td>' +
+                '<td style="color:rgba(255, 255, 255, 0.85);">' + fmt(row.threshold, 2) + '</td>' +
                 '<td>' + (row.count > 0 ? row.count : '\u2014') + lowSample + '</td>' +
                 '<td style="color:'+hrC+';">' + (row.hitRate != null ? Math.round(row.hitRate)+'%' : '\u2014') + '</td>' +
                 '</tr>';

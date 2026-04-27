@@ -508,7 +508,7 @@ const Metrics = {
     },
 
     getValueColor(value, thresholds) {
-        if (value == null) return 'var(--text-muted)';
+        if (value == null) return 'rgba(255, 255, 255, 0.85)';
         if (value >= thresholds.extreme) return 'var(--purple)';
         if (value >= thresholds.critical) return 'var(--red)';
         if (value >= thresholds.high) return 'var(--orange)';

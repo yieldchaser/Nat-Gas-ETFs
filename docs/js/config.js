@@ -133,7 +133,7 @@ const CONFIG = {
             elevated: { priceMin: 4.5, zMin: 1.5, hvPctMin: 70,
                          color: 'var(--red)',    label: 'ELEVATED STRESS',
                          note: 'Heightened conditions — interpret signals with added caution' },
-            normal:   { color: 'var(--text-dim)', label: 'NORMAL',
+            normal:   { color: 'rgba(255, 255, 255, 0.85)', label: 'NORMAL',
                          note: 'Typical conditions — signals behave as expected' },
         }
     },

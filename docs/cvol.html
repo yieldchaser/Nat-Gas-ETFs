@@ -17,7 +17,7 @@
 .cvol-title-row { display: flex; align-items: baseline; gap: 16px; }
 .cvol-title { font-size: 1.6rem; font-weight: 800; letter-spacing: 1px; color: var(--text-bright); text-transform: uppercase; }
 .cvol-badge { font-size: 0.75rem; color: var(--cyan); letter-spacing: 2px; font-weight: 600; }
-.cvol-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; line-height: 1.6; max-width: 900px; }
+.cvol-desc { font-size: 0.75rem; color: rgba(255, 255, 255, 0.85); margin-top: 6px; line-height: 1.6; max-width: 900px; }
 
 /* ---- STATUS BANNER ---- */
 .cvol-status-banner {
@@ -27,9 +27,9 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 .sb-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.sb-lbl { font-size: 0.6rem; letter-spacing: 2px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; cursor: help; }
+.sb-lbl { font-size: 0.6rem; letter-spacing: 2px; font-weight: 700; color: rgba(255, 255, 255, 0.85); text-transform: uppercase; cursor: help; }
 .sb-val { font-size: 1.3rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
-.sb-sub { font-size: 0.6rem; color: var(--text-dim); font-weight: 700; }
+.sb-sub { font-size: 0.6rem; color: rgba(255, 255, 255, 0.85); font-weight: 700; }
 .sb-badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .flash-badge {
     font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; padding: 4px 10px;
@@ -53,11 +53,11 @@
 .cvol-kpi-ticker { font-size: 0.9rem; font-weight: 800; letter-spacing: 1px; }
 .cvol-kpi-regime { font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; }
 .cvol-kpi-main { margin: 2px 0; }
-.cvol-kpi-lbl { font-size: 0.55rem; letter-spacing: 1.5px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+.cvol-kpi-lbl { font-size: 0.55rem; letter-spacing: 1.5px; color: rgba(255, 255, 255, 0.85); font-weight: 700; text-transform: uppercase; }
 .cvol-kpi-val { font-size: 1.3rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; display: block; line-height: 1.2; }
 .cvol-kpi-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
 .cvol-kpi-stat { display: flex; flex-direction: column; gap: 2px; }
-.cvol-kpi-slbl { font-size: 0.5rem; letter-spacing: 1px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; }
+.cvol-kpi-slbl { font-size: 0.5rem; letter-spacing: 1px; color: rgba(255, 255, 255, 0.85); font-weight: 700; text-transform: uppercase; }
 .cvol-kpi-sval { font-size: 0.75rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-bright); }
 /* Micro-analytics secondary section (matches T2P .micro-analytics) */
 .cvol-kpi-micro { margin-top: 2px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 5px; }
@@ -78,7 +78,7 @@
 .horizon-btn {
     font-size: 0.6rem; font-weight: 700; padding: 4px 10px; border-radius: 4px;
     background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary);
-    color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+    color: rgba(255, 255, 255, 0.85); cursor: pointer; transition: all 0.2s;
 }
 .horizon-btn:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
 .horizon-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,255,255,0.05); }
@@ -98,7 +98,7 @@
 .range-inputs input[type=range]::-moz-range-track { background: none !important; border: none !important; }
 input[type=range]:hover::-webkit-slider-thumb { background: var(--cyan); border-color: #fff; }
 input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-color: #fff; }
-.range-labels { display: flex; justify-content: center; font-size: 0.65rem; color: var(--text-dim); font-weight: 700; margin-top: 8px; letter-spacing: 1px; }
+.range-labels { display: flex; justify-content: center; font-size: 0.65rem; color: rgba(255, 255, 255, 0.85); font-weight: 700; margin-top: 8px; letter-spacing: 1px; }
 
 /* ---- CHART HOVER TOOLTIP ---- */
 #cvol-tooltip { position: absolute; display: none; background: rgba(22,22,36,0.95); border: 1px solid var(--border-primary); border-radius: 6px; padding: 10px 14px; font-size: 0.75rem; color: var(--text-bright); pointer-events: none; z-index: 1000; box-shadow: 0 8px 24px rgba(0,0,0,0.5); min-width: 160px; }
@@ -122,16 +122,16 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 .composite-card { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 6px; padding: 14px; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; position: relative; }
 .composite-card:hover { border-color: var(--border-accent); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
 .comp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.comp-name { font-size: 0.65rem; font-weight: 800; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; }
+.comp-name { font-size: 0.65rem; font-weight: 800; letter-spacing: 1.5px; color: rgba(255, 255, 255, 0.85); text-transform: uppercase; }
 .comp-val { font-size: 0.9rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
 .comp-spark-wrap { position: relative; width: 100%; height: 110px; }
 .comp-spark { width: 100%; height: 100%; }
 .comp-spark-tt { position: absolute; display: none; background: rgba(22,22,36,0.95); border: 1px solid var(--border-primary); border-radius: 4px; padding: 5px 8px; font-size: 0.6rem; color: var(--text-bright); pointer-events: none; z-index: 10; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
-.comp-footer { display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.55rem; color: var(--text-dim); font-weight: 700; letter-spacing: 0.5px; }
+.comp-footer { display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.55rem; color: rgba(255, 255, 255, 0.85); font-weight: 700; letter-spacing: 0.5px; }
 .comp-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; }
-.comp-stat { font-size: 0.5rem; color: var(--text-dim); font-weight: 700; letter-spacing: 0.5px; }
+.comp-stat { font-size: 0.5rem; color: rgba(255, 255, 255, 0.85); font-weight: 700; letter-spacing: 0.5px; }
 .comp-stat-val { display: block; font-size: 0.7rem; color: var(--text-bright); font-family: 'JetBrains Mono', monospace; font-weight: 700; }
-.comp-expand-icon { position: absolute; top: 8px; right: 8px; font-size: 0.5rem; color: var(--text-dim); letter-spacing: 1px; opacity: 0; transition: opacity 0.2s; }
+.comp-expand-icon { position: absolute; top: 8px; right: 8px; font-size: 0.5rem; color: rgba(255, 255, 255, 0.85); letter-spacing: 1px; opacity: 0; transition: opacity 0.2s; }
 .composite-card:hover .comp-expand-icon { opacity: 1; }
 
 /* ---- EXPANDED COMPOSITE MODAL ---- */
@@ -139,7 +139,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 .comp-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(90vw, 900px); max-height: 80vh; background: var(--bg-panel); border: 1px solid var(--border-accent); border-radius: 10px; padding: 28px; z-index: 9001; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
 .comp-modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .comp-modal-title { font-size: 1rem; font-weight: 800; letter-spacing: 2px; color: var(--text-bright); text-transform: uppercase; }
-.comp-modal-close { background: none; border: 1px solid var(--border-primary); color: var(--text-muted); font-size: 0.7rem; padding: 4px 12px; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+.comp-modal-close { background: none; border: 1px solid var(--border-primary); color: rgba(255, 255, 255, 0.85); font-size: 0.7rem; padding: 4px 12px; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
 .comp-modal-close:hover { border-color: var(--cyan); color: var(--cyan); }
 .comp-modal-chart { position: relative; height: 300px; width: 100%; margin-bottom: 16px; }
 .comp-modal-chart canvas { width: 100%; height: 100%; cursor: crosshair; }
@@ -152,7 +152,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 .hm-val { font-size: 0.68rem; font-weight: 800; line-height: 1; }
 .hm-pct { font-size: 0.45rem; font-weight: 600; letter-spacing: 0.5px; opacity: 0.85; line-height: 1; }
 .heatmap-label { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.8px; text-align: center; padding: 2px 0 5px; }
-.heatmap-year-label { font-size: 0.55rem; font-weight: 700; color: var(--text-muted); text-align: right; padding-right: 6px; display: flex; align-items: center; justify-content: flex-end; }
+.heatmap-year-label { font-size: 0.55rem; font-weight: 700; color: rgba(255, 255, 255, 0.85); text-align: right; padding-right: 6px; display: flex; align-items: center; justify-content: flex-end; }
 .heatmap-legend { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap; }
 .hm-leg-item { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; color: #fff; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; }
 .hm-leg-swatch { width: 18px; height: 8px; border-radius: 2px; }
@@ -178,7 +178,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 .corr-bar { position: absolute; bottom: 0; left: 0; height: 3px; border-radius: 0 2px 2px 0; opacity: 0.55; }
 .corr-col-hdr { font-size: 0.43rem; font-weight: 700; letter-spacing: 0.6px; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.2; }
 .corr-row-hdr { font-size: 0.43rem; font-weight: 700; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; text-align: center; }
-.corr-range-note { font-size: 0.46rem; color: var(--text-dim); letter-spacing: 0.4px; margin-bottom: 10px; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.corr-range-note { font-size: 0.46rem; color: rgba(255, 255, 255, 0.85); letter-spacing: 0.4px; margin-bottom: 10px; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
 .corr-legend { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
 .corr-grad-swatch { height: 8px; flex: 1; border-radius: 3px; }
 .corr-leg-label { font-size: 0.55rem; color: #fff; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; white-space: nowrap; opacity: 0.85; }
@@ -186,7 +186,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 /* ---- BACKTEST SCORECARD ---- */
 .scorecard-panel { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
 table.scorecard-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.75rem; }
-.scorecard-table th { text-align: center; padding: 10px 12px; font-size: 0.55rem; letter-spacing: 2px; color: var(--text-muted); font-weight: 700; border-bottom: 2px solid var(--bg-secondary); text-transform: uppercase; }
+.scorecard-table th { text-align: center; padding: 10px 12px; font-size: 0.55rem; letter-spacing: 2px; color: rgba(255, 255, 255, 0.85); font-weight: 700; border-bottom: 2px solid var(--bg-secondary); text-transform: uppercase; }
 .scorecard-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; }
 .scorecard-table tr:hover td { background: rgba(255,255,255,0.04) !important; }
 .scorecard-table tr.scorecard-summary td { border-top: 2px solid var(--border-accent); font-weight: 800; color: var(--text-bright); background: rgba(0,255,255,0.03); }
@@ -198,7 +198,7 @@ table.scorecard-table { width: 100%; border-collapse: separate; border-spacing: 
 .signal-chip.active { filter: brightness(1); }
 .signal-chip:not(.active) { opacity: 0.4; }
 .confluence-badge { display: inline-block; font-size: 0.55rem; font-weight: 800; padding: 1px 6px; border-radius: 3px; letter-spacing: 0.5px; }
-.pending-label { color: var(--text-dim); font-style: italic; font-weight: 600; opacity: 0.6; }
+.pending-label { color: rgba(255, 255, 255, 0.85); font-style: italic; font-weight: 600; opacity: 0.6; }
 
 /* ---- EVENT TIMELINE ---- */
 .event-panel { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
@@ -206,11 +206,11 @@ table.scorecard-table { width: 100%; border-collapse: separate; border-spacing: 
 .event-title { font-size: 0.85rem; font-weight: 800; letter-spacing: 1.5px; color: var(--text-bright); text-transform: uppercase; }
 .event-count { font-size: 0.6rem; color: var(--cyan); font-weight: 700; letter-spacing: 1px; }
 .tab-group { display: flex; background: #1a1a28; padding: 3px; border-radius: 6px; }
-.tab-btn { font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; padding: 6px 14px; border-radius: 4px; border: none; background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
+.tab-btn { font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; padding: 6px 14px; border-radius: 4px; border: none; background: transparent; color: rgba(255, 255, 255, 0.85); cursor: pointer; transition: all 0.2s; }
 .tab-btn:hover { color: var(--text-primary); }
 .tab-btn.active { background: var(--bg-secondary); color: var(--cyan); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.78rem; }
-.event-table th { text-align: center; padding: 10px 12px; font-size: 0.6rem; letter-spacing: 2px; color: var(--text-muted); font-weight: 700; border-bottom: 2px solid var(--bg-secondary); text-transform: uppercase; }
+.event-table th { text-align: center; padding: 10px 12px; font-size: 0.6rem; letter-spacing: 2px; color: rgba(255, 255, 255, 0.85); font-weight: 700; border-bottom: 2px solid var(--bg-secondary); text-transform: uppercase; }
 .event-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; }
 .event-table tr:hover td { background: rgba(255,255,255,0.04) !important; }
 .sig-badge { display: inline-block; font-size: 0.6rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid; letter-spacing: 0.8px; }
@@ -221,11 +221,11 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 
 /* ---- CHART LEGEND ---- */
 .chart-legend { display: flex; gap: 24px; flex-wrap: wrap; }
-.legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.62rem; color: var(--text-dim); font-weight: 600; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.62rem; color: rgba(255, 255, 255, 0.85); font-weight: 600; }
 .legend-line { width: 16px; height: 2px; }
 
 /* ---- LOADING ---- */
-.cvol-loading { display: flex; justify-content: center; align-items: center; height: 400px; color: var(--text-dim); font-size: 1rem; letter-spacing: 2px; font-weight: 700; }
+.cvol-loading { display: flex; justify-content: center; align-items: center; height: 400px; color: rgba(255, 255, 255, 0.85); font-size: 1rem; letter-spacing: 2px; font-weight: 700; }
 
 /* ---- TWO-COL GRID ---- */
 .two-col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; align-items: start; }
@@ -233,7 +233,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 /* ---- REGIME DASHBOARD ---- */
 .reg-cell { background: rgba(255,255,255,0.02); border: 1px solid var(--border-primary); border-radius: 6px; padding: 12px 14px; border-left: 3px solid var(--border-primary); transition: border-color 0.2s; }
 .reg-cell:hover { border-color: var(--border-accent); }
-.reg-cell-lbl { font-size: 0.5rem; letter-spacing: 1.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; cursor: help; }
+.reg-cell-lbl { font-size: 0.5rem; letter-spacing: 1.5px; font-weight: 700; color: rgba(255, 255, 255, 0.85); text-transform: uppercase; margin-bottom: 6px; cursor: help; }
 .reg-cell-val { font-size: 1.05rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1.2; }
 .reg-cell-sub { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.5px; margin-top: 4px; }
 
@@ -301,7 +301,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
         <button class="comp-modal-close" id="comp-modal-close">CLOSE ✕</button>
     </div>
-    <div class="comp-modal-desc" id="comp-modal-desc" style="font-size:0.7rem;color:var(--text-muted);margin-bottom:24px;line-height:1.5;"></div>
+    <div class="comp-modal-desc" id="comp-modal-desc" style="font-size:0.7rem;color:rgba(255, 255, 255, 0.85);margin-bottom:24px;line-height:1.5;"></div>
     <div id="comp-modal-stats" style="font-size:0.7rem;color:var(--text-primary);margin-bottom:24px;"></div>
     
     <div class="comp-modal-chart">
@@ -428,7 +428,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <div class="chart-header">
             <div style="flex:1">
                 <span style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;">Vol Regime Monitor</span>
-                <span style="font-size:0.65rem;color:var(--text-muted);margin-left:10px;">— 5D · 21D · 63D · 252D historical volatility</span>
+                <span style="font-size:0.65rem;color:rgba(255, 255, 255, 0.85);margin-left:10px;">— 5D · 21D · 63D · 252D historical volatility</span>
             </div>
         </div>
         <div id="vrm-selector"></div>
@@ -441,7 +441,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <div class="chart-container" id="regime-dashboard-panel" style="padding:20px 24px;">
         <div class="section-title-bar" style="margin-bottom:14px;">
             <span class="section-title-text" data-tooltip="Decision Synthesis: Aggregates all vol surface dimensions into a single actionable regime assessment. This is your 'at-a-glance' conviction framework — it tells you WHAT the market is doing, HOW confident we are, and WHAT to expect next.">Regime Dashboard</span>
-            <span style="font-size:0.5rem;color:var(--text-dim);margin-left:12px;letter-spacing:1.5px;font-weight:700;">DECISION FRAMEWORK</span>
+            <span style="font-size:0.5rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1.5px;font-weight:700;">DECISION FRAMEWORK</span>
         </div>
         <div id="regime-dashboard-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;"></div>
     </div>
@@ -449,7 +449,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- PANEL 5: COMPOSITE SIGNAL DASHBOARD (expanded with axes, hover, stats) -->
     <div style="margin-bottom:16px;">
         <span class="section-title-text" data-tooltip="Predictive Signal Array: Five proprietary composite indicators that decode the options-surface into actionable regime alerts. SAD (Stealth Re-positioning), CI (Fragile Calm), CVC (Trend Confirmation), and RDS (Explosive Divergence). Click any card for the full interactive timeline.">Proprietary Composite Signals</span>
-        <span style="font-size:0.55rem;color:var(--text-dim);margin-left:12px;letter-spacing:1px;font-weight:700;">CLICK TO EXPAND</span>
+        <span style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1px;font-weight:700;">CLICK TO EXPAND</span>
     </div>
     <div class="composite-grid">
         <div class="composite-card" data-comp="sad">
@@ -558,12 +558,12 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <div id="csf-header" style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer;user-select:none;" onclick="document.getElementById('csf-body').style.display=(document.getElementById('csf-body').style.display==='none'?'block':'none');this.querySelector('.csf-arrow').textContent=(document.getElementById('csf-body').style.display==='none'?'▶':'▼');">
             <div style="display:flex;align-items:center;gap:10px;">
                 <span style="font-size:0.6rem;letter-spacing:2px;font-weight:700;color:var(--text-primary);" data-tooltip="How to use CVOL conviction as a regime filter and conviction multiplier for signals from other tabs.">CROSS-SIGNAL FRAMEWORK</span>
-                <span style="font-size:0.5rem;color:var(--text-dim);letter-spacing:1px;">How CVOL conviction combines with T2P &amp; Volume signals</span>
+                <span style="font-size:0.5rem;color:rgba(255, 255, 255, 0.85);letter-spacing:1px;">How CVOL conviction combines with T2P &amp; Volume signals</span>
             </div>
-            <span class="csf-arrow" style="font-size:0.6rem;color:var(--text-dim);">▶</span>
+            <span class="csf-arrow" style="font-size:0.6rem;color:rgba(255, 255, 255, 0.85);">▶</span>
         </div>
         <div id="csf-body" style="display:none;padding:0 20px 20px;">
-            <p style="font-size:0.58rem;color:var(--text-dim);line-height:1.7;margin:0 0 16px;" data-tooltip="CVOL signals are confirmation/filter signals — not standalone alpha generators. Their highest value is as a REGIME FILTER that multiplies the reliability of signals from other tabs.">
+            <p style="font-size:0.58rem;color:rgba(255, 255, 255, 0.85);line-height:1.7;margin:0 0 16px;" data-tooltip="CVOL signals are confirmation/filter signals — not standalone alpha generators. Their highest value is as a REGIME FILTER that multiplies the reliability of signals from other tabs.">
                 CVOL signals are <strong style="color:var(--text-primary);">confirmation signals, not standalone alpha</strong>. Their highest value is as a regime filter that multiplies the reliability of
                 volume spikes (Volume Monitor) and cycle position (Trough-to-Peak). Use this matrix to interpret combined signals.
             </p>
@@ -571,29 +571,29 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <table style="width:100%;border-collapse:collapse;font-size:0.55rem;">
                 <thead>
                     <tr>
-                        <th style="padding:8px 12px;text-align:left;color:var(--text-dim);font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Current CVOL Conviction Level from the Regime Dashboard">CVOL CONVICTION</th>
-                        <th style="padding:8px 12px;text-align:center;color:#3db87a;font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Trough-to-Peak cycle position above 75th percentile — late cycle, elevated risk">T2P &gt; 75th pct<br><span style="font-weight:400;font-size:0.48rem;color:var(--text-dim);">Late-cycle / frothy</span></th>
-                        <th style="padding:8px 12px;text-align:center;color:var(--text-muted);font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Trough-to-Peak cycle position in the middle range — no clear cycle signal">T2P 25–75th<br><span style="font-weight:400;font-size:0.48rem;color:var(--text-dim);">Mid-cycle</span></th>
-                        <th style="padding:8px 12px;text-align:center;color:#60a8f8;font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Trough-to-Peak cycle position below 25th percentile — early cycle, recovery phase">T2P &lt; 25th pct<br><span style="font-weight:400;font-size:0.48rem;color:var(--text-dim);">Early-cycle / recovery</span></th>
+                        <th style="padding:8px 12px;text-align:left;color:rgba(255, 255, 255, 0.85);font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Current CVOL Conviction Level from the Regime Dashboard">CVOL CONVICTION</th>
+                        <th style="padding:8px 12px;text-align:center;color:#3db87a;font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Trough-to-Peak cycle position above 75th percentile — late cycle, elevated risk">T2P &gt; 75th pct<br><span style="font-weight:400;font-size:0.48rem;color:rgba(255, 255, 255, 0.85);">Late-cycle / frothy</span></th>
+                        <th style="padding:8px 12px;text-align:center;color:rgba(255, 255, 255, 0.85);font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Trough-to-Peak cycle position in the middle range — no clear cycle signal">T2P 25–75th<br><span style="font-weight:400;font-size:0.48rem;color:rgba(255, 255, 255, 0.85);">Mid-cycle</span></th>
+                        <th style="padding:8px 12px;text-align:center;color:#60a8f8;font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Trough-to-Peak cycle position below 25th percentile — early cycle, recovery phase">T2P &lt; 25th pct<br><span style="font-weight:400;font-size:0.48rem;color:rgba(255, 255, 255, 0.85);">Early-cycle / recovery</span></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td style="padding:10px 12px;color:#f59e0b;font-weight:800;border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="HIGH conviction means the vol surface is showing extreme readings. Combined with a vol spike, this is the highest-quality setup the system can generate.">HIGH</td>
-                        <td style="padding:10px 12px;text-align:center;background:rgba(245,158,11,0.08);border-bottom:1px solid rgba(255,255,255,0.05);border-radius:4px;" data-tooltip="MAXIMUM CONVICTION: Vol surface extremes align with late-cycle position. Historical combined hit rate outperforms any individual signal. Size up.">⚡ <strong style="color:#f59e0b;">MAXIMUM CONVICTION</strong><br><span style="color:var(--text-dim);font-size:0.48rem;">Vol + cycle both signal reversal</span></td>
-                        <td style="padding:10px 12px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="Vol surface is extreme but cycle position is ambiguous. Lean toward the CVOL directional bias, but reduce size."><strong style="color:var(--cyan);">LEAN + MONITOR</strong><br><span style="color:var(--text-dim);font-size:0.48rem;">Vol bias, cycle indeterminate</span></td>
-                        <td style="padding:10px 12px;text-align:center;background:rgba(239,68,68,0.06);border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="Vol surface and cycle are conflicted. CVOL may be early — the recovery cycle argues against the vol signal."><strong style="color:#ef4444;">CONFLICTED</strong><br><span style="color:var(--text-dim);font-size:0.48rem;">Vol extreme but early-cycle recovery</span></td>
+                        <td style="padding:10px 12px;text-align:center;background:rgba(245,158,11,0.08);border-bottom:1px solid rgba(255,255,255,0.05);border-radius:4px;" data-tooltip="MAXIMUM CONVICTION: Vol surface extremes align with late-cycle position. Historical combined hit rate outperforms any individual signal. Size up.">⚡ <strong style="color:#f59e0b;">MAXIMUM CONVICTION</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">Vol + cycle both signal reversal</span></td>
+                        <td style="padding:10px 12px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="Vol surface is extreme but cycle position is ambiguous. Lean toward the CVOL directional bias, but reduce size."><strong style="color:var(--cyan);">LEAN + MONITOR</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">Vol bias, cycle indeterminate</span></td>
+                        <td style="padding:10px 12px;text-align:center;background:rgba(239,68,68,0.06);border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="Vol surface and cycle are conflicted. CVOL may be early — the recovery cycle argues against the vol signal."><strong style="color:#ef4444;">CONFLICTED</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">Vol extreme but early-cycle recovery</span></td>
                     </tr>
                     <tr>
                         <td style="padding:10px 12px;color:var(--cyan);font-weight:800;" data-tooltip="MODERATE conviction means some vol surface signals are elevated but no full extreme. Use other tabs as primary.">MODERATE</td>
-                        <td style="padding:10px 12px;text-align:center;" data-tooltip="Vol is moderately elevated and cycle is late — watch for a volume spike as the catalyst. Vol confirmation adds value here."><strong style="color:var(--cyan);">WATCH</strong><br><span style="color:var(--text-dim);font-size:0.48rem;">Wait for volume catalyst</span></td>
-                        <td style="padding:10px 12px;text-align:center;" data-tooltip="No clear signal from either source. Wait for one of them to register an extreme reading."><strong style="color:var(--text-dim);">WAIT</strong><br><span style="color:var(--text-dim);font-size:0.48rem;">Neither tab at an extreme</span></td>
-                        <td style="padding:10px 12px;text-align:center;" data-tooltip="Cycle says early recovery, CVOL is not at an extreme. Lean long on T2P signal alone."><strong style="color:#60a8f8;">FOLLOW T2P</strong><br><span style="color:var(--text-dim);font-size:0.48rem;">T2P recovery bias</span></td>
+                        <td style="padding:10px 12px;text-align:center;" data-tooltip="Vol is moderately elevated and cycle is late — watch for a volume spike as the catalyst. Vol confirmation adds value here."><strong style="color:var(--cyan);">WATCH</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">Wait for volume catalyst</span></td>
+                        <td style="padding:10px 12px;text-align:center;" data-tooltip="No clear signal from either source. Wait for one of them to register an extreme reading."><strong style="color:rgba(255, 255, 255, 0.85);">WAIT</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">Neither tab at an extreme</span></td>
+                        <td style="padding:10px 12px;text-align:center;" data-tooltip="Cycle says early recovery, CVOL is not at an extreme. Lean long on T2P signal alone."><strong style="color:#60a8f8;">FOLLOW T2P</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">T2P recovery bias</span></td>
                     </tr>
                 </tbody>
             </table>
             </div>
-            <p style="font-size:0.5rem;color:var(--text-dim);margin:14px 0 0;line-height:1.6;" data-tooltip="The Volume Monitor's conviction events (VCVI ≥72, multi-window convergence) can substitute for T2P cycle position as the trigger signal when T2P data is unavailable.">
+            <p style="font-size:0.5rem;color:rgba(255, 255, 255, 0.85);margin:14px 0 0;line-height:1.6;" data-tooltip="The Volume Monitor's conviction events (VCVI ≥72, multi-window convergence) can substitute for T2P cycle position as the trigger signal when T2P data is unavailable.">
                 💡 <strong style="color:var(--text-primary);">Volume Monitor note:</strong> A Volume Monitor Conviction Event (VCVI ≥72 + multi-window breadth) can substitute for T2P &gt;75th pct as the trigger signal — both represent extremes of fear/capitulation that historically precede reversals. When both fire simultaneously with CVOL HIGH, that is the highest-quality setup this system can produce.
             </p>
         </div>
@@ -616,10 +616,10 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
             <div id="tsa-header" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;padding:4px 0;" onclick="var b=document.getElementById('tsa-body');b.style.display=b.style.display==='none'?'block':'none';this.querySelector('.tsa-arrow').textContent=b.style.display==='none'?'▶':'▼';">
                 <div style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:0.68rem;letter-spacing:2px;font-weight:700;color:var(--text-dim);" data-tooltip="Shows how hit rate and event count change if signal thresholds are tightened or loosened. Helps identify whether current thresholds are too loose (too many low-quality fires) or too tight (missing valid setups).">THRESHOLD SENSITIVITY</span>
-                    <span style="font-size:0.58rem;color:var(--text-dim);letter-spacing:1px;">Are triggers too loose? Does tightening improve quality?</span>
+                    <span style="font-size:0.68rem;letter-spacing:2px;font-weight:700;color:rgba(255, 255, 255, 0.85);" data-tooltip="Shows how hit rate and event count change if signal thresholds are tightened or loosened. Helps identify whether current thresholds are too loose (too many low-quality fires) or too tight (missing valid setups).">THRESHOLD SENSITIVITY</span>
+                    <span style="font-size:0.58rem;color:rgba(255, 255, 255, 0.85);letter-spacing:1px;">Are triggers too loose? Does tightening improve quality?</span>
                 </div>
-                <span class="tsa-arrow" style="font-size:0.68rem;color:var(--text-dim);">▶</span>
+                <span class="tsa-arrow" style="font-size:0.68rem;color:rgba(255, 255, 255, 0.85);">▶</span>
             </div>
             <div id="tsa-body" style="display:none;margin-top:10px;overflow-x:auto;">
                 <div id="cvol-sensitivity-panel"></div>
@@ -656,7 +656,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
                 </tr>
             </thead>
             <tbody id="cvol-event-body">
-                <tr><td colspan="9" style="text-align:center;color:var(--text-dim);">Computing signals...</td></tr>
+                <tr><td colspan="9" style="text-align:center;color:rgba(255, 255, 255, 0.85);">Computing signals...</td></tr>
             </tbody>
         </table>
         </div>

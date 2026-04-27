@@ -40,7 +40,7 @@ const VolRegime = {
 
     // Regime buckets: percentile of current HV vs all available history
     _regime(pct) {
-        if (pct == null) return { label: '--',       cls: 'vrm-reg-unknown',  color: 'var(--text-muted)' };
+        if (pct == null) return { label: '--',       cls: 'vrm-reg-unknown',  color: 'rgba(255, 255, 255, 0.85)' };
         if (pct >= 90)   return { label: 'SPIKE',    cls: 'vrm-reg-spike',    color: '#c04040' };
         if (pct >= 75)   return { label: 'ELEVATED', cls: 'vrm-reg-elevated', color: '#c07828' };
         if (pct >= 25)   return { label: 'NORMAL',   cls: 'vrm-reg-normal',   color: '#3db87a' };
@@ -184,7 +184,7 @@ const VolRegime = {
         if (lv == null || sv == null) return '';
         const spread  = Math.abs(lv - sv);
         const anomaly = spread > 5;
-        const color   = anomaly ? 'var(--orange)' : 'var(--text-dim)';
+        const color   = anomaly ? 'var(--orange)' : 'rgba(255, 255, 255, 0.85)';
         return `
             <div class="vrm-pair-spread">
                 <div class="vrm-spread-key">21D ΔHV</div>

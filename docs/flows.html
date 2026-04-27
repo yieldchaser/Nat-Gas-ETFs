@@ -26,15 +26,15 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .s-label-long { color: rgba(34,197,94,0.8); }
 .s-label-short { color: rgba(239,68,68,0.75); }
 .s-val { font-size: 1.25rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
-.s-tickers { font-size: 0.62rem; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 2px; }
-.s-sub { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; font-weight: 700; }
+.s-tickers { font-size: 0.62rem; color: rgba(255, 255, 255, 0.85); letter-spacing: 0.5px; margin-top: 2px; }
+.s-sub { font-size: 0.65rem; color: rgba(255, 255, 255, 0.85); margin-top: 4px; font-weight: 700; }
 
 .sentiment-center { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 16px; }
-.s-center-label { font-size: 0.66rem; color: var(--text-dim); letter-spacing: 2px; font-weight: 800; }
+.s-center-label { font-size: 0.66rem; color: rgba(255, 255, 255, 0.85); letter-spacing: 2px; font-weight: 800; }
 /* Two stacked meters */
 .s-meters     { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 7px; }
 .s-meter-row  { display: flex; align-items: center; gap: 8px; }
-.s-meter-lbl  { font-size: 0.62rem; font-weight: 800; letter-spacing: 1px; color: var(--text-dim); width: 38px; text-align: right; flex-shrink: 0; }
+.s-meter-lbl  { font-size: 0.62rem; font-weight: 800; letter-spacing: 1px; color: rgba(255, 255, 255, 0.85); width: 38px; text-align: right; flex-shrink: 0; }
 .s-meter-track{ flex: 1; height: 11px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden; }
 .s-meter-fill { height: 100%; transition: width 0.6s ease; border-radius: 5px; }
 .s-meter-pct  { font-size: 0.64rem; font-weight: 700; width: 30px; flex-shrink: 0; }
@@ -46,7 +46,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 }
 .side-col { display: flex; flex-direction: column; gap: 10px; }
 .side-header {
-    font-size: 0.74rem; font-weight: 800; letter-spacing: 2px; color: var(--text-dim);
+    font-size: 0.74rem; font-weight: 800; letter-spacing: 2px; color: rgba(255, 255, 255, 0.85);
     margin-bottom: 2px; border-bottom: 1px solid var(--border-primary); padding-bottom: 8px;
     display: flex; align-items: center; justify-content: space-between;
 }
@@ -54,7 +54,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .side-header-short { border-bottom-color: rgba(239,68,68,0.3); }
 .sh-arrow-long { color: var(--green); }
 .sh-arrow-short { color: var(--red); }
-.side-header-sub { font-size: 0.64rem; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; text-transform: none; }
+.side-header-sub { font-size: 0.64rem; letter-spacing: 0.5px; color: rgba(255, 255, 255, 0.85); font-weight: 600; text-transform: none; }
 
 /* Card: horizontal compact layout */
 .flow-card {
@@ -69,22 +69,22 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 
 .fc-left { display: flex; flex-direction: column; gap: 5px; border-right: 1px solid var(--border-primary); padding-right: 12px; }
 .fc-ticker { font-size: 1.15rem; font-weight: 900; letter-spacing: 1px; color: var(--text-bright); }
-.fc-nav { font-size: 0.74rem; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); }
+.fc-nav { font-size: 0.74rem; font-family: 'JetBrains Mono', monospace; color: rgba(255, 255, 255, 0.85); }
 .fc-regime { display: inline-block; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.8px; padding: 2px 6px 2px 0; border-radius: 3px; white-space: nowrap; }
 
 /* Main metrics: 2x2 grid */
 .fc-main { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; }
 .fc-metric { display: flex; flex-direction: column; }
-.fc-m-lbl { font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.8px; margin-bottom: 2px; }
+.fc-m-lbl { font-size: 0.6rem; text-transform: uppercase; color: rgba(255, 255, 255, 0.85); font-weight: 700; letter-spacing: 0.8px; margin-bottom: 2px; }
 .fc-m-val { font-size: 0.92rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1.2; }
 
 /* Momentum row spanning both columns */
-.mom-row { grid-column: 1 / span 2; display: flex; gap: 10px; font-size: 0.62rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.mom-row { grid-column: 1 / span 2; display: flex; gap: 10px; font-size: 0.62rem; color: rgba(255, 255, 255, 0.85); font-family: 'JetBrains Mono', monospace; }
 .mom-item span { font-weight: 700; }
 
 /* Right section: pressure gauge */
 .fc-right { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 58px; }
-.fc-pres-lbl { font-size: 0.58rem; color: var(--text-muted); font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
+.fc-pres-lbl { font-size: 0.58rem; color: rgba(255, 255, 255, 0.85); font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
 .fc-pres-val { font-size: 1.2rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; }
 /* Bidirectional pressure bar */
 .fc-pres-bar-wrap { position: relative; width: 58px; height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
@@ -94,7 +94,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .val-green { color: var(--green); }
 .val-red { color: var(--red); }
 .val-cyan { color: var(--cyan); }
-.val-muted { color: var(--text-muted); }
+.val-muted { color: rgba(255, 255, 255, 0.85); }
 
 /* ---- Section 3: Deep Dive Chart Panel ---- */
 .panel {
@@ -108,7 +108,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .tab-btn {
     font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
     padding: 6px 14px; border-radius: 4px; border: none;
-    background: transparent; color: var(--text-dim);
+    background: transparent; color: rgba(255, 255, 255, 0.85);
     cursor: pointer; transition: all 0.2s;
 }
 .tab-btn:hover { color: var(--text-bright); }
@@ -130,7 +130,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
     flex: 1; padding: 0 8px; border-right: 1px solid var(--border-primary);
 }
 .st-item:last-child { border-right: none; }
-.st-lbl { font-size: 0.62rem; color: var(--text-dim); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; cursor: default; }
+.st-lbl { font-size: 0.62rem; color: rgba(255, 255, 255, 0.85); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; cursor: default; }
 .st-val { font-size: 1rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
 
 /* ---- Download button ---- */
@@ -147,7 +147,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .div-table thead tr { border-bottom: 2px solid var(--border-primary); }
 .div-table th {
     text-align: right; padding: 10px 12px;
-    color: var(--text-muted); font-size: 0.6rem; letter-spacing: 1.2px;
+    color: rgba(255, 255, 255, 0.85); font-size: 0.6rem; letter-spacing: 1.2px;
     text-transform: uppercase; font-weight: 800; white-space: nowrap;
 }
 .div-table th:first-child { text-align: left; }
@@ -180,16 +180,16 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
     box-shadow: 0 8px 24px rgba(0,0,0,0.5); min-width: 160px;
 }
 .tt-row { display: flex; justify-content: space-between; margin-bottom: 4px; gap: 16px; }
-.tt-lbl { color: var(--text-dim); font-size: 0.65rem; text-transform: uppercase; font-weight: 700; }
+.tt-lbl { color: rgba(255, 255, 255, 0.85); font-size: 0.65rem; text-transform: uppercase; font-weight: 700; }
 .tt-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
 .tt-date { font-size: 0.7rem; color: var(--cyan); margin-bottom: 8px; font-weight: 800; border-bottom: 1px solid var(--border-primary); padding-bottom: 4px;}
 
-.loading-overlay { display: flex; justify-content: center; align-items: center; height: 200px; color: var(--text-dim); font-size: 0.8rem; letter-spacing: 2px; }
+.loading-overlay { display: flex; justify-content: center; align-items: center; height: 200px; color: rgba(255, 255, 255, 0.85); font-size: 0.8rem; letter-spacing: 2px; }
 
 /* Chart footer legend */
 .chart-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 8px; }
 .chart-legend { display: flex; gap: 20px; flex-wrap: wrap; }
-.legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.62rem; color: var(--text-dim); font-weight: 600; letter-spacing: 0.5px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.62rem; color: rgba(255, 255, 255, 0.85); font-weight: 600; letter-spacing: 0.5px; }
 .legend-line { width: 16px; height: 2px; }
 .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
 
@@ -257,18 +257,18 @@ input[type=range]:hover::-webkit-slider-thumb { background: var(--cyan); border-
 input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-color: #fff; }
 .range-labels {
     display: flex; justify-content: space-between;
-    font-size: 0.65rem; color: var(--text-dim);
+    font-size: 0.65rem; color: rgba(255, 255, 255, 0.85);
     font-weight: 700; margin-top: 8px; letter-spacing: 0.5px;
 }
 
 /* ---- Yearly Matrix ---- */
 .matrix-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-.matrix-table th { padding: 7px 8px; font-size: 0.62rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.matrix-table th { padding: 7px 8px; font-size: 0.62rem; color: rgba(255, 255, 255, 0.85); text-transform: uppercase; letter-spacing: 1px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.07); }
 .matrix-table th.group-header { padding: 6px 4px 4px; font-size: 0.55rem; letter-spacing: 2px; border-bottom: none; }
 .matrix-table td { padding: 8px 8px; font-size: 0.75rem; color: var(--text-primary); text-align: center; font-family: 'JetBrains Mono', monospace; border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.15s; }
 .matrix-table tbody tr:hover td { background: rgba(255,255,255,0.04) !important; }
 .matrix-year { color: var(--cyan); font-weight: 800; text-align: left !important; width: 62px; }
-.matrix-none { color: var(--text-dim); opacity: 0.2; font-size: 0.7rem; }
+.matrix-none { color: rgba(255, 255, 255, 0.85); opacity: 0.2; font-size: 0.7rem; }
 
 /* Responsive — 900px */
 @media (max-width: 900px) {
@@ -377,7 +377,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <span data-tooltip="Flow Monitor tracks daily capital inflows &amp; outflows across 6 leveraged Nat Gas ETFs. Green = bullish signal (longs accumulating / shorts unwinding). Red = bearish." style="font-size:1.8rem; font-weight:900; letter-spacing:1px; color:var(--text-bright); text-transform:uppercase; cursor:default;">Flow Monitor</span>
                 <span style="font-size:0.75rem; color:var(--cyan); letter-spacing:2px; font-weight:600;">NAT GAS ETFs</span>
             </div>
-            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; line-height:1.6; max-width:800px;">
+            <div style="font-size:0.75rem; color:rgba(255, 255, 255, 0.85); margin-top:6px; line-height:1.6; max-width:800px;">
                 Tracks daily capital inflows and outflows across all 6 leveraged ETFs. Flow Z-Score, pressure score, and divergence detection identify accumulation and distribution events in real time.
             </div>
         </div>
@@ -455,7 +455,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 
             <!-- Chart A: Cumulative Flow + Price -->
             <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
-                <div id="zoom-indicator" style="font-size:0.55rem; color:var(--text-muted); letter-spacing:1px; display:none;">
+                <div id="zoom-indicator" style="font-size:0.55rem; color:rgba(255, 255, 255, 0.85); letter-spacing:1px; display:none;">
                     ZOOMED — SCROLL TO ADJUST · <span style="cursor:pointer; color:var(--cyan);" onclick="state.zoom={start:0,end:1};renderCharts();renderCrossChart();">RESET</span>
                 </div>
             </div>
@@ -465,7 +465,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
 
             <!-- Chart B: Daily Flow Bars -->
-            <div style="margin: 8px 0 4px; font-size:0.65rem; font-weight:800; color:var(--text-dim); letter-spacing:1.5px;">
+            <div style="margin: 8px 0 4px; font-size:0.65rem; font-weight:800; color:rgba(255, 255, 255, 0.85); letter-spacing:1.5px;">
                 <span data-tooltip="Daily net capital flow. Green bars = inflows (bullish for long ETFs / bearish for short ETFs). Red = opposite.">DAILY FLOW BARS</span>
             </div>
             <div class="chart-wrap" style="padding-right: 48px;">
@@ -552,7 +552,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     </tr>
                 </thead>
                 <tbody id="div-body">
-                    <tr><td colspan="15" style="text-align:center; color:var(--text-dim);">Scanning for divergences...</td></tr>
+                    <tr><td colspan="15" style="text-align:center; color:rgba(255, 255, 255, 0.85);">Scanning for divergences...</td></tr>
                 </tbody>
             </table>
             </div><!-- /overflow scroll wrapper -->
@@ -647,7 +647,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <div class="panel-title" data-tooltip="Shows the number of significant flow events (|Z-Score| ≥ 1.5) per year per ETF, with average Z-Score magnitude. Helps identify which years had the most active flow signals." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Yearly Flow Activity Matrix</div>
             </div>
             <div id="yearly-matrix-container" style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
-                <div style="color:var(--text-muted); padding:20px; text-align:center; font-size:0.7rem; letter-spacing:1px;">Loading matrix…</div>
+                <div style="color:rgba(255, 255, 255, 0.85); padding:20px; text-align:center; font-size:0.7rem; letter-spacing:1px;">Loading matrix…</div>
             </div>
         </div>
     </main>
@@ -2194,12 +2194,12 @@ function renderDivergence() {
                 const ctxCol = (v) => v === null ? '' : (v >= 0 ? 'val-green' : 'val-red');
 
                 html += `<tr>
-                    <td style="color:var(--text-muted);font-size:0.7rem;border-left:3px solid ${rowAccent};">${cur.date}</td>
-                    <td style="color:var(--text-dim);">${w}d</td>
+                    <td style="color:rgba(255, 255, 255, 0.85);font-size:0.7rem;border-left:3px solid ${rowAccent};">${cur.date}</td>
+                    <td style="color:rgba(255, 255, 255, 0.85);">${w}d</td>
                     <td><span class="div-badge ${badgeClass}">${type}</span></td>
                     <td class="${priceMove>=0?'val-green':'val-red'}">${fmtPct(priceMove)}</td>
                     <td class="${flowSum>=0?'val-green':'val-red'}">${fmtUsd(flowSum)}</td>
-                    <td style="color:var(--text-dim);">${fmtUsd(avgDaily)}/d</td>
+                    <td style="color:rgba(255, 255, 255, 0.85);">${fmtUsd(avgDaily)}/d</td>
                     <td class="${zCol}">${zAtEnd >= 0 ? '+' : ''}${zAtEnd.toFixed(2)}</td>
                     <td class="${presCol}">${presAtEnd >= 0 ? '+' : ''}${presAtEnd}</td>
                     <td class="${ctxCol(avgCenter7)}" style="font-size:0.68rem;padding:6px 7px 6px 14px;border-left:1px solid rgba(255,255,255,0.08);">${fmtCtx(avgCenter7)}</td>
@@ -2218,7 +2218,7 @@ function renderDivergence() {
     }
 
     if (html === '') {
-        tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:var(--text-dim); padding: 20px;">No significant price-flow divergences detected.<br><span style="font-size: 0.65rem; color:var(--text-dim);">Requires a split-adjusted price move > ${(thresh*100).toFixed(0)}% alongside opposing net flows within a 3, 5, or 10 day window.</span></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:rgba(255, 255, 255, 0.85); padding: 20px;">No significant price-flow divergences detected.<br><span style="font-size: 0.65rem; color:rgba(255, 255, 255, 0.85);">Requires a split-adjusted price move > ${(thresh*100).toFixed(0)}% alongside opposing net flows within a 3, 5, or 10 day window.</span></td></tr>`;
     } else {
         tbody.innerHTML = html;
     }
@@ -2411,7 +2411,7 @@ function renderYearlyMatrix() {
     });
 
     const years = Array.from(allYears).sort((a, b) => b - a);
-    if (!years.length) { container.innerHTML = '<div style="color:var(--text-muted);padding:20px;text-align:center;font-size:0.7rem;">No flow events detected.</div>'; return; }
+    if (!years.length) { container.innerHTML = '<div style="color:rgba(255, 255, 255, 0.85);padding:20px;text-align:center;font-size:0.7rem;">No flow events detected.</div>'; return; }
 
     // Global min/max avg Z for color scaling
     const allAvgZ = [];
@@ -2471,7 +2471,7 @@ function renderYearlyMatrix() {
     });
 
     // Summary totals row
-    html += `<tr style="border-top:1px solid rgba(255,255,255,0.1);"><td class="matrix-year" style="color:var(--text-muted);font-size:0.75rem;letter-spacing:1px;font-weight:800;">TOTAL</td>`;
+    html += `<tr style="border-top:1px solid rgba(255,255,255,0.1);"><td class="matrix-year" style="color:rgba(255, 255, 255, 0.85);font-size:0.75rem;letter-spacing:1px;font-weight:800;">TOTAL</td>`;
     tickers.forEach(tk => {
         const t = totals[tk];
         html += `<td style="opacity:0.6;"><span style="font-weight:700;font-size:0.75rem;">${t.count}</span><span style="font-size:0.56rem;color:${zColor(t.avgZ)};margin-left:3px;">(${t.avgZ.toFixed(1)}σ)</span></td>`;
@@ -2659,7 +2659,7 @@ function renderCrossChart() {
             const bold   = tk === state.activeTicker;
             return `<div style="display:flex;align-items:center;gap:5px;opacity:${active?1:0.3};">
                 <span style="display:inline-block;width:${bold?18:12}px;height:${bold?3:2}px;background:${colors[tk]};border-radius:2px;"></span>
-                <span style="font-size:0.65rem;font-weight:${bold?'900':'700'};color:${active?colors[tk]:'var(--text-muted)'};font-family:monospace;letter-spacing:0.5px;">${tk}</span>
+                <span style="font-size:0.65rem;font-weight:${bold?'900':'700'};color:${active?colors[tk]:'rgba(255, 255, 255, 0.85)'};font-family:monospace;letter-spacing:0.5px;">${tk}</span>
             </div>`;
         }).join('');
     }
