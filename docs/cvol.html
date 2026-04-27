@@ -145,12 +145,18 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 .comp-modal-chart canvas { width: 100%; height: 100%; cursor: crosshair; }
 
 /* ---- REGIME HEATMAP ---- */
-.heatmap-panel { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
-.heatmap-grid { display: grid; gap: 2px; }
-.heatmap-cell { width: 100%; aspect-ratio: 1.6; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; transition: transform 0.15s, box-shadow 0.15s; cursor: help; }
-.heatmap-cell:hover { transform: scale(1.15); box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 10; position: relative; }
-.heatmap-label { font-size: 0.55rem; font-weight: 700; color: var(--text-dim); letter-spacing: 1px; text-align: center; }
-.heatmap-year-label { font-size: 0.6rem; font-weight: 700; color: var(--text-muted); text-align: right; padding-right: 6px; display: flex; align-items: center; justify-content: flex-end; }
+.heatmap-panel { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 8px; padding: 20px 20px 16px; margin-bottom: 24px; }
+.heatmap-grid { display: grid; gap: 3px; width: 100%; }
+.heatmap-cell { width: 100%; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 4px 2px; font-family: 'JetBrains Mono', monospace; transition: transform 0.15s, box-shadow 0.15s, filter 0.15s; cursor: help; min-height: 34px; }
+.heatmap-cell:hover { transform: scale(1.18); box-shadow: 0 4px 16px rgba(0,0,0,0.5); z-index: 10; position: relative; filter: brightness(1.25); }
+.hm-val { font-size: 0.68rem; font-weight: 800; line-height: 1; }
+.hm-pct { font-size: 0.38rem; font-weight: 600; letter-spacing: 0.5px; opacity: 0.75; line-height: 1; }
+.heatmap-label { font-size: 0.5rem; font-weight: 700; letter-spacing: 0.8px; text-align: center; padding: 2px 0 5px; }
+.heatmap-year-label { font-size: 0.55rem; font-weight: 700; color: var(--text-muted); text-align: right; padding-right: 6px; display: flex; align-items: center; justify-content: flex-end; }
+.heatmap-legend { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap; }
+.hm-leg-item { display: flex; align-items: center; gap: 4px; font-size: 0.42rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; }
+.hm-leg-swatch { width: 18px; height: 8px; border-radius: 2px; }
+.hm-leg-note { font-size: 0.38rem; color: var(--text-dim); margin-left: auto; letter-spacing: 0.3px; }
 
 /* ---- SIGNAL HEAT CALENDAR ---- */
 .sig-heat-grid { display: grid; grid-template-columns: repeat(18, 1fr); gap: 2px; margin: 8px 0; }

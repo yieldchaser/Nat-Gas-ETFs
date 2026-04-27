@@ -356,27 +356,63 @@ function renderHeatmap(data) {
     var hm = computeHeatmapData(data);
     var years = []; var keys = Object.keys(hm).sort();
     keys.forEach(function(k){ var y = k.split('-')[0]; if (years.indexOf(y) < 0) years.push(y); });
-    var monthLabels = ['J','F','M','A','M','J','J','A','S','O','N','D'];
-    var html = '<div class="heatmap-grid" style="grid-template-columns:50px repeat(12, 1fr);">';
+    var monthLabels = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    // Winter months get a slightly brighter label tint
+    var monthColors = [
+        '#60a8f8','#60a8f8','#8bccb8','#8bccb8','#8bccb8','#c8a860',
+        '#c8a860','#c8a860','#c8a860','#8bccb8','#60a8f8','#60a8f8'
+    ];
+    var html = '<div class="heatmap-grid" style="grid-template-columns:38px repeat(12, 1fr);">';
+    // Header row
     html += '<div></div>';
-    for (var m = 0; m < 12; m++) html += '<div class="heatmap-label">'+monthLabels[m]+'</div>';
+    for (var m = 0; m < 12; m++) {
+        html += '<div class="heatmap-label" style="color:'+monthColors[m]+';">'+monthLabels[m]+'</div>';
+    }
     years.forEach(function(y) {
         html += '<div class="heatmap-year-label">'+y+'</div>';
         for (var m = 1; m <= 12; m++) {
             var key = y + '-' + (m < 10 ? '0' : '') + m;
             var cell = hm[key];
-            if (!cell) { html += '<div class="heatmap-cell" style="background:rgba(255,255,255,0.02);color:var(--text-dim);">—</div>'; }
-            else {
+            if (!cell) {
+                html += '<div class="heatmap-cell" style="background:rgba(255,255,255,0.025);"><span class="hm-val" style="color:rgba(255,255,255,0.12);">—</span></div>';
+            } else {
                 var bg = cell.regime.color;
-                var tt = MONTHS[m-1]+' '+y+' Volatility Audit:\n' +
-                         '• NGVL Avg: '+cell.avgNgvl.toFixed(1)+'% ('+cell.regime.label+')\n' +
-                         '• NG Price Avg: $'+cell.avgUnderlying.toFixed(2)+'\n' +
-                         (cell.avgSkewRatio!=null ? '• Skew Ratio Avg: '+cell.avgSkewRatio.toFixed(2)+'\n' : '') +
-                         'Historical Context: ' + (m >= 11 || m <= 2 ? 'Winter withdrawal peak - high vol common.' : m >= 6 && m <= 8 ? 'Summer cooling demand peak.' : 'Shoulder month - injection season.');
-                html += '<div class="heatmap-cell" style="background:'+toRgba(bg,0.2)+';color:'+bg+';" data-tooltip="'+tt+'">'+cell.avgNgvl.toFixed(0)+'</div>';
+                var pct = cell.pct;
+                // Opacity: 0.18 (pct=0) → 0.70 (pct=100), smooth gradient
+                var alpha = (0.18 + (pct / 100) * 0.52).toFixed(3);
+                var border = toRgba(bg, (parseFloat(alpha) + 0.12).toFixed(3));
+                // Text: white when cell is dark enough, regime color otherwise
+                var textCol = parseFloat(alpha) >= 0.38 ? '#fff' : bg;
+                var pctLabel = pct.toFixed(0) + 'th';
+                var season = m >= 11 || m <= 2 ? 'Winter withdrawal — elevated vol expected.' :
+                             m >= 6 && m <= 8 ? 'Summer cooling demand peak.' : 'Shoulder season — injection period.';
+                var tt = MONTHS[m-1] + ' ' + y + '\n' +
+                         'NGVL Avg: ' + cell.avgNgvl.toFixed(1) + '% · ' + pctLabel + ' pct · ' + cell.regime.label + '\n' +
+                         'NG Price: $' + cell.avgUnderlying.toFixed(2) +
+                         (cell.avgSkewRatio != null ? '  Skew Ratio: ' + cell.avgSkewRatio.toFixed(2) : '') + '\n' +
+                         season;
+                html += '<div class="heatmap-cell" style="background:' + toRgba(bg, parseFloat(alpha)) + ';border:1px solid ' + border + ';" data-tooltip="' + tt.replace(/"/g, '&quot;') + '">' +
+                        '<span class="hm-val" style="color:' + textCol + ';">' + cell.avgNgvl.toFixed(0) + '</span>' +
+                        '<span class="hm-pct" style="color:' + textCol + ';">' + pctLabel + '</span>' +
+                        '</div>';
             }
         }
     });
+    html += '</div>';
+    // Legend
+    var tiers = [
+        { label: 'LOW  < 25th',      color: '#4a80b8', alpha: 0.28 },
+        { label: 'NORMAL  25–75th',  color: '#3db87a', alpha: 0.45 },
+        { label: 'ELEVATED  75–90th',color: '#c07828', alpha: 0.58 },
+        { label: 'EXTREME  > 90th',  color: '#c04040', alpha: 0.68 },
+    ];
+    html += '<div class="heatmap-legend">';
+    tiers.forEach(function(t) {
+        html += '<div class="hm-leg-item">' +
+                '<div class="hm-leg-swatch" style="background:' + toRgba(t.color, t.alpha) + ';border:1px solid ' + toRgba(t.color, t.alpha + 0.15) + ';"></div>' +
+                t.label + '</div>';
+    });
+    html += '<span class="hm-leg-note">Percentile = monthly avg NGVL vs full history</span>';
     html += '</div>';
     el.innerHTML = html;
 }
