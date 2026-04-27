@@ -160,7 +160,7 @@ function renderKpiCards(data, comp) {
         '<div class="cvol-micro-line" data-tooltip="5-day Volatility Momentum: Measures how fast the options market is repricing risk. Rapid expansion often precedes a violent price move."><span class="cvol-micro-lbl">5D ROC</span><span class="cvol-micro-val" style="color:'+pctColor(roc5)+'">'+((roc5!=null&&roc5>0)?'+':'')+fmt(roc5)+'%</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="The distance to the 1-year volatility ceiling. Proximity to 0% means the market is in a state of maximum historical uncertainty."><span class="cvol-micro-lbl">↓ 252D HIGH</span><span class="cvol-micro-val" style="color:'+(distHi!=null&&distHi>-10?'#ef4444':'var(--text-bright)')+'">'+fmt(distHi)+'%</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="The cushion above the 1-year volatility floor. Proximity to 0% indicates suppressed, spring-loaded market conditions."><span class="cvol-micro-lbl">↑ 252D LOW</span><span class="cvol-micro-val" style="color:'+(distLo!=null&&distLo<10?'#3db87a':'var(--text-bright)')+'">+'+fmt(distLo)+'%</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="Vol Risk Premium: Implied (NGVL) minus 21D Realized Vol. Positive = market overpricing fear (mean-reversion setup). Negative = market underpricing actual risk (breakout imminent). This is THE classic vol trade."><span class="cvol-micro-lbl">VRP</span><span class="cvol-micro-val" style="color:'+vrpLabelColor+'">'+((vrpVal!=null&&vrpVal>0)?'+':'')+fmt(vrpVal)+' <span style="font-size:0.45rem;opacity:0.7">'+vrpLabel+'</span></span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Vol Risk Premium: Implied (NGVL) minus 21D Realized Vol. Positive = market overpricing fear (mean-reversion setup). Negative = market underpricing actual risk (breakout imminent). This is THE classic vol trade."><span class="cvol-micro-lbl">VRP</span><span class="cvol-micro-val" style="color:'+vrpLabelColor+'">'+((vrpVal!=null&&vrpVal>0)?'+':'')+fmt(vrpVal)+' <span style="font-size:0.55rem;opacity:0.85">'+vrpLabel+'</span></span></div>' +
         '<div class="cvol-micro-line" data-tooltip="VRP Z-Score (21D): How unusual is the current vol risk premium vs. recent history. Extreme readings (|z| > 2) precede the largest directional moves."><span class="cvol-micro-lbl">VRP Z</span><span class="cvol-micro-val" style="color:'+(vrpZ!=null?(Math.abs(vrpZ)>1.5?'#f59e0b':'var(--text-bright)'):'var(--text-dim)')+'">'+fmt(vrpZ)+'σ</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="21-Day Realized Volatility: Annualized standard deviation of NG log returns over the last month. Compare to NGVL (implied) above to gauge the vol risk premium."><span class="cvol-micro-lbl">REAL VOL</span><span class="cvol-micro-val" style="color:#a78bfa">'+fmt(rvVal)+'%</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="Vol-of-Vol (21D): How volatile is volatility itself. High VoV = unstable regime, signals may whipsaw. Low VoV = stable vol environment, signals are more reliable."><span class="cvol-micro-lbl">VOV</span><span class="cvol-micro-val" style="color:'+(comp.vov&&comp.vov[n-1]!=null?(comp.vov[n-1]>5?'#ef4444':comp.vov[n-1]>2.5?'#f59e0b':'var(--text-bright)'):'var(--text-dim)')+'">'+fmt(comp.vov?comp.vov[n-1]:null)+'</span></div>' +
@@ -211,7 +211,7 @@ function renderKpiCards(data, comp) {
     '<div class="cvol-kpi-micro">' +
         '<div class="cvol-micro-line" data-tooltip="The longevity of the current tranquil regime. Extended periods above 82 often end with violent volatility gap-ups."><span class="cvol-micro-lbl">DAYS >82</span><span class="cvol-micro-val">'+(daysSinceCI!=null?daysSinceCI+'D':'—')+'</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="Intermediate momentum in baseline volatility."><span class="cvol-micro-lbl">ATM 5D</span><span class="cvol-micro-val" style="color:'+(atm5dir.indexOf('RISING')>=0?'#ef4444':'#3db87a')+'">'+atm5dir+'</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="Cross-Reference Check: CVOL signals gain maximum conviction when they align with the Trough-to-Peak cycle. A top signal here confirmed by >85% T2P cycle position is high-conviction."><span class="cvol-micro-lbl">T2P CROSS-REF</span><span class="cvol-micro-val" style="color:var(--text-dim);font-size:0.55rem;">SEE T2P TAB →</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Cross-Reference Check: CVOL signals gain maximum conviction when they align with the Trough-to-Peak cycle. A top signal here confirmed by >85% T2P cycle position is high-conviction."><span class="cvol-micro-lbl">T2P CROSS-REF</span><span class="cvol-micro-val" style="color:#fff;opacity:0.85;font-size:0.65rem;">SEE T2P TAB →</span></div>' +
     '</div></div>';
 }
 
@@ -265,7 +265,7 @@ function renderCompStats(compKey, values, events) {
     if (wPct != null || sPct != null) {
         seasonHtml = '<div class="cvol-micro-line" data-tooltip="Predictive Seasonality Check: Winning probability in Winter (Nov-Feb) vs. Summer (Jun-Aug). Natural Gas is profoundly seasonal \u2014 a signal with a 75% edge in winter may fail during the summer shoulder months.">' +
             '<span class="cvol-micro-lbl">S. WIN RATE</span>' +
-            '<span class="cvol-micro-val" style="font-size:0.55rem;">' +
+            '<span class="cvol-micro-val" style="font-size:0.65rem;">' +
             (wPct != null ? '<span style="color:' + (wPct > 55 ? '#3db87a' : '#ef4444') + '">❄:' + wPct + '%</span>' : '') +
             (wPct != null && sPct != null ? ' · ' : '') +
             (sPct != null ? '<span style="color:' + (sPct > 55 ? '#3db87a' : '#ef4444') + '">☀:' + sPct + '%</span>' : '') +
@@ -362,7 +362,7 @@ function renderSignalHeatCalendar(data, comp) {
     Object.keys(sigColors).forEach(function(sig) {
         html += '<div class="sig-heat-leg-item"><div class="sig-heat-leg-dot" style="background:' + sigColors[sig] + ';"></div>' + sig + '</div>';
     });
-    html += '<span style="font-size:0.40rem;color:var(--text-dim);margin-left:12px;letter-spacing:0.3px;">Percentiles ranked within 252D rolling window. Signal dots mark composite signal fires.</span>';
+    html += '<span style="font-size:0.55rem;color:#fff;opacity:0.85;margin-left:12px;letter-spacing:0.3px;">Percentiles ranked within 252D rolling window. Signal dots mark composite signal fires.</span>';
     html += '</div>';
 
     el.innerHTML = html;
