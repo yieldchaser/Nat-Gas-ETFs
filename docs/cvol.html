@@ -152,6 +152,16 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 .heatmap-label { font-size: 0.55rem; font-weight: 700; color: var(--text-dim); letter-spacing: 1px; text-align: center; }
 .heatmap-year-label { font-size: 0.6rem; font-weight: 700; color: var(--text-muted); text-align: right; padding-right: 6px; display: flex; align-items: center; justify-content: flex-end; }
 
+/* ---- SIGNAL HEAT CALENDAR ---- */
+.sig-heat-grid { display: grid; grid-template-columns: repeat(18, 1fr); gap: 2px; margin: 8px 0; }
+.sig-heat-cell { aspect-ratio: 1; border-radius: 2px; position: relative; cursor: help; transition: transform 0.12s; }
+.sig-heat-cell:hover { transform: scale(1.35); z-index: 10; }
+.sig-heat-badge { position: absolute; top: 1px; right: 1px; width: 4px; height: 4px; border-radius: 50%; pointer-events: none; }
+.sig-heat-legend { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.sig-heat-leg-item { display: flex; align-items: center; gap: 4px; font-size: 0.45rem; letter-spacing: 0.5px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.sig-heat-leg-swatch { width: 10px; height: 10px; border-radius: 2px; }
+.sig-heat-leg-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
 /* ---- CORRELATION MATRIX ---- */
 .corr-panel { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
 .corr-grid { display: grid; gap: 2px; }
@@ -509,6 +519,14 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             </div>
             <div id="cvol-corr-matrix"></div>
         </div>
+    </div>
+
+    <!-- PANEL 6.5: SIGNAL HEAT CALENDAR (90 DAYS) -->
+    <div class="heatmap-panel">
+        <div class="section-title-bar">
+            <span class="section-title-text" data-tooltip="Daily NGVL regime for the last 90 trading days, color-coded by 252-day percentile (blue=Low, green=Normal, orange=Elevated, red=Extreme). Colored dots mark days when a composite signal fired. Clustering of dots in high-regime (dark orange/red) days = highest-conviction setups.">Signal Activity · Last 90 Days</span>
+        </div>
+        <div id="cvol-signal-heat"></div>
     </div>
 
     <!-- SIGNAL TYPE FILTER (shared between scorecard + timeline) -->
