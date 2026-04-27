@@ -304,12 +304,15 @@ function renderSignalHeatCalendar(data, comp) {
     var regimeColors = { 'LOW': '#4a80b8', 'NORMAL': '#3db87a', 'ELEVATED': '#c07828', 'EXTREME': '#c04040' };
 
     var html = '<div class="sig-heat-grid">';
+    var prevMonth = null;
+    var monthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
     for (var i = start; i < n; i++) {
         var r = data[i];
         var pct = (comp && comp.ngvlPct252) ? comp.ngvlPct252[i] : null;
         var regime = ngvlRegime(pct);
         var ev = evByDate[r.date];
         var day = r.date ? r.date.split('-')[2] : '';
+        var month = r.date ? r.date.split('-')[1] : null;
 
         // Alpha: 0.22 at pct=0 → 0.55 at pct=100. Balanced visibility without visual alarm.
         var alpha = pct != null ? Math.min(0.55, 0.22 + (pct / 100) * 0.33).toFixed(3) : '0.15';
@@ -325,7 +328,22 @@ function renderSignalHeatCalendar(data, comp) {
 
         var fgColor = parseFloat(alpha) > 0.42 ? '#fff' : regime.color;
         var badge = ev ? '<div class="sig-heat-badge" style="background:' + (sigColors[ev.signal] || '#fff') + ';"></div>' : '';
-        html += '<div class="sig-heat-cell" style="background:' + bg + ';border:1px solid ' + border + ';color:' + fgColor + ';" data-tooltip="' + tt.replace(/"/g, '&quot;') + '">' + day + badge + '</div>';
+
+        // Border: 2px solid signal color if event fired, else regime border
+        var borderStyle = ev ? '2px solid ' + (sigColors[ev.signal] || '#fff') : '1px solid ' + border;
+
+        // Box-shadow glow for latest day
+        var shadowStyle = (i === n - 1) ? 'box-shadow: 0 0 0 2px rgba(0,229,255,0.8), 0 0 8px rgba(0,229,255,0.25);' : '';
+
+        // Month label on boundary
+        var monthLabel = '';
+        if (prevMonth !== null && prevMonth !== month) {
+            var monthIdx = parseInt(month, 10) - 1;
+            monthLabel = '<span class="sig-heat-month">' + monthNames[monthIdx] + '</span>';
+        }
+
+        html += '<div class="sig-heat-cell" style="background:' + bg + ';border:' + borderStyle + ';color:' + fgColor + ';' + shadowStyle + '" data-tooltip="' + tt.replace(/"/g, '&quot;') + '">' + monthLabel + day + badge + '</div>';
+        prevMonth = month;
     }
     html += '</div>';
 
