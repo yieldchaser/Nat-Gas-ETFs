@@ -90,8 +90,9 @@ body {
 }
 
 .top-bar-left .subtitle {
-    font-size: 0.7rem;
-    color: var(--text-muted);
+    font-size: 0.75rem;
+    color: #fff;
+    opacity: 0.85;
     letter-spacing: 1px;
 }
 
@@ -130,7 +131,7 @@ body {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--text-muted);
+    background: rgba(255, 255, 255, 0.85);
     animation: pulse 2s infinite;
 }
 
@@ -140,8 +141,9 @@ body {
 }
 
 .last-updated {
-    font-size: 0.75rem;
-    color: var(--text-muted);
+    font-size: 0.8rem;
+    color: #fff;
+    opacity: 0.85;
 }
 
 .last-updated.stale {
@@ -210,7 +212,8 @@ body {
 }
 
 .banner-arrow {
-    color: var(--text-muted);
+    color: #fff;
+    opacity: 0.85;
     transition: transform 0.3s;
 }
 
@@ -246,18 +249,20 @@ body {
 }
 
 .validation-card .corr-label {
-    font-size: 0.6rem;
-    color: var(--text-muted);
+    font-size: 0.65rem;
+    color: #fff;
+    opacity: 0.85;
     margin-top: 2px;
 }
 
 .validation-card .pvalue {
-    font-size: 0.6rem;
-    color: var(--text-secondary);
+    font-size: 0.65rem;
+    color: #fff;
+    opacity: 0.85;
 }
 .validation-card .pv-confirmed { color: var(--green); font-weight: 700; }
-.validation-card .pv-weak      { color: var(--text-secondary); }
-.validation-card .pv-none      { color: var(--text-muted); }
+.validation-card .pv-weak      { color: #fff; opacity: 0.85; }
+.validation-card .pv-none      { color: #fff; opacity: 0.6; }
 
 /* ---- MAIN DASHBOARD LAYOUT ---- */
 #dashboard {
@@ -318,8 +323,9 @@ body {
 }
 
 .section-label {
-    font-size: 0.65rem;
-    color: var(--text-muted);
+    font-size: 0.75rem;
+    color: #fff;
+    opacity: 0.85;
     letter-spacing: 1px;
 }
 
@@ -341,10 +347,11 @@ body {
 }
 
 .signal-panel h3 {
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     font-weight: 600;
     letter-spacing: 1.5px;
-    color: var(--text-secondary);
+    color: #fff;
+    opacity: 0.85;
     margin-bottom: 10px;
 }
 
@@ -358,8 +365,9 @@ footer {
 .footer-content {
     display: flex;
     justify-content: space-between;
-    font-size: 0.65rem;
-    color: var(--text-muted);
+    font-size: 0.75rem;
+    color: #fff;
+    opacity: 0.85;
 }
 
 /* ---- RESPONSIVE ---- */
@@ -416,7 +424,7 @@ footer {
 .text-purple { color: var(--purple); }
 .text-blue { color: var(--blue); }
 .text-cyan { color: var(--cyan); }
-.text-muted { color: var(--text-muted); }
+.text-muted { color: #fff; opacity: 0.85; }
 
 .bg-green { background: var(--green); }
 .bg-red { background: var(--red); }
@@ -431,10 +439,11 @@ footer {
     gap: 4px;
 }
 .nav-link {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 1px;
-    color: var(--text-muted);
+    color: #fff;
+    opacity: 0.85;
     text-decoration: none;
     padding: 4px 10px;
     border-radius: 4px;
@@ -460,7 +469,7 @@ footer {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
+    background: rgba(255, 255, 255, 0.85);
 }
 
 /* Pulsing alert animation */

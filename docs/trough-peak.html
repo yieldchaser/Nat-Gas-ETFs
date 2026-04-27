@@ -15,7 +15,7 @@
 .tp-title-row { display: flex; align-items: baseline; gap: 16px; }
 .tp-title { font-size: 1.6rem; font-weight: 800; letter-spacing: 1px; color: var(--text-bright); text-transform: uppercase; }
 .tp-badge { font-size: 0.750rem; color: var(--cyan); letter-spacing: 2px; font-weight: 600; }
-.tp-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; line-height: 1.6; max-width: 800px; }
+.tp-desc { font-size: 0.8rem; color: #fff; opacity: 0.85; margin-top: 6px; line-height: 1.6; max-width: 800px; }
 
 /* ---- SLIDER PANEL ---- */
 .slider-panel {
@@ -27,7 +27,7 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.slider-label { font-size: 0.7rem; letter-spacing: 2.5px; color: var(--text-muted); font-weight: 700; }
+.slider-label { font-size: 0.75rem; letter-spacing: 2.5px; color: #fff; opacity: 0.85; font-weight: 700; }
 .slider-value { font-size: 1.4rem; font-weight: 800; color: var(--cyan); text-shadow: 0 0 10px rgba(0,255,255,0.2); }
 .slider-track { position: relative; padding: 10px 0; }
 
@@ -95,7 +95,7 @@ input[type=range]:hover::-moz-range-thumb {
     border-color: #fff;
 }
 
-.slider-hints { display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.65rem; color: var(--text-dim); font-weight: 600; }
+.slider-hints { display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.7rem; color: #fff; opacity: 0.85; font-weight: 600; }
 
 /* ---- KPI CARDS GRID ---- */
 .kpi-grid { 
@@ -117,16 +117,16 @@ input[type=range]:hover::-moz-range-thumb {
 .kpi-card:hover { border-color: var(--card-color, var(--border-accent)); }
 .kpi-header { display: flex; justify-content: space-between; align-items: center; }
 .kpi-ticker { font-size: 1rem; font-weight: 800; letter-spacing: 1px; }
-.kpi-cycles { font-size: 0.6rem; color: var(--text-muted); font-weight: 700; }
+.kpi-cycles { font-size: 0.65rem; color: #fff; opacity: 0.85; font-weight: 700; }
 
 .kpi-main-metric { margin: 4px 0; }
-.kpi-lbl { font-size: 0.55rem; letter-spacing: 1.5px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+.kpi-lbl { font-size: 0.65rem; letter-spacing: 1.5px; color: #fff; opacity: 0.85; font-weight: 700; text-transform: uppercase; }
 .kpi-val { font-size: 1.4rem; font-weight: 800; line-height: 1; }
 
 .kpi-stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
  .stat-item { display: flex; flex-direction: column; gap: 2px; }
  .kpi-stats-row .stat-item:nth-child(2) { text-align: right; align-items: flex-end; }
- .stat-lbl { font-size: 0.5rem; letter-spacing: 1px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; }
+ .stat-lbl { font-size: 0.6rem; letter-spacing: 1px; color: #fff; opacity: 0.85; font-weight: 700; text-transform: uppercase; }
  .stat-val { font-size: 0.75rem; font-weight: 700; color: var(--text-bright); }
  
  /* ---- MICRO ANALYTICS (IN-CARD) ---- */
@@ -144,16 +144,16 @@ input[type=range]:hover::-moz-range-thumb {
      align-items: center;
      font-size: 0.7rem; /* Scaled up for readability (+2px) */
      font-weight: 700;
-     color: var(--text-dim);
+     color: #fff; opacity: 0.85;
      letter-spacing: 0.1px;
      white-space: nowrap;
  }
- .micro-label { color: var(--text-muted); text-transform: uppercase; font-size: 0.6rem; opacity: 0.7; letter-spacing: 0.5px; }
+ .micro-label { color: #fff; opacity: 0.85; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.5px; }
  .micro-group { display: flex; align-items: center; gap: 6px; }
  .sig-pos { font-weight: 800; color: var(--text-bright); }
- .regime-label { flex: 1; text-align: center; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.8px; color: var(--text-dim); opacity: 0.9; }
+ .regime-label { flex: 1; text-align: center; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.8px; color: #fff; opacity: 0.85; }
  .str-val { opacity: 0.85; } /* Secondary hierarchy */
- .ctx-val { opacity: 0.7; color: var(--text-dim); font-weight: 600; } /* Tertiary hierarchy */
+ .ctx-val { opacity: 0.85; color: #fff; font-weight: 600; } /* Tertiary hierarchy */
  .soft-green { color: #3db87a; opacity: 0.85; }
  .soft-red { color: #ef4444; opacity: 0.85; }
  .breakout-text { color: #fff; text-shadow: 0 0 8px rgba(0,255,255,0.6); font-weight: 900; }
@@ -173,7 +173,7 @@ input[type=range]:hover::-moz-range-thumb {
 .tab-btn {
     font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
     padding: 6px 14px; border-radius: 4px; border: none;
-    background: transparent; color: var(--text-dim);
+    background: transparent; color: #fff; opacity: 0.85;
     cursor: pointer; transition: all 0.2s;
 }
 .tab-btn:hover { color: var(--text-primary); }
@@ -183,7 +183,7 @@ input[type=range]:hover::-moz-range-thumb {
 .horizon-btn {
     font-size: 0.6rem; font-weight: 700; padding: 4px 10px; border-radius: 4px;
     background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary);
-    color: var(--text-dim); cursor: pointer;
+    color: #fff; opacity: 0.85; cursor: pointer;
 }
 .horizon-btn:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
 .horizon-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,255,255,0.05); }
@@ -193,7 +193,7 @@ input[type=range]:hover::-moz-range-thumb {
 
 .chart-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05); }
 .chart-legend { display: flex; gap: 24px; }
-.legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.65rem; color: var(--text-dim); font-weight: 600; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.7rem; color: #fff; opacity: 0.85; font-weight: 600; }
 .legend-symbol { width: 12px; height: 12px; border-radius: 2px; }
 .legend-line { width: 16px; height: 2px; }
 
@@ -256,7 +256,7 @@ input[type=range]:hover::-moz-range-thumb {
     display: flex;
     justify-content: space-between;
     font-size: 0.65rem;
-    color: var(--text-dim);
+    color: #fff; opacity: 0.85;
     font-weight: 700;
     margin-top: 8px;
     letter-spacing: 0.5px;
@@ -292,7 +292,7 @@ input[type=range]:hover::-moz-range-thumb {
 table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.8rem; }
 .cycle-table th {
     text-align: center; padding: 12px 16px;
-    font-size: 0.65rem; letter-spacing: 2px; color: var(--text-muted); font-weight: 700;
+    font-size: 0.75rem; letter-spacing: 2px; color: #fff; opacity: 0.85; font-weight: 700;
     border-bottom: 2px solid var(--bg-secondary);
     text-transform: uppercase;
 }
@@ -301,7 +301,7 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 
 .gain-pos { color: var(--green); font-weight: 700; }
 .val-cyan { color: var(--cyan); }
-.val-muted { color: var(--text-dim); }
+.val-muted { color: #fff; opacity: 0.85; }
 
 #chart-tooltip {
     position: absolute;
@@ -319,7 +319,7 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 }
 .tooltip-date { color: var(--cyan); font-weight: 800; margin-bottom: 4px; font-size: 0.65rem; letter-spacing: 1px; }
 .tooltip-row { display: flex; justify-content: space-between; gap: 16px; margin-top: 2px; }
-.tooltip-lbl { color: var(--text-dim); font-weight: 700; text-transform: uppercase; font-size: 0.55rem; }
+.tooltip-lbl { color: #fff; opacity: 0.85; font-weight: 700; text-transform: uppercase; font-size: 0.65rem; }
 .tooltip-val { font-weight: 700; font-family: 'JetBrains Mono', monospace; }
 
 @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
@@ -404,13 +404,13 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     margin-bottom: 24px;
 }
 .matrix-header { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
-.matrix-title { font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; color: var(--text-dim); text-transform: uppercase; }
+.matrix-title { font-size: 0.85rem; font-weight: 800; letter-spacing: 1.5px; color: #fff; opacity: 0.85; text-transform: uppercase; }
 
 .matrix-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .matrix-table th { 
     padding: 10px 8px; 
     font-size: 0.65rem; 
-    color: var(--text-dim); 
+    color: #fff; opacity: 0.85; 
     text-transform: uppercase; 
     text-align: center;
     border-bottom: 2px solid var(--bg-secondary);
@@ -428,7 +428,7 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 .matrix-year { color: var(--cyan); font-weight: 800; text-align: left !important; width: 80px; }
 .matrix-count { font-weight: 700; }
 .matrix-count.has-data { color: var(--text-primary); }
-.matrix-count.no-data { color: var(--text-dim); opacity: 0.3; }
+.matrix-count.no-data { color: #fff; opacity: 0.4; }
 
 @media (max-width: 768px) {
     .matrix-panel { padding: 14px; }
@@ -799,7 +799,7 @@ function renderCards() {
         
         // 1. Cycle Position & Regime Label
         let cycPosStr = '--', cycLabel = '';
-        let cycColor = 'var(--text-dim)';
+        let cycColor = 'rgba(255,255,255,0.85)';
         let isBreakout = false, cycPosPct = 0;
         if (cycles.length > 0) {
             const lastC = cycles[cycles.length - 1];
@@ -819,7 +819,7 @@ function renderCards() {
 
         // 2. Stretch Index (3D Return Z-Score)
         let strStr = '--';
-        let strColor = 'var(--text-dim)';
+        let strColor = 'rgba(255,255,255,0.85)';
         if (d.closes.length > 35) {
             const p = d.closes;
             const returns3d = [];
@@ -1032,7 +1032,7 @@ function initChartHover() {
                     ${changeRow}
                     <div class="tooltip-row">
                         <span class="tooltip-lbl">Volume</span>
-                        <span class="tooltip-val" style="color:var(--text-dim)">${vol.toLocaleString()}</span>
+                        <span class="tooltip-val" style="color:rgba(255,255,255,0.85)">${vol.toLocaleString()}</span>
                     </div>
                     `;
                 }
@@ -1350,11 +1350,11 @@ function renderTable() {
     const container = document.getElementById('table-container');
     if (!container) return;
     if (!state.rawData[t.symbol]) {
-        container.innerHTML = '<div class="no-data" style="color:var(--text-muted); padding:40px; text-align:center;">LOADING DATA...</div>';
+        container.innerHTML = '<div class="no-data" style="color:rgba(255,255,255,0.85); padding:40px; text-align:center;">LOADING DATA...</div>';
         return;
     }
     if (!filtered.length) {
-        container.innerHTML = '<div class="no-data" style="color:var(--text-muted); padding:40px; text-align:center;">NO CYCLES DETECTED FOR SELECTED PERIOD.</div>';
+        container.innerHTML = '<div class="no-data" style="color:rgba(255,255,255,0.85); padding:40px; text-align:center;">NO CYCLES DETECTED FOR SELECTED PERIOD.</div>';
         return;
     }
 
@@ -1399,16 +1399,16 @@ function renderTable() {
             const dayBg = `linear-gradient(90deg,rgba(148,163,184,0.13) ${Math.round(dayRatio*100)}%,transparent ${Math.round(dayRatio*100)}%)`;
 
             // GAP color
-            const gapColor = gapDays === null ? 'var(--text-dim)' : gapDays < 30 ? '#3db87a' : gapDays < 90 ? '#d4a830' : 'var(--text-dim)';
+            const gapColor = gapDays === null ? 'rgba(255,255,255,0.85)' : gapDays < 30 ? '#3db87a' : gapDays < 90 ? '#d4a830' : 'rgba(255,255,255,0.85)';
 
             return `<tr>
-                <td style="color:var(--text-dim);border-left:3px solid ${borderColor};">${c.num}</td>
+                <td style="color:rgba(255,255,255,0.85);border-left:3px solid ${borderColor};">${c.num}</td>
                 <td style="color:var(--cyan);">${c.troughDate}</td>
                 <td style="color:rgba(239,100,100,0.75);">$${fmt(c.troughPrice)}</td>
                 <td style="color:#3db87a;">${c.peakDate}</td>
                 <td style="color:rgba(61,184,122,0.8);">$${fmt(c.peakPrice)}</td>
                 <td style="color:${gainColor};font-weight:800;background:${gainBg};">${fmtPct(c.gain)}</td>
-                <td style="color:var(--text-dim);background:${dayBg};">${c.days}D</td>
+                <td style="color:rgba(255,255,255,0.85);background:${dayBg};">${c.days}D</td>
                 <td style="color:${gapColor};font-weight:700;">${gapStr}</td>
             </tr>`;
         }).join('')}
@@ -1494,7 +1494,7 @@ function renderYearlyMatrix() {
 
     // Totals row
     html += `<tr class="matrix-row matrix-totals">
-        <td class="matrix-year" style="color:var(--text-muted);font-size:0.6rem;letter-spacing:1.5px;">TOTAL</td>`;
+        <td class="matrix-year" style="color:rgba(255,255,255,0.85);font-size:0.75rem;letter-spacing:1.5px;">TOTAL</td>`;
     TICKERS.forEach(t => {
         const all   = Object.values(tickerFreq[t.label]);
         const total = all.reduce((a,b) => a + b.count, 0);
