@@ -44,7 +44,7 @@
 }
 
 .alert-message {
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85);
     flex: 1;
 }
 
@@ -418,7 +418,7 @@
 
 .bias-bull    { background: rgba(61,184,122,0.10); color: var(--green); }
 .bias-bear    { background: rgba(192,64,64,0.10);  color: var(--red); }
-.bias-neutral { background: rgba(255,255,255,0.05); color: var(--text-secondary); }
+.bias-neutral { background: rgba(255,255,255,0.05); color: rgba(255, 255, 255, 0.85); }
 
 /* Recent past occurrences */
 .echo-recent {
@@ -546,7 +546,7 @@
 
 .conviction-rate {
     font-size: 0.55rem;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85);
     cursor: help;
     margin-left: auto;
 }
@@ -587,7 +587,7 @@
 }
 
 .ce-date { color: rgba(255, 255, 255, 0.85); font-weight: 500 !important; text-align: left !important; }
-.ce-breadth { color: var(--text-secondary); }
+.ce-breadth { color: rgba(255, 255, 255, 0.85); }
 
 /* Forward returns summary below conviction table */
 .ce-fwd-returns {
@@ -657,7 +657,7 @@
     font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 1px;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .swvc-status-badge {
@@ -756,7 +756,7 @@
     background: rgba(255,255,255,0.03);
     border-radius: 0 3px 3px 0;
     font-size: 0.6rem;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85);
     line-height: 1.5;
 }
 
@@ -866,7 +866,7 @@
     gap: 8px;
     font-size: 0.62rem;
     font-family: monospace;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85);
     flex-wrap: wrap;
 }
 .ng-bar-label {
@@ -1104,7 +1104,7 @@
     transition: background 0.15s, color 0.15s;
 }
 
-.vrm-mode-btn:hover { background: var(--bg-hover); color: var(--text-secondary); }
+.vrm-mode-btn:hover { background: var(--bg-hover); color: rgba(255, 255, 255, 0.85); }
 .vrm-mode-btn.active {
     background: var(--bg-hover);
     color: var(--text-primary);
@@ -1167,7 +1167,7 @@
     align-items: center;
     gap: 4px;
     padding: 4px 10px;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85);
     border-color: var(--border-primary);
 }
 .vrm-chip-pair.vrm-chip-active {
@@ -1459,13 +1459,13 @@
     display: block;
     font-size: 0.75rem;
     font-weight: 700;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 /* Term structure classes */
 .vrm-stat-val.ts-accel    { color: #e05050; }
 .vrm-stat-val.ts-building { color: #c07828; }
-.vrm-stat-val.ts-neutral  { color: var(--text-secondary); }
+.vrm-stat-val.ts-neutral  { color: rgba(255, 255, 255, 0.85); }
 .vrm-stat-val.ts-easing   { color: #3db87a; }
 .vrm-stat-val.ts-calm     { color: #4a80b8; }
 

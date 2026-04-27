@@ -137,7 +137,7 @@ const Charts = {
         let countColor;
         if (count === total) countColor = 'var(--purple)';
         else if (count >= total - 1) countColor = 'var(--red)';
-        else countColor = 'var(--text-secondary)';
+        else countColor = 'rgba(255, 255, 255, 0.85)';
 
         const ttAttr = tooltip ? `data-tooltip="${tooltip}"` : '';
 

@@ -214,7 +214,7 @@ const Signals = {
             const side = CONFIG.etfs[t].side;
             // Negative correlation = inverse relationship active (green); positive = co-directional (red)
             const color = corr != null
-                ? (corr < -0.2 ? 'var(--green)' : corr < -0.1 ? 'var(--text-secondary)' : corr > 0.1 ? 'var(--red)' : 'rgba(255,255,255,0.85)')
+                ? (corr < -0.2 ? 'var(--green)' : corr < -0.1 ? 'rgba(255, 255, 255, 0.85)' : corr > 0.1 ? 'var(--red)' : 'rgba(255,255,255,0.85)')
                 : 'rgba(255,255,255,0.85)';
             const tickerColor = side === 'long' ? 'var(--green)' : 'var(--red)';
 
@@ -285,10 +285,10 @@ const Signals = {
             if (!s) return '';
             const medColor = s.median > 2  ? 'var(--green)'
                            : s.median < -2 ? 'var(--red)'
-                           : 'var(--text-secondary)';
+                           : 'rgba(255, 255, 255, 0.85)';
             const wrColor  = s.win_rate > 55 ? 'var(--green)'
                            : s.win_rate < 45  ? 'var(--red)'
-                           : 'var(--text-secondary)';
+                           : 'rgba(255, 255, 255, 0.85)';
             const sign = s.median >= 0 ? '+' : '';
             const isEdgeRow = w === echoes.signal_edge_window;
             return `
@@ -386,8 +386,8 @@ const Signals = {
             const color = cfg.color || 'rgba(255,255,255,0.85)';
             const icon  = r === 'extreme' ? '🚨' : r === 'elevated' ? '⚠' : '●';
             const med   = s.median;
-            const medColor = med > 2 ? 'var(--green)' : med < -2 ? 'var(--red)' : 'var(--text-secondary)';
-            const wrColor  = s.win_rate > 55 ? 'var(--green)' : s.win_rate < 45 ? 'var(--red)' : 'var(--text-secondary)';
+            const medColor = med > 2 ? 'var(--green)' : med < -2 ? 'var(--red)' : 'rgba(255, 255, 255, 0.85)';
+            const wrColor  = s.win_rate > 55 ? 'var(--green)' : s.win_rate < 45 ? 'var(--red)' : 'rgba(255, 255, 255, 0.85)';
             const tip = `${cfg.label || r}: n=${rd.count} instances, median ${med >= 0 ? '+' : ''}${med?.toFixed(1)}% over ${displayWindow}, ${s.win_rate?.toFixed(0)}% win rate`;
             return `<tr data-tooltip="${tip}">
                 <td style="color:${color}">${icon} ${(cfg.label || r).toLowerCase()}</td>
@@ -686,9 +686,9 @@ const Signals = {
         const tierColors = {
             extreme_high: 'var(--purple)', seasonal_high: 'var(--red)',
             extreme_low: 'var(--green)',   seasonal_low:  'var(--blue)',
-            seasonal_mid: 'var(--text-secondary)'
+            seasonal_mid: 'rgba(255, 255, 255, 0.85)'
         };
-        const tierColor = tierColors[tier] || 'var(--text-secondary)';
+        const tierColor = tierColors[tier] || 'rgba(255, 255, 255, 0.85)';
 
         // Z-score bar: center=0, ±3σ fills the track. Clamp to -3..+3.
         const zClamped   = Math.max(-3, Math.min(3, sz ?? 0));
@@ -904,7 +904,7 @@ const Signals = {
             const barColor = vdds == null ? 'rgba(255,255,255,0.85)'
                 : vdds < 0.85 ? 'var(--green)'
                 : vdds < 0.95 ? 'var(--blue)'
-                : vdds <= 1.05 ? 'var(--text-secondary)'
+                : vdds <= 1.05 ? 'rgba(255, 255, 255, 0.85)'
                 : vdds <= 1.15 ? 'var(--orange)'
                 : 'var(--red)';
             const dvRvol = (m.dvRvol || {})['21d'];

@@ -213,7 +213,7 @@ const Cards = {
             : vdds < 0.90 ? 'var(--blue)'
             : vdds > 1.25 ? 'var(--red)'
             : vdds > 1.10 ? 'var(--orange)'
-            : 'var(--text-secondary)';
+            : 'rgba(255, 255, 255, 0.85)';
         const vddsTip = `VDDS — Volume-Dollar Divergence Score: DV-RVOL-21d ÷ S-RVOL-21d. < 0.90: share volume outpacing dollar volume — price is low per unit, capitulation pattern. > 1.10: dollar value outpacing shares — price rising per unit, momentum/accumulation. Current: ${vdds != null ? vdds.toFixed(2) + 'x' : '--'}`;
         const dvVpsColor = Metrics.getValueColor(dvVps, CONFIG.thresholds.vps);
 

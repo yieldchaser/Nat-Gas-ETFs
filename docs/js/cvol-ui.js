@@ -10,7 +10,7 @@ function uiGetSeason(d){var m=parseInt(d.split('-')[1]);if(m>=11||m<=2)return{n:
 function renderBanner(data, comp) {
     var el = document.getElementById('cvol-status-banner'); if (!el) return;
     var last = data[data.length - 1];
-    var ngvlReg = comp.ngvlPct252 ? ngvlRegime(comp.ngvlPct252[data.length - 1]) : {label:'—',color:'#888'};
+    var ngvlReg = comp.ngvlPct252 ? ngvlRegime(comp.ngvlPct252[data.length - 1]) : {label:'—',color:'rgba(255, 255, 255, 0.85)'};
     var skDir = ''; if (data.length > 5) { var prev = data[data.length - 6].skewRatio; skDir = last.skewRatio > prev ? '▲ RISING' : '▼ FALLING'; }
     var convLabel = last.convexity > 1.1 ? 'ELEVATED' : last.convexity > 0.95 ? 'NORMAL' : 'LOW';
     var convColor = last.convexity > 1.1 ? '#f59e0b' : last.convexity > 0.95 ? '#3db87a' : '#60a8f8';
@@ -96,7 +96,7 @@ function renderConvictionBanner(data, comp) {
 function renderKpiCards(data, comp) {
     var el = document.getElementById('cvol-kpi-grid'); if (!el) return;
     var last = data[data.length - 1]; var n = data.length;
-    var ngvlReg = comp.ngvlPct252 ? ngvlRegime(comp.ngvlPct252[n-1]) : {label:'—',color:'#888'};
+    var ngvlReg = comp.ngvlPct252 ? ngvlRegime(comp.ngvlPct252[n-1]) : {label:'—',color:'rgba(255, 255, 255, 0.85)'};
     var p21 = comp.ngvlPct21 ? comp.ngvlPct21[n-1] : null;
     var p63 = comp.ngvlPct63 ? comp.ngvlPct63[n-1] : null;
     var p252 = comp.ngvlPct252 ? comp.ngvlPct252[n-1] : null;

@@ -112,7 +112,7 @@
     transition: background 0.15s, color 0.15s;
 }
 
-.mode-pill:hover { color: var(--text-secondary); }
+.mode-pill:hover { color: rgba(255, 255, 255, 0.85); }
 
 .mode-pill.active-pill {
     background: var(--border-accent);
@@ -312,7 +312,7 @@
 }
 .vr-low     { background: rgba(61,184,122,0.12); color: var(--green); }
 .vr-quiet   { background: rgba(74,128,184,0.12); color: var(--blue); }
-.vr-normal  { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+.vr-normal  { background: rgba(255,255,255,0.06); color: rgba(255, 255, 255, 0.85); }
 .vr-high    { background: rgba(192,120,40,0.12); color: var(--orange); }
 .vr-extreme { background: rgba(192,64,64,0.12); color: var(--red); }
 .vr-unknown { background: transparent; color: rgba(255, 255, 255, 0.85); }
@@ -359,7 +359,7 @@
 .hv-value {
     font-size: 0.62rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85);
     width: 36px;
     text-align: right;
     flex-shrink: 0;
@@ -392,13 +392,13 @@
     font-weight: 600;
     display: block;
     margin-top: 1px;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 /* HV Term Structure arrow colours */
 .ts-calm    { color: var(--green); }
 .ts-easing  { color: var(--blue); }
-.ts-neutral { color: var(--text-secondary); }
+.ts-neutral { color: rgba(255, 255, 255, 0.85); }
 .ts-building { color: var(--yellow); }
 .ts-accel   { color: var(--red); }
 

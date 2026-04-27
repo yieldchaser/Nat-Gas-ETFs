@@ -1019,7 +1019,7 @@ function renderSection2() {
         // Pressure: positive = buying pressure = green, negative = selling pressure = red
         const presCol = d.pressure >= 0 ? 'val-green' : 'val-red';
 
-        const accentCol = colors[tk] || '#888';
+        const accentCol = colors[tk] || 'rgba(255, 255, 255, 0.85)';
         const bc = tk === state.activeTicker
             ? `border-left-color:${accentCol}; border-color:${accentCol}; box-shadow: 0 0 14px ${accentCol}40;`
             : `border-left-color:${accentCol};`;
