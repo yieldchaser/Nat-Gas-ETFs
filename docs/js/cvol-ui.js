@@ -287,6 +287,58 @@ function renderCompStats(compKey, values, events) {
         seasonHtml;
 }
 
+// ── Signal Heat Calendar (90-day) ─────────────────────────────
+function renderSignalHeatCalendar(data, comp) {
+    var el = document.getElementById('cvol-signal-heat'); if (!el) return;
+    var n = data.length;
+    var start = Math.max(0, n - 90);
+
+    // Build date → event lookup
+    var evByDate = {};
+    (comp.events || []).forEach(function(e) { evByDate[e.date] = e; });
+
+    var sigColors = { 'SAD': '#f59e0b', 'CI': '#60a8f8', 'CVC↓': '#ef4444', 'CVC↑': '#3db87a', 'RDS': '#ec4899' };
+
+    var html = '<div class="sig-heat-grid">';
+    for (var i = start; i < n; i++) {
+        var r = data[i];
+        var pct = comp.ngvlPct252 ? comp.ngvlPct252[i] : null;
+        var regime = ngvlRegime(pct);
+        var ev = evByDate[r.date];
+        var bgAlpha = pct != null ? (0.10 + (pct / 100) * 0.28).toFixed(3) : '0.04';
+        var borderAlpha = pct != null ? (0.20 + (pct / 100) * 0.30).toFixed(3) : '0.08';
+        var bg = toRgba(regime.color, parseFloat(bgAlpha));
+        var border = toRgba(regime.color, parseFloat(borderAlpha));
+        var tt = fmtDate(r.date) +
+                 '\nNGVL: ' + (r.ngvl != null ? r.ngvl.toFixed(1) + '%' : '—') +
+                 ' · ' + regime.label + (pct != null ? ' (' + pct.toFixed(0) + 'th)' : '') +
+                 (r.underlying != null ? '\nNG: $' + r.underlying.toFixed(3) : '');
+        if (ev) tt += '\n⚡ ' + ev.signal + ' — ' + ev.direction;
+        var badge = ev ? '<div class="sig-heat-badge" style="background:' + (sigColors[ev.signal] || '#fff') + ';"></div>' : '';
+        html += '<div class="sig-heat-cell" style="background:' + bg + ';border:1px solid ' + border + ';" data-tooltip="' + tt.replace(/"/g, '&quot;') + '">' + badge + '</div>';
+    }
+    html += '</div>';
+
+    // Legend
+    var regLegend = [
+        { label: 'LOW',      color: '#4a80b8' },
+        { label: 'NORMAL',   color: '#3db87a' },
+        { label: 'ELEVATED', color: '#c07828' },
+        { label: 'EXTREME',  color: '#c04040' },
+    ];
+    html += '<div class="sig-heat-legend">';
+    regLegend.forEach(function(rl) {
+        html += '<div class="sig-heat-leg-item"><div class="sig-heat-leg-swatch" style="background:' + toRgba(rl.color, 0.30) + ';border:1px solid ' + toRgba(rl.color, 0.55) + ';"></div>' + rl.label + '</div>';
+    });
+    html += '<span style="width:1px;height:12px;background:rgba(255,255,255,0.12);margin:0 4px;"></span>';
+    Object.keys(sigColors).forEach(function(sig) {
+        html += '<div class="sig-heat-leg-item"><div class="sig-heat-leg-dot" style="background:' + sigColors[sig] + ';"></div>' + sig + '</div>';
+    });
+    html += '</div>';
+
+    el.innerHTML = html;
+}
+
 // ── Regime Heatmap ────────────────────────────────────────────
 function renderHeatmap(data) {
     var el = document.getElementById('cvol-heatmap'); if (!el) return;
@@ -1039,6 +1091,7 @@ function renderAll() {
     // New panels
     renderHeatmap(data);
     renderCorrMatrix(data);
+    renderSignalHeatCalendar(data, comp);
     renderScorecard(comp);
     renderTimeline(comp, CvolState.signalFilter);
 }
