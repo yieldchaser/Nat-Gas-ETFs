@@ -291,31 +291,41 @@ function renderCompStats(compKey, values, events) {
 function renderSignalHeatCalendar(data, comp) {
     var el = document.getElementById('cvol-signal-heat'); if (!el) return;
     var n = data.length;
+    if (!n) return;
     var start = Math.max(0, n - 90);
 
     // Build date → event lookup
     var evByDate = {};
-    (comp.events || []).forEach(function(e) { evByDate[e.date] = e; });
+    ((comp && comp.events) || []).forEach(function(e) { evByDate[e.date] = e; });
 
     var sigColors = { 'SAD': '#f59e0b', 'CI': '#60a8f8', 'CVC↓': '#ef4444', 'CVC↑': '#3db87a', 'RDS': '#ec4899' };
+
+    // Regime color map with full 6-digit hex (toRgba only handles 6-digit)
+    var regimeColors = { 'LOW': '#4a80b8', 'NORMAL': '#3db87a', 'ELEVATED': '#c07828', 'EXTREME': '#c04040' };
 
     var html = '<div class="sig-heat-grid">';
     for (var i = start; i < n; i++) {
         var r = data[i];
-        var pct = comp.ngvlPct252 ? comp.ngvlPct252[i] : null;
+        var pct = (comp && comp.ngvlPct252) ? comp.ngvlPct252[i] : null;
         var regime = ngvlRegime(pct);
         var ev = evByDate[r.date];
-        var bgAlpha = pct != null ? (0.10 + (pct / 100) * 0.28).toFixed(3) : '0.04';
-        var borderAlpha = pct != null ? (0.20 + (pct / 100) * 0.30).toFixed(3) : '0.08';
-        var bg = toRgba(regime.color, parseFloat(bgAlpha));
-        var border = toRgba(regime.color, parseFloat(borderAlpha));
-        var tt = fmtDate(r.date) +
-                 '\nNGVL: ' + (r.ngvl != null ? r.ngvl.toFixed(1) + '%' : '—') +
-                 ' · ' + regime.label + (pct != null ? ' (' + pct.toFixed(0) + 'th)' : '') +
-                 (r.underlying != null ? '\nNG: $' + r.underlying.toFixed(3) : '');
+        var day = r.date ? r.date.split('-')[2] : '';
+
+        // Alpha: 0.22 at pct=0 → 0.65 at pct=100. Ensures LOW regime cells are clearly visible.
+        var alpha = pct != null ? (0.22 + (pct / 100) * 0.43).toFixed(3) : '0.15';
+        var rColor = regimeColors[regime.label] || '#4a80b8';
+        var bg = toRgba(rColor, parseFloat(alpha));
+        var border = toRgba(rColor, Math.min(1, parseFloat(alpha) + 0.18).toFixed(3));
+
+        var ngvlStr = r.ngvl != null ? r.ngvl.toFixed(1) + '%' : '—';
+        var pctStr = pct != null ? ' (' + pct.toFixed(0) + 'th pct)' : '';
+        var priceStr = r.underlying != null ? '\nNG: $' + r.underlying.toFixed(3) : '';
+        var tt = fmtDate(r.date) + '\nNGVL: ' + ngvlStr + ' · ' + regime.label + pctStr + priceStr;
         if (ev) tt += '\n⚡ ' + ev.signal + ' — ' + ev.direction;
+
+        var fgColor = parseFloat(alpha) > 0.42 ? '#fff' : regime.color;
         var badge = ev ? '<div class="sig-heat-badge" style="background:' + (sigColors[ev.signal] || '#fff') + ';"></div>' : '';
-        html += '<div class="sig-heat-cell" style="background:' + bg + ';border:1px solid ' + border + ';" data-tooltip="' + tt.replace(/"/g, '&quot;') + '">' + badge + '</div>';
+        html += '<div class="sig-heat-cell" style="background:' + bg + ';border:1px solid ' + border + ';color:' + fgColor + ';" data-tooltip="' + tt.replace(/"/g, '&quot;') + '">' + day + badge + '</div>';
     }
     html += '</div>';
 
@@ -328,7 +338,7 @@ function renderSignalHeatCalendar(data, comp) {
     ];
     html += '<div class="sig-heat-legend">';
     regLegend.forEach(function(rl) {
-        html += '<div class="sig-heat-leg-item"><div class="sig-heat-leg-swatch" style="background:' + toRgba(rl.color, 0.30) + ';border:1px solid ' + toRgba(rl.color, 0.55) + ';"></div>' + rl.label + '</div>';
+        html += '<div class="sig-heat-leg-item"><div class="sig-heat-leg-swatch" style="background:' + toRgba(rl.color, 0.35) + ';border:1px solid ' + toRgba(rl.color, 0.65) + ';"></div>' + rl.label + '</div>';
     });
     html += '<span style="width:1px;height:12px;background:rgba(255,255,255,0.12);margin:0 4px;"></span>';
     Object.keys(sigColors).forEach(function(sig) {
