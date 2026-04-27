@@ -342,9 +342,10 @@ function renderCorrMatrix(data) {
             var bg, fg;
             if (rv == null) { bg = 'rgba(255,255,255,0.02)'; fg = 'var(--text-dim)'; }
             else if (i === j) { bg = 'rgba(255,255,255,0.05)'; fg = 'var(--text-bright)'; }
-            else if (rv > 0.7) { bg = 'rgba(61,184,122,'+((rv-0.5)*0.5)+')'; fg = '#fff'; }
+            else if (rv > 0.7) { bg = 'rgba(61,184,122,'+((rv-0.5)*0.5).toFixed(3)+')'; fg = '#fff'; }
             else if (rv > 0.3) { bg = 'rgba(61,184,122,0.08)'; fg = '#3db87a'; }
-            else if (rv < -0.3) { bg = 'rgba(239,68,68,'+((Math.abs(rv)-0.2)*0.4)+')'; fg = '#ef4444'; }
+            else if (rv < -0.7) { bg = 'rgba(239,68,68,'+((Math.abs(rv)-0.5)*0.5).toFixed(3)+')'; fg = '#fff'; }
+            else if (rv < -0.3) { bg = 'rgba(239,68,68,0.08)'; fg = '#ef4444'; }
             else { bg = 'rgba(255,255,255,0.02)'; fg = 'var(--text-muted)'; }
             var interp = '';
             if (rv == null) interp = 'Insufficient data for correlation.';
