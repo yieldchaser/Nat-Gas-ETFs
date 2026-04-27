@@ -418,47 +418,90 @@ function renderHeatmap(data) {
 }
 
 // ── Correlation Matrix (range-synced) ─────────────────────────
+var CORR_SERIES_COLORS = ['#00e5ff','#ef4444','#3db87a','#a78bfa','#f59e0b','#8b5cf6','#ec4899','#94a3b8'];
+var CORR_DESCS = [
+    'CVOL Index — overall implied vol level',
+    'Down-Variance — put-side vol / bearish pressure',
+    'Up-Variance — call-side vol / bullish pressure',
+    'Skew (pts) — absolute put-call premium spread',
+    'Skew Ratio — relative put premium (DN/UP)',
+    'ATM Vol — at-the-money implied vol baseline',
+    'Convexity — tail-risk premium / wing demand',
+    'NG Futures Price — underlying settlement',
+];
+
 function renderCorrMatrix(data) {
     var el = document.getElementById('cvol-corr-matrix'); if (!el) return;
     var r = getVisibleRange();
     var matrix = computeCorrMatrix(data, r.s, r.e);
     var n = CORR_LABELS.length;
-    // Show the range used for correlation
+
+    // Range note
     var rangeNote = '';
     if (data.length) {
         var d0 = data[r.s] ? fmtDate(data[r.s].date) : '';
         var d1 = data[r.e] ? fmtDate(data[r.e].date) : '';
         var days = r.e - r.s + 1;
-        rangeNote = '<div style="font-size:0.5rem;color:var(--text-dim);letter-spacing:0.5px;margin-bottom:8px;text-align:right;" data-tooltip="Correlation is computed from the visible date range. Adjust the range slider above to see how correlations shift across regimes.">' + d0 + ' → ' + d1 + ' (' + days + ' days)</div>';
+        rangeNote = '<div class="corr-range-note" data-tooltip="Pearson r computed from the visible date range. Adjust the range slider to see how correlations shift across regimes.">' +
+                    '<span style="color:rgba(0,229,255,0.4);">◈</span>' +
+                    '<span>' + d0 + ' → ' + d1 + ' · ' + days + ' days</span></div>';
     }
-    var html = rangeNote + '<div class="corr-grid" style="grid-template-columns:55px repeat('+n+', 1fr);">';
+
+    var html = rangeNote + '<div class="corr-grid" style="grid-template-columns:52px repeat('+n+', 1fr);">';
+
+    // Column headers (coloured by series)
     html += '<div></div>';
-    for (var j = 0; j < n; j++) html += '<div class="corr-header" style="font-size:0.45rem;">'+CORR_LABELS[j]+'</div>';
+    for (var j = 0; j < n; j++) {
+        html += '<div class="corr-col-hdr" style="color:' + CORR_SERIES_COLORS[j] + ';" data-tooltip="' + CORR_DESCS[j] + '">' + CORR_LABELS[j].replace(' ',' ') + '</div>';
+    }
+
+    // Rows
     for (var i = 0; i < n; i++) {
-        html += '<div class="corr-header" style="font-size:0.45rem;justify-content:flex-end;padding-right:4px;">'+CORR_LABELS[i]+'</div>';
+        html += '<div class="corr-row-hdr" style="color:' + CORR_SERIES_COLORS[i] + ';" data-tooltip="' + CORR_DESCS[i] + '">' + CORR_LABELS[i].replace(' ',' ') + '</div>';
         for (var j = 0; j < n; j++) {
             var rv = matrix[i][j];
-            var bg, fg;
-            if (rv == null) { bg = 'rgba(255,255,255,0.02)'; fg = 'var(--text-dim)'; }
-            else if (i === j) { bg = 'rgba(255,255,255,0.05)'; fg = 'var(--text-bright)'; }
-            else if (rv > 0.7) { bg = 'rgba(61,184,122,'+((rv-0.5)*0.5).toFixed(3)+')'; fg = '#fff'; }
-            else if (rv > 0.3) { bg = 'rgba(61,184,122,0.08)'; fg = '#3db87a'; }
-            else if (rv < -0.7) { bg = 'rgba(239,68,68,'+((Math.abs(rv)-0.5)*0.5).toFixed(3)+')'; fg = '#fff'; }
-            else if (rv < -0.3) { bg = 'rgba(239,68,68,0.08)'; fg = '#ef4444'; }
-            else { bg = 'rgba(255,255,255,0.02)'; fg = 'var(--text-muted)'; }
-            var interp = '';
-            if (rv == null) interp = 'Insufficient data for correlation.';
-            else if (i === j) interp = 'Perfect Correlation (Self)';
-            else if (rv > 0.8) interp = 'Strong Positive Correlation: These indices typically peak and trough simultaneously.';
-            else if (rv > 0.5) interp = 'Moderate Positive: General directional alignment.';
-            else if (rv < -0.6) interp = 'Strong Negative: One index typically expands as the other contracts — a primary divergence signal.';
-            else if (rv < -0.3) interp = 'Moderate Negative: Diverging volatility characteristics.';
-            else interp = 'Weak/Uncorrelated: These metrics operate independently in the current regime.';
-            
-            html += '<div class="corr-cell" style="background:'+bg+';color:'+fg+';" data-tooltip="'+CORR_LABELS[i]+' vs '+CORR_LABELS[j]+': r = '+(rv!=null?rv.toFixed(3):'—')+'\n' + interp + '">'+( rv!=null?rv.toFixed(2):'—')+'</div>';
+
+            var bg, fg, barW = '0%', barCol = 'transparent';
+            if (rv == null) {
+                bg = 'rgba(255,255,255,0.025)'; fg = 'rgba(255,255,255,0.18)';
+            } else if (i === j) {
+                bg = 'rgba(255,220,80,0.09)'; fg = 'rgba(255,220,80,0.85)';
+            } else {
+                var abs = Math.abs(rv);
+                var alpha = (0.07 + abs * 0.57).toFixed(3);
+                fg = parseFloat(alpha) >= 0.34 ? '#fff' : (rv >= 0 ? '#3db87a' : '#ef4444');
+                bg = rv >= 0 ? toRgba('#3db87a', parseFloat(alpha)) : toRgba('#ef4444', parseFloat(alpha));
+                barW = (abs * 100).toFixed(1) + '%';
+                barCol = rv >= 0 ? '#3db87a' : '#ef4444';
+            }
+
+            var interp = rv == null ? 'Insufficient data (< 10 observations).' :
+                         i === j   ? 'Self-correlation — always 1.00 by definition.' :
+                         rv > 0.85 ? 'Very strong positive — these metrics move almost in lockstep.' :
+                         rv > 0.65 ? 'Strong positive — clear directional alignment.' :
+                         rv > 0.35 ? 'Moderate positive — general co-movement.' :
+                         rv < -0.65 ? 'Strong negative — primary divergence signal. One expands as the other contracts.' :
+                         rv < -0.35 ? 'Moderate negative — diverging vol characteristics.' :
+                                     'Weak / uncorrelated — these metrics operate independently.';
+
+            var border = (rv != null && i !== j) ? ';border:1px solid ' + (rv >= 0 ? toRgba('#3db87a', (parseFloat((0.07+Math.abs(rv)*0.57).toFixed(3))+0.10).toFixed(2)) : toRgba('#ef4444', (parseFloat((0.07+Math.abs(rv)*0.57).toFixed(3))+0.10).toFixed(2))) : '';
+            var bar = (barW !== '0%') ? '<div class="corr-bar" style="width:'+barW+';background:'+barCol+';"></div>' : '';
+
+            html += '<div class="corr-cell" style="background:'+bg+border+';" data-tooltip="' +
+                    CORR_LABELS[i] + ' vs ' + CORR_LABELS[j] + ': r = ' + (rv!=null?rv.toFixed(3):'—') + '\n' + interp + '">' +
+                    '<span class="corr-r-val" style="color:'+fg+'">' + (rv!=null?rv.toFixed(2):'—') + '</span>' +
+                    bar + '</div>';
         }
     }
     html += '</div>';
+
+    // Gradient legend
+    html += '<div class="corr-legend">' +
+            '<span class="corr-leg-label">STRONG −</span>' +
+            '<div class="corr-grad-swatch" style="background:linear-gradient(90deg,rgba(239,68,68,0.65),rgba(239,68,68,0.08) 40%,rgba(255,255,255,0.04) 50%,rgba(61,184,122,0.08) 60%,rgba(61,184,122,0.65));"></div>' +
+            '<span class="corr-leg-label">STRONG +</span>' +
+            '</div>';
+
     el.innerHTML = html;
 }
 
