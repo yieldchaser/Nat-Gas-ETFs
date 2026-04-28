@@ -124,7 +124,7 @@ Scans for windows (5d / 10d / 21d) where aggregate long-side capital (BOIL + HNU
 
 | Column | Description |
 |--------|-------------|
-| **TYPE** | `LONG LEADS` (longs accumulating, shorts distributing) or `SHORT LEADS` (shorts distributing, longs pulling back — bullish for gas) |
+| **TYPE** | `LONG LEADS` (Long-side accumulation: Bullish) or `SHORT LEADS` (Short-side accumulation: Bearish) |
 | **LONG Σ / SHORT Σ** | Aggregate net flow for each side over the window |
 | **Δ SPREAD** | Capital imbalance: `LONG Σ − SHORT Σ` |
 | **BREADTH** | Individual ETF agreement count (0–6). ≥4 = strong consensus. |
@@ -132,7 +132,7 @@ Scans for windows (5d / 10d / 21d) where aggregate long-side capital (BOIL + HNU
 | **SIGNAL** | `CONFIRMED` (breadth ≥ 4 + above-median spread) or `WATCH` |
 | **STR** | Strength score 0–100: spread magnitude (40%) + breadth (30%) + window (15%) + consistency (15%) |
 
-Features summary strip (event counts, confirmed count, average strength), filterable lookback (30D / 90D / 6M / 1Y / ALL), and CSV export. Color convention follows the dashboard: `SHORT LEADS` = green (bullish for gas), `LONG LEADS` = red (bearish for gas).
+Features summary strip (event counts, confirmed count, average strength), filterable lookback (30D / 90D / 6M / 1Y / ALL), and CSV export. Color convention follows the dashboard: `LONG LEADS` = green (bullish for gas), `SHORT LEADS` = red (bearish for gas).
 
 #### Yearly Flow Activity Matrix
 
