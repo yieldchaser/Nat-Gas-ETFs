@@ -960,24 +960,66 @@ async function init() {
 }
 
 function renderSection1() {
-    const data = state.summary.cross_etf;
+    const data    = state.summary.cross_etf;
+    const tickers = state.summary.tickers || {};
 
-    // Long side: bull_flow_30d positive = inflows to longs = bullish = green
+    // ── Composite Z-scores per side ─────────────────────────────────────────
+    // Average the last-day flow Z-scores across each side's tickers.
+    // This tells us HOW STRONG the flow move was, not just its direction.
+    const longTks  = ['BOIL', 'HNU', '3NGL'];
+    const shortTks = ['KOLD', 'HND', '3NGS'];
+    const avgZ = (tks) => {
+        const vals = tks.map(t => tickers[t]?.zscore ?? 0);
+        return vals.reduce((a, b) => a + b, 0) / vals.length;
+    };
+    const zLong  = avgZ(longTks);   // positive = strong inflows, negative = outflows
+    const zShort = avgZ(shortTks);  // positive = shorts building, negative = shorts exiting
+
+    // ── Long-side label ──────────────────────────────────────────────────────
+    // longFlow > 0: capital entering long ETFs (bullish)
+    // longFlow < 0: capital leaving long ETFs (bearish)
+    // Gated by Z-score magnitude to convey signal conviction
     const longFlow = data.bull_flow_30d;
     el('sent-long').textContent = fmtUsd(longFlow);
-    el('sent-long').className = `s-val ${longFlow >= 0 ? 'val-green' : 'val-red'}`;
-    el('sent-long-sub').textContent = longFlow >= 0 ? '▲ Smart money long' : '▼ Longs reducing';
-    el('sent-long-sub').style.color = longFlow >= 0 ? 'var(--green)' : 'var(--red)';
+    el('sent-long').className   = `s-val ${longFlow >= 0 ? 'val-green' : 'val-red'}`;
 
-    // Short side: unbiased — inflows = green (accumulating), outflows = red (declining)
+    let longLabel, longColor;
+    if (longFlow >= 0) {
+        if      (zLong >= 1.5) { longLabel = '▲ Strong inflow surge';      longColor = 'var(--green)'; }
+        else if (zLong >= 0.5) { longLabel = '▲ Moderate accumulation';    longColor = 'var(--green)'; }
+        else                   { longLabel = '▲ Marginal inflow';           longColor = 'rgba(34,197,94,0.55)'; }
+    } else {
+        if      (zLong <= -1.5) { longLabel = '▼ Heavy distribution';      longColor = 'var(--red)'; }
+        else if (zLong <= -0.5) { longLabel = '▼ Moderate outflow';        longColor = 'var(--red)'; }
+        else                    { longLabel = '▼ Light redemptions';        longColor = 'rgba(239,68,68,0.55)'; }
+    }
+    el('sent-long-sub').textContent   = longLabel;
+    el('sent-long-sub').style.color   = longColor;
+
+    // ── Short-side label ─────────────────────────────────────────────────────
+    // shortFlow > 0: capital entering short ETFs (bearish for gas)
+    // shortFlow < 0: capital leaving short ETFs (bullish for gas — short squeeze / conviction exit)
+    // Color is INVERTED vs flow direction: exits from shorts = bullish = green
     const shortFlow = data.bear_flow_30d;
     el('sent-short').textContent = fmtUsd(shortFlow);
-    el('sent-short').className = `s-val ${shortFlow >= 0 ? 'val-green' : 'val-red'}`;
-    el('sent-short-sub').textContent = shortFlow >= 0 ? '▲ Shorts accumulating' : '▼ Shorts unwinding';
-    // Inverted: shorts unwinding (outflows) = bullish signal = green; shorts accumulating = bearish = red
-    el('sent-short-sub').style.color = shortFlow >= 0 ? 'var(--red)' : 'var(--green)';
+    el('sent-short').className   = `s-val ${shortFlow >= 0 ? 'val-green' : 'val-red'}`;
 
-    // Split bar: share of absolute flow between long and short sides
+    let shortLabel, shortColor;
+    if (shortFlow < 0) {
+        // Shorts exiting — bullish signal. Magnitude gated by how extreme the exodus is.
+        if      (zShort <= -1.5) { shortLabel = '▼ Shorts purging fast';   shortColor = 'var(--green)'; }
+        else if (zShort <= -0.5) { shortLabel = '▼ Shorts unwinding';      shortColor = 'var(--green)'; }
+        else                     { shortLabel = '▼ Minor short exit';       shortColor = 'rgba(34,197,94,0.55)'; }
+    } else {
+        // Shorts building — bearish signal
+        if      (zShort >= 1.5) { shortLabel = '▲ Aggressive short build'; shortColor = 'var(--red)'; }
+        else if (zShort >= 0.5) { shortLabel = '▲ Short accumulation';     shortColor = 'var(--red)'; }
+        else                    { shortLabel = '▲ Marginal short build';    shortColor = 'rgba(239,68,68,0.55)'; }
+    }
+    el('sent-short-sub').textContent = shortLabel;
+    el('sent-short-sub').style.color = shortColor;
+
+    // ── Split bar ────────────────────────────────────────────────────────────
     const absLong  = Math.abs(longFlow);
     const absShort = Math.abs(shortFlow);
     const total    = absLong + absShort;
@@ -986,18 +1028,19 @@ function renderSection1() {
 
     el('sent-bar-long').style.width  = `${longPct.toFixed(1)}%`;
     el('sent-bar-short').style.width = `${shortPct.toFixed(1)}%`;
-    const longColor  = longFlow  >= 0 ? 'var(--green)' : 'var(--red)';
-    const shortColor = shortFlow >= 0 ? 'var(--green)' : 'var(--red)';
-    el('sent-bar-long').style.background  = longColor;
-    el('sent-bar-short').style.background = shortColor;
+    const longBarColor  = longFlow  >= 0 ? 'var(--green)' : 'var(--red)';
+    const shortBarColor = shortFlow >= 0 ? 'var(--green)' : 'var(--red)';
+    el('sent-bar-long').style.background  = longBarColor;
+    el('sent-bar-short').style.background = shortBarColor;
     el('sent-pct-long').textContent  = `${longPct.toFixed(0)}%`;
     el('sent-pct-short').textContent = `${shortPct.toFixed(0)}%`;
-    el('sent-pct-long').style.color  = longColor;
-    el('sent-pct-short').style.color = shortColor;
+    el('sent-pct-long').style.color  = longBarColor;
+    el('sent-pct-short').style.color = shortBarColor;
 
+    // ── Overall sentiment badge ───────────────────────────────────────────────
     const status = data.sentiment;
-    el('sent-status').textContent = status;
-    el('sent-status').className = `s-status ${status === 'BULLISH' ? 'val-green' : status === 'BEARISH' ? 'val-red' : 'val-muted'}`;
+    el('sent-status').textContent  = status;
+    el('sent-status').className    = `s-status ${status === 'BULLISH' ? 'val-green' : status === 'BEARISH' ? 'val-red' : 'val-muted'}`;
 }
 
 function renderSection2() {
