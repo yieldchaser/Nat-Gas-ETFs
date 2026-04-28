@@ -530,6 +530,8 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
             <!-- Divergence ETF selector -->
             <div id="div-etf-tabs" style="display:flex; gap:4px; flex-wrap:wrap; justify-content:center; margin:0 0 10px 0;"></div>
+            <!-- Single-name divergence summary strip -->
+            <div id="div-summary" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; justify-content:center;"></div>
             <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
             <table class="div-table" style="min-width:1280px;">
                 <thead>
@@ -660,7 +662,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <!-- Cross-side divergence summary strip -->
             <div id="cross-div-summary" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; justify-content:center;"></div>
             <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
-            <table class="div-table" style="min-width:960px;">
+            <table class="div-table" style="min-width:1400px;">
                 <thead>
                     <tr>
                         <th data-tooltip="Date the divergence window ends.">DATE</th>
@@ -669,14 +671,20 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                         <th data-tooltip="Total net capital flow across BOIL + HNU + 3NGL during the window.">LONG Σ</th>
                         <th data-tooltip="Total net capital flow across KOLD + HND + 3NGS during the window.">SHORT Σ</th>
                         <th data-tooltip="Capital spread: LONG Σ − SHORT Σ. Large absolute values indicate strong side-rotation.">Δ SPREAD</th>
+                        <th data-tooltip="Daily average spread over the window. Normalises for window length.">AVG/DAY</th>
                         <th data-tooltip="How many of the 6 individual ETFs show flow direction consistent with the divergence. ≥4 = strong consensus.">BREADTH</th>
+                        <th data-tooltip="What fraction of days in the window had both sides diverging simultaneously. Higher = more persistent rotation.">CONS%</th>
                         <th data-tooltip="Cross-ETF sentiment label at window end based on 30-day aggregate flows.">SENTIMENT</th>
-                        <th data-tooltip="Signal quality: CONFIRMED (breadth ≥ 4 + above-median spread) or WATCH (weaker divergence)." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">SIGNAL</th>
+                        <th data-tooltip="PRE-3D: avg daily aggregate spread for the 3 trading days before the window opens. Shows whether rotation was already building." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">PRE-3D</th>
+                        <th data-tooltip="POST-3D: avg daily aggregate spread for the 3 trading days after window closes. Measures follow-through.">POST-3D</th>
+                        <th data-tooltip="DAY SPREAD: exact end-date aggregate spread. Isolates whether the final day itself was a spike.">DAY SPR</th>
+                        <th data-tooltip="BASE-30D: prevailing 30-day average daily aggregate spread before the window opened. Compare PRE-3D and AVG/DAY against this.">BASE-30D</th>
+                        <th data-tooltip="Signal quality: CONFIRMED Rotation (breadth ≥ 4 + spread + consistency) or Rotation." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">SIGNAL</th>
                         <th data-tooltip="Composite strength score 0–100. Combines spread magnitude, breadth, window length, and flow consistency.">STR</th>
                     </tr>
                 </thead>
                 <tbody id="cross-div-body">
-                    <tr><td colspan="10" style="text-align:center; color:rgba(255, 255, 255, 0.85);">Scanning for cross-side divergences...</td></tr>
+                    <tr><td colspan="16" style="text-align:center; color:rgba(255, 255, 255, 0.85);">Scanning for cross-side divergences...</td></tr>
                 </tbody>
             </table>
             </div><!-- /overflow scroll wrapper -->
@@ -2246,11 +2254,41 @@ function renderDivergence() {
     const lookback = state.divRange === 'all' ? data.length : Math.min(state.divRange, data.length);
     const results  = scanDivergences(data, thresh, lookback);
     const tbody    = el('div-body');
+    const summaryEl = el('div-summary');
 
     const fmtCtx = (v) => v === null
         ? `<span style="opacity:0.35;font-size:0.62rem;">\u2014</span>`
         : `${fmtUsd(v)}/d`;
     const ctxCol = (v) => v === null ? '' : (v >= 0 ? 'val-green' : 'val-red');
+
+    // Summary strip
+    if (summaryEl) {
+        if (results.length) {
+            const bearish = results.filter(r => r.isBear);
+            const bullish = results.filter(r => !r.isBear);
+            const confirmed = results.filter(r => r.confirmed);
+            const avgStr = Math.round(results.reduce((a, r) => a + r.strength, 0) / results.length);
+            summaryEl.innerHTML = `
+                <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);letter-spacing:0.5px;" data-tooltip="Total divergence events detected for ${state.divTicker}">
+                    <span style="font-weight:800;color:var(--cyan);">${results.length}</span> EVENTS
+                </div>
+                <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Price rose but net flow negative — stealth distribution">
+                    <span style="font-weight:800;color:#ef4444;">${bearish.length}</span> BEARISH
+                </div>
+                <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Price fell but net flow positive — stealth accumulation">
+                    <span style="font-weight:800;color:#3db87a;">${bullish.length}</span> BULLISH
+                </div>
+                <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Events where Z-Score, Pressure, Pre-3D, and consistency all agree">
+                    <span style="font-weight:800;color:var(--cyan);">${confirmed.length}</span> CONFIRMED
+                </div>
+                <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Average strength score across all events">
+                    AVG STR: <span style="font-weight:800;color:${avgStr >= 50 ? '#3db87a' : 'rgba(148,163,184,0.9)'};">${avgStr}</span>
+                </div>
+            `;
+        } else {
+            summaryEl.innerHTML = '';
+        }
+    }
 
     let html = '';
     for (const r of results) {
@@ -2434,18 +2472,15 @@ const LONG_SIDE  = ['BOIL', 'HNU', '3NGL'];
 const SHORT_SIDE = ['KOLD', 'HND', '3NGS'];
 
 function scanCrossDivergences(lookback) {
-    // Need all 6 tickers loaded
     const allTickers = [...LONG_SIDE, ...SHORT_SIDE];
     for (const tk of allTickers) {
         if (!state.cache[tk] || !state.cache[tk].data || state.cache[tk].data.length < 30) return [];
     }
 
-    // Build a common date-indexed map using BOIL as anchor
     const baseData = state.cache['BOIL'].data;
     const recentCount = lookback === 'all' ? baseData.length : Math.min(lookback, baseData.length);
     const recent = baseData.slice(-recentCount);
 
-    // Pre-index all ticker data by date for O(1) lookup
     const tickerByDate = {};
     allTickers.forEach(tk => {
         tickerByDate[tk] = {};
@@ -2453,11 +2488,8 @@ function scanCrossDivergences(lookback) {
         for (let j = 0; j < d.length; j++) tickerByDate[tk][d[j].date] = d[j];
     });
 
-    // Build aggregate series aligned to BOIL dates
-    const dates = [];
-    const longCum = [];
-    const shortCum = [];
-    const perTicker = {};  // tk -> [cumulative_flow values aligned to dates]
+    const dates = [], longCum = [], shortCum = [];
+    const perTicker = {};
     allTickers.forEach(tk => { perTicker[tk] = []; });
 
     for (let i = 0; i < recent.length; i++) {
@@ -2487,17 +2519,17 @@ function scanCrossDivergences(lookback) {
     const windows = [21, 10, 5];
     const results = [];
 
-    // Track max spread for normalisation
     let maxAbsSpread = 0;
     for (let i = windows[0]; i < dates.length; i++) {
         for (const w of windows) {
             if (i < w) continue;
-            const ld = longCum[i] - longCum[i - w];
-            const sd = shortCum[i] - shortCum[i - w];
-            const spread = Math.abs(ld - sd);
+            const spread = Math.abs((longCum[i] - longCum[i - w]) - (shortCum[i] - shortCum[i - w]));
             if (spread > maxAbsSpread) maxAbsSpread = spread;
         }
     }
+
+    // Helper: daily spread at index j
+    const daySpreadAt = (j) => (longCum[j] - longCum[j - 1]) - (shortCum[j] - shortCum[j - 1]);
 
     for (let i = dates.length - 1; i >= Math.max(...windows); i--) {
         for (const w of windows) {
@@ -2505,7 +2537,6 @@ function scanCrossDivergences(lookback) {
             const longDelta  = longCum[i] - longCum[i - w];
             const shortDelta = shortCum[i] - shortCum[i - w];
 
-            // Divergence: one side positive, the other negative
             let type = '';
             if (longDelta > 0 && shortDelta < 0) type = 'LONG LEADS';
             else if (longDelta < 0 && shortDelta > 0) type = 'SHORT LEADS';
@@ -2513,8 +2544,9 @@ function scanCrossDivergences(lookback) {
 
             const isShortLeads = type === 'SHORT LEADS';
             const spread = longDelta - shortDelta;
+            const avgDaily = spread / w;
 
-            // Breadth: how many of 6 ETFs individually agree
+            // Breadth
             let breadth = 0;
             for (const tk of allTickers) {
                 const tkArr = perTicker[tk];
@@ -2523,35 +2555,62 @@ function scanCrossDivergences(lookback) {
                 if (idxPrev < 0 || idx < 0 || idx >= tkArr.length) continue;
                 const delta = tkArr[idx] - tkArr[idxPrev];
                 if (isShortLeads) {
-                    // SHORT LEADS: expect shorts positive flow, longs negative
                     if (SHORT_SIDE.includes(tk) && delta > 0) breadth++;
                     if (LONG_SIDE.includes(tk) && delta < 0) breadth++;
                 } else {
-                    // LONG LEADS: expect longs positive, shorts negative
                     if (LONG_SIDE.includes(tk) && delta > 0) breadth++;
                     if (SHORT_SIDE.includes(tk) && delta < 0) breadth++;
                 }
             }
 
-            // Compute sentiment at window end (30-day aggregate)
-            let sentLong = 0, sentShort = 0;
+            // Sentiment at window end (30-day)
             const sentStart = Math.max(0, i - 30);
-            sentLong = longCum[i] - longCum[sentStart];
-            sentShort = shortCum[i] - shortCum[sentStart];
+            const sentLong = longCum[i] - longCum[sentStart];
+            const sentShort = shortCum[i] - shortCum[sentStart];
             let sentiment = 'NEUTRAL';
             if (sentLong > 0 && sentShort < 0) sentiment = 'BULLISH';
             else if (sentLong < 0 && sentShort > 0) sentiment = 'BEARISH';
 
-            // Flow consistency: what fraction of days in window had divergent flow direction
+            // Consistency
+            const s = i - w + 1;
             let consistentDays = 0;
-            for (let j = i - w + 1; j <= i; j++) {
+            for (let j = s; j <= i; j++) {
                 const ld1 = longCum[j] - longCum[j - 1];
                 const sd1 = shortCum[j] - shortCum[j - 1];
                 if (isShortLeads ? (sd1 > 0 && ld1 < 0) : (ld1 > 0 && sd1 < 0)) consistentDays++;
             }
             const consistency = consistentDays / w;
 
-            // Strength score
+            // Context columns — PRE-3D
+            const canPre3 = (s - 3) >= 1;
+            let avgPre3 = null;
+            if (canPre3) {
+                let sum = 0;
+                for (let k = s - 3; k < s; k++) sum += daySpreadAt(k);
+                avgPre3 = sum / 3;
+            }
+
+            // POST-3D
+            const canPost3 = (i + 3) < dates.length;
+            let avgPost3 = null;
+            if (canPost3) {
+                let sum = 0;
+                for (let k = i + 1; k <= i + 3; k++) sum += daySpreadAt(k);
+                avgPost3 = sum / 3;
+            }
+
+            // DAY SPREAD (exact end-date)
+            const exactDaySpread = (i >= 1) ? daySpreadAt(i) : 0;
+
+            // BASE-30D
+            const base30Start = s - 30;
+            let avgBase30 = null;
+            if (base30Start >= 1) {
+                const totalSpread = (longCum[s - 1] - longCum[base30Start]) - (shortCum[s - 1] - shortCum[base30Start]);
+                avgBase30 = totalSpread / 30;
+            }
+
+            // Strength
             const spreadNorm = maxAbsSpread > 0 ? Math.min(Math.abs(spread) / maxAbsSpread, 1) : 0;
             const breadthNorm = breadth / 6;
             const windowNorm  = w / 21;
@@ -2561,12 +2620,14 @@ function scanCrossDivergences(lookback) {
                 windowNorm * 0.15 * 100 + consNorm * 0.15 * 100
             );
 
-            const confirmed = breadth >= 4 && spreadNorm >= 0.3;
+            // 3-gate confirmation: breadth + spread + consistency
+            const confirmed = breadth >= 4 && spreadNorm >= 0.3 && consistency >= 0.5;
 
             results.push({
                 date: dates[i], window: w, type, isShortLeads,
-                longDelta, shortDelta, spread,
-                breadth, sentiment, consistency, confirmed, strength
+                longDelta, shortDelta, spread, avgDaily,
+                breadth, sentiment, consistency, confirmed, strength,
+                avgPre3, avgPost3, exactDaySpread, avgBase30
             });
 
             i -= (w - 1);
@@ -2584,8 +2645,13 @@ function renderCrossDivergence() {
     const lookback = state.crossDivRange === 'all' ? 'all' : state.crossDivRange;
     const results = scanCrossDivergences(lookback);
 
+    const fmtCtx = (v) => v === null
+        ? `<span style="opacity:0.35;font-size:0.62rem;">\u2014</span>`
+        : `${fmtUsd(v)}/d`;
+    const ctxCol = (v) => v === null ? '' : (v >= 0 ? 'val-green' : 'val-red');
+
     if (!results.length) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:rgba(255,255,255,0.85);padding:20px;">No cross-side divergences detected in this period.<br><span style="font-size:0.65rem;color:rgba(255,255,255,0.85);">Requires aggregate long-side and short-side flows to move in opposite directions within a 5, 10, or 21 day window.</span></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="16" style="text-align:center;color:rgba(255,255,255,0.85);padding:20px;">No cross-side divergences detected in this period.<br><span style="font-size:0.65rem;color:rgba(255,255,255,0.85);">Requires aggregate long-side and short-side flows to move in opposite directions within a 5, 10, or 21 day window.</span></td></tr>`;
         if (summaryEl) summaryEl.innerHTML = '';
         return;
     }
@@ -2600,13 +2666,13 @@ function renderCrossDivergence() {
             <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);letter-spacing:0.5px;" data-tooltip="Total cross-side divergence events detected">
                 <span style="font-weight:800;color:var(--cyan);">${results.length}</span> EVENTS
             </div>
-            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Events where long-side capital leads (longs accumulating, shorts distributing)">
+            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Longs accumulating while shorts distribute">
                 <span style="font-weight:800;color:#ef4444;">${longLeads.length}</span> LONG LEADS
             </div>
-            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Events where short-side capital leads (shorts accumulating, longs distributing — bullish for gas)">
+            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Shorts accumulating while longs distribute — bullish for gas">
                 <span style="font-weight:800;color:#3db87a;">${shortLeads.length}</span> SHORT LEADS
             </div>
-            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Events with breadth ≥ 4 and above-median spread">
+            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Events passing all 3 gates: breadth \u2265 4 + spread \u2265 30th pct + consistency \u2265 50%">
                 <span style="font-weight:800;color:var(--cyan);">${confirmed.length}</span> CONFIRMED
             </div>
             <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Average strength score across all events">
@@ -2626,15 +2692,18 @@ function renderCrossDivergence() {
         const strBar = `linear-gradient(90deg,rgba(${strRgb},0.18) ${r.strength}%,transparent ${r.strength}%)`;
 
         const breadthCol = r.breadth >= 5 ? 'val-green' : r.breadth >= 4 ? 'val-muted' : 'val-red';
+        const consCol = r.consistency >= 0.5 ? 'val-green' : 'val-red';
         const sentCol = r.sentiment === 'BULLISH' ? 'val-green' : r.sentiment === 'BEARISH' ? 'val-red' : 'val-muted';
 
         const sigDot = r.confirmed
             ? `<span style="color:${r.isShortLeads?'var(--green)':'var(--red)'};font-size:0.65rem;">\u25c6</span>`
             : `<span style="color:${r.isShortLeads?'var(--green)':'var(--red)'};font-size:0.55rem;">\u25b2</span>`;
         const sigLabel = r.confirmed
-            ? `<span style="font-weight:900;letter-spacing:0.3px;">CONFIRMED</span>`
-            : `<span style="font-weight:600;opacity:0.85;">WATCH</span>`;
+            ? `<span style="font-weight:900;letter-spacing:0.3px;">${r.isShortLeads?'CONFIRMED Bull Rot.':'CONFIRMED Bear Rot.'}</span>`
+            : `<span style="font-weight:600;opacity:0.85;">${r.isShortLeads?'Bull Rotation':'Bear Rotation'}</span>`;
         const sigHtml = `<span style="color:${r.isShortLeads?'var(--green)':'var(--red)'};font-size:0.72rem;white-space:nowrap;">${sigDot} ${sigLabel}</span>`;
+
+        const daySpreadCol = r.exactDaySpread >= 0 ? 'val-green' : 'val-red';
 
         html += `<tr>
             <td style="color:rgba(255,255,255,0.85);font-size:0.7rem;border-left:3px solid ${rowAccent};">${r.date}</td>
@@ -2643,8 +2712,14 @@ function renderCrossDivergence() {
             <td class="${r.longDelta >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(r.longDelta)}</td>
             <td class="${r.shortDelta >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(r.shortDelta)}</td>
             <td class="${spreadCol}" style="font-weight:700;">${fmtUsd(r.spread)}</td>
+            <td style="color:rgba(255,255,255,0.85);">${fmtUsd(r.avgDaily)}/d</td>
             <td class="${breadthCol}" style="font-weight:700;">${r.breadth}/6</td>
+            <td class="${consCol}" style="font-weight:600;">${(r.consistency*100).toFixed(0)}%</td>
             <td class="${sentCol}" style="font-weight:600;">${r.sentiment}</td>
+            <td class="${ctxCol(r.avgPre3)}" style="font-size:0.68rem;padding:6px 7px 6px 14px;border-left:1px solid rgba(255,255,255,0.08);">${fmtCtx(r.avgPre3)}</td>
+            <td class="${ctxCol(r.avgPost3)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(r.avgPost3)}</td>
+            <td class="${daySpreadCol}" style="font-size:0.68rem;padding:6px 7px;">${fmtUsd(r.exactDaySpread)}/d</td>
+            <td class="${ctxCol(r.avgBase30)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(r.avgBase30)}</td>
             <td style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">${sigHtml}</td>
             <td class="${strCol}" style="font-weight:700;background:${strBar};">${r.strength}</td>
         </tr>`;
@@ -2657,12 +2732,19 @@ function downloadCrossDivCSV() {
     const results = scanCrossDivergences(lookback);
     if (!results.length) return alert('No cross-side divergences found.');
 
-    const headers = ['Date','Window','Type','Long Sum','Short Sum','Spread','Breadth','Sentiment','Signal','Strength'];
+    const fmtN = (v) => v !== null ? v.toFixed(2) : 'N/A';
+    const sigStr = (r) => r.confirmed
+        ? (r.isShortLeads ? 'CONFIRMED Bull Rot.' : 'CONFIRMED Bear Rot.')
+        : (r.isShortLeads ? 'Bull Rotation' : 'Bear Rotation');
+
+    const headers = ['Date','Window','Type','Long Sum','Short Sum','Spread','Avg/Day',
+        'Breadth','Consistency','Sentiment','Pre-3D','Post-3D','Day Spread','Base-30D','Signal','Strength'];
     const csvRows = results.map(r => [
         r.date, `${r.window}d`, r.type,
-        r.longDelta.toFixed(2), r.shortDelta.toFixed(2), r.spread.toFixed(2),
-        `${r.breadth}/6`, r.sentiment,
-        r.confirmed ? 'CONFIRMED' : 'WATCH', r.strength
+        r.longDelta.toFixed(2), r.shortDelta.toFixed(2), r.spread.toFixed(2), r.avgDaily.toFixed(2),
+        `${r.breadth}/6`, (r.consistency*100).toFixed(0)+'%', r.sentiment,
+        fmtN(r.avgPre3), fmtN(r.avgPost3), r.exactDaySpread.toFixed(2), fmtN(r.avgBase30),
+        sigStr(r), r.strength
     ].join(','));
 
     const csvContent = [headers.join(','), ...csvRows].join('\n');
