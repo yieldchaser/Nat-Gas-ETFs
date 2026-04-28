@@ -12,7 +12,7 @@ This project implements five interconnected analytical engines:
 
 1. **Volume Monitor** (`index.html`) — Multi-timeframe volume anomaly detection, volatility modeling, and conviction event filtering across 6 leveraged ETFs.
 2. **Flow Monitor** (`flows.html`) — Daily capital flow tracking (AUM in/out), Z-Score history, pressure scoring, divergence detection, and cross-ETF comparison.
-3. **Trough-to-Peak Analyzer** (`trough-peak.html`) — Parameterized ZigZag recovery cycle identification with micro-analytics and forward-return context.
+3. **Trough-to-Peak Analyzer** (`trough-peak.html`) — Institutional-grade ZigZag recovery cycle identification with robust median metrics and 60-day statistical stability.
 4. **Volatility Intelligence** (`cvol.html`) — Institutional convexity analysis, variance decomposition (UpVar vs DnVar), and Proprietary Composite Signals (SAD, CI, CVC, RDS) with integrated backtest scoring.
 5. **Vol Regime Monitor** (embedded in `trough-peak.html`) — Full-lifetime historical volatility chart (5D/21D/63D/252D HV) with regime classification.
 
@@ -246,12 +246,13 @@ CVI, VPS, ATR breakout, VoV-21, and vol-regime warnings are computed and visible
 Professional-grade recovery cycle identification:
 
 - **Parameterized ZigZag** — Adjustable % rally threshold (0–300%) to confirm trough-to-peak moves
-- **Micro-Analytics:** Cyc/Regime (maturity tagging), Stretch Index, 1M/3M/6M percentile ranks, distance from peak/trough, range compression
-- **Wait-Time Analysis (GAP)** — Idle days between cycles
-- **KPI Summary Grid** — Avg Gain, Avg Days, Avg Gap, Max/Min across all 6 ETFs
-- **Price & Cycle Map** — Interactive canvas with crosshair tooltip, click-drag measurement tool, quick-range horizon buttons (1W/1M/3M/6M/1Y/ALL), dual range-slider brush, trough/peak markers, cycle band shading
-- **Cycle Detail Table** — All confirmed cycles with filterable time periods (ALL TIME / YEAR / 6M) and CSV export
-- **Yearly Opportunity Matrix** — Heatmap of cycle count and avg gain per year per ETF
+- **Institutional Micro-Analytics:** Cyc/Regime (maturity tagging), Stretch Index (60-day Z-score), 1M/3M/6M percentile ranks, and range compression
+- **Wait-Time Analysis (GAP)** — Idle days between cycles (peak to next trough)
+- **Enhanced KPI Summary Grid** — Mean and **Median** Gain (robust vs outliers), Avg Days, and Avg Gap across all 6 ETFs
+- **Price & Cycle Map** — High-performance interactive canvas with **ImageData caching** for 0-latency hover, crosshair, click-drag measurement, quick-range buttons, and dual-brush slider
+- **Visual Turn Identification:** Volume bars are color-accented (Red = Trough, Green = Peak) to highlight high-conviction turning points
+- **Cycle Detail Table:** Filterable history with **Summary Footer row** (aggregate count, avg/med gain, avg duration) and CSV export
+- **Yearly Opportunity Matrix:** Heatmap of cycle count and avg gain per year per ETF with side-aware color coding (3NGS corrected to Red)
 
 #### Vol Regime Monitor
 
