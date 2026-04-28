@@ -984,13 +984,13 @@ async function init() {
                 state.multiWindowDedup = e.target.checked;
                 mwToggle2.checked = state.multiWindowDedup;
                 renderDivergence();
-                renderCrossDivTable();
+                renderCrossDivergence();
             });
             mwToggle2.addEventListener('change', (e) => {
                 state.multiWindowDedup = e.target.checked;
                 mwToggle1.checked = state.multiWindowDedup;
                 renderDivergence();
-                renderCrossDivTable();
+                renderCrossDivergence();
             });
         }
 
