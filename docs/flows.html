@@ -380,6 +380,11 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <div style="font-size:0.75rem; color:rgba(255, 255, 255, 0.85); margin-top:6px; line-height:1.6; max-width:800px;">
                 Tracks daily capital inflows and outflows across all 6 leveraged ETFs. Flow Z-Score, pressure score, and divergence detection identify accumulation and distribution events in real time.
             </div>
+            <div style="font-size:0.65rem; color:rgba(255, 255, 255, 0.55); margin-top:10px; display:flex; gap:20px; letter-spacing:0.5px; font-weight:600; text-transform:uppercase;">
+                <span><span style="color:#3db87a; font-weight:900; margin-right:4px;">GREEN:</span> Bullish Rotation / Accumulation (Long Side Leads)</span>
+                <span><span style="color:#ef4444; font-weight:900; margin-right:4px;">RED:</span> Bearish Rotation / Distribution (Short Side Leads)</span>
+                <span><span style="color:var(--cyan); font-weight:900; margin-right:4px;">CYAN:</span> Institutional Confirmation</span>
+            </div>
         </div>
 
         <!-- IMP 6: Loading overlay -->
@@ -2622,9 +2627,10 @@ function scanCrossDivergences(lookback) {
 
             // 3-gate confirmation: breadth + spread + consistency
             const confirmed = breadth >= 4 && spreadNorm >= 0.3 && consistency >= 0.5;
+            const isBullish = type === 'LONG LEADS';
 
             results.push({
-                date: dates[i], window: w, type, isShortLeads,
+                date: dates[i], window: w, type, isBullish,
                 longDelta, shortDelta, spread, avgDaily,
                 breadth, sentiment, consistency, confirmed, strength,
                 avgPre3, avgPost3, exactDaySpread, avgBase30
@@ -2658,19 +2664,19 @@ function renderCrossDivergence() {
 
     // Summary strip
     if (summaryEl) {
-        const longLeads = results.filter(r => !r.isShortLeads);
-        const shortLeads = results.filter(r => r.isShortLeads);
+        const longLeads = results.filter(r => r.type === 'LONG LEADS');
+        const shortLeads = results.filter(r => r.type === 'SHORT LEADS');
         const confirmed = results.filter(r => r.confirmed);
         const avgStr = Math.round(results.reduce((a, r) => a + r.strength, 0) / results.length);
         summaryEl.innerHTML = `
             <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);letter-spacing:0.5px;" data-tooltip="Total cross-side divergence events detected">
                 <span style="font-weight:800;color:var(--cyan);">${results.length}</span> EVENTS
             </div>
-            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Longs accumulating while shorts distribute">
-                <span style="font-weight:800;color:#ef4444;">${longLeads.length}</span> LONG LEADS
+            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Longs accumulating while shorts distribute — Bullish for Gas">
+                <span style="font-weight:800;color:#3db87a;">${longLeads.length}</span> LONG LEADS
             </div>
-            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Shorts accumulating while longs distribute — bullish for gas">
-                <span style="font-weight:800;color:#3db87a;">${shortLeads.length}</span> SHORT LEADS
+            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Shorts accumulating while longs distribute — Bearish for Gas">
+                <span style="font-weight:800;color:#ef4444;">${shortLeads.length}</span> SHORT LEADS
             </div>
             <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Events passing all 3 gates: breadth \u2265 4 + spread \u2265 30th pct + consistency \u2265 50%">
                 <span style="font-weight:800;color:var(--cyan);">${confirmed.length}</span> CONFIRMED
@@ -2683,8 +2689,8 @@ function renderCrossDivergence() {
 
     let html = '';
     for (const r of results) {
-        const rowAccent = r.isShortLeads ? 'rgba(61,184,122,0.7)' : 'rgba(192,64,64,0.7)';
-        const badgeClass = r.isShortLeads ? 'bg-bull' : 'bg-bear';
+        const rowAccent = r.isBullish ? 'rgba(61,184,122,0.7)' : 'rgba(192,64,64,0.7)';
+        const badgeClass = r.isBullish ? 'bg-bull' : 'bg-bear';
         const spreadCol = r.spread >= 0 ? 'val-green' : 'val-red';
 
         const strCol = r.strength >= 70 ? 'val-green' : r.strength >= 40 ? 'val-muted' : 'val-red';
@@ -2696,12 +2702,12 @@ function renderCrossDivergence() {
         const sentCol = r.sentiment === 'BULLISH' ? 'val-green' : r.sentiment === 'BEARISH' ? 'val-red' : 'val-muted';
 
         const sigDot = r.confirmed
-            ? `<span style="color:${r.isShortLeads?'var(--green)':'var(--red)'};font-size:0.65rem;">\u25c6</span>`
-            : `<span style="color:${r.isShortLeads?'var(--green)':'var(--red)'};font-size:0.55rem;">\u25b2</span>`;
+            ? `<span style="color:${r.isBullish?'var(--green)':'var(--red)'};font-size:0.65rem;">\u25c6</span>`
+            : `<span style="color:${r.isBullish?'var(--green)':'var(--red)'};font-size:0.55rem;">\u25b2</span>`;
         const sigLabel = r.confirmed
-            ? `<span style="font-weight:900;letter-spacing:0.3px;">${r.isShortLeads?'CONFIRMED Bull Rot.':'CONFIRMED Bear Rot.'}</span>`
-            : `<span style="font-weight:600;opacity:0.85;">${r.isShortLeads?'Bull Rotation':'Bear Rotation'}</span>`;
-        const sigHtml = `<span style="color:${r.isShortLeads?'var(--green)':'var(--red)'};font-size:0.72rem;white-space:nowrap;">${sigDot} ${sigLabel}</span>`;
+            ? `<span style="font-weight:900;letter-spacing:0.3px;">${r.isBullish?'CONFIRMED Bull Rot.':'CONFIRMED Bear Rot.'}</span>`
+            : `<span style="font-weight:600;opacity:0.85;">${r.isBullish?'Bull Rotation':'Bear Rotation'}</span>`;
+        const sigHtml = `<span style="color:${r.isBullish?'var(--green)':'var(--red)'};font-size:0.72rem;white-space:nowrap;">${sigDot} ${sigLabel}</span>`;
 
         const daySpreadCol = r.exactDaySpread >= 0 ? 'val-green' : 'val-red';
 
@@ -2734,8 +2740,8 @@ function downloadCrossDivCSV() {
 
     const fmtN = (v) => v !== null ? v.toFixed(2) : 'N/A';
     const sigStr = (r) => r.confirmed
-        ? (r.isShortLeads ? 'CONFIRMED Bull Rot.' : 'CONFIRMED Bear Rot.')
-        : (r.isShortLeads ? 'Bull Rotation' : 'Bear Rotation');
+        ? (r.isBullish ? 'CONFIRMED Bull Rot.' : 'CONFIRMED Bear Rot.')
+        : (r.isBullish ? 'Bull Rotation' : 'Bear Rotation');
 
     const headers = ['Date','Window','Type','Long Sum','Short Sum','Spread','Avg/Day',
         'Breadth','Consistency','Sentiment','Pre-3D','Post-3D','Day Spread','Base-30D','Signal','Strength'];
