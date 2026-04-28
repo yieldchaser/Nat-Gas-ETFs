@@ -642,6 +642,46 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
         </div>
 
+        <!-- Section 6.5: Cross-Side Flow Divergence Scanner -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title" data-tooltip="Scans for windows where aggregate long-side capital (BOIL+HNU+3NGL) and short-side capital (KOLD+HND+3NGS) diverge — one side accumulating while the other distributes. Reveals institutional rotation between bull and bear positioning." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Cross-Side Flow Divergence Scanner</div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div class="tab-group" id="cross-div-filter-tabs">
+                        <button class="tab-btn" data-crossdivrange="30" data-tooltip="Scan the last 30 days">30D</button>
+                        <button class="tab-btn active" data-crossdivrange="90" data-tooltip="Scan the last 90 days">90D</button>
+                        <button class="tab-btn" data-crossdivrange="180" data-tooltip="Scan the last 180 days">6M</button>
+                        <button class="tab-btn" data-crossdivrange="365" data-tooltip="Scan the last year">1Y</button>
+                        <button class="tab-btn" data-crossdivrange="all" data-tooltip="Scan full history">ALL</button>
+                    </div>
+                    <button class="download-btn" id="download-cross-div-csv" title="Export cross-side divergences to CSV">DOWNLOAD CSV</button>
+                </div>
+            </div>
+            <!-- Cross-side divergence summary strip -->
+            <div id="cross-div-summary" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; justify-content:center;"></div>
+            <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
+            <table class="div-table" style="min-width:960px;">
+                <thead>
+                    <tr>
+                        <th data-tooltip="Date the divergence window ends.">DATE</th>
+                        <th data-tooltip="Lookback window length in trading days.">WIN</th>
+                        <th data-tooltip="LONG LEADS: longs accumulating while shorts distribute (bearish gas). SHORT LEADS: shorts distributing while longs pull back (bullish gas).">TYPE</th>
+                        <th data-tooltip="Total net capital flow across BOIL + HNU + 3NGL during the window.">LONG Σ</th>
+                        <th data-tooltip="Total net capital flow across KOLD + HND + 3NGS during the window.">SHORT Σ</th>
+                        <th data-tooltip="Capital spread: LONG Σ − SHORT Σ. Large absolute values indicate strong side-rotation.">Δ SPREAD</th>
+                        <th data-tooltip="How many of the 6 individual ETFs show flow direction consistent with the divergence. ≥4 = strong consensus.">BREADTH</th>
+                        <th data-tooltip="Cross-ETF sentiment label at window end based on 30-day aggregate flows.">SENTIMENT</th>
+                        <th data-tooltip="Signal quality: CONFIRMED (breadth ≥ 4 + above-median spread) or WATCH (weaker divergence)." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">SIGNAL</th>
+                        <th data-tooltip="Composite strength score 0–100. Combines spread magnitude, breadth, window length, and flow consistency.">STR</th>
+                    </tr>
+                </thead>
+                <tbody id="cross-div-body">
+                    <tr><td colspan="10" style="text-align:center; color:rgba(255, 255, 255, 0.85);">Scanning for cross-side divergences...</td></tr>
+                </tbody>
+            </table>
+            </div><!-- /overflow scroll wrapper -->
+        </div>
+
         <!-- Section 7: Yearly Flow Frequency Matrix -->
         <div class="panel" id="yearly-matrix-panel">
             <div class="panel-header">
@@ -779,6 +819,7 @@ const state = {
     crossFilter: 'all', // all, long, short
     divTicker: 'BOIL',  // independent ETF selector for divergence panel
     divRange: 90,       // days for divergence scan; 'all' = entire history
+    crossDivRange: 90,  // days for cross-side divergence scan; 'all' = entire history
     hoverIdx: null,
     hoverZIdx: null,
     hoverCrossIdx: null,
@@ -2388,6 +2429,262 @@ function renderYearlyMatrix() {
     container.innerHTML = html;
 }
 
+// ---- Cross-Side Flow Divergence Scanner ----
+const LONG_SIDE  = ['BOIL', 'HNU', '3NGL'];
+const SHORT_SIDE = ['KOLD', 'HND', '3NGS'];
+
+function scanCrossDivergences(lookback) {
+    // Need all 6 tickers loaded
+    const allTickers = [...LONG_SIDE, ...SHORT_SIDE];
+    for (const tk of allTickers) {
+        if (!state.cache[tk] || !state.cache[tk].data || state.cache[tk].data.length < 30) return [];
+    }
+
+    // Build a common date-indexed map using BOIL as anchor
+    const baseData = state.cache['BOIL'].data;
+    const recentCount = lookback === 'all' ? baseData.length : Math.min(lookback, baseData.length);
+    const recent = baseData.slice(-recentCount);
+
+    // Pre-index all ticker data by date for O(1) lookup
+    const tickerByDate = {};
+    allTickers.forEach(tk => {
+        tickerByDate[tk] = {};
+        const d = state.cache[tk].data;
+        for (let j = 0; j < d.length; j++) tickerByDate[tk][d[j].date] = d[j];
+    });
+
+    // Build aggregate series aligned to BOIL dates
+    const dates = [];
+    const longCum = [];
+    const shortCum = [];
+    const perTicker = {};  // tk -> [cumulative_flow values aligned to dates]
+    allTickers.forEach(tk => { perTicker[tk] = []; });
+
+    for (let i = 0; i < recent.length; i++) {
+        const date = recent[i].date;
+        let longSum = 0, shortSum = 0, skip = false;
+        for (const tk of LONG_SIDE) {
+            const row = tickerByDate[tk][date];
+            if (!row) { skip = true; break; }
+            longSum += row.cumulative_flow;
+            perTicker[tk].push(row.cumulative_flow);
+        }
+        if (skip) continue;
+        for (const tk of SHORT_SIDE) {
+            const row = tickerByDate[tk][date];
+            if (!row) { skip = true; break; }
+            shortSum += row.cumulative_flow;
+            perTicker[tk].push(row.cumulative_flow);
+        }
+        if (skip) continue;
+        dates.push(date);
+        longCum.push(longSum);
+        shortCum.push(shortSum);
+    }
+
+    if (dates.length < 22) return [];
+
+    const windows = [21, 10, 5];
+    const results = [];
+
+    // Track max spread for normalisation
+    let maxAbsSpread = 0;
+    for (let i = windows[0]; i < dates.length; i++) {
+        for (const w of windows) {
+            if (i < w) continue;
+            const ld = longCum[i] - longCum[i - w];
+            const sd = shortCum[i] - shortCum[i - w];
+            const spread = Math.abs(ld - sd);
+            if (spread > maxAbsSpread) maxAbsSpread = spread;
+        }
+    }
+
+    for (let i = dates.length - 1; i >= Math.max(...windows); i--) {
+        for (const w of windows) {
+            if (i < w) continue;
+            const longDelta  = longCum[i] - longCum[i - w];
+            const shortDelta = shortCum[i] - shortCum[i - w];
+
+            // Divergence: one side positive, the other negative
+            let type = '';
+            if (longDelta > 0 && shortDelta < 0) type = 'LONG LEADS';
+            else if (longDelta < 0 && shortDelta > 0) type = 'SHORT LEADS';
+            if (!type) continue;
+
+            const isShortLeads = type === 'SHORT LEADS';
+            const spread = longDelta - shortDelta;
+
+            // Breadth: how many of 6 ETFs individually agree
+            let breadth = 0;
+            for (const tk of allTickers) {
+                const tkArr = perTicker[tk];
+                const idx = tkArr.length - (dates.length - i);
+                const idxPrev = idx - w;
+                if (idxPrev < 0 || idx < 0 || idx >= tkArr.length) continue;
+                const delta = tkArr[idx] - tkArr[idxPrev];
+                if (isShortLeads) {
+                    // SHORT LEADS: expect shorts positive flow, longs negative
+                    if (SHORT_SIDE.includes(tk) && delta > 0) breadth++;
+                    if (LONG_SIDE.includes(tk) && delta < 0) breadth++;
+                } else {
+                    // LONG LEADS: expect longs positive, shorts negative
+                    if (LONG_SIDE.includes(tk) && delta > 0) breadth++;
+                    if (SHORT_SIDE.includes(tk) && delta < 0) breadth++;
+                }
+            }
+
+            // Compute sentiment at window end (30-day aggregate)
+            let sentLong = 0, sentShort = 0;
+            const sentStart = Math.max(0, i - 30);
+            sentLong = longCum[i] - longCum[sentStart];
+            sentShort = shortCum[i] - shortCum[sentStart];
+            let sentiment = 'NEUTRAL';
+            if (sentLong > 0 && sentShort < 0) sentiment = 'BULLISH';
+            else if (sentLong < 0 && sentShort > 0) sentiment = 'BEARISH';
+
+            // Flow consistency: what fraction of days in window had divergent flow direction
+            let consistentDays = 0;
+            for (let j = i - w + 1; j <= i; j++) {
+                const ld1 = longCum[j] - longCum[j - 1];
+                const sd1 = shortCum[j] - shortCum[j - 1];
+                if (isShortLeads ? (sd1 > 0 && ld1 < 0) : (ld1 > 0 && sd1 < 0)) consistentDays++;
+            }
+            const consistency = consistentDays / w;
+
+            // Strength score
+            const spreadNorm = maxAbsSpread > 0 ? Math.min(Math.abs(spread) / maxAbsSpread, 1) : 0;
+            const breadthNorm = breadth / 6;
+            const windowNorm  = w / 21;
+            const consNorm    = consistency;
+            const strength = Math.round(
+                spreadNorm * 0.40 * 100 + breadthNorm * 0.30 * 100 +
+                windowNorm * 0.15 * 100 + consNorm * 0.15 * 100
+            );
+
+            const confirmed = breadth >= 4 && spreadNorm >= 0.3;
+
+            results.push({
+                date: dates[i], window: w, type, isShortLeads,
+                longDelta, shortDelta, spread,
+                breadth, sentiment, consistency, confirmed, strength
+            });
+
+            i -= (w - 1);
+            break;
+        }
+    }
+    return results;
+}
+
+function renderCrossDivergence() {
+    const tbody = el('cross-div-body');
+    const summaryEl = el('cross-div-summary');
+    if (!tbody) return;
+
+    const lookback = state.crossDivRange === 'all' ? 'all' : state.crossDivRange;
+    const results = scanCrossDivergences(lookback);
+
+    if (!results.length) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:rgba(255,255,255,0.85);padding:20px;">No cross-side divergences detected in this period.<br><span style="font-size:0.65rem;color:rgba(255,255,255,0.85);">Requires aggregate long-side and short-side flows to move in opposite directions within a 5, 10, or 21 day window.</span></td></tr>`;
+        if (summaryEl) summaryEl.innerHTML = '';
+        return;
+    }
+
+    // Summary strip
+    if (summaryEl) {
+        const longLeads = results.filter(r => !r.isShortLeads);
+        const shortLeads = results.filter(r => r.isShortLeads);
+        const confirmed = results.filter(r => r.confirmed);
+        const avgStr = Math.round(results.reduce((a, r) => a + r.strength, 0) / results.length);
+        summaryEl.innerHTML = `
+            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);letter-spacing:0.5px;" data-tooltip="Total cross-side divergence events detected">
+                <span style="font-weight:800;color:var(--cyan);">${results.length}</span> EVENTS
+            </div>
+            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Events where long-side capital leads (longs accumulating, shorts distributing)">
+                <span style="font-weight:800;color:#ef4444;">${longLeads.length}</span> LONG LEADS
+            </div>
+            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Events where short-side capital leads (shorts accumulating, longs distributing — bullish for gas)">
+                <span style="font-weight:800;color:#3db87a;">${shortLeads.length}</span> SHORT LEADS
+            </div>
+            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Events with breadth ≥ 4 and above-median spread">
+                <span style="font-weight:800;color:var(--cyan);">${confirmed.length}</span> CONFIRMED
+            </div>
+            <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Average strength score across all events">
+                AVG STR: <span style="font-weight:800;color:${avgStr >= 50 ? '#3db87a' : 'rgba(148,163,184,0.9)'};">${avgStr}</span>
+            </div>
+        `;
+    }
+
+    let html = '';
+    for (const r of results) {
+        const rowAccent = r.isShortLeads ? 'rgba(61,184,122,0.7)' : 'rgba(192,64,64,0.7)';
+        const badgeClass = r.isShortLeads ? 'bg-bull' : 'bg-bear';
+        const spreadCol = r.spread >= 0 ? 'val-green' : 'val-red';
+
+        const strCol = r.strength >= 70 ? 'val-green' : r.strength >= 40 ? 'val-muted' : 'val-red';
+        const strRgb = r.strength >= 70 ? '61,184,122' : r.strength >= 40 ? '148,163,184' : '192,64,64';
+        const strBar = `linear-gradient(90deg,rgba(${strRgb},0.18) ${r.strength}%,transparent ${r.strength}%)`;
+
+        const breadthCol = r.breadth >= 5 ? 'val-green' : r.breadth >= 4 ? 'val-muted' : 'val-red';
+        const sentCol = r.sentiment === 'BULLISH' ? 'val-green' : r.sentiment === 'BEARISH' ? 'val-red' : 'val-muted';
+
+        const sigDot = r.confirmed
+            ? `<span style="color:${r.isShortLeads?'var(--green)':'var(--red)'};font-size:0.65rem;">\u25c6</span>`
+            : `<span style="color:${r.isShortLeads?'var(--green)':'var(--red)'};font-size:0.55rem;">\u25b2</span>`;
+        const sigLabel = r.confirmed
+            ? `<span style="font-weight:900;letter-spacing:0.3px;">CONFIRMED</span>`
+            : `<span style="font-weight:600;opacity:0.85;">WATCH</span>`;
+        const sigHtml = `<span style="color:${r.isShortLeads?'var(--green)':'var(--red)'};font-size:0.72rem;white-space:nowrap;">${sigDot} ${sigLabel}</span>`;
+
+        html += `<tr>
+            <td style="color:rgba(255,255,255,0.85);font-size:0.7rem;border-left:3px solid ${rowAccent};">${r.date}</td>
+            <td style="color:rgba(255,255,255,0.85);">${r.window}d</td>
+            <td><span class="div-badge ${badgeClass}">${r.type}</span></td>
+            <td class="${r.longDelta >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(r.longDelta)}</td>
+            <td class="${r.shortDelta >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(r.shortDelta)}</td>
+            <td class="${spreadCol}" style="font-weight:700;">${fmtUsd(r.spread)}</td>
+            <td class="${breadthCol}" style="font-weight:700;">${r.breadth}/6</td>
+            <td class="${sentCol}" style="font-weight:600;">${r.sentiment}</td>
+            <td style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">${sigHtml}</td>
+            <td class="${strCol}" style="font-weight:700;background:${strBar};">${r.strength}</td>
+        </tr>`;
+    }
+    tbody.innerHTML = html;
+}
+
+function downloadCrossDivCSV() {
+    const lookback = state.crossDivRange === 'all' ? 'all' : state.crossDivRange;
+    const results = scanCrossDivergences(lookback);
+    if (!results.length) return alert('No cross-side divergences found.');
+
+    const headers = ['Date','Window','Type','Long Sum','Short Sum','Spread','Breadth','Sentiment','Signal','Strength'];
+    const csvRows = results.map(r => [
+        r.date, `${r.window}d`, r.type,
+        r.longDelta.toFixed(2), r.shortDelta.toFixed(2), r.spread.toFixed(2),
+        `${r.breadth}/6`, r.sentiment,
+        r.confirmed ? 'CONFIRMED' : 'WATCH', r.strength
+    ].join(','));
+
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = 'cross_side_divergences.csv';
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+
+// Wire cross-div filter tabs
+document.querySelectorAll('#cross-div-filter-tabs .tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('#cross-div-filter-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const raw = btn.getAttribute('data-crossdivrange');
+        state.crossDivRange = raw === 'all' ? 'all' : parseInt(raw);
+        renderCrossDivergence();
+    });
+});
+document.getElementById('download-cross-div-csv').addEventListener('click', downloadCrossDivCSV);
+
 // ---- Cross ETF Toggle Chips ----
 function buildCrossToggles() {
     const container = el('cross-etf-toggles');
@@ -2439,6 +2736,7 @@ async function loadAllTickersForCross() {
     renderCrossChart();
     syncCrossSlider();
     renderYearlyMatrix();
+    renderCrossDivergence();
 }
 
 function renderCrossChart() {
