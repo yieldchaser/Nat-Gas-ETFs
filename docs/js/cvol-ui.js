@@ -685,7 +685,6 @@ function getGlobalConfluence(ev) {
     return count;
 }
 function pctFmt(n) { return n != null ? (n > 0 ? '+' : '') + (n * 100).toFixed(1) + '%' : '—'; }
-function pctColor(n) { return n > 0 ? '#3db87a' : (n < 0 ? '#ef4444' : 'var(--text-bright)'); }
 
 // ── Event Timeline (with confluence, PENDING, signal-type filter) ──
 function renderTimeline(composites, filter) {
@@ -850,7 +849,6 @@ function openCompModal(compKey) {
         var k = ev.signal.replace('↓','Down').replace('↑','Up').replace('CVC','cvc').replace('SAD','sad').replace('CI','ci').replace('RDS','rds');
         return k.toLowerCase().indexOf(compKey.toLowerCase()) >= 0;
     });
-    var totalFires = events.length;
     var totalFires = events.length;
     var hit21 = 0, fwd21s = [], wHits = 0, wTotal = 0, sHits = 0, sTotal = 0, confTotal = 0;
     events.forEach(function(ev) {
