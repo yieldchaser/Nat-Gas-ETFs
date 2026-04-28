@@ -531,7 +531,7 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <div class="chart-footer">
             <div class="chart-legend">
                 <div class="legend-item" data-tooltip="Adjusted closing price line"><span class="legend-line" style="background:var(--cyan)"></span> PRICE</div>
-                <div class="legend-item" data-tooltip="Daily trading volume bars (scaled to 30% of chart height)"><span class="legend-symbol" style="background:rgba(255,255,255,0.1)"></span> VOLUME</div>
+                <div class="legend-item" data-tooltip="Daily volume bars (scaled to 30% height). Red/Green accents highlight volume activity at troughs and peaks."><span class="legend-symbol" style="background:rgba(255,255,255,0.1)"></span> VOLUME</div>
                 <div class="legend-item" data-tooltip="Confirmed cycle low — price subsequently rallied ≥ threshold from here"><span class="legend-symbol" style="background:#e06060;border-radius:50%"></span> TROUGH</div>
                 <div class="legend-item" data-tooltip="Confirmed cycle high — price dropped ≥ threshold after this point"><span class="legend-symbol" style="background:#3db87a;border-radius:50%"></span> PEAK</div>
             </div>
@@ -913,7 +913,7 @@ function renderCards() {
                         <span class="sig-pos ${isBreakout?'breakout-text':''}" style="color:${isBreakout?'':cycColor}">${cycPosStr}</span>
                     </div>
                     <div class="regime-label" data-tooltip="Cycle Maturity: Early (≤30%), Mid (30-70%), Late (70-100%), and Extreme (>100% breakout).">${cycLabel}</div>
-                    <div class="micro-group" style="flex:1; justify-content:flex-end" data-tooltip="Stretch Index: Z-score of the 3-day return vs. 30-day volatility. Highlights overextended (+2σ) or compressed (-2σ) states.">
+                    <div class="micro-group" style="flex:1; justify-content:flex-end" data-tooltip="Stretch Index: Z-score of the 3-day return vs. 60-day volatility. Highlights overextended (+2σ) or compressed (-2σ) states.">
                         <span class="micro-label">Str:</span>
                         <span class="sig-pos str-val" style="color:${strColor}">${strStr}</span>
                     </div>
