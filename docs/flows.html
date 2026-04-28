@@ -527,6 +527,10 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <div class="panel-header">
                 <div class="panel-title" data-tooltip="Scans for instances where price and capital flow moved in opposite directions. Divergences can signal stealth accumulation or distribution." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Flow vs Price Divergence</div>
                 <div style="display:flex; align-items:center; gap:12px;">
+                    <label style="color:var(--text-bright); font-size:0.65rem; font-weight:700; display:flex; align-items:center; gap:6px; cursor:pointer;" data-tooltip="ON: Shows all matched windows per date. OFF: Shows only the first matched window per date (Legacy).">
+                        <input type="checkbox" id="multi-window-toggle-1" checked style="accent-color:var(--cyan); cursor:pointer;">
+                        MULTI-WINDOW
+                    </label>
                     <div class="tab-group" id="div-filter-tabs">
                         <button class="tab-btn active" data-divrange="90" data-tooltip="Scan the last 90 days">90D</button>
                         <button class="tab-btn" data-divrange="180" data-tooltip="Scan the last 180 days">6M</button>
@@ -657,6 +661,10 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <div class="panel-header">
                 <div class="panel-title" data-tooltip="Scans for windows where aggregate long-side capital (BOIL+HNU+3NGL) and short-side capital (KOLD+HND+3NGS) diverge — one side accumulating while the other distributes. Reveals institutional rotation between bull and bear positioning." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Cross-Side Flow Divergence Scanner</div>
                 <div style="display:flex; align-items:center; gap:12px;">
+                    <label style="color:var(--text-bright); font-size:0.65rem; font-weight:700; display:flex; align-items:center; gap:6px; cursor:pointer;" data-tooltip="ON: Shows all matched windows per date. OFF: Shows only the first matched window per date (Legacy).">
+                        <input type="checkbox" id="multi-window-toggle-2" checked style="accent-color:var(--cyan); cursor:pointer;">
+                        MULTI-WINDOW
+                    </label>
                     <div class="tab-group" id="cross-div-filter-tabs">
                         <button class="tab-btn" data-crossdivrange="30" data-tooltip="Scan the last 30 days">30D</button>
                         <button class="tab-btn active" data-crossdivrange="90" data-tooltip="Scan the last 90 days">90D</button>
@@ -846,6 +854,7 @@ const state = {
     divTicker: 'BOIL',  // independent ETF selector for divergence panel
     divRange: 90,       // days for divergence scan; 'all' = entire history
     crossDivRange: 90,  // days for cross-side divergence scan; 'all' = entire history
+    multiWindowDedup: true, // Toggle for new multi-window scanning vs legacy single-window
     hoverIdx: null,
     hoverZIdx: null,
     hoverCrossIdx: null,
@@ -966,6 +975,24 @@ async function init() {
                 renderDivergence();
             });
         });
+
+        // Multi-Window Dedup Toggles
+        const mwToggle1 = document.getElementById('multi-window-toggle-1');
+        const mwToggle2 = document.getElementById('multi-window-toggle-2');
+        if (mwToggle1 && mwToggle2) {
+            mwToggle1.addEventListener('change', (e) => {
+                state.multiWindowDedup = e.target.checked;
+                mwToggle2.checked = state.multiWindowDedup;
+                renderDivergence();
+                renderCrossDivTable();
+            });
+            mwToggle2.addEventListener('change', (e) => {
+                state.multiWindowDedup = e.target.checked;
+                mwToggle1.checked = state.multiWindowDedup;
+                renderDivergence();
+                renderCrossDivTable();
+            });
+        }
 
         const btnDivDl = document.getElementById('download-div-csv');
         if (btnDivDl) btnDivDl.addEventListener('click', downloadDivCSV);
