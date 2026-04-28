@@ -2186,6 +2186,7 @@ function scanDivergences(data, thresh, lookback) {
     const results = [];
     for (let i = recent.length - 1; i >= Math.max(...windows); i--) {
         const cur = recent[i];
+        let minMatchedWin = null;
         for (const w of windows) {
             const prev = recent[i - w];
             let cumRet = 1;
@@ -2258,9 +2259,9 @@ function scanDivergences(data, thresh, lookback) {
                 exactFlow, exactFlowAgreesDiv, confirmed, strength,
                 avgCenter7, avgPost3, avgPre3, avgPrePeriod
             });
-            i -= (w - 1);
-            break;
+            if (minMatchedWin === null || w < minMatchedWin) minMatchedWin = w;
         }
+        if (minMatchedWin !== null) i -= (minMatchedWin - 1);
     }
     return results;
 }
@@ -2550,6 +2551,7 @@ function scanCrossDivergences(lookback) {
     const daySpreadAt = (j) => (longCum[j] - longCum[j - 1]) - (shortCum[j] - shortCum[j - 1]);
 
     for (let i = dates.length - 1; i >= Math.max(...windows); i--) {
+        let minMatchedWin = null;
         for (const w of windows) {
             if (i < w) continue;
             const longDelta  = longCum[i] - longCum[i - w];
@@ -2649,9 +2651,9 @@ function scanCrossDivergences(lookback) {
                 avgPre3, avgPost3, exactDaySpread, avgBase30
             });
 
-            i -= (w - 1);
-            break;
+            if (minMatchedWin === null || w < minMatchedWin) minMatchedWin = w;
         }
+        if (minMatchedWin !== null) i -= (minMatchedWin - 1);
     }
     return results;
 }
