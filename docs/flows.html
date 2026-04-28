@@ -168,6 +168,34 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .bg-bear { background: rgba(192, 64, 64, 0.15); color: var(--red); border: 1px solid rgba(192, 64, 64, 0.3); }
 .bg-bull { background: rgba(61, 184, 122, 0.15); color: var(--green); border: 1px solid rgba(61, 184, 122, 0.3); }
 
+/* Compact Table Utilities */
+.ctx-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 14px;
+    padding: 6px 12px;
+    border-left: 1px solid rgba(255,255,255,0.08);
+}
+.ctx-item {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+.ctx-lbl {
+    font-size: 0.55rem;
+    color: rgba(255,255,255,0.5);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    line-height: 1.2;
+}
+.ctx-val {
+    font-size: 0.68rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+
 /* ---- Section 5 & 6 ---- */
 #chartZ { width: 100%; height: 300px; }
 #chartCross { width: 100%; height: 340px; }
@@ -667,25 +695,17 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <!-- Cross-side divergence summary strip -->
             <div id="cross-div-summary" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; justify-content:center;"></div>
             <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
-            <table class="div-table" style="min-width:1400px;">
+            <table class="div-table" style="min-width:1000px;">
                 <thead>
                     <tr>
-                        <th data-tooltip="Date the divergence window ends.">DATE</th>
-                        <th data-tooltip="Lookback window length in trading days.">WIN</th>
+                        <th data-tooltip="Event Date & Lookback Window.">DATE (WIN)</th>
                         <th data-tooltip="LONG LEADS: longs accumulating while shorts distribute (bearish gas). SHORT LEADS: shorts distributing while longs pull back (bullish gas).">TYPE</th>
-                        <th data-tooltip="Total net capital flow across BOIL + HNU + 3NGL during the window.">LONG Σ</th>
-                        <th data-tooltip="Total net capital flow across KOLD + HND + 3NGS during the window.">SHORT Σ</th>
-                        <th data-tooltip="Capital spread: LONG Σ − SHORT Σ. Large absolute values indicate strong side-rotation.">Δ SPREAD</th>
-                        <th data-tooltip="Daily average spread over the window. Normalises for window length.">AVG/DAY</th>
-                        <th data-tooltip="How many of the 6 individual ETFs show flow direction consistent with the divergence. ≥4 = strong consensus.">BREADTH</th>
-                        <th data-tooltip="What fraction of days in the window had both sides diverging simultaneously. Higher = more persistent rotation.">CONS%</th>
-                        <th data-tooltip="Cross-ETF sentiment label at window end based on 30-day aggregate flows.">SENTIMENT</th>
-                        <th data-tooltip="PRE-3D: avg daily aggregate spread for the 3 trading days before the window opens. Shows whether rotation was already building." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">PRE-3D</th>
-                        <th data-tooltip="POST-3D: avg daily aggregate spread for the 3 trading days after window closes. Measures follow-through.">POST-3D</th>
-                        <th data-tooltip="DAY SPREAD: exact end-date aggregate spread. Isolates whether the final day itself was a spike.">DAY SPR</th>
-                        <th data-tooltip="BASE-30D: prevailing 30-day average daily aggregate spread before the window opened. Compare PRE-3D and AVG/DAY against this.">BASE-30D</th>
-                        <th data-tooltip="Signal quality: CONFIRMED Rotation (breadth ≥ 4 + spread + consistency) or Rotation." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">SIGNAL</th>
-                        <th data-tooltip="Composite strength score 0–100. Combines spread magnitude, breadth, window length, and flow consistency.">STR</th>
+                        <th data-tooltip="Aggregate net flow for Long Side (BOIL+HNU+3NGL) and Short Side (KOLD+HND+3NGS).">FLOWS (L/S)</th>
+                        <th data-tooltip="Capital spread: LONG Σ − SHORT Σ. Large absolute values indicate strong side-rotation.">Δ SPR</th>
+                        <th data-tooltip="Daily average spread over the window. Normalises for window length.">$/DAY</th>
+                        <th data-tooltip="BREADTH: Individual ETF agreement count (0-6). CONS%: Persistence of the divergence within the window.">CONVICTION</th>
+                        <th data-tooltip="Momentum context around the event: Pre/Post window buildup and prevailing 30-day baseline." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">MOMENTUM CONTEXT (PRE/POST · DAY/BASE)</th>
+                        <th data-tooltip="Signal quality and composite strength score (0-100)." style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">SIGNAL (STR)</th>
                     </tr>
                 </thead>
                 <tbody id="cross-div-body">
@@ -2657,7 +2677,7 @@ function renderCrossDivergence() {
     const ctxCol = (v) => v === null ? '' : (v >= 0 ? 'val-green' : 'val-red');
 
     if (!results.length) {
-        tbody.innerHTML = `<tr><td colspan="16" style="text-align:center;color:rgba(255,255,255,0.85);padding:20px;">No cross-side divergences detected in this period.<br><span style="font-size:0.65rem;color:rgba(255,255,255,0.85);">Requires aggregate long-side and short-side flows to move in opposite directions within a 5, 10, or 21 day window.</span></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:rgba(255,255,255,0.85);padding:20px;">No cross-side divergences detected in this period.<br><span style="font-size:0.65rem;color:rgba(255,255,255,0.85);">Requires aggregate long-side and short-side flows to move in opposite directions within a 5, 10, or 21 day window.</span></td></tr>`;
         if (summaryEl) summaryEl.innerHTML = '';
         return;
     }
@@ -2699,7 +2719,6 @@ function renderCrossDivergence() {
 
         const breadthCol = r.breadth >= 5 ? 'val-green' : r.breadth >= 4 ? 'val-muted' : 'val-red';
         const consCol = r.consistency >= 0.5 ? 'val-green' : 'val-red';
-        const sentCol = r.sentiment === 'BULLISH' ? 'val-green' : r.sentiment === 'BEARISH' ? 'val-red' : 'val-muted';
 
         const sigDot = r.confirmed
             ? `<span style="color:${r.isBullish?'var(--green)':'var(--red)'};font-size:0.65rem;">\u25c6</span>`
@@ -2709,25 +2728,48 @@ function renderCrossDivergence() {
             : `<span style="font-weight:600;opacity:0.85;">${r.isBullish?'Bull Rotation':'Bear Rotation'}</span>`;
         const sigHtml = `<span style="color:${r.isBullish?'var(--green)':'var(--red)'};font-size:0.72rem;white-space:nowrap;">${sigDot} ${sigLabel}</span>`;
 
-        const daySpreadCol = r.exactDaySpread >= 0 ? 'val-green' : 'val-red';
-
         html += `<tr>
-            <td style="color:rgba(255,255,255,0.85);font-size:0.7rem;border-left:3px solid ${rowAccent};">${r.date}</td>
-            <td style="color:rgba(255,255,255,0.85);">${r.window}d</td>
+            <td style="color:rgba(255,255,255,0.85);font-size:0.7rem;border-left:3px solid ${rowAccent};">
+                <div style="font-weight:800;">${r.date}</div>
+                <div style="font-size:0.6rem;opacity:0.6;letter-spacing:0.5px;">WIN: ${r.window}D</div>
+            </td>
             <td><span class="div-badge ${badgeClass}">${r.type}</span></td>
-            <td class="${r.longDelta >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(r.longDelta)}</td>
-            <td class="${r.shortDelta >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(r.shortDelta)}</td>
+            <td style="font-size:0.68rem;line-height:1.4;">
+                <div class="${r.longDelta >= 0 ? 'val-green' : 'val-red'}">L: ${fmtUsd(r.longDelta)}</div>
+                <div class="${r.shortDelta >= 0 ? 'val-green' : 'val-red'}">S: ${fmtUsd(r.shortDelta)}</div>
+            </td>
             <td class="${spreadCol}" style="font-weight:700;">${fmtUsd(r.spread)}</td>
-            <td style="color:rgba(255,255,255,0.85);">${fmtUsd(r.avgDaily)}/d</td>
-            <td class="${breadthCol}" style="font-weight:700;">${r.breadth}/6</td>
-            <td class="${consCol}" style="font-weight:600;">${(r.consistency*100).toFixed(0)}%</td>
-            <td class="${sentCol}" style="font-weight:600;">${r.sentiment}</td>
-            <td class="${ctxCol(r.avgPre3)}" style="font-size:0.68rem;padding:6px 7px 6px 14px;border-left:1px solid rgba(255,255,255,0.08);">${fmtCtx(r.avgPre3)}</td>
-            <td class="${ctxCol(r.avgPost3)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(r.avgPost3)}</td>
-            <td class="${daySpreadCol}" style="font-size:0.68rem;padding:6px 7px;">${fmtUsd(r.exactDaySpread)}/d</td>
-            <td class="${ctxCol(r.avgBase30)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(r.avgBase30)}</td>
-            <td style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">${sigHtml}</td>
-            <td class="${strCol}" style="font-weight:700;background:${strBar};">${r.strength}</td>
+            <td style="color:rgba(255,255,255,0.85);font-size:0.72rem;">${fmtUsd(r.avgDaily)}/d</td>
+            <td style="font-size:0.68rem;line-height:1.4;">
+                <div class="${breadthCol}">BREADTH: ${r.breadth}/6</div>
+                <div class="${consCol}">CONSIST: ${(r.consistency*100).toFixed(0)}%</div>
+            </td>
+            <td style="padding:0;border-left:1px solid rgba(255,255,255,0.08);">
+                <div class="ctx-grid">
+                    <div class="ctx-item">
+                        <span class="ctx-lbl">PRE-3D</span>
+                        <span class="ctx-val ${ctxCol(r.avgPre3)}">${fmtCtx(r.avgPre3)}</span>
+                    </div>
+                    <div class="ctx-item">
+                        <span class="ctx-lbl">POST-3D</span>
+                        <span class="ctx-val ${ctxCol(r.avgPost3)}">${fmtCtx(r.avgPost3)}</span>
+                    </div>
+                    <div class="ctx-item">
+                        <span class="ctx-lbl">DAY SPR</span>
+                        <span class="ctx-val ${r.exactDaySpread >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(r.exactDaySpread)}/d</span>
+                    </div>
+                    <div class="ctx-item">
+                        <span class="ctx-lbl">BASE-30D</span>
+                        <span class="ctx-val ${ctxCol(r.avgBase30)}">${fmtCtx(r.avgBase30)}</span>
+                    </div>
+                </div>
+            </td>
+            <td style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    ${sigHtml}
+                    <div class="${strCol}" style="font-size:0.68rem;font-weight:800;background:${strBar};padding:2px 6px;border-radius:3px;min-width:32px;text-align:center;">${r.strength}</div>
+                </div>
+            </td>
         </tr>`;
     }
     tbody.innerHTML = html;
