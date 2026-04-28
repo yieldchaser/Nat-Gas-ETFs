@@ -118,6 +118,22 @@ Overlaid cumulative flow lines for all 6 ETFs (normalized to zero at start of vi
 - Hover crosshair showing all visible ETF values at any date
 - Controlled by the global range slider
 
+#### Cross-Side Flow Divergence Scanner
+
+Scans for windows (5d / 10d / 21d) where aggregate long-side capital (BOIL + HNU + 3NGL) and short-side capital (KOLD + HND + 3NGS) move in opposite directions — one side accumulating while the other distributes. Reveals institutional rotation between bull and bear positioning.
+
+| Column | Description |
+|--------|-------------|
+| **TYPE** | `LONG LEADS` (longs accumulating, shorts distributing) or `SHORT LEADS` (shorts distributing, longs pulling back — bullish for gas) |
+| **LONG Σ / SHORT Σ** | Aggregate net flow for each side over the window |
+| **Δ SPREAD** | Capital imbalance: `LONG Σ − SHORT Σ` |
+| **BREADTH** | Individual ETF agreement count (0–6). ≥4 = strong consensus. |
+| **SENTIMENT** | 30-day aggregate sentiment at window end |
+| **SIGNAL** | `CONFIRMED` (breadth ≥ 4 + above-median spread) or `WATCH` |
+| **STR** | Strength score 0–100: spread magnitude (40%) + breadth (30%) + window (15%) + consistency (15%) |
+
+Features summary strip (event counts, confirmed count, average strength), filterable lookback (30D / 90D / 6M / 1Y / ALL), and CSV export. Color convention follows the dashboard: `SHORT LEADS` = green (bullish for gas), `LONG LEADS` = red (bearish for gas).
+
 #### Yearly Flow Activity Matrix
 
 Heatmap-style table showing the count of significant flow events (|Z-Score| ≥ 1.5) per year per ETF, alongside average Z-Score magnitude. Useful for identifying which years had the most active capital flow signals.
