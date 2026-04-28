@@ -825,6 +825,17 @@ const fmtAxisUsd = (val) => {
     return `${sign}$${abs.toFixed(0)}`;
 };
 
+const fmtDateLong = (iso) => {
+    if (!iso) return "";
+    const parts = iso.split('-');
+    if (parts.length < 3) return iso;
+    const d = parseInt(parts[2]);
+    const m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][parseInt(parts[1])-1];
+    const y = parts[0].slice(-2);
+    const s = (d > 3 && d < 21) ? 'th' : (['th','st','nd','rd','th','th','th','th','th','th'][d%10]);
+    return `${d}${s} ${m} ${y}`;
+};
+
 // State
 const state = {
     summary: null,
@@ -2317,7 +2328,7 @@ function renderDivergence() {
         const sigHtml  = `<span style="color:${r.isBear?'var(--red)':'var(--green)'};font-size:0.72rem;white-space:nowrap;">${sigDot} ${sigLabel}</span>`;
 
         html += `<tr>
-            <td style="color:rgba(255,255,255,0.85);font-size:0.7rem;border-left:3px solid ${rowAccent};">${r.date}</td>
+            <td style="color:rgba(255,255,255,0.85);font-size:0.7rem;border-left:3px solid ${rowAccent};">${fmtDateLong(r.date)}</td>
             <td style="color:rgba(255,255,255,0.85);">${r.window}d</td>
             <td><span class="div-badge ${badgeClass}">${r.type}</span></td>
             <td class="${r.priceMove>=0?'val-green':'val-red'}">${fmtPct(r.priceMove)}</td>
@@ -2713,7 +2724,6 @@ function renderCrossDivergence() {
         const sigHtml = `<span style="color:${r.isBullish?'var(--green)':'var(--red)'};font-size:0.7rem;white-space:nowrap;">${sigDot} ${sigLabel}</span>`;
 
         const daySpreadCol = r.exactDaySpread >= 0 ? 'val-green' : 'val-red';
-        const shortDate = r.date.split('-').slice(1).join('-'); // MM-DD
         const typeLabel = r.type.replace(' LEADS', '');
         const sentIcon = r.sentiment === 'BULLISH'
             ? `<span style="color:var(--green);font-size:0.9rem;line-height:1;">\u25b4</span>`
@@ -2722,7 +2732,7 @@ function renderCrossDivergence() {
                 : `<span style="opacity:0.3;">\u2014</span>`;
 
         html += `<tr>
-            <td style="color:rgba(255,255,255,0.7);font-size:0.65rem;border-left:3px solid ${rowAccent};">${shortDate}</td>
+            <td style="color:rgba(255,255,255,0.7);font-size:0.65rem;border-left:3px solid ${rowAccent};">${fmtDateLong(r.date)}</td>
             <td style="color:rgba(255,255,255,0.65);font-size:0.65rem;">${r.window}d</td>
             <td><span class="div-badge ${badgeClass}" style="padding:1px 5px;font-size:0.58rem;min-width:40px;display:inline-block;text-align:center;">${typeLabel}</span></td>
             <td class="${r.longDelta >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(r.longDelta)}</td>
