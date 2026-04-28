@@ -2287,8 +2287,15 @@ function scanDivergences(data, thresh, lookback) {
                 avgCenter7, avgPost3, avgPre3, avgPrePeriod
             });
             if (minMatchedWin === null || w < minMatchedWin) minMatchedWin = w;
+            
+            if (!state.multiWindowDedup) {
+                i -= (w - 1);
+                break;
+            }
         }
-        if (minMatchedWin !== null) i -= (minMatchedWin - 1);
+        if (state.multiWindowDedup && minMatchedWin !== null) {
+            i -= (minMatchedWin - 1);
+        }
     }
     return results;
 }
@@ -2679,8 +2686,15 @@ function scanCrossDivergences(lookback) {
             });
 
             if (minMatchedWin === null || w < minMatchedWin) minMatchedWin = w;
+            
+            if (!state.multiWindowDedup) {
+                i -= (w - 1);
+                break;
+            }
         }
-        if (minMatchedWin !== null) i -= (minMatchedWin - 1);
+        if (state.multiWindowDedup && minMatchedWin !== null) {
+            i -= (minMatchedWin - 1);
+        }
     }
     return results;
 }
