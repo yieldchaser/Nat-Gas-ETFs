@@ -831,9 +831,8 @@ const fmtDateLong = (iso) => {
     if (parts.length < 3) return iso;
     const d = parseInt(parts[2]);
     const m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][parseInt(parts[1])-1];
-    const y = parts[0].slice(-2);
-    const s = (d > 3 && d < 21) ? 'th' : (['th','st','nd','rd','th','th','th','th','th','th'][d%10]);
-    return `${d}${s} ${m} ${y}`;
+    const y = parts[0];
+    return `${m} ${d}, ${y}`;
 };
 
 // State
