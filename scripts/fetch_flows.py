@@ -313,16 +313,32 @@ def main():
         "bear_flow_30d": round(flow_30d_bear, 2)
     }
     
-    # Sentiment simple logic
-    net_diff = flow_30d_bull + flow_30d_bear  # if total bull > abs(bear outflow)
+    # Sentiment logic:
+    # flow_30d_bull  = sum of 30d flows for LONG ETFs  (positive = longs receiving inflows = bullish)
+    # flow_30d_bear  = sum of 30d flows for SHORT ETFs  (negative = shorts losing assets = bullish for gas)
+    # BULLISH: longs growing AND/OR shorts shrinking (net capital favours long side)
+    # BEARISH: shorts growing (positive bear flow) AND/OR longs shrinking
+    net_diff = flow_30d_bull + flow_30d_bear
+    abs_bull = abs(flow_30d_bull)
+    abs_bear = abs(flow_30d_bear)
     sentiment = "NEUTRAL"
-    if flow_30d_bull > 10000 and flow_30d_bull > abs(flow_30d_bear):
+    if flow_30d_bull > 0 and flow_30d_bear < 0:
+        # Both sides bullish (longs in, shorts out) — clear BULLISH
         sentiment = "BULLISH"
-    elif flow_30d_bear > 10000 and flow_30d_bear > abs(flow_30d_bull):
+    elif flow_30d_bull < 0 and flow_30d_bear > 0:
+        # Both sides bearish (longs out, shorts in) — clear BEARISH
         sentiment = "BEARISH"
-    elif flow_30d_bull > 0 and flow_30d_bear < 0 and flow_30d_bull > abs(flow_30d_bear):
+    elif flow_30d_bull > 10000 and abs_bull > abs_bear:
+        # Only longs growing but dominant
         sentiment = "BULLISH"
-    elif flow_30d_bear > 0 and flow_30d_bull < 0 and flow_30d_bear > abs(flow_30d_bull):
+    elif flow_30d_bear < -10000 and abs_bear > abs_bull:
+        # Only shorts shrinking (outflows from short ETFs) but dominant
+        sentiment = "BULLISH"
+    elif flow_30d_bear > 10000 and abs_bear > abs_bull:
+        # Shorts growing and dominant
+        sentiment = "BEARISH"
+    elif flow_30d_bull < -10000 and abs_bull > abs_bear:
+        # Longs shrinking and dominant
         sentiment = "BEARISH"
         
     summary_data["cross_etf"]["sentiment"] = sentiment

@@ -575,8 +575,9 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <button class="tab-btn active" data-range="all">ALL</button>
                 </div>
             </div>
-            <div class="chart-wrap">
+            <div class="chart-wrap" style="position:relative;">
                 <canvas id="chartZ"></canvas>
+                <div id="z-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:150px;"></div>
             </div>
             <!-- Z-Score ETF selector -->
             <div id="z-etf-tabs" style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap; margin-top:8px;"></div>
@@ -1067,13 +1068,12 @@ function renderSection2() {
     el('col-short').innerHTML += shorts.map(createCard).join('');
 }
 
-// Compute split-adjusted prices by chaining perf_pct backwards from latest NAV
+// Compute split-adjusted prices and build date-index for O(1) hover lookups
 function computeAdjustedPrices(tickerData) {
     const data = tickerData.data;
     if (!data || data.length === 0) return;
     if (data[0].adj_nav !== undefined) return; // already computed
 
-    // Start from the last row: its nav IS the current (adjusted) price
     // Walk backwards: adj_nav[i] = adj_nav[i+1] / (1 + perf_pct[i+1])
     const n = data.length;
     data[n - 1].adj_nav = data[n - 1].nav;
@@ -1082,6 +1082,10 @@ function computeAdjustedPrices(tickerData) {
         const divisor = 1 + nextReturn;
         data[i].adj_nav = divisor !== 0 ? data[i + 1].adj_nav / divisor : data[i].nav;
     }
+
+    // Build O(1) date-index once — used by cross-chart hover instead of rebuilding per frame
+    tickerData._dateIdx = {};
+    for (let i = 0; i < n; i++) tickerData._dateIdx[data[i].date] = data[i];
 }
 
 async function loadTickerDataAndRender() {
@@ -1194,22 +1198,19 @@ function getVisibleData() {
     return base.slice(Math.max(0, s), Math.min(base.length, e));
 }
 
-// Independent zoom for Z-Score chart
+// Independent zoom for Z-Score chart — uses date-based cutoff (same as getBaseVisibleData)
 function getZBaseData() {
     const tk = state.activeZTicker;
     if (!state.cache[tk]) return [];
     const allData = state.cache[tk].data;
     if (state.timeRange === 'all') return allData;
-    let days = 30;
-    if (state.timeRange === '1w') days = 7;
-    else if (state.timeRange === '1m') days = 30;
-    else if (state.timeRange === '3m') days = 90;
-    else if (state.timeRange === '6m') days = 180;
-    else if (state.timeRange === '1y') days = 365;
-    else if (state.timeRange === '2y') days = 730;
-    else if (state.timeRange === '3y') days = 1095;
-    else if (state.timeRange === '5y') days = 1825;
-    return allData.slice(-days);
+    const dayMap = {'1w':7,'1m':30,'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095,'5y':1825};
+    const days = dayMap[state.timeRange] || 30;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    const cutoffStr = cutoffDate.toISOString().slice(0, 10);
+    const idx = allData.findIndex(d => d.date >= cutoffStr);
+    return idx === -1 ? allData : allData.slice(idx);
 }
 
 function getZVisibleData() {
@@ -1313,39 +1314,55 @@ function drawChartA(data) {
         ctxA.strokeStyle = 'rgba(255,255,255,0.1)'; ctxA.setLineDash([4,4]); ctxA.stroke(); ctxA.setLineDash([]);
     }
 
-    // Cumulative Flow Area
-    ctxA.beginPath();
-    ctxA.moveTo(pad.left, y0);
-    for (let i = 0; i < data.length; i++) {
+    // Cumulative Flow Area — split green/red at zero line for directional accuracy
+    // Above zero: green fill. Below zero: red fill. Rendered as two clipped regions.
+    const drawFlowArea = (clipAboveZero, color) => {
+        ctxA.save();
+        ctxA.beginPath();
+        if (clipAboveZero) {
+            // Clip to region above zero line
+            ctxA.rect(pad.left, pad.top, chartW, y0 - pad.top);
+        } else {
+            // Clip to region below zero line
+            ctxA.rect(pad.left, y0, chartW, (pad.top + chartH) - y0);
+        }
+        ctxA.clip();
+
+        ctxA.beginPath();
+        ctxA.moveTo(getX(0), y0);
+        for (let i = 0; i < data.length; i++) ctxA.lineTo(getX(i), getFY(flows[i]));
+        ctxA.lineTo(getX(data.length - 1), y0);
+        ctxA.closePath();
+
+        const g = ctxA.createLinearGradient(0, pad.top, 0, pad.top + chartH);
+        if (clipAboveZero) {
+            g.addColorStop(0, `rgba(${color},0.5)`);
+            g.addColorStop(1, `rgba(${color},0.05)`);
+        } else {
+            g.addColorStop(0, `rgba(${color},0.05)`);
+            g.addColorStop(1, `rgba(${color},0.45)`);
+        }
+        ctxA.fillStyle = g;
+        ctxA.fill();
+        ctxA.restore();
+    };
+    drawFlowArea(true,  '61,184,122'); // green above zero
+    drawFlowArea(false, '239,68,68');  // red below zero
+
+    // Flow Line — segment color follows sign (green positive, red negative)
+    for (let i = 1; i < data.length; i++) {
+        const isPos = flows[i] >= 0;
+        ctxA.beginPath();
+        ctxA.moveTo(getX(i - 1), getFY(flows[i - 1]));
         ctxA.lineTo(getX(i), getFY(flows[i]));
+        ctxA.strokeStyle = isPos ? 'rgba(61,184,122,0.85)' : 'rgba(239,68,68,0.85)';
+        ctxA.lineWidth = 2;
+        ctxA.stroke();
     }
-    ctxA.lineTo(w - pad.right, y0);
-    ctxA.closePath();
-    
-    // End is positive or negative relative to start?
+
+    // isNetPos still needed for hover dot coloring below
     const isNetPos = flows[flows.length - 1] >= 0;
-    const grad = ctxA.createLinearGradient(0, pad.top, 0, pad.top + chartH);
-    if (isNetPos) {
-        grad.addColorStop(0, 'rgba(61,184,122,0.5)');
-        grad.addColorStop(0.6, 'rgba(61,184,122,0.15)');
-        grad.addColorStop(1, 'rgba(61,184,122,0.0)');
-    } else {
-        grad.addColorStop(0, 'rgba(239,68,68,0.5)');
-        grad.addColorStop(0.6, 'rgba(239,68,68,0.15)');
-        grad.addColorStop(1, 'rgba(239,68,68,0.0)');
-    }
-    ctxA.fillStyle = grad;
-    ctxA.fill();
-    
-    // Flow Line
-    ctxA.beginPath();
-    ctxA.strokeStyle = isNetPos ? 'rgba(61,184,122,0.8)' : 'rgba(239,68,68,0.8)';
     ctxA.lineWidth = 2;
-    for (let i = 0; i < data.length; i++) {
-        if (i===0) ctxA.moveTo(getX(i), getFY(flows[i]));
-        else ctxA.lineTo(getX(i), getFY(flows[i]));
-    }
-    ctxA.stroke();
     
     // NAV Line
     ctxA.beginPath();
@@ -1895,6 +1912,7 @@ function handleZHover(e) {
 
     const padL = 45, padR = 20;
     const chartW = rect.width - padL - padR;
+    const zTip = el('z-tooltip');
     if (x >= padL && x <= rect.width - padR) {
         let pct = (x - padL) / chartW;
         let idx = Math.round(pct * (data.length - 1));
@@ -1903,17 +1921,20 @@ function handleZHover(e) {
 
         const d = data[idx];
         const zCol = d.flow_zscore >= 1.5 ? 'var(--green)' : (d.flow_zscore <= -1.5 ? 'var(--red)' : '#94a3b8');
-        tooltip.style.display = 'block';
-        tooltip.innerHTML = `
+        zTip.style.display = 'block';
+        zTip.innerHTML = `
             <div class="tt-date">${d.date}</div>
             <div class="tt-row"><span class="tt-lbl">Z-Score</span> <span class="tt-val" style="color:${zCol}">${d.flow_zscore >= 0 ? '+' : ''}${d.flow_zscore.toFixed(2)}</span></div>
             <div class="tt-row"><span class="tt-lbl">Daily Flow</span> <span class="tt-val" style="color:${d.usd_flow>=0?'var(--green)':'var(--red)'}">${fmtUsd(d.usd_flow)}</span></div>
             <div class="tt-row"><span class="tt-lbl">Regime</span> <span class="tt-val">${d.regime || 'BALANCED'}</span></div>
         `;
-        let tx = e.clientX + 15;
-        if (tx + 180 > window.innerWidth) tx = e.clientX - 180 - 15;
-        tooltip.style.left = tx + 'px';
-        tooltip.style.top = (e.clientY - 40) + 'px';
+        // Position relative to canvas wrapper
+        const wrapLeft = cvs.parentElement.getBoundingClientRect().left;
+        let tx = (e.clientX - wrapLeft) + 15;
+        const tipW = 185;
+        if (tx + tipW > cvs.parentElement.offsetWidth) tx = (e.clientX - wrapLeft) - tipW - 10;
+        zTip.style.left = tx + 'px';
+        zTip.style.top = Math.max(0, e.clientY - rect.top - 20) + 'px';
     } else {
         hideZHover();
     }
@@ -1922,7 +1943,8 @@ function handleZHover(e) {
 
 function hideZHover() {
     state.hoverZIdx = null;
-    tooltip.style.display = 'none';
+    const zTip = el('z-tooltip');
+    if (zTip) zTip.style.display = 'none';
     const data = getZVisibleData();
     if (data && data.length > 0) drawChartZ(data);
 }
@@ -1960,12 +1982,13 @@ function handleCrossHover(e) {
         let html = `<div style="color:#00ffff; font-weight:800; margin-bottom:4px; font-size:0.65rem;">${date}</div>`;
         const tickers = Object.keys(state.crossToggles).filter(tk => state.crossToggles[tk]);
         tickers.forEach(tk => {
-            const d = state.cache[tk]?.data;
-            if (!d) return;
-            const dateIdx = {};
-            for (let j = 0; j < d.length; j++) dateIdx[d[j].date] = d[j];
+            const cache = state.cache[tk];
+            if (!cache) return;
+            // Use pre-built date-index (Fix #7 — avoids O(n) rebuild per hover frame)
+            const dateIdx = cache._dateIdx || {};
             const match = dateIdx[date];
             if (match) {
+                const d = cache.data;
                 let startIdx = d.findIndex(x => x.date >= visibleDates[0]);
                 if (startIdx === -1) startIdx = 0;
                 const offset = d[startIdx].cumulative_flow;
@@ -1994,7 +2017,8 @@ function hideCrossHover() {
 
 // ---- Divergence Engine ----
 // Dynamic threshold by leverage: 3x→3%, 2x→2%, 1x→1%
-const DIV_LEVERAGE = { BOIL:3, KOLD:3, '3NGL':3, '3NGS':3, HNU:2, HND:2 };
+// Leverage multipliers: 2x for BOIL/KOLD/HNU/HND, 3x for 3NGL/3NGS
+const DIV_LEVERAGE = { BOIL:2, KOLD:2, '3NGL':3, '3NGS':3, HNU:2, HND:2 };
 
 function buildDivEtfChips() {
     const container = el('div-etf-tabs');
@@ -2032,22 +2056,14 @@ async function selectDivTicker(tk) {
     renderDivergence();
 }
 
-function renderDivergence() {
-    const data = state.cache[state.divTicker] && state.cache[state.divTicker].data;
-    if (!data || data.length < 10) return;
-
-    const thresh = (DIV_LEVERAGE[state.divTicker] || 1) * 0.01; // e.g. 0.03 for 3x
-    const lookback = state.divRange === 'all' ? data.length : Math.min(state.divRange, data.length);
-    const recent = data.slice(-lookback);
-    // dataOffset: index in the full data[] where recent[0] lives — needed for pre-period baseline
+// ---- Shared Divergence Scanner (Fix #4: eliminates ~350 lines of duplication) ----
+// Returns array of result objects used by both renderDivergence() and downloadDivCSV()
+function scanDivergences(data, thresh, lookback) {
+    if (!data || data.length < 10) return [];
     const dataOffset = data.length - lookback;
-    const tbody = el('div-body');
-    let html = '';
-
-    // Largest window first → strongest/sustained signals surface before short blips
+    const recent = data.slice(-lookback);
     const windows = [10, 5, 3];
 
-    // Pre-compute max abs flow in window for normalisation
     let maxAbsFlow = 0;
     for (let i = windows[0]; i < recent.length; i++) {
         for (const w of windows) {
@@ -2057,168 +2073,141 @@ function renderDivergence() {
         }
     }
 
+    const results = [];
     for (let i = recent.length - 1; i >= Math.max(...windows); i--) {
         const cur = recent[i];
-
         for (const w of windows) {
             const prev = recent[i - w];
-
             let cumRet = 1;
             for (let j = i - w + 1; j <= i; j++) cumRet *= (1 + (recent[j].perf_pct || 0));
             const priceMove = cumRet - 1;
+            const flowSum   = cur.cumulative_flow - prev.cumulative_flow;
 
-            const flowSum = cur.cumulative_flow - prev.cumulative_flow;
+            let type = '';
+            if      (priceMove > thresh && flowSum < 0) type = 'BEARISH DIV';
+            else if (priceMove < -thresh && flowSum > 0) type = 'BULLISH DIV';
+            if (!type) continue;
 
-            let isDiv = false, type = '', badgeClass = '', sig = '';
+            const isBear    = type === 'BEARISH DIV';
+            const avgDaily  = flowSum / w;
+            const zAtEnd    = cur.flow_zscore ?? 0;
+            const presAtEnd = Math.round(cur.pressure ?? 0);
+            const s         = i - w + 1;
 
-            if (priceMove > thresh && flowSum < 0) {
-                isDiv = true; type = 'BEARISH DIV'; badgeClass = 'bg-bear'; sig = '⚠️ Distribution';
-            } else if (priceMove < -thresh && flowSum > 0) {
-                isDiv = true; type = 'BULLISH DIV'; badgeClass = 'bg-bull'; sig = '🟢 Accumulation';
+            const canPre3 = (s - 3) >= 0;
+            const avgPre3 = canPre3
+                ? ((recent[s-3].usd_flow||0)+(recent[s-2].usd_flow||0)+(recent[s-1].usd_flow||0))/3
+                : null;
+
+            let consistentDays = 0;
+            for (let j = s; j <= i; j++) {
+                const df = recent[j].usd_flow || 0;
+                if (isBear ? df < 0 : df > 0) consistentDays++;
             }
+            const flowConsistency    = consistentDays / w;
+            const exactFlow          = recent[i].usd_flow || 0;
+            const exactFlowAgreesDiv = isBear ? exactFlow < 0 : exactFlow > 0;
 
-            if (isDiv) {
-                const avgDaily  = flowSum / w;
-                const zAtEnd    = cur.flow_zscore ?? 0;
-                const presAtEnd = Math.round(cur.pressure ?? 0);
+            const zAgrees           = isBear ? zAtEnd <= -0.5 : zAtEnd >= 0.5;
+            const presAgrees        = isBear ? presAtEnd < 0 : presAtEnd > 0;
+            const pre3dAgrees       = avgPre3 === null || (isBear ? avgDaily < avgPre3 : avgDaily > avgPre3);
+            const consistencyAgrees = flowConsistency >= 0.5;
+            const confirmed = zAgrees && presAgrees && pre3dAgrees && consistencyAgrees;
 
-                // Pre-compute s and PRE-3D here so confirmation can use them
-                const s = i - w + 1;
-                const canPre3 = (s - 3) >= 0;
-                let avgPre3 = null;
-                if (canPre3) {
-                    avgPre3 = ((recent[s-3].usd_flow || 0) + (recent[s-2].usd_flow || 0) + (recent[s-1].usd_flow || 0)) / 3;
-                }
+            const pNorm    = Math.min(Math.abs(priceMove) / (thresh * 5), 1);
+            const fNorm    = maxAbsFlow > 0 ? Math.min(Math.abs(flowSum) / maxAbsFlow, 1) : 0;
+            const wNorm    = w / 10;
+            const cNorm    = flowConsistency;
+            const eDayNorm = exactFlowAgreesDiv
+                ? Math.min(Math.abs(exactFlow) / (Math.abs(avgDaily) || 1), 1.5) / 1.5
+                : 0;
+            const strength = Math.round(
+                pNorm*0.30*100 + fNorm*0.30*100 +
+                wNorm*0.12*100 + cNorm*0.15*100 + eDayNorm*0.13*100
+            );
 
-                // Daily flow consistency: fraction of event-window days with flow in divergence direction
-                const isBear = type === 'BEARISH DIV';
-                let consistentDays = 0;
-                for (let j = s; j <= i; j++) {
-                    const df = recent[j].usd_flow || 0;
-                    if (isBear ? df < 0 : df > 0) consistentDays++;
-                }
-                const flowConsistency = consistentDays / w; // 0–1
-
-                // End-day flow (computed here so STR can use it)
-                const exactFlow = recent[i].usd_flow || 0;
-                const exactFlowAgreesDiv = isBear ? exactFlow < 0 : exactFlow > 0;
-
-                // Confirmation gates
-                const zAgrees           = isBear ? zAtEnd <= -0.5 : zAtEnd >= 0.5;
-                const presAgrees        = isBear ? presAtEnd < 0 : presAtEnd > 0;
-                // PRE-3D acceleration gate: event-window daily flow must be MORE extreme than pre-event.
-                // Detects intensification rather than blocking continuation — real distribution phases
-                // often begin before the window, so we want acceleration, not a clean start.
-                const pre3dAgrees       = avgPre3 === null || (isBear ? avgDaily < avgPre3 : avgDaily > avgPre3);
-                // Consistency gate: majority of event days must have flow matching divergence direction
-                const consistencyAgrees = flowConsistency >= 0.5;
-                const confirmed = zAgrees && presAgrees && pre3dAgrees && consistencyAgrees;
-                if (confirmed) sig = isBear ? '🔴 CONFIRMED Dist.' : '🟢 CONFIRMED Accum.';
-
-                // Strength score 0–100: 5 factors
-                // eDayNorm: how strong is end-day flow relative to the window's daily average?
-                //   Agrees with divergence → 0–1 based on magnitude vs avgDaily (cap at 1.5×)
-                //   Disagrees → 0 (penalised by absence of the bonus, not a hard deduction)
-                const pNorm    = Math.min(Math.abs(priceMove) / (thresh * 5), 1);
-                const fNorm    = maxAbsFlow > 0 ? Math.min(Math.abs(flowSum) / maxAbsFlow, 1) : 0;
-                const wNorm    = w / 10; // 3d=0.3, 5d=0.5, 10d=1.0
-                const cNorm    = flowConsistency;
-                const eDayNorm = exactFlowAgreesDiv
-                    ? Math.min(Math.abs(exactFlow) / (Math.abs(avgDaily) || 1), 1.5) / 1.5
-                    : 0;
-                const strength = Math.round(
-                    pNorm    * 0.30 * 100 +
-                    fNorm    * 0.30 * 100 +
-                    wNorm    * 0.12 * 100 +
-                    cNorm    * 0.15 * 100 +
-                    eDayNorm * 0.13 * 100
-                );
-                const strCol = strength >= 70 ? 'val-green' : strength >= 40 ? 'val-muted' : 'val-red';
-                const strRgb = strength >= 70 ? '61,184,122' : strength >= 40 ? '148,163,184' : '192,64,64';
-
-                const zCol   = zAtEnd >= 1.5 ? 'val-green' : zAtEnd <= -1.5 ? 'val-red' : 'val-muted';
-                const presCol = presAtEnd >= 0 ? 'val-green' : 'val-red';
-
-                // Row left-border accent color
-                const rowAccent = isBear ? 'rgba(192,64,64,0.7)' : 'rgba(61,184,122,0.7)';
-
-                // Clean signal HTML (no platform-dependent emojis)
-                const sigDot = confirmed
-                    ? `<span style="color:${isBear?'var(--red)':'var(--green)'};font-size:0.65rem;">◆</span>`
-                    : `<span style="color:${isBear?'var(--red)':'var(--green)'};font-size:0.55rem;">▲</span>`;
-                const sigLabel = confirmed
-                    ? `<span style="font-weight:900;letter-spacing:0.3px;">${isBear?'CONFIRMED Dist.':'CONFIRMED Accum.'}</span>`
-                    : `<span style="font-weight:600;opacity:0.85;">${isBear?'Distribution':'Accumulation'}</span>`;
-                const sigHtml = `<span style="color:${isBear?'var(--red)':'var(--green)'};font-size:0.72rem;white-space:nowrap;">${sigDot} ${sigLabel}</span>`;
-
-                // STR bar: gradient background behind the number
-                const strBar = `linear-gradient(90deg,rgba(${strRgb},0.18) ${strength}%,transparent ${strength}%)`;
-
-                // === Context flow metrics ===
-                // s, canPre3, avgPre3 already computed above for confirmation logic
-                const canPost3 = (i + 3) < recent.length;
-                const canLocal = canPre3 && canPost3;
-
-                // 1. LOCAL AVG: average daily flow from s-3 to e+3 (w+6 days)
-                let avgCenter7 = null;
-                if (canLocal) {
-                    let sum = 0;
-                    const localLen = w + 6;
-                    for (let k = s - 3; k <= i + 3; k++) sum += (recent[k].usd_flow || 0);
-                    avgCenter7 = sum / localLen;
-                }
-
-                // 2. POST-3D: average daily flow for e+1 to e+3
-                let avgPost3 = null;
-                if (canPost3) {
-                    avgPost3 = ((recent[i+1].usd_flow || 0) + (recent[i+2].usd_flow || 0) + (recent[i+3].usd_flow || 0)) / 3;
-                }
-
-                // 3. PRE-3D: already computed above (avgPre3)
-
-                // 4. DAY FLOW: exactFlow + exactFlowAgreesDiv already computed above for STR
-                const exactFlowCol = exactFlowAgreesDiv ? (isBear ? 'val-red' : 'val-green') : 'val-muted';
-
-                // 5. BASE-30D: average daily flow over the 30 trading days ending at s-1
-                //    sIdx = index of s-1 in data[]; requires sIdx >= 30 for a full 30-day baseline.
-                const sIdx = dataOffset + i - w; // data[] index of s-1 (= recent[i-w])
-                let avgPrePeriod = null;
-                if (sIdx >= 30) {
-                    avgPrePeriod = (data[sIdx].cumulative_flow - data[sIdx - 30].cumulative_flow) / 30;
-                }
-
-                // Helper: format a nullable context flow value
-                const fmtCtx = (v) => v === null
-                    ? `<span style="opacity:0.35;font-size:0.62rem;">—</span>`
-                    : `${fmtUsd(v)}/d`;
-                const ctxCol = (v) => v === null ? '' : (v >= 0 ? 'val-green' : 'val-red');
-
-                html += `<tr>
-                    <td style="color:rgba(255, 255, 255, 0.85);font-size:0.7rem;border-left:3px solid ${rowAccent};">${cur.date}</td>
-                    <td style="color:rgba(255, 255, 255, 0.85);">${w}d</td>
-                    <td><span class="div-badge ${badgeClass}">${type}</span></td>
-                    <td class="${priceMove>=0?'val-green':'val-red'}">${fmtPct(priceMove)}</td>
-                    <td class="${flowSum>=0?'val-green':'val-red'}">${fmtUsd(flowSum)}</td>
-                    <td style="color:rgba(255, 255, 255, 0.85);">${fmtUsd(avgDaily)}/d</td>
-                    <td class="${zCol}">${zAtEnd >= 0 ? '+' : ''}${zAtEnd.toFixed(2)}</td>
-                    <td class="${presCol}">${presAtEnd >= 0 ? '+' : ''}${presAtEnd}</td>
-                    <td class="${ctxCol(avgCenter7)}" style="font-size:0.68rem;padding:6px 7px 6px 14px;border-left:1px solid rgba(255,255,255,0.08);">${fmtCtx(avgCenter7)}</td>
-                    <td class="${ctxCol(avgPost3)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(avgPost3)}</td>
-                    <td class="${ctxCol(avgPre3)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(avgPre3)}</td>
-                    <td class="${exactFlowCol}" style="font-size:0.68rem;padding:6px 7px;">${fmtUsd(exactFlow)}/d</td>
-                    <td class="${ctxCol(avgPrePeriod)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(avgPrePeriod)}</td>
-                    <td style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">${sigHtml}</td>
-                    <td class="${strCol}" style="font-weight:700;background:${strBar};">${strength}</td>
-                </tr>`;
-
-                i -= (w - 1); // skip past this sequence to avoid overlapping copies
-                break;
+            const canPost3 = (i + 3) < recent.length;
+            const canLocal = canPre3 && canPost3;
+            let avgCenter7 = null;
+            if (canLocal) {
+                let sum = 0;
+                for (let k = s - 3; k <= i + 3; k++) sum += (recent[k].usd_flow || 0);
+                avgCenter7 = sum / (w + 6);
             }
+            const avgPost3 = canPost3
+                ? ((recent[i+1].usd_flow||0)+(recent[i+2].usd_flow||0)+(recent[i+3].usd_flow||0))/3
+                : null;
+            const sIdx = dataOffset + i - w;
+            const avgPrePeriod = sIdx >= 30
+                ? (data[sIdx].cumulative_flow - data[sIdx-30].cumulative_flow) / 30
+                : null;
+
+            results.push({
+                date: cur.date, window: w, type, isBear, priceMove, flowSum,
+                avgDaily, zAtEnd, presAtEnd, flowConsistency,
+                exactFlow, exactFlowAgreesDiv, confirmed, strength,
+                avgCenter7, avgPost3, avgPre3, avgPrePeriod
+            });
+            i -= (w - 1);
+            break;
         }
     }
+    return results;
+}
 
-    if (html === '') {
-        tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:rgba(255, 255, 255, 0.85); padding: 20px;">No significant price-flow divergences detected.<br><span style="font-size: 0.65rem; color:rgba(255, 255, 255, 0.85);">Requires a split-adjusted price move > ${(thresh*100).toFixed(0)}% alongside opposing net flows within a 3, 5, or 10 day window.</span></td></tr>`;
+function renderDivergence() {
+    const data = state.cache[state.divTicker] && state.cache[state.divTicker].data;
+    if (!data || data.length < 10) return;
+    const thresh   = (DIV_LEVERAGE[state.divTicker] || 1) * 0.01;
+    const lookback = state.divRange === 'all' ? data.length : Math.min(state.divRange, data.length);
+    const results  = scanDivergences(data, thresh, lookback);
+    const tbody    = el('div-body');
+
+    const fmtCtx = (v) => v === null
+        ? `<span style="opacity:0.35;font-size:0.62rem;">\u2014</span>`
+        : `${fmtUsd(v)}/d`;
+    const ctxCol = (v) => v === null ? '' : (v >= 0 ? 'val-green' : 'val-red');
+
+    let html = '';
+    for (const r of results) {
+        const badgeClass   = r.isBear ? 'bg-bear' : 'bg-bull';
+        const zCol         = r.zAtEnd >= 1.5 ? 'val-green' : r.zAtEnd <= -1.5 ? 'val-red' : 'val-muted';
+        const presCol      = r.presAtEnd >= 0 ? 'val-green' : 'val-red';
+        const strCol       = r.strength >= 70 ? 'val-green' : r.strength >= 40 ? 'val-muted' : 'val-red';
+        const strRgb       = r.strength >= 70 ? '61,184,122' : r.strength >= 40 ? '148,163,184' : '192,64,64';
+        const rowAccent    = r.isBear ? 'rgba(192,64,64,0.7)' : 'rgba(61,184,122,0.7)';
+        const exactFlowCol = r.exactFlowAgreesDiv ? (r.isBear ? 'val-red' : 'val-green') : 'val-muted';
+        const strBar       = `linear-gradient(90deg,rgba(${strRgb},0.18) ${r.strength}%,transparent ${r.strength}%)`;
+        const sigDot   = r.confirmed
+            ? `<span style="color:${r.isBear?'var(--red)':'var(--green)'};font-size:0.65rem;">\u25c6</span>`
+            : `<span style="color:${r.isBear?'var(--red)':'var(--green)'};font-size:0.55rem;">\u25b2</span>`;
+        const sigLabel = r.confirmed
+            ? `<span style="font-weight:900;letter-spacing:0.3px;">${r.isBear?'CONFIRMED Dist.':'CONFIRMED Accum.'}</span>`
+            : `<span style="font-weight:600;opacity:0.85;">${r.isBear?'Distribution':'Accumulation'}</span>`;
+        const sigHtml  = `<span style="color:${r.isBear?'var(--red)':'var(--green)'};font-size:0.72rem;white-space:nowrap;">${sigDot} ${sigLabel}</span>`;
+
+        html += `<tr>
+            <td style="color:rgba(255,255,255,0.85);font-size:0.7rem;border-left:3px solid ${rowAccent};">${r.date}</td>
+            <td style="color:rgba(255,255,255,0.85);">${r.window}d</td>
+            <td><span class="div-badge ${badgeClass}">${r.type}</span></td>
+            <td class="${r.priceMove>=0?'val-green':'val-red'}">${fmtPct(r.priceMove)}</td>
+            <td class="${r.flowSum>=0?'val-green':'val-red'}">${fmtUsd(r.flowSum)}</td>
+            <td style="color:rgba(255,255,255,0.85);">${fmtUsd(r.avgDaily)}/d</td>
+            <td class="${zCol}">${r.zAtEnd>=0?'+':''}${r.zAtEnd.toFixed(2)}</td>
+            <td class="${presCol}">${r.presAtEnd>=0?'+':''}${r.presAtEnd}</td>
+            <td class="${ctxCol(r.avgCenter7)}" style="font-size:0.68rem;padding:6px 7px 6px 14px;border-left:1px solid rgba(255,255,255,0.08);">${fmtCtx(r.avgCenter7)}</td>
+            <td class="${ctxCol(r.avgPost3)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(r.avgPost3)}</td>
+            <td class="${ctxCol(r.avgPre3)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(r.avgPre3)}</td>
+            <td class="${exactFlowCol}" style="font-size:0.68rem;padding:6px 7px;">${fmtUsd(r.exactFlow)}/d</td>
+            <td class="${ctxCol(r.avgPrePeriod)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(r.avgPrePeriod)}</td>
+            <td style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">${sigHtml}</td>
+            <td class="${strCol}" style="font-weight:700;background:${strBar};">${r.strength}</td>
+        </tr>`;
+    }
+
+    if (!html) {
+        const pct = (DIV_LEVERAGE[state.divTicker] || 1).toFixed(0);
+        tbody.innerHTML = `<tr><td colspan="15" style="text-align:center;color:rgba(255,255,255,0.85);padding:20px;">No significant price-flow divergences detected.<br><span style="font-size:0.65rem;color:rgba(255,255,255,0.85);">Requires a split-adjusted price move &gt; ${pct}% alongside opposing net flows within a 3, 5, or 10 day window.</span></td></tr>`;
     } else {
         tbody.innerHTML = html;
     }
@@ -2228,161 +2217,37 @@ function downloadDivCSV() {
     const tk = state.divTicker;
     const data = state.cache[tk] && state.cache[tk].data;
     if (!data || data.length < 10) return alert('No data to export.');
-
-    const thresh = (DIV_LEVERAGE[tk] || 1) * 0.01;
+    const thresh   = (DIV_LEVERAGE[tk] || 1) * 0.01;
     const lookback = state.divRange === 'all' ? data.length : Math.min(state.divRange, data.length);
-    const recent = data.slice(-lookback);
-    const dataOffset = data.length - lookback;
-
-    const results = [];
-    const windows = [10, 5, 3];
-
-    let maxAbsFlow = 0;
-    for (let i = windows[0]; i < recent.length; i++) {
-        for (const w of windows) {
-            if (i < w) continue;
-            const f = Math.abs(recent[i].cumulative_flow - recent[i - w].cumulative_flow);
-            if (f > maxAbsFlow) maxAbsFlow = f;
-        }
-    }
-
-    for (let i = recent.length - 1; i >= Math.max(...windows); i--) {
-        const cur = recent[i];
-        for (const w of windows) {
-            const prev = recent[i - w];
-            let cumRet = 1;
-            for (let j = i - w + 1; j <= i; j++) cumRet *= (1 + (recent[j].perf_pct || 0));
-            const priceMove = cumRet - 1;
-            const flowSum = cur.cumulative_flow - prev.cumulative_flow;
-
-            let isDiv = false, type = '';
-            if (priceMove > thresh && flowSum < 0) { isDiv = true; type = 'BEARISH DIV'; } 
-            else if (priceMove < -thresh && flowSum > 0) { isDiv = true; type = 'BULLISH DIV'; }
-
-            if (isDiv) {
-                const avgDaily  = flowSum / w;
-                const zAtEnd    = cur.flow_zscore ?? 0;
-                const presAtEnd = Math.round(cur.pressure ?? 0);
-
-                const isBear = type === 'BEARISH DIV';
-
-                // PRE-3D acceleration (same gate as renderDivergence)
-                const sc2 = i - w + 1;
-                const canPre3c2 = (sc2 - 3) >= 0;
-                let avgPre3c2 = null;
-                if (canPre3c2) {
-                    avgPre3c2 = ((recent[sc2-3].usd_flow || 0) + (recent[sc2-2].usd_flow || 0) + (recent[sc2-1].usd_flow || 0)) / 3;
-                }
-
-                // Flow consistency: fraction of window days flowing in divergence direction
-                let consistentDays = 0;
-                for (let j = sc2; j <= i; j++) {
-                    const df = recent[j].usd_flow || 0;
-                    if (isBear ? df < 0 : df > 0) consistentDays++;
-                }
-                const flowConsistency = consistentDays / w;
-
-                // End-day flow agreement
-                const exactFlowC2 = recent[i].usd_flow || 0;
-                const exactFlowAgrees = isBear ? exactFlowC2 < 0 : exactFlowC2 > 0;
-
-                // 4-gate confirmation — identical to renderDivergence
-                const zAgrees        = isBear ? zAtEnd <= -0.5 : zAtEnd >= 0.5;
-                const presAgrees     = isBear ? presAtEnd < 0 : presAtEnd > 0;
-                const pre3dAgrees    = avgPre3c2 === null || (isBear ? avgDaily < avgPre3c2 : avgDaily > avgPre3c2);
-                const consistAgrees  = flowConsistency >= 0.5;
-                const confirmed      = zAgrees && presAgrees && pre3dAgrees && consistAgrees;
-                const sigLabel = confirmed ? (isBear ? 'CONFIRMED Dist.' : 'CONFIRMED Accum.') : (isBear ? 'Distribution' : 'Accumulation');
-
-                // 5-factor strength — identical to renderDivergence (30/30/12/15/13)
-                const pNorm    = Math.min(Math.abs(priceMove) / (thresh * 5), 1);
-                const fNorm    = maxAbsFlow > 0 ? Math.min(Math.abs(flowSum) / maxAbsFlow, 1) : 0;
-                const wNorm    = w / 10;
-                const cNorm    = flowConsistency;
-                const eDayNorm = exactFlowAgrees
-                    ? Math.min(Math.abs(exactFlowC2) / (Math.abs(avgDaily) || 1), 1.5) / 1.5
-                    : 0;
-                const strength = Math.round(
-                    pNorm    * 0.30 * 100 +
-                    fNorm    * 0.30 * 100 +
-                    wNorm    * 0.12 * 100 +
-                    cNorm    * 0.15 * 100 +
-                    eDayNorm * 0.13 * 100
-                );
-
-                // Context flow metrics for CSV (same logic as renderDivergence)
-                const sc = i - w + 1; // window start index in recent[]
-                const canPost3c = (i + 3) < recent.length;
-                const canPre3c  = (sc - 3) >= 0;
-                const canLocalc = canPre3c && canPost3c;
-
-                let avgCenter7c = null;
-                if (canLocalc) {
-                    let sum = 0;
-                    const localLenC = w + 6;
-                    for (let k = sc - 3; k <= i + 3; k++) sum += (recent[k].usd_flow || 0);
-                    avgCenter7c = sum / localLenC;
-                }
-                let avgPost3c = null;
-                if (canPost3c) {
-                    avgPost3c = ((recent[i+1].usd_flow || 0) + (recent[i+2].usd_flow || 0) + (recent[i+3].usd_flow || 0)) / 3;
-                }
-                let avgPre3c = null;
-                if (canPre3c) {
-                    avgPre3c = ((recent[sc-3].usd_flow || 0) + (recent[sc-2].usd_flow || 0) + (recent[sc-1].usd_flow || 0)) / 3;
-                }
-                const exactFlowC = recent[i].usd_flow || 0;
-                const sIdxC = dataOffset + i - w; // data[] index of s-1
-                let avgPrePeriodC = null;
-                if (sIdxC >= 30) {
-                    avgPrePeriodC = (data[sIdxC].cumulative_flow - data[sIdxC - 30].cumulative_flow) / 30;
-                }
-
-                results.push({
-                    date: cur.date,
-                    window: `${w}d`,
-                    type: type,
-                    price_change: (priceMove * 100).toFixed(2) + '%',
-                    net_flow: flowSum.toFixed(2),
-                    avg_daily: avgDaily.toFixed(2),
-                    z_score: zAtEnd.toFixed(2),
-                    pressure: presAtEnd,
-                    flow_consistency: (flowConsistency * 100).toFixed(0) + '%',
-                    signal: sigLabel,
-                    strength: strength,
-                    avg_center7: avgCenter7c !== null ? avgCenter7c.toFixed(2) : 'N/A',
-                    avg_post3: avgPost3c !== null ? avgPost3c.toFixed(2) : 'N/A',
-                    avg_pre3: avgPre3c !== null ? avgPre3c.toFixed(2) : 'N/A',
-                    exact_flow: exactFlowC.toFixed(2),
-                    avg_pre_period: avgPrePeriodC !== null ? avgPrePeriodC.toFixed(2) : 'N/A'
-                });
-
-                i -= (w - 1);
-                break;
-            }
-        }
-    }
-
+    const results  = scanDivergences(data, thresh, lookback);
     if (!results.length) return alert('No significant divergences found.');
 
-    const headers = ['Date', 'Window', 'Type', 'Price Change', 'Net Flow', 'Avg/Day', 'Z-Score', 'Pressure', 'Flow Consistency',
-                     'Local Avg (s-3 to e+3)', 'Post-3D Avg (e+1 to e+3)', 'Pre-3D Avg (s-3 to s-1)', 'Day Flow (e)', 'Base-30D Avg (s-30 to s-1)',
-                     'Signal', 'Strength'];
+    const fmtN  = (v) => v !== null ? v.toFixed(2) : 'N/A';
+    const sigStr = (r) => r.confirmed
+        ? (r.isBear ? 'CONFIRMED Dist.' : 'CONFIRMED Accum.')
+        : (r.isBear ? 'Distribution' : 'Accumulation');
+
+    const headers = [
+        'Date','Window','Type','Price Change','Net Flow','Avg/Day','Z-Score','Pressure',
+        'Flow Consistency','Local Avg (s-3 to e+3)','Post-3D Avg (e+1 to e+3)',
+        'Pre-3D Avg (s-3 to s-1)','Day Flow (e)','Base-30D Avg (s-30 to s-1)','Signal','Strength'
+    ];
     const csvRows = results.map(r => [
-        r.date, r.window, r.type, r.price_change, r.net_flow, r.avg_daily, r.z_score, r.pressure, r.flow_consistency,
-        r.avg_center7, r.avg_post3, r.avg_pre3, r.exact_flow, r.avg_pre_period,
-        r.signal, r.strength
+        r.date, `${r.window}d`, r.type,
+        (r.priceMove*100).toFixed(2)+'%', r.flowSum.toFixed(2), r.avgDaily.toFixed(2),
+        r.zAtEnd.toFixed(2), r.presAtEnd,
+        (r.flowConsistency*100).toFixed(0)+'%',
+        fmtN(r.avgCenter7), fmtN(r.avgPost3), fmtN(r.avgPre3),
+        r.exactFlow.toFixed(2), fmtN(r.avgPrePeriod),
+        sigStr(r), r.strength
     ].join(','));
 
     const csvContent = [headers.join(','), ...csvRows].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    const url  = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = `${tk}_divergences.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    link.href = url; link.download = `${tk}_divergences.csv`;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
 // ---- Yearly Flow Activity Matrix ----
