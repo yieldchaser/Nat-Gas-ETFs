@@ -77,7 +77,7 @@ function rollingZScore(arr, window) {
         const mean = sum / cnt;
         let ss = 0;
         for (let j = i - window + 1; j <= i; j++) if (arr[j] != null) ss += (arr[j] - mean) ** 2;
-        const std = Math.sqrt(ss / cnt);
+        const std = Math.sqrt(ss / (cnt - 1));
         out[i] = std > 0.0001 ? (arr[i] - mean) / std : 0;
     }
     return out;
@@ -166,12 +166,12 @@ function computeComposites(data) {
         let sumSq = 0, cnt = 0;
         for (let j = i - 20; j <= i; j++) {
             if (underlying[j] != null && underlying[j-1] != null && underlying[j-1] > 0) {
-                var lr = Math.log(underlying[j] / underlying[j-1]);
+                const lr = Math.log(underlying[j] / underlying[j-1]);
                 sumSq += lr * lr;
                 cnt++;
             }
         }
-        if (cnt >= 15) realVol[i] = Math.sqrt(sumSq / cnt * 252) * 100; // annualized %
+        if (cnt >= 15) realVol[i] = Math.sqrt(sumSq / (cnt - 1) * 252) * 100; // annualized %, Bessel-corrected
     }
 
     // ── Vol Risk Premium (VRP) = Implied - Realized ──
@@ -196,10 +196,10 @@ function computeComposites(data) {
         let sum = 0, cnt = 0;
         for (let j = i - 20; j <= i; j++) { if (ngvl[j] != null) { sum += ngvl[j]; cnt++; } }
         if (cnt >= 15) {
-            var mean = sum / cnt;
-            var sumSq = 0;
-            for (let j = i - 20; j <= i; j++) { if (ngvl[j] != null) sumSq += (ngvl[j] - mean) * (ngvl[j] - mean); }
-            vov[i] = Math.sqrt(sumSq / cnt);
+            const avg = sum / cnt;
+            let ss = 0;
+            for (let j = i - 20; j <= i; j++) { if (ngvl[j] != null) ss += (ngvl[j] - avg) * (ngvl[j] - avg); }
+            vov[i] = Math.sqrt(ss / cnt);
         }
     }
 
@@ -237,54 +237,64 @@ function computeComposites(data) {
         }
     }
 
-    // ── Signal Events (moderate thresholds) ──
+    // ── Signal Events (strength-based selection) ──
     const sadZ = rollingZScore(sad, 63);
     const rdsZ = rollingZScore(rds, 63);
     const events = [];
     for (let i = 63; i < n; i++) {
-        let signal = null, direction = null, value = null, composite = null;
+        // Evaluate ALL signals independently, pick strongest per day
+        const candidates = [];
 
         // RDS spike: z > 1.8
         if (rdsZ[i] != null && rdsZ[i] > 1.8) {
-            signal = 'RDS'; value = rds[i]; composite = rdsZ[i];
-            direction = skewRatioRoc5[i] > 0 ? 'UPSIDE SETUP' : 'DOWNSIDE SETUP';
+            candidates.push({ signal: 'RDS', value: rds[i], composite: rdsZ[i],
+                direction: skewRatioRoc5[i] > 0 ? 'UPSIDE SETUP' : 'DOWNSIDE SETUP',
+                strength: rdsZ[i] / 1.8 });
         }
-        // SAD divergence: z > 1.5 or z < -1.5
-        else if (sadZ[i] != null && Math.abs(sadZ[i]) > 1.5) {
-            signal = 'SAD'; value = sad[i]; composite = sadZ[i];
-            direction = sadZ[i] > 0 ? 'UPSIDE SKEW' : 'DOWNSIDE SKEW';
+        // SAD divergence: |z| > 1.5
+        if (sadZ[i] != null && Math.abs(sadZ[i]) > 1.5) {
+            candidates.push({ signal: 'SAD', value: sad[i], composite: sadZ[i],
+                direction: sadZ[i] > 0 ? 'UPSIDE SKEW' : 'DOWNSIDE SKEW',
+                strength: Math.abs(sadZ[i]) / 1.5 });
         }
         // CI extreme: > 82
-        else if (ci[i] != null && ci[i] > 82) {
-            signal = 'CI'; value = ci[i]; composite = ci[i];
-            direction = 'COMPLACENCY';
+        if (ci[i] != null && ci[i] > 82) {
+            candidates.push({ signal: 'CI', value: ci[i], composite: ci[i],
+                direction: 'COMPLACENCY',
+                strength: ci[i] / 82 });
         }
-        // CVC: combined z > 1.5
-        else if (cvcDown[i] != null && cvcDown[i] > 1.2) {
-            signal = 'CVC↓'; value = cvcDown[i]; composite = cvcDown[i];
-            direction = 'TOP SIGNAL';
+        // CVC Down: > 1.2
+        if (cvcDown[i] != null && cvcDown[i] > 1.2) {
+            candidates.push({ signal: 'CVC↓', value: cvcDown[i], composite: cvcDown[i],
+                direction: 'TOP SIGNAL',
+                strength: cvcDown[i] / 1.2 });
         }
-        else if (cvcUp[i] != null && cvcUp[i] > 1.2) {
-            signal = 'CVC↑'; value = cvcUp[i]; composite = cvcUp[i];
-            direction = 'BOTTOM SIGNAL';
+        // CVC Up: > 1.2
+        if (cvcUp[i] != null && cvcUp[i] > 1.2) {
+            candidates.push({ signal: 'CVC↑', value: cvcUp[i], composite: cvcUp[i],
+                direction: 'BOTTOM SIGNAL',
+                strength: cvcUp[i] / 1.2 });
         }
 
-        if (signal) {
-            // Deduplicate: skip if same signal within last 10 sessions
-            const recent = events.filter(e => e.signal === signal && i - e.idx < 10);
-            if (recent.length === 0) {
-                const fwd5  = i +  5 < n ? ((underlying[i +  5] - underlying[i]) / underlying[i] * 100) : null;
-                const fwd10 = i + 10 < n ? ((underlying[i + 10] - underlying[i]) / underlying[i] * 100) : null;
-                const fwd21 = i + 21 < n ? ((underlying[i + 21] - underlying[i]) / underlying[i] * 100) : null;
-                const fwd42 = i + 42 < n ? ((underlying[i + 42] - underlying[i]) / underlying[i] * 100) : null;
-                events.push({
-                    idx: i, date: data[i].date, signal, direction, value, composite,
-                    underlying: underlying[i],
-                    ngvl: ngvl[i], skewRatio: skewRatio[i], convexity: convexity[i], atm: atm[i],
-                    fwd5, fwd10, fwd21, fwd42,
-                    season: getSeason(data[i].date),
-                });
-            }
+        // Sort by strength descending, emit strongest that passes dedup
+        candidates.sort((a, b) => b.strength - a.strength);
+        for (const cand of candidates) {
+            const recent = events.filter(e => e.signal === cand.signal && i - e.idx < 10);
+            if (recent.length > 0) continue;
+            const fwd5  = i +  5 < n ? ((underlying[i +  5] - underlying[i]) / underlying[i] * 100) : null;
+            const fwd10 = i + 10 < n ? ((underlying[i + 10] - underlying[i]) / underlying[i] * 100) : null;
+            const fwd21 = i + 21 < n ? ((underlying[i + 21] - underlying[i]) / underlying[i] * 100) : null;
+            const fwd42 = i + 42 < n ? ((underlying[i + 42] - underlying[i]) / underlying[i] * 100) : null;
+            events.push({
+                idx: i, date: data[i].date,
+                signal: cand.signal, direction: cand.direction,
+                value: cand.value, composite: cand.composite,
+                underlying: underlying[i],
+                ngvl: ngvl[i], skewRatio: skewRatio[i], convexity: convexity[i], atm: atm[i],
+                fwd5, fwd10, fwd21, fwd42,
+                season: getSeason(data[i].date),
+            });
+            break; // strongest signal wins for this day
         }
     }
 
@@ -633,19 +643,22 @@ function computeHeatmapData(data) {
         if (r.underlying != null) months[key].underlying.push(r.underlying);
         if (r.skewRatio != null) months[key].skewRatio.push(r.skewRatio);
     });
-    // Full-history NGVL values for percentile ranking
-    var allNgvl = data.map(function(r) { return r.ngvl; }).filter(function(v) { return v != null; });
-    allNgvl.sort(function(a,b) { return a - b; });
+    // Rank each month's avg NGVL against ALL monthly averages (not daily data)
+    var sortedKeys = Object.keys(months).sort();
+    var allMonthlyAvgs = sortedKeys.map(function(key) {
+        return months[key].ngvl.reduce(function(a,b){return a+b;},0) / months[key].ngvl.length;
+    });
+    var rankedMonthlyAvgs = allMonthlyAvgs.slice().sort(function(a,b) { return a - b; });
     var result = {};
-    Object.keys(months).sort().forEach(function(key) {
+    sortedKeys.forEach(function(key, ki) {
         var m = months[key];
-        var avgNgvl = m.ngvl.reduce(function(a,b){return a+b;},0) / m.ngvl.length;
+        var avgNgvl = allMonthlyAvgs[ki];
         var avgUnd = m.underlying.reduce(function(a,b){return a+b;},0) / m.underlying.length;
         var avgSk = m.skewRatio.length ? m.skewRatio.reduce(function(a,b){return a+b;},0) / m.skewRatio.length : null;
-        // Percentile of avgNgvl in full history
+        // Percentile of avgNgvl vs all other monthly averages
         var rank = 0;
-        for (var i = 0; i < allNgvl.length; i++) { if (allNgvl[i] <= avgNgvl) rank++; }
-        var pct = (rank / allNgvl.length) * 100;
+        for (var i = 0; i < rankedMonthlyAvgs.length; i++) { if (rankedMonthlyAvgs[i] <= avgNgvl) rank++; }
+        var pct = (rank / rankedMonthlyAvgs.length) * 100;
         result[key] = { avgNgvl: avgNgvl, avgUnderlying: avgUnd, avgSkewRatio: avgSk, pct: pct, regime: ngvlRegime(pct) };
     });
     return result;
