@@ -146,17 +146,17 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .div-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
 .div-table thead tr { border-bottom: 2px solid var(--border-primary); }
 .div-table th {
-    text-align: right; padding: 10px 12px;
+    text-align: center; padding: 10px 12px;
     color: rgba(255, 255, 255, 0.85); font-size: 0.6rem; letter-spacing: 1.2px;
     text-transform: uppercase; font-weight: 800; white-space: nowrap;
 }
-.div-table th:first-child { text-align: left; }
 .div-table td {
     padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.025);
     font-family: 'JetBrains Mono', monospace; color: var(--text-primary);
-    font-size: 0.75rem; text-align: right;
+    font-size: 0.75rem; text-align: center;
 }
-.div-table td:first-child { text-align: left; }
+.div-table th:last-child, .div-table td:last-child { text-align: right; }
+
 .div-table tbody tr:nth-child(even) td { background: rgba(255,255,255,0.012); }
 .div-table tbody tr:hover td { background: rgba(255,255,255,0.04) !important; }
 .div-table tbody tr td:first-child { border-left: 3px solid transparent; }
@@ -2325,12 +2325,12 @@ function renderDivergence() {
             <td style="color:rgba(255,255,255,0.85);">${fmtUsd(r.avgDaily)}/d</td>
             <td class="${zCol}">${r.zAtEnd>=0?'+':''}${r.zAtEnd.toFixed(2)}</td>
             <td class="${presCol}">${r.presAtEnd>=0?'+':''}${r.presAtEnd}</td>
-            <td class="${ctxCol(r.avgCenter7)}" style="font-size:0.68rem;padding:6px 7px 6px 14px;border-left:1px solid rgba(255,255,255,0.08);">${fmtCtx(r.avgCenter7)}</td>
-            <td class="${ctxCol(r.avgPost3)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(r.avgPost3)}</td>
-            <td class="${ctxCol(r.avgPre3)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(r.avgPre3)}</td>
-            <td class="${exactFlowCol}" style="font-size:0.68rem;padding:6px 7px;">${fmtUsd(r.exactFlow)}/d</td>
-            <td class="${ctxCol(r.avgPrePeriod)}" style="font-size:0.68rem;padding:6px 7px;">${fmtCtx(r.avgPrePeriod)}</td>
-            <td style="padding-left:14px;border-left:1px solid rgba(255,255,255,0.08);">${sigHtml}</td>
+            <td class="${ctxCol(r.avgCenter7)}" style="border-left:1px solid rgba(255,255,255,0.08);">${fmtCtx(r.avgCenter7)}</td>
+            <td class="${ctxCol(r.avgPost3)}">${fmtCtx(r.avgPost3)}</td>
+            <td class="${ctxCol(r.avgPre3)}">${fmtCtx(r.avgPre3)}</td>
+            <td class="${exactFlowCol}">${fmtUsd(r.exactFlow)}/d</td>
+            <td class="${ctxCol(r.avgPrePeriod)}">${fmtCtx(r.avgPrePeriod)}</td>
+            <td style="border-left:1px solid rgba(255,255,255,0.08);">${sigHtml}</td>
             <td class="${strCol}" style="font-weight:700;background:${strBar};">${r.strength}</td>
         </tr>`;
     }
