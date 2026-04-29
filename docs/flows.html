@@ -2363,20 +2363,20 @@ function renderDivergence() {
 
         html += `<tr>
             <td style="color:rgba(255,255,255,0.85);font-size:0.7rem;border-left:3px solid ${rowAccent};">${fmtDateLong(r.date)}</td>
-            <td style="color:rgba(255,255,255,0.85);">${r.window}d</td>
-            <td><span class="div-badge ${badgeClass}">${r.type}</span></td>
-            <td class="${r.priceMove>=0?'val-green':'val-red'}">${fmtPct(r.priceMove)}</td>
-            <td class="${r.flowSum>=0?'val-green':'val-red'}">${fmtUsd(r.flowSum)}</td>
-            <td style="color:rgba(255,255,255,0.85);">${fmtUsd(r.avgDaily)}/d</td>
-            <td class="${zCol}">${r.zAtEnd>=0?'+':''}${r.zAtEnd.toFixed(2)}</td>
-            <td class="${presCol}">${r.presAtEnd>=0?'+':''}${r.presAtEnd}</td>
-            <td class="${ctxCol(r.avgCenter7)}" style="border-left:1px solid rgba(255,255,255,0.08);">${fmtCtx(r.avgCenter7)}</td>
-            <td class="${ctxCol(r.avgPost3)}">${fmtCtx(r.avgPost3)}</td>
-            <td class="${ctxCol(r.avgPre3)}">${fmtCtx(r.avgPre3)}</td>
-            <td class="${exactFlowCol}">${fmtUsd(r.exactFlow)}/d</td>
-            <td class="${ctxCol(r.avgPrePeriod)}">${fmtCtx(r.avgPrePeriod)}</td>
+            <td style="color:rgba(255,255,255,0.85);" data-tooltip="Duration of divergence window">${r.window}d</td>
+            <td><span class="div-badge ${badgeClass}" data-tooltip="Signal Type: ${r.type}">${r.type}</span></td>
+            <td class="${r.priceMove>=0?'val-green':'val-red'}" data-tooltip="Price change over the ${r.window}d window">${fmtPct(r.priceMove)}</td>
+            <td class="${r.flowSum>=0?'val-green':'val-red'}" data-tooltip="Cumulative net flow over the ${r.window}d window">${fmtUsd(r.flowSum)}</td>
+            <td style="color:rgba(255,255,255,0.85);" data-tooltip="Average daily flow (${fmtUsd(r.flowSum)} ÷ ${r.window} days)">${fmtUsd(r.avgDaily)}/d</td>
+            <td class="${zCol}" data-tooltip="Z-Score on ${fmtDateLong(r.date)} (Threshold: ±1.5)">${r.zAtEnd>=0?'+':''}${r.zAtEnd.toFixed(2)}</td>
+            <td class="${presCol}" data-tooltip="Flow pressure metric on ${fmtDateLong(r.date)}">${r.presAtEnd>=0?'+':''}${r.presAtEnd}</td>
+            <td class="${ctxCol(r.avgCenter7)}" style="border-left:1px solid rgba(255,255,255,0.08);" data-tooltip="Local 7-day average flow (3 days before to 3 days after signal)">${fmtCtx(r.avgCenter7)}</td>
+            <td class="${ctxCol(r.avgPost3)}" data-tooltip="Immediate 3-day average flow AFTER signal">${fmtCtx(r.avgPost3)}</td>
+            <td class="${ctxCol(r.avgPre3)}" data-tooltip="Leading 3-day average flow BEFORE signal">${fmtCtx(r.avgPre3)}</td>
+            <td class="${exactFlowCol}" data-tooltip="Exact net flow on the signal date">${fmtUsd(r.exactFlow)}/d</td>
+            <td class="${ctxCol(r.avgPrePeriod)}" data-tooltip="Baseline 30-day average flow leading up to the window">${fmtCtx(r.avgPrePeriod)}</td>
             <td style="border-left:1px solid rgba(255,255,255,0.08);">${sigHtml}</td>
-            <td class="${strCol}" style="font-weight:700;background:${strBar};">${r.strength}</td>
+            <td class="${strCol}" style="font-weight:700;background:${strBar};" data-tooltip="Signal strength score (0-100) based on price move, flow magnitude, duration, and consistency">${r.strength}</td>
         </tr>`;
     }
 
@@ -2514,7 +2514,7 @@ function renderYearlyMatrix() {
     html += `<tr style="border-top:1px solid rgba(255,255,255,0.1);"><td class="matrix-year" style="color:rgba(255, 255, 255, 0.85);font-size:0.75rem;letter-spacing:1px;font-weight:800;">TOTAL</td>`;
     tickers.forEach(tk => {
         const t = totals[tk];
-        html += `<td style="opacity:0.6;"><span style="font-weight:700;font-size:0.75rem;">${t.count}</span><span style="font-size:0.56rem;color:${zColor(t.avgZ)};margin-left:3px;">(${t.avgZ.toFixed(1)}σ)</span></td>`;
+        html += `<td style="opacity:0.6;" data-tooltip="Total ${t.count} flow events historically for ${tk} (Avg |Z|: ${t.avgZ.toFixed(1)})"><span style="font-weight:700;font-size:0.75rem;">${t.count}</span><span style="font-size:0.56rem;color:${zColor(t.avgZ)};margin-left:3px;">(${t.avgZ.toFixed(1)}σ)</span></td>`;
     });
     html += `</tr></tbody></table>`;
     container.innerHTML = html;
@@ -2775,21 +2775,21 @@ function renderCrossDivergence() {
 
         html += `<tr>
             <td style="color:rgba(255,255,255,0.7);font-size:0.65rem;border-left:3px solid ${rowAccent};">${fmtDateLong(r.date)}</td>
-            <td style="color:rgba(255,255,255,0.65);font-size:0.65rem;">${r.window}d</td>
-            <td><span class="div-badge ${badgeClass}" style="padding:1px 5px;font-size:0.58rem;min-width:40px;display:inline-block;text-align:center;">${typeLabel}</span></td>
-            <td class="${r.longDelta >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(r.longDelta)}</td>
-            <td class="${r.shortDelta >= 0 ? 'val-green' : 'val-red'}">${fmtUsd(r.shortDelta)}</td>
-            <td class="${spreadCol}" style="font-weight:700;">${fmtUsd(r.spread)}</td>
-            <td style="color:rgba(255,255,255,0.85);">${fmtUsd(r.avgDaily)}/d</td>
-            <td class="${breadthCol}" style="font-weight:700;">${r.breadth}/6</td>
-            <td class="${consCol}" style="font-weight:600;">${(r.consistency*100).toFixed(0)}%</td>
-            <td style="text-align:center;width:30px;">${sentIcon}</td>
-            <td class="${ctxCol(r.avgPre3)}" style="border-left:1px solid rgba(255,255,255,0.08);">${fmtCtx(r.avgPre3)}</td>
-            <td class="${ctxCol(r.avgPost3)}">${fmtCtx(r.avgPost3)}</td>
-            <td class="${daySpreadCol}">${fmtUsd(r.exactDaySpread)}/d</td>
-            <td class="${ctxCol(r.avgBase30)}">${fmtCtx(r.avgBase30)}</td>
+            <td style="color:rgba(255,255,255,0.65);font-size:0.65rem;" data-tooltip="Duration of cross-divergence window">${r.window}d</td>
+            <td><span class="div-badge ${badgeClass}" style="padding:1px 5px;font-size:0.58rem;min-width:40px;display:inline-block;text-align:center;" data-tooltip="Signal Type: ${r.type}">${typeLabel}</span></td>
+            <td class="${r.longDelta >= 0 ? 'val-green' : 'val-red'}" data-tooltip="Cumulative long-side ETF flow over ${r.window}d">${fmtUsd(r.longDelta)}</td>
+            <td class="${r.shortDelta >= 0 ? 'val-green' : 'val-red'}" data-tooltip="Cumulative short-side ETF flow over ${r.window}d">${fmtUsd(r.shortDelta)}</td>
+            <td class="${spreadCol}" style="font-weight:700;" data-tooltip="Net Cross-Spread (Longs - Shorts) over ${r.window}d">${fmtUsd(r.spread)}</td>
+            <td style="color:rgba(255,255,255,0.85);" data-tooltip="Average daily cross-spread (${fmtUsd(r.spread)} ÷ ${r.window} days)">${fmtUsd(r.avgDaily)}/d</td>
+            <td class="${breadthCol}" style="font-weight:700;" data-tooltip="${r.breadth} out of 6 ETFs aligned with the divergence direction">${r.breadth}/6</td>
+            <td class="${consCol}" style="font-weight:600;" data-tooltip="Spread moved in the divergence direction on ${(r.consistency*100).toFixed(0)}% of the ${r.window} days">${(r.consistency*100).toFixed(0)}%</td>
+            <td style="text-align:center;width:30px;" data-tooltip="30-day baseline structural sentiment: ${r.sentiment}">${sentIcon}</td>
+            <td class="${ctxCol(r.avgPre3)}" style="border-left:1px solid rgba(255,255,255,0.08);" data-tooltip="Leading 3-day average cross-spread BEFORE signal">${fmtCtx(r.avgPre3)}</td>
+            <td class="${ctxCol(r.avgPost3)}" data-tooltip="Immediate 3-day average cross-spread AFTER signal">${fmtCtx(r.avgPost3)}</td>
+            <td class="${daySpreadCol}" data-tooltip="Exact cross-spread on the signal date">${fmtUsd(r.exactDaySpread)}/d</td>
+            <td class="${ctxCol(r.avgBase30)}" data-tooltip="Baseline 30-day average cross-spread leading up to the window">${fmtCtx(r.avgBase30)}</td>
             <td style="border-left:1px solid rgba(255,255,255,0.08);">${sigHtml}</td>
-            <td class="${strCol}" style="font-weight:700;background:${strBar};">${r.strength}</td>
+            <td class="${strCol}" style="font-weight:700;background:${strBar};" data-tooltip="Cross-signal strength score (0-100) based on spread magnitude, breadth, duration, and consistency">${r.strength}</td>
         </tr>`;
     }
     tbody.innerHTML = html;
