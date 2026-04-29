@@ -369,6 +369,13 @@ Every signal is subjected to rigorous institutional-grade validation:
 - **Ensemble Confluence Rows** — Metrics for **CONF ≥2** and **CONF ≥3** clusters.
 - **Seasonality Bias** — Per-signal seasonal hit rates (❄️🌱☀️🍂) identify structural tailwinds.
 
+#### Signal Activity Heatmap
+A dynamic 180-day visual calendar that maps the intersection of volatility regime and signal generation:
+- **Regime-Colored Days** — Daily blocks color-coded by the 252D volatility percentile.
+- **Signal Overlays** — Visual dots map exact days where composite signals fired.
+- **Pagination Navigation** — Glassmorphism toggles allow paging between recent 90-day and historical 90-day intervals.
+- **Clustering Analysis** — Instantly highlights periods of signal clustering during extreme regimes.
+
 #### Cross-Signal Framework (Integration Matrix)
 
 A strategic reference panel that explains how to use CVOL conviction as a multiplier for other dashboards:
@@ -626,4 +633,4 @@ MIT — Free for personal and commercial use.
 
 ---
 
-**Questions?** Hover any metric label on the dashboard for detailed explanations — all three pages are self-documenting via tooltips.
+**Questions?** Hover any metric label on the dashboard for detailed explanations — all four dashboards are self-documenting via comprehensive dynamic tooltips.
