@@ -453,6 +453,12 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <a href="flows.html" class="nav-link">FLOW MONITOR</a>
             <a href="cvol.html" class="nav-link">CVOL</a>
         </nav>
+        <div class="market-status" id="market-status">
+            <span class="status-dot"></span>
+            <span class="status-text">CYCLE DATA</span>
+        </div>
+        <div class="last-updated" id="last-updated">--</div>
+        <button class="refresh-btn" id="refresh-btn" title="Refresh Data" onclick="location.reload()">&#x21bb;</button>
     </div>
 </header>
 
@@ -1590,16 +1596,25 @@ updateSliderFill(); // set fill on page load
 // Badge start year is set dynamically after data loads (see updateBadge())
 function updateBadge() {
     let startYear = null;
+    let lastDate = null;
     for (const t of TICKERS) {
         const d = state.rawData[t.symbol];
         if (d && d.dates && d.dates.length) {
             const y = new Date(d.dates[0]).getFullYear();
             if (!startYear || y < startYear) startYear = y;
+            
+            const lDate = d.dates[d.dates.length - 1];
+            if (!lastDate || lDate > lastDate) lastDate = lDate;
         }
     }
     const endYear = new Date().getFullYear();
     document.getElementById('tp-badge').textContent =
         startYear ? `NAT GAS ETFs · ${startYear}\u2013${endYear}` : `NAT GAS ETFs · \u2013${endYear}`;
+        
+    const luEl = document.getElementById('last-updated');
+    if (luEl && lastDate) {
+        luEl.textContent = `Updated: ${lastDate}`;
+    }
 }
 updateBadge();
 initFilterTabs();
