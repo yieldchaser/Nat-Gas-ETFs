@@ -594,18 +594,28 @@ function renderScorecard(composites) {
         var optCell = r.optHorizon
             ? '<span style="color:#f59e0b;font-weight:800;letter-spacing:0.5px;" data-tooltip="Optimal Holding Period: ' + r.optHorizon.label + ' (Sharpe ' + fmt(r.optHorizon.sharpe * annFactor, 2) + ', Hit ' + Math.round(r.optHorizon.hr) + '%, n=' + r.optHorizon.n + '). This is the window where this signal has historically produced the best risk-adjusted return.">' + r.optHorizon.label + '</span>'
             : (r.count > 0 ? '<span style="color:#ef4444;font-weight:800;" data-tooltip="No directional edge detected at any measured timeframe (5D/10D/21D/42D) for this regime. Hit rates are \u226450% or Sharpe \u22640. Do not rely on this signal for trend-following entries.">NONE</span>' : '<span style="color:rgba(255, 255, 255, 0.85)">\u2014</span>');
+        var hit5TT = r.hitRate5 != null ? `Historically, ${Math.round(r.hitRate5)}% of ${r.signal} signals were profitable after 5 days.` : 'No 5D data available.';
+        var hit21TT = r.hitRate21 != null ? `Historically, ${Math.round(r.hitRate21)}% of ${r.signal} signals were profitable after 21 days (1 month).` : 'No 21D data available.';
+        var avg5TT = r.avgRet5 != null ? `Average return 5 days after a ${r.signal} event is ${fmt(r.avgRet5)}%.` : 'No 5D return data.';
+        var avg21TT = r.avgRet21 != null ? `Average return 21 days after a ${r.signal} event is ${fmt(r.avgRet21)}%.` : 'No 21D return data.';
+        var med21TT = r.median21 != null ? `Median return 21 days after a ${r.signal} event is ${fmt(r.median21)}%.` : 'No median data.';
+        var mag21TT = r.mag21 != null ? `Average absolute price move (up or down) over 21 days is ${fmt(r.mag21)}%.` : 'No magnitude data.';
+        var best21TT = r.best21 != null ? `The single best 21-day outcome for a ${r.signal} event was a ${fmt(r.best21)}% gain.` : 'No best outcome data.';
+        var worst21TT = r.worst21 != null ? `The single worst 21-day outcome for a ${r.signal} event was a ${fmt(r.worst21)}% loss.` : 'No worst outcome data.';
+        var sharpeTT = annSharpe != null ? `Annualized Sharpe Ratio of ${fmt(annSharpe, 2)}. (>0.5 is good, >1.0 is excellent).` : 'Insufficient data to calculate Sharpe.';
+
         html += '<tr' + (r.isEnsemble ? ' style="background:rgba(0,229,255,0.04);border-top:2px solid rgba(0,229,255,0.15);"' : '') + '>' +
             '<td style="color:'+sc+';font-weight:800;"' + (r.isEnsemble ? ' data-tooltip="Ensemble: combined performance for ALL events where '+r.signal.replace('CONF ','')+' other signals also fired within ±5 sessions. Higher confluence = higher conviction."' : '') + '>' + (r.isEnsemble ? '🔗 ' : '') + r.signal + seaBadge + '</td>' +
             '<td>' + countCell + '</td>' +
-            '<td style="color:'+(r.hitRate5!=null?(r.hitRate5>55?'#3db87a':'#ef4444'):'rgba(255, 255, 255, 0.85)')+'">'+fmt(r.hitRate5,0)+'%</td>' +
-            '<td style="color:'+hrColor+'">'+fmt(r.hitRate21,0)+'%<span class="score-bar" style="width:'+barW+'px;background:'+hrColor+';"></span></td>' +
-            '<td style="color:'+pctColor(r.avgRet5)+'">'+((r.avgRet5!=null&&r.avgRet5>0)?'+':'')+fmt(r.avgRet5)+'%</td>' +
-            '<td style="color:'+pctColor(r.avgRet21)+'">'+((r.avgRet21!=null&&r.avgRet21>0)?'+':'')+fmt(r.avgRet21)+'%</td>' +
-            '<td style="color:'+pctColor(r.median21)+'">'+((r.median21!=null&&r.median21>0)?'+':'')+fmt(r.median21)+'%</td>' +
-            '<td style="color:var(--text-bright)">'+fmt(r.mag21)+'%</td>' +
-            '<td style="color:#3db87a">'+((r.best21!=null&&r.best21>0)?'+':'')+fmt(r.best21)+'%</td>' +
-            '<td style="color:#ef4444">'+fmt(r.worst21)+'%</td>' +
-            '<td style="color:'+(annSharpe!=null?(annSharpe>0?'#3db87a':'#ef4444'):'rgba(255, 255, 255, 0.85)')+'">'+fmt(annSharpe,2)+'</td>' +
+            '<td data-tooltip="'+hit5TT+'" style="color:'+(r.hitRate5!=null?(r.hitRate5>55?'#3db87a':'#ef4444'):'rgba(255, 255, 255, 0.85)')+'">'+fmt(r.hitRate5,0)+'%</td>' +
+            '<td data-tooltip="'+hit21TT+'" style="color:'+hrColor+'">'+fmt(r.hitRate21,0)+'%<span class="score-bar" style="width:'+barW+'px;background:'+hrColor+';"></span></td>' +
+            '<td data-tooltip="'+avg5TT+'" style="color:'+pctColor(r.avgRet5)+'">'+((r.avgRet5!=null&&r.avgRet5>0)?'+':'')+fmt(r.avgRet5)+'%</td>' +
+            '<td data-tooltip="'+avg21TT+'" style="color:'+pctColor(r.avgRet21)+'">'+((r.avgRet21!=null&&r.avgRet21>0)?'+':'')+fmt(r.avgRet21)+'%</td>' +
+            '<td data-tooltip="'+med21TT+'" style="color:'+pctColor(r.median21)+'">'+((r.median21!=null&&r.median21>0)?'+':'')+fmt(r.median21)+'%</td>' +
+            '<td data-tooltip="'+mag21TT+'" style="color:var(--text-bright)">'+fmt(r.mag21)+'%</td>' +
+            '<td data-tooltip="'+best21TT+'" style="color:#3db87a">'+((r.best21!=null&&r.best21>0)?'+':'')+fmt(r.best21)+'%</td>' +
+            '<td data-tooltip="'+worst21TT+'" style="color:#ef4444">'+fmt(r.worst21)+'%</td>' +
+            '<td data-tooltip="'+sharpeTT+'" style="color:'+(annSharpe!=null?(annSharpe>0?'#3db87a':'#ef4444'):'rgba(255, 255, 255, 0.85)')+'">'+fmt(annSharpe,2)+'</td>' +
             '<td style="text-align:center">'+confBadge(r.hitRate21!=null?Math.round(r.hitRate21/100*r.count):null,r.count)+'</td>' +
             '<td style="text-align:center">' + optCell + '</td>' +
             '</tr>';
@@ -730,14 +740,19 @@ function renderTimeline(composites, filter) {
             : isRecent ? '<span class="pending-label" data-tooltip="Market Validation Pending: This signal fired less than 5 sessions ago. Volatility signals often require 3-5 days of \'digestion\' before price reflects the options-market bias.">PENDING</span>' : '—';
         var fwd21Html = e.fwd21 != null ? '<span style="color:' + pctColor(e.fwd21) + '">' + ((e.fwd21>0?'+':'') + fmt(e.fwd21) + '%') + '</span>'
             : isRecent ? '<span class="pending-label" data-tooltip="Institutional Alpha Window Pending: This signal fired less than 21 sessions ago. We use a full trading month (21 days) as the Gold Standard for validating options-surface predictive power.">PENDING</span>' : '—';
+        var valTT = `Raw signal value on ${fmtDate(e.date)}: ${fmt(e.value, 3)}`;
+        var priceTT = `Closing price of NG=F on ${fmtDate(e.date)}: $${fmt(e.underlying, 2)}`;
+        var fwd5TT = e.fwd5 != null ? `5-day return from $${fmt(e.underlying, 2)} was ${fmt(e.fwd5)}%.` : '5-day return is pending.';
+        var fwd21TT = e.fwd21 != null ? `21-day return from $${fmt(e.underlying, 2)} was ${fmt(e.fwd21)}%.` : '21-day return is pending.';
+
         html += '<tr data-evt-idx="' + e.idx + '"' + (conf >= 2 ? ' style="border-left:2px solid rgba(245,158,11,0.3);"' : '') + '>' +
             '<td style="color:rgba(255, 255, 255, 0.85);">'+fmtDate(e.date)+'</td>' +
             '<td><span class="sig-badge" style="'+(sigColors[e.signal]||'')+'" data-tooltip="'+(sigTooltips[e.signal]||'')+'">'+e.signal+'</span></td>' +
-            '<td style="color:'+dirColor+';font-weight:700;">'+e.direction+'</td>' +
-            '<td>'+fmt(e.value,3)+'</td>' +
-            '<td>$'+fmt(e.underlying,2)+'</td>' +
-            '<td>'+fwd5Html+'</td>' +
-            '<td>'+fwd21Html+'</td>' +
+            '<td style="color:'+dirColor+';font-weight:700;" data-tooltip="Implied direction based on this signal.">'+e.direction+'</td>' +
+            '<td data-tooltip="'+valTT+'">'+fmt(e.value,3)+'</td>' +
+            '<td data-tooltip="'+priceTT+'">$'+fmt(e.underlying,2)+'</td>' +
+            '<td data-tooltip="'+fwd5TT+'">'+fwd5Html+'</td>' +
+            '<td data-tooltip="'+fwd21TT+'">'+fwd21Html+'</td>' +
             '<td>'+confHtml+' '+cwHtml+'</td>' +
             '<td><span style="color:'+s.c+'" data-tooltip="'+s.n+' season">'+s.e+' '+s.n+'</span></td>' +
             '</tr>';
