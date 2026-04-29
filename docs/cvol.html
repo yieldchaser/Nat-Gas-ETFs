@@ -275,6 +275,12 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <a href="flows.html" class="nav-link" data-tooltip="ETF fund flow tracking">FLOW MONITOR</a>
             <a href="cvol.html" class="nav-link active" data-tooltip="CME CVOL volatility intelligence">CVOL</a>
         </nav>
+        <div class="market-status" id="market-status">
+            <span class="status-dot"></span>
+            <span class="status-text">CVOL DATA</span>
+        </div>
+        <div class="last-updated" id="last-updated">--</div>
+        <button class="refresh-btn" id="refresh-btn" title="Refresh Data" onclick="location.reload()">&#x21bb;</button>
     </div>
 </header>
 

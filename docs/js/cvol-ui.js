@@ -1296,6 +1296,11 @@ function renderVarSeriesChips() {
         if (CvolState.composites.skewRatioRoc5) {
             for (var ri = 0; ri < data.length; ri++) data[ri].skewRoc5 = CvolState.composites.skewRatioRoc5[ri];
         }
+        
+        var lastDate = data[data.length - 1].date;
+        var luEl = document.getElementById('last-updated');
+        if (luEl) luEl.textContent = 'Updated: ' + lastDate;
+
         document.getElementById('cvol-loading').style.display = 'none';
         document.getElementById('cvol-dashboard').style.display = 'block';
         renderSeriesChips();
