@@ -18,7 +18,7 @@ const App = {
     },
 
     bindEvents() {
-        document.getElementById('refresh-btn').addEventListener('click', () => this.refresh());
+
         window.addEventListener('resize', () => this.handleResize());
     },
 

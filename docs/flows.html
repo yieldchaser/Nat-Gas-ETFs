@@ -369,7 +369,6 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <span class="status-text">FLOW DATA</span>
             </div>
             <div class="last-updated" id="last-updated">--</div>
-            <button class="refresh-btn" id="refresh-btn" title="Refresh Data">&#x21bb;</button>
         </div>
     </header>
 
@@ -3057,11 +3056,7 @@ window.addEventListener('resize', () => {
     const zd = getZVisibleData(); if (zd && zd.length > 0) drawChartZ(zd);
     renderCrossChart();
 });
-document.getElementById('refresh-btn').addEventListener('click', () => {
-    state.cache = {};
-    state.summary = null;
-    init();
-});
+
 
 // Universal Tooltip System
 (function () {
