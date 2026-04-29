@@ -488,49 +488,63 @@ document.addEventListener('DOMContentLoaded', () => App.init());
     document.body.appendChild(tt);
 
     let active = null;
+    let hideTimer = null;
 
     function show(el) {
-        if (el === active) return;
+        if (el === active && tt.classList.contains('visible')) return;
         active = el;
-        tt.textContent = el.getAttribute('data-tooltip');
-        tt.style.display = 'block';
-        tt.style.opacity = '0';
+        tt.innerHTML = el.getAttribute('data-tooltip');
+        
+        if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+        
+        tt.classList.add('visible');
 
         // Position after paint so offsetWidth/Height are correct
         requestAnimationFrame(function () {
-            const r   = el.getBoundingClientRect();
-            const tw  = tt.offsetWidth;
-            const th  = tt.offsetHeight;
+            const r = el.getBoundingClientRect();
+            const tw = tt.offsetWidth;
+            const th = tt.offsetHeight;
             const pad = 8;
+            const GAP = 12;
 
             // Default: above element, horizontally centred
             let x = r.left + r.width / 2 - tw / 2;
-            let y = r.top - th - 8;
+            let y = r.top - th - GAP;
 
             // Flip below if no room above
-            if (y < pad) y = r.bottom + 8;
+            if (y < pad) y = r.bottom + GAP;
 
             // Clamp horizontally to viewport
             x = Math.max(pad, Math.min(x, window.innerWidth - tw - pad));
 
             tt.style.left = x + 'px';
-            tt.style.top  = y + 'px';
-            tt.style.opacity = '1';
+            tt.style.top = y + 'px';
         });
     }
 
     function hide() {
-        tt.style.opacity = '0';
-        tt.style.display = 'none';
+        hideTimer = setTimeout(() => {
+            tt.classList.remove('visible');
+            active = null;
+        }, 80); // Slight delay for smoother feel
+    }
+
+    function hideImmediate() {
+        if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+        tt.classList.remove('visible');
         active = null;
     }
 
     document.addEventListener('mouseover', function (e) {
         const el = e.target.closest('[data-tooltip]');
-        if (el) show(el); else hide();
+        if (el) show(el);
     });
 
-    document.addEventListener('mouseleave', function () { hide(); }, true);
+    document.addEventListener('mouseout', function (e) {
+        if (e.target.closest('[data-tooltip]')) {
+            hide();
+        }
+    });
 
     // Touch: tap to show tooltip, auto-dismiss after 2.5s or on next tap elsewhere
     let touchTimer = null;
@@ -538,11 +552,11 @@ document.addEventListener('DOMContentLoaded', () => App.init());
         const el = e.target.closest('[data-tooltip]');
         clearTimeout(touchTimer);
         if (el) {
-            if (active === el) { hide(); return; }
+            if (active === el) { hideImmediate(); return; }
             show(el);
-            touchTimer = setTimeout(hide, 2500);
+            touchTimer = setTimeout(hideImmediate, 2500);
         } else {
-            hide();
+            hideImmediate();
         }
     }, { passive: true });
 }());
