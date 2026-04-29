@@ -510,25 +510,31 @@ footer {
 [data-tooltip] { cursor: help; }
 
 #tt {
-    display: none;
     position: fixed;
     z-index: 99999;
-    background: #181820;
-    border: 1px solid #303040;
-    color: #e8e8f0;
-    font-size: 0.65rem;
-    line-height: 1.45;
+    background: rgba(16, 17, 20, 0.97); /* Deep dark theme */
+    backdrop-filter: blur(8px);         /* Glass effect */
+    color: #adbac7;                     /* Muted primary text */
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.55;
     font-weight: 400;
-    padding: 6px 10px;
-    border-radius: 5px;
-    white-space: normal;
-    max-width: 220px;
+    max-width: 280px;
     text-align: left;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
-    pointer-events: none;
+    border: 1px solid rgba(0, 212, 255, 0.25); /* Subtle accent border */
+    box-shadow: 0 8px 28px rgba(0,0,0,0.6);   /* Depth */
+    pointer-events: none;               /* Never blocks mouse interaction */
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    transform: translateY(8px);
+    font-family: 'Inter', 'JetBrains Mono', system-ui, sans-serif;
     word-break: break-word;
+}
+
+#tt.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /* ---- MOBILE 480px ---- */

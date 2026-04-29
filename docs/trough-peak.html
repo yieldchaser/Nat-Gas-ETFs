@@ -2103,32 +2103,72 @@ function drawChartOverlay(canvas, data, cycles, tickerColor) {
     tt.id = 'tt';
     document.body.appendChild(tt);
     let active = null;
+    let hideTimer = null;
+
     function show(el) {
-        if (el === active) return;
+        if (el === active && tt.classList.contains('visible')) return;
         active = el;
-        tt.textContent = el.getAttribute('data-tooltip');
-        tt.style.display = 'block';
-        tt.style.opacity = '0';
+        tt.innerHTML = el.getAttribute('data-tooltip');
+        
+        if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+        
+        tt.classList.add('visible');
+
         requestAnimationFrame(function () {
-            const r  = el.getBoundingClientRect();
+            const r = el.getBoundingClientRect();
             const tw = tt.offsetWidth;
             const th = tt.offsetHeight;
             const pad = 8;
+            const GAP = 12;
+
             let x = r.left + r.width / 2 - tw / 2;
-            let y = r.top - th - 8;
-            if (y < pad) y = r.bottom + 8;
+            let y = r.top - th - GAP;
+
+            if (y < pad) y = r.bottom + GAP;
+
             x = Math.max(pad, Math.min(x, window.innerWidth - tw - pad));
+
             tt.style.left = x + 'px';
-            tt.style.top  = y + 'px';
-            tt.style.opacity = '1';
+            tt.style.top = y + 'px';
         });
     }
-    function hide() { tt.style.opacity = '0'; tt.style.display = 'none'; active = null; }
+
+    function hide() {
+        hideTimer = setTimeout(() => {
+            tt.classList.remove('visible');
+            active = null;
+        }, 80);
+    }
+
+    function hideImmediate() {
+        if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+        tt.classList.remove('visible');
+        active = null;
+    }
+
     document.addEventListener('mouseover', function (e) {
         const el = e.target.closest('[data-tooltip]');
-        if (el) show(el); else hide();
+        if (el) show(el);
     });
-    document.addEventListener('mouseleave', function () { hide(); }, true);
+
+    document.addEventListener('mouseout', function (e) {
+        if (e.target.closest('[data-tooltip]')) {
+            hide();
+        }
+    });
+
+    let touchTimer = null;
+    document.addEventListener('touchstart', function (e) {
+        const el = e.target.closest('[data-tooltip]');
+        clearTimeout(touchTimer);
+        if (el) {
+            if (active === el) { hideImmediate(); return; }
+            show(el);
+            touchTimer = setTimeout(hideImmediate, 2500);
+        } else {
+            hideImmediate();
+        }
+    }, { passive: true });
 }());
 
 (async () => {
