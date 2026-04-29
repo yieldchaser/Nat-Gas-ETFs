@@ -540,10 +540,14 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
     </div>
 
-    <!-- PANEL 6.5: SIGNAL HEAT CALENDAR (90 DAYS) -->
+    <!-- PANEL 6.5: SIGNAL HEAT CALENDAR (90/180 DAYS) -->
     <div class="heatmap-panel">
-        <div class="section-title-bar">
-            <span class="section-title-text" data-tooltip="Daily NGVL regime for the last 90 trading days, color-coded by 252-day percentile (blue=Low, green=Normal, orange=Elevated, red=Extreme). Colored dots mark days when a composite signal fired. Clustering of dots in high-regime (dark orange/red) days = highest-conviction setups.">Signal Activity · Last 90 Days</span>
+        <div class="section-title-bar" style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="section-title-text" id="sig-heat-title" data-tooltip="Daily NGVL regime, color-coded by 252-day percentile (blue=Low, green=Normal, orange=Elevated, red=Extreme). Colored dots mark days when a composite signal fired. Clustering of dots in high-regime (dark orange/red) days = highest-conviction setups.">Signal Activity &middot; Days 1-90</span>
+            <div style="display:flex; gap:8px;">
+                <button class="nav-arrow-btn" id="sig-heat-prev" data-tooltip="View previous 90 days (Days 91-180)">&#8592;</button>
+                <button class="nav-arrow-btn" id="sig-heat-next" data-tooltip="View recent 90 days (Days 1-90)" disabled>&#8594;</button>
+            </div>
         </div>
         <div id="cvol-signal-heat"></div>
     </div>

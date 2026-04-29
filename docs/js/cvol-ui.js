@@ -287,12 +287,15 @@ function renderCompStats(compKey, values, events) {
         seasonHtml;
 }
 
-// ── Signal Heat Calendar (90-day) ─────────────────────────────
+// ── Signal Heat Calendar (90/180-day) ─────────────────────────────
 function renderSignalHeatCalendar(data, comp) {
     var el = document.getElementById('cvol-signal-heat'); if (!el) return;
     var n = data.length;
     if (!n) return;
-    var start = Math.max(0, n - 90);
+    
+    var offset = CvolState.signalHeatOffset || 0;
+    var daysEnd = n - (offset * 90);
+    var start = Math.max(0, daysEnd - 90);
 
     // Build date → event lookup
     var evByDate = {};
@@ -306,7 +309,7 @@ function renderSignalHeatCalendar(data, comp) {
     var html = '<div class="sig-heat-grid">';
     var prevMonth = null;
     var monthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-    for (var i = start; i < n; i++) {
+    for (var i = start; i < daysEnd; i++) {
         var r = data[i];
         var pct = (comp && comp.ngvlPct252) ? comp.ngvlPct252[i] : null;
         var regime = ngvlRegime(pct);
@@ -1472,6 +1475,22 @@ function renderVarSeriesChips() {
         });
         document.getElementById('comp-modal-close').addEventListener('click', closeCompModal);
         document.getElementById('comp-modal-overlay').addEventListener('click', closeCompModal);
+
+        // Signal heat calendar navigation
+        document.getElementById('sig-heat-prev').addEventListener('click', function() {
+            CvolState.signalHeatOffset = 1;
+            document.getElementById('sig-heat-prev').disabled = true;
+            document.getElementById('sig-heat-next').disabled = false;
+            document.getElementById('sig-heat-title').innerHTML = 'Signal Activity &middot; Days 91-180';
+            renderSignalHeatCalendar(CvolState.data, CvolState.composites);
+        });
+        document.getElementById('sig-heat-next').addEventListener('click', function() {
+            CvolState.signalHeatOffset = 0;
+            document.getElementById('sig-heat-prev').disabled = false;
+            document.getElementById('sig-heat-next').disabled = true;
+            document.getElementById('sig-heat-title').innerHTML = 'Signal Activity &middot; Days 1-90';
+            renderSignalHeatCalendar(CvolState.data, CvolState.composites);
+        });
 
         // Resize
         window.addEventListener('resize', function() { renderMainChart(); renderVarDecomp(); });
