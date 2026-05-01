@@ -1,40 +1,61 @@
 {
-  "last_updated": "2026-05-01T18:49:14.141764+00:00",
-  "market_status": "open",
+  "last_updated": "2026-05-01T20:09:07.837439+00:00",
+  "market_status": "after_hours",
   "signals": [
     {
       "type": "vcvi_warning",
       "side": "long",
-      "message": "VCVI (126d) = 60.2 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-05-01T18:49:11.545082+00:00",
+      "message": "VCVI (252d) = 55.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-05-01T20:09:04.606160+00:00",
+      "ticker": "BOIL"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "long",
+      "message": "VCVI (63d) = 62.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-05-01T20:09:05.281469+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
-      "message": "VCVI (252d) = 100.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-05-01T18:49:11.545082+00:00",
+      "message": "VCVI (126d) = 84.7 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-05-01T20:09:05.281469+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
+      "type": "vcvi_critical",
+      "side": "long",
+      "message": "VCVI (252d) = 115.4 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-05-01T20:09:05.281469+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_warning",
       "side": "long",
-      "message": "CVI (252d) = 67.5 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-05-01T18:49:11.545082+00:00",
+      "message": "CVI (252d) = 77.5 \u2014 potential gas bottom \u2014 long/leveraged setup",
+      "timestamp": "2026-05-01T20:09:05.281469+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_warning",
       "side": "long",
       "message": "VCVI (252d) = 64.9 \u2014 potential gas bottom \u2014 long/leveraged setup",
-      "timestamp": "2026-05-01T18:49:12.104510+00:00",
+      "timestamp": "2026-05-01T20:09:05.839283+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_critical",
       "side": "short",
       "message": "VCVI (5d) = 74.4 \u2014 potential gas top \u2014 short/inverse setup",
-      "timestamp": "2026-05-01T18:49:13.345422+00:00",
+      "timestamp": "2026-05-01T20:09:07.054168+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "short",
+      "message": "VCVI (10d) = 66.1 \u2014 potential gas top \u2014 short/inverse setup",
+      "timestamp": "2026-05-01T20:09:07.054168+00:00",
       "ticker": "HND.TO"
     }
   ],
@@ -45,20 +66,20 @@
   },
   "etf_summary": {
     "BOIL": {
-      "price": 13.29,
+      "price": 13.31,
       "change_pct": -99.999655,
-      "vps": 26.817135,
+      "vps": 32.152025,
       "mwca": false,
       "vol_regime_pct": 0.398406,
-      "hv_term_structure": 0.368186
+      "hv_term_structure": 0.369366
     },
     "HNU.TO": {
-      "price": 9.91,
+      "price": 9.925,
       "change_pct": -99.999998,
-      "vps": 38.020449,
+      "vps": 47.65888,
       "mwca": false,
       "vol_regime_pct": 1.195219,
-      "hv_term_structure": 0.459006
+      "hv_term_structure": 0.459596
     },
     "3NGL.L": {
       "price": 1.087,
@@ -69,20 +90,20 @@
       "hv_term_structure": 0.618149
     },
     "KOLD": {
-      "price": 25.63,
-      "change_pct": -86.080713,
-      "vps": 27.239097,
+      "price": 25.585,
+      "change_pct": -86.105152,
+      "vps": 30.575419,
       "mwca": false,
       "vol_regime_pct": 0.398406,
-      "hv_term_structure": 0.525553
+      "hv_term_structure": 0.527443
     },
     "HND.TO": {
-      "price": 4.97,
-      "change_pct": -90.17301,
-      "vps": 36.481715,
+      "price": 4.96,
+      "change_pct": -90.192783,
+      "vps": 48.384159,
       "mwca": false,
       "vol_regime_pct": 1.195219,
-      "hv_term_structure": 0.658421
+      "hv_term_structure": 0.659373
     },
     "3NGS.L": {
       "price": 15.96,
