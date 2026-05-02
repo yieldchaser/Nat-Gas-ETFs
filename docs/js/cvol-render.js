@@ -152,27 +152,48 @@ function renderMainChart() {
         ctx.strokeStyle = toRgba(cfg.color, 0.3); ctx.lineWidth = 2; ctx.stroke();
     });
 
-    // Signal fire markers on NGVL line
-    if (comp.events && CvolState.activeSeries.indexOf('ngvl') >= 0) {
+    // Decision-grade markers by default; raw composite fires are toggleable.
+    if (CvolState.activeSeries.indexOf('ngvl') >= 0) {
+        var markerMode = CvolState.markerMode || 'decision';
+        var decisionMarkers = (comp.decisionEvents || []);
+        var rawMarkers = (comp.rawFires || comp.events || []);
+        var markerSets = markerMode === 'raw'
+            ? [{ events: rawMarkers, raw: true }]
+            : markerMode === 'both'
+                ? [{ events: rawMarkers, raw: true }, { events: decisionMarkers, raw: false }]
+                : [{ events: decisionMarkers, raw: false }];
         var sigMarkerColors = {'SAD':'#f59e0b','CI':'#60a8f8','CVC\u2193':'#ef4444','CVC\u2191':'#3db87a','RDS':'#ec4899'};
-        comp.events.forEach(function(ev) {
+        markerSets.forEach(function(set) { set.events.forEach(function(ev) {
             if (ev.idx < r.s || ev.idx > r.e) return;
             var li = ev.idx - r.s;
             var ngvlVal = visData[li] ? visData[li].ngvl : null;
             if (ngvlVal == null) return;
             var mx = getX(li), my = getY(ngvlVal, leftR);
-            var mc = sigMarkerColors[ev.signal] || '#00e5ff';
-            // Diamond shape
+            var cls = ev.classification || ev.signal;
+            var mc = set.raw ? (sigMarkerColors[ev.signal] || '#00e5ff') : decisionColor(cls);
             ctx.save();
             ctx.translate(mx, my);
-            ctx.rotate(Math.PI / 4);
             ctx.fillStyle = mc;
-            ctx.fillRect(-3.5, -3.5, 7, 7);
-            ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(-3.5, -3.5, 7, 7);
+            if (set.raw) {
+                ctx.rotate(Math.PI / 4);
+                ctx.fillRect(-3, -3, 6, 6);
+                ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(-3, -3, 6, 6);
+            } else {
+                ctx.beginPath();
+                ctx.arc(0, 0, cls === 'CONFLICT' ? 6 : 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(0, 0, cls === 'CONFLICT' ? 9 : 8, 0, Math.PI * 2);
+                ctx.strokeStyle = toRgba(mc, 0.28);
+                ctx.stroke();
+            }
             ctx.restore();
-        });
+        }); });
     }
 
     // Hover crosshair
@@ -200,7 +221,13 @@ function renderMainChart() {
                 if (vrpH != null) html += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#a78bfa">VRP</span><span class="tooltip-val">'+(vrpH>0?'+':'')+vrpH.toFixed(1)+'</span></div>';
                 // Signal event nearby (±2 sessions)
                 var absIdx = r.s + hi;
-                var nearbyEvt = (comp.events || []).filter(function(ev) { return Math.abs(ev.idx - absIdx) <= 2; });
+                var ttMode = CvolState.markerMode || 'decision';
+                var ttSource = ttMode === 'raw'
+                    ? (comp.rawFires || comp.events || [])
+                    : ttMode === 'both'
+                        ? (comp.decisionEvents || []).concat(comp.rawFires || comp.events || [])
+                        : (comp.decisionEvents || []);
+                var nearbyEvt = ttSource.filter(function(ev) { return Math.abs(ev.idx - absIdx) <= 2; });
                 if (nearbyEvt.length > 0) {
                     nearbyEvt.forEach(function(ev) {
                         var sigC = {'SAD':'#f59e0b','CI':'#60a8f8','CVC\u2193':'#ef4444','CVC\u2191':'#3db87a','RDS':'#ec4899'};
@@ -209,7 +236,8 @@ function renderMainChart() {
                         var fwdLabel = '21D'; var fwdVal = ev.fwd21;
                         if (ev.fwd5 != null && ev.fwd21 == null) { fwdLabel = '5D'; fwdVal = ev.fwd5; }
                         if (fwdVal != null) {
-                            html += '<div style="font-size:0.55rem;color:'+(fwdVal>0?'#3db87a':'#ef4444')+'">' + fwdLabel + ': '+(fwdVal>0?'+':'')+fwdVal.toFixed(1)+'%</div>';
+                            var goodForward = ev.classification === 'TOP' ? fwdVal < 0 : ev.classification === 'BOTTOM' ? fwdVal > 0 : fwdVal > 0;
+                            html += '<div style="font-size:0.55rem;color:'+(goodForward?'#3db87a':'#ef4444')+'">' + fwdLabel + ': '+(fwdVal>0?'+':'')+fwdVal.toFixed(1)+'%</div>';
                         } else {
                             html += '<div style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);">PENDING</div>';
                         }
@@ -534,7 +562,7 @@ function renderVarDecomp() {
             if (tip) {
                 var row = visData[hi];
                 var sk = row.skewRatio;
-                var sentiment = sk > 1.45 ? 'EXTREME BULLISH' : sk > 1.25 ? 'BULLISH BIAS' : sk < 0.97 ? 'EXTREME BEARISH' : sk < 1.05 ? 'BEARISH BIAS' : 'NEUTRAL';
+                var sentiment = sk > 1.45 ? 'UP-VAR EXTREME' : sk > 1.25 ? 'UP-VAR RICH' : sk < 0.97 ? 'DN-VAR EXTREME' : sk < 1.05 ? 'DN-VAR RICH' : 'BALANCED';
                 var ttHtml = '<div style="color:var(--cyan);font-weight:800;font-size:0.6rem;letter-spacing:1.5px;margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:3px;">' + fmtDate(row.date) + '</div>';
                 ttHtml += '<div style="color:#f59e0b;font-weight:800;font-size:0.55rem;margin-bottom:6px;">SENTIMENT: '+sentiment+'</div>';
                 
