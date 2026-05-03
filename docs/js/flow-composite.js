@@ -141,12 +141,10 @@ function drawChartCompZ(data) {
     const getY = v => pad.top + (1 - (v - minZ) / (maxZ - minZ)) * ch;
     const y0 = getY(0);
 
-    // Multi-level threshold zones
+    // Multi-level threshold zones — subtle background only for extremes
     const zones = [
-        { z: 2.0, rn: 192, gn: 64,  bn: 64,  rp: 34,  gp: 197, bp: 94,  a: 0.13 },
-        { z: 1.5, rn: 239, gn: 68,  bn: 68,  rp: 61,  gp: 184, bp: 122, a: 0.10 },
-        { z: 1.0, rn: 245, gn: 158, bn: 11,  rp: 96,  gp: 210, bp: 170, a: 0.06 },
-        { z: 0.8, rn: 251, gn: 191, bn: 36,  rp: 140, gp: 220, bp: 190, a: 0.04 },
+        { z: 2.0, rn: 192, gn: 64,  bn: 64,  rp: 34,  gp: 197, bp: 94,  a: 0.06 },
+        { z: 1.5, rn: 239, gn: 68,  bn: 68,  rp: 61,  gp: 184, bp: 122, a: 0.03 },
     ];
     zones.forEach((z, i) => {
         const yP = getY(z.z), yN = getY(-z.z);
@@ -183,16 +181,20 @@ function drawChartCompZ(data) {
     ctx.fillRect(pad.left, y0, cw, pad.top + ch - y0);
     ctx.restore();
 
-    // Threshold lines
-    zones.forEach(z => {
-        if (z.z <= maxZ) {
-            ctx.setLineDash([5, 4]); ctx.lineWidth = 1;
-            ctx.strokeStyle = `rgba(${z.rp},${z.gp},${z.bp},0.55)`;
-            ctx.beginPath(); ctx.moveTo(pad.left, getY(z.z)); ctx.lineTo(pad.left + cw, getY(z.z)); ctx.stroke();
+    // Threshold lines — only critical levels (±1.5, ±2.0)
+    const criticalThresholds = [2.0, 1.5];
+    criticalThresholds.forEach(z => {
+        const colors = { 2.0: { rp: 34, gp: 197, bp: 94, rn: 192, gn: 64, bn: 64 },
+                         1.5: { rp: 61, gp: 184, bp: 122, rn: 239, gn: 68, bn: 68 } };
+        const col = colors[z];
+        ctx.setLineDash([4, 3]); ctx.lineWidth = 0.8;
+        if (z <= maxZ) {
+            ctx.strokeStyle = `rgba(${col.rp},${col.gp},${col.bp},0.4)`;
+            ctx.beginPath(); ctx.moveTo(pad.left, getY(z)); ctx.lineTo(pad.left + cw, getY(z)); ctx.stroke();
         }
-        if (-z.z >= minZ) {
-            ctx.strokeStyle = `rgba(${z.rn},${z.gn},${z.bn},0.55)`;
-            ctx.beginPath(); ctx.moveTo(pad.left, getY(-z.z)); ctx.lineTo(pad.left + cw, getY(-z.z)); ctx.stroke();
+        if (-z >= minZ) {
+            ctx.strokeStyle = `rgba(${col.rn},${col.gn},${col.bn},0.4)`;
+            ctx.beginPath(); ctx.moveTo(pad.left, getY(-z)); ctx.lineTo(pad.left + cw, getY(-z)); ctx.stroke();
         }
     });
     ctx.setLineDash([]);
@@ -219,22 +221,18 @@ function drawChartCompZ(data) {
         ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.stroke();
     }
 
-    // Y-axis with color-coded threshold values
-    const yTicks = niceAxisTicks(minZ, maxZ, 6);
-    ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.font = '10px sans-serif';
+    // Y-axis with color-coded threshold values (no grid lines)
+    const yTicks = niceAxisTicks(minZ, maxZ, 5);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.font = '9px sans-serif';
     yTicks.forEach(v => {
         const y = getY(v);
         if (y < pad.top - 5 || y > pad.top + ch + 5) return;
         const absV = Math.abs(v);
-        const fC = absV >= 1.9 ? (v > 0 ? 'rgba(34,197,94,0.9)' : 'rgba(192,64,64,0.9)')
-                 : absV >= 1.4 ? (v > 0 ? 'rgba(61,184,122,0.85)' : 'rgba(239,68,68,0.85)')
-                 : absV >= 0.9 ? 'rgba(245,158,11,0.8)' : 'rgba(148,163,184,0.65)';
+        const fC = absV >= 1.9 ? (v > 0 ? 'rgba(34,197,94,0.85)' : 'rgba(192,64,64,0.85)')
+                 : absV >= 1.4 ? (v > 0 ? 'rgba(61,184,122,0.8)' : 'rgba(239,68,68,0.8)')
+                 : 'rgba(148,163,184,0.6)';
         ctx.fillStyle = fC;
         ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1), pad.left - 6, y);
-        if (v !== 0) {
-            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y);
-            ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1; ctx.stroke();
-        }
     });
 
     // X-axis
@@ -300,24 +298,20 @@ function drawChartFlowNG(flow, ng) {
     const getYNG = v => pad.top + (1 - (v - minNG) / (maxNG - minNG)) * ch;
     const y0 = getYZ(0);
 
-    // ── 1. Multi-level threshold zones ──────────────────────────────
+    // ── 1. Multi-level threshold zones (subtle, extremes only) ───────
     const zones = [
-        { z: 2.0, color: [192, 64, 64],  colorPos: [34, 197, 94],  a: 0.14 },
-        { z: 1.5, color: [239, 68, 68],  colorPos: [61, 184, 122], a: 0.11 },
-        { z: 1.0, color: [245, 158, 11], colorPos: [96, 210, 170], a: 0.07 },
-        { z: 0.8, color: [251, 191, 36], colorPos: [140, 220, 190],a: 0.04 },
+        { z: 2.0, color: [192, 64, 64],  colorPos: [34, 197, 94],  a: 0.06 },
+        { z: 1.5, color: [239, 68, 68],  colorPos: [61, 184, 122], a: 0.03 },
     ];
     zones.forEach((zone, i) => {
         const yPos = getYZ(zone.z), yNeg = getYZ(-zone.z);
         const prevZ = i === 0 ? maxZ : zones[i - 1].z;
         const yPosEdge = getYZ(prevZ), yNegEdge = getYZ(-prevZ);
         const [r, g, b] = zone.color, [rp, gp, bp] = zone.colorPos;
-        // Above threshold (green tones)
         if (zone.z <= maxZ) {
             ctx.fillStyle = `rgba(${rp},${gp},${bp},${zone.a})`;
             ctx.fillRect(pad.left, Math.max(pad.top, yPos), cw, Math.min(yPosEdge, y0) - Math.max(pad.top, yPos));
         }
-        // Below threshold (red tones)
         if (-zone.z >= minZ) {
             ctx.fillStyle = `rgba(${r},${g},${b},${zone.a})`;
             ctx.fillRect(pad.left, Math.max(y0, yNegEdge), cw, Math.min(pad.top + ch, yNeg) - Math.max(y0, yNegEdge));
@@ -345,18 +339,16 @@ function drawChartFlowNG(flow, ng) {
     ctx.fillRect(pad.left, y0, cw, pad.top + ch - y0);
     ctx.restore();
 
-    // ── 3. Threshold lines with multi-level dashes ──────────────────
-    zones.forEach(zone => {
-        const yPos = getYZ(zone.z), yNeg = getYZ(-zone.z);
-        const [r, g, b] = zone.colorPos, [rn, gn, bn] = zone.color;
-        if (zone.z <= maxZ) {
-            ctx.setLineDash([5, 4]); ctx.lineWidth = 1;
-            ctx.strokeStyle = `rgba(${r},${g},${b},0.55)`;
-            ctx.beginPath(); ctx.moveTo(pad.left, yPos); ctx.lineTo(pad.left + cw, yPos); ctx.stroke();
+    // ── 3. Threshold lines (critical levels only) ──────────────────
+    [[2.0, [34, 197, 94], [192, 64, 64]], [1.5, [61, 184, 122], [239, 68, 68]]].forEach(([zVal, rgbPos, rgbNeg]) => {
+        if (zVal <= maxZ) {
+            ctx.setLineDash([4, 3]); ctx.lineWidth = 0.8;
+            ctx.strokeStyle = `rgba(${rgbPos[0]},${rgbPos[1]},${rgbPos[2]},0.35)`;
+            ctx.beginPath(); ctx.moveTo(pad.left, getYZ(zVal)); ctx.lineTo(pad.left + cw, getYZ(zVal)); ctx.stroke();
         }
-        if (-zone.z >= minZ) {
-            ctx.strokeStyle = `rgba(${rn},${gn},${bn},0.55)`;
-            ctx.beginPath(); ctx.moveTo(pad.left, yNeg); ctx.lineTo(pad.left + cw, yNeg); ctx.stroke();
+        if (-zVal >= minZ) {
+            ctx.strokeStyle = `rgba(${rgbNeg[0]},${rgbNeg[1]},${rgbNeg[2]},0.35)`;
+            ctx.beginPath(); ctx.moveTo(pad.left, getYZ(-zVal)); ctx.lineTo(pad.left + cw, getYZ(-zVal)); ctx.stroke();
         }
     });
     ctx.setLineDash([]);
@@ -410,32 +402,27 @@ function drawChartFlowNG(flow, ng) {
         ctx.strokeStyle = '#4ab8d8'; ctx.lineWidth = 1.5; ctx.stroke();
     }
 
-    // ── 7. Left Y-axis (pressure scale) ─────────────────────────────
-    const zTicks = niceAxisTicks(minZ, maxZ, 6);
-    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    // ── 7. Left Y-axis (pressure scale, no grid) ───────────────────
+    const zTicks = niceAxisTicks(minZ, maxZ, 5);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.font = '9px sans-serif';
     zTicks.forEach(v => {
         const y = getYZ(v);
         if (y < pad.top - 5 || y > pad.top + ch + 5) return;
-        // Color-code threshold values
         const absV = Math.abs(v);
-        const fC = absV >= 1.9 ? (v > 0 ? 'rgba(34,197,94,0.9)' : 'rgba(192,64,64,0.9)')
-                 : absV >= 1.4 ? (v > 0 ? 'rgba(61,184,122,0.85)' : 'rgba(239,68,68,0.85)')
-                 : absV >= 0.9 ? 'rgba(245,158,11,0.8)' : 'rgba(148,163,184,0.65)';
-        ctx.fillStyle = fC; ctx.font = '10px sans-serif';
+        const fC = absV >= 1.9 ? (v > 0 ? 'rgba(34,197,94,0.85)' : 'rgba(192,64,64,0.85)')
+                 : absV >= 1.4 ? (v > 0 ? 'rgba(61,184,122,0.8)' : 'rgba(239,68,68,0.8)')
+                 : 'rgba(148,163,184,0.6)';
+        ctx.fillStyle = fC;
         ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1), pad.left - 6, y);
-        if (v !== 0) {
-            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y);
-            ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1; ctx.stroke();
-        }
     });
 
     // ── 8. Right Y-axis (NG price) ───────────────────────────────────
     const ngTicks = niceAxisTicks(minNG, maxNG, 5);
-    ctx.fillStyle = 'rgba(74,184,216,0.85)'; ctx.textAlign = 'left'; ctx.font = '10px sans-serif';
+    ctx.fillStyle = 'rgba(74,184,216,0.8)'; ctx.textAlign = 'left'; ctx.font = '9px sans-serif';
     ngTicks.forEach(v => {
         const y = getYNG(v);
         if (y < pad.top - 5 || y > pad.top + ch + 5) return;
-        const lbl = v >= 10 ? '$' + v.toFixed(2) : '$' + v.toFixed(2);
+        const lbl = v >= 10 ? '$' + v.toFixed(1) : '$' + v.toFixed(2);
         ctx.fillText(lbl, pad.left + cw + 7, y);
     });
 
