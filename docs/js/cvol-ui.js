@@ -124,7 +124,7 @@ function renderKpiCards(data, comp) {
     '<div class="kpi-progress" data-tooltip="1-Year Regime Gauge: Positioning current volatility relative to its historical range (0% = Min, 100% = Max)."><div class="kpi-progress-fill" style="width:'+ngvlPctPos+'%;background:'+ngvlReg.color+'"></div></div></div>' +
  
     // SKEW RATIO Card
-    '<div class="cvol-kpi-card" style="--card-accent:#f59e0b"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#f59e0b" data-tooltip="Sentiment Barometer: compares upside variance to downside variance. >1.0 = upside wing richer; <1.0 = downside wing richer.">SKEW RATIO</span><span class="cvol-kpi-regime" style="color:'+(last.skewRatio>1?'#3db87a':'#ef4444')+'" data-tooltip="Five-day trend in directional variance demand.">'+skDir+'</span></div>' +
+    '<div class="cvol-kpi-card" style="--card-accent:#f59e0b"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#f59e0b" data-tooltip="Sentiment Barometer: compares upside variance to downside variance. >1.0 = upside wing richer; <1.0 = downside wing richer.">SKEW RATIO</span><span class="cvol-kpi-regime" style="color:'+(skDir.indexOf('RISING')>=0?'#3db87a':'#ef4444')+'" data-tooltip="Five-day trend in directional variance demand.">'+skDir+'</span></div>' +
     '<div class="cvol-kpi-main" data-tooltip="Current ratio of UpVar to DnVar. Divergence from 1.0 indicates strong directional conviction in the options surface."><div class="cvol-kpi-lbl">CURRENT</div><div class="cvol-kpi-val">'+fmt(last.skewRatio,3)+'</div></div>' +
     '<div class="cvol-kpi-stats">' +
         '<div class="cvol-kpi-stat" data-tooltip="Ranking of current skew bias over the last 3 months."><div class="cvol-kpi-slbl">63D PCT</div><div class="cvol-kpi-sval">'+fmt(comp.skewRatioPct63?comp.skewRatioPct63[n-1]:null,0)+'th</div></div>' +
@@ -283,7 +283,13 @@ function renderSignalHeatCalendar(data, comp) {
         var pctStr = pct != null ? ' (' + pct.toFixed(0) + 'th pct)' : '';
         var priceStr = r.underlying != null ? '\nNG: $' + r.underlying.toFixed(3) : '';
         var tt = fmtDate(r.date) + '\nNGVL: ' + ngvlStr + ' · ' + regime.label + pctStr + priceStr;
-        if (ev) tt += '\n⚡ ' + ev.signal + ' — ' + ev.direction;
+        if (ev) {
+            var recentCutoff = data.length > 21 ? data[data.length - 21].date : null;
+            var fwdStr = ev.fwd21 != null
+                ? ' · 21D: ' + (ev.fwd21 >= 0 ? '+' : '') + ev.fwd21.toFixed(1) + '%'
+                : (recentCutoff && ev.date > recentCutoff ? ' · 21D: PENDING' : '');
+            tt += '\n⚡ ' + ev.signal + ' — ' + ev.direction + fwdStr;
+        }
 
         var fgColor = parseFloat(alpha) > 0.42 ? '#fff' : regime.color;
         var badge = ev ? '<div class="sig-heat-badge" style="background:' + (sigColors[ev.signal] || '#fff') + ';"></div>' : '';
@@ -1210,27 +1216,39 @@ function renderSurfaceAnalogPanel(comp) {
     var analogs = comp.surfaceAnalogs;
     if (!analogs || !analogs.states) { el.innerHTML = '<div class="cvol-loading">No surface analogs available</div>'; return; }
     var states = Object.keys(analogs.states).sort(function(a, b) { return analogs.states[b].count - analogs.states[a].count; });
+    var baseImpliedBeat21 = analogs.base && analogs.base[21] ? analogs.base[21].impliedBeatRate : null;
     var html = '<table class="scorecard-table"><thead><tr>' +
         '<th data-tooltip="Options-surface state detected from CME NGVL components">STATE</th>' +
-        '<th data-tooltip="Number of historical daily observations in this state">N</th>' +
+        '<th data-tooltip="Sessions with complete 21D forward return data — the sample actually used to compute every metric in this row. n < 30 = LOW SAMPLE, treat with caution.">N (FWD DATA)</th>' +
         '<th data-tooltip="Average absolute NG move over the next 21 sessions">21D ABS MOVE</th>' +
-        '<th data-tooltip="How often actual 21D NG movement exceeded the NGVL-implied expected move">IMPLIED BEAT</th>' +
+        '<th data-tooltip="How often actual 21D NG movement exceeded the NGVL-implied expected move. Delta in parentheses vs the unconditional base rate across all sessions.">IMPLIED BEAT</th>' +
         '<th data-tooltip="How often forward realized vol exceeded current realized vol">VOL EXPAND</th>' +
         '<th data-tooltip="Directional hit rate only applies to directional surface states">DIRECTION</th>' +
         '</tr></thead><tbody>';
     states.forEach(function(state) {
         var s = analogs.states[state];
         var h = s.horizons[21] || {};
+        var hn = h.n != null ? h.n : 0;
+        var lowSample = hn < 30;
         var dir = h.dirHitRate != null
             ? fmt(h.dirHitRate,0) + '% vs base ' + fmt(h.baseRate,0) + '%' + (h.directionalEdge ? ' EDGE' : ' no edge')
             : 'not directional';
+        var nCell = lowSample
+            ? '<span style="color:#f59e0b;font-weight:700;" data-tooltip="⚠ LOW SAMPLE: n=' + hn + '. Fewer than 30 sessions with measurable 21D forward returns — hit rates and move averages are statistically unreliable.">⚠ ' + hn + '</span>'
+            : String(hn);
+        var impliedBeatStr = fmt(h.impliedBeatRate, 0) + '%';
+        if (baseImpliedBeat21 != null && h.impliedBeatRate != null) {
+            var delta = h.impliedBeatRate - baseImpliedBeat21;
+            var deltaColor = delta > 5 ? '#3db87a' : delta < -5 ? '#ef4444' : 'rgba(255,255,255,0.65)';
+            impliedBeatStr += ' <span style="font-size:0.6rem;color:' + deltaColor + ';" data-tooltip="Unconditional base rate (all sessions): ' + fmt(baseImpliedBeat21,0) + '%. This state is ' + (delta >= 0 ? '+' : '') + fmt(delta,0) + '% vs base.">' + (delta >= 0 ? '(+' : '(') + fmt(delta,0) + '%)</span>';
+        }
         html += '<tr>' +
             '<td style="color:'+s.color+';font-weight:800;" data-tooltip="'+surfaceMeta(state).action+'">'+s.label+'</td>' +
-            '<td>'+s.count+'</td>' +
+            '<td data-tooltip="'+(lowSample ? 'LOW SAMPLE — unreliable statistics' : 'n=' + hn + ' sessions used for all metrics')+'">' + nCell + '</td>' +
             '<td>'+fmt(h.avgAbsMove,1)+'%</td>' +
-            '<td>'+fmt(h.impliedBeatRate,0)+'%</td>' +
+            '<td>' + impliedBeatStr + '</td>' +
             '<td>'+fmt(h.volExpansionRate,0)+'%</td>' +
-            '<td style="color:'+(h.directionalEdge?'#3db87a':'rgba(255,255,255,0.85)')+'">'+dir+'</td>' +
+            '<td style="color:'+(h.directionalEdge?'#3db87a':'rgba(255,255,255,0.85)')+(h.lowSample?' font-style:italic;':'')+'">'+dir+(h.lowSample?' ⚠':'')+'</td>' +
             '</tr>';
     });
     html += '</tbody></table>';
