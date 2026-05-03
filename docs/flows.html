@@ -1695,80 +1695,191 @@ function drawChartZ(data) {
     const maxZ = Math.max(3, ...data.map(d => Math.abs(d.flow_zscore)));
     const getY = val => pad.top + chartH/2 - (val / maxZ) * (chartH/2);
 
-    // Safe zones bands
-    ctxZ.fillStyle = 'rgba(61,184,122,0.08)';
-    ctxZ.fillRect(pad.left, pad.top, chartW, getY(1.5) - pad.top);
-    ctxZ.fillStyle = 'rgba(239,68,68,0.08)';
-    ctxZ.fillRect(pad.left, getY(-1.5), chartW, pad.top + chartH - getY(-1.5));
+    // Multi-level threshold definitions (composite Z-score)
+    // For cross-ETF aggregates, use intermediate warning zones
+    const thresholds = [
+      { z: 2.0, label: 'EXTREME', color: '#c04040', opacity: 0.15 },
+      { z: 1.5, label: 'CRITICAL', color: '#ef4444', opacity: 0.12 },
+      { z: 1.0, label: 'ELEVATED', color: '#f59e0b', opacity: 0.08 },
+      { z: 0.8, label: 'WARM', color: '#fbbf24', opacity: 0.05 }
+    ];
 
-    // Threshold lines — colored per zone
-    ctxZ.lineWidth = 1; ctxZ.setLineDash([4,4]);
-    ctxZ.strokeStyle = 'rgba(61,184,122,0.45)';
-    ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(1.5)); ctxZ.lineTo(pad.left+chartW, getY(1.5)); ctxZ.stroke();
-    ctxZ.strokeStyle = 'rgba(239,68,68,0.45)';
-    ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(-1.5)); ctxZ.lineTo(pad.left+chartW, getY(-1.5)); ctxZ.stroke();
-    ctxZ.setLineDash([]);
-    ctxZ.strokeStyle = 'rgba(255,255,255,0.25)';
-    ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(0)); ctxZ.lineTo(pad.left+chartW, getY(0)); ctxZ.stroke();
+    // Draw gradient zone bands for positive side
+    for (let i = 0; i < thresholds.length; i++) {
+        const t = thresholds[i];
+        if (i === 0) {
+            // Above extreme threshold
+            ctxZ.fillStyle = t.color.replace('#', 'rgba(').replace(/(.{2})(.{2})(.{2})/, '$1,$2,$3,' + t.opacity + ')');
+            ctxZ.fillRect(pad.left, pad.top, chartW, getY(t.z) - pad.top);
+        } else {
+            // Between thresholds
+            const prevT = thresholds[i - 1];
+            ctxZ.fillStyle = t.color.replace('#', 'rgba(').replace(/(.{2})(.{2})(.{2})/, '$1,$2,$3,' + t.opacity + ')');
+            ctxZ.fillRect(pad.left, getY(prevT.z), chartW, getY(t.z) - getY(prevT.z));
+        }
+    }
 
-    // Zone labels — placed INSIDE their respective zones
-    ctxZ.font = 'bold 11px sans-serif'; ctxZ.textAlign = 'right';
-    ctxZ.fillStyle = 'rgba(61,184,122,0.8)';
-    ctxZ.fillText('▲ ACCUMULATION', pad.left + chartW - 4, Math.max(pad.top + 13, (pad.top + getY(1.5)) / 2 + 4));
-    ctxZ.fillStyle = 'rgba(239,68,68,0.8)';
-    ctxZ.fillText('▼ DISTRIBUTION', pad.left + chartW - 4, Math.min(pad.top + chartH - 3, (getY(-1.5) + pad.top + chartH) / 2 + 4));
-    ctxZ.font = '9px sans-serif'; ctxZ.fillStyle = 'rgba(148,163,184,0.35)';
-    ctxZ.fillText('NEUTRAL ZONE', pad.left + chartW - 4, getY(0) - 4);
+    // Draw gradient zone bands for negative side (mirror)
+    for (let i = 0; i < thresholds.length; i++) {
+        const t = thresholds[i];
+        const negColor = t.label === 'EXTREME' ? '#c04040' : t.label === 'CRITICAL' ? '#ef4444' : t.label === 'ELEVATED' ? '#f59e0b' : '#fbbf24';
+        if (i === 0) {
+            ctxZ.fillStyle = negColor.replace('#', 'rgba(').replace(/(.{2})(.{2})(.{2})/, '$1,$2,$3,' + t.opacity + ')');
+            ctxZ.fillRect(pad.left, getY(-t.z), chartW, pad.top + chartH - getY(-t.z));
+        } else {
+            const prevT = thresholds[i - 1];
+            ctxZ.fillStyle = negColor.replace('#', 'rgba(').replace(/(.{2})(.{2})(.{2})/, '$1,$2,$3,' + t.opacity + ')');
+            ctxZ.fillRect(pad.left, getY(-prevT.z), chartW, getY(-t.z) - getY(-prevT.z));
+        }
+    }
 
-    // The Z-Score line
+    // Fill area under the line (gradient)
     ctxZ.beginPath();
-    ctxZ.lineWidth = 1.5;
     for (let i = 0; i < data.length; i++) {
         const x = getX(i), y = getY(data[i].flow_zscore);
-        if (i===0) ctxZ.moveTo(x, y);
+        if (i === 0) ctxZ.moveTo(x, y);
+        else ctxZ.lineTo(x, y);
+    }
+    ctxZ.lineTo(getX(data.length - 1), getY(0));
+    for (let i = data.length - 1; i >= 0; i--) {
+        const x = getX(i), y = getY(0);
+        if (i === data.length - 1) ctxZ.lineTo(x, y);
+        else ctxZ.lineTo(x, y);
+    }
+    ctxZ.closePath();
+    const fillGrad = ctxZ.createLinearGradient(0, pad.top, 0, pad.top + chartH);
+    fillGrad.addColorStop(0, 'rgba(61,184,122,0.12)');
+    fillGrad.addColorStop(0.35, 'rgba(61,184,122,0.04)');
+    fillGrad.addColorStop(0.5, 'rgba(148,163,184,0.02)');
+    fillGrad.addColorStop(0.65, 'rgba(239,68,68,0.04)');
+    fillGrad.addColorStop(1, 'rgba(239,68,68,0.12)');
+    ctxZ.fillStyle = fillGrad;
+    ctxZ.fill();
+
+    // Threshold lines — use multi-level dashed patterns
+    ctxZ.lineWidth = 1;
+    thresholds.forEach(t => {
+        // Positive threshold
+        ctxZ.setLineDash([6, 4]);
+        ctxZ.strokeStyle = t.color.replace('#', 'rgba(').replace(/(.{2})(.{2})(.{2})/, '$1,$2,$3,0.6)');
+        ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(t.z)); ctxZ.lineTo(pad.left + chartW, getY(t.z)); ctxZ.stroke();
+        // Negative threshold
+        ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(-t.z)); ctxZ.lineTo(pad.left + chartW, getY(-t.z)); ctxZ.stroke();
+    });
+    ctxZ.setLineDash([]);
+    ctxZ.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(0)); ctxZ.lineTo(pad.left+chartW, getY(0)); ctxZ.stroke();
+
+    // Zone labels
+    ctxZ.font = 'bold 11px sans-serif'; ctxZ.textAlign = 'right'; ctxZ.textBaseline = 'middle';
+    ctxZ.fillStyle = 'rgba(61,184,122,0.9)';
+    ctxZ.fillText('▲ ACCUMULATION', pad.left + chartW - 4, getY(0.5));
+    ctxZ.fillStyle = 'rgba(239,68,68,0.9)';
+    ctxZ.fillText('▼ DISTRIBUTION', pad.left + chartW - 4, getY(-0.5));
+    ctxZ.font = '8px sans-serif'; ctxZ.fillStyle = 'rgba(148,163,184,0.5)';
+    ctxZ.textAlign = 'right';
+    thresholds.forEach(t => {
+        ctxZ.fillText(t.label, pad.left - 25, getY(t.z));
+        ctxZ.fillText(t.label, pad.left - 25, getY(-t.z));
+    });
+
+    // The Z-Score line with adaptive coloring based on position
+    ctxZ.beginPath();
+    ctxZ.lineWidth = 2;
+    for (let i = 0; i < data.length; i++) {
+        const x = getX(i), y = getY(data[i].flow_zscore), z = data[i].flow_zscore;
+        if (i === 0) ctxZ.moveTo(x, y);
         else ctxZ.lineTo(x, y);
     }
 
+    // Stroke with smart gradient coloring
     const tkColor = colors[state.activeZTicker] || '#94a3b8';
     const strokeGrad = ctxZ.createLinearGradient(0, pad.top, 0, pad.top + chartH);
-    strokeGrad.addColorStop(0, 'rgba(61,184,122,1)');
-    strokeGrad.addColorStop(0.35, tkColor);
-    strokeGrad.addColorStop(0.5, 'rgba(148,163,184,0.6)');
-    strokeGrad.addColorStop(0.65, tkColor);
-    strokeGrad.addColorStop(1, 'rgba(239,68,68,1)');
+    // Green intensity based on proximity to +1.5
+    strokeGrad.addColorStop(0, 'rgba(192, 64, 64, 1)');      // bottom: deep red
+    strokeGrad.addColorStop(0.25, 'rgba(239, 68, 68, 1)');   // approaching -1.5
+    strokeGrad.addColorStop(0.4, 'rgba(148,163,184, 0.7)');  // -0.5 zone
+    strokeGrad.addColorStop(0.5, 'rgba(148,163,184, 0.5)');  // center neutral
+    strokeGrad.addColorStop(0.6, 'rgba(148,163,184, 0.7)');  // +0.5 zone
+    strokeGrad.addColorStop(0.75, 'rgba(61,184,122, 1)');    // approaching +1.5
+    strokeGrad.addColorStop(1, 'rgba(34, 197, 94, 1)');      // top: bright green
     ctxZ.strokeStyle = strokeGrad;
     ctxZ.stroke();
 
-    // Y-labels
-    ctxZ.font = '10px monospace'; ctxZ.textAlign = 'right';
+    // Y-labels with all thresholds
+    ctxZ.font = '10px monospace'; ctxZ.textAlign = 'right'; ctxZ.textBaseline = 'middle';
     ctxZ.fillStyle = 'rgba(148,163,184,0.7)';
     ctxZ.fillText('+' + maxZ.toFixed(1), pad.left - 5, pad.top + 5);
-    ctxZ.fillStyle = 'rgba(61,184,122,0.9)';
-    ctxZ.fillText('+1.5', pad.left - 5, getY(1.5) + 3);
+
+    // Threshold labels with color coding
+    thresholds.forEach(t => {
+        ctxZ.fillStyle = t.color.replace('#', 'rgba(').replace(/(.{2})(.{2})(.{2})/, '$1,$2,$3,0.9)');
+        ctxZ.fillText('+' + t.z.toFixed(1), pad.left - 5, getY(t.z));
+        ctxZ.fillText(t.z < 1.2 ? '−' + t.z.toFixed(1) : '−' + t.z.toFixed(1), pad.left - 5, getY(-t.z));
+    });
+
     ctxZ.fillStyle = 'rgba(148,163,184,0.6)';
-    ctxZ.fillText('0', pad.left - 5, getY(0) + 3);
-    ctxZ.fillStyle = 'rgba(239,68,68,0.9)';
-    ctxZ.fillText('-1.5', pad.left - 5, getY(-1.5) + 3);
+    ctxZ.fillText('0', pad.left - 5, getY(0));
     ctxZ.fillStyle = 'rgba(148,163,184,0.7)';
     ctxZ.fillText('-' + maxZ.toFixed(1), pad.left - 5, pad.top + chartH + 3);
 
     // Adaptive X-axis for Chart Z
     drawXAxis(ctxZ, data.map(d => d.date), getX, chartW, pad.top + chartH + 14, pad);
 
-    // Hover crosshair + highlight
+    // Hover crosshair + highlight with adaptive strength visualization
     if (state.hoverZIdx !== null && state.hoverZIdx >= 0 && state.hoverZIdx < data.length) {
         const hi = state.hoverZIdx;
         const hx = getX(hi);
         const hy = getY(data[hi].flow_zscore);
+        const zVal = data[hi].flow_zscore;
+        const absZ = Math.abs(zVal);
 
         ctxZ.beginPath(); ctxZ.moveTo(hx, pad.top); ctxZ.lineTo(hx, pad.top + chartH);
         ctxZ.strokeStyle = 'rgba(0,255,255,0.22)'; ctxZ.lineWidth = 1; ctxZ.setLineDash([]); ctxZ.stroke();
 
-        const zVal = data[hi].flow_zscore;
-        const dotColor = zVal >= 1.5 ? '#3db87a' : (zVal <= -1.5 ? '#ef4444' : '#94a3b8');
-        ctxZ.beginPath(); ctxZ.arc(hx, hy, 5, 0, Math.PI*2);
+        // Adaptive dot color based on position (smooth gradient across zones)
+        let dotColor;
+        if (zVal >= 2.0) {
+            dotColor = 'rgba(34, 197, 94, 1)'; // extreme green
+        } else if (zVal >= 1.5) {
+            dotColor = 'rgba(61,184,122, 1)'; // strong green
+        } else if (zVal >= 1.0) {
+            dotColor = 'rgba(96,200,166, 0.9)'; // moderate green
+        } else if (zVal >= 0.5) {
+            dotColor = 'rgba(148,163,184, 0.7)'; // weak green
+        } else if (zVal > 0) {
+            dotColor = 'rgba(148,163,184, 0.6)'; // neutral positive
+        } else if (zVal >= -0.5) {
+            dotColor = 'rgba(148,163,184, 0.6)'; // neutral negative
+        } else if (zVal >= -1.0) {
+            dotColor = 'rgba(200,100,100, 0.9)'; // weak red
+        } else if (zVal >= -1.5) {
+            dotColor = 'rgba(239,68,68, 1)'; // strong red
+        } else {
+            dotColor = 'rgba(192, 64, 64, 1)'; // extreme red
+        }
+
+        // Adaptive dot size based on signal strength (farther from 0 = bigger)
+        const baseDotSize = 5;
+        const dotSize = baseDotSize + Math.min(absZ * 1.5, 6);
+
+        // Glow effect for strong signals (|z| > 1.5)
+        if (absZ >= 1.5) {
+            ctxZ.beginPath(); ctxZ.arc(hx, hy, dotSize + 4, 0, Math.PI*2);
+            ctxZ.fillStyle = dotColor.replace('1)', '0.2)'); ctxZ.fill();
+            ctxZ.beginPath(); ctxZ.arc(hx, hy, dotSize + 2, 0, Math.PI*2);
+            ctxZ.fillStyle = dotColor.replace('1)', '0.4)'); ctxZ.fill();
+        }
+
+        // Main dot
+        ctxZ.beginPath(); ctxZ.arc(hx, hy, dotSize, 0, Math.PI*2);
         ctxZ.fillStyle = dotColor; ctxZ.fill();
-        ctxZ.strokeStyle = '#fff'; ctxZ.lineWidth = 1.5; ctxZ.stroke();
+        ctxZ.strokeStyle = '#fff'; ctxZ.lineWidth = 2; ctxZ.stroke();
+
+        // Signal strength label in corner
+        const signalLabel = absZ >= 2.0 ? '◆ EXTREME' : absZ >= 1.5 ? '◆ CRITICAL' : absZ >= 1.0 ? '◆ ELEVATED' : absZ >= 0.8 ? '◆ WARM' : 'NEUTRAL';
+        ctxZ.font = 'bold 9px sans-serif'; ctxZ.textAlign = 'left'; ctxZ.fillStyle = dotColor;
+        ctxZ.fillText(signalLabel, hx + dotSize + 6, hy - 8);
     }
 }
 
@@ -2056,11 +2167,42 @@ function handleZHover(e) {
         state.hoverZIdx = idx;
 
         const d = data[idx];
-        const zCol = d.flow_zscore >= 1.5 ? 'var(--green)' : (d.flow_zscore <= -1.5 ? 'var(--red)' : '#94a3b8');
+        const zVal = d.flow_zscore;
+        const absZ = Math.abs(zVal);
+
+        // Determine signal strength and color
+        let zCol, signalLabel, signalDesc;
+        if (absZ >= 2.0) {
+            zCol = zVal > 0 ? 'rgba(34, 197, 94, 1)' : 'rgba(192, 64, 64, 1)';
+            signalLabel = '◆ EXTREME';
+            signalDesc = zVal > 0 ? 'Extreme accumulation signal' : 'Extreme distribution signal';
+        } else if (absZ >= 1.5) {
+            zCol = zVal > 0 ? 'var(--green)' : 'var(--red)';
+            signalLabel = '◆ CRITICAL';
+            signalDesc = zVal > 0 ? 'Strong accumulation bias' : 'Strong distribution bias';
+        } else if (absZ >= 1.0) {
+            zCol = zVal > 0 ? 'rgba(96,200,166, 0.95)' : 'rgba(200,100,100, 0.95)';
+            signalLabel = '◆ ELEVATED';
+            signalDesc = zVal > 0 ? 'Elevated inflow activity' : 'Elevated outflow activity';
+        } else if (absZ >= 0.8) {
+            zCol = zVal > 0 ? 'rgba(148,180,200, 0.8)' : 'rgba(200,140,140, 0.8)';
+            signalLabel = '◆ WARM';
+            signalDesc = zVal > 0 ? 'Mild accumulation' : 'Mild distribution';
+        } else {
+            zCol = '#94a3b8';
+            signalLabel = '○ NEUTRAL';
+            signalDesc = 'Normal flow regime';
+        }
+
+        const distanceFrom1_5 = absZ >= 1.5 ? (absZ - 1.5).toFixed(2) + 'σ beyond critical' : (1.5 - absZ).toFixed(2) + 'σ to critical';
+
         zTip.style.display = 'block';
         zTip.innerHTML = `
             <div class="tt-date">${d.date}</div>
-            <div class="tt-row"><span class="tt-lbl">Z-Score</span> <span class="tt-val" style="color:${zCol}">${d.flow_zscore >= 0 ? '+' : ''}${d.flow_zscore.toFixed(2)}</span></div>
+            <div class="tt-row"><span class="tt-lbl">Z-Score</span> <span class="tt-val" style="color:${zCol};font-weight:800;">${zVal >= 0 ? '+' : ''}${zVal.toFixed(2)}</span></div>
+            <div class="tt-row"><span class="tt-lbl">Signal</span> <span class="tt-val" style="color:${zCol};">${signalLabel}</span></div>
+            <div class="tt-row" style="font-size:0.85em;color:rgba(200,210,220,0.75);">${signalDesc}</div>
+            <div class="tt-row" style="font-size:0.8em;color:rgba(148,163,184,0.65);">Δ threshold: ${distanceFrom1_5}</div>
             <div class="tt-row"><span class="tt-lbl">Daily Flow</span> <span class="tt-val" style="color:${d.usd_flow>=0?'var(--green)':'var(--red)'}">${fmtUsd(d.usd_flow)}</span></div>
             <div class="tt-row"><span class="tt-lbl">Regime</span> <span class="tt-val">${d.regime || 'BALANCED'}</span></div>
         `;
