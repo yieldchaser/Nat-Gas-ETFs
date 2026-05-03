@@ -203,8 +203,16 @@ function renderMainChart() {
                 var pct252 = (comp.ngvlPct252 && comp.ngvlPct252[r.s + hi]) ? comp.ngvlPct252[r.s + hi] : null;
                 var reg = ngvlRegime(pct252);
                 var html = '<div class="tooltip-date">' + fmtDate(row.date) + '</div>';
-                html += '<div class="tooltip-regime" style="color:'+reg.color+';font-size:0.55rem;font-weight:800;margin-bottom:6px;letter-spacing:1px;">REGIME: '+reg.label+' ('+fmt(pct252,0)+'th)</div>';
-                
+                html += '<div class="tooltip-regime" style="color:'+reg.color+';font-size:0.55rem;font-weight:800;margin-bottom:4px;letter-spacing:1px;">REGIME: '+reg.label+' ('+fmt(pct252,0)+'th)</div>';
+                // Surface state classification for this day
+                var surfDay = comp.surfaceDaily ? comp.surfaceDaily[r.s + hi] : null;
+                if (surfDay && surfDay.state !== 'NO_EDGE') {
+                    var sc = surfaceStateColor(surfDay.state);
+                    html += '<div style="margin-bottom:6px;padding:3px 6px;border-radius:3px;background:'+toRgba(sc,0.12)+';border-left:2px solid '+sc+';">' +
+                        '<div style="font-size:0.58rem;font-weight:800;color:'+sc+';letter-spacing:0.8px;">'+surfDay.label+'</div>' +
+                        '<div style="font-size:0.52rem;color:rgba(255,255,255,0.65);">'+surfDay.confidence+' · '+surfDay.directionalRead+'</div>' +
+                        '</div>';
+                }
                 CvolState.activeSeries.forEach(function(k) {
                     var cfg = SERIES_CFG[k]; var v = row[cfg.key];
                     html += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:' + cfg.color + '">' + cfg.label + '</span><span class="tooltip-val">' + (v != null ? (cfg.unit === '$' ? '$' + v.toFixed(2) : v.toFixed(2) + cfg.unit) : '—') + '</span></div>';
@@ -349,13 +357,14 @@ function setupSparklineHover(canvasId, ttId) {
         var idx = Math.round(frac * (slice.length - 1));
         if (idx >= 0 && idx < slice.length) {
             var val = slice[idx];
-            // Get date from global data
-            var dateStr = '';
+            var dateStr = '', gIdx = null;
             if (CvolState.data && CvolState.data.length >= 90) {
-                var gIdx = CvolState.data.length - 90 + idx;
+                gIdx = CvolState.data.length - 90 + idx;
                 if (gIdx >= 0 && gIdx < CvolState.data.length) dateStr = fmtDate(CvolState.data[gIdx].date);
+                else gIdx = null;
             }
-            tt.textContent = dateStr + '  ' + val.toFixed(val >= 10 ? 1 : 3);
+            var statusStr = (canvas._sparkStatus && gIdx != null) ? canvas._sparkStatus(val, gIdx) : '';
+            tt.textContent = dateStr + '  ' + val.toFixed(val >= 10 ? 1 : 3) + (statusStr ? '  ' + statusStr : '');
             tt.style.display = 'block';
             tt.style.color = canvas._sparkColor || '#fff';
             var tx = x > rect.width / 2 ? x - tt.offsetWidth - 10 : x + 10;

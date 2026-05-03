@@ -1220,14 +1220,16 @@ function renderSurfaceAnalogPanel(comp) {
     var html = '<table class="scorecard-table"><thead><tr>' +
         '<th data-tooltip="Options-surface state detected from CME NGVL components">STATE</th>' +
         '<th data-tooltip="Sessions with complete 21D forward return data — the sample actually used to compute every metric in this row. n < 30 = LOW SAMPLE, treat with caution.">N (FWD DATA)</th>' +
-        '<th data-tooltip="Average absolute NG move over the next 21 sessions">21D ABS MOVE</th>' +
+        '<th data-tooltip="Average absolute NG move over the next 5 sessions — shows how quickly each state begins to resolve">5D ABS</th>' +
+        '<th data-tooltip="Average absolute NG move over the next 10 sessions">10D ABS</th>' +
+        '<th data-tooltip="Average absolute NG move over the next 21 sessions">21D ABS</th>' +
         '<th data-tooltip="How often actual 21D NG movement exceeded the NGVL-implied expected move. Delta in parentheses vs the unconditional base rate across all sessions.">IMPLIED BEAT</th>' +
         '<th data-tooltip="How often forward realized vol exceeded current realized vol">VOL EXPAND</th>' +
         '<th data-tooltip="Directional hit rate only applies to directional surface states">DIRECTION</th>' +
         '</tr></thead><tbody>';
     states.forEach(function(state) {
         var s = analogs.states[state];
-        var h = s.horizons[21] || {};
+        var h5 = s.horizons[5] || {}, h10 = s.horizons[10] || {}, h = s.horizons[21] || {};
         var hn = h.n != null ? h.n : 0;
         var lowSample = hn < 30;
         var dir = h.dirHitRate != null
@@ -1245,6 +1247,8 @@ function renderSurfaceAnalogPanel(comp) {
         html += '<tr>' +
             '<td style="color:'+s.color+';font-weight:800;" data-tooltip="'+surfaceMeta(state).action+'">'+s.label+'</td>' +
             '<td data-tooltip="'+(lowSample ? 'LOW SAMPLE — unreliable statistics' : 'n=' + hn + ' sessions used for all metrics')+'">' + nCell + '</td>' +
+            '<td style="color:rgba(255,255,255,0.75);">'+fmt(h5.avgAbsMove,1)+'%</td>' +
+            '<td style="color:rgba(255,255,255,0.75);">'+fmt(h10.avgAbsMove,1)+'%</td>' +
             '<td>'+fmt(h.avgAbsMove,1)+'%</td>' +
             '<td>' + impliedBeatStr + '</td>' +
             '<td>'+fmt(h.volExpansionRate,0)+'%</td>' +
@@ -1309,6 +1313,18 @@ function renderAll() {
     setupSparklineHover('spark-cvc-down','spark-cvc-down-tt');
     setupSparklineHover('spark-cvc-up','spark-cvc-up-tt');
     setupSparklineHover('spark-rds','spark-rds-tt');
+    // Contextual status functions — enrich sparkline tooltips beyond raw value
+    var _el;
+    _el = document.getElementById('spark-ci');
+    if (_el) _el._sparkStatus = function(v) { return v > 82 ? '▲ ACTIVE' : v > 70 ? '▲ WARMING' : 'CALM'; };
+    _el = document.getElementById('spark-cvc-down');
+    if (_el) _el._sparkStatus = function(v) { return v > 1.2 ? '▲ ACTIVE' : v > 0.96 ? '▲ WARMING' : 'NEUTRAL'; };
+    _el = document.getElementById('spark-cvc-up');
+    if (_el) _el._sparkStatus = function(v) { return v > 1.2 ? '▲ ACTIVE' : v > 0.96 ? '▲ WARMING' : 'NEUTRAL'; };
+    _el = document.getElementById('spark-sad');
+    if (_el) { (function(sadZ) { _el._sparkStatus = function(v, gi) { var z = sadZ[gi]; return z != null ? 'Z: '+(z>=0?'+':'')+z.toFixed(2)+(Math.abs(z)>1.5?' ▲ ACTIVE':'') : ''; }; })(comp.sadZ || []); }
+    _el = document.getElementById('spark-rds');
+    if (_el) { (function(rdsZ) { _el._sparkStatus = function(v, gi) { var z = rdsZ[gi]; return z != null ? 'Z: '+(z>=0?'+':'')+z.toFixed(2)+(z>1.8?' ▲ ACTIVE':'') : ''; }; })(comp.rdsZ || []); }
     // Current values
     var n = data.length;
     document.getElementById('sad-current').textContent = fmt(comp.sad ? comp.sad[n-1] : null, 3);
