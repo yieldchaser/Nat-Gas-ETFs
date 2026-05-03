@@ -7,6 +7,8 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+import ssl
+
 import pandas as pd
 import numpy as np
 
@@ -16,9 +18,14 @@ logger = logging.getLogger("fetch_flows")
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 FLOWS_DIR = DATA_DIR / "flows"
+DOCS_FLOWS_DIR = PROJECT_ROOT / "docs" / "data" / "flows"
 
 ENDPOINT = "https://www.trackinsight.com/search-api/snapshot/get_snapshots"
 TICKERS = ["BOIL", "KOLD", "3NGL", "HNU", "HND", "3NGS"]
+
+# Yahoo Finance v8 chart API for NG=F history
+YAHOO_BASE_URL = "https://query1.finance.yahoo.com/v8/finance/chart/"
+NG_TICKER = "NG=F"
 
 def parse_snapshots(data: list | dict, ticker: str) -> pd.DataFrame:
     if isinstance(data, list):
@@ -343,10 +350,85 @@ def main():
         
     summary_data["cross_etf"]["sentiment"] = sentiment
 
+    # ---- Fetch NG=F history for Flow Pressure vs Gas Price chart ----
+    ng_history = fetch_ng_history()
+    if ng_history:
+        summary_data["ng_history"] = ng_history
+        logger.info(f"Added {len(ng_history)} NG=F daily closes to summary")
+
     summary_out = FLOWS_DIR / "all_flows_summary.json"
     with open(summary_out, "w") as f:
         json.dump(summary_data, f, indent=2)
     logger.info(f"Saved summary to {summary_out}")
+
+    # Copy to docs/ for GitHub Pages
+    DOCS_FLOWS_DIR.mkdir(parents=True, exist_ok=True)
+    docs_summary = DOCS_FLOWS_DIR / "all_flows_summary.json"
+    with open(docs_summary, "w") as f:
+        json.dump(summary_data, f, indent=2)
+    logger.info(f"Copied summary to {docs_summary}")
+
+
+def fetch_ng_history():
+    """Fetch NG=F (Henry Hub Natural Gas Futures) daily closes from Yahoo Finance v8.
+
+    Returns a lightweight list of {date, close} dicts for the frontend to use
+    in the Flow Pressure vs Gas Price chart. Uses the same API pattern as
+    data_pipeline.py's _yahoo_fetch_one().
+    """
+    logger.info(f"Fetching NG=F history for flow-price overlay...")
+
+    period1 = int(datetime(2007, 1, 1).timestamp())
+    period2 = int(datetime.now().timestamp())
+    url = (
+        f"{YAHOO_BASE_URL}{urllib.request.quote(NG_TICKER)}"
+        f"?period1={period1}&period2={period2}&interval=1d&includePrePost=false"
+    )
+
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
+    for attempt in range(1, 4):
+        try:
+            req = urllib.request.Request(url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            })
+            resp = urllib.request.urlopen(req, context=ctx, timeout=30)
+            raw = json.loads(resp.read())
+
+            result = raw["chart"]["result"][0]
+            timestamps = result["timestamp"]
+            quote = result["indicators"]["quote"][0]
+
+            history = []
+            for i in range(len(timestamps)):
+                close = quote["close"][i]
+                if close is None:
+                    continue
+                date_str = datetime.utcfromtimestamp(timestamps[i]).strftime("%Y-%m-%d")
+                history.append({"date": date_str, "close": round(close, 4)})
+
+            # Deduplicate by date (Yahoo sometimes returns two bars for same date)
+            seen = set()
+            deduped = []
+            for h in reversed(history):  # keep latest for each date
+                if h["date"] not in seen:
+                    seen.add(h["date"])
+                    deduped.append(h)
+            deduped.reverse()
+
+            logger.info(f"NG=F: fetched {len(deduped)} daily closes")
+            return deduped
+
+        except Exception as e:
+            logger.warning(f"NG=F fetch attempt {attempt}/3 failed: {e}")
+            if attempt < 3:
+                time.sleep(5 * attempt)
+
+    logger.error("All NG=F fetch attempts failed")
+    return []
+
 
 if __name__ == "__main__":
     main()
