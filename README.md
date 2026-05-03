@@ -13,7 +13,7 @@ This project implements five interconnected analytical engines:
 1. **Volume Monitor** (`index.html`) — Multi-timeframe volume anomaly detection, volatility modeling, and conviction event filtering across 6 leveraged ETFs.
 2. **Flow Monitor** (`flows.html`) — Daily capital flow tracking (AUM in/out), Z-Score history, pressure scoring, divergence detection, and cross-ETF comparison.
 3. **Trough-to-Peak Analyzer** (`trough-peak.html`) — Institutional-grade ZigZag recovery cycle identification with robust median metrics and 60-day statistical stability.
-4. **Volatility Intelligence** (`cvol.html`) — Institutional convexity analysis, variance decomposition (UpVar vs DnVar), and Proprietary Composite Signals (SAD, CI, CVC, RDS) with integrated backtest scoring.
+4. **Volatility Intelligence** (`cvol.html`) — Regime-first CME NGVL options-surface intelligence. Reads aggregate implied vol (NGVL/ATM), variance wings (UpVar/DnVar), skew ratio, convexity, realized vs implied (VRP), and classifies an options-surface state machine. Raw inputs (SAD/CI/CVC/RDS) are retained as research layers, not direct buy/sell calls.
 5. **Vol Regime Monitor** (embedded in `trough-peak.html`) — Full-lifetime historical volatility chart (5D/21D/63D/252D HV) with regime classification.
 
 ---
@@ -40,6 +40,13 @@ This project implements five interconnected analytical engines:
 ---
 
 ## Dashboard Pages
+
+## CVOL: Reproducible Audit
+
+The CVOL tab includes a small read-only audit script so you don’t have to trust visuals:
+
+- Run surface audit: `node tools/cvol_surface_audit.mjs`
+- Run CVOL tests: `node test_cvol.js`
 
 ### 1. Flow Monitor (`flows.html`)
 
