@@ -34,62 +34,18 @@ function renderBanner(data, comp) {
 function renderConvictionBanner(data, comp) {
     var el = document.getElementById('cvol-conviction-banner'); if (!el) return;
     var n = data.length; if (n < 63) { el.style.display = 'none'; return; }
-    var last = data[n-1];
-
-    // Replicate conviction computation from renderRegimePanel (single source of truth)
-    var pct252 = comp.ngvlPct252 ? comp.ngvlPct252[n-1] : null;
-    var sk = last.skewRatio;
-    var skBias = sk == null ? 'UNKNOWN' : (sk > 1.08 ? 'BULLISH' : sk < 0.92 ? 'BEARISH' : 'NEUTRAL');
-    var vrpVal = comp.vrp ? comp.vrp[n-1] : null;
-    var vrpState = vrpVal == null ? 'UNKNOWN' : (vrpVal > 5 ? 'OVERPRICED' : vrpVal < -3 ? 'UNDERPRICED' : 'FAIR');
-    var activeSignals = (comp.events || []).filter(function(ev) { return ev.idx >= n - 10; });
-    var activeCnt = activeSignals.length;
-    var ts = comp.termStructure ? comp.termStructure[n-1] : null;
-    var vovVal = comp.vov ? comp.vov[n-1] : null;
-
-    var convScore = 0, convLen = 0;
-    if (pct252 != null) { var regScore = pct252 > 90 ? 3 : pct252 > 75 ? 2 : pct252 < 10 ? 3 : pct252 < 25 ? 2 : 1; convScore += regScore; convLen++; }
-    if (sk != null) { var skScore = Math.abs(sk - 1) > 0.08 ? 2 : 1; convScore += skScore; convLen++; }
-    if (vrpVal != null) { var vrpScore = Math.abs(vrpVal) > 5 ? 3 : Math.abs(vrpVal) > 3 ? 2 : 1; convScore += vrpScore; convLen++; }
-    if (activeCnt >= 3) { convScore += 3; convLen++; } else if (activeCnt >= 1) { convScore += 1; convLen++; }
-    if (ts != null) { convScore += (ts > 1.03 || ts < 0.97) ? 2 : 1; convLen++; }
-    if (vovVal != null) { convScore += vovVal > 5 ? 1 : vovVal > 2.5 ? 2 : 3; convLen++; }
-    var avgConv = convLen > 0 ? convScore / convLen : 0;
-    var convLabel = avgConv >= 2.5 ? 'HIGH' : avgConv >= 1.5 ? 'MODERATE' : (activeCnt === 0 ? 'NO SIGNAL' : 'LOW');
-
-    // Tactical read
-    function bannerTactical(conv, skB, vrpS, aCnt) {
-        if (conv === 'HIGH') {
-            if (skB === 'BEARISH' && vrpS === 'OVERPRICED') return 'Favor short NG bias \u2014 vol pricing exhaustion';
-            if (skB === 'BULLISH' && vrpS === 'UNDERPRICED') return 'Favor long NG bias \u2014 tail-risk underpriced';
-            if (skB === 'BEARISH') return 'Short bias \u2014 skew pricing downside protection';
-            if (skB === 'BULLISH') return 'Long bias \u2014 skew pricing upside';
-            if (vrpS === 'OVERPRICED') return 'Vol sellers favored \u2014 options overpriced';
-            return 'High conviction \u2014 confirm with T2P / Volume signals';
-        }
-        if (conv === 'MODERATE') {
-            if (aCnt >= 1) return 'Monitor \u2014 signals active but regime not extreme';
-            return 'No clear edge \u2014 wait for vol surface extremes';
-        }
-        if (conv === 'NO SIGNAL') return 'No vol-surface signals firing \u2014 defer to T2P / Flow tabs';
-        return 'No edge from vol alone \u2014 defer to T2P / Flow tabs';
-    }
-    var tactical = bannerTactical(convLabel, skBias, vrpState, activeCnt);
-
-    // Color config
-    var colorMap = { 'HIGH': '#ef4444', 'MODERATE': '#f59e0b', 'LOW': '#3db87a', 'NO SIGNAL': '#6b7280' };
-    var circleMap = { 'HIGH': '\ud83d\udd34', 'MODERATE': '\ud83d\udfe1', 'LOW': '\ud83d\udfe2', 'NO SIGNAL': '\u26aa' };
-    var cc = colorMap[convLabel] || '#6b7280';
-    var circle = circleMap[convLabel] || '\u26aa';
+    var read = comp.currentSurfaceRead;
+    if (!read) { el.style.display = 'none'; return; }
+    var color = surfaceStateColor(read.state);
 
     el.style.display = 'flex';
     el.style.alignItems = 'center';
     el.style.gap = '14px';
-    el.style.background = 'rgba(' + (convLabel === 'HIGH' ? '239,68,68' : convLabel === 'MODERATE' ? '245,158,11' : convLabel === 'LOW' ? '61,184,122' : '107,114,128') + ',0.06)';
+    el.style.background = 'rgba(255,255,255,0.025)';
     el.innerHTML =
-        '<span style="font-size:1.4rem;line-height:1;">' + circle + '</span>' +
-        '<span style="font-size:0.75rem;font-weight:900;letter-spacing:2px;color:' + cc + ';">' + convLabel + '</span>' +
-        '<span style="font-size:0.65rem;color:rgba(255, 255, 255, 0.85);letter-spacing:0.5px;font-weight:500;">' + tactical + '</span>';
+        '<span style="font-size:0.72rem;font-weight:900;letter-spacing:2px;color:' + color + ';">' + read.label + '</span>' +
+        '<span style="font-size:0.65rem;color:rgba(255,255,255,0.85);letter-spacing:0.5px;font-weight:700;">' + read.directionalRead + '</span>' +
+        '<span style="font-size:0.58rem;color:rgba(255,255,255,0.65);letter-spacing:0.5px;">Confidence ' + read.confidence + ' (' + fmt(read.confidenceScore,0) + ') | ' + read.volBias + ' | ' + read.action + '</span>';
 }
 
 // ── KPI Cards (expanded) ─────────────────────────────────────
@@ -148,7 +104,7 @@ function renderKpiCards(data, comp) {
 
     el.innerHTML =
     // NGVL Card
-    '<div class="cvol-kpi-card" style="--card-accent:'+ngvlReg.color+'"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:'+ngvlReg.color+'" data-tooltip="CME Natural Gas CVOL: The authoritative forward-looking gauge of market uncertainty. Uses the full option series to calculate the 30-day implied volatility surface.">NGVL</span><span class="cvol-kpi-regime" style="color:'+ngvlReg.color+'" data-tooltip="Regime Classification: Profiling current volatility against its own 1-year history. EXTREME (≥90th) readings are historically unsustainable and often mark major tops/bottoms.">'+ngvlReg.label+'</span></div>' +
+    '<div class="cvol-kpi-card" style="--card-accent:'+ngvlReg.color+'"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:'+ngvlReg.color+'" data-tooltip="CME Natural Gas CVOL: forward-looking aggregate implied volatility from the NG options surface.">NGVL</span><span class="cvol-kpi-regime" style="color:'+ngvlReg.color+'" data-tooltip="Regime Classification: current NGVL versus its own 1-year history. EXTREME means uncertainty is unusually expensive; LOW means implied risk is compressed.">'+ngvlReg.label+'</span></div>' +
     '<div class="cvol-kpi-main" data-tooltip="The current annualized percentage of implied volatility."><div class="cvol-kpi-lbl">CURRENT</div><div class="cvol-kpi-val" style="color:'+ngvlReg.color+'">'+fmt(last.ngvl)+'%</div></div>' +
     '<div class="cvol-kpi-stats">' +
         '<div class="cvol-kpi-stat" data-tooltip="Tactical Ranking (1 month): How expensive is volatility vs. the last 21 trading days?"><div class="cvol-kpi-slbl">21D PCT</div><div class="cvol-kpi-sval">'+fmt(p21,0)+'th</div></div>' +
@@ -168,7 +124,7 @@ function renderKpiCards(data, comp) {
     '<div class="kpi-progress" data-tooltip="1-Year Regime Gauge: Positioning current volatility relative to its historical range (0% = Min, 100% = Max)."><div class="kpi-progress-fill" style="width:'+ngvlPctPos+'%;background:'+ngvlReg.color+'"></div></div></div>' +
  
     // SKEW RATIO Card
-    '<div class="cvol-kpi-card" style="--card-accent:#f59e0b"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#f59e0b" data-tooltip="Sentiment Barometer: Comparing the premium of upside calls vs downside puts. >1.0 = Traders buying upside protection; <1.0 = Traders bracing for a price crash.">SKEW RATIO</span><span class="cvol-kpi-regime" style="color:'+(last.skewRatio>1?'#3db87a':'#ef4444')+'" data-tooltip="Five-day trend in directional demand.">'+skDir+'</span></div>' +
+    '<div class="cvol-kpi-card" style="--card-accent:#f59e0b"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#f59e0b" data-tooltip="Sentiment Barometer: compares upside variance to downside variance. >1.0 = upside wing richer; <1.0 = downside wing richer.">SKEW RATIO</span><span class="cvol-kpi-regime" style="color:'+(last.skewRatio>1?'#3db87a':'#ef4444')+'" data-tooltip="Five-day trend in directional variance demand.">'+skDir+'</span></div>' +
     '<div class="cvol-kpi-main" data-tooltip="Current ratio of UpVar to DnVar. Divergence from 1.0 indicates strong directional conviction in the options surface."><div class="cvol-kpi-lbl">CURRENT</div><div class="cvol-kpi-val">'+fmt(last.skewRatio,3)+'</div></div>' +
     '<div class="cvol-kpi-stats">' +
         '<div class="cvol-kpi-stat" data-tooltip="Ranking of current skew bias over the last 3 months."><div class="cvol-kpi-slbl">63D PCT</div><div class="cvol-kpi-sval">'+fmt(comp.skewRatioPct63?comp.skewRatioPct63[n-1]:null,0)+'th</div></div>' +
@@ -190,7 +146,7 @@ function renderKpiCards(data, comp) {
         '<div class="cvol-kpi-stat" data-tooltip="Ranking of current tail-pricing relative to the last 3 months."><div class="cvol-kpi-slbl">63D PCT</div><div class="cvol-kpi-sval">'+fmt(comp.convPct63?comp.convPct63[n-1]:null,0)+'th</div></div>' +
         '<div class="cvol-kpi-stat" data-tooltip="At-The-Money (ATM) Implied Volatility: The baseline cost of protection for the current price."><div class="cvol-kpi-slbl">ATM VOL</div><div class="cvol-kpi-sval">'+fmt(last.atm)+'%</div></div>' +
         '<div class="cvol-kpi-stat" data-tooltip="Measures how unusual current tail-risk pricing is vs. its own 1-month average."><div class="cvol-kpi-slbl">CONV Z</div><div class="cvol-kpi-sval">'+fmt(convZ)+'σ</div></div>' +
-        '<div class="cvol-kpi-stat" data-tooltip="Status of the Convexity-Variance Confirmation signal. ACTIVE = Maximum conviction for a trend reversal."><div class="cvol-kpi-slbl">CVC</div><div class="cvol-kpi-sval">'+cvcStatus+'</div></div>' +
+        '<div class="cvol-kpi-stat" data-tooltip="Status of the Convexity-Variance Confirmation input. ACTIVE = tail demand and convexity are aligned; the surface model still decides whether that becomes an edge."><div class="cvol-kpi-slbl">CVC</div><div class="cvol-kpi-sval">'+cvcStatus+'</div></div>' +
     '</div>' +
     '<div class="cvol-kpi-micro">' +
         '<div class="cvol-micro-line" data-tooltip="Bullish Demand (UpVar): Premium paid for upside Natural Gas calls."><span class="cvol-micro-lbl">UP VAR</span><span class="cvol-micro-val" style="color:#3db87a">'+fmt(last.upVar)+'%</span></div>' +
@@ -211,7 +167,7 @@ function renderKpiCards(data, comp) {
     '<div class="cvol-kpi-micro">' +
         '<div class="cvol-micro-line" data-tooltip="The longevity of the current tranquil regime. Extended periods above 82 often end with violent volatility gap-ups."><span class="cvol-micro-lbl">DAYS >82</span><span class="cvol-micro-val">'+(daysSinceCI!=null?daysSinceCI+'D':'—')+'</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="Intermediate momentum in baseline volatility."><span class="cvol-micro-lbl">ATM 5D</span><span class="cvol-micro-val" style="color:'+(atm5dir.indexOf('RISING')>=0?'#ef4444':'#3db87a')+'">'+atm5dir+'</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="Cross-Reference Check: CVOL signals gain maximum conviction when they align with the Trough-to-Peak cycle. A top signal here confirmed by >85% T2P cycle position is high-conviction."><span class="cvol-micro-lbl">T2P CROSS-REF</span><span class="cvol-micro-val" style="color:#fff;opacity:0.85;font-size:0.65rem;">SEE T2P TAB →</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Current options-surface state from the regime-first model. NO EDGE means the surface is context only, not a trade call."><span class="cvol-micro-lbl">SURFACE STATE</span><span class="cvol-micro-val" style="color:#fff;opacity:0.85;font-size:0.65rem;">'+(comp.currentSurfaceRead?comp.currentSurfaceRead.label:'NO EDGE')+'</span></div>' +
     '</div></div>';
 }
 
@@ -704,7 +660,13 @@ function renderTimeline(composites, filter) {
     var body = document.getElementById('cvol-event-body');
     var countEl = document.getElementById('cvol-event-count');
     if (!body) return;
-    var allEvents = (composites.events || []).slice().reverse();
+    var mode = CvolState.markerMode || 'surface';
+    var sourceEvents = mode === 'raw'
+        ? (composites.events || [])
+        : mode === 'both'
+            ? (composites.surfaceEvents || []).concat(composites.events || [])
+            : (composites.surfaceEvents || []);
+    var allEvents = sourceEvents.slice().sort(function(a, b) { return b.idx - a.idx; });
     // Time filter
     var now = new Date(); var yearStr = now.getFullYear().toString();
     var sixMonthsAgo = new Date(now); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
@@ -712,14 +674,17 @@ function renderTimeline(composites, filter) {
     else if (filter === '6m') allEvents = allEvents.filter(function(e) { return new Date(e.date) >= sixMonthsAgo; });
     // Signal type filter
     var stf = CvolState.signalTypeFilter;
-    var events = stf !== 'all' ? allEvents.filter(function(e) { return e.signal === stf; }) : allEvents;
-    if (countEl) countEl.textContent = events.length + ' EVENTS';
+    var events = (mode === 'raw' && stf !== 'all') ? allEvents.filter(function(e) { return e.signal === stf; }) : allEvents;
+    if (countEl) countEl.textContent = events.length + ' ' + (mode === 'raw' ? 'RAW EVENTS' : mode === 'both' ? 'EVENTS' : 'SURFACE EVENTS');
     // Determine "recent" threshold for PENDING state (last 21 sessions)
     var dataLen = CvolState.data ? CvolState.data.length : 0;
     var recentCutoffDate = null;
     if (CvolState.data && dataLen > 21) recentCutoffDate = CvolState.data[dataLen - 21].date;
     var sigColors = {'SAD':'border-color:#f59e0b;color:#f59e0b;background:rgba(245,158,11,0.1)','CI':'border-color:#60a8f8;color:#60a8f8;background:rgba(96,168,248,0.1)','CVC↓':'border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,0.1)','CVC↑':'border-color:#3db87a;color:#3db87a;background:rgba(61,184,122,0.1)','RDS':'border-color:#ec4899;color:#ec4899;background:rgba(236,72,153,0.1)'};
-    var sigTooltips = {'SAD':'Skew-ATM Divergence — stealth repositioning signal','CI':'Complacency Index — fragile calm warning','CVC↓':'Convexity-Variance down — top formation signal','CVC↑':'Convexity-Variance up — bottom formation signal','RDS':'Regime Divergence Score — explosive setup signal'};
+    var sigTooltips = {'SAD':'Skew-ATM Divergence — skew pressure versus baseline vol','CI':'Complacency Index — fragile calm warning','CVC↓':'Convexity-Variance down — downside tail demand input','CVC↑':'Convexity-Variance up — upside tail demand input','RDS':'Regime Divergence Score — surface instability input'};
+    Object.keys(SURFACE_STATES || {}).forEach(function(k) {
+        sigColors[k] = 'border-color:'+surfaceStateColor(k)+';color:'+surfaceStateColor(k)+';background:rgba(255,255,255,0.04)';
+    });
     var html = '';
     events.forEach(function(e) {
         var s = uiGetSeason(e.date);
@@ -857,6 +822,57 @@ function renderTimeline(composites, filter) {
 }
 
 // ── Composite Expand Modal ────────────────────────────────────
+function renderTimeline(composites, filter) {
+    var body = document.getElementById('cvol-event-body');
+    var countEl = document.getElementById('cvol-event-count');
+    if (!body) return;
+    var mode = CvolState.markerMode || 'surface';
+    var sourceEvents = mode === 'raw'
+        ? (composites.events || [])
+        : mode === 'both'
+            ? (composites.surfaceEvents || []).concat(composites.events || [])
+            : (composites.surfaceEvents || []);
+    var events = sourceEvents.slice().sort(function(a, b) { return b.idx - a.idx; });
+    var now = new Date(); var yearStr = now.getFullYear().toString();
+    var sixMonthsAgo = new Date(now); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    if (filter === 'year') events = events.filter(function(e) { return e.date.startsWith(yearStr); });
+    else if (filter === '6m') events = events.filter(function(e) { return new Date(e.date) >= sixMonthsAgo; });
+    if (mode === 'raw' && CvolState.signalTypeFilter !== 'all') events = events.filter(function(e) { return e.signal === CvolState.signalTypeFilter; });
+    if (countEl) countEl.textContent = events.length + ' ' + (mode === 'raw' ? 'RAW EVENTS' : mode === 'both' ? 'EVENTS' : 'SURFACE EVENTS');
+    var sigColors = {'SAD':'border-color:#f59e0b;color:#f59e0b;background:rgba(245,158,11,0.1)','CI':'border-color:#60a8f8;color:#60a8f8;background:rgba(96,168,248,0.1)','CVC↓':'border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,0.1)','CVC↑':'border-color:#3db87a;color:#3db87a;background:rgba(61,184,122,0.1)','RDS':'border-color:#ec4899;color:#ec4899;background:rgba(236,72,153,0.1)'};
+    Object.keys(SURFACE_STATES || {}).forEach(function(k) { sigColors[k] = 'border-color:'+surfaceStateColor(k)+';color:'+surfaceStateColor(k)+';background:rgba(255,255,255,0.04)'; });
+    var sigTooltips = {'SAD':'Skew-ATM divergence research input','CI':'Fragile calm research input','CVC↓':'Downside variance plus convexity input','CVC↑':'Upside variance plus convexity input','RDS':'Surface instability research input'};
+    var dataLen = CvolState.data ? CvolState.data.length : 0;
+    var recentCutoffDate = CvolState.data && dataLen > 21 ? CvolState.data[dataLen - 21].date : null;
+    var html = '';
+    events.forEach(function(e) {
+        var isSurface = e.state != null;
+        var eventColor = isSurface ? surfaceStateColor(e.state) : ((e.direction.indexOf('TOP') >= 0 || e.direction.indexOf('DOWNSIDE') >= 0) ? '#ef4444' : '#3db87a');
+        if (!isSurface && e.direction === 'COMPLACENCY') eventColor = '#f59e0b';
+        var isRecent = recentCutoffDate && e.date > recentCutoffDate;
+        var s = uiGetSeason(e.date);
+        var fwd5Html = e.fwd5 != null ? '<span style="color:' + pctColor(e.fwd5) + '">' + ((e.fwd5>0?'+':'') + fmt(e.fwd5) + '%') + '</span>' : isRecent ? '<span class="pending-label">PENDING</span>' : '—';
+        var fwd21Html = e.fwd21 != null ? '<span style="color:' + pctColor(e.fwd21) + '">' + ((e.fwd21>0?'+':'') + fmt(e.fwd21) + '%') + '</span>' : isRecent ? '<span class="pending-label">PENDING</span>' : '—';
+        var confHtml = isSurface
+            ? '<span class="confluence-badge" style="background:rgba(255,255,255,0.06);color:'+eventColor+';" data-tooltip="Surface confidence">'+(e.confidence || 'LOW')+'</span>'
+            : '<span class="confluence-badge" data-tooltip="Raw component confluence">'+getGlobalConfluence(e)+'</span>';
+        var action = isSurface ? e.directionalRead : e.direction;
+        var tooltip = isSurface ? ((e.evidence || []).join(' | ') || surfaceMeta(e.state).action) : (sigTooltips[e.signal] || '');
+        html += '<tr data-evt-idx="' + e.idx + '">' +
+            '<td style="color:rgba(255,255,255,0.85);">'+fmtDate(e.date)+'</td>' +
+            '<td><span class="sig-badge" style="'+(sigColors[e.signal]||'')+'" data-tooltip="'+tooltip+'">'+e.signal+'</span></td>' +
+            '<td style="color:'+eventColor+';font-weight:700;" data-tooltip="'+(isSurface ? 'Surface action and directional read.' : 'Raw component direction.')+'">'+action+'</td>' +
+            '<td data-tooltip="'+(isSurface ? 'Surface confidence score' : 'Raw signal value')+'">'+fmt(e.value, isSurface ? 0 : 3)+'</td>' +
+            '<td>$'+fmt(e.underlying,2)+'</td>' +
+            '<td>'+fwd5Html+'</td>' +
+            '<td>'+fwd21Html+'</td>' +
+            '<td>'+confHtml+'</td>' +
+            '<td><span style="color:'+s.c+'" data-tooltip="'+s.n+' season">'+s.e+' '+s.n+'</span></td>' +
+            '</tr>';
+    });
+    body.innerHTML = html || '<tr><td colspan="9" style="text-align:center;color:rgba(255,255,255,0.85);">No events in range</td></tr>';
+}
+
 function openCompModal(compKey) {
     var meta = COMP_META[compKey]; if (!meta) return;
     document.getElementById('comp-modal-overlay').style.display = 'block';
@@ -1113,19 +1129,19 @@ function renderRegimePanel(data, comp) {
             if (skBias === 'BEARISH') return 'Short bias — skew pricing downside protection';
             if (skBias === 'BULLISH') return 'Long bias — skew pricing upside';
             if (vrpState === 'OVERPRICED') return 'Vol sellers favored — options overpriced';
-            return 'High conviction — confirm with T2P / Volume signals';
+            return 'High surface conviction — confirm with variance follow-through';
         }
         if (conv === 'MODERATE') {
             if (activeCnt >= 1) return 'Monitor — signals active but regime not extreme';
             return 'No clear edge — wait for vol surface extremes';
         }
-        return 'No edge from vol alone — defer to T2P / Flow tabs';
+        return 'No edge from vol alone — wait for surface alignment';
     }
     var tactical = tacticalRead(convLabel, skBias, vrpState, activeCnt);
 
     el.innerHTML =
         cell('NGVL REGIME', reg.label, reg.color, fmt(pct252,0)+'th percentile', reg.color,
-            'Current 252-day NGVL regime. LOW = complacent/spring-loaded. EXTREME = panic/cycle exhaustion.') +
+            'Current 252-day NGVL regime. LOW = compressed implied risk. EXTREME = unusually expensive uncertainty.') +
         cell('VOL TREND', volTrendIcon+' '+volTrend, volTrendColor, fmt(roc5,1)+'% 5D', volTrendColor,
             'Is volatility expanding or contracting? Rising vol = growing uncertainty.') +
         cell('SKEW BIAS', skBias, skColor, 'Ratio: '+fmt(sk,3), skColor,
@@ -1143,6 +1159,74 @@ function renderRegimePanel(data, comp) {
 }
 
 // ── Threshold Sensitivity Panel ──────────────────────────────
+function renderRegimePanel(data, comp) {
+    var el = document.getElementById('regime-dashboard-grid'); if (!el) return;
+    var read = comp.currentSurfaceRead;
+    if (!read) return;
+    var f = read.features || {};
+    var color = surfaceStateColor(read.state);
+    var analog = read.analog && read.analog.primary ? read.analog.primary : null;
+    var analogSub = analog && analog.n
+        ? '21D analogs: n=' + analog.n + ', abs move ' + fmt(analog.avgAbsMove,1) + '%, implied beat ' + fmt(analog.impliedBeatRate,0) + '%'
+        : 'Insufficient analog history';
+    function cell(lbl, val, color, sub, accentColor, tooltip) {
+        return '<div class="reg-cell" style="border-left-color:'+accentColor+'" data-tooltip="'+tooltip+'">' +
+            '<div class="reg-cell-lbl">'+lbl+'</div>' +
+            '<div class="reg-cell-val" style="color:'+color+'">'+val+'</div>' +
+            (sub ? '<div class="reg-cell-sub" style="color:rgba(255, 255, 255, 0.85)">'+sub+'</div>' : '') +
+            '</div>';
+    }
+    el.innerHTML =
+        cell('SURFACE STATE', read.label, color, read.action, color,
+            'Regime-first classification from NGVL, ATM, variance wings, skew, convexity, VRP, and realized volatility.') +
+        cell('CONFIDENCE', read.confidence, color, fmt(read.confidenceScore,0) + '/100', color,
+            'Confidence measures surface alignment. Contradictions lower the score; low confidence means stand down or treat as context only.') +
+        cell('DIRECTIONAL READ', read.directionalRead, read.directionalEdge ? '#3db87a' : '#f59e0b', read.directionalEdge ? 'History beats base rate' : 'Risk pricing, not trade signal', read.directionalEdge ? '#3db87a' : '#f59e0b',
+            'Directional edge is only shown when historical analogs beat the same-horizon base rate with sufficient sample size.') +
+        cell('VOL BIAS', read.volBias, color, read.horizon, color,
+            'What the options surface says about future volatility: expansion risk, rich implied premium, cheap implied premium, or cooling stress.') +
+        cell('VARIANCE BALANCE', 'UP ' + fmt(f.upZ,2) + ' / DN ' + fmt(f.dnZ,2), f.upZ > f.dnZ ? '#3db87a' : '#ef4444', 'Spread Z ' + fmt(f.spreadZ,2), f.upZ > f.dnZ ? '#3db87a' : '#ef4444',
+            '21-day z-scores of up and down variance. This is the cleanest read of which wing the options market is bidding.') +
+        cell('PRICING GAP', 'VRP ' + fmt(f.vrp,1), f.vrp != null && f.vrp < 0 ? '#a78bfa' : f.vrp != null && f.vrp > 10 ? '#c04040' : 'rgba(255,255,255,0.85)', 'Realized ' + fmt(f.realVol,1) + '%', '#a78bfa',
+            'Vol risk premium = implied NGVL minus realized volatility. Negative means actual movement is outrunning what options priced.') +
+        cell('EVIDENCE', (read.evidence || []).slice(0, 2).join(' | ') || 'Quiet', 'rgba(255,255,255,0.9)', (read.contradictions || []).length ? read.contradictions[0] : 'No major contradiction', color,
+            'Plain-English evidence stack and the most important caveat for the current state.') +
+        cell('HISTORICAL ANALOGS', analogSub, analog && analog.directionalEdge ? '#3db87a' : 'rgba(255,255,255,0.85)', analog && analog.dirHitRate != null ? 'Dir hit ' + fmt(analog.dirHitRate,0) + '% vs base ' + fmt(analog.baseRate,0) + '%' : 'Vol/realized move focus', color,
+            'Options-native analogs: forward realized movement, implied move beat rate, and directional edge only where statistically defensible.');
+}
+
+function renderSurfaceAnalogPanel(comp) {
+    var el = document.getElementById('surface-analog-panel'); if (!el) return;
+    var analogs = comp.surfaceAnalogs;
+    if (!analogs || !analogs.states) { el.innerHTML = '<div class="cvol-loading">No surface analogs available</div>'; return; }
+    var states = Object.keys(analogs.states).sort(function(a, b) { return analogs.states[b].count - analogs.states[a].count; });
+    var html = '<table class="scorecard-table"><thead><tr>' +
+        '<th data-tooltip="Options-surface state detected from CME NGVL components">STATE</th>' +
+        '<th data-tooltip="Number of historical daily observations in this state">N</th>' +
+        '<th data-tooltip="Average absolute NG move over the next 21 sessions">21D ABS MOVE</th>' +
+        '<th data-tooltip="How often actual 21D NG movement exceeded the NGVL-implied expected move">IMPLIED BEAT</th>' +
+        '<th data-tooltip="How often forward realized vol exceeded current realized vol">VOL EXPAND</th>' +
+        '<th data-tooltip="Directional hit rate only applies to directional surface states">DIRECTION</th>' +
+        '</tr></thead><tbody>';
+    states.forEach(function(state) {
+        var s = analogs.states[state];
+        var h = s.horizons[21] || {};
+        var dir = h.dirHitRate != null
+            ? fmt(h.dirHitRate,0) + '% vs base ' + fmt(h.baseRate,0) + '%' + (h.directionalEdge ? ' EDGE' : ' no edge')
+            : 'not directional';
+        html += '<tr>' +
+            '<td style="color:'+s.color+';font-weight:800;" data-tooltip="'+surfaceMeta(state).action+'">'+s.label+'</td>' +
+            '<td>'+s.count+'</td>' +
+            '<td>'+fmt(h.avgAbsMove,1)+'%</td>' +
+            '<td>'+fmt(h.impliedBeatRate,0)+'%</td>' +
+            '<td>'+fmt(h.volExpansionRate,0)+'%</td>' +
+            '<td style="color:'+(h.directionalEdge?'#3db87a':'rgba(255,255,255,0.85)')+'">'+dir+'</td>' +
+            '</tr>';
+    });
+    html += '</tbody></table>';
+    el.innerHTML = html;
+}
+
 function renderSensitivityPanel(sensitivity) {
     var el = document.getElementById('cvol-sensitivity-panel');
     if (!el || !sensitivity || !sensitivity.length) return;
@@ -1217,6 +1301,7 @@ function renderAll() {
     renderCorrMatrix(data);
     renderSignalHeatCalendar(data, comp);
     renderScorecard(comp);
+    renderSurfaceAnalogPanel(comp);
     renderTimeline(comp, CvolState.signalFilter);
 }
 
@@ -1389,6 +1474,18 @@ function renderVarSeriesChips() {
                 cvolHorizon.querySelectorAll('.horizon-btn').forEach(function(b) { b.classList.remove('active'); });
                 btn.classList.add('active');
                 setHorizonEx(btn.dataset.range, 'main');
+            });
+        }
+
+        var markerMode = document.getElementById('cvol-marker-mode');
+        if (markerMode) {
+            markerMode.addEventListener('click', function(ev) {
+                var btn = ev.target.closest('.marker-mode-btn'); if (!btn) return;
+                markerMode.querySelectorAll('.marker-mode-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                CvolState.markerMode = btn.dataset.mode || 'surface';
+                renderMainChart();
+                renderTimeline(CvolState.composites, CvolState.signalFilter);
             });
         }
 

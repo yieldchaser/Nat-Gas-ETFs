@@ -57,7 +57,7 @@
 .cvol-kpi-stat { display: flex; flex-direction: column; gap: 2px; }
 .cvol-kpi-slbl { font-size: 0.5rem; letter-spacing: 1px; color: rgba(255, 255, 255, 0.85); font-weight: 700; text-transform: uppercase; }
 .cvol-kpi-sval { font-size: 0.75rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-bright); }
-/* Micro-analytics secondary section (matches T2P .micro-analytics) */
+/* Micro-analytics secondary section */
 .cvol-kpi-micro { margin-top: 2px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 5px; }
 .cvol-micro-line { display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; font-weight: 700; color: var(--text-bright); letter-spacing: 0.1px; white-space: nowrap; }
 .cvol-micro-lbl { color: #fff; text-transform: uppercase; font-size: 0.65rem; opacity: 0.85; letter-spacing: 0.5px; }
@@ -80,6 +80,14 @@
 }
 .horizon-btn:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
 .horizon-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,255,255,0.05); }
+.marker-mode { display: flex; gap: 4px; align-items: center; margin-right: 10px; padding-right: 10px; border-right: 1px solid rgba(255,255,255,0.08); }
+.marker-mode-btn {
+    font-size: 0.55rem; font-weight: 800; letter-spacing: 0.8px; padding: 4px 8px; border-radius: 4px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary); color: rgba(255,255,255,0.72);
+    cursor: pointer; transition: all 0.18s;
+}
+.marker-mode-btn:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.25); }
+.marker-mode-btn.active { color: var(--cyan); border-color: var(--cyan); background: rgba(0,255,255,0.06); }
 .chart-canvas-wrap { position: relative; height: 400px; width: 100%; margin-bottom: 12px; }
 #cvol-canvas { width: 100%; height: 100%; cursor: crosshair; }
 
@@ -284,7 +292,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 </header>
 
 <!-- CONVICTION TRAFFIC LIGHT BANNER -->
-<div id="cvol-conviction-banner" style="display:none;width:100%;padding:10px 24px;box-sizing:border-box;border-bottom:1px solid rgba(255,255,255,0.06);cursor:help;" data-tooltip="Conviction Banner: Synthesizes NGVL regime, skew bias, VRP state, active signals, term structure, and volatility stability into a single actionable read. HIGH = strong directional setup from vol surface. MODERATE = signals present but regime not extreme. LOW = no vol-derived edge."></div>
+<div id="cvol-conviction-banner" style="display:none;width:100%;padding:10px 24px;box-sizing:border-box;border-bottom:1px solid rgba(255,255,255,0.06);cursor:help;" data-tooltip="Options Market Read: Summarizes the current CME NGVL aggregate surface state, confidence, volatility bias, directional read if supported, and contradictions."></div>
 
 <!-- LOADING STATE -->
 <div class="cvol-loading" id="cvol-loading">LOADING CVOL DATA...</div>
@@ -336,10 +344,10 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- TITLE -->
     <div class="cvol-title-block">
         <div class="cvol-title-row">
-            <span class="cvol-title" data-tooltip="Institutional-Grade Volatility Intelligence: Powered by CME CVOL. This dashboard decodes the options market to identify 'hidden' institutional positioning before it hits the price tape.">CVOL Volatility Intelligence</span>
-            <span class="cvol-badge">CME NGVL · OPTIONS-DERIVED</span>
+            <span class="cvol-title" data-tooltip="Regime-first CME NGVL options-surface intelligence. Reads aggregate implied volatility, variance wings, skew, convexity, and realized-vs-implied pricing before making any directional claim.">CVOL Volatility Intelligence</span>
+            <span class="cvol-badge">CME NGVL · SURFACE READ</span>
         </div>
-        <div class="cvol-desc">Natural Gas Volatility Analytics: Tracks CME CVOL (30-day forward implied vol), skew ratio, and convexity to identify directional inflection points. Our proprietary composite signals (SAD, CVC, RDS) synthesize these cross-column divergences into high-conviction regime alerts.</div>
+        <div class="cvol-desc">Regime-first options-surface intelligence for natural gas. It reads CME NGVL, ATM vol, up/down variance, skew ratio, convexity, realized vol, and VRP to explain what the options market is pricing now — and only shows directional edge when historical analogs clear the bar.</div>
     </div>
 
     <!-- PANEL 1: STATUS BANNER (populated by JS with data-tooltip on every item) -->
@@ -352,7 +360,12 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <div class="chart-container">
         <div class="chart-header">
             <div style="flex:1">
-                <span class="section-title-text" data-tooltip="Volatility Environment: Overlays CME CVOL (forward vol) with NG price. Background bands represent 252-day (1-year) percentile regimes. Volatility is mean-reverting: EXTREME readings often signal cycle exhaustion; LOW readings signal dangerous 'spring-loaded' calm.">CVOL Time Series</span>
+                <span class="section-title-text" data-tooltip="Volatility Environment: Overlays CME CVOL (forward vol) with NG price. Background bands represent 252-day percentile regimes; markers default to options-surface state transitions.">CVOL Time Series</span>
+            </div>
+            <div class="marker-mode" id="cvol-marker-mode" data-tooltip="Marker mode: Surface shows decision-grade options-surface state transitions. Raw shows SAD/CI/CVC/RDS research fires. Both overlays both layers.">
+                <button class="marker-mode-btn active" data-mode="surface">SURFACE</button>
+                <button class="marker-mode-btn" data-mode="raw">RAW</button>
+                <button class="marker-mode-btn" data-mode="both">BOTH</button>
             </div>
             <div class="horizon-group" id="cvol-horizon-controls">
                 <button class="horizon-btn" data-range="1W" data-tooltip="Short-term tactical view.">1W</button>
@@ -387,7 +400,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
                 <div class="legend-item" data-tooltip="NGVL ≤ 25th percentile: Volatility is historically 'cheap'. This is often a precursor to violent, explosive price moves after a period of consolidation."><span class="legend-line" style="background:rgba(74,128,184,0.3)"></span> LOW (≤25th)</div>
                 <div class="legend-item" data-tooltip="Typical volatility environment for the trailing 252-day period."><span class="legend-line" style="background:rgba(61,184,122,0.3)"></span> NORMAL</div>
                 <div class="legend-item" data-tooltip="NGVL ≥ 75th percentile: Above-average options activity. Market is pricing high uncertainty or significant upcoming event risk."><span class="legend-line" style="background:rgba(192,120,40,0.3)"></span> ELEVATED (≥75th)</div>
-                <div class="legend-item" data-tooltip="NGVL ≥ 90th percentile: Historically rare volatility levels. Often marks a cycle top or a final capitulation 'washout' before mean reversion begins."><span class="legend-line" style="background:rgba(192,64,64,0.3)"></span> EXTREME (≥90th)</div>
+                <div class="legend-item" data-tooltip="NGVL ≥ 90th percentile: historically rare implied-volatility pricing. Treat as expensive uncertainty until realized movement or surface transitions confirm otherwise."><span class="legend-line" style="background:rgba(192,64,64,0.3)"></span> EXTREME (≥90th)</div>
             </div>
         </div>
     </div>
@@ -442,25 +455,25 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
     </div>
 
-    <!-- PANEL 4.5: REGIME DASHBOARD (Decision Synthesis) -->
+    <!-- PANEL 4.5: OPTIONS MARKET READ -->
     <div class="chart-container" id="regime-dashboard-panel" style="padding:20px 24px;">
         <div class="section-title-bar" style="margin-bottom:14px;">
-            <span class="section-title-text" data-tooltip="Decision Synthesis: Aggregates all vol surface dimensions into a single actionable regime assessment. This is your 'at-a-glance' conviction framework — it tells you WHAT the market is doing, HOW confident we are, and WHAT to expect next.">Regime Dashboard</span>
-            <span style="font-size:0.5rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1.5px;font-weight:700;">DECISION FRAMEWORK</span>
+            <span class="section-title-text" data-tooltip="Options Market Read: the current surface state, confidence, directional bias if earned, volatility bias, evidence stack, contradictions, and invalidation logic.">Options Market Read</span>
+            <span style="font-size:0.5rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1.5px;font-weight:700;">SURFACE STATE MACHINE</span>
         </div>
         <div id="regime-dashboard-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;"></div>
     </div>
 
-    <!-- PANEL 5: COMPOSITE SIGNAL DASHBOARD (expanded with axes, hover, stats) -->
+    <!-- PANEL 5: RAW SURFACE INPUTS (expanded with axes, hover, stats) -->
     <div style="margin-bottom:16px;">
-        <span class="section-title-text" data-tooltip="Predictive Signal Array: Five proprietary composite indicators that decode the options-surface into actionable regime alerts. SAD (Stealth Re-positioning), CI (Fragile Calm), CVC (Trend Confirmation), and RDS (Explosive Divergence). Click any card for the full interactive timeline.">Proprietary Composite Signals</span>
-        <span style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1px;font-weight:700;">CLICK TO EXPAND</span>
+        <span class="section-title-text" data-tooltip="Research input layer: SAD, CI, CVC, and RDS are explanatory transforms from the CME aggregate surface. They support the surface read; they are not direct directional calls. Click any card for the full interactive timeline.">Raw Surface Inputs</span>
+        <span style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1px;font-weight:700;">RESEARCH LAYER · CLICK TO EXPAND</span>
     </div>
     <div class="composite-grid">
         <div class="composite-card" data-comp="sad">
             <span class="comp-expand-icon">⤢ EXPAND</span>
             <div class="comp-head">
-                <span class="comp-name" data-tooltip="Skew-ATM Divergence: SkewRatio − (ATM / ATM_90d_median). Positive = directional skew rising without broad vol expansion = stealth repositioning by informed flow. Z > 1.5 = signal fires.">SAD</span>
+                <span class="comp-name" data-tooltip="Skew-ATM Divergence: skew ratio diverges from the ATM volatility baseline. Positive = directional wing pressure rising faster than broad vol. Z > 1.5 = research fire.">SAD</span>
                 <span class="comp-val" style="color:#f59e0b" id="sad-current">—</span>
             </div>
             <div class="comp-spark-wrap">
@@ -486,33 +499,33 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <div class="composite-card" data-comp="cvcDown">
             <span class="comp-expand-icon">⤢ EXPAND</span>
             <div class="comp-head">
-                <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Downside): ConvPct63 × max(0, DnVarZ21). High convexity + high downside variance = market aggressively buying OTM puts = pricing a top. > 1.20 = signal fires.">CVC ↓</span>
+                <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Downside): ConvPct63 × max(0, DnVarZ21). High convexity plus downside variance means the surface is paying up for downside tail risk. > 1.20 = research fire.">CVC ↓</span>
                 <span class="comp-val" style="color:#ef4444" id="cvc-down-current">—</span>
             </div>
             <div class="comp-spark-wrap">
                 <canvas class="comp-spark" id="spark-cvc-down"></canvas>
                 <div class="comp-spark-tt" id="spark-cvc-down-tt"></div>
             </div>
-            <div class="comp-footer" data-tooltip="Signal fires when CVC↓ exceeds 1.20 — confirms top formation setup"><span>THRESHOLD</span><span>1.20</span></div>
+            <div class="comp-footer" data-tooltip="Research fire when CVC↓ exceeds 1.20 — downside tail demand is elevated."><span>THRESHOLD</span><span>1.20</span></div>
             <div class="comp-stats" id="cvcDown-stats"></div>
         </div>
         <div class="composite-card" data-comp="cvcUp">
             <span class="comp-expand-icon">⤢ EXPAND</span>
             <div class="comp-head">
-                <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Upside): ConvPct63 × max(0, UpVarZ21). High convexity + high upside variance = market aggressively buying OTM calls = pricing a bottom. > 1.20 = signal fires.">CVC ↑</span>
+                <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Upside): ConvPct63 × max(0, UpVarZ21). High convexity plus upside variance means the surface is paying up for upside tail risk. > 1.20 = research fire.">CVC ↑</span>
                 <span class="comp-val" style="color:#3db87a" id="cvc-up-current">—</span>
             </div>
             <div class="comp-spark-wrap">
                 <canvas class="comp-spark" id="spark-cvc-up"></canvas>
                 <div class="comp-spark-tt" id="spark-cvc-up-tt"></div>
             </div>
-            <div class="comp-footer" data-tooltip="Signal fires when CVC↑ exceeds 1.20 — confirms bottom formation setup"><span>THRESHOLD</span><span>1.20</span></div>
+            <div class="comp-footer" data-tooltip="Research fire when CVC↑ exceeds 1.20 — upside tail demand is elevated."><span>THRESHOLD</span><span>1.20</span></div>
             <div class="comp-stats" id="cvcUp-stats"></div>
         </div>
         <div class="composite-card" data-comp="rds">
             <span class="comp-expand-icon">⤢ EXPAND</span>
             <div class="comp-head">
-                <span class="comp-name" data-tooltip="Regime Divergence Score: |ΔSkewRatio_5d| × Convexity × (1 − ATM_pctile/100). The trifecta setup: rapid skew shift + fat tails + low ATM vol = explosive directional move imminent. Z > 1.8 = signal fires.">RDS</span>
+                <span class="comp-name" data-tooltip="Regime Divergence Score: |ΔSkewRatio_5d| × Convexity × (1 − ATM_pctile/100). Rapid skew shift plus fat tails plus low ATM vol = surface instability and expansion risk. Z > 1.8 = research fire.">RDS</span>
                 <span class="comp-val" style="color:#ec4899" id="rds-current">—</span>
             </div>
             <div class="comp-spark-wrap">
@@ -555,64 +568,27 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- SIGNAL TYPE FILTER (shared between scorecard + timeline) -->
     <div class="signal-type-chips" id="cvol-signal-type-filter">
         <button class="signal-chip active" data-signal="all" style="border-color:var(--cyan);color:var(--cyan);" data-tooltip="Show all signal types">ALL SIGNALS</button>
-        <button class="signal-chip" data-signal="SAD" style="border-color:#f59e0b;color:#f59e0b;" data-tooltip="Skew-ATM Divergence — stealth repositioning signal">SAD</button>
+        <button class="signal-chip" data-signal="SAD" style="border-color:#f59e0b;color:#f59e0b;" data-tooltip="Skew-ATM Divergence — skew pressure versus baseline vol">SAD</button>
         <button class="signal-chip" data-signal="CI" style="border-color:#60a8f8;color:#60a8f8;" data-tooltip="Complacency Index — fragile calm warning">CI</button>
-        <button class="signal-chip" data-signal="CVC↓" style="border-color:#ef4444;color:#ef4444;" data-tooltip="Convexity-Variance down — top formation signal">CVC ↓</button>
-        <button class="signal-chip" data-signal="CVC↑" style="border-color:#3db87a;color:#3db87a;" data-tooltip="Convexity-Variance up — bottom formation signal">CVC ↑</button>
+        <button class="signal-chip" data-signal="CVC↓" style="border-color:#ef4444;color:#ef4444;" data-tooltip="Convexity-Variance down — downside tail demand input">CVC ↓</button>
+        <button class="signal-chip" data-signal="CVC↑" style="border-color:#3db87a;color:#3db87a;" data-tooltip="Convexity-Variance up — upside tail demand input">CVC ↑</button>
         <button class="signal-chip" data-signal="RDS" style="border-color:#ec4899;color:#ec4899;" data-tooltip="Regime Divergence Score — explosive setup signal">RDS</button>
     </div>
 
-    <!-- PANEL 7.5: CROSS-SIGNAL FRAMEWORK -->
-    <div class="scorecard-panel" style="padding:0;">
-        <div id="csf-header" style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer;user-select:none;" onclick="document.getElementById('csf-body').style.display=(document.getElementById('csf-body').style.display==='none'?'block':'none');this.querySelector('.csf-arrow').textContent=(document.getElementById('csf-body').style.display==='none'?'▶':'▼');">
-            <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:0.6rem;letter-spacing:2px;font-weight:700;color:var(--text-primary);" data-tooltip="How to use CVOL conviction as a regime filter and conviction multiplier for signals from other tabs.">CROSS-SIGNAL FRAMEWORK</span>
-                <span style="font-size:0.5rem;color:rgba(255, 255, 255, 0.85);letter-spacing:1px;">How CVOL conviction combines with T2P &amp; Volume signals</span>
-            </div>
-            <span class="csf-arrow" style="font-size:0.6rem;color:rgba(255, 255, 255, 0.85);">▶</span>
+    <!-- PANEL 7.5: SURFACE STATE ANALOGS -->
+    <div class="scorecard-panel">
+        <div class="section-title-bar">
+            <span class="section-title-text" data-tooltip="Historical analogs for the options-surface state machine. It checks whether each surface regime led to realized volatility expansion, implied-move beats, and directional edge versus the same-horizon base rate.">Surface State Analogs</span>
+            <span style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1px;font-weight:700;">OPTIONS-NATIVE AUDIT</span>
         </div>
-        <div id="csf-body" style="display:none;padding:0 20px 20px;">
-            <p style="font-size:0.58rem;color:rgba(255, 255, 255, 0.85);line-height:1.7;margin:0 0 16px;" data-tooltip="CVOL signals are confirmation/filter signals — not standalone alpha generators. Their highest value is as a REGIME FILTER that multiplies the reliability of signals from other tabs.">
-                CVOL signals are <strong style="color:var(--text-primary);">confirmation signals, not standalone alpha</strong>. Their highest value is as a regime filter that multiplies the reliability of
-                volume spikes (Volume Monitor) and cycle position (Trough-to-Peak). Use this matrix to interpret combined signals.
-            </p>
-            <div style="overflow-x:auto;">
-            <table style="width:100%;border-collapse:collapse;font-size:0.55rem;">
-                <thead>
-                    <tr>
-                        <th style="padding:8px 12px;text-align:left;color:rgba(255, 255, 255, 0.85);font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Current CVOL Conviction Level from the Regime Dashboard">CVOL CONVICTION</th>
-                        <th style="padding:8px 12px;text-align:center;color:#3db87a;font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Trough-to-Peak cycle position above 75th percentile — late cycle, elevated risk">T2P &gt; 75th pct<br><span style="font-weight:400;font-size:0.48rem;color:rgba(255, 255, 255, 0.85);">Late-cycle / frothy</span></th>
-                        <th style="padding:8px 12px;text-align:center;color:rgba(255, 255, 255, 0.85);font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Trough-to-Peak cycle position in the middle range — no clear cycle signal">T2P 25–75th<br><span style="font-weight:400;font-size:0.48rem;color:rgba(255, 255, 255, 0.85);">Mid-cycle</span></th>
-                        <th style="padding:8px 12px;text-align:center;color:#60a8f8;font-weight:700;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.07);" data-tooltip="Trough-to-Peak cycle position below 25th percentile — early cycle, recovery phase">T2P &lt; 25th pct<br><span style="font-weight:400;font-size:0.48rem;color:rgba(255, 255, 255, 0.85);">Early-cycle / recovery</span></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td style="padding:10px 12px;color:#f59e0b;font-weight:800;border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="HIGH conviction means the vol surface is showing extreme readings. Combined with a vol spike, this is the highest-quality setup the system can generate.">HIGH</td>
-                        <td style="padding:10px 12px;text-align:center;background:rgba(245,158,11,0.08);border-bottom:1px solid rgba(255,255,255,0.05);border-radius:4px;" data-tooltip="MAXIMUM CONVICTION: Vol surface extremes align with late-cycle position. Historical combined hit rate outperforms any individual signal. Size up.">⚡ <strong style="color:#f59e0b;">MAXIMUM CONVICTION</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">Vol + cycle both signal reversal</span></td>
-                        <td style="padding:10px 12px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="Vol surface is extreme but cycle position is ambiguous. Lean toward the CVOL directional bias, but reduce size."><strong style="color:var(--cyan);">LEAN + MONITOR</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">Vol bias, cycle indeterminate</span></td>
-                        <td style="padding:10px 12px;text-align:center;background:rgba(239,68,68,0.06);border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="Vol surface and cycle are conflicted. CVOL may be early — the recovery cycle argues against the vol signal."><strong style="color:#ef4444;">CONFLICTED</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">Vol extreme but early-cycle recovery</span></td>
-                    </tr>
-                    <tr>
-                        <td style="padding:10px 12px;color:var(--cyan);font-weight:800;" data-tooltip="MODERATE conviction means some vol surface signals are elevated but no full extreme. Use other tabs as primary.">MODERATE</td>
-                        <td style="padding:10px 12px;text-align:center;" data-tooltip="Vol is moderately elevated and cycle is late — watch for a volume spike as the catalyst. Vol confirmation adds value here."><strong style="color:var(--cyan);">WATCH</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">Wait for volume catalyst</span></td>
-                        <td style="padding:10px 12px;text-align:center;" data-tooltip="No clear signal from either source. Wait for one of them to register an extreme reading."><strong style="color:rgba(255, 255, 255, 0.85);">WAIT</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">Neither tab at an extreme</span></td>
-                        <td style="padding:10px 12px;text-align:center;" data-tooltip="Cycle says early recovery, CVOL is not at an extreme. Lean long on T2P signal alone."><strong style="color:#60a8f8;">FOLLOW T2P</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">T2P recovery bias</span></td>
-                    </tr>
-                </tbody>
-            </table>
-            </div>
-            <p style="font-size:0.5rem;color:rgba(255, 255, 255, 0.85);margin:14px 0 0;line-height:1.6;" data-tooltip="The Volume Monitor's conviction events (VCVI ≥72, multi-window convergence) can substitute for T2P cycle position as the trigger signal when T2P data is unavailable.">
-                💡 <strong style="color:var(--text-primary);">Volume Monitor note:</strong> A Volume Monitor Conviction Event (VCVI ≥72 + multi-window breadth) can substitute for T2P &gt;75th pct as the trigger signal — both represent extremes of fear/capitulation that historically precede reversals. When both fire simultaneously with CVOL HIGH, that is the highest-quality setup this system can produce.
-            </p>
-        </div>
+        <div id="surface-analog-panel" style="overflow-x:auto; -webkit-overflow-scrolling:touch;"></div>
     </div>
 
     <!-- PANEL 8: BACKTEST SCORECARD -->
 
     <div class="scorecard-panel">
         <div class="section-title-bar">
-            <span class="section-title-text" data-tooltip="Signal Reliability Audit: Aggregate predictive performance of each composite signal. Hits represent signals where NG moved in the predicted direction. Annualized Sharpe measures the 'Return-per-unit-of-Risk' consistency of each alert.">Signal Backtest Scorecard</span>
+            <span class="section-title-text" data-tooltip="Research Input Audit: aggregate behavior of SAD, CI, CVC, and RDS as explanatory inputs. These are retained for transparency and historical context, not treated as direct trade calls.">Research Input Scorecard</span>
         </div>
         <div class="signal-type-chips" id="cvol-regime-filter" style="margin-bottom:12px;">
             <button class="signal-chip active" data-regime="all" style="border-color:var(--cyan);color:var(--cyan);" data-tooltip="Show signal performance across ALL vol regimes">ALL REGIMES</button>
@@ -640,7 +616,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <div class="event-panel">
         <div class="event-header">
             <div style="display:flex;align-items:center;gap:12px;">
-                <span class="event-title" style="border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;" data-tooltip="All dates where any composite signal exceeded its calibrated threshold. Forward returns show NG price change 5 and 21 sessions after the signal. Use filters to narrow by time period.">Signal Event Timeline</span>
+                <span class="event-title" style="border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;" data-tooltip="Default view shows decision-grade options-surface state transitions. Switch markers to RAW to inspect SAD/CI/CVC/RDS research fires.">Surface Event Timeline</span>
                 <span class="event-count" id="cvol-event-count">--</span>
             </div>
             <div class="tab-group" id="cvol-event-filter">
@@ -653,14 +629,14 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <table class="event-table">
             <thead>
                 <tr>
-                    <th data-tooltip="The 'Moment of Truth': Date the composite calculation breached its institutional-grade threshold.">DATE</th>
-                    <th data-tooltip="Signal Type: SAD (Stealth Skew), CI (Fragile Calm), CVC (Trend Confirm), RDS (Explosive Divergence).">SIGNAL</th>
-                    <th data-tooltip="Bullish Demand (UPSIDE) vs Bearish Fear (DOWNSIDE/TOP). Complacency signals a vol-spike after fragile calm.">SENTIMENT</th>
-                    <th data-tooltip="The intensity of the signal on the day it fired.">VALUE</th>
+                    <th data-tooltip="Date the surface state changed or a meaningful raw research input fired.">DATE</th>
+                    <th data-tooltip="Surface state by default; SAD/CI/CVC/RDS when marker mode is RAW or BOTH.">STATE / INPUT</th>
+                    <th data-tooltip="Plain-English read from the surface state or raw input. Directional labels only matter when historical analogs support an edge.">READ</th>
+                    <th data-tooltip="Surface confidence score or raw input value.">SCORE</th>
                     <th data-tooltip="NG Futures settlement price on the trigger date.">NG PRICE</th>
                     <th data-tooltip="Predictive Performance (Short-Term): Price change 5 trading sessions (1 week) after fire.">NG Δ 5D</th>
                     <th data-tooltip="Predictive Performance (Medium-Term): Price change 21 trading sessions (1 month) after fire. The primary benchmark for signal validation.">NG Δ 21D</th>
-                    <th data-tooltip="Confluence Score: Number of OTHER signals firing within ±5 sessions. Higher scores signal 'Trifecta' regimes with maximum conviction.">CONF</th>
+                    <th data-tooltip="Surface confidence for decision-grade events; raw confluence count for research-input fires.">CONF</th>
                     <th data-tooltip="Seasonal Context: Natural Gas is profoundly seasonal; signals firing in Winter (withdrawal) have different risk profiles than Fall (injection).">SEASON</th>
                 </tr>
             </thead>
@@ -676,7 +652,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 <footer>
     <div class="footer-content">
         <span>Blue Meridian | CME CVOL Data via QuikStrike</span>
-        <span data-tooltip="Proprietary composite indicators not affiliated with CME Group">SAD, CVC, CI, RDS are proprietary composite indicators</span>
+        <span data-tooltip="SAD, CVC, CI, and RDS are read-only research transforms built from CME CVOL aggregate fields.">SAD, CVC, CI, RDS are research inputs from CME aggregate fields</span>
     </div>
 </footer>
 

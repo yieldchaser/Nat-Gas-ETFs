@@ -152,26 +152,41 @@ function renderMainChart() {
         ctx.strokeStyle = toRgba(cfg.color, 0.3); ctx.lineWidth = 2; ctx.stroke();
     });
 
-    // Signal fire markers on NGVL line
-    if (comp.events && CvolState.activeSeries.indexOf('ngvl') >= 0) {
+    // Surface / raw research markers on NGVL line
+    if (CvolState.activeSeries.indexOf('ngvl') >= 0) {
+        var markerMode = CvolState.markerMode || 'surface';
         var sigMarkerColors = {'SAD':'#f59e0b','CI':'#60a8f8','CVC\u2193':'#ef4444','CVC\u2191':'#3db87a','RDS':'#ec4899'};
-        comp.events.forEach(function(ev) {
-            if (ev.idx < r.s || ev.idx > r.e) return;
-            var li = ev.idx - r.s;
-            var ngvlVal = visData[li] ? visData[li].ngvl : null;
-            if (ngvlVal == null) return;
-            var mx = getX(li), my = getY(ngvlVal, leftR);
-            var mc = sigMarkerColors[ev.signal] || '#00e5ff';
-            // Diamond shape
-            ctx.save();
-            ctx.translate(mx, my);
-            ctx.rotate(Math.PI / 4);
-            ctx.fillStyle = mc;
-            ctx.fillRect(-3.5, -3.5, 7, 7);
-            ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(-3.5, -3.5, 7, 7);
-            ctx.restore();
+        var markerSets = [];
+        if (markerMode === 'surface' || markerMode === 'both') markerSets.push({ raw: false, events: comp.surfaceEvents || [] });
+        if (markerMode === 'raw' || markerMode === 'both') markerSets.push({ raw: true, events: comp.events || [] });
+        markerSets.forEach(function(set) {
+            set.events.forEach(function(ev) {
+                if (ev.idx < r.s || ev.idx > r.e) return;
+                var li = ev.idx - r.s;
+                var ngvlVal = visData[li] ? visData[li].ngvl : null;
+                if (ngvlVal == null) return;
+                var mx = getX(li), my = getY(ngvlVal, leftR);
+                var mc = set.raw ? (sigMarkerColors[ev.signal] || '#00e5ff') : surfaceStateColor(ev.state);
+                ctx.save();
+                ctx.translate(mx, my);
+                if (set.raw) {
+                    ctx.rotate(Math.PI / 4);
+                    ctx.fillStyle = mc;
+                    ctx.fillRect(-3.4, -3.4, 6.8, 6.8);
+                    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(-3.4, -3.4, 6.8, 6.8);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, ev.confidence >= 70 ? 5.5 : 4.5, 0, Math.PI * 2);
+                    ctx.fillStyle = toRgba(mc, 0.9);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+                    ctx.lineWidth = 1.2;
+                    ctx.stroke();
+                }
+                ctx.restore();
+            });
         });
     }
 
@@ -200,11 +215,19 @@ function renderMainChart() {
                 if (vrpH != null) html += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#a78bfa">VRP</span><span class="tooltip-val">'+(vrpH>0?'+':'')+vrpH.toFixed(1)+'</span></div>';
                 // Signal event nearby (±2 sessions)
                 var absIdx = r.s + hi;
-                var nearbyEvt = (comp.events || []).filter(function(ev) { return Math.abs(ev.idx - absIdx) <= 2; });
+                var markerMode = CvolState.markerMode || 'surface';
+                var nearbySource = markerMode === 'raw'
+                    ? (comp.events || [])
+                    : markerMode === 'both'
+                        ? (comp.surfaceEvents || []).concat(comp.events || [])
+                        : (comp.surfaceEvents || []);
+                var nearbyEvt = nearbySource.filter(function(ev) { return Math.abs(ev.idx - absIdx) <= 2; });
                 if (nearbyEvt.length > 0) {
                     nearbyEvt.forEach(function(ev) {
                         var sigC = {'SAD':'#f59e0b','CI':'#60a8f8','CVC\u2193':'#ef4444','CVC\u2191':'#3db87a','RDS':'#ec4899'};
-                        html += '<div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.6rem;font-weight:800;color:'+(sigC[ev.signal]||'var(--cyan)')+'">⚡ '+ev.signal+' — '+ev.direction+'</div>';
+                        var eventColor = ev.state ? surfaceStateColor(ev.state) : (sigC[ev.signal] || 'var(--cyan)');
+                        html += '<div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.6rem;font-weight:800;color:'+eventColor+'">* '+ev.signal+' - '+ev.direction+'</div>';
+                        if (ev.state && ev.evidence && ev.evidence.length) html += '<div style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);">'+ev.evidence.slice(0,2).join(' | ')+'</div>';
                         html += '<div style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);">NG $'+(ev.underlying!=null?ev.underlying.toFixed(2):'—')+'</div>';
                         var fwdLabel = '21D'; var fwdVal = ev.fwd21;
                         if (ev.fwd5 != null && ev.fwd21 == null) { fwdLabel = '5D'; fwdVal = ev.fwd5; }
