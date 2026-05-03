@@ -557,9 +557,23 @@ function renderVarDecomp() {
             if (tip) {
                 var row = visData[hi];
                 var sk = row.skewRatio;
-                var sentiment = sk > 1.45 ? 'EXTREME BULLISH' : sk > 1.25 ? 'BULLISH BIAS' : sk < 0.97 ? 'EXTREME BEARISH' : sk < 1.05 ? 'BEARISH BIAS' : 'NEUTRAL';
+                // Classify relative to rolling 21D history — raw absolute thresholds are
+                // misleading because NG structurally prices upside calls above puts (median ~1.15).
+                var skZ21 = (CvolState.composites && CvolState.composites.skewRatioZ21)
+                    ? CvolState.composites.skewRatioZ21[range.s + hi] : null;
+                var sentiment, sentimentColor;
+                if (skZ21 != null) {
+                    if (skZ21 > 1.5)       { sentiment = 'STRONG UPSIDE PRESSURE';   sentimentColor = '#3db87a'; }
+                    else if (skZ21 > 0.75) { sentiment = 'UPSIDE SKEW BUILDING';     sentimentColor = '#6ddc8b'; }
+                    else if (skZ21 < -1.5) { sentiment = 'STRONG DOWNSIDE PRESSURE'; sentimentColor = '#ef4444'; }
+                    else if (skZ21 < -0.75){ sentiment = 'DOWNSIDE SKEW BUILDING';   sentimentColor = '#f87171'; }
+                    else                   { sentiment = 'NEUTRAL';                   sentimentColor = '#f59e0b'; }
+                } else {
+                    sentiment = 'NEUTRAL'; sentimentColor = '#f59e0b';
+                }
                 var ttHtml = '<div style="color:var(--cyan);font-weight:800;font-size:0.6rem;letter-spacing:1.5px;margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:3px;">' + fmtDate(row.date) + '</div>';
-                ttHtml += '<div style="color:#f59e0b;font-weight:800;font-size:0.55rem;margin-bottom:6px;">SENTIMENT: '+sentiment+'</div>';
+                ttHtml += '<div style="color:' + sentimentColor + ';font-weight:800;font-size:0.55rem;margin-bottom:3px;">SKEW: ' + sentiment + '</div>';
+                if (skZ21 != null) ttHtml += '<div style="color:rgba(255,255,255,0.6);font-size:0.5rem;margin-bottom:5px;font-family:\'JetBrains Mono\',monospace;">Z21: ' + (skZ21 >= 0 ? '+' : '') + skZ21.toFixed(2) + 'σ vs 21D rolling avg</div>';
                 
                 if (CvolState.varActiveSeries.indexOf('upVar') >= 0) 
                     ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#3db87a">UP VAR</span><span class="tooltip-val">' + fmt(row.upVar) + '%</span></div>';
