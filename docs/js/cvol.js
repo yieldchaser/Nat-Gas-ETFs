@@ -16,6 +16,7 @@ const CvolState = {
     hoverState: null,
     dragState: { active: false, startIdx: null, currentIdx: null },
     signalFilter: 'all',
+    markerMode: 'surface',
     signalTypeFilter: 'all', // 'all', 'SAD', 'CI', 'CVC↓', 'CVC↑', 'RDS'
     regimeFilter: 'all',  // 'all', 'low', 'normal', 'high'
     composites: {},       // computed composite signal arrays
@@ -128,6 +129,330 @@ function fullPercentile(arr, value) {
 }
 
 // ── Composite Signal Computations ─────────────────────────────
+// Surface-state model: options-market read first, directional calls only if history supports them.
+const SURFACE_STATES = {
+    CALM_COMPRESSION: { label: 'CALM COMPRESSION', color: '#60a8f8', bias: 'NONE', volBias: 'EXPANSION RISK', action: 'Watch for expansion', horizon: '5-21D' },
+    UPSIDE_TAIL_BID: { label: 'UPSIDE TAIL BID', color: '#3db87a', bias: 'UPSIDE', volBias: 'EXPANSION RISK', action: 'Upside risk bid', horizon: '2-10D' },
+    DOWNSIDE_TAIL_BID: { label: 'DOWNSIDE TAIL BID', color: '#ef4444', bias: 'DOWNSIDE', volBias: 'EXPANSION RISK', action: 'Downside risk bid', horizon: '2-10D' },
+    TWO_SIDED_STRESS: { label: 'TWO-SIDED STRESS', color: '#f59e0b', bias: 'TWO_WAY', volBias: 'RANGE EXPANSION', action: 'Respect two-way risk', horizon: '2-21D' },
+    PANIC_PREMIUM: { label: 'PANIC PREMIUM', color: '#c04040', bias: 'NONE', volBias: 'RICH IMPLIED', action: 'Risk already expensive', horizon: '5-21D' },
+    VOL_UNDERPRICED: { label: 'VOL UNDERPRICED', color: '#a78bfa', bias: 'NONE', volBias: 'CHEAP IMPLIED', action: 'Realized outruns implied', horizon: '5-21D' },
+    NORMALIZATION: { label: 'NORMALIZATION', color: '#94a3b8', bias: 'NONE', volBias: 'COOLING', action: 'Stress cooling', horizon: '5-21D' },
+    NO_EDGE: { label: 'NO EDGE', color: '#6b7280', bias: 'NONE', volBias: 'NEUTRAL', action: 'Stand down', horizon: 'WAIT' },
+};
+
+function surfaceMeta(state) {
+    return SURFACE_STATES[state] || SURFACE_STATES.NO_EDGE;
+}
+
+function surfaceStateColor(state) {
+    return surfaceMeta(state).color;
+}
+
+function surfaceBiasText(bias, hasEdge) {
+    if (bias === 'UPSIDE') return hasEdge ? 'UPSIDE EDGE' : 'UPSIDE RISK BID';
+    if (bias === 'DOWNSIDE') return hasEdge ? 'DOWNSIDE EDGE' : 'DOWNSIDE RISK BID';
+    if (bias === 'TWO_WAY') return 'TWO-WAY MOVE RISK';
+    return 'NO DIRECTIONAL EDGE';
+}
+
+function cvolPct(v, threshold) {
+    return v != null && isFinite(v) && v >= threshold;
+}
+
+function cvolLow(v, threshold) {
+    return v != null && isFinite(v) && v <= threshold;
+}
+
+function cvolForwardReturn(data, i, days) {
+    if (i + days >= data.length || data[i].underlying == null || data[i].underlying === 0 || data[i + days].underlying == null) return null;
+    return (data[i + days].underlying - data[i].underlying) / data[i].underlying * 100;
+}
+
+function cvolForwardRealizedVol(data, i, days) {
+    if (i + days >= data.length) return null;
+    let sumSq = 0, count = 0;
+    for (let j = i + 1; j <= i + days; j++) {
+        if (data[j] && data[j - 1] && data[j].underlying != null && data[j - 1].underlying != null && data[j - 1].underlying > 0) {
+            const lr = Math.log(data[j].underlying / data[j - 1].underlying);
+            sumSq += lr * lr;
+            count++;
+        }
+    }
+    return count >= Math.max(3, Math.floor(days * 0.6)) ? Math.sqrt(sumSq / Math.max(1, count - 1) * 252) * 100 : null;
+}
+
+function cvolExpectedMove(ngvl, days) {
+    return ngvl != null ? ngvl / Math.sqrt(252) * Math.sqrt(days) : null;
+}
+
+function classifySurfaceDay(data, comp, extra, i) {
+    const row = data[i] || {};
+    const metaNoEdge = surfaceMeta('NO_EDGE');
+    if (i < 252) {
+        return {
+            idx: i, date: row.date, state: 'NO_EDGE', label: metaNoEdge.label, confidence: 'LOW', confidenceScore: 0,
+            directionalBias: 'NONE', directionalEdge: false, directionalRead: 'NO DIRECTIONAL EDGE',
+            volBias: metaNoEdge.volBias, action: metaNoEdge.action, horizon: metaNoEdge.horizon,
+            evidence: ['Insufficient 252-session history for full surface context'], contradictions: [], confirms: [], negates: [], features: {}
+        };
+    }
+
+    const ngvlPct = comp.ngvlPct252 ? comp.ngvlPct252[i] : null;
+    const atmPct = comp.atmPct252 ? comp.atmPct252[i] : null;
+    const convPct = comp.convPct63 ? comp.convPct63[i] : null;
+    const upZ = comp.upVarZ21 ? comp.upVarZ21[i] : null;
+    const dnZ = comp.dnVarZ21 ? comp.dnVarZ21[i] : null;
+    const skewZ = comp.skewRatioZ21 ? comp.skewRatioZ21[i] : null;
+    const skewRoc5 = comp.skewRatioRoc5 ? comp.skewRatioRoc5[i] : null;
+    const ngvlZ = comp.ngvlZ21 ? comp.ngvlZ21[i] : null;
+    const convZ = comp.convZ21 ? comp.convZ21[i] : null;
+    const vrpVal = comp.vrp ? comp.vrp[i] : null;
+    const vrpZ = comp.vrpZ21 ? comp.vrpZ21[i] : null;
+    const realVol = comp.realVol ? comp.realVol[i] : null;
+    const vov = comp.vov ? comp.vov[i] : null;
+    const spread = extra.varianceSpread ? extra.varianceSpread[i] : null;
+    const spreadZ = extra.varianceSpreadZ ? extra.varianceSpreadZ[i] : null;
+    const volRoc5 = extra.ngvlRoc5 ? extra.ngvlRoc5[i] : null;
+    const vov5Ago = i > 5 && comp.vov ? comp.vov[i - 5] : null;
+    const vovFalling = vov != null && vov5Ago != null && vov < vov5Ago;
+    const evidence = [], contradictions = [], confirms = [], negates = [];
+    function add(list, text) { if (text && list.length < 5) list.push(text); }
+
+    const upsidePressure = (row.skewRatio != null && row.skewRatio >= 1.08 ? 1.0 : 0) +
+        (skewZ != null && skewZ >= 1.0 ? 0.7 : 0) +
+        (skewRoc5 != null && skewRoc5 >= 0.035 ? 0.65 : 0) +
+        (upZ != null && upZ >= 1.0 ? 0.85 : 0) +
+        (spreadZ != null && spreadZ >= 1.0 ? 0.65 : 0);
+    const downsidePressure = (row.skewRatio != null && row.skewRatio <= 0.96 ? 1.0 : 0) +
+        (skewZ != null && skewZ <= -1.0 ? 0.7 : 0) +
+        (skewRoc5 != null && skewRoc5 <= -0.035 ? 0.65 : 0) +
+        (dnZ != null && dnZ >= 1.0 ? 0.85 : 0) +
+        (spreadZ != null && spreadZ <= -1.0 ? 0.65 : 0);
+    const tailStress = (convPct != null ? convPct / 100 : 0) + (convZ != null && convZ > 0 ? Math.min(convZ / 2, 1) : 0);
+    const bothWings = upZ != null && dnZ != null && upZ >= 0.85 && dnZ >= 0.85;
+    const richPremium = (vrpVal != null && vrpVal >= 10) || (vrpZ != null && vrpZ >= 1.4) || cvolPct(ngvlPct, 92);
+    const cheapPremium = (vrpVal != null && vrpVal <= -5) || (vrpZ != null && vrpZ <= -1.2) || (realVol != null && row.ngvl != null && realVol > row.ngvl * 1.12);
+    const compressed = cvolLow(ngvlPct, 25) && cvolLow(atmPct, 30) && !(convPct != null && convPct >= 80);
+    const cooling = ngvlZ != null && ngvlZ <= -0.75 && vovFalling && !bothWings && !cheapPremium;
+
+    let state = 'NO_EDGE';
+    let score = 22;
+    if (bothWings && tailStress >= 1.25) {
+        state = 'TWO_SIDED_STRESS';
+        score = 64 + Math.min(22, (tailStress - 1.25) * 18 + Math.max(upZ || 0, dnZ || 0) * 3);
+        add(evidence, 'Both variance wings are bid while convexity is elevated');
+        add(confirms, 'Range expansion or gap risk should show up as realized vol rising');
+        add(negates, 'Stress cools if both wings and convexity fall together');
+    } else if (cheapPremium) {
+        state = 'VOL_UNDERPRICED';
+        score = 60 + Math.min(24, Math.abs(vrpZ || 0) * 6 + Math.max(0, (realVol || 0) - (row.ngvl || 0)) * 0.25);
+        add(evidence, 'Realized movement is outrunning implied volatility');
+        add(confirms, 'Forward realized vol should remain above implied or NG should move beyond expected range');
+        add(negates, 'Risk is repriced once NGVL expands or realized vol cools');
+    } else if (richPremium && (cvolPct(ngvlPct, 85) || tailStress > 1.1)) {
+        state = 'PANIC_PREMIUM';
+        score = 58 + Math.min(28, Math.max(0, (ngvlPct || 0) - 85) * 0.9 + Math.max(0, (vrpVal || 0) - 8) * 0.8);
+        add(evidence, 'Implied volatility is rich versus recent realized movement');
+        add(confirms, 'Options are already pricing stress; follow-through needs fresh realized movement');
+        add(negates, 'Premium normalizes if NGVL and VRP fall together');
+    } else if (upsidePressure >= 1.7 && upsidePressure >= downsidePressure + 0.55) {
+        state = 'UPSIDE_TAIL_BID';
+        score = 55 + Math.min(30, upsidePressure * 8 + Math.max(0, tailStress - 0.7) * 7);
+        add(evidence, 'Up variance and skew ratio show upside-tail demand');
+        add(confirms, 'Confirmation is NG moving higher while up variance remains firm');
+        add(negates, 'Signal fades if skew ratio drops back toward 1.0 or down variance takes leadership');
+    } else if (downsidePressure >= 1.7 && downsidePressure >= upsidePressure + 0.55) {
+        state = 'DOWNSIDE_TAIL_BID';
+        score = 55 + Math.min(30, downsidePressure * 8 + Math.max(0, tailStress - 0.7) * 7);
+        add(evidence, 'Down variance and skew impulse show downside protection demand');
+        add(confirms, 'Confirmation is NG moving lower while down variance remains firm');
+        add(negates, 'Signal fades if skew ratio rebounds or up variance takes leadership');
+    } else if (compressed) {
+        state = 'CALM_COMPRESSION';
+        score = 54 + Math.min(28, (25 - (ngvlPct || 25)) * 0.8 + (30 - (atmPct || 30)) * 0.55);
+        add(evidence, 'NGVL and ATM vol are low versus their own one-year history');
+        add(confirms, 'Compression matters if skew, convexity, or realized movement starts rising');
+        add(negates, 'Compression loses value if implied vol reprices before price moves');
+    } else if (cooling) {
+        state = 'NORMALIZATION';
+        score = 52 + Math.min(22, Math.abs(ngvlZ || 0) * 7 + (vovFalling ? 8 : 0));
+        add(evidence, 'Volatility and vol-of-vol are cooling after prior stress');
+        add(confirms, 'Normalization continues if NGVL, convexity, and VRP keep falling');
+        add(negates, 'Fresh skew impulse or wing demand cancels the cooling read');
+    } else {
+        add(evidence, 'Surface components are not aligned enough for a regime read');
+        add(confirms, 'Wait for skew, variance wings, convexity, or VRP to move together');
+        add(negates, 'No invalidation needed; this is already a stand-down state');
+    }
+
+    if (upsidePressure > 1.2 && downsidePressure > 1.2 && state !== 'TWO_SIDED_STRESS') add(contradictions, 'Both directional wings are active, so direction is less reliable');
+    if (richPremium && (state === 'UPSIDE_TAIL_BID' || state === 'DOWNSIDE_TAIL_BID')) add(contradictions, 'Directional risk is bid, but options are already expensive');
+    if (volRoc5 != null && volRoc5 < -8 && (state === 'UPSIDE_TAIL_BID' || state === 'DOWNSIDE_TAIL_BID')) add(contradictions, 'Headline CVOL is falling while directional skew is active');
+
+    const meta = surfaceMeta(state);
+    const confidenceScore = Math.max(0, Math.min(100, score - contradictions.length * 7));
+    const confidence = confidenceScore >= 72 ? 'HIGH' : confidenceScore >= 55 ? 'MODERATE' : 'LOW';
+    return {
+        idx: i, date: row.date, state, label: meta.label, signal: state, direction: meta.action,
+        confidence, confidenceScore, directionalBias: meta.bias, directionalEdge: false,
+        directionalRead: surfaceBiasText(meta.bias, false), volBias: meta.volBias, action: meta.action, horizon: meta.horizon,
+        value: confidenceScore, composite: confidenceScore, underlying: row.underlying, ngvl: row.ngvl,
+        evidence, contradictions, confirms, negates,
+        features: { ngvlPct, atmPct, convPct, upZ, dnZ, skewZ, skewRoc5, spread, spreadZ, vrp: vrpVal, vrpZ, realVol, vov, volRoc5, upsidePressure, downsidePressure, tailStress },
+    };
+}
+
+function addSurfaceForwardFields(data, ev) {
+    const out = Object.assign({}, ev);
+    out.fwd5 = cvolForwardReturn(data, ev.idx, 5);
+    out.fwd10 = cvolForwardReturn(data, ev.idx, 10);
+    out.fwd21 = cvolForwardReturn(data, ev.idx, 21);
+    out.fwd42 = cvolForwardReturn(data, ev.idx, 42);
+    out.fwd5 = out.fwd5 != null ? out.fwd5 : out.forwardRet5;
+    out.fwd10 = out.fwd10 != null ? out.fwd10 : out.forwardRet10;
+    out.fwd21 = out.fwd21 != null ? out.fwd21 : out.forwardRet21;
+    out.fwdAbs5 = out.fwd5 != null ? Math.abs(out.fwd5) : null;
+    out.fwdAbs10 = out.fwd10 != null ? Math.abs(out.fwd10) : null;
+    out.fwdAbs21 = out.fwd21 != null ? Math.abs(out.fwd21) : null;
+    out.forwardRealVol21 = cvolForwardRealizedVol(data, ev.idx, 21);
+    out.expectedMove21 = cvolExpectedMove(ev.ngvl, 21);
+    out.season = getSeason(ev.date);
+    out.direction = ev.directionalRead;
+    out.value = ev.confidence;
+    return out;
+}
+
+function buildSurfaceEvents(data, daily) {
+    const events = [];
+    const lastByState = {};
+    let prevState = 'NO_EDGE';
+    for (let i = 0; i < daily.length; i++) {
+        const d = daily[i];
+        if (!d || d.state === 'NO_EDGE') {
+            if (d) prevState = d.state;
+            continue;
+        }
+        const transition = d.state !== prevState;
+        const high = d.confidence !== 'LOW';
+        const lastIdx = lastByState[d.state];
+        if ((transition || high) && (lastIdx == null || d.idx - lastIdx >= 7)) {
+            events.push(addSurfaceForwardFields(data, Object.assign({}, d)));
+            lastByState[d.state] = d.idx;
+        }
+        prevState = d.state;
+    }
+    return events;
+}
+
+function buildSurfaceAnalogs(data, daily) {
+    const horizons = [5, 10, 21];
+    const base = {};
+    horizons.forEach(function(h) {
+        let up = 0, down = 0, abs = 0, count = 0, impliedBeat = 0;
+        for (let i = 252; i + h < data.length; i++) {
+            const ret = cvolForwardReturn(data, i, h);
+            if (ret == null) continue;
+            const exp = cvolExpectedMove(data[i].ngvl, h);
+            if (ret > 0) up++;
+            if (ret < 0) down++;
+            if (exp != null && Math.abs(ret) > exp) impliedBeat++;
+            abs += Math.abs(ret);
+            count++;
+        }
+        base[h] = { count, upRate: count ? up / count * 100 : null, downRate: count ? down / count * 100 : null, avgAbs: count ? abs / count : null, impliedBeatRate: count ? impliedBeat / count * 100 : null };
+    });
+
+    const states = {};
+    daily.forEach(function(d) {
+        if (!d || d.state === 'NO_EDGE' || d.idx < 252) return;
+        if (!states[d.state]) {
+            states[d.state] = { state: d.state, label: d.label, color: surfaceStateColor(d.state), bias: d.directionalBias, count: 0, horizons: {} };
+            horizons.forEach(function(h) {
+                states[d.state].horizons[h] = { n: 0, avgMove: 0, avgAbsMove: 0, dirHits: 0, volExpansion: 0, impliedBeat: 0 };
+            });
+        }
+        states[d.state].count++;
+        horizons.forEach(function(h) {
+            const ret = cvolForwardReturn(data, d.idx, h);
+            if (ret == null) return;
+            const row = states[d.state].horizons[h];
+            const futureRv = cvolForwardRealizedVol(data, d.idx, h);
+            const currentRv = d.features ? d.features.realVol : null;
+            const expected = cvolExpectedMove(d.ngvl, h);
+            row.n++;
+            row.avgMove += ret;
+            row.avgAbsMove += Math.abs(ret);
+            if (d.directionalBias === 'UPSIDE' && ret > 0) row.dirHits++;
+            if (d.directionalBias === 'DOWNSIDE' && ret < 0) row.dirHits++;
+            if (futureRv != null && currentRv != null && futureRv > currentRv) row.volExpansion++;
+            if (expected != null && Math.abs(ret) > expected) row.impliedBeat++;
+        });
+    });
+
+    Object.keys(states).forEach(function(state) {
+        const s = states[state];
+        horizons.forEach(function(h) {
+            const row = s.horizons[h];
+            const n = row.n;
+            const dirBase = s.bias === 'UPSIDE' ? base[h].upRate : s.bias === 'DOWNSIDE' ? base[h].downRate : null;
+            const dirHitRate = (s.bias === 'UPSIDE' || s.bias === 'DOWNSIDE') && n ? row.dirHits / n * 100 : null;
+            row.avgMove = n ? row.avgMove / n : null;
+            row.avgAbsMove = n ? row.avgAbsMove / n : null;
+            row.dirHitRate = dirHitRate;
+            row.baseRate = dirBase;
+            row.baseDirRate = dirBase;
+            row.directionalEdge = dirHitRate != null && n >= 30 && dirBase != null && dirHitRate >= dirBase + 3 && dirHitRate >= 52;
+            row.volExpansionRate = n ? row.volExpansion / n * 100 : null;
+            row.impliedBeatRate = n ? row.impliedBeat / n * 100 : null;
+            row.lowSample = n < 30;
+        });
+        s.primary = s.horizons[21] || s.horizons[10] || s.horizons[5];
+        s.hasDirectionalEdge = !!(s.primary && s.primary.directionalEdge);
+    });
+
+    return { base, states };
+}
+
+function computeSurfaceModel(data, comp) {
+    const n = data.length;
+    const spread = data.map(r => (r.upVar != null && r.dnVar != null) ? r.upVar - r.dnVar : null);
+    const ratio = data.map(r => (r.upVar != null && r.dnVar != null && r.dnVar !== 0) ? r.upVar / r.dnVar : r.skewRatio);
+    const ngvlRoc5 = new Array(n).fill(null);
+    const atmRoc5 = new Array(n).fill(null);
+    const convRoc5 = new Array(n).fill(null);
+    for (let i = 5; i < n; i++) {
+        if (data[i].ngvl != null && data[i - 5].ngvl != null && data[i - 5].ngvl !== 0) ngvlRoc5[i] = (data[i].ngvl / data[i - 5].ngvl - 1) * 100;
+        if (data[i].atm != null && data[i - 5].atm != null && data[i - 5].atm !== 0) atmRoc5[i] = (data[i].atm / data[i - 5].atm - 1) * 100;
+        if (data[i].convexity != null && data[i - 5].convexity != null && data[i - 5].convexity !== 0) convRoc5[i] = (data[i].convexity / data[i - 5].convexity - 1) * 100;
+    }
+    const extra = {
+        varianceSpread: spread,
+        varianceRatio: ratio,
+        varianceSpreadZ: rollingZScore(spread, 21),
+        varianceRatioZ: rollingZScore(ratio, 21),
+        ngvlRoc5,
+        atmRoc5,
+        convRoc5,
+    };
+    const daily = data.map((_, i) => classifySurfaceDay(data, comp, extra, i));
+    const analogs = buildSurfaceAnalogs(data, daily);
+    daily.forEach(function(d) {
+        const analog = analogs.states[d.state];
+        d.analog = analog || null;
+        d.directionalEdge = !!(analog && analog.hasDirectionalEdge);
+        d.directionalRead = surfaceBiasText(d.directionalBias, d.directionalEdge);
+        if ((d.directionalBias === 'UPSIDE' || d.directionalBias === 'DOWNSIDE') && !d.directionalEdge) {
+            if (d.contradictions.indexOf('Historical direction has not beaten base rate; treat this as risk pricing, not a trade call') < 0) {
+                d.contradictions.push('Historical direction has not beaten base rate; treat this as risk pricing, not a trade call');
+            }
+        }
+    });
+    const events = buildSurfaceEvents(data, daily);
+    const current = daily[daily.length - 1] || null;
+    return Object.assign(extra, { surfaceDaily: daily, surfaceEvents: events, currentSurfaceRead: current, surfaceAnalogs: analogs });
+}
+
 function computeComposites(data) {
     const n = data.length;
     const ngvl = data.map(r => r.ngvl);
@@ -237,12 +562,12 @@ function computeComposites(data) {
         }
     }
 
-    // ── Signal Events (strength-based selection) ──
+    // ── Raw Research Fires (strength-based selection) ──
     const sadZ = rollingZScore(sad, 63);
     const rdsZ = rollingZScore(rds, 63);
     const events = [];
     for (let i = 63; i < n; i++) {
-        // Evaluate ALL signals independently, pick strongest per day
+        // Evaluate all raw inputs independently, pick strongest per day
         const candidates = [];
 
         // RDS spike: z > 1.8
@@ -266,13 +591,13 @@ function computeComposites(data) {
         // CVC Down: > 1.2
         if (cvcDown[i] != null && cvcDown[i] > 1.2) {
             candidates.push({ signal: 'CVC↓', value: cvcDown[i], composite: cvcDown[i],
-                direction: 'TOP SIGNAL',
+                direction: 'DOWNSIDE INPUT',
                 strength: cvcDown[i] / 1.2 });
         }
         // CVC Up: > 1.2
         if (cvcUp[i] != null && cvcUp[i] > 1.2) {
             candidates.push({ signal: 'CVC↑', value: cvcUp[i], composite: cvcUp[i],
-                direction: 'BOTTOM SIGNAL',
+                direction: 'UPSIDE INPUT',
                 strength: cvcUp[i] / 1.2 });
         }
 
@@ -298,7 +623,7 @@ function computeComposites(data) {
         }
     }
 
-    return {
+    const base = {
         ngvlPct21, ngvlPct63, ngvlPct252, atmPct252, skewRatioPct63, convPct63,
         skewRatioZ21, dnVarZ21, upVarZ21, atmZ21, ngvlZ21, convZ21,
         skewRatioRoc5, atmMed90,
@@ -307,6 +632,7 @@ function computeComposites(data) {
         realVol, vrp, vrpZ21, termStructure, vov,
         events,
     };
+    return Object.assign(base, computeSurfaceModel(data, base));
 }
 
 function getSeason(dateStr) {
@@ -360,7 +686,7 @@ const SERIES_CFG = {
 const VAR_SERIES_CFG = {
     upVar:     { label: 'UP VAR',     color: '#3db87a', key: 'upVar',  desc: 'Bullish Demand Check: Measures the premium paid for upside protection (OTM calls). Rising green area signals aggressive institutional buying often seen before explosive short-gamma breakouts.' },
     dnVar:     { label: 'DN VAR',     color: '#ef4444', key: 'dnVar',  desc: 'Bearish Fear Check: Tracks the cost of downside tail-risk insurance. When the red area expands, the market is bracing for a violent gap-down or capitulation event.' },
-    skewRatio: { label: 'SKEW RATIO', color: '#f59e0b', key: 'skewRatio', desc: 'Directional Pressure Gauge: The ratio of Bear Fear (Puts) vs. Bull Greed (Calls). >1.0 means downside protection is expensive; <1.0 means the market is foaming for upside.' },
+    skewRatio: { label: 'SKEW RATIO', color: '#f59e0b', key: 'skewRatio', desc: 'Directional Pressure Gauge: Up variance divided by down variance. >1.0 means upside variance is richer; <1.0 means downside variance is richer.' },
     underlying:{ label: 'NG PRICE',   color: '#94a3b8', key: 'underlying', desc: 'Price Correlation Context: Overlays the absolute front-month Natural Gas settlement price. Vital for identifying if directional volatility spikes are leading or lagging absolute price pivots.' },
     skewRoc5:  { label: 'SKEW MOM',   color: '#818cf8', key: 'skewRoc5', desc: 'Skew Momentum (5D ROC): Rate of change in skew ratio over 5 sessions. Positive = skew accelerating bullish. Negative = skew accelerating bearish. Sharp moves precede directional breakouts.' },
 };
@@ -434,11 +760,11 @@ function toRgba(hex, a) {
 
 // ── Composite Meta (for expanded cards) ───────────────────────
 var COMP_META = {
-    sad:     { label: 'SAD — Skew-ATM Divergence', color: '#f59e0b', desc: 'Proprietary Divergence Signal: Measures the spread between SkewRatio and ATM Volatility. When Skew rises while ATM Vol remains suppressed, it reveals "Informed Flow" building directional exposure ahead of a major price expansion. Z-Score > 1.5 indicates high-conviction stealth positioning.',     threshold: null, thresholdType: 'z', thresholdVal: 1.5 },
-    ci:      { label: 'CI — Complacency Index',     color: '#60a8f8', desc: 'Regime Fragility Benchmark: Inverse of the 1-year ATM volatility percentile. A reading > 82 represents "Extreme Complacency" (Vol Bottoming). Historically, these "Fragile Calm" regimes are precursors to violent, gap-up volatility spikes as hedges are cheaply under-owned across the street.',       threshold: 82, thresholdType: 'raw', thresholdVal: 82 },
-    cvcDown: { label: 'CVC↓ — Convexity-Variance (Down)', color: '#ef4444', desc: 'Top Formation Confirmation: Synchronizes Tail-Risk (Convexity) with Downside Fear (DnVar). An active signal (>1.20) indicates institutions are aggressively layering deep OTM Put protection, physically pricing a significant correction or peak in the Natural Gas cycle.',       threshold: 1.2, thresholdType: 'raw', thresholdVal: 1.2 },
-    cvcUp:   { label: 'CVC↑ — Convexity-Variance (Up)',   color: '#3db87a', desc: 'Bottom Formation Confirmation: Synchronizes Tail-Risk (Convexity) with Bullish Demand (UpVar). An active signal (>1.20) indicates a "Panic for Calls" as traders chase a bottom or hedge a sudden upside gap. High-probability signal for trend reversals.',     threshold: 1.2, thresholdType: 'raw', thresholdVal: 1.2 },
-    rds:     { label: 'RDS — Regime Divergence Score', color: '#ec4899', desc: 'Explosive Momentum Lead: The "Trifecta" signal combining 5-day Skew momentum, Fat-Tail pricing, and ATM Volatility ranking. High RDS readings (>1.8 Z) occur at major ecological shifts in the volatility surface, often preceding the largest directional moves in the asset.',   threshold: null, thresholdType: 'z', thresholdVal: 1.8 },
+    sad:     { label: 'SAD - Skew-ATM Divergence', color: '#f59e0b', desc: 'Research input: skew ratio diverging from the ATM volatility baseline. It describes surface pressure; it is not a standalone directional signal.',     threshold: null, thresholdType: 'z', thresholdVal: 1.5 },
+    ci:      { label: 'CI - Complacency Index',     color: '#60a8f8', desc: 'Research input: inverse of the 1-year ATM volatility percentile. High values mean fragile calm and possible expansion risk, not automatic direction.',       threshold: 82, thresholdType: 'raw', thresholdVal: 82 },
+    cvcDown: { label: 'CVC Down - Convexity/Down Var', color: '#ef4444', desc: 'Research input: convexity aligned with downside variance. It says downside tail protection is bid; historical edge must be checked before treating it as directional.',       threshold: 1.2, thresholdType: 'raw', thresholdVal: 1.2 },
+    cvcUp:   { label: 'CVC Up - Convexity/Up Var',   color: '#3db87a', desc: 'Research input: convexity aligned with upside variance. It says upside tail exposure is bid; historical edge must be checked before treating it as directional.',     threshold: 1.2, thresholdType: 'raw', thresholdVal: 1.2 },
+    rds:     { label: 'RDS - Regime Divergence Score', color: '#ec4899', desc: 'Research input: fast skew movement, convexity, and low ATM percentile. It flags surface instability and expansion risk, not guaranteed directional edge.',   threshold: null, thresholdType: 'z', thresholdVal: 1.8 },
 };
 
 // ── Correlation Matrix ────────────────────────────────────────
@@ -695,9 +1021,9 @@ function computeThresholdSensitivity(composites, data) {
         { name: 'CI',   getVal: function(i) { return ciA[i]; }, thresholds: [87, 82, 77], isAbove: true,
           dirFn: function() { return 'COMPLACENCY'; } },
         { name: 'CVC\u2193', getVal: function(i) { return cvcDA[i]; }, thresholds: [1.7, 1.2, 0.8], isAbove: true,
-          dirFn: function() { return 'TOP SIGNAL'; } },
+          dirFn: function() { return 'DOWNSIDE INPUT'; } },
         { name: 'CVC\u2191', getVal: function(i) { return cvcUA[i]; }, thresholds: [1.7, 1.2, 0.8], isAbove: true,
-          dirFn: function() { return 'BOTTOM SIGNAL'; } },
+          dirFn: function() { return 'UPSIDE INPUT'; } },
     ];
 
     function hitRateAtThreshold(cfg, threshold) {
