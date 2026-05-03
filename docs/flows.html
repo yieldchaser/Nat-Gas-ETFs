@@ -1855,10 +1855,10 @@ function drawChartZ(data) {
     // Multi-level threshold definitions (composite Z-score)
     // For cross-ETF aggregates, use intermediate warning zones
     const thresholds = [
-      { z: 2.0, label: 'EXTREME', color: '#c04040', opacity: 0.15 },
-      { z: 1.5, label: 'CRITICAL', color: '#ef4444', opacity: 0.12 },
-      { z: 1.0, label: 'ELEVATED', color: '#f59e0b', opacity: 0.08 },
-      { z: 0.8, label: 'WARM', color: '#fbbf24', opacity: 0.05 }
+      { z: 2.0, label: 'EXTREME',  r: 192, g: 64,  b: 64,  opacity: 0.15, strokeA: 0.55 },
+      { z: 1.5, label: 'CRITICAL', r: 239, g: 68,  b: 68,  opacity: 0.12, strokeA: 0.45 },
+      { z: 1.0, label: 'ELEVATED', r: 245, g: 158, b: 11,  opacity: 0.08, strokeA: 0.35 },
+      { z: 0.8, label: 'WARM',     r: 251, g: 191, b: 36,  opacity: 0.05, strokeA: 0.25 }
     ];
 
     // Draw gradient zone bands for positive side
@@ -1866,12 +1866,12 @@ function drawChartZ(data) {
         const t = thresholds[i];
         if (i === 0) {
             // Above extreme threshold
-            ctxZ.fillStyle = t.color.replace('#', 'rgba(').replace(/(.{2})(.{2})(.{2})/, '$1,$2,$3,' + t.opacity + ')');
+            ctxZ.fillStyle = `rgba(${t.r},${t.g},${t.b},${t.opacity})`;
             ctxZ.fillRect(pad.left, pad.top, chartW, getY(t.z) - pad.top);
         } else {
             // Between thresholds
             const prevT = thresholds[i - 1];
-            ctxZ.fillStyle = t.color.replace('#', 'rgba(').replace(/(.{2})(.{2})(.{2})/, '$1,$2,$3,' + t.opacity + ')');
+            ctxZ.fillStyle = `rgba(${t.r},${t.g},${t.b},${t.opacity})`;
             ctxZ.fillRect(pad.left, getY(prevT.z), chartW, getY(t.z) - getY(prevT.z));
         }
     }
@@ -1879,13 +1879,12 @@ function drawChartZ(data) {
     // Draw gradient zone bands for negative side (mirror)
     for (let i = 0; i < thresholds.length; i++) {
         const t = thresholds[i];
-        const negColor = t.label === 'EXTREME' ? '#c04040' : t.label === 'CRITICAL' ? '#ef4444' : t.label === 'ELEVATED' ? '#f59e0b' : '#fbbf24';
         if (i === 0) {
-            ctxZ.fillStyle = negColor.replace('#', 'rgba(').replace(/(.{2})(.{2})(.{2})/, '$1,$2,$3,' + t.opacity + ')');
+            ctxZ.fillStyle = `rgba(${t.r},${t.g},${t.b},${t.opacity})`;
             ctxZ.fillRect(pad.left, getY(-t.z), chartW, pad.top + chartH - getY(-t.z));
         } else {
             const prevT = thresholds[i - 1];
-            ctxZ.fillStyle = negColor.replace('#', 'rgba(').replace(/(.{2})(.{2})(.{2})/, '$1,$2,$3,' + t.opacity + ')');
+            ctxZ.fillStyle = `rgba(${t.r},${t.g},${t.b},${t.opacity})`;
             ctxZ.fillRect(pad.left, getY(-prevT.z), chartW, getY(-t.z) - getY(-prevT.z));
         }
     }
@@ -1918,7 +1917,7 @@ function drawChartZ(data) {
     thresholds.forEach(t => {
         // Positive threshold
         ctxZ.setLineDash([6, 4]);
-        ctxZ.strokeStyle = t.color.replace('#', 'rgba(').replace(/(.{2})(.{2})(.{2})/, '$1,$2,$3,0.6)');
+        ctxZ.strokeStyle = `rgba(${t.r},${t.g},${t.b},${t.strokeA})`;
         ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(t.z)); ctxZ.lineTo(pad.left + chartW, getY(t.z)); ctxZ.stroke();
         // Negative threshold
         ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(-t.z)); ctxZ.lineTo(pad.left + chartW, getY(-t.z)); ctxZ.stroke();
@@ -1933,12 +1932,6 @@ function drawChartZ(data) {
     ctxZ.fillText('▲ ACCUMULATION', pad.left + chartW - 4, getY(0.5));
     ctxZ.fillStyle = 'rgba(239,68,68,0.9)';
     ctxZ.fillText('▼ DISTRIBUTION', pad.left + chartW - 4, getY(-0.5));
-    ctxZ.font = '8px sans-serif'; ctxZ.fillStyle = 'rgba(148,163,184,0.5)';
-    ctxZ.textAlign = 'right';
-    thresholds.forEach(t => {
-        ctxZ.fillText(t.label, pad.left - 25, getY(t.z));
-        ctxZ.fillText(t.label, pad.left - 25, getY(-t.z));
-    });
 
     // The Z-Score line with adaptive coloring based on position
     ctxZ.beginPath();
@@ -1970,9 +1963,9 @@ function drawChartZ(data) {
 
     // Threshold labels with color coding
     thresholds.forEach(t => {
-        ctxZ.fillStyle = t.color.replace('#', 'rgba(').replace(/(.{2})(.{2})(.{2})/, '$1,$2,$3,0.9)');
+        ctxZ.fillStyle = `rgba(${t.r},${t.g},${t.b},0.9)`;
         ctxZ.fillText('+' + t.z.toFixed(1), pad.left - 5, getY(t.z));
-        ctxZ.fillText(t.z < 1.2 ? '−' + t.z.toFixed(1) : '−' + t.z.toFixed(1), pad.left - 5, getY(-t.z));
+        ctxZ.fillText('−' + t.z.toFixed(1), pad.left - 5, getY(-t.z));
     });
 
     ctxZ.fillStyle = 'rgba(148,163,184,0.6)';
