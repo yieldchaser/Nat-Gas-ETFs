@@ -655,8 +655,8 @@ function getGlobalConfluence(ev) {
 }
 function pctFmt(n) { return n != null ? (n > 0 ? '+' : '') + (n * 100).toFixed(1) + '%' : '—'; }
 
-// ── Event Timeline (with confluence, PENDING, signal-type filter) ──
-function renderTimeline(composites, filter) {
+// Legacy raw timeline renderer retained for modal sparkline helpers; main timeline uses the surface-aware renderer below.
+function renderLegacyTimeline(composites, filter) {
     var body = document.getElementById('cvol-event-body');
     var countEl = document.getElementById('cvol-event-count');
     if (!body) return;
@@ -1056,8 +1056,8 @@ function closeCompModal() {
 }
 
 // ── Full Render Orchestrator ──────────────────────────────────
-// ── Regime Dashboard Panel ────────────────────────────────────
-function renderRegimePanel(data, comp) {
+// Legacy conviction renderer retained for reference; main dashboard uses the surface-aware renderer below.
+function renderLegacyRegimePanel(data, comp) {
     var el = document.getElementById('regime-dashboard-grid'); if (!el) return;
     var n = data.length; if (n < 63) return;
     var last = data[n-1];
