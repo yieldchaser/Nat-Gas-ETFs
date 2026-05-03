@@ -1852,74 +1852,34 @@ function drawChartZ(data) {
     const maxZ = Math.max(3, ...data.map(d => Math.abs(d.flow_zscore)));
     const getY = val => pad.top + chartH/2 - (val / maxZ) * (chartH/2);
 
-    // Multi-level threshold definitions (composite Z-score)
-    // For cross-ETF aggregates, use intermediate warning zones
+    // Threshold zones — positive side green, negative side red, 2 critical levels only
     const thresholds = [
-      { z: 2.0, label: 'EXTREME',  r: 192, g: 64,  b: 64,  opacity: 0.15, strokeA: 0.55 },
-      { z: 1.5, label: 'CRITICAL', r: 239, g: 68,  b: 68,  opacity: 0.12, strokeA: 0.45 },
-      { z: 1.0, label: 'ELEVATED', r: 245, g: 158, b: 11,  opacity: 0.08, strokeA: 0.35 },
-      { z: 0.8, label: 'WARM',     r: 251, g: 191, b: 36,  opacity: 0.05, strokeA: 0.25 }
+      { z: 2.0, rp: 34,  gp: 197, bp: 94,  rn: 192, gn: 64,  bn: 64,  opacity: 0.06, strokeA: 0.4 },
+      { z: 1.5, rp: 61,  gp: 184, bp: 122, rn: 239, gn: 68,  bn: 68,  opacity: 0.03, strokeA: 0.3 },
     ];
 
-    // Draw gradient zone bands for positive side
+    // Positive zone bands (green)
     for (let i = 0; i < thresholds.length; i++) {
         const t = thresholds[i];
-        if (i === 0) {
-            // Above extreme threshold
-            ctxZ.fillStyle = `rgba(${t.r},${t.g},${t.b},${t.opacity})`;
-            ctxZ.fillRect(pad.left, pad.top, chartW, getY(t.z) - pad.top);
-        } else {
-            // Between thresholds
-            const prevT = thresholds[i - 1];
-            ctxZ.fillStyle = `rgba(${t.r},${t.g},${t.b},${t.opacity})`;
-            ctxZ.fillRect(pad.left, getY(prevT.z), chartW, getY(t.z) - getY(prevT.z));
-        }
+        const prevZ = i === 0 ? maxZ : thresholds[i - 1].z;
+        ctxZ.fillStyle = `rgba(${t.rp},${t.gp},${t.bp},${t.opacity})`;
+        ctxZ.fillRect(pad.left, Math.max(pad.top, getY(prevZ)), chartW, getY(t.z) - Math.max(pad.top, getY(prevZ)));
     }
 
-    // Draw gradient zone bands for negative side (mirror)
+    // Negative zone bands (red)
     for (let i = 0; i < thresholds.length; i++) {
         const t = thresholds[i];
-        if (i === 0) {
-            ctxZ.fillStyle = `rgba(${t.r},${t.g},${t.b},${t.opacity})`;
-            ctxZ.fillRect(pad.left, getY(-t.z), chartW, pad.top + chartH - getY(-t.z));
-        } else {
-            const prevT = thresholds[i - 1];
-            ctxZ.fillStyle = `rgba(${t.r},${t.g},${t.b},${t.opacity})`;
-            ctxZ.fillRect(pad.left, getY(-prevT.z), chartW, getY(-t.z) - getY(-prevT.z));
-        }
+        const prevZ = i === 0 ? maxZ : thresholds[i - 1].z;
+        ctxZ.fillStyle = `rgba(${t.rn},${t.gn},${t.bn},${t.opacity})`;
+        ctxZ.fillRect(pad.left, getY(-t.z), chartW, Math.min(pad.top + chartH, getY(-prevZ)) - getY(-t.z));
     }
 
-    // Fill area under the line (gradient)
-    ctxZ.beginPath();
-    for (let i = 0; i < data.length; i++) {
-        const x = getX(i), y = getY(data[i].flow_zscore);
-        if (i === 0) ctxZ.moveTo(x, y);
-        else ctxZ.lineTo(x, y);
-    }
-    ctxZ.lineTo(getX(data.length - 1), getY(0));
-    for (let i = data.length - 1; i >= 0; i--) {
-        const x = getX(i), y = getY(0);
-        if (i === data.length - 1) ctxZ.lineTo(x, y);
-        else ctxZ.lineTo(x, y);
-    }
-    ctxZ.closePath();
-    const fillGrad = ctxZ.createLinearGradient(0, pad.top, 0, pad.top + chartH);
-    fillGrad.addColorStop(0, 'rgba(61,184,122,0.12)');
-    fillGrad.addColorStop(0.35, 'rgba(61,184,122,0.04)');
-    fillGrad.addColorStop(0.5, 'rgba(148,163,184,0.02)');
-    fillGrad.addColorStop(0.65, 'rgba(239,68,68,0.04)');
-    fillGrad.addColorStop(1, 'rgba(239,68,68,0.12)');
-    ctxZ.fillStyle = fillGrad;
-    ctxZ.fill();
-
-    // Threshold lines — use multi-level dashed patterns
-    ctxZ.lineWidth = 1;
+    // Threshold lines — critical levels only, correctly colored per side
+    ctxZ.lineWidth = 0.8; ctxZ.setLineDash([4, 3]);
     thresholds.forEach(t => {
-        // Positive threshold
-        ctxZ.setLineDash([6, 4]);
-        ctxZ.strokeStyle = `rgba(${t.r},${t.g},${t.b},${t.strokeA})`;
+        ctxZ.strokeStyle = `rgba(${t.rp},${t.gp},${t.bp},${t.strokeA})`;
         ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(t.z)); ctxZ.lineTo(pad.left + chartW, getY(t.z)); ctxZ.stroke();
-        // Negative threshold
+        ctxZ.strokeStyle = `rgba(${t.rn},${t.gn},${t.bn},${t.strokeA})`;
         ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(-t.z)); ctxZ.lineTo(pad.left + chartW, getY(-t.z)); ctxZ.stroke();
     });
     ctxZ.setLineDash([]);
@@ -1961,10 +1921,11 @@ function drawChartZ(data) {
     ctxZ.fillStyle = 'rgba(148,163,184,0.7)';
     ctxZ.fillText('+' + maxZ.toFixed(1), pad.left - 5, pad.top + 5);
 
-    // Threshold labels with color coding
+    // Threshold labels with correct colors (green for positive, red for negative)
     thresholds.forEach(t => {
-        ctxZ.fillStyle = `rgba(${t.r},${t.g},${t.b},0.9)`;
+        ctxZ.fillStyle = `rgba(${t.rp},${t.gp},${t.bp},0.85)`;
         ctxZ.fillText('+' + t.z.toFixed(1), pad.left - 5, getY(t.z));
+        ctxZ.fillStyle = `rgba(${t.rn},${t.gn},${t.bn},0.85)`;
         ctxZ.fillText('−' + t.z.toFixed(1), pad.left - 5, getY(-t.z));
     });
 
