@@ -685,6 +685,106 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
         </div>
 
+        <!-- Section 6.1: Cross-ETF Composite Z-Score History -->
+        <div class="panel" id="composite-z-panel">
+            <div class="panel-header">
+                <div class="panel-title" data-tooltip="Unified directional pressure oscillator: averages flow Z-scores across all 6 ETFs (with short-side sign inversion). Positive = upward pressure on gas. Negative = downward pressure." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Cross-ETF Composite Z-Score</div>
+                <div class="tab-group time-tabs" id="compz-time-tabs">
+                    <button class="tab-btn" data-range="1w">1W</button>
+                    <button class="tab-btn" data-range="1m">1M</button>
+                    <button class="tab-btn" data-range="3m">3M</button>
+                    <button class="tab-btn" data-range="6m">6M</button>
+                    <button class="tab-btn" data-range="1y">1Y</button>
+                    <button class="tab-btn" data-range="2y">2Y</button>
+                    <button class="tab-btn" data-range="3y">3Y</button>
+                    <button class="tab-btn" data-range="5y">5Y</button>
+                    <button class="tab-btn active" data-range="all">ALL</button>
+                </div>
+            </div>
+            <!-- Current reading indicator -->
+            <div id="comp-z-current" class="comp-z-reading">
+                <div class="comp-z-dot" style="color:rgba(148,163,184,0.6); background:rgba(148,163,184,0.6);"></div>
+                <div>
+                    <div class="comp-z-value" style="color:rgba(148,163,184,0.7);">--</div>
+                    <div class="comp-z-label" style="color:rgba(148,163,184,0.5);">LOADING</div>
+                </div>
+                <div style="flex:1;"></div>
+                <div class="comp-z-date">--</div>
+            </div>
+            <div class="chart-wrap" style="position:relative;">
+                <canvas id="chartCompZ"></canvas>
+                <div id="compz-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:180px;"></div>
+            </div>
+            <!-- Range slider -->
+            <div class="range-slider-container" style="margin-top:8px;">
+                <div class="range-slider-wrap">
+                    <div class="range-inputs">
+                        <div class="range-slider-track"></div>
+                        <div class="range-slider-highlight" id="compz-range-highlight"></div>
+                        <input type="range" id="compz-range-start" min="0" max="1000" value="0" data-tooltip="Zoom start for Composite Z chart">
+                        <input type="range" id="compz-range-end" min="0" max="1000" value="1000" data-tooltip="Zoom end for Composite Z chart">
+                    </div>
+                </div>
+                <div class="range-labels">
+                    <span id="compz-range-label" style="color:var(--text-bright); text-transform:uppercase; letter-spacing:2px;">ALL</span>
+                </div>
+            </div>
+            <!-- Legend + methodology -->
+            <div class="chart-footer">
+                <div class="chart-legend">
+                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(61,184,122,0.5)"></span> UPWARD PRESSURE</div>
+                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,0.5)"></span> DOWNWARD PRESSURE</div>
+                    <div class="legend-item"><span class="legend-line" style="background:rgba(255,255,255,0.3); height:2px;"></span> ZERO LINE</div>
+                    <div class="legend-item"><span class="legend-line" style="background:rgba(0,255,255,0.4); height:1px; border-top:1px dashed rgba(0,255,255,0.4);"></span> ±1.5σ THRESHOLDS</div>
+                </div>
+                <span data-tooltip="Methodology: Equal-weighted average of 6 ETF flow Z-scores with short-side sign inversion (KOLD, HND, 3NGS scores flipped). 30-day rolling window inherited from per-ETF computation. Positive = net upward pressure (longs accumulating / shorts exiting). Negative = net downward pressure." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ METHODOLOGY</span>
+            </div>
+        </div>
+
+        <!-- Section 6.2: Flow Pressure vs Natural Gas Price -->
+        <div class="panel" id="flow-ng-panel">
+            <div class="panel-header">
+                <div class="panel-title" data-tooltip="Dual-axis overlay: Composite flow pressure (Z-Score) vs NG=F Henry Hub futures price. Identifies divergences where capital flows contradict price movement — often leading indicators of trend reversals." style="border-left:3px solid rgba(80,144,160,0.6); padding-left:8px;">Flow Pressure vs Natural Gas Price</div>
+                <div class="tab-group time-tabs" id="flowng-time-tabs">
+                    <button class="tab-btn" data-range="1m">1M</button>
+                    <button class="tab-btn" data-range="3m">3M</button>
+                    <button class="tab-btn" data-range="6m">6M</button>
+                    <button class="tab-btn" data-range="1y">1Y</button>
+                    <button class="tab-btn" data-range="2y">2Y</button>
+                    <button class="tab-btn" data-range="3y">3Y</button>
+                    <button class="tab-btn" data-range="5y">5Y</button>
+                    <button class="tab-btn active" data-range="all">ALL</button>
+                </div>
+            </div>
+            <div class="chart-wrap" style="position:relative;">
+                <canvas id="chartFlowNG"></canvas>
+                <div id="flowng-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:200px;"></div>
+            </div>
+            <!-- Range slider -->
+            <div class="range-slider-container" style="margin-top:8px;">
+                <div class="range-slider-wrap">
+                    <div class="range-inputs">
+                        <div class="range-slider-track"></div>
+                        <div class="range-slider-highlight" id="flowng-range-highlight"></div>
+                        <input type="range" id="flowng-range-start" min="0" max="1000" value="0" data-tooltip="Zoom start for Flow vs NG chart">
+                        <input type="range" id="flowng-range-end" min="0" max="1000" value="1000" data-tooltip="Zoom end for Flow vs NG chart">
+                    </div>
+                </div>
+                <div class="range-labels">
+                    <span id="flowng-range-label" style="color:var(--text-bright); text-transform:uppercase; letter-spacing:2px;">ALL</span>
+                </div>
+            </div>
+            <!-- Legend -->
+            <div class="chart-footer">
+                <div class="chart-legend">
+                    <div class="legend-item"><span class="legend-line" style="background:#5090a0; height:2px;"></span> NG=F PRICE (RIGHT AXIS)</div>
+                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(61,184,122,0.4)"></span> UPWARD FLOW PRESSURE (LEFT)</div>
+                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,0.4)"></span> DOWNWARD FLOW PRESSURE (LEFT)</div>
+                </div>
+                <span data-tooltip="Flow Pressure = composite Z-Score of all 6 leveraged NG ETF flows (short-side inverted). NG=F = NYMEX Henry Hub front-month futures close. When pressure diverges from price direction, it may signal a forthcoming trend reversal." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ WHAT IS FLOW PRESSURE?</span>
+            </div>
+        </div>
+
         <!-- Section 6.5: Cross-Side Flow Divergence Scanner -->
         <div class="panel">
             <div class="panel-header">
@@ -745,105 +845,6 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
         </div>
 
-        <!-- Section 8: Cross-ETF Composite Z-Score History -->
-        <div class="panel" id="composite-z-panel">
-            <div class="panel-header">
-                <div class="panel-title" data-tooltip="Unified directional pressure oscillator: averages flow Z-scores across all 6 ETFs (with short-side sign inversion). Positive = upward pressure on gas. Negative = downward pressure." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Cross-ETF Composite Z-Score</div>
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div class="tab-group time-tabs" id="compz-time-tabs">
-                        <button class="tab-btn" data-range="1w">1W</button>
-                        <button class="tab-btn" data-range="1m">1M</button>
-                        <button class="tab-btn" data-range="3m">3M</button>
-                        <button class="tab-btn" data-range="6m">6M</button>
-                        <button class="tab-btn" data-range="1y">1Y</button>
-                        <button class="tab-btn" data-range="2y">2Y</button>
-                        <button class="tab-btn" data-range="all" class="active">ALL</button>
-                    </div>
-                </div>
-            </div>
-            <!-- Current reading indicator -->
-            <div id="comp-z-current" class="comp-z-reading">
-                <div class="comp-z-dot" style="color:rgba(148,163,184,0.6); background:rgba(148,163,184,0.6);"></div>
-                <div>
-                    <div class="comp-z-value" style="color:rgba(148,163,184,0.7);">--</div>
-                    <div class="comp-z-label" style="color:rgba(148,163,184,0.5);">LOADING</div>
-                </div>
-                <div style="flex:1;"></div>
-                <div class="comp-z-date">--</div>
-            </div>
-            <div class="chart-wrap" style="position:relative;">
-                <canvas id="chartCompZ"></canvas>
-                <div id="compz-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:50; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:180px;"></div>
-            </div>
-            <!-- Range slider -->
-            <div class="range-slider-container" style="margin-top:8px;">
-                <div class="range-slider-wrap">
-                    <div class="range-slider-track"></div>
-                    <div class="range-slider-highlight" id="compz-range-highlight"></div>
-                    <div class="range-inputs">
-                        <input type="range" id="compz-range-start" min="0" max="1000" value="0">
-                        <input type="range" id="compz-range-end" min="0" max="1000" value="1000">
-                    </div>
-                </div>
-                <div class="range-labels">
-                    <span id="compz-range-label" style="color:var(--cyan);">ALL</span>
-                </div>
-            </div>
-            <!-- Legend + methodology -->
-            <div class="chart-footer">
-                <div class="chart-legend">
-                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(61,184,122,0.5)"></span> UPWARD PRESSURE</div>
-                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,0.5)"></span> DOWNWARD PRESSURE</div>
-                    <div class="legend-item"><span class="legend-line" style="background:rgba(255,255,255,0.3); height:2px;"></span> ZERO LINE (EQUILIBRIUM)</div>
-                    <div class="legend-item"><span class="legend-line" style="background:rgba(0,255,255,0.4); height:1px; border-top:1px dashed rgba(0,255,255,0.4);"></span> ±1.5σ THRESHOLDS</div>
-                </div>
-                <span data-tooltip="Methodology: Equal-weighted average of 6 ETF flow Z-scores with short-side sign inversion (KOLD, HND, 3NGS scores flipped). 30-day rolling window inherited from per-ETF computation. Positive = net upward pressure (longs accumulating / shorts exiting). Negative = net downward pressure." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ METHODOLOGY</span>
-            </div>
-        </div>
-
-        <!-- Section 9: Flow Pressure vs Natural Gas Price -->
-        <div class="panel" id="flow-ng-panel">
-            <div class="panel-header">
-                <div class="panel-title" data-tooltip="Dual-axis overlay: Composite flow pressure (Z-Score) vs NG=F Henry Hub futures price. Identifies divergences where capital flows contradict price movement — often leading indicators of trend reversals." style="border-left:3px solid rgba(80,144,160,0.6); padding-left:8px;">Flow Pressure vs Natural Gas Price</div>
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div class="tab-group time-tabs" id="flowng-time-tabs">
-                        <button class="tab-btn" data-range="1m">1M</button>
-                        <button class="tab-btn" data-range="3m">3M</button>
-                        <button class="tab-btn" data-range="6m">6M</button>
-                        <button class="tab-btn" data-range="1y">1Y</button>
-                        <button class="tab-btn" data-range="2y">2Y</button>
-                        <button class="tab-btn" data-range="all" class="active">ALL</button>
-                    </div>
-                </div>
-            </div>
-            <div class="chart-wrap" style="position:relative;">
-                <canvas id="chartFlowNG"></canvas>
-                <div id="flowng-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:50; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:200px;"></div>
-            </div>
-            <!-- Range slider -->
-            <div class="range-slider-container" style="margin-top:8px;">
-                <div class="range-slider-wrap">
-                    <div class="range-slider-track"></div>
-                    <div class="range-slider-highlight" id="flowng-range-highlight"></div>
-                    <div class="range-inputs">
-                        <input type="range" id="flowng-range-start" min="0" max="1000" value="0">
-                        <input type="range" id="flowng-range-end" min="0" max="1000" value="1000">
-                    </div>
-                </div>
-                <div class="range-labels">
-                    <span id="flowng-range-label" style="color:var(--cyan);">ALL</span>
-                </div>
-            </div>
-            <!-- Legend + methodology -->
-            <div class="chart-footer">
-                <div class="chart-legend">
-                    <div class="legend-item"><span class="legend-line" style="background:#5090a0; height:2px;"></span> NG=F PRICE (RIGHT AXIS)</div>
-                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(61,184,122,0.4)"></span> UPWARD FLOW PRESSURE (LEFT AXIS)</div>
-                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,0.4)"></span> DOWNWARD FLOW PRESSURE (LEFT AXIS)</div>
-                </div>
-                <span data-tooltip="Flow Pressure = composite Z-Score of all 6 leveraged NG ETF flows (short-side inverted). NG=F = NYMEX Henry Hub front-month futures close. When pressure diverges from price direction, it may signal a forthcoming trend reversal (institutional capital front-running price). When aligned, it confirms trend strength." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ WHAT IS FLOW PRESSURE?</span>
-            </div>
-        </div>
 
     </main>
 
