@@ -132,89 +132,133 @@ function drawChartCompZ(data) {
 
     const dates = data.map(d => d.date);
     const vals = data.map(d => d.z);
-    let minZ = Math.min(...vals, -0.5);
-    let maxZ = Math.max(...vals, 0.5);
-    const zPad = (maxZ - minZ) * 0.1;
+    let minZ = Math.min(...vals, -1.6);
+    let maxZ = Math.max(...vals, 1.6);
+    const zPad = (maxZ - minZ) * 0.08;
     minZ -= zPad; maxZ += zPad;
 
     const getX = i => pad.left + (i / (data.length - 1)) * cw;
     const getY = v => pad.top + (1 - (v - minZ) / (maxZ - minZ)) * ch;
-
-    // Threshold bands (±1.5)
-    const y15p = getY(1.5), y15n = getY(-1.5);
-    if (1.5 < maxZ) {
-        ctx.fillStyle = 'rgba(61,184,122,0.04)';
-        ctx.fillRect(pad.left, pad.top, cw, Math.max(0, y15p - pad.top));
-    }
-    if (-1.5 > minZ) {
-        ctx.fillStyle = 'rgba(239,68,68,0.04)';
-        ctx.fillRect(pad.left, y15n, cw, Math.max(0, pad.top + ch - y15n));
-    }
-
-    // Zero line
     const y0 = getY(0);
-    ctx.beginPath(); ctx.moveTo(pad.left, y0); ctx.lineTo(pad.left + cw, y0);
-    ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1.5; ctx.stroke();
 
-    // ±1.5 threshold lines
-    [1.5, -1.5].forEach(v => {
-        if (v > minZ && v < maxZ) {
-            const yy = getY(v);
-            ctx.beginPath(); ctx.setLineDash([4, 4]);
-            ctx.moveTo(pad.left, yy); ctx.lineTo(pad.left + cw, yy);
-            ctx.strokeStyle = 'rgba(0,255,255,0.3)'; ctx.lineWidth = 1; ctx.stroke();
-            ctx.setLineDash([]);
+    // Multi-level threshold zones
+    const zones = [
+        { z: 2.0, rn: 192, gn: 64,  bn: 64,  rp: 34,  gp: 197, bp: 94,  a: 0.13 },
+        { z: 1.5, rn: 239, gn: 68,  bn: 68,  rp: 61,  gp: 184, bp: 122, a: 0.10 },
+        { z: 1.0, rn: 245, gn: 158, bn: 11,  rp: 96,  gp: 210, bp: 170, a: 0.06 },
+        { z: 0.8, rn: 251, gn: 191, bn: 36,  rp: 140, gp: 220, bp: 190, a: 0.04 },
+    ];
+    zones.forEach((z, i) => {
+        const yP = getY(z.z), yN = getY(-z.z);
+        const prevZVal = i === 0 ? maxZ : zones[i - 1].z;
+        const yPEdge = getY(prevZVal), yNEdge = getY(-prevZVal);
+        if (z.z <= maxZ) {
+            ctx.fillStyle = `rgba(${z.rp},${z.gp},${z.bp},${z.a})`;
+            ctx.fillRect(pad.left, Math.max(pad.top, yP), cw, Math.min(yPEdge, y0) - Math.max(pad.top, yP));
+        }
+        if (-z.z >= minZ) {
+            ctx.fillStyle = `rgba(${z.rn},${z.gn},${z.bn},${z.a})`;
+            ctx.fillRect(pad.left, Math.max(y0, yNEdge), cw, Math.min(pad.top + ch, yN) - Math.max(y0, yNEdge));
         }
     });
 
-    // Filled area chart
+    // Gradient fill under line
     ctx.beginPath();
     ctx.moveTo(getX(0), y0);
     for (let i = 0; i < data.length; i++) ctx.lineTo(getX(i), getY(vals[i]));
     ctx.lineTo(getX(data.length - 1), y0);
     ctx.closePath();
-
-    // Split fill: green above zero, red below
-    ctx.save();
-    ctx.clip();
-    // Green above
-    ctx.fillStyle = 'rgba(61,184,122,0.25)';
+    ctx.save(); ctx.clip();
+    const gUp = ctx.createLinearGradient(0, pad.top, 0, y0);
+    gUp.addColorStop(0, 'rgba(34,197,94,0.28)');
+    gUp.addColorStop(0.5, 'rgba(61,184,122,0.16)');
+    gUp.addColorStop(1, 'rgba(61,184,122,0.03)');
+    ctx.fillStyle = gUp;
     ctx.fillRect(pad.left, pad.top, cw, y0 - pad.top);
-    // Red below
-    ctx.fillStyle = 'rgba(239,68,68,0.25)';
+    const gDn = ctx.createLinearGradient(0, y0, 0, pad.top + ch);
+    gDn.addColorStop(0, 'rgba(239,68,68,0.03)');
+    gDn.addColorStop(0.5, 'rgba(239,68,68,0.16)');
+    gDn.addColorStop(1, 'rgba(192,64,64,0.28)');
+    ctx.fillStyle = gDn;
     ctx.fillRect(pad.left, y0, cw, pad.top + ch - y0);
     ctx.restore();
 
-    // Line
-    ctx.beginPath();
-    for (let i = 0; i < data.length; i++) {
-        const x = getX(i), y = getY(vals[i]);
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1.5; ctx.stroke();
+    // Threshold lines
+    zones.forEach(z => {
+        if (z.z <= maxZ) {
+            ctx.setLineDash([5, 4]); ctx.lineWidth = 1;
+            ctx.strokeStyle = `rgba(${z.rp},${z.gp},${z.bp},0.55)`;
+            ctx.beginPath(); ctx.moveTo(pad.left, getY(z.z)); ctx.lineTo(pad.left + cw, getY(z.z)); ctx.stroke();
+        }
+        if (-z.z >= minZ) {
+            ctx.strokeStyle = `rgba(${z.rn},${z.gn},${z.bn},0.55)`;
+            ctx.beginPath(); ctx.moveTo(pad.left, getY(-z.z)); ctx.lineTo(pad.left + cw, getY(-z.z)); ctx.stroke();
+        }
+    });
+    ctx.setLineDash([]);
 
-    // Y-axis
+    // Zero line
+    ctx.beginPath(); ctx.moveTo(pad.left, y0); ctx.lineTo(pad.left + cw, y0);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Color-coded composite line segments
+    for (let i = 1; i < data.length; i++) {
+        const z = (vals[i] + vals[i - 1]) / 2;
+        const absZ = Math.abs(z);
+        let color;
+        if (z > 0) {
+            color = absZ >= 2.0 ? 'rgba(34,197,94,1)' : absZ >= 1.5 ? 'rgba(61,184,122,0.95)' :
+                    absZ >= 1.0 ? 'rgba(96,200,166,0.85)' : 'rgba(180,200,190,0.7)';
+        } else {
+            color = absZ >= 2.0 ? 'rgba(192,64,64,1)' : absZ >= 1.5 ? 'rgba(239,68,68,0.95)' :
+                    absZ >= 1.0 ? 'rgba(200,100,100,0.85)' : 'rgba(200,170,170,0.7)';
+        }
+        ctx.beginPath();
+        ctx.moveTo(getX(i - 1), getY(vals[i - 1]));
+        ctx.lineTo(getX(i), getY(vals[i]));
+        ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.stroke();
+    }
+
+    // Y-axis with color-coded threshold values
     const yTicks = niceAxisTicks(minZ, maxZ, 6);
-    ctx.fillStyle = '#94a3b8'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.font = '10px sans-serif';
     yTicks.forEach(v => {
         const y = getY(v);
         if (y < pad.top - 5 || y > pad.top + ch + 5) return;
-        ctx.fillText(v.toFixed(1), pad.left - 6, y + 3);
-        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y);
-        ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1; ctx.stroke();
+        const absV = Math.abs(v);
+        const fC = absV >= 1.9 ? (v > 0 ? 'rgba(34,197,94,0.9)' : 'rgba(192,64,64,0.9)')
+                 : absV >= 1.4 ? (v > 0 ? 'rgba(61,184,122,0.85)' : 'rgba(239,68,68,0.85)')
+                 : absV >= 0.9 ? 'rgba(245,158,11,0.8)' : 'rgba(148,163,184,0.65)';
+        ctx.fillStyle = fC;
+        ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1), pad.left - 6, y);
+        if (v !== 0) {
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y);
+            ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1; ctx.stroke();
+        }
     });
 
     // X-axis
     drawXAxis(ctx, dates, getX, cw, pad.top + ch + 14, pad);
 
-    // Hover crosshair
+    // Hover crosshair with adaptive signal strength
     if (state.hoverCompZIdx !== null && state.hoverCompZIdx < data.length) {
         const i = state.hoverCompZIdx;
         const x = getX(i), y = getY(vals[i]);
+        const absZ = Math.abs(vals[i]);
         ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + ch);
-        ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1; ctx.stroke();
-        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = vals[i] >= 0 ? '#3db87a' : '#ef4444'; ctx.fill();
+        ctx.strokeStyle = 'rgba(0,255,255,0.2)'; ctx.lineWidth = 1; ctx.stroke();
+
+        const dotColor = vals[i] >= 0
+            ? (absZ >= 2.0 ? 'rgba(34,197,94,1)' : absZ >= 1.5 ? '#3db87a' : 'rgba(96,200,166,0.9)')
+            : (absZ >= 2.0 ? 'rgba(192,64,64,1)' : absZ >= 1.5 ? '#ef4444' : 'rgba(200,100,100,0.9)');
+        const dotR = 4 + Math.min(absZ * 1.0, 3.5);
+
+        if (absZ >= 1.5) {
+            ctx.beginPath(); ctx.arc(x, y, dotR + 4, 0, Math.PI * 2);
+            ctx.fillStyle = dotColor.replace(/[\d.]+\)$/, '0.18)'); ctx.fill();
+        }
+        ctx.beginPath(); ctx.arc(x, y, dotR, 0, Math.PI * 2);
+        ctx.fillStyle = dotColor; ctx.fill();
         ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
     }
 }
@@ -233,7 +277,7 @@ function drawChartFlowNG(flow, ng) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
-    const pad = { top: 20, right: 55, bottom: 32, left: 55 };
+    const pad = { top: 24, right: 60, bottom: 32, left: 55 };
     const cw = w - pad.left - pad.right;
     const ch = h - pad.top - pad.bottom;
     if (cw < 20 || ch < 20) return;
@@ -243,8 +287,9 @@ function drawChartFlowNG(flow, ng) {
     const ngVals = ng.map(d => d.close);
     const validNG = ngVals.filter(v => v !== null);
 
-    let minZ = Math.min(...zVals, -0.5), maxZ = Math.max(...zVals, 0.5);
-    const zPad2 = (maxZ - minZ) * 0.1; minZ -= zPad2; maxZ += zPad2;
+    // Anchor scale to include all signal tiers
+    let minZ = Math.min(...zVals, -1.6), maxZ = Math.max(...zVals, 1.6);
+    const zPad2 = (maxZ - minZ) * 0.08; minZ -= zPad2; maxZ += zPad2;
 
     let minNG = validNG.length > 0 ? Math.min(...validNG) : 0;
     let maxNG = validNG.length > 0 ? Math.max(...validNG) : 10;
@@ -255,22 +300,98 @@ function drawChartFlowNG(flow, ng) {
     const getYNG = v => pad.top + (1 - (v - minNG) / (maxNG - minNG)) * ch;
     const y0 = getYZ(0);
 
-    // Zero line
-    ctx.beginPath(); ctx.moveTo(pad.left, y0); ctx.lineTo(pad.left + cw, y0);
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1; ctx.stroke();
+    // ── 1. Multi-level threshold zones ──────────────────────────────
+    const zones = [
+        { z: 2.0, color: [192, 64, 64],  colorPos: [34, 197, 94],  a: 0.14 },
+        { z: 1.5, color: [239, 68, 68],  colorPos: [61, 184, 122], a: 0.11 },
+        { z: 1.0, color: [245, 158, 11], colorPos: [96, 210, 170], a: 0.07 },
+        { z: 0.8, color: [251, 191, 36], colorPos: [140, 220, 190],a: 0.04 },
+    ];
+    zones.forEach((zone, i) => {
+        const yPos = getYZ(zone.z), yNeg = getYZ(-zone.z);
+        const prevZ = i === 0 ? maxZ : zones[i - 1].z;
+        const yPosEdge = getYZ(prevZ), yNegEdge = getYZ(-prevZ);
+        const [r, g, b] = zone.color, [rp, gp, bp] = zone.colorPos;
+        // Above threshold (green tones)
+        if (zone.z <= maxZ) {
+            ctx.fillStyle = `rgba(${rp},${gp},${bp},${zone.a})`;
+            ctx.fillRect(pad.left, Math.max(pad.top, yPos), cw, Math.min(yPosEdge, y0) - Math.max(pad.top, yPos));
+        }
+        // Below threshold (red tones)
+        if (-zone.z >= minZ) {
+            ctx.fillStyle = `rgba(${r},${g},${b},${zone.a})`;
+            ctx.fillRect(pad.left, Math.max(y0, yNegEdge), cw, Math.min(pad.top + ch, yNeg) - Math.max(y0, yNegEdge));
+        }
+    });
 
-    // Z-score filled area
+    // ── 2. Gradient fill under pressure line ────────────────────────
     ctx.beginPath(); ctx.moveTo(getX(0), y0);
     for (let i = 0; i < flow.length; i++) ctx.lineTo(getX(i), getYZ(zVals[i]));
     ctx.lineTo(getX(flow.length - 1), y0); ctx.closePath();
     ctx.save(); ctx.clip();
-    ctx.fillStyle = 'rgba(61,184,122,0.18)';
+    // Positive (upward pressure): gradient from top intensifies near threshold
+    const gUp = ctx.createLinearGradient(0, pad.top, 0, y0);
+    gUp.addColorStop(0, 'rgba(34,197,94,0.28)');
+    gUp.addColorStop(0.4, 'rgba(61,184,122,0.18)');
+    gUp.addColorStop(1, 'rgba(61,184,122,0.03)');
+    ctx.fillStyle = gUp;
     ctx.fillRect(pad.left, pad.top, cw, y0 - pad.top);
-    ctx.fillStyle = 'rgba(239,68,68,0.18)';
+    // Negative (downward pressure): gradient intensifies toward bottom
+    const gDn = ctx.createLinearGradient(0, y0, 0, pad.top + ch);
+    gDn.addColorStop(0, 'rgba(239,68,68,0.03)');
+    gDn.addColorStop(0.6, 'rgba(239,68,68,0.18)');
+    gDn.addColorStop(1, 'rgba(192,64,64,0.28)');
+    ctx.fillStyle = gDn;
     ctx.fillRect(pad.left, y0, cw, pad.top + ch - y0);
     ctx.restore();
 
-    // NG=F price line
+    // ── 3. Threshold lines with multi-level dashes ──────────────────
+    zones.forEach(zone => {
+        const yPos = getYZ(zone.z), yNeg = getYZ(-zone.z);
+        const [r, g, b] = zone.colorPos, [rn, gn, bn] = zone.color;
+        if (zone.z <= maxZ) {
+            ctx.setLineDash([5, 4]); ctx.lineWidth = 1;
+            ctx.strokeStyle = `rgba(${r},${g},${b},0.55)`;
+            ctx.beginPath(); ctx.moveTo(pad.left, yPos); ctx.lineTo(pad.left + cw, yPos); ctx.stroke();
+        }
+        if (-zone.z >= minZ) {
+            ctx.strokeStyle = `rgba(${rn},${gn},${bn},0.55)`;
+            ctx.beginPath(); ctx.moveTo(pad.left, yNeg); ctx.lineTo(pad.left + cw, yNeg); ctx.stroke();
+        }
+    });
+    ctx.setLineDash([]);
+
+    // Zero line
+    ctx.beginPath(); ctx.moveTo(pad.left, y0); ctx.lineTo(pad.left + cw, y0);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // ── 4. Zone labels (▲/▼ PRESSURE) ──────────────────────────────
+    const midUpY = (pad.top + y0) / 2, midDnY = (y0 + pad.top + ch) / 2;
+    ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(61,184,122,0.75)';
+    ctx.fillText('▲ PRESSURE', pad.left + 6, midUpY);
+    ctx.fillStyle = 'rgba(239,68,68,0.75)';
+    ctx.fillText('▼ PRESSURE', pad.left + 6, midDnY);
+
+    // ── 5. Pressure line — color-coded segments by signal strength ──
+    for (let i = 1; i < flow.length; i++) {
+        const z = (zVals[i] + zVals[i - 1]) / 2;
+        const absZ = Math.abs(z);
+        let color;
+        if (z > 0) {
+            color = absZ >= 2.0 ? 'rgba(34,197,94,1)' : absZ >= 1.5 ? 'rgba(61,184,122,0.95)' :
+                    absZ >= 1.0 ? 'rgba(96,200,166,0.85)' : 'rgba(180,200,190,0.7)';
+        } else {
+            color = absZ >= 2.0 ? 'rgba(192,64,64,1)' : absZ >= 1.5 ? 'rgba(239,68,68,0.95)' :
+                    absZ >= 1.0 ? 'rgba(200,100,100,0.85)' : 'rgba(200,170,170,0.7)';
+        }
+        ctx.beginPath();
+        ctx.moveTo(getX(i - 1), getYZ(zVals[i - 1]));
+        ctx.lineTo(getX(i), getYZ(zVals[i]));
+        ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.stroke();
+    }
+
+    // ── 6. NG=F price line — bright cyan, prominent ─────────────────
     ctx.beginPath();
     let started = false;
     for (let i = 0; i < ng.length; i++) {
@@ -278,49 +399,88 @@ function drawChartFlowNG(flow, ng) {
         const x = getX(i), y = getYNG(ngVals[i]);
         started ? ctx.lineTo(x, y) : (ctx.moveTo(x, y), started = true);
     }
-    ctx.strokeStyle = '#5090a0'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = '#4ab8d8'; ctx.lineWidth = 1.8; ctx.stroke();
 
-    // Left Y-axis (Z-Score)
-    const zTicks = niceAxisTicks(minZ, maxZ, 5);
-    ctx.fillStyle = '#94a3b8'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+    // Last NG price dot
+    const lastNgIdx = ng.length - 1;
+    if (ngVals[lastNgIdx] !== null) {
+        const lx = getX(lastNgIdx), ly = getYNG(ngVals[lastNgIdx]);
+        ctx.beginPath(); ctx.arc(lx, ly, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.strokeStyle = '#4ab8d8'; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+
+    // ── 7. Left Y-axis (pressure scale) ─────────────────────────────
+    const zTicks = niceAxisTicks(minZ, maxZ, 6);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
     zTicks.forEach(v => {
         const y = getYZ(v);
         if (y < pad.top - 5 || y > pad.top + ch + 5) return;
-        ctx.fillText(v.toFixed(1), pad.left - 6, y + 3);
-        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y);
-        ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1; ctx.stroke();
+        // Color-code threshold values
+        const absV = Math.abs(v);
+        const fC = absV >= 1.9 ? (v > 0 ? 'rgba(34,197,94,0.9)' : 'rgba(192,64,64,0.9)')
+                 : absV >= 1.4 ? (v > 0 ? 'rgba(61,184,122,0.85)' : 'rgba(239,68,68,0.85)')
+                 : absV >= 0.9 ? 'rgba(245,158,11,0.8)' : 'rgba(148,163,184,0.65)';
+        ctx.fillStyle = fC; ctx.font = '10px sans-serif';
+        ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1), pad.left - 6, y);
+        if (v !== 0) {
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y);
+            ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1; ctx.stroke();
+        }
     });
 
-    // Right Y-axis (NG Price)
+    // ── 8. Right Y-axis (NG price) ───────────────────────────────────
     const ngTicks = niceAxisTicks(minNG, maxNG, 5);
-    ctx.fillStyle = '#5090a0'; ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(74,184,216,0.85)'; ctx.textAlign = 'left'; ctx.font = '10px sans-serif';
     ngTicks.forEach(v => {
         const y = getYNG(v);
         if (y < pad.top - 5 || y > pad.top + ch + 5) return;
-        ctx.fillText('$' + v.toFixed(2), pad.left + cw + 6, y + 3);
+        const lbl = v >= 10 ? '$' + v.toFixed(2) : '$' + v.toFixed(2);
+        ctx.fillText(lbl, pad.left + cw + 7, y);
     });
 
     // X-axis
     drawXAxis(ctx, dates, getX, cw, pad.top + ch + 14, pad);
 
-    // Hover
+    // ── 9. Hover crosshair with adaptive signal strength ─────────────
     if (state.hoverFlowNGIdx !== null && state.hoverFlowNGIdx < flow.length) {
         const i = state.hoverFlowNGIdx;
         const x = getX(i);
+        const absZ = Math.abs(zVals[i]);
         ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + ch);
-        ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1; ctx.stroke();
-        // Z dot
+        ctx.strokeStyle = 'rgba(0,255,255,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([]); ctx.stroke();
+
+        // Adaptive pressure dot color
+        const zDotColor = zVals[i] >= 0
+            ? (absZ >= 2.0 ? 'rgba(34,197,94,1)' : absZ >= 1.5 ? '#3db87a' : absZ >= 1.0 ? 'rgba(96,200,166,0.9)' : 'rgba(180,200,190,0.8)')
+            : (absZ >= 2.0 ? 'rgba(192,64,64,1)' : absZ >= 1.5 ? '#ef4444' : absZ >= 1.0 ? 'rgba(200,100,100,0.9)' : 'rgba(200,170,170,0.8)');
+
+        const dotR = 4 + Math.min(absZ * 1.2, 4);
         const yz = getYZ(zVals[i]);
-        ctx.beginPath(); ctx.arc(x, yz, 4, 0, Math.PI * 2);
-        ctx.fillStyle = zVals[i] >= 0 ? '#3db87a' : '#ef4444'; ctx.fill();
+
+        // Glow for strong signals
+        if (absZ >= 1.5) {
+            ctx.beginPath(); ctx.arc(x, yz, dotR + 4, 0, Math.PI * 2);
+            ctx.fillStyle = zDotColor.replace(/[\d.]+\)$/, '0.18)'); ctx.fill();
+            ctx.beginPath(); ctx.arc(x, yz, dotR + 2, 0, Math.PI * 2);
+            ctx.fillStyle = zDotColor.replace(/[\d.]+\)$/, '0.35)'); ctx.fill();
+        }
+        ctx.beginPath(); ctx.arc(x, yz, dotR, 0, Math.PI * 2);
+        ctx.fillStyle = zDotColor; ctx.fill();
         ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
-        // NG dot
+
+        // NG price dot
         if (ngVals[i] !== null) {
             const yn = getYNG(ngVals[i]);
             ctx.beginPath(); ctx.arc(x, yn, 4, 0, Math.PI * 2);
-            ctx.fillStyle = '#5090a0'; ctx.fill();
+            ctx.fillStyle = '#4ab8d8'; ctx.fill();
             ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
         }
+
+        // Signal label
+        const sLabel = absZ >= 2.0 ? '◆ EXTREME' : absZ >= 1.5 ? '◆ CRITICAL' : absZ >= 1.0 ? '◆ ELEVATED' : absZ >= 0.8 ? '◆ WARM' : '○ NEUTRAL';
+        ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = zDotColor;
+        ctx.fillText(sLabel, x + dotR + 5, yz - 8);
     }
 }
 
@@ -371,10 +531,27 @@ function handleFlowNGHover(e) {
     const d = flow[idx];
     const ngClose = ng[idx] ? ng[idx].close : null;
     const tip = document.getElementById('flowng-tooltip');
-    const color = d.z >= 0 ? '#3db87a' : '#ef4444';
-    tip.innerHTML = `<div style="color:var(--cyan); font-size:0.7rem; font-weight:800; margin-bottom:6px;">${fmtDateLong(d.date)}</div>
-        <div style="display:flex; justify-content:space-between; gap:16px;"><span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">FLOW PRESSURE</span><span style="color:${color}; font-weight:800; font-family:'JetBrains Mono',monospace;">${d.z >= 0 ? '+' : ''}${d.z.toFixed(3)}σ</span></div>
-        <div style="display:flex; justify-content:space-between; gap:16px; margin-top:3px;"><span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">NG=F PRICE</span><span style="color:#5090a0; font-weight:800; font-family:'JetBrains Mono',monospace;">${ngClose !== null ? '$' + ngClose.toFixed(3) : 'N/A'}</span></div>`;
+    const absZ = Math.abs(d.z);
+    let color, signalLabel, signalDesc;
+    if (absZ >= 2.0)      { color = d.z > 0 ? 'rgba(34,197,94,1)' : 'rgba(192,64,64,1)';   signalLabel = '◆ EXTREME';  signalDesc = d.z > 0 ? 'Extreme accumulation across all ETFs' : 'Extreme distribution across all ETFs'; }
+    else if (absZ >= 1.5) { color = d.z > 0 ? '#3db87a' : '#ef4444';                        signalLabel = '◆ CRITICAL'; signalDesc = d.z > 0 ? 'Strong cross-ETF buying pressure' : 'Strong cross-ETF selling pressure'; }
+    else if (absZ >= 1.0) { color = d.z > 0 ? 'rgba(96,200,166,1)' : 'rgba(200,100,100,1)'; signalLabel = '◆ ELEVATED'; signalDesc = d.z > 0 ? 'Elevated accumulation signal' : 'Elevated distribution signal'; }
+    else if (absZ >= 0.8) { color = d.z > 0 ? 'rgba(148,200,190,1)' : 'rgba(200,150,150,1)'; signalLabel = '◆ WARM';    signalDesc = d.z > 0 ? 'Mild upward pressure building' : 'Mild downward pressure building'; }
+    else                  { color = '#94a3b8';                                                signalLabel = '○ NEUTRAL'; signalDesc = 'Cross-ETF flows in equilibrium'; }
+    const distLabel = absZ >= 1.5 ? `${(absZ - 1.5).toFixed(2)}σ beyond critical` : `${(1.5 - absZ).toFixed(2)}σ to critical`;
+    tip.innerHTML = `
+        <div style="color:var(--cyan); font-size:0.7rem; font-weight:800; margin-bottom:6px;">${fmtDateLong(d.date)}</div>
+        <div style="display:flex; justify-content:space-between; gap:16px;">
+            <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">FLOW PRESSURE</span>
+            <span style="color:${color}; font-weight:800; font-family:'JetBrains Mono',monospace;">${d.z >= 0 ? '+' : ''}${d.z.toFixed(3)}σ</span>
+        </div>
+        <div style="color:${color}; font-size:0.62rem; font-weight:700; margin-top:3px;">${signalLabel}</div>
+        <div style="color:rgba(190,205,220,0.7); font-size:0.58rem; margin-top:2px;">${signalDesc}</div>
+        <div style="color:rgba(148,163,184,0.6); font-size:0.56rem; margin-top:2px;">Δ threshold: ${distLabel}</div>
+        <div style="display:flex; justify-content:space-between; gap:16px; margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.07);">
+            <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">NG=F PRICE</span>
+            <span style="color:#4ab8d8; font-weight:800; font-family:'JetBrains Mono',monospace;">${ngClose !== null ? '$' + ngClose.toFixed(3) : 'N/A'}</span>
+        </div>`;
     tip.style.display = 'block';
     const tx = Math.min(rect.width - 220, Math.max(10, x - 100));
     tip.style.left = tx + 'px'; tip.style.top = '10px';
