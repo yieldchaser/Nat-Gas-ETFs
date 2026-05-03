@@ -34,19 +34,6 @@ function renderBanner(data, comp) {
 function renderConvictionBanner(data, comp) {
     var el = document.getElementById('cvol-conviction-banner'); if (!el) return;
     var n = data.length; if (n < 63) { el.style.display = 'none'; return; }
-    if (comp && comp.currentDecision) {
-        var d = comp.currentDecision;
-        var dc = decisionColor(d.classification);
-        el.style.display = 'flex';
-        el.style.alignItems = 'center';
-        el.style.gap = '14px';
-        el.style.background = 'rgba(255,255,255,0.025)';
-        el.innerHTML =
-            '<span style="font-size:0.75rem;font-weight:900;letter-spacing:2px;color:'+dc+';">'+d.classification+'</span>' +
-            '<span style="font-size:0.65rem;color:rgba(255,255,255,0.85);letter-spacing:0.5px;font-weight:700;">'+d.action+'</span>' +
-            '<span style="font-size:0.58rem;color:rgba(255,255,255,0.65);letter-spacing:0.5px;">Conviction '+d.conviction+' · '+phaseLabel(d.phase)+' · Top '+fmt(d.topScore,2)+' / Bottom '+fmt(d.bottomScore,2)+'</span>';
-        return;
-    }
     var last = data[n-1];
 
     // Replicate conviction computation from renderRegimePanel (single source of truth)
@@ -717,13 +704,7 @@ function renderTimeline(composites, filter) {
     var body = document.getElementById('cvol-event-body');
     var countEl = document.getElementById('cvol-event-count');
     if (!body) return;
-    var mode = CvolState.markerMode || 'decision';
-    var sourceEvents = mode === 'raw'
-        ? (composites.rawFires || composites.events || [])
-        : mode === 'both'
-            ? (composites.decisionEvents || []).concat(composites.rawFires || composites.events || [])
-            : (composites.decisionEvents || []);
-    var allEvents = sourceEvents.slice().sort(function(a, b) { return b.idx - a.idx; });
+    var allEvents = (composites.events || []).slice().reverse();
     // Time filter
     var now = new Date(); var yearStr = now.getFullYear().toString();
     var sixMonthsAgo = new Date(now); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
@@ -731,27 +712,21 @@ function renderTimeline(composites, filter) {
     else if (filter === '6m') allEvents = allEvents.filter(function(e) { return new Date(e.date) >= sixMonthsAgo; });
     // Signal type filter
     var stf = CvolState.signalTypeFilter;
-    var events = (mode === 'raw' && stf !== 'all') ? allEvents.filter(function(e) { return normalizeSignalName(e.signal) === normalizeSignalName(stf); }) : allEvents;
-    if (countEl) countEl.textContent = events.length + ' ' + (mode === 'raw' ? 'RAW FIRES' : mode === 'both' ? 'EVENTS' : 'DECISIONS');
+    var events = stf !== 'all' ? allEvents.filter(function(e) { return e.signal === stf; }) : allEvents;
+    if (countEl) countEl.textContent = events.length + ' EVENTS';
     // Determine "recent" threshold for PENDING state (last 21 sessions)
     var dataLen = CvolState.data ? CvolState.data.length : 0;
     var recentCutoffDate = null;
     if (CvolState.data && dataLen > 21) recentCutoffDate = CvolState.data[dataLen - 21].date;
-    var sigColors = {'SAD':'border-color:#f59e0b;color:#f59e0b;background:rgba(245,158,11,0.1)','CI':'border-color:#60a8f8;color:#60a8f8;background:rgba(96,168,248,0.1)','CVC↓':'border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,0.1)','CVC↑':'border-color:#3db87a;color:#3db87a;background:rgba(61,184,122,0.1)','CVC\u2193':'border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,0.1)','CVC\u2191':'border-color:#3db87a;color:#3db87a;background:rgba(61,184,122,0.1)','RDS':'border-color:#ec4899;color:#ec4899;background:rgba(236,72,153,0.1)'};
-    ['BOTTOM','TOP','EXPANSION','EXHAUSTION','CONFLICT','NO_EDGE'].forEach(function(k) {
-        sigColors[k] = 'border-color:'+decisionColor(k)+';color:'+decisionColor(k)+';background:rgba(255,255,255,0.04)';
-    });
+    var sigColors = {'SAD':'border-color:#f59e0b;color:#f59e0b;background:rgba(245,158,11,0.1)','CI':'border-color:#60a8f8;color:#60a8f8;background:rgba(96,168,248,0.1)','CVC↓':'border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,0.1)','CVC↑':'border-color:#3db87a;color:#3db87a;background:rgba(61,184,122,0.1)','RDS':'border-color:#ec4899;color:#ec4899;background:rgba(236,72,153,0.1)'};
     var sigTooltips = {'SAD':'Skew-ATM Divergence — stealth repositioning signal','CI':'Complacency Index — fragile calm warning','CVC↓':'Convexity-Variance down — top formation signal','CVC↑':'Convexity-Variance up — bottom formation signal','RDS':'Regime Divergence Score — explosive setup signal'};
     var html = '';
     events.forEach(function(e) {
         var s = uiGetSeason(e.date);
-        var isDecision = e.classification != null || DECISION_TYPES.indexOf(e.signal) >= 0;
-        var eventClass = e.classification || e.signal;
-        var dirColor = isDecision ? decisionColor(eventClass) : ((e.direction.indexOf('TOP')>=0||e.direction.indexOf('DOWNSIDE')>=0)?'#ef4444':'#3db87a');
-        if (!isDecision && (e.direction==='COMPLACENCY' || e.direction==='FRAGILE CALM')) dirColor = '#f59e0b';
+        var dirColor = (e.direction.indexOf('TOP')>=0||e.direction.indexOf('DOWNSIDE')>=0)?'#ef4444':'#3db87a';
+        if (e.direction==='COMPLACENCY') dirColor = '#f59e0b';
         var conf = getGlobalConfluence(e);
-        var confHtml = isDecision ? '<span class="confluence-badge" style="background:rgba(255,255,255,0.06);color:'+dirColor+';" data-tooltip="Decision conviction from the T2P-anchored model">'+(e.conviction || 'LOW')+'</span>'
-            : conf >= 3 ? '<span class="confluence-badge" style="background:rgba(239,68,68,0.2);color:#ef4444;" data-tooltip="' + conf + ' other signals within ±5 sessions — EXTREME confluence">' + conf + '</span>'
+        var confHtml = conf >= 3 ? '<span class="confluence-badge" style="background:rgba(239,68,68,0.2);color:#ef4444;" data-tooltip="' + conf + ' other signals within ±5 sessions — EXTREME confluence">' + conf + '</span>'
             : conf >= 2 ? '<span class="confluence-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;" data-tooltip="' + conf + ' other signals within ±5 sessions — strong confluence">' + conf + '</span>'
             : conf >= 1 ? '<span class="confluence-badge" style="background:rgba(96,168,248,0.1);color:#60a8f8;" data-tooltip="' + conf + ' other signal within ±5 sessions">' + conf + '</span>'
             : '<span style="color:rgba(255, 255, 255, 0.85);opacity:0.3">0</span>';
@@ -761,28 +736,22 @@ function renderTimeline(composites, filter) {
         var pct = composites.ngvlPct252 ? composites.ngvlPct252[e.idx] : null;
         if (pct != null && (pct > 75 || pct < 25)) cw++;
         cw = Math.min(cw, 3);
-        var cwHtml = isDecision ? '' : '<span style="color:'+(cw>=3?'#f59e0b':cw>=2?'#60a8f8':'rgba(255, 255, 255, 0.85)')+'" data-tooltip="Conviction: '+cw+'/3. Based on confluence ('+conf+'), regime ('+fmt(pct,0)+'th pct)">'+'★'.repeat(cw)+'</span>';
+        var cwHtml = '<span style="color:'+(cw>=3?'#f59e0b':cw>=2?'#60a8f8':'rgba(255, 255, 255, 0.85)')+'" data-tooltip="Conviction: '+cw+'/3. Based on confluence ('+conf+'), regime ('+fmt(pct,0)+'th pct)">'+'★'.repeat(cw)+'</span>';
         // PENDING state for recent events where forward returns aren't measurable yet
         var isRecent = recentCutoffDate && e.date > recentCutoffDate;
-        function eventReturnColor(v) {
-            if (v == null) return 'rgba(255, 255, 255, 0.85)';
-            if (isDecision && eventClass === 'TOP') return v < 0 ? '#3db87a' : '#ef4444';
-            if (isDecision && eventClass === 'BOTTOM') return v > 0 ? '#3db87a' : '#ef4444';
-            return pctColor(v);
-        }
-        var fwd5Html = e.fwd5 != null ? '<span style="color:' + eventReturnColor(e.fwd5) + '">' + ((e.fwd5>0?'+':'') + fmt(e.fwd5) + '%') + '</span>'
+        var fwd5Html = e.fwd5 != null ? '<span style="color:' + pctColor(e.fwd5) + '">' + ((e.fwd5>0?'+':'') + fmt(e.fwd5) + '%') + '</span>'
             : isRecent ? '<span class="pending-label" data-tooltip="Market Validation Pending: This signal fired less than 5 sessions ago. Volatility signals often require 3-5 days of \'digestion\' before price reflects the options-market bias.">PENDING</span>' : '—';
-        var fwd21Html = e.fwd21 != null ? '<span style="color:' + eventReturnColor(e.fwd21) + '">' + ((e.fwd21>0?'+':'') + fmt(e.fwd21) + '%') + '</span>'
+        var fwd21Html = e.fwd21 != null ? '<span style="color:' + pctColor(e.fwd21) + '">' + ((e.fwd21>0?'+':'') + fmt(e.fwd21) + '%') + '</span>'
             : isRecent ? '<span class="pending-label" data-tooltip="Institutional Alpha Window Pending: This signal fired less than 21 sessions ago. We use a full trading month (21 days) as the Gold Standard for validating options-surface predictive power.">PENDING</span>' : '—';
-        var valTT = isDecision ? `Decision score on ${fmtDate(e.date)}: Top ${fmt(e.topScore,2)}, Bottom ${fmt(e.bottomScore,2)}, Expansion ${fmt(e.expansionRisk,2)}` : `Raw signal value on ${fmtDate(e.date)}: ${fmt(e.value, 3)}`;
+        var valTT = `Raw signal value on ${fmtDate(e.date)}: ${fmt(e.value, 3)}`;
         var priceTT = `Closing price of NG=F on ${fmtDate(e.date)}: $${fmt(e.underlying, 2)}`;
         var fwd5TT = e.fwd5 != null ? `5-day return from $${fmt(e.underlying, 2)} was ${fmt(e.fwd5)}%.` : '5-day return is pending.';
         var fwd21TT = e.fwd21 != null ? `21-day return from $${fmt(e.underlying, 2)} was ${fmt(e.fwd21)}%.` : '21-day return is pending.';
 
         html += '<tr data-evt-idx="' + e.idx + '"' + (conf >= 2 ? ' style="border-left:2px solid rgba(245,158,11,0.3);"' : '') + '>' +
             '<td style="color:rgba(255, 255, 255, 0.85);">'+fmtDate(e.date)+'</td>' +
-            '<td><span class="sig-badge" style="'+(sigColors[eventClass]||sigColors[e.signal]||'')+'" data-tooltip="'+(isDecision ? ((e.reasons||[]).join(' | ') || 'Decision-grade event') : (sigTooltips[e.signal]||''))+'">'+eventClass+'</span></td>' +
-            '<td style="color:'+dirColor+';font-weight:700;" data-tooltip="Decision/action for this event.">'+e.direction+'</td>' +
+            '<td><span class="sig-badge" style="'+(sigColors[e.signal]||'')+'" data-tooltip="'+(sigTooltips[e.signal]||'')+'">'+e.signal+'</span></td>' +
+            '<td style="color:'+dirColor+';font-weight:700;" data-tooltip="Implied direction based on this signal.">'+e.direction+'</td>' +
             '<td data-tooltip="'+valTT+'">'+fmt(e.value,3)+'</td>' +
             '<td data-tooltip="'+priceTT+'">$'+fmt(e.underlying,2)+'</td>' +
             '<td data-tooltip="'+fwd5TT+'">'+fwd5Html+'</td>' +
@@ -1206,145 +1175,13 @@ function renderSensitivityPanel(sensitivity) {
     el.innerHTML = html;
 }
 
-function phaseLabel(phase) {
-    return String(phase || 'UNKNOWN').replace(/_/g, ' ');
-}
-
-function verdictStyle(verdict) {
-    var color = verdict === 'ALIGNED' ? '#3db87a'
-        : verdict === 'WRONG' ? '#ef4444'
-        : verdict === 'MIXED' || verdict === 'CONFLICT' ? '#ec4899'
-        : verdict === 'REFERENCE_MISMATCH' ? '#f59e0b'
-        : 'rgba(255, 255, 255, 0.85)';
-    return 'color:' + color + ';font-weight:800;';
-}
-
-function leadLagLabel(v) {
-    if (v == null) return '--';
-    if (v === 0) return 'same day';
-    return Math.abs(v) + 'D ' + (v < 0 ? 'lead' : 'lag');
-}
-
-function renderDataHealth(data, comp) {
-    var el = document.getElementById('cvol-data-health'); if (!el) return;
-    var h = comp.dataHealth || {};
-    var stale = h.staleDays != null && h.staleDays > 5;
-    var missing = h.missingDateCount || 0;
-    var coverage = h.coverage || { available: 0, expected: 0 };
-    var state = !h.latestT2pDate ? 'NO T2P' : stale ? 'STALE' : missing > 8 ? 'GAPS' : 'HEALTHY';
-    var stateColor = state === 'HEALTHY' ? '#3db87a' : state === 'GAPS' ? '#f59e0b' : '#ef4444';
-    el.innerHTML =
-        '<div class="health-kicker" style="color:'+stateColor+'">'+state+'</div>' +
-        '<div class="health-item"><span>CVOL latest</span><strong>'+(h.latestCvolDate || (data && data.length ? data[data.length-1].date : '--'))+'</strong></div>' +
-        '<div class="health-item"><span>T2P latest</span><strong>'+(h.latestT2pDate || '--')+'</strong></div>' +
-        '<div class="health-item"><span>Missing dates</span><strong style="color:'+(missing>8?'#f59e0b':'var(--text-bright)')+'">'+missing+'</strong></div>' +
-        '<div class="health-item"><span>ETF coverage</span><strong>'+coverage.available+'/'+coverage.expected+'</strong></div>' +
-        '<div class="health-note">'+(state === 'HEALTHY' ? 'CVOL and T2P are in sync; decision layer is using full context.' : 'Decision layer is still rendered, but stale or missing T2P inputs reduce trust.')+'</div>';
-}
-
-function renderDecisionCommand(data, comp) {
-    var el = document.getElementById('regime-dashboard-grid'); if (!el) return;
-    var d = comp.currentDecision || (comp.decisionDaily ? comp.decisionDaily[comp.decisionDaily.length - 1] : null);
-    if (!d) { el.innerHTML = '<div class="decision-empty">Decision layer unavailable.</div>'; return; }
-    var color = decisionColor(d.classification);
-    var nearest = d.nearestTurn ? d.nearestTurn.type + ' ' + Math.abs(d.nearestTurn.daysFromTurn) + 'D' : '--';
-    var reasons = (d.reasons || []).map(function(r) { return '<li>'+r+'</li>'; }).join('');
-    var flags = (d.flags || []).length ? d.flags.join(', ') : (d.conflictScore > 0 ? 'Soft conflict' : 'None');
-    el.innerHTML =
-        '<div class="decision-command" style="--decision-color:'+color+'">' +
-            '<div class="decision-hero">' +
-                '<div><div class="decision-eyebrow">CURRENT ACTION</div><div class="decision-action" style="color:'+color+'">'+d.action+'</div></div>' +
-                '<div class="decision-pill" style="border-color:'+color+';color:'+color+'">'+d.classification+'</div>' +
-            '</div>' +
-            '<div class="decision-grid">' +
-                '<div><span>Conviction</span><strong style="color:'+color+'">'+d.conviction+'</strong></div>' +
-                '<div><span>Phase</span><strong>'+phaseLabel(d.phase)+'</strong></div>' +
-                '<div><span>Horizon</span><strong>'+d.horizon+'</strong></div>' +
-                '<div><span>Nearest Turn</span><strong>'+nearest+'</strong></div>' +
-                '<div><span>Top Score</span><strong style="color:#ef4444">'+fmt(d.topScore,2)+'</strong></div>' +
-                '<div><span>Bottom Score</span><strong style="color:#3db87a">'+fmt(d.bottomScore,2)+'</strong></div>' +
-                '<div><span>Expansion Risk</span><strong style="color:#60a8f8">'+fmt(d.expansionRisk,2)+'</strong></div>' +
-                '<div><span>Conflict Flags</span><strong style="color:'+(d.conflictScore>=2?'#ec4899':'var(--text-bright)')+'">'+flags+'</strong></div>' +
-            '</div>' +
-            '<div class="decision-reasons"><div class="decision-eyebrow">WHY THIS READ</div><ul>'+reasons+'</ul></div>' +
-        '</div>';
-}
-
-function renderTurningPointReplay(comp) {
-    var el = document.getElementById('cvol-turning-replay'); if (!el) return;
-    var rows = comp.turningPointReplay || [];
-    if (!rows.length) { el.innerHTML = '<div class="decision-empty">No T2P replay rows available.</div>'; return; }
-    var html = '<table class="scorecard-table replay-table"><thead><tr>' +
-        '<th>TURN WINDOW</th><th>TYPE</th><th>CONSENSUS</th><th>CVOL NEARBY</th><th>DECISION</th><th>LEAD/LAG</th><th>VERDICT</th><th>NG 42D</th>' +
-        '</tr></thead><tbody>';
-    rows.slice(0, 18).forEach(function(r) {
-        var resultColor = r.fwd42 == null ? 'rgba(255, 255, 255, 0.85)' : ((r.type === 'BOTTOM' && r.fwd42 > 0) || (r.type === 'TOP' && r.fwd42 < 0) ? '#3db87a' : '#ef4444');
-        html += '<tr>' +
-            '<td>'+r.window+'</td>' +
-            '<td style="color:'+decisionColor(r.type)+';font-weight:800;">'+r.type+'</td>' +
-            '<td>'+r.support+' ETFs<br><span style="font-size:0.58rem;color:rgba(255,255,255,0.65)">'+(r.tickers||[]).join(', ')+'</span></td>' +
-            '<td>'+(r.cvSignals && r.cvSignals.length ? r.cvSignals.join('<br>') : '--')+'</td>' +
-            '<td>'+(r.decisionSignals && r.decisionSignals.length ? r.decisionSignals.join('<br>') : '--')+'</td>' +
-            '<td>'+leadLagLabel(r.leadLag)+'</td>' +
-            '<td style="'+verdictStyle(r.verdict)+'">'+r.verdict+'</td>' +
-            '<td style="color:'+resultColor+'">'+fmtSign(r.fwd42)+'</td>' +
-            '</tr>';
-    });
-    html += '</tbody></table>';
-    el.innerHTML = html;
-}
-
-function renderSignalQualityAudit(comp) {
-    var el = document.getElementById('cvol-quality-audit'); if (!el) return;
-    var rows = comp.signalQualityAudit || [];
-    if (!rows.length) { el.innerHTML = '<div class="decision-empty">Signal quality audit unavailable.</div>'; return; }
-    var html = '<table class="scorecard-table"><thead><tr>' +
-        '<th>INPUT</th><th>TOP HIT</th><th>BOTTOM HIT</th><th>FALSE +</th><th>WRONG SIDE</th><th>AVG LEAD/LAG</th><th>BEST REGIME</th>' +
-        '</tr></thead><tbody>';
-    rows.forEach(function(r) {
-        html += '<tr>' +
-            '<td style="font-weight:800;color:var(--text-bright)">'+r.signal+'</td>' +
-            '<td>'+fmt(r.topHitRate,0)+'% <span style="font-size:0.55rem;color:rgba(255,255,255,0.6)">('+r.topHits+'/'+r.topTotal+')</span></td>' +
-            '<td>'+fmt(r.bottomHitRate,0)+'% <span style="font-size:0.55rem;color:rgba(255,255,255,0.6)">('+r.bottomHits+'/'+r.bottomTotal+')</span></td>' +
-            '<td style="color:'+(r.falsePositiveRate>45?'#ef4444':'#3db87a')+'">'+fmt(r.falsePositiveRate,0)+'%</td>' +
-            '<td style="color:'+(r.wrongSideRate>20?'#ef4444':'rgba(255,255,255,0.85)')+'">'+fmt(r.wrongSideRate,0)+'%</td>' +
-            '<td>'+leadLagLabel(r.avgLeadLag == null ? null : Math.round(r.avgLeadLag))+'</td>' +
-            '<td>'+r.bestRegime+'</td>' +
-            '</tr>';
-    });
-    html += '</tbody></table>';
-    el.innerHTML = html;
-}
-
-function renderKnownWindowAudit(comp) {
-    var el = document.getElementById('cvol-known-window-audit'); if (!el) return;
-    var rows = comp.knownWindowAudit || [];
-    if (!rows.length) { el.innerHTML = '<div class="decision-empty">Known-window audit unavailable.</div>'; return; }
-    var html = '<table class="scorecard-table"><thead><tr>' +
-        '<th>WINDOW</th><th>EXPECTED</th><th>T2P SUPPORT</th><th>CVOL DECISION</th><th>RAW FIRES</th><th>VERDICT</th>' +
-        '</tr></thead><tbody>';
-    rows.forEach(function(r) {
-        html += '<tr>' +
-            '<td style="text-align:left;"><strong>'+r.label+'</strong><br><span style="font-size:0.58rem;color:rgba(255,255,255,0.65)">'+r.window+'</span></td>' +
-            '<td style="color:'+decisionColor(r.expected)+';font-weight:800;">'+r.expected+'</td>' +
-            '<td>'+r.t2pSupport+'</td>' +
-            '<td>'+(r.decisionSignals.length ? r.decisionSignals.join('<br>') : '--')+'</td>' +
-            '<td>'+(r.rawSignals.length ? r.rawSignals.join('<br>') : '--')+'</td>' +
-            '<td style="'+verdictStyle(r.verdict)+'">'+r.verdict+(r.notes ? '<br><span style="font-size:0.55rem;color:rgba(255,255,255,0.65);font-weight:500">'+r.notes+'</span>' : '')+'</td>' +
-            '</tr>';
-    });
-    html += '</tbody></table>';
-    el.innerHTML = html;
-}
-
 function renderAll() {
     var data = CvolState.data; var comp = CvolState.composites;
     if (!data || !data.length) return;
-    renderDataHealth(data, comp);
     renderBanner(data, comp);
     renderConvictionBanner(data, comp);
     renderKpiCards(data, comp);
-    renderDecisionCommand(data, comp);
+    renderRegimePanel(data, comp);
     renderMainChart();
     renderVarDecomp();
     renderVarSeriesChips();
@@ -1379,9 +1216,6 @@ function renderAll() {
     renderHeatmap(data);
     renderCorrMatrix(data);
     renderSignalHeatCalendar(data, comp);
-    renderTurningPointReplay(comp);
-    renderSignalQualityAudit(comp);
-    renderKnownWindowAudit(comp);
     renderScorecard(comp);
     renderTimeline(comp, CvolState.signalFilter);
 }
@@ -1452,17 +1286,12 @@ function renderVarSeriesChips() {
     try {
         var resp = await fetch('data/cvol/ngvl_cvol_history.csv');
         if (!resp.ok) throw new Error('CSV fetch failed: ' + resp.status);
-        var t2pPromise = fetch('data/trough_peak_data.json')
-            .then(function(r) { return r.ok ? r.json() : null; })
-            .catch(function(err) { console.warn('CVOL: T2P context unavailable', err); return null; });
         var text = await resp.text();
-        var t2pJson = await t2pPromise;
         var data = parseCvolCsv(text);
         if (!data.length) throw new Error('No data parsed');
         CvolState.data = data;
         CvolState.dates = data.map(function(r){ return r.date; });
         CvolState.composites = computeComposites(data);
-        applyT2pDecisionLayer(data, CvolState.composites, t2pJson);
         // Inject computed series into data rows for chart access
         if (CvolState.composites.realVol) {
             for (var ri = 0; ri < data.length; ri++) data[ri].realVol = CvolState.composites.realVol[ri];
@@ -1620,18 +1449,6 @@ function renderVarSeriesChips() {
             CvolState.signalFilter = btn.dataset.filter;
             renderTimeline(CvolState.composites, CvolState.signalFilter);
         });
-
-        var markerMode = document.getElementById('cvol-marker-mode');
-        if (markerMode) {
-            markerMode.addEventListener('click', function(ev) {
-                var btn = ev.target.closest('.marker-mode-btn'); if (!btn) return;
-                markerMode.querySelectorAll('.marker-mode-btn').forEach(function(b) { b.classList.remove('active'); });
-                btn.classList.add('active');
-                CvolState.markerMode = btn.dataset.mode || 'decision';
-                renderMainChart();
-                renderTimeline(CvolState.composites, CvolState.signalFilter);
-            });
-        }
 
         // Signal type filter chips (syncs scorecard + timeline)
         document.getElementById('cvol-signal-type-filter').addEventListener('click', function(ev) {

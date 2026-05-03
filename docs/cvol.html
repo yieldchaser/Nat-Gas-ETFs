@@ -237,33 +237,6 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 .reg-cell-val { font-size: 1.05rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1.2; }
 .reg-cell-sub { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.5px; margin-top: 4px; }
 
-/* ---- DECISION COMMAND CENTER ---- */
-.health-strip { display:flex; align-items:center; gap:18px; flex-wrap:wrap; background:rgba(255,255,255,0.025); border:1px solid var(--border-primary); border-radius:8px; padding:12px 16px; margin-bottom:18px; }
-.health-kicker { font-size:0.62rem; font-weight:900; letter-spacing:2px; }
-.health-item { display:flex; flex-direction:column; gap:2px; min-width:96px; }
-.health-item span { font-size:0.5rem; color:rgba(255,255,255,0.58); letter-spacing:1.2px; text-transform:uppercase; font-weight:800; }
-.health-item strong { font-family:'JetBrains Mono', monospace; color:var(--text-bright); font-size:0.72rem; }
-.health-note { margin-left:auto; max-width:460px; color:rgba(255,255,255,0.68); font-size:0.62rem; line-height:1.5; }
-#regime-dashboard-grid { display:block !important; }
-.decision-command { border:1px solid rgba(255,255,255,0.09); border-left:3px solid var(--decision-color); border-radius:10px; padding:18px; background:linear-gradient(135deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01)); }
-.decision-hero { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:18px; }
-.decision-eyebrow { color:rgba(255,255,255,0.55); font-size:0.52rem; font-weight:900; letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
-.decision-action { font-size:1.35rem; font-weight:900; letter-spacing:1px; text-transform:uppercase; }
-.decision-pill { border:1px solid; border-radius:999px; padding:6px 12px; font-size:0.6rem; font-weight:900; letter-spacing:1.5px; }
-.decision-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; }
-.decision-grid div { background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.06); border-radius:6px; padding:10px; }
-.decision-grid span { display:block; font-size:0.5rem; color:rgba(255,255,255,0.55); letter-spacing:1.2px; text-transform:uppercase; margin-bottom:5px; font-weight:800; }
-.decision-grid strong { color:var(--text-bright); font-family:'JetBrains Mono', monospace; font-size:0.72rem; }
-.decision-reasons { margin-top:14px; border-top:1px solid rgba(255,255,255,0.06); padding-top:12px; }
-.decision-reasons ul { margin:0; padding-left:18px; color:rgba(255,255,255,0.82); font-size:0.68rem; line-height:1.7; }
-.decision-empty { padding:18px; color:rgba(255,255,255,0.65); text-align:center; }
-.research-shell { margin-bottom:24px; border:1px solid var(--border-primary); border-radius:8px; background:rgba(255,255,255,0.015); }
-.research-shell summary { cursor:pointer; padding:14px 18px; color:var(--text-bright); font-weight:900; letter-spacing:1.5px; font-size:0.72rem; text-transform:uppercase; }
-.research-shell .two-col-grid, .research-shell .heatmap-panel { margin:0 18px 18px; }
-.marker-mode { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
-.marker-mode-btn { border:1px solid var(--border-primary); background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.75); border-radius:4px; padding:5px 10px; font-size:0.56rem; font-weight:900; letter-spacing:1px; cursor:pointer; }
-.marker-mode-btn.active { border-color:var(--cyan); color:var(--cyan); background:rgba(0,229,255,0.08); }
-
 /* ---- RESPONSIVE ---- */
 @media (max-width: 1200px) { .cvol-kpi-grid { grid-template-columns: repeat(2, 1fr); } .composite-grid { grid-template-columns: repeat(3, 1fr); } .two-col-grid { grid-template-columns: 1fr; } #regime-dashboard-grid { grid-template-columns: repeat(3, 1fr) !important; } }
 @media (max-width: 768px) {
@@ -366,10 +339,8 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <span class="cvol-title" data-tooltip="Institutional-Grade Volatility Intelligence: Powered by CME CVOL. This dashboard decodes the options market to identify 'hidden' institutional positioning before it hits the price tape.">CVOL Volatility Intelligence</span>
             <span class="cvol-badge">CME NGVL · OPTIONS-DERIVED</span>
         </div>
-        <div class="cvol-desc">T2P-anchored CVOL decision system: raw SAD, CI, CVC, and RDS fires remain visible, but the main read now asks whether volatility data confirms, contradicts, or fails to improve the cycle signal.</div>
+        <div class="cvol-desc">Natural Gas Volatility Analytics: Tracks CME CVOL (30-day forward implied vol), skew ratio, and convexity to identify directional inflection points. Our proprietary composite signals (SAD, CVC, RDS) synthesize these cross-column divergences into high-conviction regime alerts.</div>
     </div>
-
-    <div class="health-strip" id="cvol-data-health"></div>
 
     <!-- PANEL 1: STATUS BANNER (populated by JS with data-tooltip on every item) -->
     <div class="cvol-status-banner" id="cvol-status-banner"></div>
@@ -382,11 +353,6 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <div class="chart-header">
             <div style="flex:1">
                 <span class="section-title-text" data-tooltip="Volatility Environment: Overlays CME CVOL (forward vol) with NG price. Background bands represent 252-day (1-year) percentile regimes. Volatility is mean-reverting: EXTREME readings often signal cycle exhaustion; LOW readings signal dangerous 'spring-loaded' calm.">CVOL Time Series</span>
-            </div>
-            <div class="marker-mode" id="cvol-marker-mode" data-tooltip="Decision markers are T2P-anchored events. Raw markers show every SAD/CI/CVC/RDS fire.">
-                <button class="marker-mode-btn active" data-mode="decision">DECISION</button>
-                <button class="marker-mode-btn" data-mode="raw">RAW</button>
-                <button class="marker-mode-btn" data-mode="both">BOTH</button>
             </div>
             <div class="horizon-group" id="cvol-horizon-controls">
                 <button class="horizon-btn" data-range="1W" data-tooltip="Short-term tactical view.">1W</button>
@@ -476,18 +442,18 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
     </div>
 
-    <!-- PANEL 4.5: DECISION COMMAND CENTER -->
+    <!-- PANEL 4.5: REGIME DASHBOARD (Decision Synthesis) -->
     <div class="chart-container" id="regime-dashboard-panel" style="padding:20px 24px;">
         <div class="section-title-bar" style="margin-bottom:14px;">
-            <span class="section-title-text" data-tooltip="T2P-anchored decision layer: current action, conviction, phase, horizon, scores, conflict flags, and reasons.">Decision Command Center</span>
-            <span style="font-size:0.5rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1.5px;font-weight:700;">T2P-ANCHORED READ</span>
+            <span class="section-title-text" data-tooltip="Decision Synthesis: Aggregates all vol surface dimensions into a single actionable regime assessment. This is your 'at-a-glance' conviction framework — it tells you WHAT the market is doing, HOW confident we are, and WHAT to expect next.">Regime Dashboard</span>
+            <span style="font-size:0.5rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1.5px;font-weight:700;">DECISION FRAMEWORK</span>
         </div>
-        <div id="regime-dashboard-grid"></div>
+        <div id="regime-dashboard-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;"></div>
     </div>
 
     <!-- PANEL 5: COMPOSITE SIGNAL DASHBOARD (expanded with axes, hover, stats) -->
     <div style="margin-bottom:16px;">
-        <span class="section-title-text" data-tooltip="Raw CVOL inputs. These are confirmations and warnings that become actionable only through the T2P-anchored decision layer. Click any card for the full interactive timeline.">Raw CVOL Inputs</span>
+        <span class="section-title-text" data-tooltip="Predictive Signal Array: Five proprietary composite indicators that decode the options-surface into actionable regime alerts. SAD (Stealth Re-positioning), CI (Fragile Calm), CVC (Trend Confirmation), and RDS (Explosive Divergence). Click any card for the full interactive timeline.">Proprietary Composite Signals</span>
         <span style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1px;font-weight:700;">CLICK TO EXPAND</span>
     </div>
     <div class="composite-grid">
@@ -558,32 +524,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
     </div>
 
-    <div class="scorecard-panel">
-        <div class="section-title-bar">
-            <span class="section-title-text" data-tooltip="Replay of T2P-confirmed natural gas turn windows against nearby CVOL raw fires and decision events.">Turning Point Replay</span>
-            <span style="font-size:0.55rem;color:rgba(255,255,255,0.65);letter-spacing:1px;">LAST 12-18 MONTHS</span>
-        </div>
-        <div id="cvol-turning-replay" style="overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
-    </div>
-
-    <div class="two-col-grid">
-        <div class="scorecard-panel">
-            <div class="section-title-bar">
-                <span class="section-title-text" data-tooltip="Indicator quality measured against T2P turning windows, not generic forward-return guesses.">Signal Quality Audit</span>
-            </div>
-            <div id="cvol-quality-audit" style="overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
-        </div>
-        <div class="scorecard-panel">
-            <div class="section-title-bar">
-                <span class="section-title-text" data-tooltip="Regression audit of known windows: Dec 2024, Jan 2025, Mar 2025, and Oct 2025.">Known Window Audit</span>
-            </div>
-            <div id="cvol-known-window-audit" style="overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
-        </div>
-    </div>
-
-    <!-- PANEL 6 & 7: RESEARCH PANELS -->
-    <details class="research-shell">
-        <summary>Research Panels - heatmap, correlation, raw activity</summary>
+    <!-- PANEL 6 & 7: HEATMAP + CORRELATION MATRIX (side by side) -->
     <div class="two-col-grid">
         <div class="heatmap-panel">
             <div class="section-title-bar">
@@ -610,7 +551,6 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
         <div id="cvol-signal-heat"></div>
     </div>
-    </details>
 
     <!-- SIGNAL TYPE FILTER (shared between scorecard + timeline) -->
     <div class="signal-type-chips" id="cvol-signal-type-filter">
@@ -648,8 +588,8 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
                 </thead>
                 <tbody>
                     <tr>
-                        <td style="padding:10px 12px;color:#f59e0b;font-weight:800;border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="HIGH conviction means the vol surface is showing aligned extreme readings. It still needs tape and risk validation.">HIGH</td>
-                        <td style="padding:10px 12px;text-align:center;background:rgba(245,158,11,0.08);border-bottom:1px solid rgba(255,255,255,0.05);border-radius:4px;" data-tooltip="HIGH QUALITY: Vol surface extremes align with late-cycle position. Treat as a confirmation stack, not automatic sizing advice.">⚡ <strong style="color:#f59e0b;">HIGH QUALITY</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">Vol + cycle both signal reversal</span></td>
+                        <td style="padding:10px 12px;color:#f59e0b;font-weight:800;border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="HIGH conviction means the vol surface is showing extreme readings. Combined with a vol spike, this is the highest-quality setup the system can generate.">HIGH</td>
+                        <td style="padding:10px 12px;text-align:center;background:rgba(245,158,11,0.08);border-bottom:1px solid rgba(255,255,255,0.05);border-radius:4px;" data-tooltip="MAXIMUM CONVICTION: Vol surface extremes align with late-cycle position. Historical combined hit rate outperforms any individual signal. Size up.">⚡ <strong style="color:#f59e0b;">MAXIMUM CONVICTION</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">Vol + cycle both signal reversal</span></td>
                         <td style="padding:10px 12px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="Vol surface is extreme but cycle position is ambiguous. Lean toward the CVOL directional bias, but reduce size."><strong style="color:var(--cyan);">LEAN + MONITOR</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">Vol bias, cycle indeterminate</span></td>
                         <td style="padding:10px 12px;text-align:center;background:rgba(239,68,68,0.06);border-bottom:1px solid rgba(255,255,255,0.05);" data-tooltip="Vol surface and cycle are conflicted. CVOL may be early — the recovery cycle argues against the vol signal."><strong style="color:#ef4444;">CONFLICTED</strong><br><span style="color:rgba(255, 255, 255, 0.85);font-size:0.48rem;">Vol extreme but early-cycle recovery</span></td>
                     </tr>
@@ -663,7 +603,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             </table>
             </div>
             <p style="font-size:0.5rem;color:rgba(255, 255, 255, 0.85);margin:14px 0 0;line-height:1.6;" data-tooltip="The Volume Monitor's conviction events (VCVI ≥72, multi-window convergence) can substitute for T2P cycle position as the trigger signal when T2P data is unavailable.">
-                💡 <strong style="color:var(--text-primary);">Volume Monitor note:</strong> A Volume Monitor Conviction Event (VCVI ≥72 + multi-window breadth) can substitute for T2P &gt;75th pct as the trigger signal — both represent extremes of fear/capitulation that historically precede reversals. When both fire simultaneously with CVOL HIGH, treat it as a high-quality confirmation stack rather than a standalone alert.
+                💡 <strong style="color:var(--text-primary);">Volume Monitor note:</strong> A Volume Monitor Conviction Event (VCVI ≥72 + multi-window breadth) can substitute for T2P &gt;75th pct as the trigger signal — both represent extremes of fear/capitulation that historically precede reversals. When both fire simultaneously with CVOL HIGH, that is the highest-quality setup this system can produce.
             </p>
         </div>
     </div>
