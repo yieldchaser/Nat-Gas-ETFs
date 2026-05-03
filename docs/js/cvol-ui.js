@@ -1075,10 +1075,19 @@ function renderLegacyRegimePanel(data, comp) {
     var volTrendColor = roc5 == null ? 'rgba(255, 255, 255, 0.85)' : (roc5 > 3 ? '#ef4444' : roc5 < -3 ? '#3db87a' : 'rgba(255, 255, 255, 0.85)');
     var volTrendIcon = roc5 == null ? '' : (roc5 > 3 ? '▲' : roc5 < -3 ? '▼' : '→');
 
-    // 3. Skew Bias
+    // 3. Skew Bias — use 21D Z-score, not raw absolute value.
+    // Raw threshold (>1.08) fired ~75% of all days because NG structurally prices
+    // upside calls above puts (median skewRatio ~1.15, not 1.0).
     var sk = last.skewRatio;
-    var skBias = sk == null ? 'UNKNOWN' : (sk > 1.08 ? 'BULLISH' : sk < 0.92 ? 'BEARISH' : 'NEUTRAL');
-    var skColor = sk == null ? 'rgba(255, 255, 255, 0.85)' : (sk > 1.08 ? '#3db87a' : sk < 0.92 ? '#ef4444' : '#f59e0b');
+    var skZ21 = comp.skewRatioZ21 ? comp.skewRatioZ21[n-1] : null;
+    var skBias, skColor;
+    if (skZ21 == null) {
+        skBias = 'UNKNOWN'; skColor = 'rgba(255, 255, 255, 0.85)';
+    } else if (skZ21 > 1.5)  { skBias = 'UPSIDE PRESSURE';   skColor = '#3db87a'; }
+    else if (skZ21 > 0.75)   { skBias = 'UPSIDE BUILDING';   skColor = '#6ddc8b'; }
+    else if (skZ21 < -1.5)   { skBias = 'DOWNSIDE PRESSURE'; skColor = '#ef4444'; }
+    else if (skZ21 < -0.75)  { skBias = 'DOWNSIDE BUILDING'; skColor = '#f87171'; }
+    else                     { skBias = 'NEUTRAL';            skColor = '#f59e0b'; }
 
     // 4. VRP State
     var vrpVal = comp.vrp ? comp.vrp[n-1] : null;
@@ -1103,7 +1112,7 @@ function renderLegacyRegimePanel(data, comp) {
     // 7. Overall Conviction (weighted synthesis — 6 inputs)
     var convScore = 0, convLen = 0;
     if (pct252 != null) { var regScore = pct252 > 90 ? 3 : pct252 > 75 ? 2 : pct252 < 10 ? 3 : pct252 < 25 ? 2 : 1; convScore += regScore; convLen++; }
-    if (sk != null) { var skScore = Math.abs(sk - 1) > 0.08 ? 2 : 1; convScore += skScore; convLen++; }
+    if (skZ21 != null) { var skScore = Math.abs(skZ21) > 1.5 ? 3 : Math.abs(skZ21) > 0.75 ? 2 : 1; convScore += skScore; convLen++; }
     if (vrpVal != null) { var vrpScore = Math.abs(vrpVal) > 5 ? 3 : Math.abs(vrpVal) > 3 ? 2 : 1; convScore += vrpScore; convLen++; }
     if (activeCnt >= 3) { convScore += 3; convLen++; } else if (activeCnt >= 1) { convScore += 1; convLen++; }
     // Term structure stress
@@ -1124,10 +1133,10 @@ function renderLegacyRegimePanel(data, comp) {
     // Tactical read — prescriptive one-liner based on current state
     function tacticalRead(conv, skBias, vrpState, activeCnt) {
         if (conv === 'HIGH') {
-            if (skBias === 'BEARISH' && vrpState === 'OVERPRICED') return 'Favor short NG bias — vol pricing exhaustion';
-            if (skBias === 'BULLISH' && vrpState === 'UNDERPRICED') return 'Favor long NG bias — tail-risk underpriced';
-            if (skBias === 'BEARISH') return 'Short bias — skew pricing downside protection';
-            if (skBias === 'BULLISH') return 'Long bias — skew pricing upside';
+            if ((skBias === 'DOWNSIDE PRESSURE' || skBias === 'DOWNSIDE BUILDING') && vrpState === 'OVERPRICED') return 'Favor short NG bias — vol pricing exhaustion';
+            if ((skBias === 'UPSIDE PRESSURE' || skBias === 'UPSIDE BUILDING') && vrpState === 'UNDERPRICED') return 'Favor long NG bias — tail-risk underpriced';
+            if (skBias === 'DOWNSIDE PRESSURE') return 'Short bias — skew pricing downside protection';
+            if (skBias === 'UPSIDE PRESSURE') return 'Long bias — skew pricing upside';
             if (vrpState === 'OVERPRICED') return 'Vol sellers favored — options overpriced';
             return 'High surface conviction — confirm with variance follow-through';
         }
@@ -1138,14 +1147,15 @@ function renderLegacyRegimePanel(data, comp) {
         return 'No edge from vol alone — wait for surface alignment';
     }
     var tactical = tacticalRead(convLabel, skBias, vrpState, activeCnt);
+    var skSubLabel = 'Z21: ' + (skZ21 != null ? ((skZ21 >= 0 ? '+' : '') + skZ21.toFixed(2) + 'σ · Ratio: ' + fmt(sk, 3)) : fmt(sk, 3));
 
     el.innerHTML =
         cell('NGVL REGIME', reg.label, reg.color, fmt(pct252,0)+'th percentile', reg.color,
             'Current 252-day NGVL regime. LOW = compressed implied risk. EXTREME = unusually expensive uncertainty.') +
         cell('VOL TREND', volTrendIcon+' '+volTrend, volTrendColor, fmt(roc5,1)+'% 5D', volTrendColor,
             'Is volatility expanding or contracting? Rising vol = growing uncertainty.') +
-        cell('SKEW BIAS', skBias, skColor, 'Ratio: '+fmt(sk,3), skColor,
-            'Skew ratio > 1.08 = bullish. < 0.92 = bearish. Neutral = balanced.') +
+        cell('SKEW BIAS', skBias, skColor, skSubLabel, skColor,
+            'Skew bias measured by 21D rolling Z-score. NG structurally prices upside calls above puts (median ratio ~1.15), so raw absolute thresholds are misleading — only the Z-score reveals genuine directional skew shifts relative to recent history.') +
         cell('VRP STATE', vrpState, vrpColor, (vrpVal!=null?(vrpVal>0?'+':'')+fmt(vrpVal,1)+'pts':'\u2014'), vrpColor,
             'Vol Risk Premium: OVERPRICED = fear overpriced. UNDERPRICED = risk underestimated.') +
         cell('TERM STRUCT', tsLabel, tsColor, fmt(ts,3)+'x', tsColor,

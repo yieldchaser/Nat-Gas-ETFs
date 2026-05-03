@@ -219,13 +219,17 @@ function classifySurfaceDay(data, comp, extra, i) {
     const evidence = [], contradictions = [], confirms = [], negates = [];
     function add(list, text) { if (text && list.length < 5) list.push(text); }
 
-    const upsidePressure = (row.skewRatio != null && row.skewRatio >= 1.08 ? 1.0 : 0) +
-        (skewZ != null && skewZ >= 1.0 ? 0.7 : 0) +
+    // Use rolling 21D Z-score instead of absolute skewRatio thresholds.
+    // Raw threshold (>=1.08) fired for ~75% of all days because NG structurally
+    // prices upside calls above puts — the median skewRatio is ~1.15, not 1.0.
+    // Z-score centers on recent history so upside/downside fire symmetrically (~20% each).
+    const upsidePressure = (skewZ != null && skewZ >= 0.75 ? 1.0 : 0) +
+        (skewZ != null && skewZ >= 1.3 ? 0.7 : 0) +
         (skewRoc5 != null && skewRoc5 >= 0.035 ? 0.65 : 0) +
         (upZ != null && upZ >= 1.0 ? 0.85 : 0) +
         (spreadZ != null && spreadZ >= 1.0 ? 0.65 : 0);
-    const downsidePressure = (row.skewRatio != null && row.skewRatio <= 0.96 ? 1.0 : 0) +
-        (skewZ != null && skewZ <= -1.0 ? 0.7 : 0) +
+    const downsidePressure = (skewZ != null && skewZ <= -0.75 ? 1.0 : 0) +
+        (skewZ != null && skewZ <= -1.3 ? 0.7 : 0) +
         (skewRoc5 != null && skewRoc5 <= -0.035 ? 0.65 : 0) +
         (dnZ != null && dnZ >= 1.0 ? 0.85 : 0) +
         (spreadZ != null && spreadZ <= -1.0 ? 0.65 : 0);
