@@ -175,6 +175,32 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 #chartZ { width: 100%; height: 300px; }
 #chartCross { width: 100%; height: 340px; }
 
+/* ---- Section 8 & 9: Composite Z + Flow vs NG ---- */
+#chartCompZ { width: 100%; height: 340px; }
+#chartFlowNG { width: 100%; height: 380px; }
+
+/* Current Z-Score reading indicator */
+.comp-z-reading {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 14px;
+    padding: 10px 16px; background: rgba(255,255,255,0.02);
+    border-radius: 8px; border: 1px solid var(--border-primary);
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.2);
+}
+.comp-z-value { font-size: 1.8rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; line-height: 1; }
+.comp-z-label { font-size: 0.72rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+.comp-z-sublabel { font-size: 0.62rem; color: rgba(255,255,255,0.5); font-weight: 600; margin-top: 2px; letter-spacing: 0.5px; }
+.comp-z-date { font-size: 0.62rem; color: rgba(255,255,255,0.4); font-family: 'JetBrains Mono', monospace; }
+.comp-z-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 12px currentColor; }
+
+/* Flow vs NG panel axis labels */
+.axis-label-left, .axis-label-right {
+    font-size: 0.58rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+    writing-mode: vertical-rl; text-orientation: mixed;
+    position: absolute; top: 50%; transform: translateY(-50%) rotate(180deg);
+}
+.axis-label-left { left: 4px; color: rgba(255,255,255,0.35); }
+.axis-label-right { right: 4px; color: rgba(80,144,160,0.6); }
+
 /* Custom Tooltip */
 #chart-tooltip {
     position: fixed; display: none; background: rgba(13, 17, 28, 0.95);
@@ -207,7 +233,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .etf-chip.inactive { opacity: 0.3; background: transparent !important; }
 
 /* Canvas interactivity hints */
-#chartA, #chartB, #chartZ, #chartCross { cursor: crosshair; }
+#chartA, #chartB, #chartZ, #chartCross, #chartCompZ, #chartFlowNG { cursor: crosshair; }
 
 /* ---- Range Slider Brush — matches trough-peak.html exactly ---- */
 .range-slider-container { margin: 10px 0 20px; }
@@ -288,6 +314,8 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
     #chartB { height: 160px; }
     #chartZ { height: 220px; }
     #chartCross { height: 250px; }
+    #chartCompZ { height: 260px; }
+    #chartFlowNG { height: 280px; }
     .div-table { font-size: 0.7rem; }
     .div-table th, .div-table td { padding: 8px 6px; }
     .chart-footer { flex-direction: column; gap: 8px; align-items: flex-start; }
@@ -317,6 +345,8 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
     #chartB { height: 130px; }
     #chartZ { height: 180px; }
     #chartCross { height: 200px; }
+    #chartCompZ { height: 200px; }
+    #chartFlowNG { height: 220px; }
     .panel { padding: 10px; }
     .tab-btn { font-size: 0.55rem; padding: 3px 5px; }
     .fc-main { grid-template-columns: 1fr; }
@@ -714,6 +744,107 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <div style="color:rgba(255, 255, 255, 0.85); padding:20px; text-align:center; font-size:0.7rem; letter-spacing:1px;">Loading matrix…</div>
             </div>
         </div>
+
+        <!-- Section 8: Cross-ETF Composite Z-Score History -->
+        <div class="panel" id="composite-z-panel">
+            <div class="panel-header">
+                <div class="panel-title" data-tooltip="Unified directional pressure oscillator: averages flow Z-scores across all 6 ETFs (with short-side sign inversion). Positive = upward pressure on gas. Negative = downward pressure." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Cross-ETF Composite Z-Score</div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div class="tab-group time-tabs" id="compz-time-tabs">
+                        <button class="tab-btn" data-range="1w">1W</button>
+                        <button class="tab-btn" data-range="1m">1M</button>
+                        <button class="tab-btn" data-range="3m">3M</button>
+                        <button class="tab-btn" data-range="6m">6M</button>
+                        <button class="tab-btn" data-range="1y">1Y</button>
+                        <button class="tab-btn" data-range="2y">2Y</button>
+                        <button class="tab-btn" data-range="all" class="active">ALL</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Current reading indicator -->
+            <div id="comp-z-current" class="comp-z-reading">
+                <div class="comp-z-dot" style="color:rgba(148,163,184,0.6); background:rgba(148,163,184,0.6);"></div>
+                <div>
+                    <div class="comp-z-value" style="color:rgba(148,163,184,0.7);">--</div>
+                    <div class="comp-z-label" style="color:rgba(148,163,184,0.5);">LOADING</div>
+                </div>
+                <div style="flex:1;"></div>
+                <div class="comp-z-date">--</div>
+            </div>
+            <div class="chart-wrap" style="position:relative;">
+                <canvas id="chartCompZ"></canvas>
+                <div id="compz-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:50; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:180px;"></div>
+            </div>
+            <!-- Range slider -->
+            <div class="range-slider-container" style="margin-top:8px;">
+                <div class="range-slider-wrap">
+                    <div class="range-slider-track"></div>
+                    <div class="range-slider-highlight" id="compz-range-highlight"></div>
+                    <div class="range-inputs">
+                        <input type="range" id="compz-range-start" min="0" max="1000" value="0">
+                        <input type="range" id="compz-range-end" min="0" max="1000" value="1000">
+                    </div>
+                </div>
+                <div class="range-labels">
+                    <span id="compz-range-label" style="color:var(--cyan);">ALL</span>
+                </div>
+            </div>
+            <!-- Legend + methodology -->
+            <div class="chart-footer">
+                <div class="chart-legend">
+                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(61,184,122,0.5)"></span> UPWARD PRESSURE</div>
+                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,0.5)"></span> DOWNWARD PRESSURE</div>
+                    <div class="legend-item"><span class="legend-line" style="background:rgba(255,255,255,0.3); height:2px;"></span> ZERO LINE (EQUILIBRIUM)</div>
+                    <div class="legend-item"><span class="legend-line" style="background:rgba(0,255,255,0.4); height:1px; border-top:1px dashed rgba(0,255,255,0.4);"></span> ±1.5σ THRESHOLDS</div>
+                </div>
+                <span data-tooltip="Methodology: Equal-weighted average of 6 ETF flow Z-scores with short-side sign inversion (KOLD, HND, 3NGS scores flipped). 30-day rolling window inherited from per-ETF computation. Positive = net upward pressure (longs accumulating / shorts exiting). Negative = net downward pressure." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ METHODOLOGY</span>
+            </div>
+        </div>
+
+        <!-- Section 9: Flow Pressure vs Natural Gas Price -->
+        <div class="panel" id="flow-ng-panel">
+            <div class="panel-header">
+                <div class="panel-title" data-tooltip="Dual-axis overlay: Composite flow pressure (Z-Score) vs NG=F Henry Hub futures price. Identifies divergences where capital flows contradict price movement — often leading indicators of trend reversals." style="border-left:3px solid rgba(80,144,160,0.6); padding-left:8px;">Flow Pressure vs Natural Gas Price</div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div class="tab-group time-tabs" id="flowng-time-tabs">
+                        <button class="tab-btn" data-range="1m">1M</button>
+                        <button class="tab-btn" data-range="3m">3M</button>
+                        <button class="tab-btn" data-range="6m">6M</button>
+                        <button class="tab-btn" data-range="1y">1Y</button>
+                        <button class="tab-btn" data-range="2y">2Y</button>
+                        <button class="tab-btn" data-range="all" class="active">ALL</button>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-wrap" style="position:relative;">
+                <canvas id="chartFlowNG"></canvas>
+                <div id="flowng-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:50; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:200px;"></div>
+            </div>
+            <!-- Range slider -->
+            <div class="range-slider-container" style="margin-top:8px;">
+                <div class="range-slider-wrap">
+                    <div class="range-slider-track"></div>
+                    <div class="range-slider-highlight" id="flowng-range-highlight"></div>
+                    <div class="range-inputs">
+                        <input type="range" id="flowng-range-start" min="0" max="1000" value="0">
+                        <input type="range" id="flowng-range-end" min="0" max="1000" value="1000">
+                    </div>
+                </div>
+                <div class="range-labels">
+                    <span id="flowng-range-label" style="color:var(--cyan);">ALL</span>
+                </div>
+            </div>
+            <!-- Legend + methodology -->
+            <div class="chart-footer">
+                <div class="chart-legend">
+                    <div class="legend-item"><span class="legend-line" style="background:#5090a0; height:2px;"></span> NG=F PRICE (RIGHT AXIS)</div>
+                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(61,184,122,0.4)"></span> UPWARD FLOW PRESSURE (LEFT AXIS)</div>
+                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,0.4)"></span> DOWNWARD FLOW PRESSURE (LEFT AXIS)</div>
+                </div>
+                <span data-tooltip="Flow Pressure = composite Z-Score of all 6 leveraged NG ETF flows (short-side inverted). NG=F = NYMEX Henry Hub front-month futures close. When pressure diverges from price direction, it may signal a forthcoming trend reversal (institutional capital front-running price). When aligned, it confirms trend strength." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ WHAT IS FLOW PRESSURE?</span>
+            </div>
+        </div>
+
     </main>
 
     <footer>
@@ -861,6 +992,13 @@ const state = {
     zoom:      { start: 0, end: 1 }, // deep dive (chartA + chartB)
     zoomZ:     { start: 0, end: 1 }, // Z-Score history (chartZ) — independent
     zoomCross: { start: 0, end: 1 }, // cross ETF comparison — independent
+    zoomCompZ: { start: 0, end: 1 }, // composite Z-score — independent
+    zoomFlowNG:{ start: 0, end: 1 }, // flow vs NG price — independent
+    compositeZ: [],  // [{date, z, longZ, shortZ}]
+    ngHistory: {},   // date -> close  (O(1) lookup)
+    ngDates: [],     // sorted date strings
+    hoverCompZIdx: null,
+    hoverFlowNGIdx: null,
     drag: { active: false, startIdx: null, currentIdx: null }
 };
 
@@ -870,6 +1008,8 @@ const ctxA = el('chartA').getContext('2d');
 const ctxB = el('chartB').getContext('2d');
 const ctxZ = el('chartZ').getContext('2d');
 const ctxCross = el('chartCross').getContext('2d');
+const ctxCompZ = el('chartCompZ').getContext('2d');
+const ctxFlowNG = el('chartFlowNG').getContext('2d');
 const tooltip = el('chart-tooltip');
 
 // Colors — two professional families: gold/amber (longs) · blue/cyan/violet (shorts)
@@ -927,7 +1067,9 @@ async function init() {
             state.zoom      = { start: 0, end: 1 };
             state.zoomZ     = { start: 0, end: 1 };
             state.zoomCross = { start: 0, end: 1 };
-            ['#time-tabs', '#z-time-tabs', '#cross-time-tabs'].forEach(sel => {
+            state.zoomCompZ = { start: 0, end: 1 };
+            state.zoomFlowNG= { start: 0, end: 1 };
+            ['#time-tabs', '#z-time-tabs', '#cross-time-tabs', '#compz-time-tabs', '#flowng-time-tabs'].forEach(sel => {
                 document.querySelectorAll(sel + ' .tab-btn').forEach(b => {
                     b.classList.toggle('active', b.dataset.range === range);
                 });
@@ -937,9 +1079,13 @@ async function init() {
             syncZSlider();
             renderCrossChart();
             syncCrossSlider();
+            renderCompZChart();
+            syncCompZSlider();
+            renderFlowNGChart();
+            syncFlowNGSlider();
         }
 
-        ['#time-tabs', '#z-time-tabs', '#cross-time-tabs'].forEach(sel => {
+        ['#time-tabs', '#z-time-tabs', '#cross-time-tabs', '#compz-time-tabs', '#flowng-time-tabs'].forEach(sel => {
             document.querySelectorAll(sel + ' .tab-btn').forEach(b => {
                 b.addEventListener('click', () => setTimeRange(b.dataset.range));
             });
@@ -964,6 +1110,8 @@ async function init() {
         initRangeSlider();
         initZSlider();
         initCrossSlider();
+        initCompZSlider();
+        initFlowNGSlider();
 
         // Divergence filter tabs
         document.querySelectorAll('#div-filter-tabs .tab-btn').forEach(b => {
@@ -1035,7 +1183,7 @@ async function init() {
         });
 
         // Scroll-to-zoom on main charts
-        ['chartA', 'chartB', 'chartZ', 'chartCross'].forEach(id => {
+        ['chartA', 'chartB', 'chartZ', 'chartCross', 'chartCompZ', 'chartFlowNG'].forEach(id => {
             el(id).addEventListener('wheel', handleChartWheel, { passive: false });
         });
 
@@ -1046,6 +1194,14 @@ async function init() {
         // Cross chart hover
         el('chartCross').addEventListener('mousemove', handleCrossHover);
         el('chartCross').addEventListener('mouseleave', hideCrossHover);
+
+        // Composite Z hover
+        el('chartCompZ').addEventListener('mousemove', handleCompZHover);
+        el('chartCompZ').addEventListener('mouseleave', hideCompZHover);
+
+        // Flow vs NG hover
+        el('chartFlowNG').addEventListener('mousemove', handleFlowNGHover);
+        el('chartFlowNG').addEventListener('mouseleave', hideFlowNGHover);
         
     } catch (e) {
         console.error("Failed to init", e);
@@ -1948,12 +2104,14 @@ function handleChartWheel(e) {
     // Route to the correct zoom state based on which chart was scrolled
     const isZ     = id === 'chartZ';
     const isCross = id === 'chartCross';
-    const zoomKey = isZ ? 'zoomZ' : isCross ? 'zoomCross' : 'zoom';
+    const isCompZ  = id === 'chartCompZ';
+    const isFlowNG = id === 'chartFlowNG';
+    const zoomKey = isZ ? 'zoomZ' : isCross ? 'zoomCross' : isCompZ ? 'zoomCompZ' : isFlowNG ? 'zoomFlowNG' : 'zoom';
 
     const rect   = e.target.getBoundingClientRect();
     const x      = e.clientX - rect.left;
-    const padL   = isZ ? 45 : 60;
-    const padR   = isZ ? 20 : 60;
+    const padL   = (isZ || isCompZ) ? 45 : isFlowNG ? 55 : 60;
+    const padR   = (isZ || isCompZ) ? 20 : isFlowNG ? 55 : 60;
     const chartW = rect.width - padL - padR;
     const frac   = Math.max(0, Math.min(1, (x - padL) / chartW));
 
@@ -1984,6 +2142,12 @@ function handleChartWheel(e) {
         const zData = getZVisibleData();
         if (zData && zData.length > 0) drawChartZ(zData);
         syncZSlider();
+    } else if (isCompZ) {
+        renderCompZChart();
+        syncCompZSlider();
+    } else if (isFlowNG) {
+        renderFlowNGChart();
+        syncFlowNGSlider();
     } else {
         renderCharts();
         syncRangeSlider();
@@ -3024,10 +3188,16 @@ async function loadAllTickersForCross() {
     });
     
     await Promise.all(proms);
+    computeCompositeZ();
+    loadNGHistory();
     renderCrossChart();
     syncCrossSlider();
     renderYearlyMatrix();
     renderCrossDivergence();
+    renderCompZChart();
+    syncCompZSlider();
+    renderFlowNGChart();
+    syncFlowNGSlider();
 }
 
 function renderCrossChart() {
@@ -3191,12 +3361,17 @@ function renderCrossChart() {
     }
 }
 
+</script>
+<script src="js/flow-composite.js"></script>
+<script>
 // Init
 init();
 window.addEventListener('resize', () => {
     renderCharts();
     const zd = getZVisibleData(); if (zd && zd.length > 0) drawChartZ(zd);
     renderCrossChart();
+    renderCompZChart();
+    renderFlowNGChart();
 });
 
 
