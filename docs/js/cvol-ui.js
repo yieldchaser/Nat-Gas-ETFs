@@ -243,37 +243,69 @@ function renderCompStats(compKey, values, events) {
         seasonHtml;
 }
 
-// ── Signal Heat Calendar (90/180-day) ─────────────────────────────
+// ── Signal Heat Calendar (90-day windows) ─────────────────────────────
 function renderSignalHeatCalendar(data, comp) {
     var el = document.getElementById('cvol-signal-heat'); if (!el) return;
     var n = data.length;
     if (!n) return;
-    
+
     var offset = CvolState.signalHeatOffset || 0;
     var daysEnd = n - (offset * 90);
     var start = Math.max(0, daysEnd - 90);
 
-    // Build date → event lookup
+    // Respect markerMode: surface, raw, or both
+    var mode = CvolState.markerMode || 'both';
     var evByDate = {};
-    ((comp && comp.events) || []).forEach(function(e) { evByDate[e.date] = e; });
+    var surfEvByDate = {};
+
+    if (mode === 'raw' || mode === 'both') {
+        ((comp && comp.events) || []).forEach(function(e) { evByDate[e.date] = e; });
+    }
+    if (mode === 'surface' || mode === 'both') {
+        ((comp && comp.surfaceEvents) || []).forEach(function(e) {
+            if (!surfEvByDate[e.date]) surfEvByDate[e.date] = [];
+            surfEvByDate[e.date].push(e);
+        });
+    }
 
     var sigColors = { 'SAD': '#f59e0b', 'CI': '#60a8f8', 'CVC↓': '#ef4444', 'CVC↑': '#3db87a', 'RDS': '#ec4899' };
-
-    // Regime color map with full 6-digit hex (toRgba only handles 6-digit)
+    var surfaceStateColors = {
+        'CALM_COMPRESSION': '#4a80b8', 'UPSIDE_TAIL_BID': '#3db87a', 'DOWNSIDE_TAIL_BID': '#ef4444',
+        'TWO_SIDED_STRESS': '#c07828', 'PANIC_PREMIUM': '#c04040', 'VOL_UNDERPRICED': '#60a8f8',
+        'NORMALIZATION': '#a3a3a3', 'NO_EDGE': '#4a4a4a'
+    };
     var regimeColors = { 'LOW': '#4a80b8', 'NORMAL': '#3db87a', 'ELEVATED': '#c07828', 'EXTREME': '#c04040' };
 
     var html = '<div class="sig-heat-grid">';
     var prevMonth = null;
     var monthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    var windowEventCount = 0;
+    var windowElevatedDays = 0;
+
     for (var i = start; i < daysEnd; i++) {
         var r = data[i];
         var pct = (comp && comp.ngvlPct252) ? comp.ngvlPct252[i] : null;
         var regime = ngvlRegime(pct);
         var ev = evByDate[r.date];
+        var surfEvs = surfEvByDate[r.date];
+        var surfDay = (comp && comp.surfaceDaily) ? comp.surfaceDaily[i] : null;
         var day = r.date ? r.date.split('-')[2] : '';
         var month = r.date ? r.date.split('-')[1] : null;
 
-        // Alpha: 0.22 at pct=0 → 0.55 at pct=100. Balanced visibility without visual alarm.
+        // Count events and elevated days for stats
+        if (ev) windowEventCount++;
+        if (surfEvs && surfEvs.length > 0) windowEventCount++;
+        if (pct != null && pct > 75) windowElevatedDays++;
+
+        // Skew Z-score indicator badge
+        var skewZ = (comp && comp.skewRatioZ21) ? comp.skewRatioZ21[i] : null;
+        var skewBadgeHtml = '';
+        if (skewZ != null && Math.abs(skewZ) > 0.75) {
+            var badgeColor = skewZ > 1.5 ? '#3db87a' : skewZ < -1.5 ? '#ef4444' : '#f59e0b';
+            skewBadgeHtml = '<div class="sig-heat-skew-badge" style="background:' + badgeColor + ';"></div>';
+        }
+
+        // Alpha: 0.22 at pct=0 → 0.55 at pct=100
         var alpha = pct != null ? Math.min(0.55, 0.22 + (pct / 100) * 0.33).toFixed(3) : '0.15';
         var rColor = regimeColors[regime.label] || '#4a80b8';
         var bg = toRgba(rColor, parseFloat(alpha));
@@ -281,38 +313,67 @@ function renderSignalHeatCalendar(data, comp) {
 
         var ngvlStr = r.ngvl != null ? r.ngvl.toFixed(1) + '%' : '—';
         var pctStr = pct != null ? ' (' + pct.toFixed(0) + 'th pct)' : '';
-        var priceStr = r.underlying != null ? '\nNG: $' + r.underlying.toFixed(3) : '';
-        var tt = fmtDate(r.date) + '\nNGVL: ' + ngvlStr + ' · ' + regime.label + pctStr + priceStr;
+        var priceStr = r.underlying != null ? '$' + r.underlying.toFixed(3) : '—';
+
+        // Build rich HTML tooltip
+        var tt = '<b style="color:#a3e7ff;">' + fmtDate(r.date) + '</b><br>' +
+                 '<span style="color:#c9d1d9;">NGVL: ' + ngvlStr + ' · ' + regime.label + pctStr + ' · NG: ' + priceStr + '</span>';
+
+        if (surfDay && surfDay.state !== 'NO_EDGE') {
+            var surfColor = surfaceStateColors[surfDay.state] || '#fff';
+            tt += '<br><span style="color:' + surfColor + '; font-weight:600;">◆ ' + surfDay.label + '</span>';
+        }
+
         if (ev) {
             var recentCutoff = data.length > 21 ? data[data.length - 21].date : null;
             var fwdStr = ev.fwd21 != null
-                ? ' · 21D: ' + (ev.fwd21 >= 0 ? '+' : '') + ev.fwd21.toFixed(1) + '%'
-                : (recentCutoff && ev.date > recentCutoff ? ' · 21D: PENDING' : '');
-            tt += '\n⚡ ' + ev.signal + ' — ' + ev.direction + fwdStr;
+                ? (ev.fwd21 >= 0 ? '+' : '') + ev.fwd21.toFixed(1) + '%'
+                : (recentCutoff && ev.date > recentCutoff ? 'PENDING' : '');
+            var sigColor = sigColors[ev.signal] || '#fff';
+            tt += '<br><span style="color:' + sigColor + '; font-weight:600;">⚡ ' + ev.signal + ' — ' + ev.direction + (fwdStr ? ' (' + fwdStr + ')' : '') + '</span>';
+        }
+
+        if (surfEvs && surfEvs.length > 0) {
+            surfEvs.forEach(function(se) {
+                var seColor = surfaceStateColors[se.state] || '#fff';
+                tt += '<br><span style="color:' + seColor + ';">◆ ' + se.label + '</span>';
+            });
         }
 
         var fgColor = parseFloat(alpha) > 0.42 ? '#fff' : regime.color;
         var badge = ev ? '<div class="sig-heat-badge" style="background:' + (sigColors[ev.signal] || '#fff') + ';"></div>' : '';
 
-        // Border: 2px solid signal color if event fired, else regime border
-        var borderStyle = ev ? '2px solid ' + (sigColors[ev.signal] || '#fff') : '1px solid ' + border;
+        // Surface event indicator (different from raw signal)
+        if (surfEvs && surfEvs.length > 0 && !ev) {
+            badge = '<div class="sig-heat-badge" style="background:' + (surfaceStateColors[surfEvs[0].state] || '#fff') + '; opacity: 0.6;"></div>';
+        }
 
-        // Box-shadow glow for latest day
+        var borderStyle = ev || surfEvs ? '2px solid ' + (ev ? (sigColors[ev.signal] || '#fff') : (surfaceStateColors[surfEvs[0].state] || '#fff')) : '1px solid ' + border;
         var shadowStyle = (i === n - 1) ? 'box-shadow: 0 0 0 2px rgba(0,229,255,0.8), 0 0 8px rgba(0,229,255,0.25);' : '';
 
-        // Month label on boundary
         var monthLabel = '';
         if (prevMonth !== null && prevMonth !== month) {
             var monthIdx = parseInt(month, 10) - 1;
             monthLabel = '<span class="sig-heat-month">' + monthNames[monthIdx] + '</span>';
         }
 
-        html += '<div class="sig-heat-cell" style="background:' + bg + ';border:' + borderStyle + ';color:' + fgColor + ';' + shadowStyle + '" data-tooltip="' + tt.replace(/"/g, '&quot;') + '">' + monthLabel + day + badge + '</div>';
+        html += '<div class="sig-heat-cell" style="position:relative;background:' + bg + ';border:' + borderStyle + ';color:' + fgColor + ';' + shadowStyle + '" data-tooltip="' + tt.replace(/"/g, '&quot;') + '">' + monthLabel + day + badge + skewBadgeHtml + '</div>';
         prevMonth = month;
     }
     html += '</div>';
 
-    // Legend
+    // Stats bar
+    var startDate = data[start].date;
+    var endDate = data[daysEnd - 1].date;
+    var elevatedPct = Math.round((windowElevatedDays / 90) * 100);
+    var levelLabel = elevatedPct > 65 ? '▲ ELEVATED' : elevatedPct > 40 ? '⚬ MODERATE' : '○ QUIET';
+
+    html += '<div class="sig-heat-stats-bar">' +
+            '<span style="font-size:0.55rem;color:#a3e7ff;font-weight:600;">' + startDate + ' → ' + endDate + '</span>' +
+            '<span style="font-size:0.55rem;color:#c9d1d9;">Events: <b>' + windowEventCount + '</b> · Elevated: ' + elevatedPct + '% · ' + levelLabel + '</span>' +
+            '</div>';
+
+    // Legend (adapt to markerMode)
     var regLegend = [
         { label: 'LOW',      color: '#4a80b8' },
         { label: 'NORMAL',   color: '#3db87a' },
@@ -324,10 +385,23 @@ function renderSignalHeatCalendar(data, comp) {
         html += '<div class="sig-heat-leg-item"><div class="sig-heat-leg-swatch" style="background:' + toRgba(rl.color, 0.35) + ';border:1px solid ' + toRgba(rl.color, 0.65) + ';"></div>' + rl.label + '</div>';
     });
     html += '<span style="width:1px;height:12px;background:rgba(255,255,255,0.12);margin:0 4px;"></span>';
-    Object.keys(sigColors).forEach(function(sig) {
-        html += '<div class="sig-heat-leg-item"><div class="sig-heat-leg-dot" style="background:' + sigColors[sig] + ';"></div>' + sig + '</div>';
-    });
-    html += '<span style="font-size:0.55rem;color:#fff;opacity:0.85;margin-left:12px;letter-spacing:0.3px;">Percentiles ranked within 252D rolling window. Signal dots mark composite signal fires.</span>';
+
+    if (mode === 'raw' || mode === 'both') {
+        Object.keys(sigColors).forEach(function(sig) {
+            html += '<div class="sig-heat-leg-item"><div class="sig-heat-leg-dot" style="background:' + sigColors[sig] + ';"></div>' + sig + '</div>';
+        });
+    }
+
+    if (mode === 'surface' || mode === 'both') {
+        html += '<span style="width:1px;height:12px;background:rgba(255,255,255,0.12);margin:0 4px;"></span>';
+        var surfStates = ['UPSIDE_TAIL_BID', 'DOWNSIDE_TAIL_BID', 'TWO_SIDED_STRESS', 'PANIC_PREMIUM'];
+        surfStates.forEach(function(state) {
+            var label = state.replace(/_/g, ' ');
+            html += '<div class="sig-heat-leg-item"><div class="sig-heat-leg-dot" style="background:' + surfaceStateColors[state] + ';opacity:0.6;"></div>' + label.substring(0, 10) + '</div>';
+        });
+    }
+
+    html += '<span style="font-size:0.55rem;color:#fff;opacity:0.85;margin-left:12px;letter-spacing:0.3px;">Percentiles ranked within 252D. Dots mark signal fires. Badge (⬜) shows SkewZ strength.</span>';
     html += '</div>';
 
     el.innerHTML = html;
@@ -1410,6 +1484,30 @@ function renderVarSeriesChips() {
     });
 }
 
+// ── Signal Heat Navigation Helper ────────────────────────────
+function updateSignalHeatNav() {
+    var n = (CvolState.data && CvolState.data.length) || 0;
+    if (!n) return;
+
+    var maxOffset = Math.floor((n - 1) / 90);
+    var offset = CvolState.signalHeatOffset || 0;
+
+    var prevBtn = document.getElementById('sig-heat-prev');
+    var nextBtn = document.getElementById('sig-heat-next');
+    var titleEl = document.getElementById('sig-heat-title');
+
+    if (prevBtn) prevBtn.disabled = (offset >= maxOffset);
+    if (nextBtn) nextBtn.disabled = (offset === 0);
+
+    if (titleEl) {
+        var daysEnd = n - (offset * 90);
+        var start = Math.max(0, daysEnd - 90);
+        var startDate = CvolState.data[start].date;
+        var endDate = CvolState.data[Math.min(daysEnd - 1, n - 1)].date;
+        titleEl.innerHTML = 'Signal Activity &middot; ' + startDate + ' to ' + endDate;
+    }
+}
+
 // ── Initialization ────────────────────────────────────────────
 (async function() {
     try {
@@ -1437,6 +1535,7 @@ function renderVarSeriesChips() {
         document.getElementById('cvol-dashboard').style.display = 'block';
         renderSeriesChips();
         renderAll();
+        updateSignalHeatNav();
         // Threshold sensitivity (compute once, static panel)
         CvolState.sensitivity = computeThresholdSensitivity(CvolState.composites, data);
         renderSensitivityPanel(CvolState.sensitivity);
@@ -1619,18 +1718,20 @@ function renderVarSeriesChips() {
 
         // Signal heat calendar navigation
         document.getElementById('sig-heat-prev').addEventListener('click', function() {
-            CvolState.signalHeatOffset = 1;
-            document.getElementById('sig-heat-prev').disabled = true;
-            document.getElementById('sig-heat-next').disabled = false;
-            document.getElementById('sig-heat-title').innerHTML = 'Signal Activity &middot; Days 91-180';
-            renderSignalHeatCalendar(CvolState.data, CvolState.composites);
+            var n = CvolState.data.length;
+            var maxOffset = Math.floor((n - 1) / 90);
+            if ((CvolState.signalHeatOffset || 0) < maxOffset) {
+                CvolState.signalHeatOffset = (CvolState.signalHeatOffset || 0) + 1;
+                updateSignalHeatNav();
+                renderSignalHeatCalendar(CvolState.data, CvolState.composites);
+            }
         });
         document.getElementById('sig-heat-next').addEventListener('click', function() {
-            CvolState.signalHeatOffset = 0;
-            document.getElementById('sig-heat-prev').disabled = false;
-            document.getElementById('sig-heat-next').disabled = true;
-            document.getElementById('sig-heat-title').innerHTML = 'Signal Activity &middot; Days 1-90';
-            renderSignalHeatCalendar(CvolState.data, CvolState.composites);
+            if ((CvolState.signalHeatOffset || 0) > 0) {
+                CvolState.signalHeatOffset = (CvolState.signalHeatOffset || 0) - 1;
+                updateSignalHeatNav();
+                renderSignalHeatCalendar(CvolState.data, CvolState.composites);
+            }
         });
 
         // Resize
