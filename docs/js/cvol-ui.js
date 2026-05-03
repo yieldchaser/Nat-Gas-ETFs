@@ -275,6 +275,15 @@ function renderSignalHeatCalendar(data, comp) {
         'NORMALIZATION': '#a3a3a3', 'NO_EDGE': '#4a4a4a'
     };
     var regimeColors = { 'LOW': '#4a80b8', 'NORMAL': '#3db87a', 'ELEVATED': '#c07828', 'EXTREME': '#c04040' };
+    var surfaceStateDesc = {
+        'CALM_COMPRESSION':  'Vol surface flat & compressed — no directional edge, but expansion risk builds',
+        'UPSIDE_TAIL_BID':   'Call wing above put side — market pricing upside tail risk',
+        'DOWNSIDE_TAIL_BID': 'Put wing above call side — market pricing downside tail risk',
+        'TWO_SIDED_STRESS':  'Both tails bid simultaneously — uncertainty high, move could go either way',
+        'PANIC_PREMIUM':     'Extreme vol spike — options are expensive, risk already priced in',
+        'VOL_UNDERPRICED':   'Realized vol outruns implied — surface historically cheap here',
+        'NORMALIZATION':     'Stressed surface cooling — prior premium is deflating'
+    };
 
     var html = '<div class="sig-heat-grid">';
     var prevMonth = null;
@@ -321,7 +330,38 @@ function renderSignalHeatCalendar(data, comp) {
 
         if (surfDay && surfDay.state !== 'NO_EDGE') {
             var surfColor = surfaceStateColors[surfDay.state] || '#fff';
-            tt += '<br><span style="color:' + surfColor + '; font-weight:600;">◆ ' + surfDay.label + '</span>';
+            var surfDesc = surfaceStateDesc[surfDay.state] || '';
+            var confTag = surfDay.confidence ? ' <span style="color:rgba(200,210,220,0.55);font-weight:400;">[' + surfDay.confidence + ']</span>' : '';
+            tt += '<br><span style="color:' + surfColor + '; font-weight:600;">◆ ' + surfDay.label + confTag + '</span>';
+            if (surfDesc) tt += '<br><span style="color:rgba(180,200,220,0.6);font-size:0.92em;">↳ ' + surfDesc + '</span>';
+            // If a surface event also fired on this date, show event-fire info without repeating the label
+            if (surfEvs) {
+                var recentCutoff2 = data.length > 21 ? data[data.length - 21].date : null;
+                surfEvs.forEach(function(se) {
+                    if (se.state === surfDay.state) {
+                        if (se.fwd21 != null) {
+                            var fc = se.fwd21 >= 0 ? '#3db87a' : '#ef4444';
+                            tt += '<br><span style="color:rgba(200,210,220,0.7);">⚡ Signal fire · 21D: <b style="color:' + fc + ';">' + (se.fwd21 >= 0 ? '+' : '') + se.fwd21.toFixed(1) + '%</b></span>';
+                        } else if (recentCutoff2 && se.date > recentCutoff2) {
+                            tt += '<br><span style="color:rgba(200,210,220,0.7);">⚡ Signal fire · 21D: <b style="color:#f59e0b;">PENDING</b></span>';
+                        }
+                    } else {
+                        // Different state on same day — show separately with description
+                        var seColor2 = surfaceStateColors[se.state] || '#fff';
+                        var seDesc2 = surfaceStateDesc[se.state] || '';
+                        tt += '<br><span style="color:' + seColor2 + '; font-weight:600;">◆ ' + se.label + '</span>';
+                        if (seDesc2) tt += '<br><span style="color:rgba(180,200,220,0.6);font-size:0.92em;">↳ ' + seDesc2 + '</span>';
+                    }
+                });
+            }
+        } else if (surfEvs && surfEvs.length > 0) {
+            // No ambient surfDay state but surface events fired — show them with descriptions
+            surfEvs.forEach(function(se) {
+                var seColor = surfaceStateColors[se.state] || '#fff';
+                var seDesc = surfaceStateDesc[se.state] || '';
+                tt += '<br><span style="color:' + seColor + '; font-weight:600;">◆ ' + se.label + '</span>';
+                if (seDesc) tt += '<br><span style="color:rgba(180,200,220,0.6);font-size:0.92em;">↳ ' + seDesc + '</span>';
+            });
         }
 
         if (ev) {
@@ -331,13 +371,6 @@ function renderSignalHeatCalendar(data, comp) {
                 : (recentCutoff && ev.date > recentCutoff ? 'PENDING' : '');
             var sigColor = sigColors[ev.signal] || '#fff';
             tt += '<br><span style="color:' + sigColor + '; font-weight:600;">⚡ ' + ev.signal + ' — ' + ev.direction + (fwdStr ? ' (' + fwdStr + ')' : '') + '</span>';
-        }
-
-        if (surfEvs && surfEvs.length > 0) {
-            surfEvs.forEach(function(se) {
-                var seColor = surfaceStateColors[se.state] || '#fff';
-                tt += '<br><span style="color:' + seColor + ';">◆ ' + se.label + '</span>';
-            });
         }
 
         var fgColor = parseFloat(alpha) > 0.42 ? '#fff' : regime.color;
