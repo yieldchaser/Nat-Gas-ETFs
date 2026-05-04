@@ -85,6 +85,89 @@ Select any ETF + time range (1W / 1M / 3M / 6M / 1Y / 3Y / ALL). Contains:
 3. **Daily Flow Bars** — Green bars above zero = inflow days; red bars below = outflow days.
 4. **Stats Row** — Bottom of panel: Z-Score, 5D/20D momentum, Regime, Pressure for the active ETF.
 
+#### Flow-Price Divergence Signal Chart
+
+**Composite Z-Score vs. Natural Gas Price** — An interactive dual-axis canvas chart showing when cross-ETF aggregate flows move *opposite* to recent NG price direction (contrarian flows = potential predictive signal).
+
+**Left Y-Axis (Divergence Intensity):**
+- **GREEN bars (above zero):** Bullish-contrarian flow — composite Z-score is positive (net long-side accumulation) *while* NG=F fell over the prior 5 trading sessions. Signals smart-money buying against weakness.
+- **RED bars (below zero):** Bearish-contrarian flow — composite Z-score is negative (net short-side accumulation) *while* NG=F rose over the prior 5 sessions. Signals smart-money selling into strength.
+- **FLAT (zero bars):** Reactive flows — composite Z aligns with the 5-day NG move. No signal (flows are following price, not opposing it).
+- **Bar height:** Magnitude of composite Z-score (±0 to ±3σ). Taller bars = stronger divergence intensity = higher conviction contrarian positioning.
+
+**Right Y-Axis (NG Price Context):**
+- **Cyan line:** NYMEX Henry Hub NG=F spot price ($/MMBtu). Provides price context for interpreting the divergence bars.
+
+**Reference Zones:**
+- **Green shaded band:** ±1.5σ zone (moderate to strong bullish divergence threshold)
+- **Red shaded band:** ±1.5σ zone (moderate to strong bearish divergence threshold)
+- **Zero line (dashed white):** Marks the boundary between reactive (no bar) and divergent flows
+
+**Audit Finding:**
+The underlying audit of 2,500+ trading days revealed that **95% of flows are reactive** (follow price with a 3–5 day lag; r ≈ −0.30, p < 0.001). This chart *filters out the reactive 95%* and surfaces only the rare contrarian 5%, which showed marginally better 21-day forward accuracy. The chart is intentionally sparse — when bars appear, they warrant attention.
+
+**Interactive Features:**
+- **Time range tabs:** 1M / 3M / 6M / 1Y / 2Y / 3Y / 5Y / ALL
+- **Independent zoom range slider:** Zoom the divergence chart independently from other panels
+- **Hover crosshair & tooltip:** 
+  - Divergence value (σ) and direction (BULLISH/BEARISH DIVERGENCE or REACTIVE)
+  - Underlying composite Z-score
+  - NG 5-day return (%)
+  - NG=F spot price ($)
+- **Scroll-wheel zoom:** Zoom in/out while hovering over the chart
+
+**Why This Matters:**
+Divergence bars represent moments when institutional flows moved *counter* to the crowd. Historical analysis shows these setups have modest but measurable 21-day forward edge, especially when bars exceed 1.5σ intensity.
+
+---
+
+#### Flow Reactivity Intensity (Mean-Reversion Signal)
+
+**Opposite of Divergence: Momentum Chasing as a Mean-Reversion Setup** — A companion chart showing when cross-ETF aggregate flows are *most reactive* (aligned with recent NG price direction). Intended to identify crowded momentum trades that often reverse on longer horizons.
+
+**Y-Axis (Reactivity Intensity):**
+- **Gray bars:** Flow reactivity magnitude — appears only when composite Z-score *aligns* with the 5-day NG move (opposite of the divergence chart). Bar height = |Z-score| magnitude at that moment.
+- **Zero bars:** Contrarian flows (see Divergence Signal chart above). No reactivity bar drawn.
+- **Bar color:** Neutral gray (no directional signal). This is a *strength metric*, not a trade direction.
+
+**What Reactivity Means:**
+- Flows are momentum-chasing — crowds accumulating/distributing in the same direction as recent price action
+- High reactivity intensity = crowds are acting on recent momentum with high confidence
+- Mean-reversion principle: Crowded momentum often reverses at 21-day horizons when extremes are reached
+
+**Reference Zones:**
+- **Shaded band at ±1.5σ:** Highlights the range where reactivity is strongest (moderate to extreme momentum chasing)
+- **Zero line:** Separates reactive bars from contrarian flows
+
+**Audit Finding:**
+The underlying audit showed that:
+- Short-term (1–5d) directional accuracy was near-random (hit rate ≈ 50%) regardless of flow direction
+- However, *magnitude* of flows (|Z-score|) correlated with subsequent move *size*: when 3NGL/3NGS flows were extreme, the reversals — when they came — were larger
+- At 21-day horizons, extreme reactivity + mean-reversion setup often produced the largest reversals
+- This chart surfaces those high-magnitude reactive moments as potential reversal confidence signals
+
+**Interactive Features:**
+- **Time range tabs:** 1M / 3M / 6M / 1Y / 2Y / 3Y / 5Y / ALL
+- **Independent zoom range slider:** Zoom independently from other panels
+- **Hover crosshair & tooltip:**
+  - Reactivity magnitude (σ) and intensity level (MODERATE MOMENTUM / EXTREME MOMENTUM / NO REACTIVITY)
+  - Underlying composite Z-score
+  - NG 5-day return (%)
+  - Mean-reversion setup confidence note
+- **Scroll-wheel zoom:** Zoom in/out while hovering
+
+**How to Use:**
+1. Look for **tall gray bars** (high reactivity, |Z| > 1.5σ)
+2. Check the **NG 5-day return** — confirm flows are chasing that direction
+3. Cross-reference with **volatility regime** (from Vol Monitor) — mean-reversion works best when vol is elevated
+4. Compare to the **Divergence Signal chart** — when reactivity is extreme and divergence is sparse, you have a momentum-driven crowd without contrarian smart money offsetting
+5. **Action on 21-day horizon:** Size reversals off the intensity of reactivity, not directional confidence (which is near-random at short lags)
+
+**Why This Works:**
+Extremes in either direction (strong reactivity *or* strong contrarian divergence) can signal turning points. Reactivity-based mean-reversion is the inverse thesis: crowds are most wrong when they're most confident in recent momentum.
+
+---
+
 #### Flow vs Price Divergence Table
 
 Scans the active ETF's history for windows (3d / 5d / 10d) where price and flow moved in opposite directions by meaningful thresholds:
