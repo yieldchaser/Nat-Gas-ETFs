@@ -2162,12 +2162,13 @@ function handleChartWheel(e) {
     const isCross = id === 'chartCross';
     const isCompZ  = id === 'chartCompZ';
     const isFlowNG = id === 'chartFlowNG';
-    const zoomKey = isZ ? 'zoomZ' : isCross ? 'zoomCross' : isCompZ ? 'zoomCompZ' : isFlowNG ? 'zoomFlowNG' : 'zoom';
+    const isReactivity = id === 'chartReactivity';
+    const zoomKey = isZ ? 'zoomZ' : isCross ? 'zoomCross' : isCompZ ? 'zoomCompZ' : isFlowNG ? 'zoomFlowNG' : isReactivity ? 'zoomReactivity' : 'zoom';
 
     const rect   = e.target.getBoundingClientRect();
     const x      = e.clientX - rect.left;
-    const padL   = (isZ || isCompZ) ? 45 : isFlowNG ? 55 : 60;
-    const padR   = (isZ || isCompZ) ? 20 : isFlowNG ? 55 : 60;
+    const padL   = (isZ || isCompZ) ? 45 : (isFlowNG || isReactivity) ? 55 : 60;
+    const padR   = (isZ || isCompZ) ? 20 : (isFlowNG || isReactivity) ? 55 : 60;
     const chartW = rect.width - padL - padR;
     const frac   = Math.max(0, Math.min(1, (x - padL) / chartW));
 
@@ -2204,6 +2205,9 @@ function handleChartWheel(e) {
     } else if (isFlowNG) {
         renderFlowNGChart();
         syncFlowNGSlider();
+    } else if (isReactivity) {
+        renderReactivityChart();
+        syncReactivitySlider();
     } else {
         renderCharts();
         syncRangeSlider();
@@ -3254,6 +3258,8 @@ async function loadAllTickersForCross() {
     syncCompZSlider();
     renderFlowNGChart();
     syncFlowNGSlider();
+    renderReactivityChart();
+    syncReactivitySlider();
 }
 
 function renderCrossChart() {
@@ -3428,6 +3434,7 @@ window.addEventListener('resize', () => {
     renderCrossChart();
     renderCompZChart();
     renderFlowNGChart();
+    renderReactivityChart();
 });
 
 
