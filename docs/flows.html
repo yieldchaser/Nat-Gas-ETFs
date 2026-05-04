@@ -761,7 +761,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 6.2: Flow Pressure vs Natural Gas Price -->
         <div class="panel" id="flow-ng-panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Dual-axis overlay showing ETF capital flows vs actual gas price. LEFT AXIS (GREEN/RED bars): Composite flow pressure Z-score across all 6 leveraged NG ETFs. GREEN = upward pressure (longs accumulating, shorts exiting) — bullish flow signal. RED = downward pressure (shorts accumulating, longs exiting) — bearish flow signal. RIGHT AXIS (CYAN line): NG=F Henry Hub futures price. DIVERGENCE = predictive signal: when flows and price move opposite directions, institutions are front-running reversals. Example: green pressure rising while price falls = capitulation bottom forming. Red pressure rising while price rises = euphoria top forming." style="border-left:3px solid rgba(80,144,160,0.6); padding-left:8px;">Flow Pressure vs Natural Gas Price</div>
+                <div class="panel-title" data-tooltip="Flow-Price Divergence Signal: LEFT AXIS shows contrarian flow intensity — bars only appear when cross-ETF composite flow direction OPPOSES NG's recent 5-session price move. GREEN = flows bullish while NG recently fell (smart money buying against weakness). RED = flows bearish while NG recently rose (smart money selling into strength). Flat = flows reactive (following price, not leading it). RIGHT AXIS (CYAN line): NG=F Henry Hub futures price for context. Audit finding: contrarian flows show marginally better 21-day forward accuracy than reactive flows — this chart surfaces only the potentially predictive portion of the flow signal." style="border-left:3px solid rgba(80,144,160,0.6); padding-left:8px;">Flow-Price Divergence Signal</div>
                 <div class="tab-group time-tabs" id="flowng-time-tabs">
                     <button class="tab-btn" data-range="1m">1M</button>
                     <button class="tab-btn" data-range="3m">3M</button>
@@ -794,11 +794,12 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <!-- Legend -->
             <div class="chart-footer">
                 <div class="chart-legend">
-                    <div class="legend-item" data-tooltip="Current NYMEX Henry Hub natural gas futures price (front month). Right Y-axis shows dollar value per MMBtu. Use to compare if flows are leading or lagging price moves."><span class="legend-line" style="background:#5090a0; height:2px;"></span> NG=F PRICE (RIGHT AXIS)</div>
-                    <div class="legend-item" data-tooltip="Longs accumulating, shorts exiting. Institutional capital flowing INTO bullish leveraged ETFs. Positive signal for upside. Strong signal when bars push high while price stays low."><span class="legend-swatch" style="background:rgba(61,184,122,0.4)"></span> UPWARD FLOW PRESSURE (LEFT)</div>
-                    <div class="legend-item" data-tooltip="Shorts accumulating, longs exiting. Institutional capital flowing INTO bearish leveraged ETFs. Negative signal for downside. Strong signal when bars push low while price stays high (selling into strength)."><span class="legend-swatch" style="background:rgba(239,68,68,0.4)"></span> DOWNWARD FLOW PRESSURE (LEFT)</div>
+                    <div class="legend-item" data-tooltip="Current NYMEX Henry Hub natural gas futures price (front month). Right Y-axis shows dollar value per MMBtu."><span class="legend-line" style="background:#5090a0; height:2px;"></span> NG=F PRICE (RIGHT AXIS)</div>
+                    <div class="legend-item" data-tooltip="Flows are bullish while NG recently fell — contrarian accumulation against price weakness. Bar height = composite Z-Score magnitude. Only appears when flow opposes the prior 5-session NG move."><span class="legend-swatch" style="background:rgba(61,184,122,0.65)"></span> BULLISH DIVERGENCE (LEFT)</div>
+                    <div class="legend-item" data-tooltip="Flows are bearish while NG recently rose — contrarian distribution into price strength. Bar height = composite Z-Score magnitude. Only appears when flow opposes the prior 5-session NG move."><span class="legend-swatch" style="background:rgba(239,68,68,0.65)"></span> BEARISH DIVERGENCE (LEFT)</div>
+                    <div class="legend-item" data-tooltip="No bar = flows are reactive (following price, not opposing it). Reactive flows have near-random forward predictive value per audit."><span style="width:16px; height:2px; background:rgba(255,255,255,0.15); display:inline-block; border-top: 1px solid rgba(255,255,255,0.2);"></span> FLAT = REACTIVE (no signal)</div>
                 </div>
-                <span data-tooltip="COLORS: Green = institutions buying gas (bullish). Red = institutions selling gas (bearish). Magnitude = strength of the signal. PRICE (cyan line): What gas is trading at now. DIVERGENCE: Green bars rising while price falls = smart money buying the dip (bullish setup). Red bars rising while price rises = selling into strength (bearish setup). Matching direction = trend confirmation. Opposite direction = reversal warning." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ WHAT DO COLORS MEAN?</span>
+                <span data-tooltip="WHY ONLY CONTRARIAN BARS? Flow audit (2,500+ days) found flows are primarily reactive — they follow price with a 3-5 day lag (r ≈ −0.30, p&lt;0.001). Contrarian flows (opposing recent price direction) showed marginally better 21-day predictive accuracy. This chart filters out reactive noise and surfaces only the flow events where direction is unexpected relative to recent price action." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ WHY ONLY CONTRARIAN BARS?</span>
             </div>
         </div>
 
@@ -1017,6 +1018,7 @@ const state = {
     ngDates: [],     // sorted date strings
     hoverCompZIdx: null,
     hoverFlowNGIdx: null,
+    divValsCache: [],  // [{signed, ng5d}] — built per render in drawChartFlowNG, read by hover handler
     drag: { active: false, startIdx: null, currentIdx: null }
 };
 
