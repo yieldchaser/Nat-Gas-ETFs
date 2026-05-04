@@ -595,3 +595,214 @@ function syncFlowNGSlider() {
         lbl.textContent = isZoomed ? 'CUSTOM SELECTION' : `PRESET: ${state.timeRange.toUpperCase()}`;
     }
 }
+
+// ---- Reactivity Intensity Chart ----
+function getFlowReactivityVisible() {
+    const cz = state.compositeZ;
+    if (!cz || cz.length === 0) return { flow: [], ng: [] };
+    const base = applyTimeFilter(cz);
+    const z = state.zoomReactivity;
+    const s = Math.floor(z.start * base.length);
+    const e = Math.ceil(z.end * base.length);
+    const flow = base.slice(s, e);
+    const ng = flow.map(f => ({ date: f.date, close: state.ngHistory[f.date] || null }));
+    return { flow, ng };
+}
+
+function renderReactivityChart() {
+    const { flow, ng } = getFlowReactivityVisible();
+    if (!flow || flow.length < 2) return;
+    drawChartReactivity(flow, ng);
+}
+
+function drawChartReactivity(flow, ng) {
+    const cvs = el('chartReactivity');
+    const { w, h, dpr } = resizeCanvas(cvs);
+    const ctx = ctxReactivity;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    const pad = { top: 24, right: 40, bottom: 32, left: 55 };
+    const cw = w - pad.left - pad.right;
+    const ch = h - pad.top - pad.bottom;
+    if (cw < 20 || ch < 20) return;
+
+    const dates = flow.map(d => d.date);
+    const ngDateIdx = {};
+    if (state.ngDates) state.ngDates.forEach((d, i) => { ngDateIdx[d] = i; });
+
+    // ── Reactivity bars: appear when flow aligns with price (opposite of divergence) ─
+    const reactData = flow.map(f => {
+        const ni = ngDateIdx[f.date];
+        if (ni === undefined || ni < 5) return { intensity: 0, ng5d: null };
+        const p0 = state.ngHistory[state.ngDates[ni - 5]];
+        const p1 = state.ngHistory[state.ngDates[ni]];
+        if (!p0 || !p1 || p0 === 0) return { intensity: 0, ng5d: null };
+        const ng5d = (p1 - p0) / p0;
+        if (Math.abs(ng5d) < 0.005 || Math.abs(f.z) < 0.3) return { intensity: 0, ng5d };
+        const flowUp = f.z > 0, ngUp = ng5d > 0;
+        if (flowUp !== ngUp) return { intensity: 0, ng5d }; // opposite = divergence, not reactivity
+        return { intensity: Math.abs(f.z), ng5d };
+    });
+    state.reactValsCache = reactData;
+
+    const reactIntensities = reactData.map(d => d.intensity);
+    const absMax = Math.max(1.6, ...reactIntensities.map(v => Math.abs(v)));
+    const scale = absMax * 1.1;
+    const y0 = pad.top + ch / 2;
+
+    const getX = i => pad.left + (i / (flow.length - 1)) * cw;
+    const getYReact = v => y0 - (v / scale) * (ch / 2);
+
+    // ── 1. Background shading for ±1.5σ zones ──────────────────────────────────
+    const y15p = getYReact(1.5), y15n = getYReact(-1.5);
+    ctx.fillStyle = 'rgba(148,163,184,0.04)';
+    ctx.fillRect(pad.left, pad.top, cw, y15p - pad.top);
+    ctx.fillRect(pad.left, y15n, cw, pad.top + ch - y15n);
+
+    // ── 2. Reference lines ──────────────────────────────────────────────────────
+    ctx.setLineDash([4, 3]); ctx.lineWidth = 0.8;
+    ctx.strokeStyle = 'rgba(148,163,184,0.25)';
+    ctx.beginPath(); ctx.moveTo(pad.left, y15p); ctx.lineTo(pad.left + cw, y15p); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad.left, y15n); ctx.lineTo(pad.left + cw, y15n); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath(); ctx.moveTo(pad.left, y0); ctx.lineTo(pad.left + cw, y0);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // ── 3. Zone label ───────────────────────────────────────────────────────────
+    ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(148,163,184,0.5)';
+    ctx.fillText('REACTIVITY INTENSITY (Momentum Chasing)', pad.left + 6, (pad.top + y15p) / 2);
+
+    // ── 4. Reactivity bars (neutral gray) ────────────────────────────────────────
+    const bw = Math.max(1, (cw / flow.length) * 0.85);
+    for (let i = 0; i < flow.length; i++) {
+        const v = reactIntensities[i];
+        if (v === 0) continue;
+        const x = getX(i);
+        ctx.fillStyle = v >= 1.5 ? 'rgba(148,163,184,0.72)' : 'rgba(148,163,184,0.55)';
+        const yTop = getYReact(v);
+        ctx.fillRect(x - bw / 2, Math.min(yTop, y0), bw, Math.abs(yTop - y0));
+    }
+
+    // ── 5. Left Y-axis (reactivity intensity) ────────────────────────────────────
+    const reactTicks = niceAxisTicks(-scale, scale, 5);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.font = '9px sans-serif';
+    reactTicks.forEach(v => {
+        const y = getYReact(v);
+        if (y < pad.top - 5 || y > pad.top + ch + 5) return;
+        ctx.fillStyle = 'rgba(148,163,184,0.6)';
+        ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1), pad.left - 6, y);
+    });
+
+    // ── 6. X-axis ───────────────────────────────────────────────────────────────
+    drawXAxis(ctx, dates, getX, cw, pad.top + ch + 14, pad);
+
+    // ── 7. Hover crosshair ──────────────────────────────────────────────────────
+    if (state.hoverReactivityIdx !== null && state.hoverReactivityIdx < flow.length) {
+        const i = state.hoverReactivityIdx;
+        const x = getX(i);
+        ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + ch);
+        ctx.strokeStyle = 'rgba(0,255,255,0.2)'; ctx.lineWidth = 1; ctx.stroke();
+
+        const v = reactIntensities[i];
+        if (v !== 0) {
+            ctx.beginPath(); ctx.arc(x, getYReact(v), 4, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(148,163,184,0.9)'; ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+    }
+}
+
+function handleReactivityHover(e) {
+    const { flow, ng } = getFlowReactivityVisible();
+    if (!flow || flow.length < 2) return;
+    const rect = e.target.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const padObj = { left: 55, right: 40 };
+    const cw = rect.width - padObj.left - padObj.right;
+    const frac = (x - padObj.left) / cw;
+    const idx = Math.round(frac * (flow.length - 1));
+    if (idx < 0 || idx >= flow.length) { hideReactivityHover(); return; }
+    state.hoverReactivityIdx = idx;
+    drawChartReactivity(flow, ng);
+    const d = flow[idx];
+    const rc = state.reactValsCache[idx] || { intensity: 0, ng5d: null };
+    const reactV = rc.intensity;
+    const ng5d = rc.ng5d;
+    const tip = document.getElementById('reactivity-tooltip');
+
+    let reactLabel, reactDesc;
+    if (reactV === 0) {
+        reactLabel = '○ NO REACTIVITY';
+        reactDesc = 'Flow opposes recent NG direction (see Divergence Signal chart)';
+    } else if (reactV >= 1.5) {
+        reactLabel = '● EXTREME MOMENTUM';
+        reactDesc = 'Crowds aggressively chasing price momentum — high mean-reversion risk';
+    } else {
+        reactLabel = '● MODERATE MOMENTUM';
+        reactDesc = 'Moderate crowd momentum chasing — potential reversal setup';
+    }
+    const ng5dStr = ng5d !== null ? ((ng5d >= 0 ? '+' : '') + (ng5d * 100).toFixed(1) + '%') : '—';
+    const ng5dColor = ng5d === null ? '#94a3b8' : ng5d >= 0 ? '#3db87a' : '#ef4444';
+
+    tip.innerHTML = `
+        <div style="color:var(--cyan); font-size:0.7rem; font-weight:800; margin-bottom:6px;">${fmtDateLong(d.date)}</div>
+        <div style="display:flex; justify-content:space-between; gap:16px;">
+            <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">REACTIVITY</span>
+            <span style="color:rgba(148,163,184,0.9); font-weight:800; font-family:'JetBrains Mono',monospace;">${reactV >= 0 ? '+' : ''}${reactV.toFixed(2)}σ</span>
+        </div>
+        <div style="color:rgba(148,163,184,0.9); font-size:0.62rem; font-weight:700; margin-top:2px;">${reactLabel} — ${reactDesc}</div>
+        <div style="display:flex; justify-content:space-between; gap:16px; margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
+            <span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">COMP Z (underlying)</span>
+            <span style="color:rgba(148,163,184,0.8); font-weight:700; font-family:'JetBrains Mono',monospace;">${d.z >= 0 ? '+' : ''}${d.z.toFixed(2)}σ</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:16px; margin-top:2px;">
+            <span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">NG 5D RETURN</span>
+            <span style="color:${ng5dColor}; font-weight:700; font-family:'JetBrains Mono',monospace;">${ng5dStr}</span>
+        </div>`;
+    tip.style.display = 'block';
+    const tx = Math.min(rect.width - 240, Math.max(10, x - 110));
+    tip.style.left = tx + 'px'; tip.style.top = '10px';
+}
+
+function hideReactivityHover() {
+    state.hoverReactivityIdx = null;
+    const tip = document.getElementById('reactivity-tooltip');
+    if (tip) tip.style.display = 'none';
+    renderReactivityChart();
+}
+
+function initReactivitySlider() {
+    const sS = document.getElementById('reactivity-range-start');
+    const sE = document.getElementById('reactivity-range-end');
+    if (!sS || !sE) return;
+    function onInput() {
+        let s = parseInt(sS.value) / 1000, e = parseInt(sE.value) / 1000;
+        if (s > e - 0.02) { s = e - 0.02; sS.value = Math.round(s * 1000); }
+        state.zoomReactivity = { start: s, end: e };
+        renderReactivityChart();
+        syncReactivitySlider();
+    }
+    sS.addEventListener('input', onInput);
+    sE.addEventListener('input', onInput);
+}
+
+function syncReactivitySlider() {
+    const sS = document.getElementById('reactivity-range-start');
+    const sE = document.getElementById('reactivity-range-end');
+    const hl = document.getElementById('reactivity-range-highlight');
+    const lbl = document.getElementById('reactivity-range-label');
+    if (!sS || !sE) return;
+    sS.value = Math.round(state.zoomReactivity.start * 1000);
+    sE.value = Math.round(state.zoomReactivity.end * 1000);
+    if (hl) {
+        hl.style.left = (state.zoomReactivity.start * 100) + '%';
+        hl.style.width = ((state.zoomReactivity.end - state.zoomReactivity.start) * 100) + '%';
+    }
+    if (lbl) {
+        const isZoomed = state.zoomReactivity.start > 0.001 || state.zoomReactivity.end < 0.999;
+        lbl.textContent = isZoomed ? 'CUSTOM SELECTION' : `PRESET: ${state.timeRange.toUpperCase()}`;
+    }
+}
