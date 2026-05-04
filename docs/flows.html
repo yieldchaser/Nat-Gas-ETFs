@@ -96,6 +96,23 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .val-cyan { color: var(--cyan); }
 .val-muted { color: rgba(255, 255, 255, 0.85); }
 
+/* Reactive / Leading flow signal tag */
+.fc-signal-tag {
+    display: inline-block; font-size: 0.52rem; font-weight: 800;
+    letter-spacing: 0.8px; padding: 1px 5px; border-radius: 3px;
+    white-space: nowrap; margin-top: 2px;
+}
+.fc-signal-reactive {
+    color: rgba(245,158,11,0.85);
+    background: rgba(245,158,11,0.07);
+    border: 1px solid rgba(245,158,11,0.18);
+}
+.fc-signal-leading {
+    color: var(--cyan);
+    background: rgba(0,255,255,0.05);
+    border: 1px solid rgba(0,255,255,0.18);
+}
+
 /* ---- Section 3: Deep Dive Chart Panel ---- */
 .panel {
     background: var(--bg-panel); border: 1px solid var(--border-primary);
@@ -1293,6 +1310,29 @@ function renderSection1() {
     el('sent-status').className    = `s-status ${status === 'BULLISH' ? 'val-green' : status === 'BEARISH' ? 'val-red' : 'val-muted'}`;
 }
 
+// Returns a REACTIVE or LEADING badge for the Z-Score cell.
+// REACTIVE: flow direction matches NG's recent 5-session move (momentum chasing).
+// LEADING:  flow runs against recent price — the sub-signal with marginal predictive value.
+// Returns '' when |Z| < 0.5 or price context is unavailable.
+function getFlowSignalTag(tk, zscore) {
+    if (Math.abs(zscore) < 0.5) return '';
+    const ng = state.summary && state.summary.ng_history;
+    if (!ng || ng.length < 7) return '';
+    const recent = ng[ng.length - 1].close;
+    const prior5 = ng[ng.length - 6].close;
+    if (!prior5 || prior5 === 0) return '';
+    const ng5dReturn = (recent - prior5) / prior5;
+    if (Math.abs(ng5dReturn) < 0.005) return ''; // < 0.5% move — too flat to classify
+    const isShort = ['KOLD', 'HND', '3NGS'].includes(tk);
+    const signalBullish = isShort ? zscore < 0 : zscore > 0;
+    const priceBullish  = ng5dReturn > 0;
+    if (signalBullish === priceBullish) {
+        return `<span class="fc-signal-tag fc-signal-reactive" data-tooltip="REACTIVE: This Z-Score spike aligns with NG's recent 5-day price move — likely momentum chasing. Audit across 2,500+ trading days shows reactive flows have limited forward predictive value (hit rate ≈ coin flip).">REACTIVE</span>`;
+    } else {
+        return `<span class="fc-signal-tag fc-signal-leading" data-tooltip="LEADING: Flow direction opposes NG's recent 5-day move. Contrarian flows show marginally better 21-day forward accuracy in our audit — the strongest sub-signal found in flow data.">LEADING</span>`;
+    }
+}
+
 function renderSection2() {
     const longs = ['BOIL', 'HNU', '3NGL'];
     const shorts = ['KOLD', 'HND', '3NGS'];
@@ -1339,6 +1379,7 @@ function renderSection2() {
                 <div class="fc-metric">
                     <div class="fc-m-lbl" data-tooltip="Flow Z-Score vs 30-day avg. >+1.5 = unusual accumulation, <−1.5 = unusual distribution.">Z-SCORE</div>
                     <div class="fc-m-val ${zCol}">${d.zscore >= 0 ? '+' : ''}${d.zscore.toFixed(2)}</div>
+                    ${getFlowSignalTag(tk, d.zscore)}
                 </div>
                 <div class="mom-row">
                     <div class="mom-item" data-tooltip="5-day rolling net flow.">5D <span class="${flowColor(tk, d.flow_5d)}">${fmtUsd(d.flow_5d)}</span></div>
