@@ -800,9 +800,12 @@ const VolRegime = {
             ctx.stroke();
         }
         ctx.setLineDash([]);
-        ctx.font = '9px monospace'; ctx.textAlign = 'left';
-        ctx.fillStyle = 'rgba(255,255,255,0.28)';
-        for (const tick of yTicks) ctx.fillText(tick.toFixed(0) + '%', pad.left + cW + 5, toY(tick) + 3.5);
+        // p25/p75/p90 right-side text labels — hide when overlay axis occupies same space
+        if (!showTR && !showVoV) {
+            ctx.font = '9px monospace'; ctx.textAlign = 'left';
+            ctx.fillStyle = 'rgba(255,255,255,0.28)';
+            for (const tick of yTicks) ctx.fillText(tick.toFixed(0) + '%', pad.left + cW + 5, toY(tick) + 3.5);
+        }
 
         // ── Background regime zones (using primary series thresholds) ──
         const zones = [
@@ -978,34 +981,66 @@ const VolRegime = {
             }
         }
 
-        // ── Regime signal timeline strip (5px at chart bottom) ───
+        // ── Regime signal timeline strip (below chart baseline) ─
         if (showSignals) {
             const hv21S  = (allSeries['21d'] || []).slice(si, ei);
             const hv5dS  = (allSeries['5d']  || []).slice(si, ei);
             const hv63dS = (allSeries['63d'] || []).slice(si, ei);
-            // Use full 21D series for stable percentile thresholds (same as regime zones)
             const s21all = [...(allSeries['21d'] || [])].filter(v => v != null).sort((a,b) => a-b);
             const pFn21  = f => s21all.length ? s21all[Math.max(0, Math.floor(s21all.length * f) - 1)] : 0;
             const [sr25, sr75, sr90] = [pFn21(0.25), pFn21(0.75), pFn21(0.90)];
             const SIG_COL = {
-                'rs-surge':    'rgba(192,64,64,0.85)',
-                'rs-trending': 'rgba(61,184,122,0.85)',
-                'rs-choppy':   'rgba(192,120,40,0.85)',
-                'rs-qtrend':   'rgba(0,212,255,0.85)',
-                'rs-coiling':  'rgba(255,255,255,0.20)',
+                'rs-surge':    'rgba(192,64,64,0.90)',
+                'rs-trending': 'rgba(61,184,122,0.90)',
+                'rs-choppy':   'rgba(192,120,40,0.90)',
+                'rs-qtrend':   'rgba(0,212,255,0.90)',
+                'rs-coiling':  'rgba(255,255,255,0.28)',
             };
-            const stripH = 5;
-            const stripY = pad.top + cH - stripH;
-            const barW   = cW / Math.max(hv21S.length - 1, 1);
+            const stripH = 7;
+            const stripY = pad.top + cH + 4; // below chart baseline, above x-axis text
+
+            // Solid faint base so strip is always a continuous band (not patchy)
+            ctx.fillStyle = 'rgba(255,255,255,0.06)';
+            ctx.fillRect(pad.left, stripY, cW, stripH);
+
+            // Collect contiguous same-signal runs and flush as single rects (no gaps)
+            let runStart = 0, runSig = null;
+            const flush = (end) => {
+                if (runSig == null || !SIG_COL[runSig.cls]) return;
+                ctx.fillStyle = SIG_COL[runSig.cls];
+                ctx.fillRect(toX(runStart), stripY, toX(end) - toX(runStart) + 1, stripH);
+            };
             for (let i = 0; i < hv21S.length; i++) {
-                const hv21 = hv21S[i]; if (hv21 == null) continue;
+                const hv21 = hv21S[i];
+                if (hv21 == null) { flush(i - 1); runSig = null; runStart = i + 1; continue; }
                 const hvPct = hv21 >= sr90 ? 92 : hv21 >= sr75 ? 80 : hv21 >= sr25 ? 50 : 15;
                 const ts_i  = (hv5dS[i] > 0 && hv63dS[i] > 0) ? hv5dS[i] / hv63dS[i] : null;
                 const sig   = this._regimeSignal(hvPct, trSlice[i] ?? null, ts_i);
-                if (!sig) continue;
-                const col = SIG_COL[sig.cls]; if (!col) continue;
+                const cls   = sig?.cls ?? null;
+                if (cls !== runSig?.cls) { flush(i - 1); runSig = sig; runStart = i; }
+            }
+            flush(hv21S.length - 1);
+
+            // Inline mini-legend in top padding (right-aligned)
+            const LEGEND = [
+                ['⚡', 'rgba(192,64,64,0.85)',  'SURGE'],
+                ['→', 'rgba(61,184,122,0.85)', 'TREND'],
+                ['↔', 'rgba(192,120,40,0.85)', 'CHOP'],
+                ['↗', 'rgba(0,212,255,0.85)',  'QUIET'],
+                ['◎', 'rgba(255,255,255,0.4)', 'COIL'],
+            ];
+            ctx.font = '7.5px monospace';
+            let lx = pad.left + cW;
+            for (let i = LEGEND.length - 1; i >= 0; i--) {
+                const [sym, col, lbl] = LEGEND[i];
+                const symW = ctx.measureText(sym + ' ').width;
+                const lblW = ctx.measureText(lbl).width;
                 ctx.fillStyle = col;
-                ctx.fillRect(toX(i) - barW / 2, stripY, barW + 1, stripH);
+                ctx.textAlign = 'left';
+                ctx.fillText(sym, lx - symW - lblW, 12);
+                ctx.fillStyle = 'rgba(255,255,255,0.30)';
+                ctx.fillText(lbl, lx - lblW, 12);
+                lx -= symW + lblW + 7;
             }
         }
 
@@ -1234,13 +1269,12 @@ const VolRegime = {
                 lines.push({ text: `VoV: ${vv.toFixed(1)}% · ${vl}`, color: 'rgba(192,120,40,0.85)', isDate: false });
             }
             if (showSignals) {
+                // Reuse already-computed p25/p75/p90 (primary series = 21D by default)
                 const hv21h  = (allSeries['21d'] || [])[si + hIdx];
                 const hv5dh  = (allSeries['5d']  || [])[si + hIdx];
                 const hv63dh = (allSeries['63d'] || [])[si + hIdx];
                 if (hv21h != null) {
-                    const s21t  = [...(allSeries['21d'] || [])].filter(v => v != null).sort((a,b) => a-b);
-                    const pFt   = f => s21t.length ? s21t[Math.max(0, Math.floor(s21t.length * f) - 1)] : 0;
-                    const hvPct = hv21h >= pFt(0.90) ? 92 : hv21h >= pFt(0.75) ? 80 : hv21h >= pFt(0.25) ? 50 : 15;
+                    const hvPct = hv21h >= p90 ? 92 : hv21h >= p75 ? 80 : hv21h >= p25 ? 50 : 15;
                     const ts_h  = (hv5dh > 0 && hv63dh > 0) ? hv5dh / hv63dh : null;
                     const sig   = this._regimeSignal(hvPct, trSeriesFull[si + hIdx] ?? null, ts_h);
                     if (sig) lines.push({ text: `REGIME: ${sig.label}`, color: 'rgba(255,255,255,0.55)', isDate: false });
