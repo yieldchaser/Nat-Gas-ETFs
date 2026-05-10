@@ -144,13 +144,9 @@ const VolRegime = {
     _toggleSeries(ticker, key) {
         if (!this._activeSeries[ticker]) this._activeSeries[ticker] = ['21d'];
         const active = this._activeSeries[ticker];
-        if (active.includes(key)) {
-            if (active.length > 1) { // Ensure at least one is selected
-                this._activeSeries[ticker] = active.filter(k => k !== key);
-            }
-        } else {
-            this._activeSeries[ticker].push(key);
-        }
+        this._activeSeries[ticker] = active.includes(key)
+            ? active.filter(k => k !== key)
+            : [...active, key];
         this._renderContent();
     },
 
@@ -755,9 +751,13 @@ const VolRegime = {
         for (const k of activeKeys) {
             if (allSeries[k]) slices[k] = allSeries[k].slice(si, ei);
         }
-        const primaryKey = activeKeys.includes('21d') ? '21d' : activeKeys[0];
-        const primarySeries = slices[primaryKey] || slices[Object.keys(slices)[0]] || [];
-        const fullPrimary = allSeries[primaryKey] || fullDates.map(() => 0); // fallback
+        // When no HV series are active, use 21d as a hidden reference for x-scale,
+        // regime zone thresholds, and the signal strip — it is never drawn as a line.
+        const noHV = activeKeys.length === 0;
+        const primaryKey = activeKeys.includes('21d') ? '21d' : (activeKeys[0] || '21d');
+        const refSeries21 = (allSeries['21d'] || []).slice(si, ei);
+        const primarySeries = noHV ? refSeries21 : (slices[primaryKey] || slices[Object.keys(slices)[0]] || []);
+        const fullPrimary = allSeries[primaryKey] || allSeries['21d'] || fullDates.map(() => 0);
 
         // ── Overlay state ────────────────────────────────────────
         const activeOverlays = this._activeOverlays[ticker] || [];
@@ -784,7 +784,11 @@ const VolRegime = {
         for (const k in slices) {
             for (const v of slices[k]) if (v != null) allVisValues.push(v);
         }
-        if (allVisValues.length === 0) return; // Nothing to draw
+        // When all HV series are off, use 21d reference for the scale so regime
+        // zones and overlays still render correctly on a meaningful backdrop.
+        const scaleValues = allVisValues.length > 0 ? allVisValues
+            : refSeries21.filter(v => v != null);
+        if (scaleValues.length === 0) return; // truly no data at all
 
         // Percentile thresholds from FULL primary series
         const sortedPrimary = [...fullPrimary].filter(v => v != null).sort((a, b) => a - b);
@@ -795,7 +799,7 @@ const VolRegime = {
         const cW  = cssW - pad.left - pad.right;
         const cH  = cssH - pad.top  - pad.bottom;
 
-        const rawMin = Math.min(...allVisValues), rawMax = Math.max(...allVisValues);
+        const rawMin = Math.min(...scaleValues), rawMax = Math.max(...scaleValues);
         const vMin = rawMin * 0.90, vMax = rawMax * 1.06;
         const vRange = vMax - vMin || 1;
 
@@ -816,9 +820,9 @@ const VolRegime = {
             ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y);
             ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.stroke();
             ctx.setLineDash([]);
-            // Left-side Y labels
+            // Left-side Y labels — dimmed when no HV series selected (scale is a ghost ref)
             ctx.textAlign = 'right';
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = noHV ? 'rgba(148,163,184,0.25)' : '#94a3b8';
             ctx.fillText(v.toFixed(1) + '%', pad.left - 4, y + 3.5);
         }
 
@@ -852,7 +856,9 @@ const VolRegime = {
             if (y2 > y1) { ctx.fillStyle = z.color; ctx.fillRect(pad.left, y1, cW, y2 - y1); }
         }
 
-        // ── Area fill for primary series only ─────────────────
+        // ── Area fill + HV lines: skipped when all series are off ─
+        if (noHV) { /* skip fill and line drawing below */ }
+        else {
         let lastVPrimary = null;
         for (let i = primarySeries.length - 1; i >= 0; i--) {
             if (primarySeries[i] != null) { lastVPrimary = primarySeries[i]; break; }
@@ -920,6 +926,7 @@ const VolRegime = {
                 ctx.stroke();
             }
         }
+        } // end noHV else
 
         // ── Secondary overlays: TR and VoV ───────────────────────
         if (showTR || showVoV) {
@@ -1083,8 +1090,8 @@ const VolRegime = {
             }
         }
 
-        // ── Current value dots ─────────────────────────────────
-        if (atEnd) {
+        // ── Current value dots (HV series only) ───────────────
+        if (!noHV && atEnd) {
             let labelOffset = 0;
             for (const k of activeKeys) {
                 const s = slices[k];
