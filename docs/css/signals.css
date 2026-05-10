@@ -1689,6 +1689,16 @@
     color: rgba(255,255,255,0.75);
     background: rgba(255,255,255,0.05);
 }
+.vrm-overlay-btn.active.ov-ng {
+    border-color: rgba(61,220,130,0.55);
+    color: rgba(61,220,130,0.9);
+    background: rgba(61,220,130,0.08);
+}
+.vrm-overlay-btn.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
 
 /* ── Responsive overrides ──────────────────────────────────────── */
 @media (max-width: 900px) {
