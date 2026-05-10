@@ -447,6 +447,7 @@ const VolRegime = {
             const trSeries     = [...Array(histCloses.length - trSeriesRaw.length).fill(null), ...trSeriesRaw];
             const vovSeriesRaw = histCloses.length >= 32 ? Metrics.computeVoVSeries(histCloses)    : [];
             const vovSeries    = [...Array(histCloses.length - vovSeriesRaw.length).fill(null), ...vovSeriesRaw];
+            const vov21Current = histCloses.length >= 32 ? Metrics.computeVoV21(histCloses) : null;
 
             allMetrics[ticker] = {
                 ticker,
@@ -458,7 +459,7 @@ const VolRegime = {
                     hvSeries21: hvSeries21Legacy,
                     hvDates21: hvDates21Legacy,
                     hvTermStructure: vol.hv_term_structure ?? vol.hvTermStructure ?? null,
-                    vov21:       vol.vov21       ?? null,
+                    vov21:       vov21Current ?? vol.vov21 ?? null,
                     volRegimePct: vol.vol_regime_pct ?? vol.volRegimePct ?? null,
                     atr14Pct:    vol.atr14_pct   ?? vol.atr14Pct        ?? null,
                     vovSeries,
