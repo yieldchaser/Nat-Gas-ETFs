@@ -1559,6 +1559,55 @@
     color: rgba(255, 255, 255, 0.85);
 }
 
+/* ── Vol Regime overlay toggle row ─────────────────────────────── */
+.vrm-overlay-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 0 6px;
+    flex-wrap: wrap;
+}
+.vrm-overlay-lbl {
+    font-size: 0.6rem;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.28);
+    text-transform: uppercase;
+    margin-right: 2px;
+}
+.vrm-overlay-btn {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 9px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: transparent;
+    color: rgba(255,255,255,0.35);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    font-family: var(--font-mono, monospace);
+}
+.vrm-overlay-btn:hover {
+    border-color: rgba(255,255,255,0.28);
+    color: rgba(255,255,255,0.6);
+}
+.vrm-overlay-btn.active.ov-tr {
+    border-color: rgba(0,212,255,0.55);
+    color: rgba(0,212,255,0.9);
+    background: rgba(0,212,255,0.08);
+}
+.vrm-overlay-btn.active.ov-vov {
+    border-color: rgba(192,120,40,0.55);
+    color: rgba(192,120,40,0.9);
+    background: rgba(192,120,40,0.08);
+}
+.vrm-overlay-btn.active.ov-signals {
+    border-color: rgba(255,255,255,0.28);
+    color: rgba(255,255,255,0.75);
+    background: rgba(255,255,255,0.05);
+}
+
 /* ── Responsive overrides ──────────────────────────────────────── */
 @media (max-width: 900px) {
     .vrm-pair-layout { grid-template-columns: 1fr; }
