@@ -1559,6 +1559,88 @@
     color: rgba(255, 255, 255, 0.85);
 }
 
+/* ── Regime duration chip inside badge ─────────────────────────── */
+.vrm-regime-dur {
+    font-size: 0.72em;
+    opacity: 0.7;
+    font-weight: 400;
+    letter-spacing: 0;
+}
+
+/* ── Signal quality warning badge ──────────────────────────────── */
+.vrm-sqw {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    cursor: help;
+    flex-shrink: 0;
+}
+.vrm-sqw.sqw-unstable {
+    color: #e05050;
+    background: rgba(224,80,80,0.12);
+    border: 1px solid rgba(224,80,80,0.4);
+    animation: sqw-pulse 2s ease-in-out infinite;
+}
+.vrm-sqw.sqw-shifting {
+    color: #c07828;
+    background: rgba(192,120,40,0.10);
+    border: 1px solid rgba(192,120,40,0.35);
+}
+@keyframes sqw-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.6; }
+}
+
+/* ── Tactical read (implication bar) ────────────────────────────── */
+.vrm-tactical-read {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 7px 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    border-left: 3px solid transparent;
+    background: rgba(255,255,255,0.03);
+    cursor: help;
+}
+.vrm-tac-lbl {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    white-space: nowrap;
+    padding-top: 1px;
+    min-width: 76px;
+}
+.vrm-tac-txt {
+    font-size: 0.72rem;
+    line-height: 1.4;
+    color: rgba(255,255,255,0.8);
+}
+.vrm-tactical-read.tac-neutral  { border-left-color: rgba(255,255,255,0.15); }
+.vrm-tactical-read.tac-trend    { border-left-color: rgba(61,184,122,0.6);  background: rgba(61,184,122,0.05);  }
+.vrm-tactical-read.tac-good     { border-left-color: rgba(61,184,122,0.6);  background: rgba(61,184,122,0.05);  }
+.vrm-tactical-read.tac-watch    { border-left-color: rgba(0,212,255,0.5);   background: rgba(0,212,255,0.04);   }
+.vrm-tactical-read.tac-caution  { border-left-color: rgba(192,120,40,0.6);  background: rgba(192,120,40,0.06);  }
+.vrm-tactical-read.tac-danger   { border-left-color: rgba(192,64,64,0.7);   background: rgba(192,64,64,0.07);   }
+.vrm-tactical-read.tac-warn     { border-left-color: rgba(224,140,0,0.7);   background: rgba(224,140,0,0.07);   }
+.vrm-tactical-read.tac-trend .vrm-tac-lbl  { color: rgba(61,184,122,0.6);  }
+.vrm-tactical-read.tac-good .vrm-tac-lbl   { color: rgba(61,184,122,0.6);  }
+.vrm-tactical-read.tac-watch .vrm-tac-lbl  { color: rgba(0,212,255,0.55);  }
+.vrm-tactical-read.tac-caution .vrm-tac-lbl{ color: rgba(192,120,40,0.6);  }
+.vrm-tactical-read.tac-danger .vrm-tac-lbl { color: rgba(192,64,64,0.65);  }
+.vrm-tactical-read.tac-warn .vrm-tac-lbl   { color: rgba(224,140,0,0.65);  }
+
+/* ── Decay drag stat colours ────────────────────────────────────── */
+.vrm-stat-val.dd-low      { color: #3db87a; }
+.vrm-stat-val.dd-moderate { color: var(--yellow); }
+.vrm-stat-val.dd-high     { color: #c07828; }
+.vrm-stat-val.dd-extreme  { color: #e05050; }
+
 /* ── Vol Regime overlay toggle row ─────────────────────────────── */
 .vrm-overlay-row {
     display: flex;

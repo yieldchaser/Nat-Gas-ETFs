@@ -251,6 +251,38 @@ const VolRegime = {
         const trInfo     = this._trLabel(trCurrent, trPct);
         const regSignal  = this._regimeSignal(hvPcts['21d'], trCurrent, ts);
 
+        // Regime duration: consecutive sessions at the same 21D HV regime label
+        let regimeDuration = 0;
+        const hv21Full = m?.volatility?.hvSeriesAll?.['21d'] || [];
+        if (hv21Full.length > 5 && hvPcts['21d'] != null) {
+            const s21s = [...hv21Full].filter(v => v != null).sort((a,b) => a-b);
+            const pr   = f => s21s.length ? s21s[Math.max(0, Math.floor(s21s.length * f) - 1)] : 0;
+            const [rd25, rd75, rd90] = [pr(0.25), pr(0.75), pr(0.90)];
+            const getR = v => v >= rd90 ? 'SPIKE' : v >= rd75 ? 'ELEVATED' : v >= rd25 ? 'NORMAL' : 'LOW';
+            const curR = regBadge.label;
+            for (let i = hv21Full.length - 1; i >= 0 && regimeDuration < 9999; i--) {
+                if (hv21Full[i] == null || getR(hv21Full[i]) !== curR) break;
+                regimeDuration++;
+            }
+        }
+
+        // Annualised rebalancing decay drag: (L-1)² × σ²/2, expressed as %
+        const decayDrag = (!isNG && hv['21d'] != null && levMult > 1)
+            ? +(Math.pow(levMult - 1, 2) * Math.pow(hv['21d'] / 100, 2) / 2 * 100).toFixed(1)
+            : null;
+
+        // Signal quality warning based on VoV stability
+        const signalQuality = vov != null && vovInfo.cls === 'vov-high'
+            ? { label: '⚠ SIGNALS UNRELIABLE', cls: 'sqw-unstable',
+                tip: `VoV-21 is UNSTABLE (${vov.toFixed(1)}%) — volatility itself is highly volatile. All regime signals and TR readings are noisy. Avoid structural positions based solely on current classification.` }
+            : vov != null && vovInfo.cls === 'vov-mid'
+            ? { label: '~ SIGNALS NOISY', cls: 'sqw-shifting',
+                tip: `VoV-21 is SHIFTING (${vov.toFixed(1)}%) — regime may be transitioning. Treat current signals with moderate caution and confirm with price action.` }
+            : null;
+
+        // Actionable one-line tactical read
+        const tactRead = this._tacticalRead(regSignal, vovInfo, levMult, decayDrag, isNG, side);
+
         const tickerColor = side === 'long' ? 'var(--green)'
                           : side === 'short' ? 'var(--red)' : 'var(--blue)';
 
@@ -283,13 +315,16 @@ const VolRegime = {
                     ${lev   ? `<span class="vrm-badge-lev">${lev}</span>` : ''}
                     ${exch  ? `<span class="vrm-badge-exch">${exch}</span>` : ''}
                     <span class="vrm-regime-badge ${regBadge.cls}"
-                          data-tooltip="${ticker} Vol Regime: 21D HV currently sits at the ${hvPcts['21d'] != null ? hvPcts['21d'].toFixed(0)+'th' : '--'} percentile of all available history">
-                        ${regBadge.label}
+                          data-tooltip="${ticker} Vol Regime: 21D HV currently sits at the ${hvPcts['21d'] != null ? hvPcts['21d'].toFixed(0)+'th' : '--'} percentile of all available history${regimeDuration > 1 ? '. Current regime active for ' + regimeDuration + ' consecutive sessions.' : ''}">
+                        ${regBadge.label}${regimeDuration > 2 ? `<span class="vrm-regime-dur">&nbsp;·&nbsp;${regimeDuration}d</span>` : ''}
                     </span>
                     ${regSignal ? `<span class="vrm-regime-signal ${regSignal.cls}" data-tooltip="${regSignal.tip}">${regSignal.label}</span>` : ''}
                     ${spikeEvt ? `<span class="vrm-spike-badge"
                         data-tooltip="SPIKE EVENT in ${ticker} — 5D HV (${hv['5d'].toFixed(1)}%) exceeds 2× the 252D baseline (${hv['252d'].toFixed(1)}%). Near-term vol has completely broken from the annual norm.">⚡ SPIKE EVENT</span>` : ''}
+                    ${signalQuality ? `<span class="vrm-sqw ${signalQuality.cls}" data-tooltip="${signalQuality.tip}">${signalQuality.label}</span>` : ''}
                 </div>
+
+                ${tactRead ? `<div class="vrm-tactical-read ${tactRead.cls}" data-tooltip="Regime implication for ${ticker} — synthesises composite signal + VoV quality into a one-line tactical read."><span class="vrm-tac-lbl">IMPLICATION</span><span class="vrm-tac-txt">${tactRead.text}</span></div>` : ''}
 
                 <div class="vrm-hv-boxes">${boxes}</div>
 
@@ -359,6 +394,11 @@ const VolRegime = {
                     <div class="vrm-stat-box" data-tooltip="Effective ETF volatility = HV-21 × ${levMult}× leverage. This represents the realistic annual swing scale for ${ticker} — expressing what you are actually mathematically exposed to.">
                         <span class="vrm-stat-lbl">EFF VOL ${levMult}×</span>
                         <span class="vrm-stat-val vrm-eff-vol">${effVol.toFixed(1)}%</span>
+                    </div>` : ''}
+                    ${decayDrag != null ? `
+                    <div class="vrm-stat-box" data-tooltip="Annualised rebalancing decay drag = (L−1)² × σ²/2. At ${levMult}× leverage with ${hv['21d'].toFixed(1)}% HV-21, long holders lose approx ${decayDrag.toFixed(1)}% annually to path dependency alone, before any directional move. Decay scales with the SQUARE of volatility — doubling HV quadruples drag.">
+                        <span class="vrm-stat-lbl">DECAY DRAG</span>
+                        <span class="vrm-stat-val ${decayDrag > 30 ? 'dd-extreme' : decayDrag > 15 ? 'dd-high' : decayDrag > 5 ? 'dd-moderate' : 'dd-low'}">${decayDrag.toFixed(1)}%&nbsp;/yr</span>
                     </div>` : ''}
                 </div>
 
@@ -1301,5 +1341,52 @@ const VolRegime = {
             return { label: '◎ COILING',        cls: 'rs-coiling',
                      tip: 'Low-vol chop — quiet compression (HV ≤ 25th pct). Historical pattern: vol expansion typically follows coiling. Monitor term structure for early breakout signal.' };
         return null;
+    },
+
+    // One-line actionable tactical read synthesising composite regime + VoV quality
+    _tacticalRead(regSignal, vovInfo, levMult, decayDrag, isNG, side) {
+        const dd      = decayDrag != null ? ` (est. ${decayDrag.toFixed(0)}%/yr drag)` : '';
+        const isLong  = side === 'long';
+        const isShort = side === 'short';
+
+        // Signal quality overrides trump everything
+        if (vovInfo.cls === 'vov-high')
+            return { text: 'Regime signals unreliable — VoV unstable. Avoid structural positions based on current classification.', cls: 'tac-warn' };
+        if (vovInfo.cls === 'vov-mid')
+            return { text: 'Signals moderately noisy — VoV shifting. Reduce conviction on regime calls, confirm with price action.', cls: 'tac-caution' };
+
+        if (!regSignal)
+            return isNG
+                ? { text: 'Normal vol — no vol-based directional edge.', cls: 'tac-neutral' }
+                : { text: 'Normal regime — standard position sizing applicable.', cls: 'tac-neutral' };
+
+        switch (regSignal.cls) {
+            case 'rs-surge':
+                if (isNG)    return { text: 'Vol spike — options premium elevated; directional positions require wider stops and smaller size.', cls: 'tac-danger' };
+                if (isLong)  return { text: `Extreme decay environment${dd} — reduce leveraged long exposure or hedge urgently.`, cls: 'tac-danger' };
+                if (isShort) return { text: `High vol aids short ETF via long-side decay${dd}. Monitor for vol mean-reversion which caps upside.`, cls: 'tac-caution' };
+                break;
+            case 'rs-trending':
+                if (isNG)    return { text: 'Trending vol — directional momentum strategies have edge. Follow trend with defined stops.', cls: 'tac-trend' };
+                if (isLong)  return { text: `Elevated decay${dd} but sustained trend offsets it. Momentum valid — tight stops required, do not hold through reversals.`, cls: 'tac-trend' };
+                if (isShort) return { text: 'Trending vol: confirm NG direction before sizing — short ETF at risk if sustained rally is underway.', cls: 'tac-caution' };
+                break;
+            case 'rs-choppy':
+                if (isNG)    return { text: 'Choppy vol — mean-reversion and range strategies preferred. Breakout trades have low win rate.', cls: 'tac-caution' };
+                if (isLong)  return { text: `Worst-case for leveraged long: high decay${dd} + intraday noise cancels weekly gains. Reduce or exit.`, cls: 'tac-danger' };
+                if (isShort) return { text: `Choppy high-vol structurally aids short ETF — long-side decay${dd} + noise erodes long holders. Regime favours this side.`, cls: 'tac-trend' };
+                break;
+            case 'rs-qtrend':
+                if (isNG)    return { text: 'Quiet directional drift — low-cost entry window for positioning ahead of potential vol expansion.', cls: 'tac-good' };
+                if (isLong)  return { text: `Low decay window${dd} — favourable entry for directional longs. Watch term structure acceleration as breakout trigger.`, cls: 'tac-good' };
+                if (isShort) return { text: 'Quiet trend: low decay both sides. Short ETF less favoured if NG is trending upward.', cls: 'tac-watch' };
+                break;
+            case 'rs-coiling':
+                if (isNG)    return { text: 'Vol compression — breakout likely. Monitor storage data and term structure for direction catalyst.', cls: 'tac-watch' };
+                if (isLong)  return { text: `Low decay${dd}, no clear trend. Small long tolerable — monitor term structure acceleration for breakout signal.`, cls: 'tac-watch' };
+                if (isShort) return { text: `Coiling: low decay${dd} environment for short ETF. Watch for vol expansion trigger and confirm direction before adding.`, cls: 'tac-watch' };
+                break;
+        }
+        return { text: 'Monitor for regime confirmation.', cls: 'tac-neutral' };
     },
 };
