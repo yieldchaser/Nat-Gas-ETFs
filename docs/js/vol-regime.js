@@ -226,6 +226,10 @@ const VolRegime = {
         const hv       = vol.hv       || {};
         const hvPcts   = vol.hvPercentiles || {};
         const vov      = vol.vov21;
+        const vovSeries = (vol.vovSeries || []).filter(v => v != null);
+        const vovPct   = vov != null && vovSeries.length >= 20
+            ? +(vovSeries.filter(v => v <= vov).length / vovSeries.length * 100).toFixed(1)
+            : null;
 
         // Primary regime badge uses 21D HV percentile
         const regBadge = this._regime(hvPcts['21d']);
@@ -271,13 +275,15 @@ const VolRegime = {
             ? +(Math.pow(levMult - 1, 2) * Math.pow(hv['21d'] / 100, 2) / 2 * 100).toFixed(1)
             : null;
 
-        // Signal quality warning based on VoV stability
-        const signalQuality = vov != null && vovInfo.cls === 'vov-high'
+        // Signal quality: percentile-based so the badge only fires when VoV is
+        // elevated vs this instrument's own history (≥90th = unreliable, ≥75th = noisy).
+        // Pure absolute thresholds fire permanently on nat gas ETFs and carry no information.
+        const signalQuality = vovPct != null && vovPct >= 90
             ? { label: '⚠ SIGNALS UNRELIABLE', cls: 'sqw-unstable',
-                tip: `VoV-21 is UNSTABLE (${vov.toFixed(1)}%) — volatility itself is highly volatile. All regime signals and TR readings are noisy. Avoid structural positions based solely on current classification.` }
-            : vov != null && vovInfo.cls === 'vov-mid'
+                tip: `VoV-21 is at its ${vovPct.toFixed(0)}th percentile (${vov.toFixed(1)}%) — volatility of volatility is higher than ${vovPct.toFixed(0)}% of all recorded sessions for ${ticker}. Regime signals and TR readings are unreliable. Avoid structural positions based solely on current classification.` }
+            : vovPct != null && vovPct >= 75
             ? { label: '~ SIGNALS NOISY', cls: 'sqw-shifting',
-                tip: `VoV-21 is SHIFTING (${vov.toFixed(1)}%) — regime may be transitioning. Treat current signals with moderate caution and confirm with price action.` }
+                tip: `VoV-21 is at its ${vovPct.toFixed(0)}th percentile (${vov.toFixed(1)}%) — noisier than ${vovPct.toFixed(0)}% of ${ticker}'s history. Regime may be transitioning. Confirm signals with price action before acting.` }
             : null;
 
         // Actionable one-line tactical read
