@@ -21,7 +21,8 @@ const VolRegime = {
     _dragState:  {},      // ticker -> { active, startIdx, currentIdx }
     _horizonState: {},    // ticker -> active horizon key ('all','1y','6m','3m','1m','1w')
     _activeSeries: {},    // ticker -> array of active HV keys e.g. ['21d', '63d']
-    _activeOverlays: {},  // ticker -> array of active overlay keys ['tr','vov','signals']
+    _activeOverlays: {},  // ticker -> array of active overlay keys ['tr','vov','signals','ng']
+    _ngPriceMap: null,    // Map<dateStr, price> built from ngVolMetrics for fast date-aligned lookup
 
     // ── Config ─────────────────────────────────────────────
     _instruments: ['NG=F', 'BOIL', 'HNU.TO', '3NGL.L', 'KOLD', 'HND.TO', '3NGS.L'],
@@ -52,6 +53,11 @@ const VolRegime = {
     render(allMetrics, ngVolMetrics) {
         this._allMetrics   = allMetrics;
         this._ngVolMetrics = ngVolMetrics;
+
+        // Build date→price lookup for NG=F price overlay (available once live data loads)
+        if (ngVolMetrics?.dates && ngVolMetrics?.closes) {
+            this._ngPriceMap = new Map(ngVolMetrics.dates.map((d, i) => [d, ngVolMetrics.closes[i]]));
+        }
 
         this._buildSelector();
         this._renderContent();
@@ -226,6 +232,10 @@ const VolRegime = {
         const hv       = vol.hv       || {};
         const hvPcts   = vol.hvPercentiles || {};
         const vov      = vol.vov21;
+        const vovSeries = (vol.vovSeries || []).filter(v => v != null);
+        const vovPct   = vov != null && vovSeries.length >= 20
+            ? +(vovSeries.filter(v => v <= vov).length / vovSeries.length * 100).toFixed(1)
+            : null;
 
         // Primary regime badge uses 21D HV percentile
         const regBadge = this._regime(hvPcts['21d']);
@@ -271,13 +281,15 @@ const VolRegime = {
             ? +(Math.pow(levMult - 1, 2) * Math.pow(hv['21d'] / 100, 2) / 2 * 100).toFixed(1)
             : null;
 
-        // Signal quality warning based on VoV stability
-        const signalQuality = vov != null && vovInfo.cls === 'vov-high'
+        // Signal quality: percentile-based so the badge only fires when VoV is
+        // elevated vs this instrument's own history (≥90th = unreliable, ≥75th = noisy).
+        // Pure absolute thresholds fire permanently on nat gas ETFs and carry no information.
+        const signalQuality = vovPct != null && vovPct >= 90
             ? { label: '⚠ SIGNALS UNRELIABLE', cls: 'sqw-unstable',
-                tip: `VoV-21 is UNSTABLE (${vov.toFixed(1)}%) — volatility itself is highly volatile. All regime signals and TR readings are noisy. Avoid structural positions based solely on current classification.` }
-            : vov != null && vovInfo.cls === 'vov-mid'
+                tip: `VoV-21 is at its ${vovPct.toFixed(0)}th percentile (${vov.toFixed(1)}%) — volatility of volatility is higher than ${vovPct.toFixed(0)}% of all recorded sessions for ${ticker}. Regime signals and TR readings are unreliable. Avoid structural positions based solely on current classification.` }
+            : vovPct != null && vovPct >= 75
             ? { label: '~ SIGNALS NOISY', cls: 'sqw-shifting',
-                tip: `VoV-21 is SHIFTING (${vov.toFixed(1)}%) — regime may be transitioning. Treat current signals with moderate caution and confirm with price action.` }
+                tip: `VoV-21 is at its ${vovPct.toFixed(0)}th percentile (${vov.toFixed(1)}%) — noisier than ${vovPct.toFixed(0)}% of ${ticker}'s history. Regime may be transitioning. Confirm signals with price action before acting.` }
             : null;
 
         // Actionable one-line tactical read
@@ -341,6 +353,9 @@ const VolRegime = {
                         <button class="vrm-overlay-btn ov-signals${ao.includes('signals')?' active':''}"
                                 onclick="VolRegime._toggleOverlay('${ticker}','signals')"
                                 data-tooltip="Show composite regime signal timeline at chart bottom. ⚡ Surge=red · → Trending=green · ↔ Choppy=amber · ↗ Quiet Trend=cyan · ◎ Coiling=gray">SIGNALS</button>
+                        ${!isNG ? `<button class="vrm-overlay-btn ov-ng${ao.includes('ng')?' active':''}${!VolRegime._ngPriceMap?' disabled':''}"
+                                onclick="VolRegime._toggleOverlay('${ticker}','ng')"
+                                data-tooltip="${VolRegime._ngPriceMap ? 'Show NG=F front-month price as a green line overlay. Secondary right Y-axis in $/MMBtu. Helps correlate ETF vol regime changes with spot price moves.' : 'NG=F price data loading — available once live data is fetched.'}">NG</button>` : ''}
                     </div>`;
                 })()}
 
@@ -447,6 +462,7 @@ const VolRegime = {
             const trSeries     = [...Array(histCloses.length - trSeriesRaw.length).fill(null), ...trSeriesRaw];
             const vovSeriesRaw = histCloses.length >= 32 ? Metrics.computeVoVSeries(histCloses)    : [];
             const vovSeries    = [...Array(histCloses.length - vovSeriesRaw.length).fill(null), ...vovSeriesRaw];
+            const vov21Current = histCloses.length >= 32 ? Metrics.computeVoV21(histCloses) : null;
 
             allMetrics[ticker] = {
                 ticker,
@@ -458,7 +474,7 @@ const VolRegime = {
                     hvSeries21: hvSeries21Legacy,
                     hvDates21: hvDates21Legacy,
                     hvTermStructure: vol.hv_term_structure ?? vol.hvTermStructure ?? null,
-                    vov21:       vol.vov21       ?? null,
+                    vov21:       vov21Current ?? vol.vov21 ?? null,
                     volRegimePct: vol.vol_regime_pct ?? vol.volRegimePct ?? null,
                     atr14Pct:    vol.atr14_pct   ?? vol.atr14Pct        ?? null,
                     vovSeries,
@@ -490,6 +506,8 @@ const VolRegime = {
         const vovSeries    = [...Array(closes.length - vovSeriesRaw.length).fill(null), ...vovSeriesRaw];
         return {
             ticker,
+            closes,   // raw closes — needed for NG=F price overlay date-alignment
+            dates,    // raw dates  — same
             volatility: {
                 hv: {
                     '5d':  Metrics.computeHV(closes, 5),
@@ -738,13 +756,19 @@ const VolRegime = {
 
         // ── Overlay state ────────────────────────────────────────
         const activeOverlays = this._activeOverlays[ticker] || [];
-        const showTR      = activeOverlays.includes('tr');
-        const showVoV     = activeOverlays.includes('vov');
-        const showSignals = activeOverlays.includes('signals');
+        const showTR       = activeOverlays.includes('tr');
+        const showVoV      = activeOverlays.includes('vov');
+        const showSignals  = activeOverlays.includes('signals');
+        const showNgPrice  = activeOverlays.includes('ng') && this._ngPriceMap != null;
         const trSeriesFull  = m?.tr?.series           || [];
         const vovSeriesFull = m?.volatility?.vovSeries || [];
         const trSlice  = trSeriesFull.slice(si, ei);
         const vovSlice = vovSeriesFull.slice(si, ei);
+
+        // Build NG=F price slice aligned to this ETF's date range
+        const ngSlice = showNgPrice
+            ? fullDates.slice(si, ei).map(d => this._ngPriceMap.get(d) ?? null)
+            : [];
 
         // Gather all valid values for y-scale
         const allVisValues = [];
@@ -800,8 +824,8 @@ const VolRegime = {
             ctx.stroke();
         }
         ctx.setLineDash([]);
-        // p25/p75/p90 right-side text labels — hide when overlay axis occupies same space
-        if (!showTR && !showVoV) {
+        // p25/p75/p90 right-side text labels — hide when any overlay axis occupies same space
+        if (!showTR && !showVoV && !showNgPrice) {
             ctx.font = '9px monospace'; ctx.textAlign = 'left';
             ctx.fillStyle = 'rgba(255,255,255,0.28)';
             for (const tick of yTicks) ctx.fillText(tick.toFixed(0) + '%', pad.left + cW + 5, toY(tick) + 3.5);
@@ -942,6 +966,61 @@ const VolRegime = {
             ctx.textAlign = 'center'; ctx.font = '8px monospace'; ctx.fillStyle = axColor;
             ctx.fillText(showTR ? 'TR' : 'VoV', 0, 0);
             ctx.restore();
+        }
+
+        // ── NG=F price overlay ────────────────────────────────
+        if (showNgPrice) {
+            const ngVals = ngSlice.filter(v => v != null);
+            if (ngVals.length >= 2) {
+                const ngMin = Math.min(...ngVals) * 0.94;
+                const ngMax = Math.max(...ngVals) * 1.06;
+                const ngRange = ngMax - ngMin || 1;
+                const toYng = v => pad.top + cH - ((v - ngMin) / ngRange) * cH;
+
+                // Price line — bright green, slightly translucent
+                ctx.strokeStyle = 'rgba(61,220,130,0.75)'; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+                let px = null, py = null;
+                for (let i = 0; i < ngSlice.length; i++) {
+                    if (ngSlice[i] == null) { px = null; continue; }
+                    const [x, y] = [toX(i), toYng(ngSlice[i])];
+                    if (px != null) { ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(x, y); ctx.stroke(); }
+                    [px, py] = [x, y];
+                }
+
+                // Right Y-axis ticks
+                const ngColor = 'rgba(61,220,130,0.60)';
+                ctx.font = '9px monospace'; ctx.textAlign = 'left'; ctx.fillStyle = ngColor;
+                const ngStep = (ngMax - ngMin) / 4;
+                for (let i = 0; i <= 4; i++) {
+                    const v = ngMin + i * ngStep;
+                    const ty = toYng(v);
+                    if (ty >= pad.top && ty <= pad.top + cH)
+                        ctx.fillText('$' + v.toFixed(2), pad.left + cW + 5, ty + 3.5);
+                }
+                // Rotated axis label
+                ctx.save();
+                ctx.translate(cssW - 4, pad.top + cH / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.textAlign = 'center'; ctx.font = '8px monospace'; ctx.fillStyle = ngColor;
+                ctx.fillText('NG', 0, 0);
+                ctx.restore();
+
+                // End-dot with price label
+                if (atEnd) {
+                    let lastNg = null;
+                    for (let i = ngSlice.length - 1; i >= 0; i--) if (ngSlice[i] != null) { lastNg = ngSlice[i]; break; }
+                    if (lastNg != null) {
+                        const dx = toX(ngSlice.length - 1), dy = toYng(lastNg);
+                        ctx.beginPath(); ctx.arc(dx, dy, 3.5, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(61,220,130,0.85)'; ctx.fill();
+                        ctx.beginPath(); ctx.arc(dx, dy, 1.5, 0, Math.PI * 2);
+                        ctx.fillStyle = '#fff'; ctx.fill();
+                        ctx.font = 'bold 9px monospace'; ctx.fillStyle = 'rgba(61,220,130,0.85)';
+                        ctx.textAlign = 'right';
+                        ctx.fillText('$' + lastNg.toFixed(2), dx - 10, dy - 4);
+                    }
+                }
+            }
         }
 
         // ── Current value dots ─────────────────────────────────
@@ -1267,6 +1346,9 @@ const VolRegime = {
                 const vv = vovSlice[hIdx];
                 const vl = vv >= 20 ? 'UNSTABLE' : vv >= 12 ? 'SHIFTING' : vv >= 6 ? 'MODERATE' : 'STABLE';
                 lines.push({ text: `VoV: ${vv.toFixed(1)}% · ${vl}`, color: 'rgba(192,120,40,0.85)', isDate: false });
+            }
+            if (showNgPrice && ngSlice[hIdx] != null) {
+                lines.push({ text: `NG=F: $${ngSlice[hIdx].toFixed(3)}/MMBtu`, color: 'rgba(61,220,130,0.85)', isDate: false });
             }
             if (showSignals) {
                 // Reuse already-computed p25/p75/p90 (primary series = 21D by default)
