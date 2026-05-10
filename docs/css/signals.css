@@ -1478,6 +1478,28 @@
 /* Effective vol */
 .vrm-stat-val.vrm-eff-vol { color: var(--orange); }
 
+/* Trend Ratio classes — audit-validated thresholds: TR≥1.2 trending, TR<0.8 choppy */
+.vrm-stat-val.tr-trending { color: #3db87a; }
+.vrm-stat-val.tr-mixed    { color: rgba(255,255,255,0.75); }
+.vrm-stat-val.tr-choppy   { color: #c07828; }
+.vrm-stat-val.tr-extreme  { color: #e05050; }
+
+/* Composite Regime Signal badge — appears in card header */
+.vrm-regime-signal {
+    font-size: 0.54rem;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+    cursor: help;
+}
+.vrm-regime-signal.rs-surge    { color: #fff;       background: rgba(192,64,64,0.22);  border: 1px solid rgba(192,64,64,0.5);    }
+.vrm-regime-signal.rs-trending { color: #3db87a;    background: rgba(61,184,122,0.1);  border: 1px solid rgba(61,184,122,0.35);  }
+.vrm-regime-signal.rs-choppy   { color: #c07828;    background: rgba(192,120,40,0.1);  border: 1px solid rgba(192,120,40,0.35);  }
+.vrm-regime-signal.rs-qtrend   { color: var(--cyan); background: rgba(0,255,255,0.05); border: 1px solid rgba(0,255,255,0.22);   }
+.vrm-regime-signal.rs-coiling  { color: rgba(255,255,255,0.65); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.14); }
+
 /* ---- VDDS BAR ---- */
 .vdds-bar {
     display: flex;
