@@ -353,6 +353,9 @@ const VolRegime = {
                         <button class="vrm-overlay-btn ov-signals${ao.includes('signals')?' active':''}"
                                 onclick="VolRegime._toggleOverlay('${ticker}','signals')"
                                 data-tooltip="Show composite regime signal timeline at chart bottom. ⚡ Surge=red · → Trending=green · ↔ Choppy=amber · ↗ Quiet Trend=cyan · ◎ Coiling=gray">SIGNALS</button>
+                        <button class="vrm-overlay-btn ov-price${ao.includes('price')?' active':''}"
+                                onclick="VolRegime._toggleOverlay('${ticker}','price')"
+                                data-tooltip="Show ${ticker} historical price as a white line overlay. Secondary right Y-axis. Helps see how price action correlates with vol regime changes.">PRICE</button>
                         ${!isNG ? `<button class="vrm-overlay-btn ov-ng${ao.includes('ng')?' active':''}${!VolRegime._ngPriceMap?' disabled':''}"
                                 onclick="VolRegime._toggleOverlay('${ticker}','ng')"
                                 data-tooltip="${VolRegime._ngPriceMap ? 'Show NG=F front-month price as a green line overlay. Secondary right Y-axis in $/MMBtu. Helps correlate ETF vol regime changes with spot price moves.' : 'NG=F price data loading — available once live data is fetched.'}">NG</button>` : ''}
@@ -466,6 +469,8 @@ const VolRegime = {
 
             allMetrics[ticker] = {
                 ticker,
+                closes: histCloses, // raw price series — 1:1 with hvDatesAll, used for price overlay
+                dates:  histDates,
                 volatility: {
                     hv,
                     hvPercentiles,
@@ -760,10 +765,14 @@ const VolRegime = {
         const showVoV      = activeOverlays.includes('vov');
         const showSignals  = activeOverlays.includes('signals');
         const showNgPrice  = activeOverlays.includes('ng') && this._ngPriceMap != null;
+        const showPrice    = activeOverlays.includes('price');
         const trSeriesFull  = m?.tr?.series           || [];
         const vovSeriesFull = m?.volatility?.vovSeries || [];
         const trSlice  = trSeriesFull.slice(si, ei);
         const vovSlice = vovSeriesFull.slice(si, ei);
+
+        // ETF own-price slice — closes is 1:1 with hvDatesAll so direct slice works
+        const priceSlice = showPrice && m.closes ? m.closes.slice(si, ei) : [];
 
         // Build NG=F price slice aligned to this ETF's date range
         const ngSlice = showNgPrice
@@ -825,7 +834,7 @@ const VolRegime = {
         }
         ctx.setLineDash([]);
         // p25/p75/p90 right-side text labels — hide when any overlay axis occupies same space
-        if (!showTR && !showVoV && !showNgPrice) {
+        if (!showTR && !showVoV && !showNgPrice && !showPrice) {
             ctx.font = '9px monospace'; ctx.textAlign = 'left';
             ctx.fillStyle = 'rgba(255,255,255,0.28)';
             for (const tick of yTicks) ctx.fillText(tick.toFixed(0) + '%', pad.left + cW + 5, toY(tick) + 3.5);
@@ -966,6 +975,57 @@ const VolRegime = {
             ctx.textAlign = 'center'; ctx.font = '8px monospace'; ctx.fillStyle = axColor;
             ctx.fillText(showTR ? 'TR' : 'VoV', 0, 0);
             ctx.restore();
+        }
+
+        // ── ETF own-price overlay ─────────────────────────────
+        if (showPrice && priceSlice.length >= 2) {
+            const pVals = priceSlice.filter(v => v != null);
+            if (pVals.length >= 2) {
+                const pMin = Math.min(...pVals) * 0.94;
+                const pMax = Math.max(...pVals) * 1.06;
+                const pRange = pMax - pMin || 1;
+                const toYp = v => pad.top + cH - ((v - pMin) / pRange) * cH;
+
+                ctx.strokeStyle = 'rgba(255,255,255,0.60)'; ctx.lineWidth = 1.3; ctx.setLineDash([]);
+                let px = null, py = null;
+                for (let i = 0; i < priceSlice.length; i++) {
+                    if (priceSlice[i] == null) { px = null; continue; }
+                    const [x, y] = [toX(i), toYp(priceSlice[i])];
+                    if (px != null) { ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(x, y); ctx.stroke(); }
+                    [px, py] = [x, y];
+                }
+
+                const priceColor = 'rgba(255,255,255,0.45)';
+                ctx.font = '9px monospace'; ctx.textAlign = 'left'; ctx.fillStyle = priceColor;
+                const pStep = (pMax - pMin) / 4;
+                for (let i = 0; i <= 4; i++) {
+                    const v = pMin + i * pStep;
+                    const ty = toYp(v);
+                    if (ty >= pad.top && ty <= pad.top + cH)
+                        ctx.fillText('$' + v.toFixed(2), pad.left + cW + 5, ty + 3.5);
+                }
+                ctx.save();
+                ctx.translate(cssW - 4, pad.top + cH / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.textAlign = 'center'; ctx.font = '8px monospace'; ctx.fillStyle = priceColor;
+                ctx.fillText('$', 0, 0);
+                ctx.restore();
+
+                if (atEnd) {
+                    let lastP = null;
+                    for (let i = priceSlice.length - 1; i >= 0; i--) if (priceSlice[i] != null) { lastP = priceSlice[i]; break; }
+                    if (lastP != null) {
+                        const dx = toX(priceSlice.length - 1), dy = toYp(lastP);
+                        ctx.beginPath(); ctx.arc(dx, dy, 3.5, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(255,255,255,0.80)'; ctx.fill();
+                        ctx.beginPath(); ctx.arc(dx, dy, 1.5, 0, Math.PI * 2);
+                        ctx.fillStyle = '#000'; ctx.fill();
+                        ctx.font = 'bold 9px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.80)';
+                        ctx.textAlign = 'right';
+                        ctx.fillText('$' + lastP.toFixed(2), dx - 10, dy - 4);
+                    }
+                }
+            }
         }
 
         // ── NG=F price overlay ────────────────────────────────
@@ -1346,6 +1406,9 @@ const VolRegime = {
                 const vv = vovSlice[hIdx];
                 const vl = vv >= 20 ? 'UNSTABLE' : vv >= 12 ? 'SHIFTING' : vv >= 6 ? 'MODERATE' : 'STABLE';
                 lines.push({ text: `VoV: ${vv.toFixed(1)}% · ${vl}`, color: 'rgba(192,120,40,0.85)', isDate: false });
+            }
+            if (showPrice && priceSlice[hIdx] != null) {
+                lines.push({ text: `${ticker}: $${priceSlice[hIdx].toFixed(2)}`, color: 'rgba(255,255,255,0.80)', isDate: false });
             }
             if (showNgPrice && ngSlice[hIdx] != null) {
                 lines.push({ text: `NG=F: $${ngSlice[hIdx].toFixed(3)}/MMBtu`, color: 'rgba(61,220,130,0.85)', isDate: false });
