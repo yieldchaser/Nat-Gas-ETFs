@@ -21,6 +21,7 @@ const VolRegime = {
     _dragState:  {},      // ticker -> { active, startIdx, currentIdx }
     _horizonState: {},    // ticker -> active horizon key ('all','1y','6m','3m','1m','1w')
     _activeSeries: {},    // ticker -> array of active HV keys e.g. ['21d', '63d']
+    _activeOverlays: {},  // ticker -> array of active overlay keys ['tr','vov','signals']
 
     // ── Config ─────────────────────────────────────────────
     _instruments: ['NG=F', 'BOIL', 'HNU.TO', '3NGL.L', 'KOLD', 'HND.TO', '3NGS.L'],
@@ -143,6 +144,17 @@ const VolRegime = {
             }
         } else {
             this._activeSeries[ticker].push(key);
+        }
+        this._renderContent();
+    },
+
+    _toggleOverlay(ticker, key) {
+        if (!this._activeOverlays[ticker]) this._activeOverlays[ticker] = [];
+        const active = this._activeOverlays[ticker];
+        if (active.includes(key)) {
+            this._activeOverlays[ticker] = active.filter(k => k !== key);
+        } else {
+            this._activeOverlays[ticker].push(key);
         }
         this._renderContent();
     },
@@ -281,6 +293,22 @@ const VolRegime = {
 
                 <div class="vrm-hv-boxes">${boxes}</div>
 
+                ${(() => {
+                    const ao = this._activeOverlays[ticker] || [];
+                    return `<div class="vrm-overlay-row">
+                        <span class="vrm-overlay-lbl">OVERLAYS</span>
+                        <button class="vrm-overlay-btn ov-tr${ao.includes('tr')?' active':''}"
+                                onclick="VolRegime._toggleOverlay('${ticker}','tr')"
+                                data-tooltip="Show historical Trend Ratio as a cyan line overlay. Secondary right Y-axis. TR ≥ 1.2 = trending, TR < 0.8 = choppy.">TR</button>
+                        <button class="vrm-overlay-btn ov-vov${ao.includes('vov')?' active':''}"
+                                onclick="VolRegime._toggleOverlay('${ticker}','vov')"
+                                data-tooltip="Show historical Vol-of-Vol (VoV-21) as an amber line overlay. High VoV = regime instability — signals are less reliable.">VoV</button>
+                        <button class="vrm-overlay-btn ov-signals${ao.includes('signals')?' active':''}"
+                                onclick="VolRegime._toggleOverlay('${ticker}','signals')"
+                                data-tooltip="Show composite regime signal timeline at chart bottom. ⚡ Surge=red · → Trending=green · ↔ Choppy=amber · ↗ Quiet Trend=cyan · ◎ Coiling=gray">SIGNALS</button>
+                    </div>`;
+                })()}
+
                 <div class="vrm-spark-wrap">
                     <div class="vrm-spark-label-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
                         <div class="vrm-spark-label" style="margin-bottom:0;">Rolling HV
@@ -375,6 +403,10 @@ const VolRegime = {
             const hv = { '5d': hv5d, ...(vol.hv || {}) };
             const trCurrent    = histCloses.length >= 21 ? Metrics.computeTR(histCloses)            : null;
             const trPercentile = histCloses.length >= 25 ? Metrics.computeTRPercentile(histCloses) : null;
+            const trSeriesRaw  = histCloses.length >= 21 ? Metrics.computeTRSeries(histCloses)     : [];
+            const trSeries     = [...Array(histCloses.length - trSeriesRaw.length).fill(null), ...trSeriesRaw];
+            const vovSeriesRaw = histCloses.length >= 32 ? Metrics.computeVoVSeries(histCloses)    : [];
+            const vovSeries    = [...Array(histCloses.length - vovSeriesRaw.length).fill(null), ...vovSeriesRaw];
 
             allMetrics[ticker] = {
                 ticker,
@@ -389,8 +421,9 @@ const VolRegime = {
                     vov21:       vol.vov21       ?? null,
                     volRegimePct: vol.vol_regime_pct ?? vol.volRegimePct ?? null,
                     atr14Pct:    vol.atr14_pct   ?? vol.atr14Pct        ?? null,
+                    vovSeries,
                 },
-                tr: { current: trCurrent, percentile: trPercentile },
+                tr: { current: trCurrent, percentile: trPercentile, series: trSeries },
             };
         }
         return allMetrics;
@@ -411,6 +444,10 @@ const VolRegime = {
         const hvDatesAll = dates;
         const hvSeries21 = Metrics.computeHVSeries(closes, 21, closes.length);
         const hvDates21  = dates.slice(21, 21 + hvSeries21.length);
+        const trSeriesRaw  = Metrics.computeTRSeries(closes);
+        const trSeries     = [...Array(closes.length - trSeriesRaw.length).fill(null), ...trSeriesRaw];
+        const vovSeriesRaw = Metrics.computeVoVSeries(closes);
+        const vovSeries    = [...Array(closes.length - vovSeriesRaw.length).fill(null), ...vovSeriesRaw];
         return {
             ticker,
             volatility: {
@@ -433,10 +470,12 @@ const VolRegime = {
                 hvDates21,
                 hvTermStructure: Metrics.computeHVTermStructure(closes),
                 vov21: Metrics.computeVoV21(closes),
+                vovSeries,
             },
             tr: {
                 current:    Metrics.computeTR(closes),
                 percentile: Metrics.computeTRPercentile(closes),
+                series:     trSeries,
             },
         };
     },
@@ -657,6 +696,16 @@ const VolRegime = {
         const primarySeries = slices[primaryKey] || slices[Object.keys(slices)[0]] || [];
         const fullPrimary = allSeries[primaryKey] || fullDates.map(() => 0); // fallback
 
+        // ── Overlay state ────────────────────────────────────────
+        const activeOverlays = this._activeOverlays[ticker] || [];
+        const showTR      = activeOverlays.includes('tr');
+        const showVoV     = activeOverlays.includes('vov');
+        const showSignals = activeOverlays.includes('signals');
+        const trSeriesFull  = m?.tr?.series           || [];
+        const vovSeriesFull = m?.volatility?.vovSeries || [];
+        const trSlice  = trSeriesFull.slice(si, ei);
+        const vovSlice = vovSeriesFull.slice(si, ei);
+
         // Gather all valid values for y-scale
         const allVisValues = [];
         for (const k in slices) {
@@ -796,6 +845,62 @@ const VolRegime = {
             }
         }
 
+        // ── Secondary overlays: TR and VoV ───────────────────────
+        if (showTR || showVoV) {
+            // Build secondary Y scale from whichever overlay is "primary"
+            const ovSlice = showTR ? trSlice : vovSlice;
+            const ovVals  = ovSlice.filter(v => v != null);
+            const ovMin   = showTR ? Math.min(0.4, ovVals.length ? Math.min(...ovVals) * 0.9 : 0.4) : 0;
+            const ovMax   = showTR ? Math.max(1.6, ovVals.length ? Math.max(...ovVals) * 1.1 : 1.6)
+                                   : Math.max(30,  ovVals.length ? Math.max(...ovVals) * 1.1 : 30);
+            const ovRange = ovMax - ovMin || 1;
+            const toYov   = v => pad.top + cH - ((v - ovMin) / ovRange) * cH;
+
+            const drawOverlayLine = (slice, color, lw) => {
+                ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash([]);
+                let px = null, py = null;
+                for (let i = 0; i < slice.length; i++) {
+                    if (slice[i] == null) { px = null; continue; }
+                    const [x, y] = [toX(i), toYov(slice[i])];
+                    if (px != null) { ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(x, y); ctx.stroke(); }
+                    [px, py] = [x, y];
+                }
+            };
+
+            if (showTR) {
+                // TR=1.2 (trending) and TR=0.8 (choppy) threshold guides
+                ctx.setLineDash([2, 4]); ctx.lineWidth = 0.7;
+                for (const [v, col] of [[1.2,'rgba(61,184,122,0.30)'],[0.8,'rgba(192,120,40,0.30)']]) {
+                    const ty = toYov(v);
+                    if (ty >= pad.top && ty <= pad.top + cH) {
+                        ctx.strokeStyle = col;
+                        ctx.beginPath(); ctx.moveTo(pad.left, ty); ctx.lineTo(pad.left + cW, ty); ctx.stroke();
+                    }
+                }
+                ctx.setLineDash([]);
+                drawOverlayLine(trSlice,  'rgba(0,212,255,0.72)', 1.5);
+            }
+            if (showVoV) drawOverlayLine(vovSlice, 'rgba(192,120,40,0.68)', 1.2);
+
+            // Right Y-axis: TR wins over VoV for label space
+            const axColor = showTR ? 'rgba(0,212,255,0.55)' : 'rgba(192,120,40,0.55)';
+            ctx.font = '9px monospace'; ctx.textAlign = 'left'; ctx.fillStyle = axColor;
+            const axTicks = showTR ? [0.6,0.8,1.0,1.2,1.4] : [5,10,15,20,25];
+            for (const v of axTicks) {
+                if (v < ovMin || v > ovMax) continue;
+                const ty = toYov(v);
+                if (ty >= pad.top && ty <= pad.top + cH)
+                    ctx.fillText(showTR ? v.toFixed(1) : v + '%', pad.left + cW + 5, ty + 3.5);
+            }
+            // Tiny axis label rotated along right edge
+            ctx.save();
+            ctx.translate(cssW - 4, pad.top + cH / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center'; ctx.font = '8px monospace'; ctx.fillStyle = axColor;
+            ctx.fillText(showTR ? 'TR' : 'VoV', 0, 0);
+            ctx.restore();
+        }
+
         // ── Current value dots ─────────────────────────────────
         if (atEnd) {
             let labelOffset = 0;
@@ -830,6 +935,37 @@ const VolRegime = {
                 // Adjust vertical placement minimally to avoid text overlap if possible
                 ctx.fillText(lastValid.toFixed(1) + '%', lX - 10, lY - 4 - labelOffset);
                 if (activeKeys.length > 1) labelOffset += 10;
+            }
+        }
+
+        // ── Regime signal timeline strip (5px at chart bottom) ───
+        if (showSignals) {
+            const hv21S  = (allSeries['21d'] || []).slice(si, ei);
+            const hv5dS  = (allSeries['5d']  || []).slice(si, ei);
+            const hv63dS = (allSeries['63d'] || []).slice(si, ei);
+            // Use full 21D series for stable percentile thresholds (same as regime zones)
+            const s21all = [...(allSeries['21d'] || [])].filter(v => v != null).sort((a,b) => a-b);
+            const pFn21  = f => s21all.length ? s21all[Math.max(0, Math.floor(s21all.length * f) - 1)] : 0;
+            const [sr25, sr75, sr90] = [pFn21(0.25), pFn21(0.75), pFn21(0.90)];
+            const SIG_COL = {
+                'rs-surge':    'rgba(192,64,64,0.85)',
+                'rs-trending': 'rgba(61,184,122,0.85)',
+                'rs-choppy':   'rgba(192,120,40,0.85)',
+                'rs-qtrend':   'rgba(0,212,255,0.85)',
+                'rs-coiling':  'rgba(255,255,255,0.20)',
+            };
+            const stripH = 5;
+            const stripY = pad.top + cH - stripH;
+            const barW   = cW / Math.max(hv21S.length - 1, 1);
+            for (let i = 0; i < hv21S.length; i++) {
+                const hv21 = hv21S[i]; if (hv21 == null) continue;
+                const hvPct = hv21 >= sr90 ? 92 : hv21 >= sr75 ? 80 : hv21 >= sr25 ? 50 : 15;
+                const ts_i  = (hv5dS[i] > 0 && hv63dS[i] > 0) ? hv5dS[i] / hv63dS[i] : null;
+                const sig   = this._regimeSignal(hvPct, trSlice[i] ?? null, ts_i);
+                if (!sig) continue;
+                const col = SIG_COL[sig.cls]; if (!col) continue;
+                ctx.fillStyle = col;
+                ctx.fillRect(toX(i) - barW / 2, stripY, barW + 1, stripH);
             }
         }
 
@@ -1043,6 +1179,31 @@ const VolRegime = {
                         color: hColorHex,
                         isDate: false
                     });
+                }
+            }
+
+            // Overlay values at hover point
+            if (showTR && trSlice[hIdx] != null) {
+                const tv = trSlice[hIdx];
+                const tl = tv >= 1.2 ? 'TRENDING' : tv >= 1.0 ? 'MIXED' : tv >= 0.8 ? 'CHOPPY' : 'EXTREME CHOP';
+                lines.push({ text: `TR: ${tv.toFixed(3)} · ${tl}`, color: 'rgba(0,212,255,0.85)', isDate: false });
+            }
+            if (showVoV && vovSlice[hIdx] != null) {
+                const vv = vovSlice[hIdx];
+                const vl = vv >= 20 ? 'UNSTABLE' : vv >= 12 ? 'SHIFTING' : vv >= 6 ? 'MODERATE' : 'STABLE';
+                lines.push({ text: `VoV: ${vv.toFixed(1)}% · ${vl}`, color: 'rgba(192,120,40,0.85)', isDate: false });
+            }
+            if (showSignals) {
+                const hv21h  = (allSeries['21d'] || [])[si + hIdx];
+                const hv5dh  = (allSeries['5d']  || [])[si + hIdx];
+                const hv63dh = (allSeries['63d'] || [])[si + hIdx];
+                if (hv21h != null) {
+                    const s21t  = [...(allSeries['21d'] || [])].filter(v => v != null).sort((a,b) => a-b);
+                    const pFt   = f => s21t.length ? s21t[Math.max(0, Math.floor(s21t.length * f) - 1)] : 0;
+                    const hvPct = hv21h >= pFt(0.90) ? 92 : hv21h >= pFt(0.75) ? 80 : hv21h >= pFt(0.25) ? 50 : 15;
+                    const ts_h  = (hv5dh > 0 && hv63dh > 0) ? hv5dh / hv63dh : null;
+                    const sig   = this._regimeSignal(hvPct, trSeriesFull[si + hIdx] ?? null, ts_h);
+                    if (sig) lines.push({ text: `REGIME: ${sig.label}`, color: 'rgba(255,255,255,0.55)', isDate: false });
                 }
             }
 
