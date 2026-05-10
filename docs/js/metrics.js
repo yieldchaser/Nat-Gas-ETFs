@@ -220,6 +220,70 @@ const Metrics = {
         return this.std(hv10Series);
     },
 
+    // ── Trend Ratio (TR) ──────────────────────────────────────────────────────
+    // Compares RV sampled weekly to RV sampled daily over a 20-day window.
+    // When weekly vol < daily vol, intraday noise dominates (chop).
+    // When weekly vol ≈ daily vol, sustained directional moves dominate (trend).
+    //
+    // For leveraged ETFs, TR is structurally < 1.0 due to daily rebalancing decay,
+    // so use computeTRPercentile for regime signals rather than absolute thresholds.
+    //
+    // Method from weekly-sampled RV literature:
+    //   daily_RV  = sqrt(mean(logRet_daily²)) × sqrt(252) × 100
+    //   weekly_RV = std(4 five-day log-returns)  × sqrt(251/20) × 100
+    //   TR = weekly_RV / daily_RV
+    computeTR(closes, window = 20) {
+        if (closes.length < window + 1) return null;
+        const c = closes.slice(-(window + 1));
+
+        // Daily RV (uses mean of squared returns, not std — matches Yang-Zhang convention)
+        const dailyRets = [];
+        for (let i = 1; i < c.length; i++) {
+            if (c[i-1] > 0 && c[i] > 0) dailyRets.push(Math.log(c[i] / c[i-1]));
+        }
+        if (dailyRets.length < 5) return null;
+        const meanSq = dailyRets.reduce((a, b) => a + b * b, 0) / dailyRets.length;
+        const rvDaily = Math.sqrt(meanSq) * Math.sqrt(252) * 100;
+        if (rvDaily === 0) return null;
+
+        // Weekly RV: 4 non-overlapping 5-day log-returns
+        // Annualize by sqrt(252/5) — there are 252/5 ≈ 50.4 weeks in a trading year.
+        // Using sqrt(251/20) would be wrong by a factor of ~2× and make TR > 1.0 near-impossible.
+        const weeklyRets = [];
+        for (let j = 1; j <= 4; j++) {
+            const p0 = c[(j - 1) * 5], p1 = c[j * 5];
+            if (p0 > 0 && p1 > 0) weeklyRets.push(Math.log(p1 / p0));
+        }
+        if (weeklyRets.length < 3) return null;
+        const rvWeekly = this.std(weeklyRets) * Math.sqrt(252 / 5) * 100;
+
+        return rvWeekly / rvDaily;
+    },
+
+    // Rolling TR series — aligned with closes array length (nulls for early entries)
+    computeTRSeries(closes, seriesLength) {
+        if (closes.length < 21) return [];
+        const startIdx = Math.max(20, closes.length - seriesLength);
+        const series = [];
+        for (let i = startIdx; i < closes.length; i++) {
+            series.push(this.computeTR(closes.slice(0, i + 1)));
+        }
+        return series.slice(-seriesLength);
+    },
+
+    // TR percentile: where does current TR sit vs full available history?
+    // Returns 0–100. Needed because leveraged ETFs are always structurally below TR=1.0.
+    computeTRPercentile(closes) {
+        if (closes.length < 25) return null;
+        const series = [];
+        for (let i = 20; i < closes.length; i++) {
+            const tr = this.computeTR(closes.slice(0, i + 1));
+            if (tr != null) series.push(tr);
+        }
+        if (series.length < 5) return null;
+        return this.percentileRank(series[series.length - 1], series);
+    },
+
     // VCVI: Vol-adjusted CVI
     // Boosts signal when vol is quiet (0th pct → ×1.5), discounts in turbulent regimes (100th → ×0.5)
     computeVCVI(cvi, volRegimePct) {
