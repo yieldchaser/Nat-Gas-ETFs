@@ -260,15 +260,29 @@ const Metrics = {
         return rvWeekly / rvDaily;
     },
 
-    // Rolling TR series — aligned with closes array length (nulls for early entries)
+    // Rolling TR series — uses window slicing to avoid O(n) allocs per iteration
     computeTRSeries(closes, seriesLength) {
         if (closes.length < 21) return [];
-        const startIdx = Math.max(20, closes.length - seriesLength);
-        const series = [];
-        for (let i = startIdx; i < closes.length; i++) {
-            series.push(this.computeTR(closes.slice(0, i + 1)));
+        const n = closes.length;
+        const startIdx = seriesLength ? Math.max(20, n - seriesLength) : 20;
+        const out = [];
+        for (let i = startIdx; i < n; i++) {
+            out.push(this.computeTR(closes.slice(Math.max(0, i - 20), i + 1)));
         }
-        return series.slice(-seriesLength);
+        return out;
+    },
+
+    // Rolling VoV-21 series — null-padded to align with closes
+    computeVoVSeries(closes, seriesLength) {
+        const needed = 32; // 21 + 10 + 1
+        if (closes.length < needed) return [];
+        const n = closes.length;
+        const startIdx = seriesLength ? Math.max(needed - 1, n - seriesLength) : needed - 1;
+        const out = [];
+        for (let i = startIdx; i < n; i++) {
+            out.push(this.computeVoV21(closes.slice(Math.max(0, i - (needed - 1)), i + 1)));
+        }
+        return out;
     },
 
     // TR percentile: where does current TR sit vs full available history?
