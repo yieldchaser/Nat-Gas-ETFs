@@ -139,7 +139,13 @@
 
             <!-- VOLUME HEAT CALENDAR -->
             <div class="signal-panel" id="heat-calendar-panel">
-                <h3>VOLUME HEAT MAP (90 Days)</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+                    <h3 id="heat-calendar-title" style="margin-bottom:0;">VOLUME HEAT MAP (Days 1-90)</h3>
+                    <div style="display:flex; gap:8px;">
+                        <button class="nav-arrow-btn" id="heat-prev" data-tooltip="View previous 90 days (Days 91-180)">&#8592;</button>
+                        <button class="nav-arrow-btn" id="heat-next" data-tooltip="View recent 90 days (Days 1-90)" disabled>&#8594;</button>
+                    </div>
+                </div>
                 <div class="heat-calendar" id="heat-calendar">
                     <!-- Filled dynamically -->
                 </div>
