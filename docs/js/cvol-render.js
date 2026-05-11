@@ -526,6 +526,56 @@ function renderVarDecomp() {
         }
     }
 
+    // Variance Spread overlay (UpVar - DnVar, net directional imbalance)
+    if (CvolState.varActiveSeries.indexOf('varSpread') >= 0 && CvolState.composites && CvolState.composites.varSpread) {
+        var vsArr = CvolState.composites.varSpread;
+        var vsMin = Infinity, vsMax = -Infinity;
+        for (var i = 0; i < n; i++) { var v = vsArr[range.s + i]; if (v != null) { vsMin = Math.min(vsMin, v); vsMax = Math.max(vsMax, v); } }
+        if (isFinite(vsMin)) {
+            var vsm = (vsMax - vsMin) * 0.1 || 0.1; vsMin -= vsm; vsMax += vsm;
+            var getVSY = function(v) { return pad.top + chartH - ((v - vsMin) / (vsMax - vsMin)) * chartH; };
+            if (0 >= vsMin && 0 <= vsMax) {
+                var zy = getVSY(0);
+                ctx.beginPath(); ctx.moveTo(pad.left, zy); ctx.lineTo(pad.left + chartW, zy);
+                ctx.strokeStyle = 'rgba(45,212,191,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+            }
+            ctx.beginPath(); var started = false;
+            for (var i = 0; i < n; i++) { var v = vsArr[range.s + i]; if (v == null) continue; if (!started) { ctx.moveTo(getX(i), getVSY(v)); started = true; } else ctx.lineTo(getX(i), getVSY(v)); }
+            ctx.strokeStyle = '#2dd4bf'; ctx.lineWidth = 1.3; ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]);
+        }
+    }
+
+    // Wing Divergence overlay
+    if (CvolState.varActiveSeries.indexOf('wingDiv') >= 0 && CvolState.composites && CvolState.composites.wingDiv) {
+        var wdArr = CvolState.composites.wingDiv;
+        var wdMin = 0, wdMax = -Infinity;
+        for (var i = 0; i < n; i++) { var v = wdArr[range.s + i]; if (v != null) { wdMax = Math.max(wdMax, v); } }
+        if (isFinite(wdMax) && wdMax > 0) {
+            var wdm = wdMax * 0.1 || 0.1; wdMax += wdm;
+            var getWDY = function(v) { return pad.top + chartH - ((v - wdMin) / (wdMax - wdMin)) * chartH; };
+            ctx.beginPath(); var started = false;
+            for (var i = 0; i < n; i++) { var v = wdArr[range.s + i]; if (v == null) continue; if (!started) { ctx.moveTo(getX(i), getWDY(v)); started = true; } else ctx.lineTo(getX(i), getWDY(v)); }
+            ctx.strokeStyle = '#fb923c'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
+        }
+    }
+
+    // Regime Tension heat strip (4px bar at chart bottom)
+    if (CvolState.composites && CvolState.composites.regimeTensionPct) {
+        var rtPct = CvolState.composites.regimeTensionPct;
+        var stripH = 4, stripY = pad.top + chartH - stripH;
+        for (var i = 0; i < n; i++) {
+            var pv = rtPct[range.s + i];
+            if (pv == null) continue;
+            var x0 = getX(i), x1 = i < n - 1 ? getX(i + 1) : x0 + chartW / n;
+            var hue = pv < 50 ? 210 : pv < 75 ? 45 - (pv - 50) * 0.6 : 0;
+            var sat = Math.min(100, 40 + pv * 0.6);
+            var lum = pv >= 90 ? 55 : pv >= 75 ? 50 : 40;
+            var alpha = 0.15 + (pv / 100) * 0.55;
+            ctx.fillStyle = 'hsla(' + hue + ',' + sat + '%,' + lum + '%,' + alpha + ')';
+            ctx.fillRect(x0, stripY, Math.max(1, x1 - x0), stripH);
+        }
+    }
+
     // Skew = 1.0 reference line
     if (1.0 >= skMin && 1.0 <= skMax) {
         var refY = getSY(1.0);
@@ -552,7 +602,13 @@ function renderVarDecomp() {
         ctx.fillStyle = '#94a3b8'; ctx.fillText('▬ PRICE', lx, pad.top + 12); lx += 55;
     }
     if (CvolState.varActiveSeries.indexOf('skewRoc5') >= 0) {
-        ctx.fillStyle = '#818cf8'; ctx.fillText('╌ SKEW MOM', lx, pad.top + 12);
+        ctx.fillStyle = '#818cf8'; ctx.fillText('╌ SKEW MOM', lx, pad.top + 12); lx += 80;
+    }
+    if (CvolState.varActiveSeries.indexOf('varSpread') >= 0) {
+        ctx.fillStyle = '#2dd4bf'; ctx.fillText('╌ VAR SPREAD', lx, pad.top + 12); lx += 85;
+    }
+    if (CvolState.varActiveSeries.indexOf('wingDiv') >= 0) {
+        ctx.fillStyle = '#fb923c'; ctx.fillText('╌ WING DIV', lx, pad.top + 12); lx += 75;
     }
 
     // Hover
@@ -565,11 +621,9 @@ function renderVarDecomp() {
             var tip = document.getElementById('var-decomp-tooltip');
             if (tip) {
                 var row = visData[hi];
-                var sk = row.skewRatio;
-                // Classify relative to rolling 21D history — raw absolute thresholds are
-                // misleading because NG structurally prices upside calls above puts (median ~1.15).
-                var skZ21 = (CvolState.composites && CvolState.composites.skewRatioZ21)
-                    ? CvolState.composites.skewRatioZ21[range.s + hi] : null;
+                var gi = range.s + hi;
+                var comp = CvolState.composites || {};
+                var skZ21 = comp.skewRatioZ21 ? comp.skewRatioZ21[gi] : null;
                 var sentiment, sentimentColor;
                 if (skZ21 != null) {
                     if (skZ21 > 1.5)       { sentiment = 'STRONG UPSIDE PRESSURE';   sentimentColor = '#3db87a'; }
@@ -577,14 +631,13 @@ function renderVarDecomp() {
                     else if (skZ21 < -1.5) { sentiment = 'STRONG DOWNSIDE PRESSURE'; sentimentColor = '#ef4444'; }
                     else if (skZ21 < -0.75){ sentiment = 'DOWNSIDE SKEW BUILDING';   sentimentColor = '#f87171'; }
                     else                   { sentiment = 'NEUTRAL';                   sentimentColor = '#f59e0b'; }
-                } else {
-                    sentiment = 'NEUTRAL'; sentimentColor = '#f59e0b';
-                }
+                } else { sentiment = 'NEUTRAL'; sentimentColor = '#f59e0b'; }
+
                 var ttHtml = '<div style="color:var(--cyan);font-weight:800;font-size:0.6rem;letter-spacing:1.5px;margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:3px;">' + fmtDate(row.date) + '</div>';
-                ttHtml += '<div style="color:' + sentimentColor + ';font-weight:800;font-size:0.55rem;margin-bottom:3px;">SKEW: ' + sentiment + '</div>';
-                if (skZ21 != null) ttHtml += '<div style="color:rgba(255,255,255,0.6);font-size:0.5rem;margin-bottom:5px;font-family:\'JetBrains Mono\',monospace;">Z21: ' + (skZ21 >= 0 ? '+' : '') + skZ21.toFixed(2) + 'σ vs 21D rolling avg</div>';
-                
-                if (CvolState.varActiveSeries.indexOf('upVar') >= 0) 
+                ttHtml += '<div style="color:' + sentimentColor + ';font-weight:800;font-size:0.55rem;margin-bottom:3px;">' + sentiment + '</div>';
+                if (skZ21 != null) ttHtml += '<div style="color:rgba(255,255,255,0.6);font-size:0.5rem;margin-bottom:5px;font-family:\'JetBrains Mono\',monospace;">Z21: ' + (skZ21 >= 0 ? '+' : '') + skZ21.toFixed(2) + '\u03c3 vs 21D rolling avg</div>';
+
+                if (CvolState.varActiveSeries.indexOf('upVar') >= 0)
                     ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#3db87a">UP VAR</span><span class="tooltip-val">' + fmt(row.upVar) + '%</span></div>';
                 if (CvolState.varActiveSeries.indexOf('dnVar') >= 0)
                     ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#ef4444">DN VAR</span><span class="tooltip-val">' + fmt(row.dnVar) + '%</span></div>';
@@ -592,14 +645,64 @@ function renderVarDecomp() {
                     ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#f59e0b">SKEW RATIO</span><span class="tooltip-val">' + fmt(row.skewRatio, 3) + '</span></div>';
                 if (CvolState.varActiveSeries.indexOf('underlying') >= 0)
                     ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#94a3b8">NG PRICE</span><span class="tooltip-val">$' + fmt(row.underlying, 2) + '</span></div>';
-                
+
+                // ── Advanced Diagnostics Section ──
+                var vsVal = comp.varSpread ? comp.varSpread[gi] : null;
+                var vsZ = comp.varSpreadZ21 ? comp.varSpreadZ21[gi] : null;
+                var saVal = comp.skewAccel ? comp.skewAccel[gi] : null;
+                var wdVal = comp.wingDiv ? comp.wingDiv[gi] : null;
+                var rtPct = comp.regimeTensionPct ? comp.regimeTensionPct[gi] : null;
+                var psCorr = comp.priceSkewCorr ? comp.priceSkewCorr[gi] : null;
+                var vrpVal = comp.vrp ? comp.vrp[gi] : null;
+                var svVal = comp.surfaceVelocity ? comp.surfaceVelocity[gi] : null;
+
+                var hasAdvanced = vsVal != null || saVal != null || wdVal != null || rtPct != null;
+                if (hasAdvanced) {
+                    ttHtml += '<div style="margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.45rem;letter-spacing:1.5px;color:rgba(255,255,255,0.4);font-weight:700;margin-bottom:3px;">ADVANCED DIAGNOSTICS</div>';
+
+                    if (vsVal != null) {
+                        var vsColor = vsVal > 0 ? '#3db87a' : vsVal < 0 ? '#ef4444' : '#94a3b8';
+                        var vsLabel = vsVal > 0 ? 'CALLS RICHER' : vsVal < 0 ? 'PUTS RICHER' : 'BALANCED';
+                        var zBadge = vsZ != null ? ' <span style="color:rgba(255,255,255,0.5);font-size:0.45rem;">Z:' + (vsZ >= 0 ? '+' : '') + vsZ.toFixed(1) + '</span>' : '';
+                        ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#2dd4bf">VAR SPREAD</span><span class="tooltip-val" style="color:' + vsColor + '">' + (vsVal >= 0 ? '+' : '') + fmt(vsVal) + '%' + zBadge + '</span></div>';
+                    }
+                    if (saVal != null) {
+                        var saArrow = saVal > 0.005 ? ' \u2191' : saVal < -0.005 ? ' \u2193' : ' \u2194';
+                        var saColor = saVal > 0.005 ? '#3db87a' : saVal < -0.005 ? '#ef4444' : '#94a3b8';
+                        ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#a78bfa">SKEW ACCEL</span><span class="tooltip-val" style="color:' + saColor + '">' + (saVal >= 0 ? '+' : '') + (saVal * 1000).toFixed(1) + 'bp' + saArrow + '</span></div>';
+                    }
+                    if (wdVal != null) {
+                        var wdColor = wdVal >= 2.0 ? '#fb923c' : wdVal >= 1.0 ? '#fbbf24' : '#94a3b8';
+                        var wdLabel = wdVal >= 2.0 ? 'HIGH' : wdVal >= 1.0 ? 'MODERATE' : 'LOW';
+                        ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#fb923c">WING DIV</span><span class="tooltip-val" style="color:' + wdColor + '">' + fmt(wdVal, 2) + '\u03c3 \u00b7 ' + wdLabel + '</span></div>';
+                    }
+                    if (rtPct != null) {
+                        var rtColor = rtPct >= 90 ? '#ef4444' : rtPct >= 75 ? '#f59e0b' : rtPct >= 50 ? '#fbbf24' : '#60a8f8';
+                        var rtLabel = rtPct >= 90 ? 'CRITICAL' : rtPct >= 75 ? 'ELEVATED' : rtPct >= 50 ? 'MODERATE' : 'LOW';
+                        ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#fbbf24">TENSION</span><span class="tooltip-val" style="color:' + rtColor + '">' + fmt(rtPct, 0) + 'th \u00b7 ' + rtLabel + '</span></div>';
+                    }
+                    if (psCorr != null) {
+                        var syncColor = Math.abs(psCorr) < 0.3 ? '#f59e0b' : '#3db87a';
+                        var syncLabel = Math.abs(psCorr) < 0.3 ? 'DISLOCATED \u26a0' : 'IN SYNC \u2713';
+                        ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:rgba(255,255,255,0.5)">PRICE-SKEW</span><span class="tooltip-val" style="color:' + syncColor + '">' + syncLabel + ' (r=' + psCorr.toFixed(2) + ')</span></div>';
+                    }
+                    if (vrpVal != null && svVal != null) {
+                        var vpColor = vrpVal < -5 && skZ21 != null && Math.abs(skZ21) > 0.75 ? '#ec4899' : 'rgba(255,255,255,0.5)';
+                        var vpLabel = vrpVal < -5 && skZ21 != null && Math.abs(skZ21) > 0.75 ? 'VRP-SKEW CROSS \u2605' : '';
+                        if (vpLabel) ttHtml += '<div style="margin-top:3px;padding:2px 4px;border-radius:2px;background:rgba(236,72,153,0.1);border:1px solid rgba(236,72,153,0.2);font-size:0.48rem;font-weight:800;color:#ec4899;letter-spacing:1px;text-align:center;">' + vpLabel + '</div>';
+                    }
+                }
+
                 tip.innerHTML = ttHtml;
                 tip.style.display = 'block';
-                tip.style.left = (x + pad.left > W / 2 ? x - 150 : x + 15) + 'px';
+                tip.style.left = (x + pad.left > W / 2 ? x - 170 : x + 15) + 'px';
                 tip.style.top = '10px';
             }
         }
     }
+
+    // ── Inflection Radar Strip ──
+    renderInflectionRadar(range);
 }
 
 // ── Expanded Composite Modal Chart ────────────────────────────
@@ -749,4 +852,82 @@ function renderModalChart(compKey) {
         tt.style.left = (Math.min(hx + 15, W - 160)) + 'px';
         tt.style.top = Math.max(20, (v != null ? getVY(v) : pad.top) - 20) + 'px';
     }
+}
+
+// ── Inflection Radar Strip ────────────────────────────────────
+function renderInflectionRadar(range) {
+    var el = document.getElementById('var-inflection-radar');
+    if (!el || !CvolState.composites || !CvolState.data) return;
+    var comp = CvolState.composites;
+    var gi = range ? range.e : CvolState.data.length - 1;
+    if (gi < 0) return;
+
+    var skZ = comp.skewRatioZ21 ? comp.skewRatioZ21[gi] : null;
+    var vsZ = comp.varSpreadZ21 ? comp.varSpreadZ21[gi] : null;
+    var vs = comp.varSpread ? comp.varSpread[gi] : null;
+    var sa = comp.skewAccel ? comp.skewAccel[gi] : null;
+    var rtP = comp.regimeTensionPct ? comp.regimeTensionPct[gi] : null;
+    var psc = comp.priceSkewCorr ? comp.priceSkewCorr[gi] : null;
+
+    function cell(label, value, color, bg) {
+        return '<div style="flex:1;text-align:center;padding:6px 4px;background:' + bg + ';border-radius:4px;min-width:0;">' +
+            '<div style="font-size:0.45rem;letter-spacing:1.2px;color:rgba(255,255,255,0.45);font-weight:700;margin-bottom:2px;">' + label + '</div>' +
+            '<div style="font-size:0.6rem;font-weight:800;color:' + color + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + value + '</div></div>';
+    }
+
+    var cells = '';
+
+    // 1) Skew Regime
+    var skLabel = '--', skColor = '#94a3b8';
+    if (skZ != null) {
+        if (skZ > 1.5)       { skLabel = 'STRONG \u2191'; skColor = '#3db87a'; }
+        else if (skZ > 0.75) { skLabel = 'BUILDING \u2191'; skColor = '#6ddc8b'; }
+        else if (skZ < -1.5) { skLabel = 'STRONG \u2193'; skColor = '#ef4444'; }
+        else if (skZ < -0.75){ skLabel = 'BUILDING \u2193'; skColor = '#f87171'; }
+        else                 { skLabel = 'NEUTRAL'; skColor = '#f59e0b'; }
+    }
+    cells += cell('SKEW REGIME', skLabel, skColor, 'rgba(255,255,255,0.03)');
+
+    // 2) Wing Bias
+    var wbLabel = '--', wbColor = '#94a3b8';
+    if (vs != null && vsZ != null) {
+        if (vsZ > 1.0)       { wbLabel = 'CALLS RICH'; wbColor = '#3db87a'; }
+        else if (vsZ > 0.5) { wbLabel = 'CALL LEAN'; wbColor = '#6ddc8b'; }
+        else if (vsZ < -1.0){ wbLabel = 'PUTS RICH'; wbColor = '#ef4444'; }
+        else if (vsZ < -0.5){ wbLabel = 'PUT LEAN'; wbColor = '#f87171'; }
+        else                { wbLabel = 'BALANCED'; wbColor = '#f59e0b'; }
+    }
+    cells += cell('WING BIAS', wbLabel, wbColor, 'rgba(255,255,255,0.02)');
+
+    // 3) Momentum (Skew Acceleration)
+    var moLabel = '--', moColor = '#94a3b8';
+    if (sa != null) {
+        if (sa > 0.01)       { moLabel = 'ACCEL \u2191'; moColor = '#3db87a'; }
+        else if (sa > 0.003) { moLabel = 'BUILDING \u2191'; moColor = '#6ddc8b'; }
+        else if (sa < -0.01) { moLabel = 'ACCEL \u2193'; moColor = '#ef4444'; }
+        else if (sa < -0.003){ moLabel = 'BUILDING \u2193'; moColor = '#f87171'; }
+        else                 { moLabel = 'FLAT'; moColor = '#94a3b8'; }
+    }
+    cells += cell('MOMENTUM', moLabel, moColor, 'rgba(255,255,255,0.03)');
+
+    // 4) Tension
+    var tnLabel = '--', tnColor = '#94a3b8', tnBg = 'rgba(255,255,255,0.02)';
+    if (rtP != null) {
+        if (rtP >= 90)      { tnLabel = 'CRITICAL'; tnColor = '#ef4444'; tnBg = 'rgba(239,68,68,0.08)'; }
+        else if (rtP >= 75) { tnLabel = 'ELEVATED'; tnColor = '#f59e0b'; tnBg = 'rgba(245,158,11,0.06)'; }
+        else if (rtP >= 50) { tnLabel = 'MODERATE'; tnColor = '#fbbf24'; tnBg = 'rgba(255,255,255,0.02)'; }
+        else                { tnLabel = 'LOW'; tnColor = '#60a8f8'; }
+    }
+    cells += cell('TENSION', tnLabel, tnColor, tnBg);
+
+    // 5) Price-Skew Sync
+    var psLabel = '--', psColor = '#94a3b8';
+    if (psc != null) {
+        if (Math.abs(psc) < 0.2)     { psLabel = 'DISLOCATED'; psColor = '#f59e0b'; }
+        else if (Math.abs(psc) < 0.4){ psLabel = 'DECOUPLING'; psColor = '#fbbf24'; }
+        else                         { psLabel = 'IN SYNC'; psColor = '#3db87a'; }
+    }
+    cells += cell('PRICE-SKEW', psLabel, psColor, 'rgba(255,255,255,0.02)');
+
+    el.innerHTML = cells;
 }

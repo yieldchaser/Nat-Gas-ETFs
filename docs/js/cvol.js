@@ -627,6 +627,83 @@ function computeComposites(data) {
         }
     }
 
+    // ── Advanced Quant Signals (Derived from existing data) ──
+    // Variance Spread: net directional imbalance (calls vs puts)
+    const varSpread = new Array(n).fill(null);
+    for (let i = 0; i < n; i++) {
+        if (upVar[i] != null && dnVar[i] != null) varSpread[i] = upVar[i] - dnVar[i];
+    }
+    const varSpreadZ21 = rollingZScore(varSpread, 21);
+
+    // Skew Acceleration: 2nd derivative of skew — catches inflections BEFORE momentum does
+    const skewAccel = new Array(n).fill(null);
+    for (let i = 10; i < n; i++) {
+        if (skewRatioRoc5[i] != null && skewRatioRoc5[i - 5] != null) {
+            skewAccel[i] = skewRatioRoc5[i] - skewRatioRoc5[i - 5];
+        }
+    }
+
+    // Wing Divergence Index: when wings pick a side — high = conviction
+    const wingDiv = new Array(n).fill(null);
+    for (let i = 0; i < n; i++) {
+        if (upVarZ21[i] != null && dnVarZ21[i] != null) {
+            wingDiv[i] = Math.abs(upVarZ21[i] - dnVarZ21[i]);
+        }
+    }
+
+    // Price-Skew Dislocation: rolling 10D correlation between NG returns and skew changes
+    // When they decouple, smart money is repositioning ahead of a move
+    const priceRet = new Array(n).fill(null);
+    const skewChg = new Array(n).fill(null);
+    for (let i = 1; i < n; i++) {
+        if (underlying[i] != null && underlying[i-1] != null && underlying[i-1] > 0)
+            priceRet[i] = (underlying[i] / underlying[i-1] - 1) * 100;
+        if (skewRatio[i] != null && skewRatio[i-1] != null)
+            skewChg[i] = skewRatio[i] - skewRatio[i-1];
+    }
+    const priceSkewCorr = new Array(n).fill(null);
+    for (let i = 14; i < n; i++) {
+        let sx = 0, sy = 0, sxy = 0, sx2 = 0, sy2 = 0, cnt = 0;
+        for (let j = i - 9; j <= i; j++) {
+            if (priceRet[j] != null && skewChg[j] != null) {
+                sx += priceRet[j]; sy += skewChg[j]; sxy += priceRet[j] * skewChg[j];
+                sx2 += priceRet[j] * priceRet[j]; sy2 += skewChg[j] * skewChg[j];
+                cnt++;
+            }
+        }
+        if (cnt >= 7) {
+            const num = cnt * sxy - sx * sy;
+            const den = Math.sqrt((cnt * sx2 - sx * sx) * (cnt * sy2 - sy * sy));
+            priceSkewCorr[i] = den > 0 ? num / den : 0;
+        }
+    }
+
+    // Regime Tension Score: composite pressure gauge — high tension precedes explosive moves
+    const regimeTension = new Array(n).fill(null);
+    for (let i = 0; i < n; i++) {
+        if (convZ21[i] != null && varSpreadZ21[i] != null) {
+            const accelFactor = skewAccel[i] != null ? (1 + Math.abs(skewAccel[i]) * 10) : 1;
+            regimeTension[i] = Math.abs(convZ21[i]) * Math.abs(varSpreadZ21[i]) * accelFactor;
+        }
+    }
+    const regimeTensionPct = rollingPercentile(regimeTension, 63);
+
+    // Convexity-Adjusted Wing Spread: weights variance spread by convexity for conviction-adjusted reads
+    const convAdjWingSpread = new Array(n).fill(null);
+    for (let i = 0; i < n; i++) {
+        if (varSpread[i] != null && convexity[i] != null) {
+            convAdjWingSpread[i] = varSpread[i] * (convexity[i] / 100);
+        }
+    }
+
+    // Surface Velocity: 5D rate of change of the VRP to track implied repricing speed
+    const surfaceVelocity = new Array(n).fill(null);
+    for (let i = 5; i < n; i++) {
+        if (vrp[i] != null && vrp[i - 5] != null) {
+            surfaceVelocity[i] = vrp[i] - vrp[i - 5];
+        }
+    }
+
     const base = {
         ngvlPct21, ngvlPct63, ngvlPct252, atmPct252, skewRatioPct63, convPct63,
         skewRatioZ21, dnVarZ21, upVarZ21, atmZ21, ngvlZ21, convZ21,
@@ -634,6 +711,8 @@ function computeComposites(data) {
         sad, ci, cvcDown, cvcUp, rds,
         sadZ, rdsZ,
         realVol, vrp, vrpZ21, termStructure, vov,
+        varSpread, varSpreadZ21, skewAccel, wingDiv, priceSkewCorr,
+        regimeTension, regimeTensionPct, convAdjWingSpread, surfaceVelocity,
         events,
     };
     return Object.assign(base, computeSurfaceModel(data, base));
@@ -693,6 +772,9 @@ const VAR_SERIES_CFG = {
     skewRatio: { label: 'SKEW RATIO', color: '#f59e0b', key: 'skewRatio', desc: 'Directional Pressure Gauge: Up variance divided by down variance. >1.0 means upside variance is richer; <1.0 means downside variance is richer.' },
     underlying:{ label: 'NG PRICE',   color: '#94a3b8', key: 'underlying', desc: 'Price Correlation Context: Overlays the absolute front-month Natural Gas settlement price. Vital for identifying if directional volatility spikes are leading or lagging absolute price pivots.' },
     skewRoc5:  { label: 'SKEW MOM',   color: '#818cf8', key: 'skewRoc5', desc: 'Skew Momentum (5D ROC): Rate of change in skew ratio over 5 sessions. Positive = skew accelerating bullish. Negative = skew accelerating bearish. Sharp moves precede directional breakouts.' },
+    varSpread: { label: 'VAR SPREAD', color: '#2dd4bf', key: 'varSpread', desc: 'Net Directional Imbalance: UpVar minus DnVar. Positive = call-side richer (bullish demand), negative = put-side richer (downside hedging). The Z-score filters seasonal noise to isolate genuine conviction shifts.' },
+    wingDiv:   { label: 'WING DIV',   color: '#fb923c', key: 'wingDiv', desc: 'Wing Divergence Index: |UpVarZ - DnVarZ|. When variance wings diverge, the market is picking a side. High values signal directional conviction; low values signal two-way uncertainty or complacency.' },
+    regimeTension: { label: 'TENSION', color: '#fbbf24', key: 'regimeTension', desc: 'Regime Tension Score: ConvexityZ × |VarSpreadZ| × SkewAccel. Composite pressure gauge — elevated tension precedes explosive directional moves or vol expansions. Think of it as the spring being compressed.' },
 };
 
 // ── X-Axis engine (reused from flows.html pattern) ────────────
