@@ -560,7 +560,7 @@ function renderVarDecomp() {
     }
 
     // Regime Tension heat strip (4px bar at chart bottom)
-    if (CvolState.composites && CvolState.composites.regimeTensionPct) {
+    if (CvolState.varActiveSeries.indexOf('regimeTension') >= 0 && CvolState.composites && CvolState.composites.regimeTensionPct) {
         var rtPct = CvolState.composites.regimeTensionPct;
         var stripH = 4, stripY = pad.top + chartH - stripH;
         for (var i = 0; i < n; i++) {
@@ -609,6 +609,9 @@ function renderVarDecomp() {
     }
     if (CvolState.varActiveSeries.indexOf('wingDiv') >= 0) {
         ctx.fillStyle = '#fb923c'; ctx.fillText('╌ WING DIV', lx, pad.top + 12); lx += 75;
+    }
+    if (CvolState.varActiveSeries.indexOf('regimeTension') >= 0) {
+        ctx.fillStyle = '#ef4444'; ctx.fillText('■ TENSION', lx, pad.top + 12); lx += 70;
     }
 
     // Hover
@@ -869,8 +872,8 @@ function renderInflectionRadar(range) {
     var rtP = comp.regimeTensionPct ? comp.regimeTensionPct[gi] : null;
     var psc = comp.priceSkewCorr ? comp.priceSkewCorr[gi] : null;
 
-    function cell(label, value, color, bg) {
-        return '<div style="flex:1;text-align:center;padding:6px 4px;background:' + bg + ';border-radius:4px;min-width:0;">' +
+    function cell(label, value, color, bg, tooltip) {
+        return '<div data-tooltip="' + tooltip + '" style="flex:1;text-align:center;padding:6px 4px;background:' + bg + ';border-radius:4px;min-width:0;cursor:help;">' +
             '<div style="font-size:0.45rem;letter-spacing:1.2px;color:rgba(255,255,255,0.45);font-weight:700;margin-bottom:2px;">' + label + '</div>' +
             '<div style="font-size:0.6rem;font-weight:800;color:' + color + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + value + '</div></div>';
     }
@@ -886,7 +889,7 @@ function renderInflectionRadar(range) {
         else if (skZ < -0.75){ skLabel = 'BUILDING \u2193'; skColor = '#f87171'; }
         else                 { skLabel = 'NEUTRAL'; skColor = '#f59e0b'; }
     }
-    cells += cell('SKEW REGIME', skLabel, skColor, 'rgba(255,255,255,0.03)');
+    cells += cell('SKEW REGIME', skLabel, skColor, 'rgba(255,255,255,0.03)', 'Directional intensity of the ATM Skew ratio vs its 21D average');
 
     // 2) Wing Bias
     var wbLabel = '--', wbColor = '#94a3b8';
@@ -897,7 +900,7 @@ function renderInflectionRadar(range) {
         else if (vsZ < -0.5){ wbLabel = 'PUT LEAN'; wbColor = '#f87171'; }
         else                { wbLabel = 'BALANCED'; wbColor = '#f59e0b'; }
     }
-    cells += cell('WING BIAS', wbLabel, wbColor, 'rgba(255,255,255,0.02)');
+    cells += cell('WING BIAS', wbLabel, wbColor, 'rgba(255,255,255,0.02)', 'Net variance spread indicating whether Calls or Puts command a premium in the tails');
 
     // 3) Momentum (Skew Acceleration)
     var moLabel = '--', moColor = '#94a3b8';
@@ -908,7 +911,7 @@ function renderInflectionRadar(range) {
         else if (sa < -0.003){ moLabel = 'BUILDING \u2193'; moColor = '#f87171'; }
         else                 { moLabel = 'FLAT'; moColor = '#94a3b8'; }
     }
-    cells += cell('MOMENTUM', moLabel, moColor, 'rgba(255,255,255,0.03)');
+    cells += cell('MOMENTUM', moLabel, moColor, 'rgba(255,255,255,0.03)', 'Acceleration (2nd derivative) of the Skew trend to catch early inflections');
 
     // 4) Tension
     var tnLabel = '--', tnColor = '#94a3b8', tnBg = 'rgba(255,255,255,0.02)';
@@ -918,7 +921,7 @@ function renderInflectionRadar(range) {
         else if (rtP >= 50) { tnLabel = 'MODERATE'; tnColor = '#fbbf24'; tnBg = 'rgba(255,255,255,0.02)'; }
         else                { tnLabel = 'LOW'; tnColor = '#60a8f8'; }
     }
-    cells += cell('TENSION', tnLabel, tnColor, tnBg);
+    cells += cell('TENSION', tnLabel, tnColor, tnBg, 'Composite measure of volatility structure stress (Spread \u00d7 Convexity \u00d7 Skew Accel)');
 
     // 5) Price-Skew Sync
     var psLabel = '--', psColor = '#94a3b8';
@@ -927,7 +930,7 @@ function renderInflectionRadar(range) {
         else if (Math.abs(psc) < 0.4){ psLabel = 'DECOUPLING'; psColor = '#fbbf24'; }
         else                         { psLabel = 'IN SYNC'; psColor = '#3db87a'; }
     }
-    cells += cell('PRICE-SKEW', psLabel, psColor, 'rgba(255,255,255,0.02)');
+    cells += cell('PRICE-SKEW', psLabel, psColor, 'rgba(255,255,255,0.02)', '10D rolling correlation between price and skew. Decoupling signals structural shifts');
 
     el.innerHTML = cells;
 }
