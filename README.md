@@ -480,6 +480,23 @@ A multi-factor predictive array that identifies structural shifts in the options
 | **CVC↑** | **Convexity-Var UP** | High-conviction **BOTTOM** formation signal; identifies "Volatility Capitulation" where convexity turns positive. |
 | **RDS** | **Regime Divergence Score** | An explosive setup signal; flags when 5D/21D/252D volatility regimes are in extreme conflict. |
 
+#### Variance Decomposition & Inflection Radar
+
+An advanced quantitative visualization suite breaking down the directional pressures driving volatility:
+
+| Metric | Description |
+|--------|-------------|
+| **VAR SPREAD** | Net Directional Imbalance (UpVar minus DnVar). Positive = calls richer; Negative = puts richer. Z-score filters seasonal noise to isolate genuine conviction shifts. |
+| **WING DIV** | Wing Divergence Index (`\|UpVarZ - DnVarZ\|`). High values signal the market is picking a side with conviction; low values indicate two-way uncertainty or complacency. |
+| **TENSION** | Regime Tension Score (`ConvexityZ × \|VarSpreadZ\| × SkewAccel`). A composite pressure gauge; elevated levels (compressing the spring) precede explosive directional breakouts. |
+| **SKEW ACCEL** | Skew Momentum 2nd Derivative. Detects the acceleration of the 5-day skew rate of change for early inflection detection. |
+| **PRICE-SKEW** | Dislocation monitor tracking the 5-day correlation between absolute NG price and skew. Flags when volatility pricing decouples from underlying price trends. |
+| **VRP-SKEW CROSS** | Critical structural warning when Implied Volatility drops severely below Realized Volatility (`VRP < -5`) while Skew is simultaneously at a statistical extreme (`\|Z\| > 0.75`). |
+
+**Interactive Features:**
+- **Inflection Radar Strip:** A 5-cell diagnostic strip at the chart base providing instant, at-a-glance reads on Skew Regime, Wing Bias, Momentum, Tension, and Price-Skew status.
+- **Dynamic Tooltips:** "Advanced Diagnostics" hover panels dynamically display active signal readouts matched exactly to the chart series currently toggled on by the user, ensuring clean, modular analysis.
+
 #### Realized vs Implied Volatility Divergence (The "Crown Jewel")
 
 Measures the **Vol Risk Premium (VRP)** to identify market mispricing:
