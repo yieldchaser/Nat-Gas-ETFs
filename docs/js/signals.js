@@ -125,12 +125,11 @@ const Signals = {
         }).join('');
     },
 
-    renderHeatCalendar(allMetrics) {
+    renderHeatCalendar(allMetrics, offset = 0) {
         const container = document.getElementById('heat-calendar');
         if (!container) return;
 
-        // Build daily max CVI scores across all ETFs for last 90 days
-        // Use the longest available history
+        // Build daily max CVI scores across all ETFs
         const allTickers = Object.keys(allMetrics).filter(t => allMetrics[t] != null);
         if (allTickers.length === 0) return;
 
@@ -141,12 +140,29 @@ const Signals = {
             if (data && data.length > longestData.length) longestData = data;
         }
 
-        // For a proper heatmap, we need to compute CVI for each historical day
-        // Simplified: use volume percentile as proxy (already have sparkData)
-        const days = Math.min(CONFIG.heatmapDays, longestData.length);
-        const dailyScores = [];
+        // Pagination controls
+        const maxOffset = Math.floor((longestData.length - 1) / 90);
+        offset = Math.max(0, Math.min(offset, maxOffset));
 
-        for (let i = longestData.length - days; i < longestData.length; i++) {
+        const hp = document.getElementById('heat-prev');
+        const hn = document.getElementById('heat-next');
+        const titleEl = document.getElementById('heat-calendar-title');
+        if (hp) hp.disabled = (offset >= maxOffset);
+        if (hn) hn.disabled = (offset === 0);
+
+        if (titleEl) {
+            const startDay = offset * 90 + 1;
+            const endDay = Math.min((offset + 1) * 90, longestData.length);
+            titleEl.innerHTML = `VOLUME HEAT MAP (Days ${startDay}-${endDay})`;
+        }
+
+        const days = 90;
+        const dailyScores = [];
+        const dataLength = longestData.length;
+        const startIndex = dataLength - (offset + 1) * days;
+        const endIndex = dataLength - offset * days;
+
+        for (let i = Math.max(0, startIndex); i < endIndex; i++) {
             let maxScore = 0;
             const date = longestData[i]?.date || '';
 
@@ -933,7 +949,7 @@ const Signals = {
         this.renderConvictionEvents(allMetrics);
         this.renderElevatedWatch(allMetrics);
         this.renderHistoricalEchoes(allMetrics);
-        this.renderHeatCalendar(allMetrics);
+        this.renderHeatCalendar(allMetrics, window.App ? window.App.heatOffset : 0);
         this.renderConvergenceGauges(allMetrics);
         this.renderCorrelationBars(allMetrics);
         this.renderValidationBanner(allMetrics);

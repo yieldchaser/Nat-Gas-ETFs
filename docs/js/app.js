@@ -8,6 +8,7 @@ const App = {
     ngVolMetrics: null,   // NG=F vol data for the Vol Regime Monitor
     refreshTimer: null,
     isLoading: false,
+    heatOffset: 0,        // Offset for 90-day volume heat map pagination
 
     async init() {
         console.log('[MONITOR] Initializing...');
@@ -20,6 +21,11 @@ const App = {
     bindEvents() {
         document.getElementById('refresh-btn').addEventListener('click', () => this.refresh());
         window.addEventListener('resize', () => this.handleResize());
+        
+        const hp = document.getElementById('heat-prev');
+        const hn = document.getElementById('heat-next');
+        if (hp) hp.addEventListener('click', () => { this.heatOffset++; this.renderHeatCalendarOnly(); });
+        if (hn) hn.addEventListener('click', () => { this.heatOffset = Math.max(0, this.heatOffset - 1); this.renderHeatCalendarOnly(); });
     },
 
     async refresh() {
@@ -360,6 +366,10 @@ const App = {
 
         // Vol Regime Monitor moved to trough-peak page
         if (typeof VolRegime !== 'undefined') VolRegime.render(this.allMetrics, this.ngVolMetrics);
+    },
+
+    renderHeatCalendarOnly() {
+        Signals.renderHeatCalendar(this.allMetrics, this.heatOffset);
     },
 
     // Returns NYSE session state based on the current wall-clock time.
