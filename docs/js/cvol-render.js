@@ -659,40 +659,45 @@ function renderVarDecomp() {
                 var vrpVal = comp.vrp ? comp.vrp[gi] : null;
                 var svVal = comp.surfaceVelocity ? comp.surfaceVelocity[gi] : null;
 
-                var hasAdvanced = vsVal != null || saVal != null || wdVal != null || rtPct != null;
+                var showVs = vsVal != null && CvolState.varActiveSeries.indexOf('varSpread') >= 0;
+                var showWd = wdVal != null && CvolState.varActiveSeries.indexOf('wingDiv') >= 0;
+                var showRt = rtPct != null && CvolState.varActiveSeries.indexOf('regimeTension') >= 0;
+                var showSa = saVal != null && CvolState.varActiveSeries.indexOf('skewRoc5') >= 0;
+                var showPs = psCorr != null && (CvolState.varActiveSeries.indexOf('skewRatio') >= 0 || CvolState.varActiveSeries.indexOf('underlying') >= 0);
+                var showVrp = vrpVal != null && svVal != null && vrpVal < -5 && skZ21 != null && Math.abs(skZ21) > 0.75;
+
+                var hasAdvanced = showVs || showSa || showWd || showRt || showPs || showVrp;
                 if (hasAdvanced) {
                     ttHtml += '<div style="margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.45rem;letter-spacing:1.5px;color:rgba(255,255,255,0.4);font-weight:700;margin-bottom:3px;">ADVANCED DIAGNOSTICS</div>';
 
-                    if (vsVal != null) {
+                    if (showVs) {
                         var vsColor = vsVal > 0 ? '#3db87a' : vsVal < 0 ? '#ef4444' : '#94a3b8';
                         var vsLabel = vsVal > 0 ? 'CALLS RICHER' : vsVal < 0 ? 'PUTS RICHER' : 'BALANCED';
                         var zBadge = vsZ != null ? ' <span style="color:rgba(255,255,255,0.5);font-size:0.45rem;">Z:' + (vsZ >= 0 ? '+' : '') + vsZ.toFixed(1) + '</span>' : '';
                         ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#2dd4bf">VAR SPREAD</span><span class="tooltip-val" style="color:' + vsColor + '">' + (vsVal >= 0 ? '+' : '') + fmt(vsVal) + '%' + zBadge + '</span></div>';
                     }
-                    if (saVal != null) {
+                    if (showSa) {
                         var saArrow = saVal > 0.005 ? ' \u2191' : saVal < -0.005 ? ' \u2193' : ' \u2194';
                         var saColor = saVal > 0.005 ? '#3db87a' : saVal < -0.005 ? '#ef4444' : '#94a3b8';
                         ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#a78bfa">SKEW ACCEL</span><span class="tooltip-val" style="color:' + saColor + '">' + (saVal >= 0 ? '+' : '') + (saVal * 1000).toFixed(1) + 'bp' + saArrow + '</span></div>';
                     }
-                    if (wdVal != null) {
+                    if (showWd) {
                         var wdColor = wdVal >= 2.0 ? '#fb923c' : wdVal >= 1.0 ? '#fbbf24' : '#94a3b8';
                         var wdLabel = wdVal >= 2.0 ? 'HIGH' : wdVal >= 1.0 ? 'MODERATE' : 'LOW';
                         ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#fb923c">WING DIV</span><span class="tooltip-val" style="color:' + wdColor + '">' + fmt(wdVal, 2) + '\u03c3 \u00b7 ' + wdLabel + '</span></div>';
                     }
-                    if (rtPct != null) {
+                    if (showRt) {
                         var rtColor = rtPct >= 90 ? '#ef4444' : rtPct >= 75 ? '#f59e0b' : rtPct >= 50 ? '#fbbf24' : '#60a8f8';
                         var rtLabel = rtPct >= 90 ? 'CRITICAL' : rtPct >= 75 ? 'ELEVATED' : rtPct >= 50 ? 'MODERATE' : 'LOW';
                         ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#fbbf24">TENSION</span><span class="tooltip-val" style="color:' + rtColor + '">' + fmt(rtPct, 0) + 'th \u00b7 ' + rtLabel + '</span></div>';
                     }
-                    if (psCorr != null) {
+                    if (showPs) {
                         var syncColor = Math.abs(psCorr) < 0.3 ? '#f59e0b' : '#3db87a';
                         var syncLabel = Math.abs(psCorr) < 0.3 ? 'DISLOCATED \u26a0' : 'IN SYNC \u2713';
                         ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:rgba(255,255,255,0.5)">PRICE-SKEW</span><span class="tooltip-val" style="color:' + syncColor + '">' + syncLabel + ' (r=' + psCorr.toFixed(2) + ')</span></div>';
                     }
-                    if (vrpVal != null && svVal != null) {
-                        var vpColor = vrpVal < -5 && skZ21 != null && Math.abs(skZ21) > 0.75 ? '#ec4899' : 'rgba(255,255,255,0.5)';
-                        var vpLabel = vrpVal < -5 && skZ21 != null && Math.abs(skZ21) > 0.75 ? 'VRP-SKEW CROSS \u2605' : '';
-                        if (vpLabel) ttHtml += '<div style="margin-top:3px;padding:2px 4px;border-radius:2px;background:rgba(236,72,153,0.1);border:1px solid rgba(236,72,153,0.2);font-size:0.48rem;font-weight:800;color:#ec4899;letter-spacing:1px;text-align:center;">' + vpLabel + '</div>';
+                    if (showVrp) {
+                        ttHtml += '<div style="margin-top:3px;padding:2px 4px;border-radius:2px;background:rgba(236,72,153,0.1);border:1px solid rgba(236,72,153,0.2);font-size:0.48rem;font-weight:800;color:#ec4899;letter-spacing:1px;text-align:center;">VRP-SKEW CROSS \u2605</div>';
                     }
                 }
 
