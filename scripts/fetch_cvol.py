@@ -24,7 +24,7 @@ POPUP_BASE      = f"{QUIKSTRIKE_BASE}/User/ControlPopup.aspx"
 # Parameters for the NGVL history popup (the page with JSONSettings data)
 POPUP_PARAMS = {
     "ControlPath": "~/UserControls/VolIndex/HistoryChart/ViewControl.ascx",
-    "insid":       "223330980",
+    "insid":       "225412764",
     "dsrc":        "Intraday",
     "pcode":       "LN",
     "top":         "10",
@@ -35,7 +35,7 @@ POPUP_PARAMS = {
 # Parameters for the QuikStrike dashboard page (used to activate a qsid via SSO)
 TOOLS_PARAMS = {
     "viewitemid": "IntegratedVolIndexDashboard",
-    "insid":      "223330980",
+    "insid":      "225412764",
 }
 
 # Output path (relative to repo root — script should be run from repo root)
