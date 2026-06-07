@@ -1007,8 +1007,8 @@ function setupFlowHeatTooltip() {
                         <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">KOLD: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.KOLD >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.KOLD >= 0 ? '+' : ''}${d.etfs.KOLD.toFixed(1)}</span></div>
                         <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">HNU: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.HNU >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.HNU >= 0 ? '+' : ''}${d.etfs.HNU.toFixed(1)}</span></div>
                         <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">HND: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.HND >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.HND >= 0 ? '+' : ''}${d.etfs.HND.toFixed(1)}</span></div>
-                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">3NGL: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.3NGL >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.3NGL >= 0 ? '+' : ''}${d.etfs.3NGL.toFixed(1)}</span></div>
-                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">3NGS: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.3NGS >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.3NGS >= 0 ? '+' : ''}${d.etfs.3NGS.toFixed(1)}</span></div>
+                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">3NGL: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs['3NGL'] >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs['3NGL'] >= 0 ? '+' : ''}${d.etfs['3NGL'].toFixed(1)}</span></div>
+                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">3NGS: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs['3NGS'] >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs['3NGS'] >= 0 ? '+' : ''}${d.etfs['3NGS'].toFixed(1)}</span></div>
                     </div>`;
             }
 
