@@ -946,6 +946,7 @@ function renderFlowHeatCalendar(offset = 0) {
     }
     
     html += '</div>';
+    html += `<div id="flow-heat-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:220px;"></div>`;
     elContainer.innerHTML = html;
     
     // Setup event listeners for tooltip
@@ -960,14 +961,10 @@ function setupFlowHeatTooltip() {
     const cells = container.querySelectorAll('.flow-heat-cell');
     
     cells.forEach(cell => {
-        cell.addEventListener('mousemove', (e) => {
+        cell.addEventListener('mouseenter', (e) => {
             const idx = parseInt(cell.dataset.index);
             const d = state.compositeZ[idx];
             if (!d) return;
-            
-            const rect = container.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
             
             const zColor = d.z >= 0 ? '#3db87a' : '#ef4444';
             const zLabel = d.z >= 0 ? 'UPWARD PRESSURE' : 'DOWNWARD PRESSURE';
@@ -1046,13 +1043,25 @@ function setupFlowHeatTooltip() {
             
             const tooltipWidth = tooltip.offsetWidth;
             const tooltipHeight = tooltip.offsetHeight;
-            let tx = x - tooltipWidth / 2;
-            let ty = y - tooltipHeight - 12;
             
-            if (tx < 10) tx = 10;
-            if (tx + tooltipWidth > rect.width - 10) tx = rect.width - tooltipWidth - 10;
-            if (ty < 10) {
-                ty = y + 25;
+            const cellLeft = cell.offsetLeft;
+            const cellTop = cell.offsetTop;
+            const cellWidth = cell.offsetWidth;
+            const cellHeight = cell.offsetHeight;
+            
+            let tx = cellLeft + cellWidth / 2 - tooltipWidth / 2;
+            let ty = cellTop - tooltipHeight - 10; // 10px above the cell
+            
+            // Flip below if not enough room above container
+            if (ty < 5) {
+                ty = cellTop + cellHeight + 10;
+            }
+            
+            // Horizontal bounds clamping relative to the container
+            const containerWidth = container.offsetWidth;
+            if (tx < 5) tx = 5;
+            if (tx + tooltipWidth > containerWidth - 5) {
+                tx = containerWidth - tooltipWidth - 5;
             }
             
             tooltip.style.left = tx + 'px';
