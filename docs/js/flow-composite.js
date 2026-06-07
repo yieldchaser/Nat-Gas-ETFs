@@ -8,26 +8,62 @@ const SHORT_TICKERS = ['KOLD', 'HND', '3NGS'];
 function computeCompositeZ() {
     const tickers = ['BOIL','HNU','3NGL','KOLD','HND','3NGS'];
     const dateMap = {};
+    const rawDateMap = {};
     tickers.forEach(tk => {
         const d = state.cache[tk];
         if (!d || !d.data) return;
         d.data.forEach(row => {
             if (!dateMap[row.date]) dateMap[row.date] = {};
+            if (!rawDateMap[row.date]) rawDateMap[row.date] = {};
             const z = row.flow_zscore || 0;
             dateMap[row.date][tk] = SHORT_TICKERS.includes(tk) ? -z : z;
+            rawDateMap[row.date][tk] = z;
         });
     });
     const dates = Object.keys(dateMap).sort();
+    const ngDateIdx = {};
+    if (state.ngDates) state.ngDates.forEach((d, i) => { ngDateIdx[d] = i; });
+
     state.compositeZ = dates.map(date => {
         const vals = dateMap[date];
+        const rawVals = rawDateMap[date];
         const zArr = Object.values(vals);
-        if (zArr.length === 0) return { date, z: 0, count: 0 };
+        if (zArr.length === 0) return { date, z: 0, count: 0, longZ: 0, shortZ: 0, divVal: 0, ng5d: null, etfs: {} };
         const avg = zArr.reduce((a, b) => a + b, 0) / zArr.length;
         const longZ = tickers.filter(t => !SHORT_TICKERS.includes(t))
             .map(t => vals[t] || 0).reduce((a,b) => a+b, 0) / 3;
         const shortZ = SHORT_TICKERS
             .map(t => vals[t] || 0).reduce((a,b) => a+b, 0) / 3;
-        return { date, z: Math.round(avg * 10000) / 10000, longZ: Math.round(longZ*1e4)/1e4, shortZ: Math.round(shortZ*1e4)/1e4, count: zArr.length };
+
+        // Pre-compute divergence
+        let divVal = 0;
+        let ng5d = null;
+        const ni = ngDateIdx[date];
+        if (ni !== undefined && ni >= 5) {
+            const p0 = state.ngHistory[state.ngDates[ni - 5]];
+            const p1 = state.ngHistory[state.ngDates[ni]];
+            if (p0 && p1 && p0 !== 0) {
+                ng5d = (p1 - p0) / p0;
+                if (Math.abs(ng5d) >= 0.005 && Math.abs(avg) >= 0.3) {
+                    const flowUp = avg > 0;
+                    const ngUp = ng5d > 0;
+                    if (flowUp !== ngUp) {
+                        divVal = flowUp ? Math.abs(avg) : -Math.abs(avg);
+                    }
+                }
+            }
+        }
+
+        return { 
+            date, 
+            z: Math.round(avg * 10000) / 10000, 
+            longZ: Math.round(longZ*1e4)/1e4, 
+            shortZ: Math.round(shortZ*1e4)/1e4, 
+            count: zArr.length,
+            divVal,
+            ng5d,
+            etfs: rawVals
+        };
     });
     updateCompZReading();
 }
@@ -292,18 +328,7 @@ function drawChartFlowNG(flow, ng) {
     const ngDateIdx = {};
     if (state.ngDates) state.ngDates.forEach((d, i) => { ngDateIdx[d] = i; });
 
-    const divData = flow.map(f => {
-        const ni = ngDateIdx[f.date];
-        if (ni === undefined || ni < 5) return { signed: 0, ng5d: null };
-        const p0 = state.ngHistory[state.ngDates[ni - 5]];
-        const p1 = state.ngHistory[state.ngDates[ni]];
-        if (!p0 || !p1 || p0 === 0) return { signed: 0, ng5d: null };
-        const ng5d = (p1 - p0) / p0;
-        if (Math.abs(ng5d) < 0.005 || Math.abs(f.z) < 0.3) return { signed: 0, ng5d };
-        const flowUp = f.z > 0, ngUp = ng5d > 0;
-        if (flowUp === ngUp) return { signed: 0, ng5d };
-        return { signed: flowUp ? Math.abs(f.z) : -Math.abs(f.z), ng5d };
-    });
+    const divData = flow.map(f => ({ signed: f.divVal || 0, ng5d: f.ng5d }));
     state.divValsCache = divData; // read by handleFlowNGHover
 
     const divSigned = divData.map(d => d.signed);
@@ -805,4 +830,237 @@ function syncReactivitySlider() {
         const isZoomed = state.zoomReactivity.start > 0.001 || state.zoomReactivity.end < 0.999;
         lbl.textContent = isZoomed ? 'CUSTOM SELECTION' : `PRESET: ${state.timeRange.toUpperCase()}`;
     }
+}
+
+function renderFlowHeatCalendar(offset = 0) {
+    const elContainer = document.getElementById('flow-activity-heat');
+    if (!elContainer) return;
+    
+    const longestData = state.compositeZ;
+    if (!longestData || longestData.length === 0) return;
+    
+    // Pagination bounds
+    const maxOffset = Math.floor((longestData.length - 1) / 90);
+    offset = Math.max(0, Math.min(offset, maxOffset));
+    state.flowHeatOffset = offset;
+    
+    // Wire up navigation buttons
+    const btnPrev = document.getElementById('flow-heat-prev');
+    const btnNext = document.getElementById('flow-heat-next');
+    if (btnPrev) btnPrev.disabled = (offset >= maxOffset);
+    if (btnNext) btnNext.disabled = (offset === 0);
+    
+    // Update range label in title
+    const rangeLabel = document.getElementById('flow-heat-range-label');
+    const days = 90;
+    const dataLength = longestData.length;
+    const startIndex = Math.max(0, dataLength - (offset + 1) * days);
+    const endIndex = dataLength - offset * days;
+    
+    if (rangeLabel && longestData[startIndex] && longestData[endIndex - 1]) {
+        const startD = longestData[startIndex].date;
+        const endD = longestData[endIndex - 1].date;
+        rangeLabel.textContent = `· ${startD} TO ${endD} (Days ${dataLength - endIndex + 1}-${dataLength - startIndex})`;
+    }
+    
+    // Mode & Source
+    const mode = state.flowHeatMode || 'unified';
+    const source = state.flowHeatSource || 'all';
+    
+    // Set legend details based on mode
+    const sigLegend = document.getElementById('flow-heat-legend-signals');
+    if (sigLegend) {
+        sigLegend.style.display = (mode === 'unified') ? 'flex' : 'none';
+    }
+    
+    let html = '<div class="flow-heat-grid">';
+    let prevMonth = null;
+    const monthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    
+    for (let i = startIndex; i < endIndex; i++) {
+        const d = longestData[i];
+        if (!d) continue;
+        
+        const day = d.date.split('-')[2];
+        const month = d.date.split('-')[1];
+        
+        // Month label
+        let monthLabel = '';
+        if (prevMonth !== null && prevMonth !== month) {
+            const monthIdx = parseInt(month, 10) - 1;
+            monthLabel = `<span class="flow-heat-month">${monthNames[monthIdx]}</span>`;
+        }
+        prevMonth = month;
+        
+        // Determine value to color cell
+        let val = 0;
+        if (source === 'all') {
+            val = d.z;
+        } else if (source === 'long') {
+            val = d.longZ;
+        } else if (source === 'short') {
+            val = d.shortZ;
+        }
+        
+        // Coloring logic
+        const absV = Math.abs(val);
+        let bg = '#1a1a28';
+        let borderStyle = '1px solid rgba(255, 255, 255, 0.04)';
+        let fgColor = 'rgba(255, 255, 255, 0.4)';
+        let alpha = 0.15;
+        
+        if (mode === 'divergence' && d.divVal === 0) {
+            bg = '#1a1a28';
+            borderStyle = '1px solid rgba(255, 255, 255, 0.02)';
+            fgColor = 'rgba(255, 255, 255, 0.15)';
+        } else if (absV >= 0.3) {
+            alpha = Math.min(0.85, 0.22 + (absV / 2.0) * 0.63);
+            const rColor = val >= 0 ? '61, 184, 122' : '239, 68, 68';
+            bg = `rgba(${rColor}, ${alpha})`;
+            borderStyle = `1px solid rgba(${rColor}, ${Math.min(1, alpha + 0.15)})`;
+            fgColor = (alpha > 0.45) ? '#fff' : (val >= 0 ? '#3db87a' : '#ef4444');
+        }
+        
+        // Divergence Badge (in Unified Mode)
+        let badge = '';
+        if (mode === 'unified' && d.divVal !== 0) {
+            const badgeColor = d.divVal > 0 ? '#3db87a' : '#ef4444';
+            badge = `<div class="flow-heat-badge" style="background:${badgeColor};"></div>`;
+            borderStyle = `2px solid ${badgeColor}`;
+        }
+        
+        // Highlight current day if it's the very last day of data
+        let shadowStyle = '';
+        if (i === dataLength - 1) {
+            shadowStyle = 'box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.85), 0 0 8px rgba(0, 229, 255, 0.25);';
+        }
+        
+        html += `
+            <div class="flow-heat-cell" 
+                 data-index="${i}" 
+                 style="position:relative; background:${bg}; border:${borderStyle}; color:${fgColor}; ${shadowStyle}">
+                 ${monthLabel}
+                 ${day}
+                 ${badge}
+            </div>`;
+    }
+    
+    html += '</div>';
+    elContainer.innerHTML = html;
+    
+    // Setup event listeners for tooltip
+    setupFlowHeatTooltip();
+}
+
+function setupFlowHeatTooltip() {
+    const container = document.getElementById('flow-activity-heat');
+    const tooltip = document.getElementById('flow-heat-tooltip');
+    if (!container || !tooltip) return;
+    
+    const cells = container.querySelectorAll('.flow-heat-cell');
+    
+    cells.forEach(cell => {
+        cell.addEventListener('mousemove', (e) => {
+            const idx = parseInt(cell.dataset.index);
+            const d = state.compositeZ[idx];
+            if (!d) return;
+            
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const zColor = d.z >= 0 ? '#3db87a' : '#ef4444';
+            const zLabel = d.z >= 0 ? 'UPWARD PRESSURE' : 'DOWNWARD PRESSURE';
+            const zIntensity = Math.abs(d.z) > 1.5 ? 'EXTREME' : Math.abs(d.z) > 1 ? 'STRONG' : Math.abs(d.z) > 0.5 ? 'MODERATE' : 'MILD';
+            
+            let divHtml = '';
+            if (d.divVal !== 0) {
+                const divColor = d.divVal > 0 ? '#3db87a' : '#ef4444';
+                const divType = d.divVal > 0 ? 'BULLISH DIVERGENCE (Leading)' : 'BEARISH DIVERGENCE (Leading)';
+                const divDesc = d.divVal > 0 ? 'Capital inflows despite falling gas prices' : 'Capital outflows despite rising gas prices';
+                divHtml = `
+                    <div style="margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
+                        <div style="color:${divColor}; font-size:0.62rem; font-weight:800;">⚡ ${divType}</div>
+                        <div style="color:rgba(255,255,255,0.6); font-size:0.56rem; font-style:italic;">${divDesc}</div>
+                    </div>`;
+            } else if (d.ng5d !== null && Math.abs(d.z) >= 0.3) {
+                const flowUp = d.z > 0;
+                const ngUp = d.ng5d > 0;
+                if (flowUp === ngUp) {
+                    divHtml = `
+                        <div style="margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
+                            <div style="color:#94a3b8; font-size:0.6rem; font-weight:700;">○ REACTIVE FLOW</div>
+                            <div style="color:rgba(255,255,255,0.5); font-size:0.56rem; font-style:italic;">Capital following price momentum</div>
+                        </div>`;
+                }
+            }
+            
+            const ngClose = state.ngHistory[d.date];
+            const ng5dStr = d.ng5d !== null ? `${d.ng5d >= 0 ? '+' : ''}${(d.ng5d * 100).toFixed(1)}%` : '—';
+            const ng5dColor = d.ng5d === null ? '#94a3b8' : d.ng5d >= 0 ? '#3db87a' : '#ef4444';
+            
+            let etfHtml = '';
+            if (d.etfs) {
+                etfHtml = `
+                    <div style="margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06); display:grid; grid-template-columns:1fr 1fr; gap:3px 12px;">
+                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">BOIL: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.BOIL >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.BOIL >= 0 ? '+' : ''}${d.etfs.BOIL.toFixed(1)}</span></div>
+                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">KOLD: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.KOLD >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.KOLD >= 0 ? '+' : ''}${d.etfs.KOLD.toFixed(1)}</span></div>
+                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">HNU: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.HNU >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.HNU >= 0 ? '+' : ''}${d.etfs.HNU.toFixed(1)}</span></div>
+                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">HND: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.HND >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.HND >= 0 ? '+' : ''}${d.etfs.HND.toFixed(1)}</span></div>
+                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">3NGL: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.3NGL >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.3NGL >= 0 ? '+' : ''}${d.etfs.3NGL.toFixed(1)}</span></div>
+                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">3NGS: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.3NGS >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.3NGS >= 0 ? '+' : ''}${d.etfs.3NGS.toFixed(1)}</span></div>
+                    </div>`;
+            }
+
+            tooltip.innerHTML = `
+                <div style="color:var(--cyan); font-size:0.7rem; font-weight:800; margin-bottom:5px;">${fmtDateLong(d.date)}</div>
+                <div style="display:flex; justify-content:space-between; gap:16px;">
+                    <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">COMPOSITE Z</span>
+                    <span style="color:${zColor}; font-weight:800; font-family:'JetBrains Mono',monospace;">${d.z >= 0 ? '+' : ''}${d.z.toFixed(3)}σ</span>
+                </div>
+                <div style="color:${zColor}; font-size:0.58rem; font-weight:700; margin-top:2px;">${zIntensity} · ${zLabel}</div>
+                
+                <div style="display:flex; justify-content:space-between; gap:16px; margin-top:3px;">
+                    <span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">LONG AVERAGE</span>
+                    <span style="color:#F5C542; font-size:0.6rem; font-weight:700; font-family:'JetBrains Mono';">${d.longZ >= 0 ? '+' : ''}${d.longZ.toFixed(2)}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; gap:16px; margin-top:2px;">
+                    <span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">SHORT AVERAGE</span>
+                    <span style="color:#4A9CF5; font-size:0.6rem; font-weight:700; font-family:'JetBrains Mono';">${d.shortZ >= 0 ? '+' : ''}${d.shortZ.toFixed(2)}</span>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; gap:16px; margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
+                    <span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">NG=F PRICE</span>
+                    <span style="color:#4ab8d8; font-weight:700; font-family:'JetBrains Mono';">${ngClose !== undefined ? '$' + ngClose.toFixed(3) : '—'}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; gap:16px; margin-top:2px;">
+                    <span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">NG 5D RETURN</span>
+                    <span style="color:${ng5dColor}; font-weight:700; font-family:'JetBrains Mono';">${ng5dStr}</span>
+                </div>
+
+                ${divHtml}
+                ${etfHtml}
+            `;
+            
+            tooltip.style.display = 'block';
+            
+            const tooltipWidth = tooltip.offsetWidth;
+            const tooltipHeight = tooltip.offsetHeight;
+            let tx = x - tooltipWidth / 2;
+            let ty = y - tooltipHeight - 12;
+            
+            if (tx < 10) tx = 10;
+            if (tx + tooltipWidth > rect.width - 10) tx = rect.width - tooltipWidth - 10;
+            if (ty < 10) {
+                ty = y + 25;
+            }
+            
+            tooltip.style.left = tx + 'px';
+            tooltip.style.top = ty + 'px';
+        });
+        
+        cell.addEventListener('mouseleave', () => {
+            tooltip.style.display = 'none';
+        });
+    });
 }
