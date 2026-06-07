@@ -401,6 +401,70 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
     .div-range-row { flex-wrap: wrap; gap: 6px; }
 }
 
+/* ---- FLOW HEAT CALENDAR ---- */
+.flow-heat-grid {
+    display: grid;
+    grid-template-columns: repeat(18, 1fr);
+    gap: 3px;
+    margin: 8px 0;
+}
+
+.flow-heat-cell {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 4px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.12s, filter 0.12s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    overflow: hidden;
+    background: #1a1a28;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.flow-heat-cell:hover {
+    transform: scale(1.35);
+    z-index: 10;
+    filter: brightness(1.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.flow-heat-badge {
+    position: absolute;
+    top: 2.5px;
+    right: 2.5px;
+    width: 4.5px;
+    height: 4.5px;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.flow-heat-month {
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    font-size: 0.28rem;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1;
+    pointer-events: none;
+    text-transform: uppercase;
+}
+
+.flow-heat-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 </style>
 </head>
 <body>
@@ -763,6 +827,61 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
         </div>
 
+        <!-- Section 6.1b: Flow Activity Heat Map -->
+        <div class="panel" id="flow-heat-panel">
+            <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div class="panel-title" data-tooltip="FLOW ACTIVITY HEAT MAP: Daily Composite Z-score (flow pressure), color-coded by strength (Green = Bullish Inflow, Red = Bearish Outflow). Colored dots mark days when a Flow-Price Divergence signal fired. Hover cells for rich metrics." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">FLOW ACTIVITY HEAT MAP <span class="panel-subtitle" id="flow-heat-range-label">— LOADING</span></div>
+                
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <!-- Display Mode Selector -->
+                    <div class="tab-group" id="flow-heat-mode-tabs" style="margin-right:4px;">
+                        <button class="tab-btn active" data-mode="unified" data-tooltip="Show overall flows with divergence overlays">UNIFIED</button>
+                        <button class="tab-btn" data-mode="composite" data-tooltip="Show pure Z-score flow strength">COMPOSITE</button>
+                        <button class="tab-btn" data-mode="divergence" data-tooltip="Highlight contrarian divergence signals only">DIVERGENCES</button>
+                    </div>
+
+                    <!-- Flow Source Selector -->
+                    <div class="tab-group" id="flow-heat-source-tabs" style="margin-right:8px;">
+                        <button class="tab-btn active" data-source="all" data-tooltip="Average flow across all 6 ETFs">ALL ETFs</button>
+                        <button class="tab-btn" data-source="long" data-tooltip="Averages BOIL, HNU, and 3NGL">LONGS (Bull)</button>
+                        <button class="tab-btn" data-source="short" data-tooltip="Averages KOLD, HND, and 3NGS">SHORTS (Bear)</button>
+                    </div>
+
+                    <!-- Pagination Navigation -->
+                    <div style="display:flex; gap:6px;">
+                        <button class="nav-arrow-btn" id="flow-heat-prev" data-tooltip="View previous 90 days">&#8592;</button>
+                        <button class="nav-arrow-btn" id="flow-heat-next" data-tooltip="View recent 90 days" disabled>&#8594;</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="flow-activity-heat" style="position:relative;">
+                <!-- Grid will be rendered here dynamically -->
+            </div>
+            
+            <div id="flow-heat-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:220px;"></div>
+
+            <!-- Legend -->
+            <div class="heat-legend" style="display:flex; align-items:center; gap:12px; margin-top:12px; justify-content:center; flex-wrap:wrap; padding-top:10px; border-top:1px solid rgba(255,255,255,0.05);">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:0.6rem; color:rgba(255,255,255,0.6); font-weight:600;">Outflow (Bear)</span>
+                    <span class="flow-heat-swatch" style="background:rgba(239, 68, 68, 0.85); border:1px solid rgba(239, 68, 68, 1);"></span>
+                    <span class="flow-heat-swatch" style="background:rgba(239, 68, 68, 0.45); border:1px solid rgba(239, 68, 68, 0.65);"></span>
+                    <span class="flow-heat-swatch" style="background:#1a1a28; border:1px solid rgba(255,255,255,0.04);"></span>
+                    <span class="flow-heat-swatch" style="background:rgba(61, 184, 122, 0.45); border:1px solid rgba(61, 184, 122, 0.65);"></span>
+                    <span class="flow-heat-swatch" style="background:rgba(61, 184, 122, 0.85); border:1px solid rgba(61, 184, 122, 1);"></span>
+                    <span style="font-size:0.6rem; color:rgba(255,255,255,0.6); font-weight:600;">Inflow (Bull)</span>
+                </div>
+                <span style="width:1px; height:12px; background:rgba(255,255,255,0.12); margin:0 4px;"></span>
+                <div id="flow-heat-legend-signals" style="display:flex; align-items:center; gap:8px; font-size:0.58rem; color:#fff;">
+                    <div style="display:flex; align-items:center; gap:4px;"><div style="width:6px; height:6px; border-radius:50%; background:#3db87a;"></div>Bullish Div</div>
+                    <div style="display:flex; align-items:center; gap:4px;"><div style="width:6px; height:6px; border-radius:50%; background:#ef4444;"></div>Bearish Div</div>
+                </div>
+                <span style="width:1px; height:12px; background:rgba(255,255,255,0.12); margin:0 4px;"></span>
+                <span style="font-size:0.55rem; color:rgba(255,255,255,0.45); font-weight:600; letter-spacing:0.3px;">Opacity scales with Z-score. Cells show day of month; dots mark divergence dates.</span>
+            </div>
+        </div>
+
         <!-- Section 6.2: Flow Pressure vs Natural Gas Price -->
         <div class="panel" id="flow-ng-panel">
             <div class="panel-header">
@@ -1067,6 +1186,10 @@ const state = {
     hoverCompZIdx: null,
     hoverFlowNGIdx: null,
     hoverReactivityIdx: null,
+    hoverFlowHeatIdx: null,
+    flowHeatOffset: 0,
+    flowHeatMode: 'unified',
+    flowHeatSource: 'all',
     zoomReactivity: { start: 0, end: 1 },  // reactivity chart zoom — independent
     divValsCache: [],  // [{signed, ng5d}] — built per render in drawChartFlowNG, read by hover handler
     reactValsCache: [], // [{intensity, ng5d}] — built per render in drawChartReactivity, read by hover handler
@@ -1142,6 +1265,7 @@ async function init() {
             state.zoomCompZ = { start: 0, end: 1 };
             state.zoomFlowNG= { start: 0, end: 1 };
             state.zoomReactivity = { start: 0, end: 1 };
+            state.flowHeatOffset = 0;
             ['#time-tabs', '#z-time-tabs', '#cross-time-tabs', '#compz-time-tabs', '#flowng-time-tabs', '#reactivity-time-tabs'].forEach(sel => {
                 document.querySelectorAll(sel + ' .tab-btn').forEach(b => {
                     b.classList.toggle('active', b.dataset.range === range);
@@ -1158,6 +1282,7 @@ async function init() {
             syncFlowNGSlider();
             renderReactivityChart();
             syncReactivitySlider();
+            renderFlowHeatCalendar(state.flowHeatOffset);
         }
 
         ['#time-tabs', '#z-time-tabs', '#cross-time-tabs', '#compz-time-tabs', '#flowng-time-tabs', '#reactivity-time-tabs'].forEach(sel => {
@@ -1188,6 +1313,40 @@ async function init() {
         initCompZSlider();
         initFlowNGSlider();
         initReactivitySlider();
+
+        // Flow Heat Calendar selectors
+        document.querySelectorAll('#flow-heat-mode-tabs .tab-btn').forEach(b => {
+            b.addEventListener('click', () => {
+                document.querySelectorAll('#flow-heat-mode-tabs .tab-btn').forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+                state.flowHeatMode = b.dataset.mode;
+                renderFlowHeatCalendar(state.flowHeatOffset);
+            });
+        });
+
+        document.querySelectorAll('#flow-heat-source-tabs .tab-btn').forEach(b => {
+            b.addEventListener('click', () => {
+                document.querySelectorAll('#flow-heat-source-tabs .tab-btn').forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+                state.flowHeatSource = b.dataset.source;
+                renderFlowHeatCalendar(state.flowHeatOffset);
+            });
+        });
+
+        document.getElementById('flow-heat-prev').addEventListener('click', () => {
+            const maxOffset = Math.floor((state.compositeZ.length - 1) / 90);
+            if (state.flowHeatOffset < maxOffset) {
+                state.flowHeatOffset++;
+                renderFlowHeatCalendar(state.flowHeatOffset);
+            }
+        });
+
+        document.getElementById('flow-heat-next').addEventListener('click', () => {
+            if (state.flowHeatOffset > 0) {
+                state.flowHeatOffset--;
+                renderFlowHeatCalendar(state.flowHeatOffset);
+            }
+        });
 
         // Divergence filter tabs
         document.querySelectorAll('#div-filter-tabs .tab-btn').forEach(b => {
@@ -3248,8 +3407,9 @@ async function loadAllTickersForCross() {
     });
     
     await Promise.all(proms);
-    computeCompositeZ();
     loadNGHistory();
+    computeCompositeZ();
+    renderFlowHeatCalendar(state.flowHeatOffset);
     renderCrossChart();
     syncCrossSlider();
     renderYearlyMatrix();
