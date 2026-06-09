@@ -942,6 +942,11 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:nowrap; gap:12px;">
                 <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
                     <div class="panel-title" data-tooltip="FLOW ACTIVITY HEAT MAP: Daily Composite Z-score (flow pressure), color-coded by strength (Green = Bullish Inflow, Red = Bearish Outflow). Outliers are highlighted using Global Historical Percentiles of absolute flow Z-scores. Flow Z-scores are already normalized locally over a 30-day window, making the global threshold stable, stationary, and comparable across years." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px; margin-bottom:0;">FLOW ACTIVITY HEAT MAP <span id="flow-heat-range-label" style="font-size:0.75rem; font-weight:normal; color:rgba(255,255,255,0.5); text-transform:none; margin-left:6px; letter-spacing:0.3px;">— LOADING</span></div>
+                    <!-- Pagination Navigation -->
+                    <div style="display:flex; gap:4px; margin-left:4px; margin-right:2px;">
+                        <button class="nav-arrow-btn" id="flow-heat-prev" data-tooltip="View previous 90 days">&#8592;</button>
+                        <button class="nav-arrow-btn" id="flow-heat-next" data-tooltip="View recent 90 days" disabled>&#8594;</button>
+                    </div>
                     <span class="heat-peak-count" id="flow-heat-peaks-badge">0 PEAKS</span>
                 </div>
                 
@@ -954,12 +959,6 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                             <button class="tab-btn active" data-threshold="95" data-tooltip="Significant+ Outliers: Filter to days where absolute flow pressure exceeds the 95th percentile of its global history (Default).">p95</button>
                             <button class="tab-btn" data-threshold="99" data-tooltip="Extreme Outliers: Filter to days where absolute flow pressure exceeds the 99th percentile of its global history.">p99</button>
                         </div>
-                    </div>
-
-                    <!-- Pagination Navigation -->
-                    <div style="display:flex; gap:6px;">
-                        <button class="nav-arrow-btn" id="flow-heat-prev" data-tooltip="View previous 90 days">&#8592;</button>
-                        <button class="nav-arrow-btn" id="flow-heat-next" data-tooltip="View recent 90 days" disabled>&#8594;</button>
                     </div>
                 </div>
             </div>
