@@ -73,35 +73,12 @@
 
             <!-- VOLUME HEAT CALENDAR -->
             <div class="signal-panel" id="heat-calendar-panel">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; flex-wrap: nowrap; gap: 12px; width: 100%;">
-                    <!-- Left Group: Title, Badge, Side, Mode -->
-                    <div style="display:flex; align-items:center; gap:16px; flex-shrink: 0; flex-wrap: nowrap;">
-                        <div style="display:flex; align-items:center; gap:6px; flex-shrink: 0;">
-                            <h3 id="heat-calendar-title" style="margin-bottom:0; font-size:0.95rem; font-weight:800; white-space:nowrap;" data-tooltip="Aggregated heatmap representing the maximum volume pressure across the selected ETFs.">VOLUME HEAT MAP</h3>
-                            <span class="heat-peak-count" id="heat-peak-count">0 PEAKS</span>
-                        </div>
-
-                        <!-- SIDE and MODE -->
-                        <div style="display:flex; align-items:center; gap:10px; flex-wrap: nowrap; flex-shrink: 0;">
-                            <div style="display:flex; align-items:center; gap:4px;">
-                                <span style="font-size:0.5rem; font-weight:800; color:rgba(255,255,255,0.45); letter-spacing:0.8px; white-space:nowrap;">SIDE</span>
-                                <div class="tab-group" id="heat-side-group" style="margin: 0; padding: 2px;">
-                                    <button class="tab-btn active" data-side="all" data-tooltip="Analyze all 6 ETFs (BOIL, HNU, 3NGL, KOLD, HND, 3NGS) simultaneously.">ALL</button>
-                                    <button class="tab-btn" data-side="long" data-tooltip="Analyze only long-side leveraged ETFs (BOIL, HNU, 3NGL).">LONG</button>
-                                    <button class="tab-btn" data-side="short" data-tooltip="Analyze only short-side/inverse ETFs (KOLD, HND, 3NGS).">SHORT</button>
-                                </div>
-                            </div>
-                            <div style="display:flex; align-items:center; gap:4px;">
-                                <span style="font-size:0.5rem; font-weight:800; color:rgba(255,255,255,0.45); letter-spacing:0.8px; white-space:nowrap;">MODE</span>
-                                <div class="tab-group" id="heat-mode-group" style="margin: 0; padding: 2px;">
-                                    <button class="tab-btn active" data-mode="share" data-tooltip="CVI Mode: calculated using share volume relative percentiles.">S</button>
-                                    <button class="tab-btn" data-mode="dollar" data-tooltip="DVCVI Mode: calculated using dollar volume (price × volume) relative percentiles.">$</button>
-                                </div>
-                            </div>
-                        </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; flex-wrap: nowrap; gap: 8px; width: 100%;">
+                    <div style="display:flex; align-items:center; gap:6px; flex-shrink: 0;">
+                        <h3 id="heat-calendar-title" style="margin-bottom:0; font-size:0.95rem; font-weight:800; white-space:nowrap;" data-tooltip="Aggregated heatmap representing the maximum volume pressure across the selected ETFs.">VOLUME HEAT MAP</h3>
+                        <span class="heat-peak-count" id="heat-peak-count">0 PEAKS</span>
                     </div>
                     
-                    <!-- Right Group: PEAKS and Pagination -->
                     <div style="display:flex; gap:8px; align-items:center; margin-left:auto; flex-wrap: nowrap; flex-shrink: 0;">
                         <!-- PEAKS Toggle -->
                         <div style="display:flex; gap:6px; align-items:center;">
@@ -116,6 +93,27 @@
                         <div style="display:flex; gap:6px;">
                             <button class="nav-arrow-btn" id="heat-prev" data-tooltip="View previous 90 days (Days 91-180)">&#8592;</button>
                             <button class="nav-arrow-btn" id="heat-next" data-tooltip="View recent 90 days (Days 1-90)" disabled>&#8594;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Toolbar -->
+                <div class="heat-filter-toolbar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:6px 10px; background:rgba(26,26,40,0.45); border:1px solid rgba(255,255,255,0.05); border-radius:6px; flex-wrap:nowrap; gap:12px; width: 100%;">
+                    <!-- Left: SIDE -->
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-size:0.55rem; font-weight:800; color:rgba(255,255,255,0.45); letter-spacing:0.8px;">SIDE</span>
+                        <div class="tab-group" id="heat-side-group" style="margin: 0; padding: 2px; flex-shrink: 0;">
+                            <button class="tab-btn active" data-side="all" data-tooltip="Analyze all 6 ETFs (BOIL, HNU, 3NGL, KOLD, HND, 3NGS) simultaneously.">ALL</button>
+                            <button class="tab-btn" data-side="long" data-tooltip="Analyze only long-side leveraged ETFs (BOIL, HNU, 3NGL).">LONG</button>
+                            <button class="tab-btn" data-side="short" data-tooltip="Analyze only short-side/inverse ETFs (KOLD, HND, 3NGS).">SHORT</button>
+                        </div>
+                    </div>
+                    <!-- Right: MODE -->
+                    <div style="display:flex; align-items:center; gap:6px; margin-left:auto;">
+                        <span style="font-size:0.55rem; font-weight:800; color:rgba(255,255,255,0.45); letter-spacing:0.8px;">MODE</span>
+                        <div class="tab-group" id="heat-mode-group" style="margin: 0; padding: 2px; flex-shrink: 0;">
+                            <button class="tab-btn active" data-mode="share" data-tooltip="CVI Mode: calculated using share volume relative percentiles.">S</button>
+                            <button class="tab-btn" data-mode="dollar" data-tooltip="DVCVI Mode: calculated using dollar volume (price × volume) relative percentiles.">$</button>
                         </div>
                     </div>
                 </div>
