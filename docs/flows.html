@@ -941,18 +941,18 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <div class="panel" id="flow-heat-panel">
             <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:nowrap; gap:12px;">
                 <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-                    <div class="panel-title" data-tooltip="FLOW ACTIVITY HEAT MAP: Daily Composite Z-score (flow pressure), color-coded by strength (Green = Bullish Inflow, Red = Bearish Outflow). Colored dots mark days when a Flow-Price Divergence signal fired. Hover cells for rich metrics." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px; margin-bottom:0;">FLOW ACTIVITY HEAT MAP <span id="flow-heat-range-label" style="font-size:0.75rem; font-weight:normal; color:rgba(255,255,255,0.5); text-transform:none; margin-left:6px; letter-spacing:0.3px;">— LOADING</span></div>
+                    <div class="panel-title" data-tooltip="FLOW ACTIVITY HEAT MAP: Daily Composite Z-score (flow pressure), color-coded by strength (Green = Bullish Inflow, Red = Bearish Outflow). Outliers are highlighted using Global Historical Percentiles of absolute flow Z-scores. Flow Z-scores are already normalized locally over a 30-day window, making the global threshold stable, stationary, and comparable across years." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px; margin-bottom:0;">FLOW ACTIVITY HEAT MAP <span id="flow-heat-range-label" style="font-size:0.75rem; font-weight:normal; color:rgba(255,255,255,0.5); text-transform:none; margin-left:6px; letter-spacing:0.3px;">— LOADING</span></div>
                     <span class="heat-peak-count" id="flow-heat-peaks-badge">0 PEAKS</span>
                 </div>
                 
                 <div style="display:flex; align-items:center; gap:12px; flex-wrap:nowrap; margin-left:auto; flex-shrink:0;">
                     <!-- PEAKS Toggle -->
                     <div style="display:flex; gap:6px; align-items:center;">
-                        <button class="peaks-toggle-btn" id="flow-heat-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all cells except key statistical flow pressure outliers.">PEAKS</button>
+                        <button class="peaks-toggle-btn" id="flow-heat-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all cells except key statistical flow pressure outliers. Compares daily absolute Composite Z-scores to Global Historical Percentiles (full 5+ year history) to locate true extreme flow events.">PEAKS</button>
                         <div class="tab-group heat-peaks-sub" id="flow-heat-peaks-threshold-group" style="margin: 0; padding: 2px; display: none; align-items: center;">
-                            <button class="tab-btn" data-threshold="90" data-tooltip="Show top 10% highest absolute flow pressure days (Notable+).">p90</button>
-                            <button class="tab-btn active" data-threshold="95" data-tooltip="Show top 5% highest absolute flow pressure days (Significant+).">p95</button>
-                            <button class="tab-btn" data-threshold="99" data-tooltip="Show top 1% highest absolute flow pressure days (Extreme only).">p99</button>
+                            <button class="tab-btn" data-threshold="90" data-tooltip="Notable+ Outliers: Filter to days where absolute flow pressure exceeds the 90th percentile of its global history.">p90</button>
+                            <button class="tab-btn active" data-threshold="95" data-tooltip="Significant+ Outliers: Filter to days where absolute flow pressure exceeds the 95th percentile of its global history (Default).">p95</button>
+                            <button class="tab-btn" data-threshold="99" data-tooltip="Extreme Outliers: Filter to days where absolute flow pressure exceeds the 99th percentile of its global history.">p99</button>
                         </div>
                     </div>
 
@@ -970,18 +970,18 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span style="font-size:0.6rem; font-weight:800; color:rgba(255,255,255,0.45); letter-spacing:0.8px;">DISPLAY MODE</span>
                     <div class="tab-group" id="flow-heat-mode-tabs">
-                        <button class="tab-btn active" data-mode="unified" data-tooltip="Show overall flows with divergence overlays">UNIFIED</button>
-                        <button class="tab-btn" data-mode="composite" data-tooltip="Show pure Z-score flow strength">COMPOSITE</button>
-                        <button class="tab-btn" data-mode="divergence" data-tooltip="Highlight contrarian divergence signals only">DIVERGENCES</button>
+                        <button class="tab-btn active" data-mode="unified" data-tooltip="Unified Mode: Displays daily Composite Z-score colors with green/red dot overlays for active Flow-Price Divergences.">UNIFIED</button>
+                        <button class="tab-btn" data-mode="composite" data-tooltip="Composite Mode: Displays raw averaged Z-score colors representing net capital flow pressure.">COMPOSITE</button>
+                        <button class="tab-btn" data-mode="divergence" data-tooltip="Divergence Mode: Dims all cells except those where a Flow-Price Divergence signal occurred.">DIVERGENCES</button>
                     </div>
                 </div>
                 <!-- Right: FLOW SOURCE -->
                 <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
                     <span style="font-size:0.6rem; font-weight:800; color:rgba(255,255,255,0.45); letter-spacing:0.8px;">FLOW SOURCE</span>
                     <div class="tab-group" id="flow-heat-source-tabs">
-                        <button class="tab-btn active" data-source="all" data-tooltip="Average flow across all 6 ETFs">ALL ETFs</button>
-                        <button class="tab-btn" data-source="long" data-tooltip="Averages BOIL, HNU, and 3NGL">LONGS (Bull)</button>
-                        <button class="tab-btn" data-source="short" data-tooltip="Averages KOLD, HND, and 3NGS">SHORTS (Bear)</button>
+                        <button class="tab-btn active" data-source="all" data-tooltip="All ETFs: Equal-weighted average of flow Z-scores across all 6 long and short ETFs (with short-side sign inversion: inflows to KOLD/HND/3NGS are treated as selling pressure).">ALL ETFs</button>
+                        <button class="tab-btn" data-source="long" data-tooltip="Longs (Bull): Equal-weighted average of flow Z-scores across long ETFs (BOIL, HNU, 3NGL). Positive represents inflows.">LONGS (Bull)</button>
+                        <button class="tab-btn" data-source="short" data-tooltip="Shorts (Bear): Equal-weighted average of flow Z-scores across short ETFs (KOLD, HND, 3NGS). Positive represents inflows to short ETFs (bearish sentiment).">SHORTS (Bear)</button>
                     </div>
                 </div>
             </div>

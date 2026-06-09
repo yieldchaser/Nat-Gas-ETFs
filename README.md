@@ -42,18 +42,39 @@ This project implements five interconnected analytical engines:
 ## Outlier Spotlight (PEAKS Mode)
 
 To cut through visual noise during periods of extreme volatility or congestion, all heatmaps and activity matrices across the dashboards support **PEAKS Mode** (Outlier Spotlight). When toggled:
-- **Lights Off (Dimming):** Non-outlying days, months, or years are dimmed to near-black (`opacity: 0.15`), making normal conditions recede into the background.
+- **Lights Off (Dimming):** Non-outlying days, months, or years are dimmed to near-black (`opacity: 0.15` or `#0b0b14`), making normal conditions recede into the background.
 - **Spotlight Glow:** Key statistical outliers are highlighted with harmonized glowing borders, vibrant backdrops, and interactive entry animations:
   - **Notable Peaks (P90):** Amber/gold glow.
   - **Significant Peaks (P95):** Orange/copper glow.
   - **Extreme Peaks (P99):** Red/crimson intense glow.
 - **Outlier Counter Badge:** Displays the exact count of outliers currently spotlighted in the view window.
 
+### Lookback Window & Percentile Methodologies
+
+To ensure mathematical consistency and maximum usefulness for market analysis, each heatmap uses a lookback window tailored to the statistical properties of its underlying metric:
+
+| Heatmap | Primary Metric | Statistical Property | Lookback Window | Rationale |
+| :--- | :--- | :--- | :--- | :--- |
+| **Volume Heat Map** (`index.html`) | **Capitulation Volume Index (CVI / DVCVI)** | **Stationary** (bounded product of rolling 21d volume & price ranks) | **Global Historical** (Full 5+ Year History) | Since CVI is already locally normalized, its scale is stationary across years. Using a global baseline prevents "false alarms" (highlighting normal days in quiet years) and ensures a CVI score has the same visual intensity across different years. |
+| **Flow Activity Heat Map** (`flows.html`) | **Composite Flow Z-Score** | **Stationary** (rolling 30d mean/std dev standardized flow average) | **Global Historical** (Full 5+ Year History) | Z-scores have a stable, stationary probability distribution. Using global absolute thresholds (e.g., p95 $\approx 1.5 - 2.0\sigma$) ensures that only historically extreme capital movements are highlighted, maintaining consistent visual scale across the timeline. |
+| **CVOL Signal Activity Heatmap** (`cvol.html`) | **Implied Volatility (NGVL)** | **Non-Stationary** (raw index value; regime-dependent with long-term drift) | **Rolling 252-Day** (Trailing 1 Year) | Implied volatility shifts structural regimes (e.g., quiet years at 30% vs energy crisis spikes at 120%). Comparing raw vol globally would drown out all spikes in normal years. A rolling 1-year window evaluates volatility expansion relative to the current market environment. |
+| **CVOL Monthly Regime Heatmap** (`cvol.html`) | **Monthly Average NGVL** | **Stationary Grouping** (aggregated monthly averages) | **Global Historical** (All months in history) | Ranks the average NGVL of each month against the distribution of all historical months, highlighting the top 10% highest-volatility months on record to reveal seasonal macro-regimes. |
+
+#### Detailed Lookback Rationale
+
+1. **Global Historical Window (Volume & Flow)**
+   - **Lookahead Bias vs. Comparability:** While global lookbacks technically incorporate future data, they are the mathematically correct choice for rendering historical timelines. If we used rolling or visible lookbacks for stationary metrics like CVI or Z-scores, the thresholds would constantly shift. In a low-flow period, a minor noise day would be flagged as an "extreme outlier" (false positive), whereas in a high-activity period, a massive capitulation spike would be ignored because it was preceded by other spikes (false negative).
+   - **Double-Normalization:** Metrics like CVI and Z-scores are already locally normalized (rolling 21-day and 30-day windows). Applying another rolling normalization layer on top introduces mathematical redundancy and distorting noise.
+
+2. **Rolling Historical Window (Implied Volatility)**
+   - **Regime Shifts:** Natural Gas Implied Volatility (NGVL) is highly non-stationary. If evaluated globally, the extreme peaks of the 2022 energy crisis (NGVL > 120%) would set the baseline so high that no volatility expansion in 2024, 2025, or 2026 would ever trigger a highlight.
+   - **Option Trading Standard:** Options traders evaluate volatility rank (IV Rank or IV Percentile) relative to a trailing 1-year (252 trading days) window. This tells the trader: *"Is volatility high or low relative to options priced over the last year?"* This is the exact context needed to judge if option premiums are cheap or expensive today.
+
 PEAKS Mode is supported on:
 1. **Volume Heat Map (Days 1–90)** (`index.html`): Filterable by P90, P95, or P99 thresholds. Uses global historical percentiles computed over all active daily maximum ETF CVIs.
-2. **CVOL Signal Activity Heatmap** (`cvol.html`): Filterable by P90, P95, or P99 thresholds. Dims non-outliers, styles outlying signals, and hides signal dots on dimmed cells.
-3. **Regime Heatmap (Monthly NGVL)** (`cvol.html`): Spotlight threshold fixed at P90.
-4. **Yearly Flow Activity Matrix** (`flows.html`): Spotlight threshold fixed at P90. Clears inline background styles on cells to let the glowing outlier classes shine.
+2. **CVOL Signal Activity Heatmap** (`cvol.html`): Filterable by P90, P95, or P99 thresholds. Uses trailing 252-day rolling percentiles to identify volatility outliers.
+3. **Regime Heatmap (Monthly NGVL)** (`cvol.html`): Spotlight threshold fixed at P90 (top 10% of monthly average NGVL values in global history).
+4. **Yearly Flow Activity Matrix** (`flows.html`): Filterable by P90, P95, or P99 thresholds. Uses global historical percentiles of absolute composite flow Z-scores.
 
 ---
 
