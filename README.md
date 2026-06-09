@@ -241,9 +241,11 @@ Multi-timeframe volume anomaly detection engine covering both **share volume** a
 - **Monitors capitulation** with **VCVI** (Vol-Adjusted Capitulation Volume Index)
 - **Monitors dollar-flow capitulation** with **DVCVI** — same formula as VCVI but using dollar volume percentile; doubly penalised in capitulation because low price already suppresses dollar volume
 - **Scores capital flow intensity** with **DV-VPS** — parallel to VPS but computed on dollar volume metrics
-- **Tracks flow divergence** with **VDDS** (Volume-Dollar Divergence Score) — DV-RVOL ÷ S-RVOL per ETF and cross-ETF comparison bar
+- **Tracks flow divergence** with **VDDS** (Volume-Dollar Divergence Score) — DV-RVOL ÷ S-RVOL per ETF. The VDDS panel includes a **VOL / $ flip toggle** mirroring the heatmap's mode toggle:
+  - **VOL mode** (default) — shows S-RVOL-21d (pure share volume relative to 21-day average) as a left-anchored bar per ETF. Color: dim=sub-normal, white=normal, blue=mild surge, yellow=notable, orange=high, red=extreme, purple=absolute extreme.
+  - **$ mode** — shows the original VDDS ratio (DV-RVOL-21d ÷ S-RVOL-21d) as a centered divergence bar (green=capitulation, red=momentum).
 - **Detects weather spikes** via 5d fast-window VCVI + ATR sharp-spike flag
-- **Gates signals** with a seasonally-adjusted NG=F price Z-score
+- **Gates signals** with a **log-transformed rolling 10-year seasonal Z-score** on NG=F (corrects for right-skewed gas price distribution; raw Z-scores were non-triggerable at low prices due to 2022 spike inflating σ)
 - **Corrects for leveraged ETF decay** to prevent structural price drift contaminating percentile signals
 - **Weights by season** (winter ×1.3, summer ×0.85)
 - **Classifies NG=F volatility regime** (normal / elevated / extreme)
@@ -285,18 +287,18 @@ Each banner shows the individual ETF spike dates, days-ago, and RVOL levels inli
 
 #### Signal Column Layout (top to bottom)
 
-Panels are ordered by signal priority:
+Panels are ordered by **signal recency and actionability** — real-time / current-state panels first, historical analysis last:
 
-1. **VDDS Bar** — per-ETF volume-dollar divergence (DV-RVOL ÷ S-RVOL), always visible
-2. **NG=F Price Context Bar** — seasonal Z-score gate (always visible)
-3. **Conviction Events** — strictest filter, shown first as the primary actionable signal
-4. **Elevated Watch** — softer pre-conviction filter
-5. **Active Alerts** — real-time feed (VCVI, MWCA, RVOL only — see below)
-6. **Stress Matrix** — per-pair IPSI, vol regime, status
-7. **Side-Wide Convergence (SWVC)** — cross-market tri-ETF spike tracker
-8. **Historical Echoes** — base-rate forward returns for past VCVI signals
-9. **Volume Heat Calendar** — 90-day volume heatmap
-10. **Multi-Window Convergence** — gauges across all 6 timeframes
+1. **NG=F Price Context Bar** — seasonal log-Z-score gate (always visible, top of center column)
+2. **Active Alerts** — real-time feed (VCVI, MWCA, RVOL)
+3. **Volume Heat Map (Days 1–90)** — 90-day rolling heatmap, immediately actionable at a glance
+4. **Inverse Pair Stress Matrix** — per-pair IPSI, vol regime, real-time stress status
+5. **VDDS Panel** — per-ETF volume bar with VOL / $ flip toggle
+6. **Side-Wide Convergence (SWVC)** — cross-market tri-ETF spike tracker
+7. **Multi-Window Convergence** — gauges across all 6 timeframes
+8. **Conviction Events** — strictest historical filter
+9. **Elevated Watch** — softer pre-conviction historical filter
+10. **Historical Echoes** — base-rate forward returns for past VCVI signals
 
 #### Active Alerts
 
@@ -312,12 +314,14 @@ CVI, VPS, ATR breakout, VoV-21, and vol-regime warnings are computed and visible
 
 #### Signal Command Center
 
-**NG=F Price Context Bar** — Seasonal Z-score gate:
+**NG=F Price Context Bar** — Log-transformed seasonal Z-score gate:
+
+The seasonal Z-score uses **log-prices** and a **rolling 10-year same-month lookback** rather than raw prices. This corrects for natural gas's right-skewed price distribution (2022 spike inflates the raw standard deviation, making the gate nearly unfireable at low prices). The log transformation normalises the distribution and produces calibrated, triggerable signals:
 
 | Gate | Condition | Meaning |
 |------|-----------|---------|
-| **LONG ✓** | Seasonal z ≤ −1.5σ | Gas anomalously cheap for the month → long signals credible |
-| **SHORT ✓** | Seasonal z ≥ +1.5σ | Gas anomalously expensive → short signals credible |
+| **LONG ✓** | Log-seasonal z ≤ −1.5σ | Gas anomalously cheap for the month (log-scale) → long signals credible |
+| **SHORT ✓** | Log-seasonal z ≥ +1.5σ | Gas anomalously expensive → short signals credible |
 | **Both ✗** | −1.5 < z < +1.5 | Gas within seasonal norm → interpret with caution |
 
 **Volatility Regime Badge:**
@@ -577,7 +581,7 @@ A collapsible diagnostic panel for every signal that compares performance across
 | **DV-VROC** | Dollar volume rate of change |
 | **DVCVI** | `dv_percentile × (1 − price_pct/100)`; doubly penalised in capitulation because low price already suppresses dollar volume |
 | **DV-VPS** | Parallel VPS composite computed on dollar-volume metrics (same weights as VPS) |
-| **VDDS** | Volume-Dollar Divergence Score: `DV-RVOL-21d ÷ S-RVOL-21d`; `< 1` = share vol outpacing dollar vol (capitulation); `> 1` = dollar vol outpacing share vol (momentum/accumulation) |
+| **VDDS** | Volume-Dollar Divergence Score: `DV-RVOL-21d ÷ S-RVOL-21d`; `< 1` = share vol outpacing dollar vol (capitulation); `> 1` = dollar vol outpacing share vol (momentum/accumulation). Panel has VOL/$ toggle — VOL mode shows raw S-RVOL-21d per ETF as an intuitive surge bar. |
 
 ### Leveraged ETF Decay Correction
 
@@ -682,7 +686,8 @@ The dashboard uses a two-layer data architecture: a pre-computed pipeline layer 
 4. Classify regime per day (Accumulation / Distribution / Balanced)
 5. Compute pressure score (Z + momentum + streak bonus, clamped ±100)
 6. Aggregate cross-ETF sentiment (bull vs bear 30d net flows, BULLISH/BEARISH/NEUTRAL)
-7. Write per-ticker JSON + summary JSON → sync to `docs/data/flows/`
+7. Set `updated` date in `all_flows_summary.json` to **the actual latest data date** (min across all tickers) — not the script run date. TrackInsight data lags 1–4 business days; using today's date would show a false "Updated: today" when data is 4 days old. `flows.html` reads this date to display the correct data cutoff.
+8. Write per-ticker JSON + summary JSON → sync to `docs/data/flows/`
 
 **Layer 2 — Live browser-side overlay (Volume Monitor only):**
 
