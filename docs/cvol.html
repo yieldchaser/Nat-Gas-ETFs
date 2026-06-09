@@ -647,10 +647,10 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <div class="heatmap-panel">
             <div class="section-title-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: nowrap; gap: 6px;">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="section-title-text" data-tooltip="Monthly NGVL regime heatmap — color-coded by 252-day percentile for each month across all available years. Reveals seasonal volatility patterns: winter typically elevated, shoulder months complacent. Hover for details.">Regime Heatmap</span>
+                    <span class="section-title-text" data-tooltip="Monthly NGVL regime heatmap — color-coded by Global Historical Percentiles of monthly averages across the entire 5+ year history. Reveals seasonal volatility patterns: winter typically elevated, shoulder months complacent. Hover for details.">Regime Heatmap</span>
                     <span class="heat-peak-count" id="cvol-hm-peak-count">0 PEAKS</span>
                 </div>
-                <button class="peaks-toggle-btn" id="cvol-hm-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all months except key statistical NGVL outliers.">PEAKS</button>
+                <button class="peaks-toggle-btn" id="cvol-hm-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all months except those in the top 10% of historical volatility (Notable, Significant, and Extreme, i.e. ≥90th percentile of all monthly averages globally).">PEAKS</button>
             </div>
             <div id="cvol-heatmap"></div>
         </div>
@@ -666,17 +666,17 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <div class="heatmap-panel">
         <div class="section-title-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: nowrap; gap: 6px;">
             <div style="display:flex; align-items:center; gap:8px;">
-                <span class="section-title-text" id="sig-heat-title" data-tooltip="Daily NGVL regime, color-coded by 252-day percentile (blue=Low, green=Normal, orange=Elevated, red=Extreme). Colored dots mark days when a composite signal fired. Clustering of dots in high-regime (dark orange/red) days = highest-conviction setups.">Signal Activity &middot; Days 1-90</span>
+                <span class="section-title-text" id="sig-heat-title" data-tooltip="Daily NGVL regime, color-coded by the Rolling 252-Day (1-Year) Percentile of NGVL. Options implied volatility is non-stationary and regime-dependent; a rolling 1-year lookback is the options-industry standard to evaluate volatility expansion/compression relative to the current market environment. Colored dots mark days when a composite signal fired.">Signal Activity &middot; Days 1-90</span>
                 <span class="heat-peak-count" id="cvol-sig-peak-count">0 PEAKS</span>
             </div>
             <div style="display:flex; gap:12px; align-items:center; margin-left:auto;">
                 <!-- PEAKS Toggle -->
                 <div style="display:flex; gap:6px; align-items:center;">
-                    <button class="peaks-toggle-btn" id="cvol-sig-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all cells except key NGVL statistical outliers.">PEAKS</button>
+                    <button class="peaks-toggle-btn" id="cvol-sig-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all cells except key NGVL statistical outliers. Uses the Rolling 252-Day Percentile baseline to highlight days with significant volatility expansion.">PEAKS</button>
                     <div class="tab-group heat-peaks-sub" id="cvol-sig-peaks-threshold-group" style="margin: 0; padding: 2px; display: none;">
-                        <button class="tab-btn" data-threshold="90" data-tooltip="Show top 10% highest NGVL days (Notable+).">p90</button>
-                        <button class="tab-btn active" data-threshold="95" data-tooltip="Show top 5% highest NGVL days (Significant+).">p95</button>
-                        <button class="tab-btn" data-threshold="99" data-tooltip="Show top 1% highest NGVL days (Extreme only).">p99</button>
+                        <button class="tab-btn" data-threshold="90" data-tooltip="Notable+ Outliers: Filter to days where NGVL exceeds the 90th percentile of its trailing 252-day history.">p90</button>
+                        <button class="tab-btn active" data-threshold="95" data-tooltip="Significant+ Outliers: Filter to days where NGVL exceeds the 95th percentile of its trailing 252-day history (Default).">p95</button>
+                        <button class="tab-btn" data-threshold="99" data-tooltip="Extreme Outliers: Filter to days where NGVL exceeds the 99th percentile of its trailing 252-day history.">p99</button>
                     </div>
                 </div>
                 <!-- Pagination -->
