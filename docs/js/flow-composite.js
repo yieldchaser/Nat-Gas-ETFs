@@ -68,6 +68,29 @@ function computeCompositeZ() {
     updateCompZReading();
 }
 
+function computeFlowHeatGlobalPercentiles() {
+    state.flowHeatGlobalPercentiles = {};
+    ['all', 'long', 'short'].forEach(source => {
+        const vals = state.compositeZ.map(d => {
+            if (source === 'all') return Math.abs(d.z || 0);
+            if (source === 'long') return Math.abs(d.longZ || 0);
+            if (source === 'short') return Math.abs(d.shortZ || 0);
+            return 0;
+        });
+        vals.sort((a, b) => a - b);
+        const n = vals.length;
+        if (n > 0) {
+            state.flowHeatGlobalPercentiles[source] = {
+                p90: vals[Math.floor(0.90 * n)],
+                p95: vals[Math.floor(0.95 * n)],
+                p99: vals[Math.floor(0.99 * n)]
+            };
+        } else {
+            state.flowHeatGlobalPercentiles[source] = { p90: 1.5, p95: 2.0, p99: 2.5 };
+        }
+    });
+}
+
 function updateCompZReading() {
     const cz = state.compositeZ;
     if (!cz || cz.length === 0) return;
@@ -873,7 +896,19 @@ function renderFlowHeatCalendar(offset = 0) {
         sigLegend.style.display = (mode === 'unified') ? 'flex' : 'none';
     }
     
-    let html = '<div class="flow-heat-grid">';
+    // PEAKS Mode setup
+    const peaksMode = state.flowHeatPeaksMode || false;
+    const thresholdPct = state.flowHeatPeaksThreshold || 95;
+    const globalObj = state.flowHeatGlobalPercentiles;
+    const percentiles = globalObj ? globalObj[source] : null;
+    const cutoff = percentiles ? (percentiles[`p${thresholdPct}`] || 1.5) : 1.5;
+    const p90Cutoff = percentiles ? (percentiles.p90 || 1.2) : 1.2;
+    const p95Cutoff = percentiles ? (percentiles.p95 || 1.5) : 1.5;
+    const p99Cutoff = percentiles ? (percentiles.p99 || 2.0) : 2.0;
+    
+    let windowPeakCount = 0;
+    
+    let html = `<div class="flow-heat-grid ${peaksMode ? 'peaks-mode' : ''}">`;
     let prevMonth = null;
     const monthNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
     
@@ -908,25 +943,51 @@ function renderFlowHeatCalendar(offset = 0) {
         let borderStyle = '1px solid rgba(255, 255, 255, 0.04)';
         let fgColor = 'rgba(255, 255, 255, 0.4)';
         let alpha = 0.15;
+        let isDimmed = false;
+        let cellPeaksClass = '';
         
-        if (mode === 'divergence' && d.divVal === 0) {
-            bg = '#1a1a28';
-            borderStyle = '1px solid rgba(255, 255, 255, 0.02)';
-            fgColor = 'rgba(255, 255, 255, 0.15)';
-        } else if (absV >= 0.3) {
-            alpha = Math.min(0.85, 0.22 + (absV / 2.0) * 0.63);
-            const rColor = val >= 0 ? '61, 184, 122' : '239, 68, 68';
-            bg = `rgba(${rColor}, ${alpha})`;
-            borderStyle = `1px solid rgba(${rColor}, ${Math.min(1, alpha + 0.15)})`;
-            fgColor = (alpha > 0.45) ? '#fff' : (val >= 0 ? '#3db87a' : '#ef4444');
+        if (peaksMode) {
+            if (absV < cutoff) {
+                isDimmed = true;
+                cellPeaksClass = ' heat-dim';
+                bg = '#0b0b14';
+                borderStyle = '1px solid transparent';
+                fgColor = 'rgba(255, 255, 255, 0.08)';
+            } else {
+                windowPeakCount++;
+                if (absV >= p99Cutoff) {
+                    cellPeaksClass = ' heat-peak-extreme';
+                } else if (absV >= p95Cutoff) {
+                    cellPeaksClass = ' heat-peak-significant';
+                } else {
+                    cellPeaksClass = ' heat-peak-notable';
+                }
+                bg = ''; // clear background to let CSS handle it
+                borderStyle = ''; // clear border to let CSS glow apply
+                fgColor = '#fff';
+            }
+        } else {
+            if (mode === 'divergence' && d.divVal === 0) {
+                bg = '#1a1a28';
+                borderStyle = '1px solid rgba(255, 255, 255, 0.02)';
+                fgColor = 'rgba(255, 255, 255, 0.15)';
+            } else if (absV >= 0.3) {
+                alpha = Math.min(0.85, 0.22 + (absV / 2.0) * 0.63);
+                const rColor = val >= 0 ? '61, 184, 122' : '239, 68, 68';
+                bg = `rgba(${rColor}, ${alpha})`;
+                borderStyle = `1px solid rgba(${rColor}, ${Math.min(1, alpha + 0.15)})`;
+                fgColor = (alpha > 0.45) ? '#fff' : (val >= 0 ? '#3db87a' : '#ef4444');
+            }
         }
         
-        // Divergence Badge (in Unified Mode)
+        // Divergence Badge (in Unified Mode) — hide if cell is dimmed
         let badge = '';
-        if (mode === 'unified' && d.divVal !== 0) {
+        if (mode === 'unified' && d.divVal !== 0 && !isDimmed) {
             const badgeColor = d.divVal > 0 ? '#3db87a' : '#ef4444';
             badge = `<div class="flow-heat-badge" style="background:${badgeColor};"></div>`;
-            borderStyle = `2px solid ${badgeColor}`;
+            if (!peaksMode) {
+                borderStyle = `2px solid ${badgeColor}`;
+            }
         }
         
         // Highlight current day if it's the very last day of data
@@ -936,9 +997,9 @@ function renderFlowHeatCalendar(offset = 0) {
         }
         
         html += `
-            <div class="flow-heat-cell" 
+            <div class="flow-heat-cell${cellPeaksClass}" 
                  data-index="${i}" 
-                 style="position:relative; background:${bg}; border:${borderStyle}; color:${fgColor}; ${shadowStyle}">
+                 style="position:relative; ${bg ? `background:${bg};` : ''} ${borderStyle ? `border:${borderStyle};` : ''} color:${fgColor}; ${shadowStyle}">
                  ${monthLabel}
                  ${day}
                  ${badge}
@@ -948,6 +1009,17 @@ function renderFlowHeatCalendar(offset = 0) {
     html += '</div>';
     html += `<div id="flow-heat-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:220px;"></div>`;
     elContainer.innerHTML = html;
+    
+    // Update peak count badge
+    const peakBadge = document.getElementById('flow-heat-peaks-badge');
+    if (peakBadge) {
+        if (peaksMode) {
+            peakBadge.textContent = `${windowPeakCount} ${windowPeakCount === 1 ? 'PEAK' : 'PEAKS'}`;
+            peakBadge.classList.add('visible');
+        } else {
+            peakBadge.classList.remove('visible');
+        }
+    }
     
     // Setup event listeners for tooltip
     setupFlowHeatTooltip();

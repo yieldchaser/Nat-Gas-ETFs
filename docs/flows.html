@@ -436,7 +436,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 }
 
 /* ---- FLOW HEAT PEAKS / SPOTLIGHT MODE ---- */
-.flow-yearly-matrix.peaks-mode {
+.flow-heat-grid.peaks-mode {
     background: rgba(5, 5, 14, 0.72);
     border-radius: 6px;
     padding: 4px;
@@ -940,9 +940,21 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 6.1b: Flow Activity Heat Map -->
         <div class="panel" id="flow-heat-panel">
             <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-                <div class="panel-title" data-tooltip="FLOW ACTIVITY HEAT MAP: Daily Composite Z-score (flow pressure), color-coded by strength (Green = Bullish Inflow, Red = Bearish Outflow). Colored dots mark days when a Flow-Price Divergence signal fired. Hover cells for rich metrics." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">FLOW ACTIVITY HEAT MAP <span class="panel-subtitle" id="flow-heat-range-label">— LOADING</span></div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="panel-title" data-tooltip="FLOW ACTIVITY HEAT MAP: Daily Composite Z-score (flow pressure), color-coded by strength (Green = Bullish Inflow, Red = Bearish Outflow). Colored dots mark days when a Flow-Price Divergence signal fired. Hover cells for rich metrics." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px; margin-bottom:0;">FLOW ACTIVITY HEAT MAP <span class="panel-subtitle" id="flow-heat-range-label">— LOADING</span></div>
+                    <span class="heat-peak-count" id="flow-heat-peaks-badge">0 PEAKS</span>
+                </div>
                 
-                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-left:auto;">
+                    <!-- PEAKS Toggle -->
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <button class="peaks-toggle-btn" id="flow-heat-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all cells except key statistical flow pressure outliers.">PEAKS</button>
+                        <div class="tab-group heat-peaks-sub" id="flow-heat-peaks-threshold-group" style="margin: 0; padding: 2px; display: none; align-items: center;">
+                            <button class="tab-btn" data-threshold="90" data-tooltip="Show top 10% highest absolute flow pressure days (Notable+).">p90</button>
+                            <button class="tab-btn active" data-threshold="95" data-tooltip="Show top 5% highest absolute flow pressure days (Significant+).">p95</button>
+                            <button class="tab-btn" data-threshold="99" data-tooltip="Show top 1% highest absolute flow pressure days (Extreme only).">p99</button>
+                        </div>
+                    </div>
                     <!-- Display Mode Selector -->
                     <div class="tab-group" id="flow-heat-mode-tabs" style="margin-right:4px;">
                         <button class="tab-btn active" data-mode="unified" data-tooltip="Show overall flows with divergence overlays">UNIFIED</button>
@@ -1131,12 +1143,8 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 
         <!-- Section 7: Yearly Flow Frequency Matrix -->
         <div class="panel" id="yearly-matrix-panel">
-            <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 8px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <div class="panel-title" data-tooltip="Shows the number of significant flow events (|Z-Score| ≥ 1.5) per year per ETF, with average Z-Score magnitude. Helps identify which years had the most active flow signals." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Yearly Flow Activity Matrix</div>
-                    <span class="heat-peak-count" id="flow-matrix-peak-count">0 PEAKS</span>
-                </div>
-                <button class="peaks-toggle-btn" id="flow-matrix-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all cells except key statistical outliers.">PEAKS</button>
+            <div class="panel-header">
+                <div class="panel-title" data-tooltip="Shows the number of significant flow events (|Z-Score| ≥ 1.5) per year per ETF, with average Z-Score magnitude. Helps identify which years had the most active flow signals." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Yearly Flow Activity Matrix</div>
             </div>
             <div id="yearly-matrix-container" style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
                 <div style="color:rgba(255, 255, 255, 0.85); padding:20px; text-align:center; font-size:0.7rem; letter-spacing:1px;">Loading matrix…</div>
@@ -1307,7 +1315,9 @@ const state = {
     zoomReactivity: { start: 0, end: 1 },  // reactivity chart zoom — independent
     divValsCache: [],  // [{signed, ng5d}] — built per render in drawChartFlowNG, read by hover handler
     reactValsCache: [], // [{intensity, ng5d}] — built per render in drawChartReactivity, read by hover handler
-    flowMatrixPeaksMode: false,
+    flowHeatPeaksMode: false,
+    flowHeatPeaksThreshold: 95,
+    flowHeatGlobalPercentiles: {},
     drag: { active: false, startIdx: null, currentIdx: null }
 };
 
@@ -1557,13 +1567,28 @@ async function init() {
         el('chartReactivity').addEventListener('mousemove', handleReactivityHover);
         el('chartReactivity').addEventListener('mouseleave', hideReactivityHover);
 
-        // PEAKS mode toggle for flow activity matrix
-        const flowMatrixPeaksToggle = document.getElementById('flow-matrix-peaks-toggle');
-        if (flowMatrixPeaksToggle) {
-            flowMatrixPeaksToggle.addEventListener('click', () => {
-                state.flowMatrixPeaksMode = !state.flowMatrixPeaksMode;
-                flowMatrixPeaksToggle.classList.toggle('active', state.flowMatrixPeaksMode);
-                renderYearlyMatrix();
+        // PEAKS mode toggle for flow activity heatmap
+        const flowHeatPeaksToggle = document.getElementById('flow-heat-peaks-toggle');
+        const flowHeatPeaksThresholdGroup = document.getElementById('flow-heat-peaks-threshold-group');
+        if (flowHeatPeaksToggle) {
+            flowHeatPeaksToggle.addEventListener('click', () => {
+                state.flowHeatPeaksMode = !state.flowHeatPeaksMode;
+                flowHeatPeaksToggle.classList.toggle('active', state.flowHeatPeaksMode);
+                if (flowHeatPeaksThresholdGroup) {
+                    flowHeatPeaksThresholdGroup.style.display = state.flowHeatPeaksMode ? 'flex' : 'none';
+                }
+                renderFlowHeatCalendar(state.flowHeatOffset);
+            });
+        }
+
+        if (flowHeatPeaksThresholdGroup) {
+            flowHeatPeaksThresholdGroup.addEventListener('click', (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                flowHeatPeaksThresholdGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.flowHeatPeaksThreshold = parseInt(btn.getAttribute('data-threshold'));
+                renderFlowHeatCalendar(state.flowHeatOffset);
             });
         }
         
@@ -3081,10 +3106,6 @@ function renderYearlyMatrix() {
     const container = document.getElementById('yearly-matrix-container');
     if (!container) return;
 
-    const peaksMode = state.flowMatrixPeaksMode || false;
-    const panel = document.getElementById('yearly-matrix-panel');
-    if (panel) panel.classList.toggle('peaks-mode', peaksMode);
-
     const tickers = ['BOIL', 'HNU', '3NGL', 'KOLD', 'HND', '3NGS'];
     const allYears = new Set();
     const freq = {}; // ticker -> year -> { count, sumZ }
@@ -3107,24 +3128,6 @@ function renderYearlyMatrix() {
 
     const years = Array.from(allYears).sort((a, b) => b - a);
     if (!years.length) { container.innerHTML = '<div style="color:rgba(255, 255, 255, 0.85);padding:20px;text-align:center;font-size:0.7rem;">No flow events detected.</div>'; return; }
-
-    // Collect all cell counts for percentile calculations
-    const counts = [];
-    years.forEach(yr => {
-        tickers.forEach(tk => {
-            const s = freq[tk][yr];
-            if (s && s.count) counts.push(s.count);
-        });
-    });
-    counts.sort((a, b) => a - b);
-    const p90Idx = Math.floor(0.9 * counts.length);
-    const p90Threshold = counts.length ? counts[Math.min(p90Idx, counts.length - 1)] : 0;
-    const p95Idx = Math.floor(0.95 * counts.length);
-    const p95Threshold = counts.length ? counts[Math.min(p95Idx, counts.length - 1)] : 0;
-    const p99Idx = Math.floor(0.99 * counts.length);
-    const p99Threshold = counts.length ? counts[Math.min(p99Idx, counts.length - 1)] : 0;
-
-    let windowPeakCount = 0;
 
     // Global min/max avg Z for color scaling
     const allAvgZ = [];
@@ -3174,31 +3177,10 @@ function renderYearlyMatrix() {
             if (s && s.count) {
                 const avgZ = s.sumZ / s.count;
                 const ratio = s.count / colMax[tk];
-                let bg = `rgba(${rgbMap[tk]},${(ratio * 0.22).toFixed(2)})`;
-                let cellClass = 'flow-heat-cell';
-
-                if (peaksMode) {
-                    if (s.count < p90Threshold) {
-                        cellClass += ' heat-dim';
-                        bg = 'transparent';
-                    } else {
-                        windowPeakCount++;
-                        if (s.count >= p99Threshold) {
-                            cellClass += ' heat-peak-extreme';
-                        } else if (s.count >= p95Threshold) {
-                            cellClass += ' heat-peak-significant';
-                        } else {
-                            cellClass += ' heat-peak-notable';
-                        }
-                        bg = ''; // Let CSS background rule apply
-                    }
-                }
-
-                const styleAttr = bg ? ` style="background:${bg};"` : '';
-                html += `<td class="${cellClass}" data-tooltip="${s.count} events · avg |Z| ${avgZ.toFixed(1)}"${styleAttr}><span style="font-weight:800;font-size:0.8rem;">${s.count}</span><span style="font-size:0.58rem;color:${zColor(avgZ)};margin-left:3px;">(${avgZ.toFixed(1)}σ)</span></td>`;
+                const bg = `rgba(${rgbMap[tk]},${(ratio * 0.22).toFixed(2)})`;
+                html += `<td data-tooltip="${s.count} events · avg |Z| ${avgZ.toFixed(1)}" style="background:${bg};"><span style="font-weight:800;font-size:0.8rem;">${s.count}</span><span style="font-size:0.58rem;color:${zColor(avgZ)};margin-left:3px;">(${avgZ.toFixed(1)}σ)</span></td>`;
             } else {
-                const cellClass = peaksMode ? 'matrix-none heat-dim' : 'matrix-none';
-                html += `<td class="${cellClass}">—</td>`;
+                html += `<td class="matrix-none">—</td>`;
             }
         });
         html += '</tr>';
@@ -3212,17 +3194,6 @@ function renderYearlyMatrix() {
     });
     html += `</tr></tbody></table>`;
     container.innerHTML = html;
-
-    // Update peak count badge
-    const peakBadge = document.getElementById('flow-matrix-peak-count');
-    if (peakBadge) {
-        if (peaksMode) {
-            peakBadge.textContent = `${windowPeakCount} ${windowPeakCount === 1 ? 'OUTLIER' : 'OUTLIERS'}`;
-            peakBadge.classList.add('visible');
-        } else {
-            peakBadge.classList.remove('visible');
-        }
-    }
 }
 
 // ---- Cross-Side Flow Divergence Scanner ----
@@ -3590,6 +3561,7 @@ async function loadAllTickersForCross() {
     await Promise.all(proms);
     loadNGHistory();
     computeCompositeZ();
+    computeFlowHeatGlobalPercentiles();
     renderFlowHeatCalendar(state.flowHeatOffset);
     renderCrossChart();
     syncCrossSlider();
