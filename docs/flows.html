@@ -940,27 +940,12 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 6.1b: Flow Activity Heat Map -->
         <div class="panel" id="flow-heat-panel">
             <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:nowrap; gap:12px;">
-                <div style="display:flex; align-items:center; gap:12px; flex-wrap:nowrap;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div class="panel-title" data-tooltip="FLOW ACTIVITY HEAT MAP: Daily Composite Z-score (flow pressure), color-coded by strength (Green = Bullish Inflow, Red = Bearish Outflow). Colored dots mark days when a Flow-Price Divergence signal fired. Hover cells for rich metrics." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px; margin-bottom:0;">FLOW ACTIVITY HEAT MAP <span id="flow-heat-range-label" style="font-size:0.75rem; font-weight:normal; color:rgba(255,255,255,0.5); text-transform:none; margin-left:6px; letter-spacing:0.3px;">— LOADING</span></div>
-                        <span class="heat-peak-count" id="flow-heat-peaks-badge">0 PEAKS</span>
-                    </div>
-                    <!-- Display Mode Selector -->
-                    <div class="tab-group" id="flow-heat-mode-tabs" style="margin-right:4px;">
-                        <button class="tab-btn active" data-mode="unified" data-tooltip="Show overall flows with divergence overlays">UNIFIED</button>
-                        <button class="tab-btn" data-mode="composite" data-tooltip="Show pure Z-score flow strength">COMPOSITE</button>
-                        <button class="tab-btn" data-mode="divergence" data-tooltip="Highlight contrarian divergence signals only">DIVERGENCES</button>
-                    </div>
-
-                    <!-- Flow Source Selector -->
-                    <div class="tab-group" id="flow-heat-source-tabs" style="margin-right:8px;">
-                        <button class="tab-btn active" data-source="all" data-tooltip="Average flow across all 6 ETFs">ALL ETFs</button>
-                        <button class="tab-btn" data-source="long" data-tooltip="Averages BOIL, HNU, and 3NGL">LONGS (Bull)</button>
-                        <button class="tab-btn" data-source="short" data-tooltip="Averages KOLD, HND, and 3NGS">SHORTS (Bear)</button>
-                    </div>
+                <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                    <div class="panel-title" data-tooltip="FLOW ACTIVITY HEAT MAP: Daily Composite Z-score (flow pressure), color-coded by strength (Green = Bullish Inflow, Red = Bearish Outflow). Colored dots mark days when a Flow-Price Divergence signal fired. Hover cells for rich metrics." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px; margin-bottom:0;">FLOW ACTIVITY HEAT MAP <span id="flow-heat-range-label" style="font-size:0.75rem; font-weight:normal; color:rgba(255,255,255,0.5); text-transform:none; margin-left:6px; letter-spacing:0.3px;">— LOADING</span></div>
+                    <span class="heat-peak-count" id="flow-heat-peaks-badge">0 PEAKS</span>
                 </div>
                 
-                <div style="display:flex; align-items:center; gap:12px; flex-wrap:nowrap; margin-left:auto;">
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:nowrap; margin-left:auto; flex-shrink:0;">
                     <!-- PEAKS Toggle -->
                     <div style="display:flex; gap:6px; align-items:center;">
                         <button class="peaks-toggle-btn" id="flow-heat-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all cells except key statistical flow pressure outliers.">PEAKS</button>
@@ -975,6 +960,26 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <div style="display:flex; gap:6px;">
                         <button class="nav-arrow-btn" id="flow-heat-prev" data-tooltip="View previous 90 days">&#8592;</button>
                         <button class="nav-arrow-btn" id="flow-heat-next" data-tooltip="View recent 90 days" disabled>&#8594;</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Toolbar -->
+            <div class="flow-filter-toolbar" style="display:flex; gap:16px; align-items:center; margin-bottom:12px; padding:6px 12px; background:rgba(26,26,40,0.45); border:1px solid rgba(255,255,255,0.05); border-radius:6px; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:0.6rem; font-weight:800; color:rgba(255,255,255,0.45); letter-spacing:0.8px;">DISPLAY MODE</span>
+                    <div class="tab-group" id="flow-heat-mode-tabs">
+                        <button class="tab-btn active" data-mode="unified" data-tooltip="Show overall flows with divergence overlays">UNIFIED</button>
+                        <button class="tab-btn" data-mode="composite" data-tooltip="Show pure Z-score flow strength">COMPOSITE</button>
+                        <button class="tab-btn" data-mode="divergence" data-tooltip="Highlight contrarian divergence signals only">DIVERGENCES</button>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; margin-left:8px;">
+                    <span style="font-size:0.6rem; font-weight:800; color:rgba(255,255,255,0.45); letter-spacing:0.8px;">FLOW SOURCE</span>
+                    <div class="tab-group" id="flow-heat-source-tabs">
+                        <button class="tab-btn active" data-source="all" data-tooltip="Average flow across all 6 ETFs">ALL ETFs</button>
+                        <button class="tab-btn" data-source="long" data-tooltip="Averages BOIL, HNU, and 3NGL">LONGS (Bull)</button>
+                        <button class="tab-btn" data-source="short" data-tooltip="Averages KOLD, HND, and 3NGS">SHORTS (Bear)</button>
                     </div>
                 </div>
             </div>
