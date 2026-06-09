@@ -76,6 +76,11 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; flex-wrap: nowrap; gap: 8px; width: 100%;">
                     <div style="display:flex; align-items:center; gap:6px; flex-shrink: 0;">
                         <h3 id="heat-calendar-title" style="margin-bottom:0; font-size:0.95rem; font-weight:800; white-space:nowrap;" data-tooltip="Aggregated heatmap representing the maximum volume pressure across selected ETFs. Outliers are highlighted using Global Historical Percentiles (full 5+ year history). The underlying CVI metric uses a 21-day rolling volume/price percentile, making the baseline stationary and comparable across all years.">VOLUME HEAT MAP</h3>
+                        <!-- Pagination -->
+                        <div style="display:flex; gap:4px; margin-left:6px; margin-right:2px;">
+                            <button class="nav-arrow-btn" id="heat-prev" data-tooltip="View previous 90 days (Days 91-180)">&#8592;</button>
+                            <button class="nav-arrow-btn" id="heat-next" data-tooltip="View recent 90 days (Days 1-90)" disabled>&#8594;</button>
+                        </div>
                         <span class="heat-peak-count" id="heat-peak-count">0 PEAKS</span>
                     </div>
                     
@@ -88,11 +93,6 @@
                                 <button class="tab-btn active" data-threshold="95" data-tooltip="Significant+ Outliers: Filter to days where CVI exceeds the 95th percentile of its global history (Default).">p95</button>
                                 <button class="tab-btn" data-threshold="99" data-tooltip="Extreme Outliers: Filter to days where CVI exceeds the 99th percentile of its global history.">p99</button>
                             </div>
-                        </div>
-                        <!-- Pagination -->
-                        <div style="display:flex; gap:6px;">
-                            <button class="nav-arrow-btn" id="heat-prev" data-tooltip="View previous 90 days (Days 91-180)">&#8592;</button>
-                            <button class="nav-arrow-btn" id="heat-next" data-tooltip="View recent 90 days (Days 1-90)" disabled>&#8594;</button>
                         </div>
                     </div>
                 </div>
