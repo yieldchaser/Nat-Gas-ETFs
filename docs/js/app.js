@@ -11,6 +11,7 @@ const App = {
     heatOffset: 0,        // Offset for 90-day volume heat map pagination
     heatMode: 'share',    // Mode for 90-day heat map: 'share' or 'dollar'
     heatSide: 'all',      // Side for 90-day heat map: 'all', 'long', or 'short'
+    vddsMode: 'vol',      // Mode for VDDS panel: 'vol' (S-RVOL-21d) or 'dv' (VDDS ratio)
 
     async init() {
         console.log('[MONITOR] Initializing...');
@@ -52,6 +53,26 @@ const App = {
                 btn.classList.add('active');
                 this.heatMode = btn.getAttribute('data-mode');
                 this.renderHeatCalendarOnly();
+            });
+        }
+
+        // VDDS VOL / $ Mode Toggle
+        const vddsModeGroup = document.getElementById('vdds-mode-group');
+        if (vddsModeGroup) {
+            vddsModeGroup.addEventListener('click', (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                vddsModeGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.vddsMode = btn.getAttribute('data-vdds-mode');
+                // Update subtitle label
+                const subtitle = document.getElementById('vdds-subtitle');
+                if (subtitle) {
+                    subtitle.textContent = this.vddsMode === 'vol'
+                        ? '\u2014 share volume relative (RVOL-21d)'
+                        : '\u2014 volume-dollar divergence per ETF';
+                }
+                Signals.renderVddsBar(this.allMetrics, this.vddsMode);
             });
         }
     },

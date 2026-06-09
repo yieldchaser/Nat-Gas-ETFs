@@ -941,58 +941,84 @@ const Signals = {
     },
 
     // ---- VDDS CROSS-ETF COMPARISON BAR ----
-    renderVddsBar(allMetrics) {
+    // mode: 'vol' = show S-RVOL-21d (pure share volume bar, centre=1.0, range 0.5–3x)
+    //        'dv'  = show VDDS ratio DV-RVOL-21d / S-RVOL-21d (original mode)
+    renderVddsBar(allMetrics, mode) {
         const el = document.getElementById('vdds-bar');
         if (!el) return;
         const tickers = Object.keys(allMetrics);
         if (!tickers.length) { el.innerHTML = '<span class="vdds-na">No data</span>'; return; }
 
+        const isVolMode = (mode !== 'dv');
+
         const rows = tickers.map(ticker => {
             const m = allMetrics[ticker];
             if (!m) return '';
-            const vdds = m.vdds;
             const side = (CONFIG.etfs[ticker] || {}).side || 'long';
             const sideColor = side === 'long' ? 'var(--long-accent)' : 'var(--short-accent)';
-            // Bar: centre at 1.0, range 0.5–1.5 (100% width)
-            const clamped = Math.max(0.5, Math.min(1.5, vdds ?? 1.0));
-            const pct = ((clamped - 0.5) / 1.0) * 100;
-            const centerPct = 50; // 1.0 maps to center
-            const fillLeft  = Math.min(pct, centerPct);
-            const fillWidth = Math.abs(pct - centerPct);
-            const fillStart = pct < centerPct ? pct : centerPct;
-            // Symmetric colour scale around 1.0 — mirrors the dashboard alert palette:
-            //   < 0.85   green   (strong capitulation — share vol surging vs dollar)
-            //   0.85–0.95  blue    (mild capitulation)
-            //   0.95–1.05  text-secondary (neutral — balanced; visible but muted)
-            //   1.05–1.15  orange  (mild anti-capitulation — dollar vol slightly ahead)
-            //   > 1.15   red     (strong anti-capitulation / momentum environment)
-            // Green ↔ Red symmetry matches the rest of the dashboard's alert language.
-            const barColor = vdds == null ? 'rgba(255,255,255,0.85)'
-                : vdds < 0.85 ? 'var(--green)'
-                : vdds < 0.95 ? 'var(--blue)'
-                : vdds <= 1.05 ? 'rgba(255, 255, 255, 0.85)'
-                : vdds <= 1.15 ? 'var(--orange)'
-                : 'var(--red)';
-            const dvRvol = (m.dvRvol || {})['21d'];
-            const sRvol  = (m.rvol   || {})['21d'];
-            const tip = `VDDS for ${ticker}: DV-RVOL=${dvRvol!=null?dvRvol.toFixed(2):'--'} ÷ S-RVOL=${sRvol!=null?sRvol.toFixed(2):'--'} = ${vdds!=null?vdds.toFixed(2):'--'}x. ${vdds!=null&&vdds<0.90?'Capitulation pattern — share vol outpacing dollar vol.':vdds!=null&&vdds>1.10?'Momentum pattern — dollar vol outpacing share vol.':'Neutral — balanced flows.'}`;
+
+            let displayVal, barColor, tip, fillStart, fillWidth;
+
+            if (isVolMode) {
+                // --- VOL MODE: S-RVOL-21d pure volume bars ---
+                // Scale: 0.5x → 0% | 1.0x → 20% (baseline) | 3.0x → 100%
+                const sRvol = (m.rvol || {})['21d'];
+                const clamped = Math.max(0.5, Math.min(3.0, sRvol ?? 1.0));
+                const pct = ((clamped - 0.5) / 2.5) * 100;
+                const basePct = ((1.0 - 0.5) / 2.5) * 100; // 20% = 1x normal
+                fillStart = basePct;
+                fillWidth = Math.max(0, pct - basePct);
+                barColor = sRvol == null ? 'rgba(255,255,255,0.3)'
+                    : sRvol < 0.8  ? 'rgba(255,255,255,0.3)'  // sub-normal (dim)
+                    : sRvol < 1.2  ? 'rgba(255,255,255,0.55)' // normal
+                    : sRvol < 1.5  ? 'var(--blue)'             // mild surge
+                    : sRvol < 2.0  ? 'var(--yellow)'           // notable
+                    : sRvol < 2.5  ? 'var(--orange)'           // high
+                    : sRvol < 3.0  ? 'var(--red)'              // extreme
+                    : 'var(--purple)';                          // absolute extreme
+                displayVal = sRvol != null ? sRvol.toFixed(2) + 'x' : '--';
+                tip = `S-RVOL-21d for ${ticker}: current share volume is ${displayVal} of the 21-day average. >1.5x = notable surge; >2x = extreme volume event.`;
+            } else {
+                // --- DV MODE: VDDS ratio (DV-RVOL / S-RVOL) ---
+                const vdds = m.vdds;
+                const clamped = Math.max(0.5, Math.min(1.5, vdds ?? 1.0));
+                const pct = ((clamped - 0.5) / 1.0) * 100;
+                const centerPct = 50;
+                fillStart = Math.min(pct, centerPct);
+                fillWidth = Math.abs(pct - centerPct);
+                barColor = vdds == null ? 'rgba(255,255,255,0.85)'
+                    : vdds < 0.85 ? 'var(--green)'
+                    : vdds < 0.95 ? 'var(--blue)'
+                    : vdds <= 1.05 ? 'rgba(255, 255, 255, 0.85)'
+                    : vdds <= 1.15 ? 'var(--orange)'
+                    : 'var(--red)';
+                const dvRvol = (m.dvRvol || {})['21d'];
+                const sRvol  = (m.rvol   || {})['21d'];
+                displayVal = vdds != null ? vdds.toFixed(2) + 'x' : '--';
+                tip = `VDDS for ${ticker}: DV-RVOL=${dvRvol!=null?dvRvol.toFixed(2):'--'} ÷ S-RVOL=${sRvol!=null?sRvol.toFixed(2):'--'} = ${displayVal}. ${vdds!=null&&vdds<0.90?'Capitulation pattern — share vol outpacing dollar vol.':vdds!=null&&vdds>1.10?'Momentum pattern — dollar vol outpacing share vol.':'Neutral — balanced flows.'}`;
+            }
+
+            // Baseline marker: sits at 1x in VOL mode (20%), or at ratio centre in DV mode (50%)
+            const markPct = isVolMode ? ((1.0 - 0.5) / 2.5) * 100 : 50;
+
             return `
                 <div class="vdds-row">
                     <span class="vdds-ticker" style="color:${sideColor}" data-tooltip="${tip}">${ticker}</span>
                     <div class="vdds-track">
-                        <div class="vdds-center-mark"></div>
+                        <div class="vdds-center-mark" style="left:${markPct}%"></div>
                         <div class="vdds-fill" style="left:${fillStart}%;width:${fillWidth}%;background:${barColor}"></div>
                     </div>
-                    <span class="vdds-value" style="color:${barColor}">${vdds != null ? vdds.toFixed(2) + 'x' : '--'}</span>
+                    <span class="vdds-value" style="color:${barColor}">${displayVal}</span>
                 </div>`;
         }).join('');
         el.innerHTML = rows || '<span class="vdds-na">No VDDS data available</span>';
     },
 
     renderAll(allMetrics, sideConvergence, ngPriceContext) {
+        const vddsMode = (window.App && window.App.vddsMode) ? window.App.vddsMode : 'vol';
         this.renderConvergenceFlash(sideConvergence);
         this.renderNgPriceBar(ngPriceContext);
-        this.renderVddsBar(allMetrics);
+        this.renderVddsBar(allMetrics, vddsMode);
         this.renderAlertFeed(allMetrics);
         this.renderStressMatrix(allMetrics);
         this.renderSideConvergence(sideConvergence);
