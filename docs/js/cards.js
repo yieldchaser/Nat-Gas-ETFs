@@ -76,7 +76,7 @@ const Cards = {
             : '';
 
         const spikeHtml = metrics.sharpSpike
-            ? `<span class="spike-badge" data-tooltip="SHARP SPIKE: 5d VCVI + move > 2×ATR. ${metrics.fastSignal === 'weather_top_candidate' ? 'Weather Top Candidate — gas may have peaked.' : 'Weather Bottom Candidate — gas may have bottomed.'}">⚡ SPIKE</span>`
+            ? `<span class="spike-badge" data-tooltip="SHARP SPIKE: 5d VCVI + move > 2×ATR. ${metrics.fastSignal === 'weather_top_candidate' ? 'Weather Top Candidate — GAS may have peaked.' : 'Weather Bottom Candidate — GAS may have bottomed.'}">⚡ SPIKE</span>`
             : '';
 
         const vcviEntries = ['5d', '21d', '63d'].map(w => {
