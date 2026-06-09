@@ -13,11 +13,10 @@ Designed to be run by GitHub Actions on a schedule, or locally.
 import json
 import logging
 import math
-import os
 import ssl
 import sys
 import urllib.request
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -1522,7 +1521,7 @@ def _compute_historical_echoes(
         peak_window = [w for w in fwd_windows if w <= 63]
         days_to_peak = None
         if peak_window and entry_pos + max(peak_window) < len(close_arr):
-            future_slice = close_arr.iloc[entry_pos: entry_pos + max(peak_window) + 1]
+            close_arr.iloc[entry_pos: entry_pos + max(peak_window) + 1]
             best_ret = None
             best_day = None
             for w in peak_window:

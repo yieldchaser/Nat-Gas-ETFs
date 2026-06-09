@@ -329,7 +329,7 @@ const Signals = {
         const peakBadge = document.getElementById('heat-peak-count');
         if (peakBadge) {
             if (peaksMode) {
-                peakBadge.textContent = `${peaksCount} ${peaksCount === 1 ? 'OUTLIER' : 'OUTLIERS'}`;
+                peakBadge.textContent = `${peaksCount} ${peaksCount === 1 ? 'PEAK' : 'PEAKS'}`;
                 peakBadge.classList.add('visible');
             } else {
                 peakBadge.classList.remove('visible');

@@ -55,7 +55,8 @@ def parse_snapshots(data: list | dict, ticker: str) -> pd.DataFrame:
     perf_vals = unpack(item.get("perf", {}))
 
     n = len(dates)
-    pad = lambda lst: lst + [None] * (n - len(lst))
+    def pad(lst):
+        return lst + [None] * (n - len(lst))
     
     df = pd.DataFrame({
         "date": dates,
@@ -342,7 +343,7 @@ def main():
     # flow_30d_bear  = sum of 30d flows for SHORT ETFs  (negative = shorts losing assets = bullish for gas)
     # BULLISH: longs growing AND/OR shorts shrinking (net capital favours long side)
     # BEARISH: shorts growing (positive bear flow) AND/OR longs shrinking
-    net_diff = flow_30d_bull + flow_30d_bear
+    flow_30d_bull + flow_30d_bear
     abs_bull = abs(flow_30d_bull)
     abs_bear = abs(flow_30d_bear)
     sentiment = "NEUTRAL"
@@ -393,7 +394,7 @@ def fetch_ng_history():
     in the Flow Pressure vs Gas Price chart. Uses the same API pattern as
     data_pipeline.py's _yahoo_fetch_one().
     """
-    logger.info(f"Fetching NG=F history for flow-price overlay...")
+    logger.info("Fetching NG=F history for flow-price overlay...")
 
     period1 = int(datetime(2007, 1, 1).timestamp())
     period2 = int(datetime.now().timestamp())
