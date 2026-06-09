@@ -909,8 +909,8 @@ const Signals = {
         if (!sideConvergence) { el.style.display = 'none'; return; }
 
         const sides = [
-            { key: 'short', label: 'SHORT SIDE', direction: 'gas TOP', setupLabel: '↓ SHORT / INVERSE SETUP', cls: 'flash-short' },
-            { key: 'long',  label: 'LONG SIDE',  direction: 'gas BOTTOM', setupLabel: '↑ LONG / LEVERAGED SETUP', cls: 'flash-long' },
+            { key: 'short', label: 'SHORT SIDE', direction: 'GAS TOP', setupLabel: '↓ SHORT / INVERSE SETUP', cls: 'flash-short' },
+            { key: 'long',  label: 'LONG SIDE',  direction: 'GAS BOTTOM', setupLabel: '↑ LONG / LEVERAGED SETUP', cls: 'flash-long' },
         ];
 
         const banners = sides
@@ -928,7 +928,7 @@ const Signals = {
                         <strong>${s.label} CONVERGED</strong> — all 3 ETFs spiked within ${spread} calendar days
                         <span class="flash-etfs">${etfList}</span>
                     </span>
-                    <span class="flash-setup">${s.setupLabel} — ${s.direction} candidate</span>
+                    <span class="flash-setup">${s.setupLabel} — ${s.direction} CANDIDATE</span>
                 </div>`;
             });
 
