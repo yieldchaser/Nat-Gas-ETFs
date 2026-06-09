@@ -179,6 +179,21 @@ const Signals = {
             titleEl.innerHTML = `${modeLabel} HEAT MAP${sideLabel} (Days ${startDay}-${endDay})`;
         }
 
+        // Build a date-to-index map for each active ETF to ensure date alignment across holidays
+        const indexMaps = {};
+        for (const t of activeTickers) {
+            const sd = allMetrics[t].heatmapData;
+            const map = new Map();
+            if (sd) {
+                for (let idx = 0; idx < sd.length; idx++) {
+                    if (sd[idx] && sd[idx].date) {
+                        map.set(sd[idx].date, idx);
+                    }
+                }
+            }
+            indexMaps[t] = map;
+        }
+
         const days = 90;
         const dailyScores = [];
         const dataLength = longestData.length;
@@ -188,13 +203,18 @@ const Signals = {
         for (let i = Math.max(0, startIndex); i < endIndex; i++) {
             let maxScore = 0;
             const date = longestData[i]?.date || '';
+            if (!date) continue;
 
             for (const t of activeTickers) {
                 const sd = allMetrics[t].heatmapData;
-                if (!sd || i >= sd.length) continue;
+                const map = indexMaps[t];
+                if (!sd || !map) continue;
 
-                // Quick CVI proxy: how extreme is volume relative to recent mean
-                const subData = sd.slice(Math.max(0, i - 21), i + 1);
+                const idx = map.get(date);
+                if (idx === undefined) continue;
+
+                // Quick CVI proxy: how extreme is volume relative to recent mean on this specific aligned date
+                const subData = sd.slice(Math.max(0, idx - 21), idx + 1);
                 if (subData.length < 5) continue;
 
                 let values;
