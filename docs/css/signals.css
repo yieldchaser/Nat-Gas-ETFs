@@ -302,6 +302,14 @@
     box-shadow: 0 0 8px 1px rgba(136, 85, 187, 0.35);
 }
 
+/* Compact style for PEAKS threshold tab groups to prevent horizontal clipping */
+.heat-peaks-sub .tab-btn,
+#flow-heat-peaks-threshold-group .tab-btn,
+#cvol-sig-peaks-threshold-group .tab-btn {
+    padding: 4px 6px;
+    font-size: 0.65rem;
+}
+
 
 /* ---- CONVERGENCE GAUGES ---- */
 .convergence-gauges {
