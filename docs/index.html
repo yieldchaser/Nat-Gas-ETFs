@@ -71,40 +71,6 @@
                 </div>
             </div>
 
-            <!-- INVERSE PAIR STRESS MATRIX -->
-            <div class="signal-panel" id="stress-matrix-panel">
-                <h3 data-tooltip="Compares relative volume, capitulation metrics, and stress status side-by-side for long/short pairs.">INVERSE PAIR STRESS MATRIX</h3>
-                <div class="table-scroll-wrap">
-                <table class="stress-matrix" id="stress-matrix">
-                    <thead>
-                        <tr>
-                            <th>PAIR</th>
-                            <th data-tooltip="Long ETF 21-day Relative Volume">LONG RVOL</th>
-                            <th data-tooltip="Short/Inverse ETF 21-day Relative Volume">SHORT RVOL</th>
-                            <th data-tooltip="Long-side VCVI-63d — spikes when long ETF has high volume AND low price. Gas is near a BOTTOM. Favors long/leveraged setup.">L-CAP</th>
-                            <th data-tooltip="Short-side VCVI-63d — spikes when short ETF has high volume AND low price (gas is HIGH). Gas is near a TOP. Favors short/inverse setup.">S-CAP</th>
-                            <th data-tooltip="5d fast-window VCVI (Long/Short) — catches weather event spikes before longer windows. Threshold: 45. Format: L/S">FAST-5d</th>
-                            <th data-tooltip="Sharp Spike flag — fires when 5d VCVI>45 AND move>2×ATR on the same day. Weather event candidate.">SPIKE</th>
-                            <th data-tooltip="Inverse Pair Stress Index — short ETF RVOL ÷ long ETF RVOL. &gt;2x indicates abnormal directional pressure.">IPSI</th>
-                            <th data-tooltip="Current volatility regime — where HV21 sits in its own 252-day history. Signals in LOW/QUIET regimes are most reliable.">VOL REGIME</th>
-                            <th>STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody id="stress-matrix-body">
-                        <!-- Filled dynamically -->
-                    </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- VDDS CROSS-ETF COMPARISON BAR -->
-            <div class="signal-panel" id="vdds-panel">
-                <h3 data-tooltip="VDDS (Volume-Dollar Divergence Score) = DV-RVOL-21d ÷ S-RVOL-21d per ETF. Below 1.0: share volume growing faster than dollar volume → price is low per share → capitulation pattern. Above 1.0: dollar value growing faster → price rising per unit → momentum/accumulation. Left of centre = bearish ETF price, right = bullish.">VDDS <span class="panel-subtitle">— volume-dollar divergence per ETF</span></h3>
-                <div id="vdds-bar" class="vdds-bar">
-                    <span class="vdds-na">Loading VDDS data…</span>
-                </div>
-            </div>
-
             <!-- VOLUME HEAT CALENDAR -->
             <div class="signal-panel" id="heat-calendar-panel">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
@@ -140,6 +106,47 @@
                     <span class="heat-swatch" style="background:#c04040"></span>
                     <span class="heat-swatch" style="background:#8855bb" data-tooltip="Absolute extreme volume pressure (purple)."></span>
                     <span class="heat-label" data-tooltip="High volume pressure (capitulation/exhaustion spike).">Extreme</span>
+                </div>
+            </div>
+
+            <!-- INVERSE PAIR STRESS MATRIX -->
+            <div class="signal-panel" id="stress-matrix-panel">
+                <h3 data-tooltip="Compares relative volume, capitulation metrics, and stress status side-by-side for long/short pairs.">INVERSE PAIR STRESS MATRIX</h3>
+                <div class="table-scroll-wrap">
+                <table class="stress-matrix" id="stress-matrix">
+                    <thead>
+                        <tr>
+                            <th>PAIR</th>
+                            <th data-tooltip="Long ETF 21-day Relative Volume">LONG RVOL</th>
+                            <th data-tooltip="Short/Inverse ETF 21-day Relative Volume">SHORT RVOL</th>
+                            <th data-tooltip="Long-side VCVI-63d — spikes when long ETF has high volume AND low price. Gas is near a BOTTOM. Favors long/leveraged setup.">L-CAP</th>
+                            <th data-tooltip="Short-side VCVI-63d — spikes when short ETF has high volume AND low price (gas is HIGH). Gas is near a TOP. Favors short/inverse setup.">S-CAP</th>
+                            <th data-tooltip="5d fast-window VCVI (Long/Short) — catches weather event spikes before longer windows. Threshold: 45. Format: L/S">FAST-5d</th>
+                            <th data-tooltip="Sharp Spike flag — fires when 5d VCVI>45 AND move>2×ATR on the same day. Weather event candidate.">SPIKE</th>
+                            <th data-tooltip="Inverse Pair Stress Index — short ETF RVOL ÷ long ETF RVOL. &gt;2x indicates abnormal directional pressure.">IPSI</th>
+                            <th data-tooltip="Current volatility regime — where HV21 sits in its own 252-day history. Signals in LOW/QUIET regimes are most reliable.">VOL REGIME</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stress-matrix-body">
+                        <!-- Filled dynamically -->
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- VDDS CROSS-ETF COMPARISON BAR -->
+            <div class="signal-panel" id="vdds-panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
+                    <h3 style="margin-bottom:0;" data-tooltip="VDDS (Volume-Dollar Divergence Score) = DV-RVOL-21d ÷ S-RVOL-21d per ETF. Below 1.0: share volume growing faster than dollar volume → price is low per share → capitulation pattern. Above 1.0: dollar value growing faster → price rising per unit → momentum/accumulation. Left of centre = bearish ETF price, right = bullish.">VDDS <span class="panel-subtitle" id="vdds-subtitle">— share volume relative (RVOL-21d)</span></h3>
+                    <!-- VOL / $ flip toggle — mirrors heatmap mode toggle -->
+                    <div class="tab-group" id="vdds-mode-group" style="margin:0; padding:2px;">
+                        <button class="tab-btn active" data-vdds-mode="vol" id="vdds-btn-vol" data-tooltip="VOL mode: shows S-RVOL-21d (share volume relative to 21-day average) per ETF — pure volume bar.">VOL</button>
+                        <button class="tab-btn" data-vdds-mode="dv" id="vdds-btn-dv" data-tooltip="$ mode: shows VDDS ratio (DV-RVOL-21d ÷ S-RVOL-21d) — dollar vs share volume divergence.">$</button>
+                    </div>
+                </div>
+                <div id="vdds-bar" class="vdds-bar">
+                    <span class="vdds-na">Loading VDDS data…</span>
                 </div>
             </div>
 
