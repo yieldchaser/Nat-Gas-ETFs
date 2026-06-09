@@ -210,10 +210,12 @@ def main():
     today_str = datetime.today().strftime("%Y-%m-%d")
 
     summary_data = {
-        "updated": today_str,
+        "updated": today_str,  # will be overwritten below with actual data date
         "tickers": {},
         "cross_etf": {}
     }
+
+    latest_dates = []  # track the actual latest date per ticker
 
     flow_30d_bull = 0.0
     flow_30d_bear = 0.0
@@ -299,6 +301,11 @@ def main():
         # Populate summary
         last_row = df.iloc[-1]
         last_30d_net = df.tail(30)["usd_flow"].sum()
+
+        # Track actual latest data date (not today's run date)
+        actual_latest = df["date"].max()
+        if actual_latest:
+            latest_dates.append(actual_latest)
         
         summary_data["tickers"][ticker] = {
             "last_30d_net": round(last_30d_net, 2),
@@ -307,13 +314,23 @@ def main():
             "pressure": round(last_row["pressure"], 0),
             "latest_nav": round(last_row["nav"], 2),
             "flow_5d": round(last_row["flow_5d"], 2),
-            "flow_20d": round(last_row["flow_20d"], 2)
+            "flow_20d": round(last_row["flow_20d"], 2),
+            "latest_date": actual_latest
         }
         
         if ticker in ["BOIL", "HNU", "3NGL"]:
             flow_30d_bull += last_30d_net
         else:
             flow_30d_bear += last_30d_net
+
+    # Use the actual latest data date (min across all tickers = most conservative/accurate)
+    # This prevents the "updated" field from showing today's run date when data lags by 1-4 days
+    if latest_dates:
+        actual_data_date = min(latest_dates)  # min = most conservative (all tickers have data up to this date)
+        summary_data["updated"] = actual_data_date
+        logger.info(f"Actual data date: {actual_data_date} (range: {min(latest_dates)} – {max(latest_dates)})")
+    else:
+        logger.warning("No latest_dates collected; falling back to today_str")
 
     summary_data["cross_etf"] = {
         "bull_flow_30d": round(flow_30d_bull, 2),
