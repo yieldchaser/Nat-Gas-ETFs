@@ -1613,7 +1613,7 @@ function updateSignalHeatNav() {
         var start = Math.max(0, daysEnd - 90);
         var startDate = CvolState.data[start].date;
         var endDate = CvolState.data[Math.min(daysEnd - 1, n - 1)].date;
-        titleEl.innerHTML = 'Signal Activity &middot; ' + startDate + ' to ' + endDate;
+        titleEl.innerHTML = 'Signal Activity <span style="font-size:0.65rem; font-weight:normal; color:rgba(255,255,255,0.5); text-transform:none; margin-left:4px;">(' + startDate + ' to ' + endDate + ')</span>';
     }
 }
 
