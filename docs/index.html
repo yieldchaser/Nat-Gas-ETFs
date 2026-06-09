@@ -71,6 +71,44 @@
                 </div>
             </div>
 
+            <!-- VOLUME HEAT CALENDAR -->
+            <div class="signal-panel" id="heat-calendar-panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <h3 id="heat-calendar-title" style="margin-bottom:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" data-tooltip="Aggregated heatmap representing the maximum volume pressure across the selected ETFs.">VOLUME HEAT MAP (Days 1-90)</h3>
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <!-- Side Toggle -->
+                        <div class="tab-group" id="heat-side-group" style="margin: 0; padding: 2px;">
+                            <button class="tab-btn active" data-side="all" data-tooltip="Analyze all 6 ETFs (BOIL, HNU, 3NGL, KOLD, HND, 3NGS) simultaneously.">ALL</button>
+                            <button class="tab-btn" data-side="long" data-tooltip="Analyze only long-side leveraged ETFs (BOIL, HNU, 3NGL).">LONG</button>
+                            <button class="tab-btn" data-side="short" data-tooltip="Analyze only short-side/inverse ETFs (KOLD, HND, 3NGS).">SHORT</button>
+                        </div>
+                        <!-- Mode Toggle -->
+                        <div class="tab-group" id="heat-mode-group" style="margin: 0; padding: 2px;">
+                            <button class="tab-btn active" data-mode="share" data-tooltip="CVI Mode: calculated using share volume relative percentiles.">S</button>
+                            <button class="tab-btn" data-mode="dollar" data-tooltip="DVCVI Mode: calculated using dollar volume (price × volume) relative percentiles.">$</button>
+                        </div>
+                        <!-- Pagination -->
+                        <div style="display:flex; gap:6px;">
+                            <button class="nav-arrow-btn" id="heat-prev" data-tooltip="View previous 90 days (Days 91-180)">&#8592;</button>
+                            <button class="nav-arrow-btn" id="heat-next" data-tooltip="View recent 90 days (Days 1-90)" disabled>&#8594;</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="heat-calendar" id="heat-calendar">
+                    <!-- Filled dynamically -->
+                </div>
+                <div class="heat-legend">
+                    <span class="heat-label" data-tooltip="Low volume pressure relative to historical norm.">Quiet</span>
+                    <span class="heat-swatch" style="background:#1a1a28"></span>
+                    <span class="heat-swatch" style="background:#283848"></span>
+                    <span class="heat-swatch" style="background:#4a6878"></span>
+                    <span class="heat-swatch" style="background:#d4a830"></span>
+                    <span class="heat-swatch" style="background:#c04040"></span>
+                    <span class="heat-swatch" style="background:#8855bb" data-tooltip="Absolute extreme volume pressure (purple)."></span>
+                    <span class="heat-label" data-tooltip="High volume pressure (capitulation/exhaustion spike).">Extreme</span>
+                </div>
+            </div>
+
             <!-- SIDE-WIDE VOLUME CONVERGENCE -->
             <div class="signal-panel" id="swvc-panel">
                 <h3 data-tooltip="Tracks whether all 3 ETFs on the same side (e.g., KOLD + HND.TO + 3NGS.L) each had a volume spike ≥2× average within a rolling 10-day window — even if the spikes occurred on different days. Independent spiking across US/CA/UK markets is a stronger signal than a single-market event.">SIDE-WIDE CONVERGENCE <span class="panel-subtitle">— tri-ETF rolling window</span></h3>
@@ -145,43 +183,7 @@
                 </div>
             </div>
 
-            <!-- VOLUME HEAT CALENDAR -->
-            <div class="signal-panel" id="heat-calendar-panel">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                    <h3 id="heat-calendar-title" style="margin-bottom:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" data-tooltip="Aggregated heatmap representing the maximum volume pressure across the selected ETFs.">VOLUME HEAT MAP (Days 1-90)</h3>
-                    <div style="display:flex; gap:12px; align-items:center;">
-                        <!-- Side Toggle -->
-                        <div class="tab-group" id="heat-side-group" style="margin: 0; padding: 2px;">
-                            <button class="tab-btn active" data-side="all" data-tooltip="Analyze all 6 ETFs (BOIL, HNU, 3NGL, KOLD, HND, 3NGS) simultaneously.">ALL</button>
-                            <button class="tab-btn" data-side="long" data-tooltip="Analyze only long-side leveraged ETFs (BOIL, HNU, 3NGL).">LONG</button>
-                            <button class="tab-btn" data-side="short" data-tooltip="Analyze only short-side/inverse ETFs (KOLD, HND, 3NGS).">SHORT</button>
-                        </div>
-                        <!-- Mode Toggle -->
-                        <div class="tab-group" id="heat-mode-group" style="margin: 0; padding: 2px;">
-                            <button class="tab-btn active" data-mode="share" data-tooltip="CVI Mode: calculated using share volume relative percentiles.">S</button>
-                            <button class="tab-btn" data-mode="dollar" data-tooltip="DVCVI Mode: calculated using dollar volume (price × volume) relative percentiles.">$</button>
-                        </div>
-                        <!-- Pagination -->
-                        <div style="display:flex; gap:6px;">
-                            <button class="nav-arrow-btn" id="heat-prev" data-tooltip="View previous 90 days (Days 91-180)">&#8592;</button>
-                            <button class="nav-arrow-btn" id="heat-next" data-tooltip="View recent 90 days (Days 1-90)" disabled>&#8594;</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="heat-calendar" id="heat-calendar">
-                    <!-- Filled dynamically -->
-                </div>
-                <div class="heat-legend">
-                    <span class="heat-label" data-tooltip="Low volume pressure relative to historical norm.">Quiet</span>
-                    <span class="heat-swatch" style="background:#1a1a28"></span>
-                    <span class="heat-swatch" style="background:#283848"></span>
-                    <span class="heat-swatch" style="background:#4a6878"></span>
-                    <span class="heat-swatch" style="background:#d4a830"></span>
-                    <span class="heat-swatch" style="background:#c04040"></span>
-                    <span class="heat-swatch" style="background:#8855bb" data-tooltip="Absolute extreme volume pressure (purple)."></span>
-                    <span class="heat-label" data-tooltip="High volume pressure (capitulation/exhaustion spike).">Extreme</span>
-                </div>
-            </div>
+
  
             <!-- MULTI-WINDOW CONVERGENCE -->
             <div class="signal-panel" id="convergence-panel">
