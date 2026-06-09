@@ -502,17 +502,24 @@ NG_SEASONAL_Z_GATE = 1.5      # σ threshold — gates fire above/below this
 
 def _compute_ng_seasonal_z_series(ng_close: pd.Series) -> pd.Series:
     """
-    Compute per-date seasonal z-score for NG=F using only prior same-month
-    observations (no lookahead bias).  Returns a Series aligned to ng_close.index.
+    Compute per-date seasonal z-score for NG=F in log-space using a rolling
+    lookback of the prior same-month observations (no lookahead bias).
+    Returns a Series aligned to ng_close.index.
     """
     result = pd.Series(np.nan, index=ng_close.index, dtype=float)
     for month in range(1, 13):
         mask = ng_close.index.month == month
         idx = ng_close.index[mask]
         prices = ng_close.loc[idx]
-        means = prices.expanding().mean().shift(1)
-        stds  = prices.expanding().std().shift(1)
-        z = ((prices - means) / stds).where(stds > 0)
+        
+        # Log prices to normalize right-skewness
+        log_prices = np.log(prices)
+        
+        # 10 years lookback corresponds to ~210 same-month trading day observations
+        means = log_prices.rolling(window=210, min_periods=12).mean().shift(1)
+        stds  = log_prices.rolling(window=210, min_periods=12).std().shift(1)
+        
+        z = ((log_prices - means) / stds).where(stds > 0)
         result.loc[idx] = z.values
     return result
 
@@ -592,8 +599,9 @@ def _fetch_ng_price_context() -> dict:
     window_close = close.iloc[-NG_PRICE_WINDOW_DAYS:]
     pct_2yr = float((window_close < current).sum() / len(window_close) * 100)
 
-    # Seasonal z-score: compare current price to all historical values for this month
-    same_month_prices = close[close.index.month == current_month]
+    # Seasonal z-score: compare current price in log-space to prior 10 years of same-month prices
+    cutoff_year = close.index[-1].year - 10
+    same_month_prices = close[(close.index.month == current_month) & (close.index.year >= cutoff_year)]
     if len(same_month_prices) < 12:
         # Not enough monthly data — fall back to 2yr percentile gate
         seasonal_z = None
@@ -601,12 +609,15 @@ def _fetch_ng_price_context() -> dict:
         gate_short = pct_2yr >= NG_HIGH_QUARTILE
         gate_long  = pct_2yr <= NG_LOW_QUARTILE
     else:
-        m_mean = float(same_month_prices.mean())
-        m_std  = float(same_month_prices.std())
-        seasonal_z = round((current - m_mean) / m_std, 2) if m_std > 0 else 0.0
+        log_same_month = np.log(same_month_prices)
+        m_mean_log = float(log_same_month.mean())
+        m_std_log  = float(log_same_month.std())
+        current_log = math.log(current)
+        seasonal_z = round((current_log - m_mean_log) / m_std_log, 2) if m_std_log > 0 else 0.0
+        g_mean = math.exp(m_mean_log)
         seasonal_note = (
             f"vs {len(same_month_prices)} {_season_label(current_month)}-month obs "
-            f"(μ=${m_mean:.2f}, σ=${m_std:.2f})"
+            f"(gMean=${g_mean:.2f}, std_log={m_std_log:.3f})"
         )
         # Gate: fires when gas is anomalously high (short) or low (long) for this month
         gate_short = seasonal_z >= NG_SEASONAL_Z_GATE
