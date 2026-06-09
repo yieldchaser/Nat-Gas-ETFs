@@ -9,6 +9,8 @@ const App = {
     refreshTimer: null,
     isLoading: false,
     heatOffset: 0,        // Offset for 90-day volume heat map pagination
+    heatMode: 'share',    // Mode for 90-day heat map: 'share' or 'dollar'
+    heatSide: 'all',      // Side for 90-day heat map: 'all', 'long', or 'short'
 
     async init() {
         console.log('[MONITOR] Initializing...');
@@ -26,6 +28,32 @@ const App = {
         const hn = document.getElementById('heat-next');
         if (hp) hp.addEventListener('click', () => { this.heatOffset++; this.renderHeatCalendarOnly(); });
         if (hn) hn.addEventListener('click', () => { this.heatOffset = Math.max(0, this.heatOffset - 1); this.renderHeatCalendarOnly(); });
+
+        // Heat Map Side Selector
+        const sideGroup = document.getElementById('heat-side-group');
+        if (sideGroup) {
+            sideGroup.addEventListener('click', (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                sideGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.heatSide = btn.getAttribute('data-side');
+                this.renderHeatCalendarOnly();
+            });
+        }
+
+        // Heat Map Mode Selector
+        const modeGroup = document.getElementById('heat-mode-group');
+        if (modeGroup) {
+            modeGroup.addEventListener('click', (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                modeGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.heatMode = btn.getAttribute('data-mode');
+                this.renderHeatCalendarOnly();
+            });
+        }
     },
 
     async refresh() {
@@ -369,7 +397,7 @@ const App = {
     },
 
     renderHeatCalendarOnly() {
-        Signals.renderHeatCalendar(this.allMetrics, this.heatOffset);
+        Signals.renderHeatCalendar(this.allMetrics, this.heatOffset, this.heatMode, this.heatSide);
     },
 
     // Returns NYSE session state based on the current wall-clock time.

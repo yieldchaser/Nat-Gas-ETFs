@@ -95,7 +95,7 @@ const Charts = {
     },
 
     // ---- HEAT CALENDAR ----
-    drawHeatCalendar(container, dailyScores) {
+    drawHeatCalendar(container, dailyScores, mode = 'share') {
         container.innerHTML = '';
         if (!dailyScores || !dailyScores.length) return;
 
@@ -105,6 +105,8 @@ const Charts = {
             '#c07828', '#c04040', '#a03838', '#8855bb'
         ];
 
+        const label = mode === 'dollar' ? 'DVCVI' : 'CVI';
+
         for (const day of dailyScores) {
             const cell = document.createElement('div');
             cell.className = 'heat-cell';
@@ -112,7 +114,7 @@ const Charts = {
             // Map score (0-100) to color index
             const idx = Math.min(colors.length - 1, Math.floor((day.score / 100) * colors.length));
             cell.style.background = colors[idx];
-            cell.setAttribute('data-tooltip', `${day.date}: CVI ${day.score.toFixed(0)}`);
+            cell.setAttribute('data-tooltip', `${day.date}: ${label} ${day.score.toFixed(0)}`);
 
             container.appendChild(cell);
         }
@@ -322,8 +324,10 @@ const Charts = {
             barStyle = `left: 50%; width: ${widthPct}%;`;
         }
 
+        const tip = `30-day Spearman correlation between ${ticker} daily log returns and NG=F spot returns. Current: ${value.toFixed(3)}.`;
+
         return `
-            <div class="corr-row">
+            <div class="corr-row" data-tooltip="${tip}">
                 <span class="corr-ticker" style="color: ${tickerColor}">${ticker}</span>
                 <div class="corr-bar-container">
                     <div class="corr-bar-center"></div>
