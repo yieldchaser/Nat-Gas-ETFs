@@ -252,11 +252,11 @@ const App = {
                 close: h.close != null ? h.close : h[1],
                 volume: h.volume != null ? h.volume : h[2]
             });
-            const sparkData = (etfData.history && etfData.history.length > 0)
-                ? etfData.history.slice(-CONFIG.sparklineDays).map(mapBar)
+            const sparkData = (hist && hist.length > 0)
+                ? hist.slice(-CONFIG.sparklineDays).map(mapBar)
                 : [];
-            const heatmapData = (etfData.history && etfData.history.length > 0)
-                ? etfData.history.slice(-CONFIG.heatmapDays).map(mapBar)
+            const heatmapData = (hist && hist.length > 0)
+                ? hist.slice(-CONFIG.heatmapDays).map(mapBar)
                 : [];
 
             // Build metrics object from pre-computed data
