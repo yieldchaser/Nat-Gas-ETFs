@@ -23,6 +23,9 @@ const CvolState = {
     percentiles: {},      // rolling percentile caches
     zscores: {},          // rolling z-score caches
     modalRange: null,     // shared for composite modals
+    sigPeaksMode: false,
+    sigPeaksThreshold: 95,
+    hmPeaksMode: false,
 };
 
 // ── CSV Parser ────────────────────────────────────────────────

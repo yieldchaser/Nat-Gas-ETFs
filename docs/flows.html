@@ -435,6 +435,65 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
+/* ---- FLOW HEAT PEAKS / SPOTLIGHT MODE ---- */
+.flow-yearly-matrix.peaks-mode {
+    background: rgba(5, 5, 14, 0.72);
+    border-radius: 6px;
+    padding: 4px;
+    transition: background 0.35s ease;
+}
+.flow-heat-cell.heat-dim {
+    opacity: 0.15 !important;
+    background: #0b0b14 !important;
+    transition: background 0.28s ease, opacity 0.28s ease;
+    box-shadow: none !important;
+    color: rgba(255, 255, 255, 0.08) !important;
+    border-color: transparent !important;
+}
+.flow-heat-cell.heat-dim:hover {
+    opacity: 0.45 !important;
+    transform: scale(1.2);
+}
+.flow-heat-cell.heat-peak-notable {
+    opacity: 1 !important;
+    background: #c8922a !important;
+    box-shadow: 0 0 5px 1px rgba(200, 146, 42, 0.60) !important;
+    animation: hpeak-in 0.42s cubic-bezier(.22,.68,0,1.22) both;
+    color: #fff !important;
+    border-color: rgba(200, 146, 42, 0.4) !important;
+}
+.flow-heat-cell.heat-peak-notable:hover {
+    transform: scale(1.45);
+    box-shadow: 0 0 10px 3px rgba(200, 146, 42, 0.80) !important;
+}
+.flow-heat-cell.heat-peak-significant {
+    opacity: 1 !important;
+    background: #d96030 !important;
+    box-shadow: 0 0 8px 2px rgba(217, 96, 48, 0.70) !important;
+    animation: hpeak-in 0.44s cubic-bezier(.22,.68,0,1.22) both;
+    color: #fff !important;
+    border-color: rgba(217, 96, 48, 0.4) !important;
+}
+.flow-heat-cell.heat-peak-significant:hover {
+    transform: scale(1.45);
+    box-shadow: 0 0 14px 4px rgba(217, 96, 48, 0.85) !important;
+}
+.flow-heat-cell.heat-peak-extreme {
+    opacity: 1 !important;
+    background: #ff4d4d !important;
+    box-shadow: 0 0 12px 4px rgba(255, 77, 77, 0.80),
+                0 0 28px 7px rgba(255, 120, 60, 0.35) !important;
+    animation: hpeak-in-strong 0.52s cubic-bezier(.22,.68,0,1.22) both;
+    color: #fff !important;
+    border-color: rgba(255, 77, 77, 0.4) !important;
+}
+.flow-heat-cell.heat-peak-extreme:hover {
+    transform: scale(1.55);
+    box-shadow: 0 0 18px 6px rgba(255, 77, 77, 0.90),
+                0 0 36px 10px rgba(255, 120, 60, 0.45) !important;
+}
+
+
 .flow-heat-badge {
     position: absolute;
     top: 2.5px;
@@ -465,6 +524,57 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* ---- PEAKS TOGGLE BUTTON & BADGE ---- */
+.peaks-toggle-btn {
+    font-family: inherit;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(20, 20, 30, 0.6);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+}
+.peaks-toggle-btn:hover {
+    color: var(--text-bright);
+    background: rgba(255, 255, 255, 0.05);
+}
+.peaks-toggle-btn.active {
+    background: rgba(136, 85, 187, 0.2);
+    color: #bf80ff;
+    border-color: rgba(136, 85, 187, 0.45);
+    box-shadow: 0 0 8px 1px rgba(136, 85, 187, 0.35);
+}
+
+.heat-peak-count {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: rgba(201, 146, 42, 0.15);
+    border: 1px solid rgba(201, 146, 42, 0.4);
+    color: #c8922a;
+    display: none;
+}
+.heat-peak-count.visible {
+    display: inline-block;
+}
+
+@keyframes hpeak-in {
+    0%   { transform: scale(0.75); opacity: 0; }
+    65%  { transform: scale(1.18); }
+    100% { transform: scale(1.0);  opacity: 1; }
+}
+@keyframes hpeak-in-strong {
+    0%   { transform: scale(0.60); opacity: 0; }
+    55%  { transform: scale(1.28); }
+    100% { transform: scale(1.0);  opacity: 1; }
+}
 </style>
 </head>
 <body>
@@ -1021,8 +1131,12 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 
         <!-- Section 7: Yearly Flow Frequency Matrix -->
         <div class="panel" id="yearly-matrix-panel">
-            <div class="panel-header">
-                <div class="panel-title" data-tooltip="Shows the number of significant flow events (|Z-Score| ≥ 1.5) per year per ETF, with average Z-Score magnitude. Helps identify which years had the most active flow signals." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Yearly Flow Activity Matrix</div>
+            <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 8px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="panel-title" data-tooltip="Shows the number of significant flow events (|Z-Score| ≥ 1.5) per year per ETF, with average Z-Score magnitude. Helps identify which years had the most active flow signals." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Yearly Flow Activity Matrix</div>
+                    <span class="heat-peak-count" id="flow-matrix-peak-count">0 PEAKS</span>
+                </div>
+                <button class="peaks-toggle-btn" id="flow-matrix-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all cells except key statistical outliers.">PEAKS</button>
             </div>
             <div id="yearly-matrix-container" style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
                 <div style="color:rgba(255, 255, 255, 0.85); padding:20px; text-align:center; font-size:0.7rem; letter-spacing:1px;">Loading matrix…</div>
@@ -1192,6 +1306,7 @@ const state = {
     zoomReactivity: { start: 0, end: 1 },  // reactivity chart zoom — independent
     divValsCache: [],  // [{signed, ng5d}] — built per render in drawChartFlowNG, read by hover handler
     reactValsCache: [], // [{intensity, ng5d}] — built per render in drawChartReactivity, read by hover handler
+    flowMatrixPeaksMode: false,
     drag: { active: false, startIdx: null, currentIdx: null }
 };
 
@@ -1440,6 +1555,16 @@ async function init() {
         // Reactivity hover
         el('chartReactivity').addEventListener('mousemove', handleReactivityHover);
         el('chartReactivity').addEventListener('mouseleave', hideReactivityHover);
+
+        // PEAKS mode toggle for flow activity matrix
+        const flowMatrixPeaksToggle = document.getElementById('flow-matrix-peaks-toggle');
+        if (flowMatrixPeaksToggle) {
+            flowMatrixPeaksToggle.addEventListener('click', () => {
+                state.flowMatrixPeaksMode = !state.flowMatrixPeaksMode;
+                flowMatrixPeaksToggle.classList.toggle('active', state.flowMatrixPeaksMode);
+                renderYearlyMatrix();
+            });
+        }
         
     } catch (e) {
         console.error("Failed to init", e);
@@ -2953,6 +3078,10 @@ function renderYearlyMatrix() {
     const container = document.getElementById('yearly-matrix-container');
     if (!container) return;
 
+    const peaksMode = state.flowMatrixPeaksMode || false;
+    const panel = document.getElementById('yearly-matrix-panel');
+    if (panel) panel.classList.toggle('peaks-mode', peaksMode);
+
     const tickers = ['BOIL', 'HNU', '3NGL', 'KOLD', 'HND', '3NGS'];
     const allYears = new Set();
     const freq = {}; // ticker -> year -> { count, sumZ }
@@ -2975,6 +3104,24 @@ function renderYearlyMatrix() {
 
     const years = Array.from(allYears).sort((a, b) => b - a);
     if (!years.length) { container.innerHTML = '<div style="color:rgba(255, 255, 255, 0.85);padding:20px;text-align:center;font-size:0.7rem;">No flow events detected.</div>'; return; }
+
+    // Collect all cell counts for percentile calculations
+    const counts = [];
+    years.forEach(yr => {
+        tickers.forEach(tk => {
+            const s = freq[tk][yr];
+            if (s && s.count) counts.push(s.count);
+        });
+    });
+    counts.sort((a, b) => a - b);
+    const p90Idx = Math.floor(0.9 * counts.length);
+    const p90Threshold = counts.length ? counts[Math.min(p90Idx, counts.length - 1)] : 0;
+    const p95Idx = Math.floor(0.95 * counts.length);
+    const p95Threshold = counts.length ? counts[Math.min(p95Idx, counts.length - 1)] : 0;
+    const p99Idx = Math.floor(0.99 * counts.length);
+    const p99Threshold = counts.length ? counts[Math.min(p99Idx, counts.length - 1)] : 0;
+
+    let windowPeakCount = 0;
 
     // Global min/max avg Z for color scaling
     const allAvgZ = [];
@@ -3024,10 +3171,31 @@ function renderYearlyMatrix() {
             if (s && s.count) {
                 const avgZ = s.sumZ / s.count;
                 const ratio = s.count / colMax[tk];
-                const bg = `rgba(${rgbMap[tk]},${(ratio * 0.22).toFixed(2)})`;
-                html += `<td data-tooltip="${s.count} events · avg |Z| ${avgZ.toFixed(1)}" style="background:${bg};"><span style="font-weight:800;font-size:0.8rem;">${s.count}</span><span style="font-size:0.58rem;color:${zColor(avgZ)};margin-left:3px;">(${avgZ.toFixed(1)}σ)</span></td>`;
+                let bg = `rgba(${rgbMap[tk]},${(ratio * 0.22).toFixed(2)})`;
+                let cellClass = 'flow-heat-cell';
+
+                if (peaksMode) {
+                    if (s.count < p90Threshold) {
+                        cellClass += ' heat-dim';
+                        bg = 'transparent';
+                    } else {
+                        windowPeakCount++;
+                        if (s.count >= p99Threshold) {
+                            cellClass += ' heat-peak-extreme';
+                        } else if (s.count >= p95Threshold) {
+                            cellClass += ' heat-peak-significant';
+                        } else {
+                            cellClass += ' heat-peak-notable';
+                        }
+                        bg = ''; // Let CSS background rule apply
+                    }
+                }
+
+                const styleAttr = bg ? ` style="background:${bg};"` : '';
+                html += `<td class="${cellClass}" data-tooltip="${s.count} events · avg |Z| ${avgZ.toFixed(1)}"${styleAttr}><span style="font-weight:800;font-size:0.8rem;">${s.count}</span><span style="font-size:0.58rem;color:${zColor(avgZ)};margin-left:3px;">(${avgZ.toFixed(1)}σ)</span></td>`;
             } else {
-                html += `<td class="matrix-none">—</td>`;
+                const cellClass = peaksMode ? 'matrix-none heat-dim' : 'matrix-none';
+                html += `<td class="${cellClass}">—</td>`;
             }
         });
         html += '</tr>';
@@ -3041,6 +3209,17 @@ function renderYearlyMatrix() {
     });
     html += `</tr></tbody></table>`;
     container.innerHTML = html;
+
+    // Update peak count badge
+    const peakBadge = document.getElementById('flow-matrix-peak-count');
+    if (peakBadge) {
+        if (peaksMode) {
+            peakBadge.textContent = `${windowPeakCount} ${windowPeakCount === 1 ? 'OUTLIER' : 'OUTLIERS'}`;
+            peakBadge.classList.add('visible');
+        } else {
+            peakBadge.classList.remove('visible');
+        }
+    }
 }
 
 // ---- Cross-Side Flow Divergence Scanner ----

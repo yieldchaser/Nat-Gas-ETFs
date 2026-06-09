@@ -156,6 +156,57 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 .heatmap-grid { display: grid; gap: 3px; width: 100%; }
 .heatmap-cell { width: 100%; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 4px 2px; font-family: 'JetBrains Mono', monospace; transition: transform 0.15s, box-shadow 0.15s, filter 0.15s; cursor: help; min-height: 34px; }
 .heatmap-cell:hover { transform: scale(1.18); box-shadow: 0 4px 16px rgba(0,0,0,0.5); z-index: 10; position: relative; filter: brightness(1.25); }
+
+/* ---- CVOL HM PEAKS / SPOTLIGHT MODE ---- */
+#cvol-heatmap.peaks-mode {
+    background: rgba(5, 5, 14, 0.72);
+    border-radius: 6px;
+    padding: 4px;
+    transition: background 0.35s ease;
+}
+.heatmap-cell.heat-dim {
+    opacity: 0.15 !important;
+    background: #0b0b14 !important;
+    transition: background 0.28s ease, opacity 0.28s ease;
+    box-shadow: none !important;
+}
+.heatmap-cell.heat-dim:hover {
+    opacity: 0.45 !important;
+    transform: scale(1.2);
+}
+.heatmap-cell.heat-peak-notable {
+    opacity: 1 !important;
+    background: #c8922a !important;
+    box-shadow: 0 0 5px 1px rgba(200, 146, 42, 0.60) !important;
+    animation: hpeak-in 0.42s cubic-bezier(.22,.68,0,1.22) both;
+}
+.heatmap-cell.heat-peak-notable:hover {
+    transform: scale(1.45);
+    box-shadow: 0 0 10px 3px rgba(200, 146, 42, 0.80) !important;
+}
+.heatmap-cell.heat-peak-significant {
+    opacity: 1 !important;
+    background: #d96030 !important;
+    box-shadow: 0 0 8px 2px rgba(217, 96, 48, 0.70) !important;
+    animation: hpeak-in 0.44s cubic-bezier(.22,.68,0,1.22) both;
+}
+.heatmap-cell.heat-peak-significant:hover {
+    transform: scale(1.45);
+    box-shadow: 0 0 14px 4px rgba(217, 96, 48, 0.85) !important;
+}
+.heatmap-cell.heat-peak-extreme {
+    opacity: 1 !important;
+    background: #ff4d4d !important;
+    box-shadow: 0 0 12px 4px rgba(255, 77, 77, 0.80),
+                0 0 28px 7px rgba(255, 120, 60, 0.35) !important;
+    animation: hpeak-in-strong 0.52s cubic-bezier(.22,.68,0,1.22) both;
+}
+.heatmap-cell.heat-peak-extreme:hover {
+    transform: scale(1.55);
+    box-shadow: 0 0 18px 6px rgba(255, 77, 77, 0.90),
+                0 0 36px 10px rgba(255, 120, 60, 0.45) !important;
+}
+
 .hm-val { font-size: 0.68rem; font-weight: 800; line-height: 1; }
 .hm-pct { font-size: 0.45rem; font-weight: 600; letter-spacing: 0.5px; opacity: 0.85; line-height: 1; }
 .heatmap-label { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.8px; text-align: center; padding: 2px 0 5px; }
@@ -169,6 +220,57 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 .sig-heat-grid { display: grid; grid-template-columns: repeat(18, 1fr); gap: 2px; margin: 8px 0; }
 .sig-heat-cell { width: 100%; aspect-ratio: 1; border-radius: 2px; position: relative; cursor: help; transition: transform 0.12s; display: flex; align-items: center; justify-content: center; font-size: 0.60rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; overflow: hidden; }
 .sig-heat-cell:hover { transform: scale(1.35); z-index: 10; }
+
+/* ---- CVOL SIG PEAKS / SPOTLIGHT MODE ---- */
+#cvol-signal-heat.peaks-mode {
+    background: rgba(5, 5, 14, 0.72);
+    border-radius: 6px;
+    padding: 4px;
+    transition: background 0.35s ease;
+}
+.sig-heat-cell.heat-dim {
+    opacity: 0.15 !important;
+    background: #0b0b14 !important;
+    transition: background 0.28s ease, opacity 0.28s ease;
+    box-shadow: none !important;
+}
+.sig-heat-cell.heat-dim:hover {
+    opacity: 0.45 !important;
+    transform: scale(1.2);
+}
+.sig-heat-cell.heat-peak-notable {
+    opacity: 1 !important;
+    background: #c8922a !important;
+    box-shadow: 0 0 5px 1px rgba(200, 146, 42, 0.60) !important;
+    animation: hpeak-in 0.42s cubic-bezier(.22,.68,0,1.22) both;
+}
+.sig-heat-cell.heat-peak-notable:hover {
+    transform: scale(1.45);
+    box-shadow: 0 0 10px 3px rgba(200, 146, 42, 0.80) !important;
+}
+.sig-heat-cell.heat-peak-significant {
+    opacity: 1 !important;
+    background: #d96030 !important;
+    box-shadow: 0 0 8px 2px rgba(217, 96, 48, 0.70) !important;
+    animation: hpeak-in 0.44s cubic-bezier(.22,.68,0,1.22) both;
+}
+.sig-heat-cell.heat-peak-significant:hover {
+    transform: scale(1.45);
+    box-shadow: 0 0 14px 4px rgba(217, 96, 48, 0.85) !important;
+}
+.sig-heat-cell.heat-peak-extreme {
+    opacity: 1 !important;
+    background: #ff4d4d !important;
+    box-shadow: 0 0 12px 4px rgba(255, 77, 77, 0.80),
+                0 0 28px 7px rgba(255, 120, 60, 0.35) !important;
+    animation: hpeak-in-strong 0.52s cubic-bezier(.22,.68,0,1.22) both;
+}
+.sig-heat-cell.heat-peak-extreme:hover {
+    transform: scale(1.55);
+    box-shadow: 0 0 18px 6px rgba(255, 77, 77, 0.90),
+                0 0 36px 10px rgba(255, 120, 60, 0.45) !important;
+}
+
 .sig-heat-badge { position: absolute; top: 2px; right: 2px; width: 4px; height: 4px; border-radius: 50%; pointer-events: none; }
 .sig-heat-month { position: absolute; top: 2px; left: 3px; font-size: 0.29rem; font-weight: 800; letter-spacing: 0.4px; color: rgba(255,255,255,0.75); line-height: 1; pointer-events: none; text-transform: uppercase; }
 .sig-heat-legend { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
@@ -543,8 +645,9 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- PANEL 6 & 7: HEATMAP + CORRELATION MATRIX (side by side) -->
     <div class="two-col-grid">
         <div class="heatmap-panel">
-            <div class="section-title-bar">
+            <div class="section-title-bar" style="display:flex; justify-content:space-between; align-items:center;">
                 <span class="section-title-text" data-tooltip="Monthly NGVL regime heatmap — color-coded by 252-day percentile for each month across all available years. Reveals seasonal volatility patterns: winter typically elevated, shoulder months complacent. Hover for details.">Regime Heatmap</span>
+                <button class="peaks-toggle-btn" id="cvol-hm-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all months except key statistical NGVL outliers.">PEAKS</button>
             </div>
             <div id="cvol-heatmap"></div>
         </div>
@@ -558,11 +661,26 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 
     <!-- PANEL 6.5: SIGNAL HEAT CALENDAR (90/180 DAYS) -->
     <div class="heatmap-panel">
-        <div class="section-title-bar" style="display:flex; justify-content:space-between; align-items:center;">
-            <span class="section-title-text" id="sig-heat-title" data-tooltip="Daily NGVL regime, color-coded by 252-day percentile (blue=Low, green=Normal, orange=Elevated, red=Extreme). Colored dots mark days when a composite signal fired. Clustering of dots in high-regime (dark orange/red) days = highest-conviction setups.">Signal Activity &middot; Days 1-90</span>
-            <div style="display:flex; gap:8px;">
-                <button class="nav-arrow-btn" id="sig-heat-prev" data-tooltip="View previous 90 days (Days 91-180)">&#8592;</button>
-                <button class="nav-arrow-btn" id="sig-heat-next" data-tooltip="View recent 90 days (Days 1-90)" disabled>&#8594;</button>
+        <div class="section-title-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span class="section-title-text" id="sig-heat-title" data-tooltip="Daily NGVL regime, color-coded by 252-day percentile (blue=Low, green=Normal, orange=Elevated, red=Extreme). Colored dots mark days when a composite signal fired. Clustering of dots in high-regime (dark orange/red) days = highest-conviction setups.">Signal Activity &middot; Days 1-90</span>
+                <span class="heat-peak-count" id="cvol-sig-peak-count">0 PEAKS</span>
+            </div>
+            <div style="display:flex; gap:12px; align-items:center;">
+                <!-- PEAKS Toggle -->
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <button class="peaks-toggle-btn" id="cvol-sig-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all cells except key NGVL statistical outliers.">PEAKS</button>
+                    <div class="tab-group heat-peaks-sub" id="cvol-sig-peaks-threshold-group" style="margin: 0; padding: 2px;">
+                        <button class="tab-btn" data-threshold="90" data-tooltip="Show top 10% highest NGVL days (Notable+).">p90</button>
+                        <button class="tab-btn active" data-threshold="95" data-tooltip="Show top 5% highest NGVL days (Significant+).">p95</button>
+                        <button class="tab-btn" data-threshold="99" data-tooltip="Show top 1% highest NGVL days (Extreme only).">p99</button>
+                    </div>
+                </div>
+                <!-- Pagination -->
+                <div style="display:flex; gap:6px;">
+                    <button class="nav-arrow-btn" id="sig-heat-prev" data-tooltip="View previous 90 days (Days 91-180)">&#8592;</button>
+                    <button class="nav-arrow-btn" id="sig-heat-next" data-tooltip="View recent 90 days (Days 1-90)" disabled>&#8594;</button>
+                </div>
             </div>
         </div>
         <div id="cvol-signal-heat"></div>

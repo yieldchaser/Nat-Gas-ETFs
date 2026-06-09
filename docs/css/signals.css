@@ -176,6 +176,133 @@
     border-radius: 2px;
 }
 
+/* ---- PEAKS / SPOTLIGHT MODE ---- */
+/* Panel background dims slightly for cinematic effect */
+.heat-calendar.peaks-mode {
+    background: rgba(5, 5, 14, 0.72);
+    border-radius: 4px;
+    padding: 3px;
+    transition: background 0.35s ease;
+}
+
+/* Non-outlier cells — fade to near-invisible, preserving shape/grid */
+.heat-cell.heat-dim {
+    background: #0b0b14 !important;
+    opacity: 0.18;
+    transition: background 0.28s ease, opacity 0.28s ease;
+    box-shadow: none !important;
+}
+.heat-cell.heat-dim:hover {
+    opacity: 0.45;
+    transform: scale(1.2);
+}
+
+/* Tier 1 — notable (p90–p95): warm amber */
+.heat-cell.heat-peak-notable {
+    background: #c8922a !important;
+    opacity: 1;
+    box-shadow: 0 0 5px 1px rgba(200, 146, 42, 0.60);
+    animation: hpeak-in 0.42s cubic-bezier(.22,.68,0,1.22) both;
+    transition: transform 0.1s;
+}
+.heat-cell.heat-peak-notable:hover {
+    transform: scale(1.45);
+    box-shadow: 0 0 10px 3px rgba(200, 146, 42, 0.80);
+}
+
+/* Tier 2 — significant (p95–p99): orange */
+.heat-cell.heat-peak-significant {
+    background: #d96030 !important;
+    opacity: 1;
+    box-shadow: 0 0 8px 2px rgba(217, 96, 48, 0.70);
+    animation: hpeak-in 0.44s cubic-bezier(.22,.68,0,1.22) both;
+    transition: transform 0.1s;
+}
+.heat-cell.heat-peak-significant:hover {
+    transform: scale(1.45);
+    box-shadow: 0 0 14px 4px rgba(217, 96, 48, 0.85);
+}
+
+/* Tier 3 — extreme (p99+): blazing red-white double glow */
+.heat-cell.heat-peak-extreme {
+    background: #ff4d4d !important;
+    opacity: 1;
+    box-shadow: 0 0 12px 4px rgba(255, 77, 77, 0.80),
+                0 0 28px 7px rgba(255, 120, 60, 0.35);
+    animation: hpeak-in-strong 0.52s cubic-bezier(.22,.68,0,1.22) both;
+    transition: transform 0.1s;
+}
+.heat-cell.heat-peak-extreme:hover {
+    transform: scale(1.55);
+    box-shadow: 0 0 18px 6px rgba(255, 77, 77, 0.90),
+                0 0 36px 10px rgba(255, 120, 60, 0.45);
+}
+
+/* Entry animations — run once on toggle */
+@keyframes hpeak-in {
+    0%   { transform: scale(0.75); opacity: 0; }
+    65%  { transform: scale(1.18); }
+    100% { transform: scale(1.0);  opacity: 1; }
+}
+@keyframes hpeak-in-strong {
+    0%   { transform: scale(0.60); opacity: 0; }
+    55%  { transform: scale(1.28); }
+    100% { transform: scale(1.0);  opacity: 1; }
+}
+
+/* Sub-threshold picker — hidden by default, shown when PEAKS is active */
+.heat-peaks-sub {
+    display: none;
+    gap: 4px;
+    align-items: center;
+}
+.heat-peaks-sub.visible {
+    display: flex;
+}
+
+/* Peak counter badge in panel header */
+.heat-peak-count {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: rgba(201, 146, 42, 0.15);
+    border: 1px solid rgba(201, 146, 42, 0.4);
+    color: #c8922a;
+    display: none;
+}
+.heat-peak-count.visible {
+    display: inline-block;
+}
+
+/* PEAKS Toggle Button styling */
+.peaks-toggle-btn {
+    font-family: inherit;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(20, 20, 30, 0.6);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+}
+.peaks-toggle-btn:hover {
+    color: var(--text-bright);
+    background: rgba(255, 255, 255, 0.05);
+}
+.peaks-toggle-btn.active {
+    background: rgba(136, 85, 187, 0.2);
+    color: #bf80ff;
+    border-color: rgba(136, 85, 187, 0.45);
+    box-shadow: 0 0 8px 1px rgba(136, 85, 187, 0.35);
+}
+
+
 /* ---- CONVERGENCE GAUGES ---- */
 .convergence-gauges {
     display: grid;
