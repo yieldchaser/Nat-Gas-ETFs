@@ -112,11 +112,7 @@ const Charts = {
             // Map score (0-100) to color index
             const idx = Math.min(colors.length - 1, Math.floor((day.score / 100) * colors.length));
             cell.style.background = colors[idx];
-
-            const tooltip = document.createElement('span');
-            tooltip.className = 'tooltip';
-            tooltip.textContent = `${day.date}: CVI ${day.score.toFixed(0)}`;
-            cell.appendChild(tooltip);
+            cell.setAttribute('data-tooltip', `${day.date}: CVI ${day.score.toFixed(0)}`);
 
             container.appendChild(cell);
         }
