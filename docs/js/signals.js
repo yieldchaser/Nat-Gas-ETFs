@@ -125,20 +125,41 @@ const Signals = {
         }).join('');
     },
 
-    renderHeatCalendar(allMetrics, offset = 0) {
+    renderHeatCalendar(allMetrics, offset = 0, mode = 'share', side = 'all') {
         const container = document.getElementById('heat-calendar');
         if (!container) return;
+
+        // If mode/side not explicitly passed, fallback to window.App values
+        if (window.App) {
+            if (arguments.length < 3) mode = window.App.heatMode || 'share';
+            if (arguments.length < 4) side = window.App.heatSide || 'all';
+        }
 
         // Build daily max CVI scores across all ETFs
         const allTickers = Object.keys(allMetrics).filter(t => allMetrics[t] != null);
         if (allTickers.length === 0) return;
 
+        // Filter active tickers by side
+        let activeTickers = allTickers;
+        if (side === 'long') {
+            activeTickers = allTickers.filter(t => CONFIG.etfs[t] && CONFIG.etfs[t].side === 'long');
+        } else if (side === 'short') {
+            activeTickers = allTickers.filter(t => CONFIG.etfs[t] && CONFIG.etfs[t].side === 'short');
+        }
+
+        if (activeTickers.length === 0) {
+            container.innerHTML = `<div style="grid-column: 1 / -1; padding: 24px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No active ETFs for the selected side filter.</div>`;
+            return;
+        }
+
         // Find ETF with most data to get date index
         let longestData = [];
-        for (const t of allTickers) {
+        for (const t of activeTickers) {
             const data = allMetrics[t].heatmapData;
             if (data && data.length > longestData.length) longestData = data;
         }
+
+        if (longestData.length === 0) return;
 
         // Pagination controls
         const maxOffset = Math.floor((longestData.length - 1) / 90);
@@ -153,7 +174,9 @@ const Signals = {
         if (titleEl) {
             const startDay = offset * 90 + 1;
             const endDay = Math.min((offset + 1) * 90, longestData.length);
-            titleEl.innerHTML = `VOLUME HEAT MAP (Days ${startDay}-${endDay})`;
+            const modeLabel = mode === 'dollar' ? 'DOLLAR VOLUME' : 'VOLUME';
+            const sideLabel = side === 'all' ? '' : ` (${side.toUpperCase()} SIDE)`;
+            titleEl.innerHTML = `${modeLabel} HEAT MAP${sideLabel} (Days ${startDay}-${endDay})`;
         }
 
         const days = 90;
@@ -166,25 +189,32 @@ const Signals = {
             let maxScore = 0;
             const date = longestData[i]?.date || '';
 
-            for (const t of allTickers) {
+            for (const t of activeTickers) {
                 const sd = allMetrics[t].heatmapData;
                 if (!sd || i >= sd.length) continue;
 
                 // Quick CVI proxy: how extreme is volume relative to recent mean
-                const volumes = sd.slice(Math.max(0, i - 21), i + 1).map(d => d.volume);
-                const closes = sd.slice(Math.max(0, i - 21), i + 1).map(d => d.close);
-                if (volumes.length < 5) continue;
+                const subData = sd.slice(Math.max(0, i - 21), i + 1);
+                if (subData.length < 5) continue;
 
-                const volPct = Metrics.percentileRank(volumes[volumes.length - 1], volumes);
+                let values;
+                if (mode === 'dollar') {
+                    values = subData.map(d => (d.volume || 0) * (d.close || 0));
+                } else {
+                    values = subData.map(d => d.volume || 0);
+                }
+                const closes = subData.map(d => d.close || 0);
+
+                const valPct = Metrics.percentileRank(values[values.length - 1], values);
                 const pricePct = Metrics.percentileRank(closes[closes.length - 1], closes);
-                const cvi = volPct * (1 - pricePct / 100);
+                const cvi = valPct * (1 - pricePct / 100);
                 maxScore = Math.max(maxScore, cvi);
             }
 
             dailyScores.push({ date, score: maxScore });
         }
 
-        Charts.drawHeatCalendar(container, dailyScores);
+        Charts.drawHeatCalendar(container, dailyScores, mode);
     },
 
     renderConvergenceGauges(allMetrics) {
@@ -233,9 +263,10 @@ const Signals = {
                 ? (corr < -0.2 ? 'var(--green)' : corr < -0.1 ? 'rgba(255, 255, 255, 0.85)' : corr > 0.1 ? 'var(--red)' : 'rgba(255,255,255,0.85)')
                 : 'rgba(255,255,255,0.85)';
             const tickerColor = side === 'long' ? 'var(--green)' : 'var(--red)';
+            const tipText = `${t} tracking validation card. 30-day Spearman correlation to NG spot is ${corr != null ? corr.toFixed(3) : 'N/A'}. ${side === 'short' ? 'Inverse ETF requires negative correlation to be effective.' : 'Long ETF requires positive correlation to be effective.'}`;
 
             return `
-                <div class="validation-card">
+                <div class="validation-card" data-tooltip="${tipText}">
                     <div class="ticker" style="color:${tickerColor}">${t}</div>
                     <div class="corr-value" style="color:${color}">${corr != null ? corr.toFixed(3) : '--'}</div>
                     <div class="corr-label">30d Spearman</div>
@@ -949,7 +980,7 @@ const Signals = {
         this.renderConvictionEvents(allMetrics);
         this.renderElevatedWatch(allMetrics);
         this.renderHistoricalEchoes(allMetrics);
-        this.renderHeatCalendar(allMetrics, window.App ? window.App.heatOffset : 0);
+        this.renderHeatCalendar(allMetrics, window.App ? window.App.heatOffset : 0, window.App ? window.App.heatMode : 'share', window.App ? window.App.heatSide : 'all');
         this.renderConvergenceGauges(allMetrics);
         this.renderCorrelationBars(allMetrics);
         this.renderValidationBanner(allMetrics);

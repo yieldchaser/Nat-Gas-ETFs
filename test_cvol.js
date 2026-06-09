@@ -128,7 +128,9 @@ const comp = computeComposites(data);
 assert.ok(data.length > 3000, 'parser loads full CVOL history');
 const latestCsv = csv.trim().split(/\r?\n/).at(-1).split(',');
 const latest = data.at(-1);
-assert.strictEqual(latest.date, '2026-05-01', 'latest row date matches fixture expectation');
+const [dDay, dMonth, dYear] = latestCsv[0].split('-');
+const formattedCsvDate = `${dYear}-${dMonth}-${dDay}`;
+assert.strictEqual(latest.date, formattedCsvDate, 'latest row date matches CSV expectation');
 assertNear(latest.ngvl, Number(latestCsv[1]), 1e-9, 'latest NGVL matches CSV');
 ['dnVar', 'upVar', 'skew', 'skewRatio', 'atm', 'convexity', 'underlying'].forEach((field) => {
     assert.ok(Number.isFinite(latest[field]), `${field} parses as finite number`);
