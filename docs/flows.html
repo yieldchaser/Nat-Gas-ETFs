@@ -1274,6 +1274,7 @@ const fmtDateLong = (iso) => {
 
 // State
 const state = {
+    initialized: false,
     summary: null,
     cache: {},
     activeTicker: 'BOIL',
@@ -1566,6 +1567,7 @@ async function init() {
             });
         }
         
+        state.initialized = true;
     } catch (e) {
         console.error("Failed to init", e);
     }
@@ -1848,6 +1850,7 @@ async function selectZTicker(tk) {
 }
 
 function getBaseVisibleData() {
+    if (!state.cache[state.activeTicker]) return [];
     const allData = state.cache[state.activeTicker].data;
     if (state.timeRange === 'all') return allData;
 
@@ -3767,6 +3770,7 @@ function renderCrossChart() {
 // Init
 init();
 window.addEventListener('resize', () => {
+    if (!state.initialized) return;
     renderCharts();
     const zd = getZVisibleData(); if (zd && zd.length > 0) drawChartZ(zd);
     renderCrossChart();
