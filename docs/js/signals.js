@@ -114,8 +114,8 @@ const Signals = {
                     <td class="pair-name">${pair.label}${seasonTag}</td>
                     <td style="color:${rvolColor(longRvol)}" data-tooltip="Long ETF 21d RVOL">${longRvol != null ? longRvol.toFixed(1) + 'x' : '--'}</td>
                     <td style="color:${rvolColor(shortRvol)}" data-tooltip="Short/Inverse ETF 21d RVOL">${shortRvol != null ? shortRvol.toFixed(1) + 'x' : '--'}</td>
-                    <td style="color:${lCapColor}" data-tooltip="Long-side VCVI-63d (${pair.long}) — gas BOTTOM signal. Threshold: 55 watch, 72 critical.">${longVcvi != null ? longVcvi.toFixed(0) : '--'}</td>
-                    <td style="color:${sCapColor}" data-tooltip="Short-side VCVI-63d (${pair.short}) — gas TOP signal. Threshold: 55 watch, 72 critical.">${shortVcvi != null ? shortVcvi.toFixed(0) : '--'}</td>
+                    <td style="color:${lCapColor}" data-tooltip="Long-side VCVI-63d (${pair.long}) — GAS BOTTOM signal. Threshold: 55 watch, 72 critical.">${longVcvi != null ? longVcvi.toFixed(0) : '--'}</td>
+                    <td style="color:${sCapColor}" data-tooltip="Short-side VCVI-63d (${pair.short}) — GAS TOP signal. Threshold: 55 watch, 72 critical.">${shortVcvi != null ? shortVcvi.toFixed(0) : '--'}</td>
                     <td style="color:${fastColor(longVcvi5||shortVcvi5)}" data-tooltip="5d fast-window VCVI — L:${longVcvi5!=null?longVcvi5.toFixed(0):'—'} S:${shortVcvi5!=null?shortVcvi5.toFixed(0):'—'}. Threshold 45. Fires on weather spikes before 21d window catches up.">${longVcvi5!=null?longVcvi5.toFixed(0):'—'}/${shortVcvi5!=null?shortVcvi5.toFixed(0):'—'}</td>
                     <td data-tooltip="${anySpike?`SHARP SPIKE detected on ${spikeTicker} — move >2×ATR with VCVI-5d>45`:'No sharp spike'}">${anySpike ? '<span class="spike-badge-sm">⚡</span>' : '—'}</td>
                     <td style="color:${ipsiColor}" data-tooltip="${ipsiTip}">${ipsi != null ? ipsi.toFixed(1) + 'x' : '--'}</td>
