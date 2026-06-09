@@ -174,9 +174,8 @@ const Signals = {
         if (titleEl) {
             const startDay = offset * 90 + 1;
             const endDay = Math.min((offset + 1) * 90, longestData.length);
-            const modeLabel = mode === 'dollar' ? 'DOLLAR VOLUME' : 'VOLUME';
-            const sideLabel = side === 'all' ? '' : ` (${side.toUpperCase()} SIDE)`;
-            titleEl.innerHTML = `${modeLabel} HEAT MAP${sideLabel} (Days ${startDay}-${endDay})`;
+            const modeLabel = mode === 'dollar' ? 'DOLLAR VOL' : 'VOLUME';
+            titleEl.innerHTML = `${modeLabel} HEAT MAP (Days ${startDay}-${endDay})`;
         }
 
         // Build a date-to-index map for each active ETF to ensure date alignment across holidays
