@@ -14,6 +14,92 @@ const Signals = {
         return icons[type] || '●';
     },
 
+    computeHeatGlobalPercentiles(allMetrics, mode = 'share', side = 'all') {
+        const allTickers = Object.keys(allMetrics).filter(t => allMetrics[t] != null);
+        if (allTickers.length === 0) return { p90: 90, p95: 95, p99: 99 };
+
+        let activeTickers = allTickers;
+        if (side === 'long') {
+            activeTickers = allTickers.filter(t => CONFIG.etfs[t] && CONFIG.etfs[t].side === 'long');
+        } else if (side === 'short') {
+            activeTickers = allTickers.filter(t => CONFIG.etfs[t] && CONFIG.etfs[t].side === 'short');
+        }
+
+        if (activeTickers.length === 0) return { p90: 90, p95: 95, p99: 99 };
+
+        let longestData = [];
+        for (const t of activeTickers) {
+            const data = allMetrics[t].heatmapData;
+            if (data && data.length > longestData.length) longestData = data;
+        }
+        if (longestData.length === 0) return { p90: 90, p95: 95, p99: 99 };
+
+        const indexMaps = {};
+        for (const t of activeTickers) {
+            const sd = allMetrics[t].heatmapData;
+            const map = new Map();
+            if (sd) {
+                for (let idx = 0; idx < sd.length; idx++) {
+                    if (sd[idx] && sd[idx].date) {
+                        map.set(sd[idx].date, idx);
+                    }
+                }
+            }
+            indexMaps[t] = map;
+        }
+
+        const scores = [];
+        for (let i = 0; i < longestData.length; i++) {
+            let maxScore = 0;
+            const date = longestData[i]?.date || '';
+            if (!date) continue;
+            let hasData = false;
+
+            for (const t of activeTickers) {
+                const sd = allMetrics[t].heatmapData;
+                const map = indexMaps[t];
+                if (!sd || !map) continue;
+
+                const idx = map.get(date);
+                if (idx === undefined) continue;
+
+                const subData = sd.slice(Math.max(0, idx - 21), idx + 1);
+                if (subData.length < 5) continue;
+
+                let values;
+                if (mode === 'dollar') {
+                    values = subData.map(d => (d.volume || 0) * (d.close || 0));
+                } else {
+                    values = subData.map(d => d.volume || 0);
+                }
+                const closes = subData.map(d => d.close || 0);
+
+                const valPct = Metrics.percentileRank(values[values.length - 1], values);
+                const pricePct = Metrics.percentileRank(closes[closes.length - 1], closes);
+                const cvi = valPct * (1 - pricePct / 100);
+                maxScore = Math.max(maxScore, cvi);
+                hasData = true;
+            }
+            if (hasData) {
+                scores.push(maxScore);
+            }
+        }
+
+        if (scores.length === 0) return { p90: 90, p95: 95, p99: 99 };
+        scores.sort((a, b) => a - b);
+
+        const getPercentile = (p) => {
+            const idx = Math.floor((p / 100) * scores.length);
+            return scores[Math.min(idx, scores.length - 1)];
+        };
+
+        return {
+            p90: getPercentile(90),
+            p95: getPercentile(95),
+            p99: getPercentile(99)
+        };
+    },
+
     renderAlertFeed(allMetrics) {
         const feed = document.getElementById('alert-feed');
         if (!feed) return;
@@ -125,7 +211,7 @@ const Signals = {
         }).join('');
     },
 
-    renderHeatCalendar(allMetrics, offset = 0, mode = 'share', side = 'all') {
+    renderHeatCalendar(allMetrics, offset = 0, mode = 'share', side = 'all', peaksMode = false, peaksThreshold = 95, globalPercentiles = null) {
         const container = document.getElementById('heat-calendar');
         if (!container) return;
 
@@ -133,6 +219,12 @@ const Signals = {
         if (window.App) {
             if (arguments.length < 3) mode = window.App.heatMode || 'share';
             if (arguments.length < 4) side = window.App.heatSide || 'all';
+            if (arguments.length < 5) peaksMode = window.App.heatPeaksMode || false;
+            if (arguments.length < 6) peaksThreshold = window.App.heatPeaksThreshold || 95;
+            if (arguments.length < 7) {
+                const globalObj = window.App.heatGlobalPercentiles;
+                globalPercentiles = (globalObj && globalObj[mode]) ? globalObj[mode][side] : null;
+            }
         }
 
         // Build daily max CVI scores across all ETFs
@@ -233,7 +325,16 @@ const Signals = {
             dailyScores.push({ date, score: maxScore });
         }
 
-        Charts.drawHeatCalendar(container, dailyScores, mode);
+        const peaksCount = Charts.drawHeatCalendar(container, dailyScores, mode, peaksMode, peaksThreshold, globalPercentiles);
+        const peakBadge = document.getElementById('heat-peak-count');
+        if (peakBadge) {
+            if (peaksMode) {
+                peakBadge.textContent = `${peaksCount} ${peaksCount === 1 ? 'OUTLIER' : 'OUTLIERS'}`;
+                peakBadge.classList.add('visible');
+            } else {
+                peakBadge.classList.remove('visible');
+            }
+        }
     },
 
     renderConvergenceGauges(allMetrics) {

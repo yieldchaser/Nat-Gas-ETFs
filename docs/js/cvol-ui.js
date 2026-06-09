@@ -249,6 +249,12 @@ function renderSignalHeatCalendar(data, comp) {
     var n = data.length;
     if (!n) return;
 
+    var peaksMode = CvolState.sigPeaksMode || false;
+    var peaksThreshold = CvolState.sigPeaksThreshold || 95;
+    var windowPeakCount = 0;
+
+    el.classList.toggle('peaks-mode', peaksMode);
+
     var offset = CvolState.signalHeatOffset || 0;
     var daysEnd = n - (offset * 90);
     var start = Math.max(0, daysEnd - 90);
@@ -384,16 +390,47 @@ function renderSignalHeatCalendar(data, comp) {
         var borderStyle = ev || surfEvs ? '2px solid ' + (ev ? (sigColors[ev.signal] || '#fff') : (surfaceStateColors[surfEvs[0].state] || '#fff')) : '1px solid ' + border;
         var shadowStyle = (i === n - 1) ? 'box-shadow: 0 0 0 2px rgba(0,229,255,0.8), 0 0 8px rgba(0,229,255,0.25);' : '';
 
+        var sigClass = 'sig-heat-cell';
+        if (peaksMode) {
+            if (pct == null || pct < peaksThreshold) {
+                sigClass += ' heat-dim';
+                bg = 'transparent';
+                borderStyle = '1px solid transparent';
+                fgColor = 'rgba(255,255,255,0.15)';
+                badge = '';
+                skewBadgeHtml = '';
+            } else {
+                windowPeakCount++;
+                if (pct >= 99) {
+                    sigClass += ' heat-peak-extreme';
+                } else if (pct >= 95) {
+                    sigClass += ' heat-peak-significant';
+                } else {
+                    sigClass += ' heat-peak-notable';
+                }
+            }
+        }
+
         var monthLabel = '';
         if (prevMonth !== null && prevMonth !== month) {
             var monthIdx = parseInt(month, 10) - 1;
             monthLabel = '<span class="sig-heat-month">' + monthNames[monthIdx] + '</span>';
         }
 
-        html += '<div class="sig-heat-cell" style="position:relative;background:' + bg + ';border:' + borderStyle + ';color:' + fgColor + ';' + shadowStyle + '" data-tooltip="' + tt.replace(/"/g, '&quot;') + '">' + monthLabel + day + badge + skewBadgeHtml + '</div>';
+        html += '<div class="' + sigClass + '" style="position:relative;background:' + bg + ';border:' + borderStyle + ';color:' + fgColor + ';' + shadowStyle + '" data-tooltip="' + tt.replace(/"/g, '&quot;') + '">' + monthLabel + day + badge + skewBadgeHtml + '</div>';
         prevMonth = month;
     }
     html += '</div>';
+
+    var peakBadge = document.getElementById('cvol-sig-peak-count');
+    if (peakBadge) {
+        if (peaksMode) {
+            peakBadge.textContent = windowPeakCount + ' ' + (windowPeakCount === 1 ? 'OUTLIER' : 'OUTLIERS');
+            peakBadge.classList.add('visible');
+        } else {
+            peakBadge.classList.remove('visible');
+        }
+    }
 
     // Stats bar
     var startDate = data[start].date;
@@ -443,6 +480,9 @@ function renderSignalHeatCalendar(data, comp) {
 // ── Regime Heatmap ────────────────────────────────────────────
 function renderHeatmap(data) {
     var el = document.getElementById('cvol-heatmap'); if (!el) return;
+    var peaksMode = CvolState.hmPeaksMode || false;
+    el.classList.toggle('peaks-mode', peaksMode);
+
     var hm = computeHeatmapData(data);
     var years = []; var keys = Object.keys(hm).sort();
     keys.forEach(function(k){ var y = k.split('-')[0]; if (years.indexOf(y) < 0) years.push(y); });
@@ -464,7 +504,8 @@ function renderHeatmap(data) {
             var key = y + '-' + (m < 10 ? '0' : '') + m;
             var cell = hm[key];
             if (!cell) {
-                html += '<div class="heatmap-cell" style="background:rgba(255,255,255,0.025);"><span class="hm-val" style="color:rgba(255,255,255,0.12);">—</span></div>';
+                var dimClass = peaksMode ? 'heatmap-cell heat-dim' : 'heatmap-cell';
+                html += '<div class="' + dimClass + '" style="background:rgba(255,255,255,0.025);border:1px solid transparent;"><span class="hm-val" style="color:rgba(255,255,255,0.12);">—</span></div>';
             } else {
                 var bg = cell.regime.color;
                 var pct = cell.pct;
@@ -481,7 +522,29 @@ function renderHeatmap(data) {
                          'NG Price: $' + cell.avgUnderlying.toFixed(2) +
                          (cell.avgSkewRatio != null ? '  Skew Ratio: ' + cell.avgSkewRatio.toFixed(2) : '') + '\n' +
                          season;
-                html += '<div class="heatmap-cell" style="background:' + toRgba(bg, parseFloat(alpha)) + ';border:1px solid ' + border + ';" data-tooltip="' + tt.replace(/"/g, '&quot;') + '">' +
+
+                var cellBg = toRgba(bg, parseFloat(alpha));
+                var borderStyle = '1px solid ' + border;
+                var cellClass = 'heatmap-cell';
+
+                if (peaksMode) {
+                    if (pct < 90) {
+                        cellClass += ' heat-dim';
+                        cellBg = 'transparent';
+                        borderStyle = '1px solid transparent';
+                        textCol = 'rgba(255,255,255,0.15)';
+                    } else {
+                        if (pct >= 99) {
+                            cellClass += ' heat-peak-extreme';
+                        } else if (pct >= 95) {
+                            cellClass += ' heat-peak-significant';
+                        } else {
+                            cellClass += ' heat-peak-notable';
+                        }
+                    }
+                }
+
+                html += '<div class="' + cellClass + '" style="background:' + cellBg + ';border:' + borderStyle + ';" data-tooltip="' + tt.replace(/"/g, '&quot;') + '">' +
                         '<span class="hm-val" style="color:' + textCol + ';">' + cell.avgNgvl.toFixed(0) + '</span>' +
                         '<span class="hm-pct" style="color:' + textCol + ';">' + pctLabel + '</span>' +
                         '</div>';
@@ -1766,6 +1829,42 @@ function updateSignalHeatNav() {
                 renderSignalHeatCalendar(CvolState.data, CvolState.composites);
             }
         });
+
+        // PEAKS Toggle & Sub-picker (Signal Activity)
+        var sigPeaksToggle = document.getElementById('cvol-sig-peaks-toggle');
+        var sigPeaksThresholdGroup = document.getElementById('cvol-sig-peaks-threshold-group');
+        if (sigPeaksToggle) {
+            // Set initial state
+            if (sigPeaksThresholdGroup) sigPeaksThresholdGroup.style.display = 'none';
+            sigPeaksToggle.addEventListener('click', function() {
+                CvolState.sigPeaksMode = !CvolState.sigPeaksMode;
+                sigPeaksToggle.classList.toggle('active', CvolState.sigPeaksMode);
+                if (sigPeaksThresholdGroup) {
+                    sigPeaksThresholdGroup.style.display = CvolState.sigPeaksMode ? 'flex' : 'none';
+                }
+                renderSignalHeatCalendar(CvolState.data, CvolState.composites);
+            });
+        }
+        if (sigPeaksThresholdGroup) {
+            sigPeaksThresholdGroup.addEventListener('click', function(ev) {
+                var btn = ev.target.closest('button');
+                if (!btn) return;
+                sigPeaksThresholdGroup.querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                CvolState.sigPeaksThreshold = parseInt(btn.getAttribute('data-threshold'), 10);
+                renderSignalHeatCalendar(CvolState.data, CvolState.composites);
+            });
+        }
+
+        // PEAKS Toggle (Regime Heatmap)
+        var hmPeaksToggle = document.getElementById('cvol-hm-peaks-toggle');
+        if (hmPeaksToggle) {
+            hmPeaksToggle.addEventListener('click', function() {
+                CvolState.hmPeaksMode = !CvolState.hmPeaksMode;
+                hmPeaksToggle.classList.toggle('active', CvolState.hmPeaksMode);
+                renderHeatmap(CvolState.data);
+            });
+        }
 
         // Resize
         window.addEventListener('resize', function() { renderMainChart(); renderVarDecomp(); });

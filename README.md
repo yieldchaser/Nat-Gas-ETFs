@@ -39,6 +39,24 @@ This project implements five interconnected analytical engines:
 
 ---
 
+## Outlier Spotlight (PEAKS Mode)
+
+To cut through visual noise during periods of extreme volatility or congestion, all heatmaps and activity matrices across the dashboards support **PEAKS Mode** (Outlier Spotlight). When toggled:
+- **Lights Off (Dimming):** Non-outlying days, months, or years are dimmed to near-black (`opacity: 0.15`), making normal conditions recede into the background.
+- **Spotlight Glow:** Key statistical outliers are highlighted with harmonized glowing borders, vibrant backdrops, and interactive entry animations:
+  - **Notable Peaks (P90):** Amber/gold glow.
+  - **Significant Peaks (P95):** Orange/copper glow.
+  - **Extreme Peaks (P99):** Red/crimson intense glow.
+- **Outlier Counter Badge:** Displays the exact count of outliers currently spotlighted in the view window.
+
+PEAKS Mode is supported on:
+1. **Volume Heat Map (Days 1–90)** (`index.html`): Filterable by P90, P95, or P99 thresholds. Uses global historical percentiles computed over all active daily maximum ETF CVIs.
+2. **CVOL Signal Activity Heatmap** (`cvol.html`): Filterable by P90, P95, or P99 thresholds. Dims non-outliers, styles outlying signals, and hides signal dots on dimmed cells.
+3. **Regime Heatmap (Monthly NGVL)** (`cvol.html`): Spotlight threshold fixed at P90.
+4. **Yearly Flow Activity Matrix** (`flows.html`): Spotlight threshold fixed at P90. Clears inline background styles on cells to let the glowing outlier classes shine.
+
+---
+
 ## Dashboard Pages
 
 ## CVOL: Reproducible Audit

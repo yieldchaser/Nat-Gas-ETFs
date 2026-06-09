@@ -12,6 +12,10 @@ const App = {
     heatMode: 'share',    // Mode for 90-day heat map: 'share' or 'dollar'
     heatSide: 'all',      // Side for 90-day heat map: 'all', 'long', or 'short'
     vddsMode: 'vol',      // Mode for VDDS panel: 'vol' (S-RVOL-21d) or 'dv' (VDDS ratio)
+    heatPeaksMode: false, // PEAKS spotlight mode active/inactive
+    heatPeaksThreshold: 95, // Spotlight threshold percentile (90, 95, or 99)
+    heatGlobalPercentiles: {}, // Keyed by {mode, side}
+
 
     async init() {
         console.log('[MONITOR] Initializing...');
@@ -55,6 +59,33 @@ const App = {
                 this.renderHeatCalendarOnly();
             });
         }
+
+        // PEAKS Toggle
+        const peaksToggle = document.getElementById('heat-peaks-toggle');
+        const peaksThresholdGroup = document.getElementById('heat-peaks-threshold-group');
+        if (peaksToggle) {
+            peaksToggle.addEventListener('click', () => {
+                this.heatPeaksMode = !this.heatPeaksMode;
+                peaksToggle.classList.toggle('active', this.heatPeaksMode);
+                if (peaksThresholdGroup) {
+                    peaksThresholdGroup.style.display = this.heatPeaksMode ? 'flex' : 'none';
+                }
+                this.renderHeatCalendarOnly();
+            });
+        }
+
+        // PEAKS Threshold sub-picker
+        if (peaksThresholdGroup) {
+            peaksThresholdGroup.addEventListener('click', (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                peaksThresholdGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.heatPeaksThreshold = parseInt(btn.getAttribute('data-threshold'));
+                this.renderHeatCalendarOnly();
+            });
+        }
+
 
         // VDDS VOL / $ Mode Toggle
         const vddsModeGroup = document.getElementById('vdds-mode-group');
@@ -226,6 +257,7 @@ const App = {
         }
 
         this.updateMarketStatus(raw.marketState);
+        this.computeAllGlobalPercentiles();
         this.render();
         this.updateTimestamp();
     },
@@ -399,6 +431,7 @@ const App = {
         // Always compute market status from current wall-clock time so the
         // label is correct even when the pre-computed JSON is stale.
         this.updateMarketStatus(this.getMarketStatusNow());
+        this.computeAllGlobalPercentiles();
         this.render();
         this.updateTimestamp(data.last_updated);
     },
@@ -418,7 +451,24 @@ const App = {
     },
 
     renderHeatCalendarOnly() {
-        Signals.renderHeatCalendar(this.allMetrics, this.heatOffset, this.heatMode, this.heatSide);
+        const globalObj = this.heatGlobalPercentiles[this.heatMode];
+        const percentiles = globalObj ? globalObj[this.heatSide] : null;
+        Signals.renderHeatCalendar(this.allMetrics, this.heatOffset, this.heatMode, this.heatSide, this.heatPeaksMode, this.heatPeaksThreshold, percentiles);
+    },
+
+    computeAllGlobalPercentiles() {
+        this.heatGlobalPercentiles = {
+            share: {
+                all: Signals.computeHeatGlobalPercentiles(this.allMetrics, 'share', 'all'),
+                long: Signals.computeHeatGlobalPercentiles(this.allMetrics, 'share', 'long'),
+                short: Signals.computeHeatGlobalPercentiles(this.allMetrics, 'share', 'short')
+            },
+            dollar: {
+                all: Signals.computeHeatGlobalPercentiles(this.allMetrics, 'dollar', 'all'),
+                long: Signals.computeHeatGlobalPercentiles(this.allMetrics, 'dollar', 'long'),
+                short: Signals.computeHeatGlobalPercentiles(this.allMetrics, 'dollar', 'short')
+            }
+        };
     },
 
     // Returns NYSE session state based on the current wall-clock time.

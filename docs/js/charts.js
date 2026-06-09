@@ -95,9 +95,10 @@ const Charts = {
     },
 
     // ---- HEAT CALENDAR ----
-    drawHeatCalendar(container, dailyScores, mode = 'share') {
+    drawHeatCalendar(container, dailyScores, mode = 'share', peaksMode = false, peaksThreshold = 95, globalPercentiles = null) {
         container.innerHTML = '';
-        if (!dailyScores || !dailyScores.length) return;
+        container.classList.toggle('peaks-mode', peaksMode);
+        if (!dailyScores || !dailyScores.length) return 0;
 
         const colors = [
             '#14141e', '#1a1a28', '#202838', '#283848',
@@ -106,6 +107,17 @@ const Charts = {
         ];
 
         const label = mode === 'dollar' ? 'DVCVI' : 'CVI';
+        let peakCount = 0;
+
+        // Fallback thresholds if not provided
+        const p90 = globalPercentiles?.p90 ?? 90;
+        const p95 = globalPercentiles?.p95 ?? 95;
+        const p99 = globalPercentiles?.p99 ?? 99;
+
+        // The threshold cutoff score below which cells are dimmed
+        const thresholdCutoff = peaksThreshold === 99 ? p99
+                              : peaksThreshold === 90 ? p90
+                              : p95; // default to p95
 
         for (const day of dailyScores) {
             const cell = document.createElement('div');
@@ -116,8 +128,24 @@ const Charts = {
             cell.style.background = colors[idx];
             cell.setAttribute('data-tooltip', `${day.date}: ${label} ${day.score.toFixed(0)}`);
 
+            if (peaksMode) {
+                if (day.score < thresholdCutoff) {
+                    cell.classList.add('heat-dim');
+                } else {
+                    peakCount++;
+                    if (day.score >= p99) {
+                        cell.classList.add('heat-peak-extreme');
+                    } else if (day.score >= p95) {
+                        cell.classList.add('heat-peak-significant');
+                    } else {
+                        cell.classList.add('heat-peak-notable');
+                    }
+                }
+            }
+
             container.appendChild(cell);
         }
+        return peakCount;
     },
 
     // ---- CONVERGENCE GAUGE (SVG Ring) ----
