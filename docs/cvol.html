@@ -645,8 +645,11 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- PANEL 6 & 7: HEATMAP + CORRELATION MATRIX (side by side) -->
     <div class="two-col-grid">
         <div class="heatmap-panel">
-            <div class="section-title-bar" style="display:flex; justify-content:space-between; align-items:center;">
-                <span class="section-title-text" data-tooltip="Monthly NGVL regime heatmap — color-coded by 252-day percentile for each month across all available years. Reveals seasonal volatility patterns: winter typically elevated, shoulder months complacent. Hover for details.">Regime Heatmap</span>
+            <div class="section-title-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 8px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="section-title-text" data-tooltip="Monthly NGVL regime heatmap — color-coded by 252-day percentile for each month across all available years. Reveals seasonal volatility patterns: winter typically elevated, shoulder months complacent. Hover for details.">Regime Heatmap</span>
+                    <span class="heat-peak-count" id="cvol-hm-peak-count">0 PEAKS</span>
+                </div>
                 <button class="peaks-toggle-btn" id="cvol-hm-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all months except key statistical NGVL outliers.">PEAKS</button>
             </div>
             <div id="cvol-heatmap"></div>
@@ -670,7 +673,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
                 <!-- PEAKS Toggle -->
                 <div style="display:flex; gap:6px; align-items:center;">
                     <button class="peaks-toggle-btn" id="cvol-sig-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all cells except key NGVL statistical outliers.">PEAKS</button>
-                    <div class="tab-group heat-peaks-sub" id="cvol-sig-peaks-threshold-group" style="margin: 0; padding: 2px;">
+                    <div class="tab-group heat-peaks-sub" id="cvol-sig-peaks-threshold-group" style="margin: 0; padding: 2px; display: none;">
                         <button class="tab-btn" data-threshold="90" data-tooltip="Show top 10% highest NGVL days (Notable+).">p90</button>
                         <button class="tab-btn active" data-threshold="95" data-tooltip="Show top 5% highest NGVL days (Significant+).">p95</button>
                         <button class="tab-btn" data-threshold="99" data-tooltip="Show top 1% highest NGVL days (Extreme only).">p99</button>

@@ -93,7 +93,7 @@ def get_fresh_qsid(cme_token: str, userinfo: str) -> tuple[str, requests.Session
             return active, session
 
     # Fallback: use the UUID we generated (may already be active if SSO worked)
-    print(f"  Warning: qsid not found in response — using generated UUID as fallback")
+    print("  Warning: qsid not found in response — using generated UUID as fallback")
     return qsid, session
 
 

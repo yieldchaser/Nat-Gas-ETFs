@@ -23,8 +23,7 @@ No login required if the endpoint is public. If you get 401/403, add:
 
 import argparse
 import json
-import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests

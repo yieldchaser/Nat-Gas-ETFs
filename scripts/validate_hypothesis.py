@@ -189,7 +189,6 @@ def event_study(df, lookback=60, window_around=5):
 
     # Collect volume around each event
     event_volumes = []
-    baseline_volumes = []
     for idx in low_indices:
         start = max(0, idx - window_around)
         end = min(len(df), idx + window_around + 1)

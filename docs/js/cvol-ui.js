@@ -425,7 +425,7 @@ function renderSignalHeatCalendar(data, comp) {
     var peakBadge = document.getElementById('cvol-sig-peak-count');
     if (peakBadge) {
         if (peaksMode) {
-            peakBadge.textContent = windowPeakCount + ' ' + (windowPeakCount === 1 ? 'OUTLIER' : 'OUTLIERS');
+            peakBadge.textContent = windowPeakCount + ' ' + (windowPeakCount === 1 ? 'PEAK' : 'PEAKS');
             peakBadge.classList.add('visible');
         } else {
             peakBadge.classList.remove('visible');
@@ -483,6 +483,8 @@ function renderHeatmap(data) {
     var peaksMode = CvolState.hmPeaksMode || false;
     el.classList.toggle('peaks-mode', peaksMode);
 
+    var windowPeakCount = 0;
+
     var hm = computeHeatmapData(data);
     var years = []; var keys = Object.keys(hm).sort();
     keys.forEach(function(k){ var y = k.split('-')[0]; if (years.indexOf(y) < 0) years.push(y); });
@@ -534,6 +536,7 @@ function renderHeatmap(data) {
                         borderStyle = '1px solid transparent';
                         textCol = 'rgba(255,255,255,0.15)';
                     } else {
+                        windowPeakCount++;
                         if (pct >= 99) {
                             cellClass += ' heat-peak-extreme';
                         } else if (pct >= 95) {
@@ -568,6 +571,16 @@ function renderHeatmap(data) {
     html += '<span class="hm-leg-note">Percentile = monthly avg NGVL vs full history</span>';
     html += '</div>';
     el.innerHTML = html;
+
+    var peakBadge = document.getElementById('cvol-hm-peak-count');
+    if (peakBadge) {
+        if (peaksMode) {
+            peakBadge.textContent = windowPeakCount + ' ' + (windowPeakCount === 1 ? 'PEAK' : 'PEAKS');
+            peakBadge.classList.add('visible');
+        } else {
+            peakBadge.classList.remove('visible');
+        }
+    }
 }
 
 // ── Correlation Matrix (range-synced) ─────────────────────────
