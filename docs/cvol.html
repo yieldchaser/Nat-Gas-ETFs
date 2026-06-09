@@ -645,7 +645,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- PANEL 6 & 7: HEATMAP + CORRELATION MATRIX (side by side) -->
     <div class="two-col-grid">
         <div class="heatmap-panel">
-            <div class="section-title-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 8px;">
+            <div class="section-title-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: nowrap; gap: 6px;">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span class="section-title-text" data-tooltip="Monthly NGVL regime heatmap — color-coded by 252-day percentile for each month across all available years. Reveals seasonal volatility patterns: winter typically elevated, shoulder months complacent. Hover for details.">Regime Heatmap</span>
                     <span class="heat-peak-count" id="cvol-hm-peak-count">0 PEAKS</span>
@@ -664,7 +664,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 
     <!-- PANEL 6.5: SIGNAL HEAT CALENDAR (90/180 DAYS) -->
     <div class="heatmap-panel">
-        <div class="section-title-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 8px;">
+        <div class="section-title-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: nowrap; gap: 6px;">
             <div style="display:flex; align-items:center; gap:8px;">
                 <span class="section-title-text" id="sig-heat-title" data-tooltip="Daily NGVL regime, color-coded by 252-day percentile (blue=Low, green=Normal, orange=Elevated, red=Extreme). Colored dots mark days when a composite signal fired. Clustering of dots in high-regime (dark orange/red) days = highest-conviction setups.">Signal Activity &middot; Days 1-90</span>
                 <span class="heat-peak-count" id="cvol-sig-peak-count">0 PEAKS</span>

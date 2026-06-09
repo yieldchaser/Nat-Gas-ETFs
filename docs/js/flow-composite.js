@@ -883,7 +883,7 @@ function renderFlowHeatCalendar(offset = 0) {
     if (rangeLabel && longestData[startIndex] && longestData[endIndex - 1]) {
         const startD = longestData[startIndex].date;
         const endD = longestData[endIndex - 1].date;
-        rangeLabel.textContent = `· ${startD} TO ${endD} (Days ${dataLength - endIndex + 1}-${dataLength - startIndex})`;
+        rangeLabel.textContent = `· ${startD} to ${endD}`;
     }
     
     // Mode & Source

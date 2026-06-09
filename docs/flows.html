@@ -939,10 +939,10 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 
         <!-- Section 6.1b: Flow Activity Heat Map -->
         <div class="panel" id="flow-heat-panel">
-            <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:nowrap; gap:12px;">
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:nowrap;">
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <div class="panel-title" data-tooltip="FLOW ACTIVITY HEAT MAP: Daily Composite Z-score (flow pressure), color-coded by strength (Green = Bullish Inflow, Red = Bearish Outflow). Colored dots mark days when a Flow-Price Divergence signal fired. Hover cells for rich metrics." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px; margin-bottom:0;">FLOW ACTIVITY HEAT MAP <span class="panel-subtitle" id="flow-heat-range-label">— LOADING</span></div>
+                        <div class="panel-title" data-tooltip="FLOW ACTIVITY HEAT MAP: Daily Composite Z-score (flow pressure), color-coded by strength (Green = Bullish Inflow, Red = Bearish Outflow). Colored dots mark days when a Flow-Price Divergence signal fired. Hover cells for rich metrics." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px; margin-bottom:0;">FLOW ACTIVITY HEAT MAP <span id="flow-heat-range-label" style="font-size:0.75rem; font-weight:normal; color:rgba(255,255,255,0.5); text-transform:none; margin-left:6px; letter-spacing:0.3px;">— LOADING</span></div>
                         <span class="heat-peak-count" id="flow-heat-peaks-badge">0 PEAKS</span>
                     </div>
                     <!-- Display Mode Selector -->
@@ -960,7 +960,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     </div>
                 </div>
                 
-                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-left:auto;">
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:nowrap; margin-left:auto;">
                     <!-- PEAKS Toggle -->
                     <div style="display:flex; gap:6px; align-items:center;">
                         <button class="peaks-toggle-btn" id="flow-heat-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all cells except key statistical flow pressure outliers.">PEAKS</button>
