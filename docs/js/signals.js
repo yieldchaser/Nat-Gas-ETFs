@@ -925,7 +925,7 @@ const Signals = {
                 return `<div class="convergence-flash-inner ${s.cls}">
                     <span class="flash-icon">⚡</span>
                     <span class="flash-body">
-                        <strong>${s.label} CONVERGED</strong> — all 3 ETFs spiked within ${spread} calendar days
+                        <strong>${s.label} CONVERGED</strong> — All 3 ETFs spiked within ${spread} calendar days
                         <span class="flash-etfs">${etfList}</span>
                     </span>
                     <span class="flash-setup">${s.setupLabel} — ${s.direction} CANDIDATE</span>
