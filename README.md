@@ -406,7 +406,7 @@ Professional-grade recovery cycle identification:
 
 #### Leveraged ETF Cycle Tax & Compounding Calculator
 
-An institutional-grade compounding simulator that models the real-world friction of trading offshore leveraged ETFs from India under LRS guidelines. 
+An institutional-grade compounding simulator that models the real-world friction of trading offshore leveraged ETFs from India under Liberalised Remittance Scheme (LRS) guidelines. 
 
 ##### ⚖️ Regulatory & Tax Context (Indian LRS Guidelines)
 *   **LRS & FEMA Gray Area:** The RBI Liberalised Remittance Scheme (LRS) prohibits the use of remitted funds for margin trading, leveraged instruments, or derivatives abroad. Because daily-reset leveraged ETFs achieve leverage internally using swaps/derivatives rather than exposing the investor to margin calls, their classification remains an unsettled gray area. The worst-case FEMA consequence is typically a compounding settlement fee (capped at ₹2 Lakh under RBI 2025 guidelines) rather than prosecution.
@@ -415,18 +415,43 @@ An institutional-grade compounding simulator that models the real-world friction
     *   **LTCG:** Taxed at a flat 12.5% rate (Budget 2024/2026), with the surcharge capped at 15%.
 *   **LRS TCS:** Under LRS, outward remittances exceeding ₹7 Lakh per PAN per FY trigger a 20% Tax Collected at Source (TCS) (or 5% if for education/medical). While TCS is refundable or offsettable against regular tax liability at the end of the fiscal year, it creates a severe intraday/intrayear cash flow lockup.
 
+##### 🔌 Platform & Cost Structures
+The calculator models two distinct brokerage platform tiers and dynamically pivots between them based on portfolio growth:
+
+| Parameter | INDmoney (Domestic Neo-Broker) | Interactive Brokers - IBKR (Direct Offshore) |
+| :--- | :--- | :--- |
+| **Brokerage per Side** | 0.25% ($C_{brk\_ind} = 0.0025$) | 0.05% ($C_{brk\_ibkr} = 0.0005$) |
+| **FX Conversion Spread** | 0.70% ($C_{fx\_ind} = 0.0070$) | 0.40% ($C_{fx\_ibkr} = 0.0040$) |
+| **Outbound Wire Fee** | ₹0 | ₹1,000 per remittance ($Wire_{ibkr}$) |
+| **Execution Proxy Fee** | $0 | $2 per trade ($Proxy_{ibkr}$) |
+
+*   **The IBKR Pivot:** Direct offshore platforms like IBKR offer significantly lower transaction fees but require manual outward wires (which carry fixed bank fees) and direct compliance overhead, making them impractical for small capital sizes. The calculator lets users specify a **Pivot Threshold (default ₹2 Crore)**. The simulation starts compounding using the high-friction INDmoney tier, and instantly switches to the low-friction IBKR tier the exact year the corpus crosses the threshold.
+
 ##### 🧮 Mathematical Model & Fee Drag
 The simulation compounds the capital year-by-year, factoring in brokerage fees, exchange rate markups, and structural drift:
 
 1.  **Net Return per Trade Swing ($R_{net}$):**
     $$R_{net} = \frac{(1 + R_{gross}) \times (1 - C_{brk})}{1 + C_{brk} + C_{fx}} - 1$$
-    Where $R_{gross}$ is the gross captured return per cycle, computed as $R_{gross} = \text{historical cycle gain} \times \text{captureFraction}$ (default 40% to account for trading slippage, signal confirmation delays, and execution friction). $C_{brk}$ is the brokerage percentage per side (e.g. 0.25% for INDmoney, 0.05% for IBKR), and $C_{fx}$ is the currency markup (e.g. 0.70% for INDmoney, 0.40% for IBKR).
+    Where $C_{brk}$ is the brokerage percentage per side, and $C_{fx}$ is the currency markup. 
+    $R_{gross}$ is the gross captured return per cycle, computed as:
+    $$R_{gross} = \text{Historical Cycle Gain} \times \text{Capture Fraction}$$
+    *The Capture Fraction (default 40%) accounts for the fact that perfect entry at absolute troughs and exit at absolute peaks is physically impossible due to signal lag and execution slippage.*
+
 2.  **Annual Compounding with FX Drift:**
     $$Corpus_{y} = StartCorpus_{y} \times (1 + R_{net})^{SwingsPerYear} \times (1 + FX_{drift})$$
     Where $FX_{drift}$ is the annual depreciation of INR against the USD (e.g., 3.0% annual tailwind). The currency gains compound into the INR corpus, making them fully taxable under capital gains rules.
 
+##### 🔄 Compounding Frequency (Decimal Swings)
+The historical average frequency of complete cycles is derived as:
+$$\text{Cycles / Year} = \frac{365 \text{ days}}{\text{Average Cycle Duration (Days)} + \text{Average Waiting/Gap Days}}$$
+To prevent step-function rounding errors over long horizons, **Swings / Year** is modeled as a decimal number (e.g., 2.5 swings/year). In the simulation, the annual compounding factor uses the decimal swings directly as the exponent:
+$$\text{Compounded Factor} = (1 + R_{net})^{SwingsPerYear}$$
+For a 10-year simulation at 2.5 swings/year, this results in exactly 25 compounding trades:
+$$\text{10-Year Factor} = \left((1 + R_{net})^{2.5}\right)^{10} = (1 + R_{net})^{25}$$
+This matches the historical timeline without under- or over-estimating transaction frequencies.
+
 ##### ⏳ TCS Cash Drag Modeling
-TCS is not just a tax; it is a temporary capital drain. The calculator simulates this drag dynamically:
+TCS acts as an interest-free loan to the government, temporarily draining investable capital:
 *   **Start of Year 1:** The initial remittance is reduced by the TCS paid:
     $$TCS_{initial} = \max(0, Remittance - Exemption) \times TCS_{rate}$$
     The active capital starting the compounding loop is $Corpus - TCS_{initial}$.
@@ -438,7 +463,7 @@ TCS is not just a tax; it is a temporary capital drain. The calculator simulates
 Rather than relying on static average returns, the calculator derives historical cycle gain distributions:
 *   **ZigZag Distribution:** The P25 (25th percentile / Conservative), P50 (Median / Expected), and P75 (75th percentile / Optimistic) gains are computed directly from the confirmed trough-to-peak cycles.
 *   **Translucent Cones:** Runs three parallel simulations (P25, P50, P75). On the *Corpus Growth* tab, it renders the Expected path as a solid cyan line, while plotting the P25 and P75 bounds as dashed lines. The region between them is filled with a translucent shadow (`rgba(80, 144, 160, 0.08)`) to represent the confidence range.
-*   **Hover Interactivity:** Hovering over any year on the chart renders dots on the P25, P50, and P75 points and shows their exact values in the floating tooltip card.
+*   **Hover Interactivity:** Hovering over any year on the chart renders dots on the P25, P50, and P75 curves and displays their exact values in the floating tooltip card.
 
 ##### 📉 Tax Wedge & Drag Decomposition
 On the *Gross vs Net* tab, the calculator visualizes how the wealth gets eroded over the horizon:
@@ -447,6 +472,38 @@ On the *Gross vs Net* tab, the calculator visualizes how the wealth gets eroded 
 *   **Drag Decomposition:** Renders a stacked translucent area chart decomposing:
     $$GrossWealth_y = NetWealth_y + Tax_{cumulative, y} + Cost_{cumulative, y}$$
     Where $Tax_{cumulative}$ is filled in translucent red and $Cost_{cumulative}$ is filled in translucent gold, showing the relative impact of tax vs. transaction drag over time.
+
+##### 📊 Comparative Metrics
+*   **Leakage Saved by IBKR Pivot:** Quantifies the financial advantage of pivoting platforms. It compares the terminal wealth of the active simulation (with pivot) against a simulation forced to stay on the higher-friction domestic neo-broker (INDmoney) for the entire horizon:
+    $$\text{Leakage Saved} = \text{Terminal Wealth}_{\text{withPivot}} - \text{Terminal Wealth}_{\text{forcedINDmoney}}$$
+*   **Unlevered Equivalent Comparison:** Plots the performance of a 1x equivalent strategy (same capture, but cycle gains divided by the leverage factor: 2× for BOIL/KOLD, 3× for 3NGL/3NGS). Since 1x ETFs do not use internal swaps, they are fully permitted under LRS (avoiding FEMA risks). This comparison allows users to judge whether the excess returns of the leveraged strategy outweigh the added regulatory risks and daily rebalancing decay.
+
+##### 🔀 Step-by-Step Simulation Algorithm
+For each year $y \in [1, Horizon]$:
+1.  **Check Platform State:** Compare active corpus against `pivotINR`. Set fees to IBKR if $Corpus_{y-1} \ge \text{pivotINR}$, else INDmoney.
+2.  **Calculate round-trip swing performance:**
+    $$R_{net} = \frac{(1 + R_{gross}) \times (1 - C_{brk})}{1 + C_{brk} + C_{fx}} - 1$$
+3.  **Compound active corpus over Swings / Year:**
+    $$Corpus_{gross\_year} = Corpus_{y-1} \times (1 + R_{net})^{swingsPerYear}$$
+4.  **Apply Annual Exchange Rate Tailwind:**
+    $$Corpus_{net\_year} = Corpus_{gross\_year} \times (1 + FX_{drift})$$
+5.  **Compute Capital Gain for the year:**
+    $$Gain_y = Corpus_{net\_year} - Corpus_{start\_of\_year}$$
+6.  **Calculate Progressive Surcharges & Taxes:**
+    Combine capital gain ($Gain_y$) with domestic other income ($OtherIncome$) to find the total income bracket. Compute effective tax rate ($Rate_{eff}$):
+    *   **STCG (unlisted foreign shares):** Taxed at progressive slab rates (default 30% base + surcharge + 4% cess):
+        *   Income $\le$ ₹50L: $30\% \times 1.00 \times 1.04 = \mathbf{31.20\%}$
+        *   Income ₹50L–₹1Cr: $30\% \times 1.10 \times 1.04 = \mathbf{34.32\%}$
+        *   Income ₹1Cr–₹2Cr: $30\% \times 1.15 \times 1.04 = \mathbf{35.88\%}$
+        *   Income $>$ ₹2Cr: $30\% \times 1.25 \times 1.04 = \mathbf{39.00\%}$
+    *   **LTCG (held $\ge 24$ months):** Flat 12.5% rate + capped 15% surcharge + 4% cess:
+        *   Income $\le$ ₹2Cr: $12.5\% \times 1.00 \times 1.04 = \mathbf{13.00\%}$
+        *   Income $>$ ₹2Cr: $12.5\% \times 1.15 \times 1.04 = \mathbf{14.95\%}$
+    Subtract tax from corpus: $Corpus_y = Corpus_{net\_year} - (Gain_y \times Rate_{eff})$.
+7.  **Apply TCS Cash Drag (If Enabled):**
+    *   If **USD Vault** is OFF (annual repatriation): Calculate new TCS on year gains: $TCS_y = \max(0, Gain_y - Exemption) \times TCS_{rate}$. Reduce active corpus by $TCS_y$.
+    *   Add locked TCS from prior year ($TCS_{y-1}$) back into the active compounding corpus.
+8.  **Record year metrics:** Save gross wealth, net wealth, cumulative tax, and platform costs. Repeat for next year.
 
 
 #### Vol Regime Monitor
