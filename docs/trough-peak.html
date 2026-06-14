@@ -3097,12 +3097,12 @@ function calcSyncFields() {
     const avgBtn = document.getElementById('calc-basis-avg');
     if (avgBtn) avgBtn.textContent = `× AVG (${avgVal} - optimistic)`;
 
-    // Dynamic placeholder for gross return override
-    const grossOverrideEl = document.getElementById('calc-gross-override');
-    if (grossOverrideEl) {
+    // Update single-mode placeholder to show what auto would be
+    const singleInpEl = document.getElementById('calc-gross-single');
+    if (singleInpEl && !singleInpEl.placeholder.includes('e.g.')) {
         const basisVal = calcUI.captureBasis === 'median' ? s.medianGainPct : s.avgGainPct;
         const autoPct = basisVal * (cap / 100);
-        grossOverrideEl.placeholder = `auto = ${autoPct.toFixed(2)}%`;
+        singleInpEl.placeholder = `e.g. ${autoPct.toFixed(1)} (auto)`;
     }
 
     // Sync TCS drag segment
@@ -3905,6 +3905,13 @@ async function calcRestoreFromHash() {
                 if (parts.length > 0) {
                     calcUI.userSet[f] = true;
                     calcUI.values[f] = parts.length === 1 ? parts[0] : parts;
+                    // Restore the correct mode so UI matches the loaded values
+                    if (parts.length === 1) {
+                        calcUI.grossReturnMode = 'single';
+                    } else {
+                        calcUI.grossReturnMode = 'var';
+                        calcUI._varSwingCount = parts.length;
+                    }
                 }
                 continue;
             }
@@ -4020,6 +4027,15 @@ function calcInit() {
         if (!container) return;
         const count = calcUI._varSwingCount;
         if (countDisplay) countDisplay.textContent = count;
+
+        // Skip full rebuild if any variable input currently has focus (prevents typing interruption)
+        const focused = container.querySelector('input:focus');
+        const currentCount = container.querySelectorAll('input[data-swing-idx]').length;
+        if (focused || currentCount === count) {
+            // Just update count display and return — values are live
+            return;
+        }
+
         // Read existing values so they survive rebuilds
         const existing = Array.from(container.querySelectorAll('input[data-swing-idx]'))
             .map(inp => inp.value);
