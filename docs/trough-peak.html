@@ -2869,18 +2869,20 @@ function calcBuildInputs() {
         swingsPerYear = calcUI.values.grossOverride.length;
     }
 
+    const capitalRisked = Math.max(0, Math.min(100, calcGetVal('capitalRisked', def)));
+
     return {
-        capitalINR: calcGetVal('capitalINR', def),
+        capitalINR: Math.max(0, calcGetVal('capitalINR', def)),
         medianGainPct: def._basisGain,
-        captureFraction,
+        captureFraction: Math.max(0, Math.min(1, captureFraction)),
         grossPerCycleOverride: grossOverride,
-        capitalRisked: calcGetVal('capitalRisked', def),
-        cyclesPerYear: calcGetVal('cyclesPerYear', def),
-        swingsPerYear: swingsPerYear,
-        horizonYears: Math.max(1, Math.round(calcGetVal('horizonYears', def))),
+        capitalRisked: capitalRisked,
+        cyclesPerYear: Math.max(0.01, calcGetVal('cyclesPerYear', def)),
+        swingsPerYear: Math.max(0, swingsPerYear),
+        horizonYears: Math.max(1, Math.min(100, Math.round(calcGetVal('horizonYears', def)))),
         holding: calcUI.holding,
-        otherIncomeINR: calcGetVal('otherIncomeINR', def),
-        pivotINR: calcGetVal('pivotINR', def),
+        otherIncomeINR: Math.max(0, calcGetVal('otherIncomeINR', def)),
+        pivotINR: Math.max(0, calcGetVal('pivotINR', def)),
         vault: calcUI.vault === 'on',
         fxDrift: calcGetVal('fxDrift', def),
         tcsDrag: calcGetVal('tcsDrag', def),
@@ -3657,6 +3659,9 @@ function calcInit() {
             calcUI.values[field] = scale ? v*scale : v;
             renderCalc();
         });
+        el.addEventListener('blur', () => {
+            renderCalc();
+        });
     };
     bindNum('calc-capital', 'capitalINR');
     bindNum('calc-cycles', 'cyclesPerYear');
@@ -3680,6 +3685,9 @@ function calcInit() {
             if (parts.length === 0) return;
             calcUI.userSet.grossOverride = true;
             calcUI.values.grossOverride = parts.length === 1 ? parts[0] : parts;
+            renderCalc();
+        });
+        grossOverrideEl.addEventListener('blur', () => {
             renderCalc();
         });
     }
@@ -3873,9 +3881,9 @@ function calcInit() {
                             </div>`;
                             if (calcUI.compare) {
                                 const lev = (calcActiveSym().includes('3N')) ? 3 : 2;
-                                const cmpInp = Object.assign({}, calcBuildInputs(), {
-                                    medianGainPct: calcBuildInputs()._basisGain / lev,
-                                    grossPerCycleOverride: scaleOverride(calcBuildInputs().grossPerCycleOverride, 1/lev),
+                                const cmpInp = Object.assign({}, inp, {
+                                    medianGainPct: inp._basisGain / lev,
+                                    grossPerCycleOverride: scaleOverride(inp.grossPerCycleOverride, 1/lev),
                                 });
                                 const cmpSim = simulate(cmpInp, calcUI.cfg);
                                 const cmpVal = cmpSim.years[i].corpus;
