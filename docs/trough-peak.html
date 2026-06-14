@@ -730,6 +730,7 @@ select.calc-input { cursor: pointer; }
                 <span class="calc-chevron" aria-hidden="true">&#9660;</span>
             </button>
             <button class="calc-share" id="calc-share" type="button" data-tooltip="Copy a shareable link that restores these calculator inputs">Share</button>
+            <button class="calc-share" id="calc-export-csv" type="button" data-tooltip="Download the current year-by-year projection as a CSV file">Download CSV</button>
         </div>
         <div class="calc-body" id="calc-body">
             <div class="calc-grid">
@@ -3226,7 +3227,53 @@ function calcInit() {
         } catch (_) { /* ignore */ }
     });
 
+    // download CSV button → export the current year-by-year projection
+    const exportEl = document.getElementById('calc-export-csv');
+    if (exportEl) exportEl.addEventListener('click', calcExportCSV);
+
     window.addEventListener('resize', () => { if (calcUI.open && calcUI.lastSim) renderCalc(); });
+}
+
+// Export the current simulation's year-by-year rows as CSV (raw values for spreadsheets)
+function calcExportCSV() {
+    const inp = calcBuildInputs();
+    if (!inp._sampleN || (inp._basisGain <= 0 && inp.grossPerCycleOverride == null)) {
+        return alert('No projection to export — lower the ZigZag threshold to model this ticker.');
+    }
+    const sim = simulate(inp, calcUI.cfg);
+    if (!sim || !sim.years || !sim.years.length) {
+        return alert('No projection to export — lower the ZigZag threshold to model this ticker.');
+    }
+
+    const usdInr = calcUI.cfg.fx.usdInr;
+    const r2 = v => (v == null || !isFinite(v)) ? '' : (Math.round(v * 100) / 100);
+    const header = [
+        'Year', 'Start Corpus (INR)', 'Gross Gain (INR)', 'Year Gain (INR)',
+        'Year Cost (INR)', 'Year Tax (INR)', 'Effective Tax Rate (%)',
+        'End Corpus (INR)', 'End Corpus (USD)', 'Gross Wealth (INR)', 'Net Wealth (INR)',
+        'On IBKR',
+    ];
+    const rows = sim.years.map(y => {
+        const startCorpus = y.corpus - y.yearGain + y.tax;
+        const grossGain = y.yearGain + y.cost;
+        return [
+            y.year, r2(startCorpus), r2(grossGain), r2(y.yearGain),
+            r2(y.cost), r2(y.tax), r2(y.effRate * 100),
+            r2(y.corpus), r2(y.corpus / usdInr), r2(y.grossWealth), r2(y.netWealth),
+            y.onIBKR ? 'Yes' : 'No',
+        ].join(',');
+    });
+    const csv = [header.join(','), ...rows].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${calcActiveSym()}_calc_projection.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
 }
 
 // collapsible toggle
