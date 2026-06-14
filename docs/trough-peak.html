@@ -614,6 +614,53 @@ select.calc-input { cursor: pointer; }
     .calc-canvas-wrap { height: 240px; }
 }
 
+/* ---- VARIABLE SWING RETURN INPUTS ---- */
+.swing-var-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+}
+.swing-var-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.swing-var-lbl {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    white-space: nowrap;
+    min-width: 58px;
+}
+.swing-var-count {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+}
+.swing-var-count-btn {
+    width: 22px; height: 22px;
+    border-radius: 4px;
+    border: 1px solid var(--border-primary);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-bright);
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s, background 0.15s;
+}
+.swing-var-count-btn:hover { border-color: var(--cyan); background: rgba(0,255,255,0.08); color: var(--cyan); }
+.swing-var-count-lbl {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.65);
+    letter-spacing: 0.5px;
+}
+
 /* ---- SWING SCHEDULE PANEL ---- */
 .swing-schedule {
     background: var(--bg-secondary);
@@ -894,9 +941,31 @@ select.calc-input { cursor: pointer; }
                         </div>
                     </div>
 
-                    <div class="calc-field" data-field="grossOverride" data-tooltip="Manually specify a custom gross return percentage per trade cycle. You can also enter different returns for individual swings (e.g., '60, 70' for two swings). Bypasses and disables the 'Capture / Cycle' slider and basis buttons (× MEDIAN, × AVG) to use this instead.">
-                        <div class="calc-field-head"><span class="calc-flbl">Gross Return / Cycle override (%)</span><button class="calc-reset" data-reset="grossOverride" title="Clear override">&#8635;</button></div>
-                        <input class="calc-input" id="calc-gross-override" type="text" placeholder="auto = median × capture" data-tooltip="Enter custom gross return percentage per cycle. You can also specify different returns for individual swings as a comma-separated list (e.g. '60, 70'). Clear this field to re-enable the Capture / Cycle settings.">
+                    <div class="calc-field" data-field="grossOverride" data-tooltip="Gross Return Override: Choose AUTO to use the Capture × Median/Avg setting, SINGLE to specify one fixed return for all swings, or VARIABLE to set a different gross return target for each individual swing in the cycle.">
+                        <div class="calc-field-head"><span class="calc-flbl">Gross Return / Cycle</span><button class="calc-reset" title="Reset to Auto" id="gross-override-reset">&#8635;</button></div>
+
+                        <!-- mode selector -->
+                        <div class="calc-seg" role="radiogroup" aria-label="Return mode" id="gross-mode-seg">
+                            <button class="calc-seg-btn" id="gross-mode-auto"  role="radio" aria-checked="true"  data-tooltip="AUTO: Use Capture × Median or Avg from historical cycles. No manual override.">Auto</button>
+                            <button class="calc-seg-btn" id="gross-mode-single" role="radio" aria-checked="false" data-tooltip="SINGLE: Enter one fixed gross return % that applies equally to every swing.">Single</button>
+                            <button class="calc-seg-btn" id="gross-mode-var"   role="radio" aria-checked="false" data-tooltip="VARIABLE: Set a different gross return % for each individual swing (e.g. Swing 1 = 60%, Swing 2 = 70%). The pattern repeats each year.">Variable</button>
+                        </div>
+
+                        <!-- Single mode input -->
+                        <div id="gross-single-wrap" style="display:none; margin-top:6px;">
+                            <input class="calc-input" id="calc-gross-single" type="number" min="0" max="2000" step="1" placeholder="e.g. 65" data-tooltip="Enter the gross return % per cycle (e.g. 65 means 65%). Fees and tax are applied on top.">
+                        </div>
+
+                        <!-- Variable mode inputs -->
+                        <div id="gross-var-wrap" style="display:none; margin-top:6px;">
+                            <div class="swing-var-count">
+                                <span class="swing-var-count-lbl">Swings in pattern:</span>
+                                <button class="swing-var-count-btn" id="gross-var-minus" data-tooltip="Remove last swing from pattern">−</button>
+                                <span id="gross-var-count-display" style="font-size:0.72rem;font-weight:800;color:var(--cyan);min-width:14px;text-align:center;">2</span>
+                                <button class="swing-var-count-btn" id="gross-var-plus" data-tooltip="Add another swing to pattern">+</button>
+                            </div>
+                            <div class="swing-var-inputs" id="gross-var-inputs"></div>
+                        </div>
                     </div>
 
                     <div class="calc-field" data-field="capitalRisked" data-tooltip="Capital Risked / Trade (%): The percentage of the active compounding corpus that is actually deployed into each trade cycle/swing. The remaining percentage stays in idle cash/safe assets and is not exposed to the trade return or transaction costs. Default is 100%.">
@@ -3043,13 +3112,24 @@ function calcSyncFields() {
     setTcsDragUI('calc-tcsdrag-on', tcsDragState);
     setTcsDragUI('calc-tcsdrag-off', !tcsDragState);
 
-    if (calcUI.userSet.grossOverride && calcUI.values.grossOverride != null) {
-        const displayVal = Array.isArray(calcUI.values.grossOverride) 
-            ? calcUI.values.grossOverride.join(', ') 
-            : calcUI.values.grossOverride;
-        setVal('calc-gross-override', displayVal);
+    // Sync gross-return mode UI (AUTO / SINGLE / VARIABLE)
+    const gMode = calcUI.grossReturnMode || 'auto';
+    const setGrossMode = id => ['gross-mode-auto','gross-mode-single','gross-mode-var'].forEach(x => {
+        const b = document.getElementById(x); if (b) b.setAttribute('aria-checked', x === id);
+    });
+    setGrossMode('gross-mode-' + gMode);
+    const sWrap = document.getElementById('gross-single-wrap');
+    const vWrap = document.getElementById('gross-var-wrap');
+    if (sWrap) sWrap.style.display = gMode === 'single' ? '' : 'none';
+    if (vWrap) vWrap.style.display = gMode === 'var' ? '' : 'none';
+    if (gMode === 'single') {
+        const sv = document.getElementById('calc-gross-single');
+        if (sv && document.activeElement !== sv) {
+            sv.value = (calcUI.userSet.grossOverride && !Array.isArray(calcUI.values.grossOverride))
+                ? calcUI.values.grossOverride : '';
+        }
     }
-    else { const g = document.getElementById('calc-gross-override'); if (g && document.activeElement !== g) g.value = ''; }
+    if (gMode === 'var' && typeof syncVarInputs === 'function') syncVarInputs();
 
     const hasOverride = calcUI.userSet.grossOverride && calcUI.values.grossOverride != null;
     const captureInput = document.getElementById('calc-capture');
@@ -3917,26 +3997,112 @@ function calcInit() {
     bindNum('calc-pivot', 'pivotINR');
     bindNum('calc-capital-risked', 'capitalRisked');
 
-    const grossOverrideEl = document.getElementById('calc-gross-override');
-    if (grossOverrideEl) {
-        grossOverrideEl.addEventListener('input', () => {
-            const raw = grossOverrideEl.value;
-            if (raw.trim() === '') {
+    // ── Gross Return Mode selector (Auto / Single / Variable) ────────────────
+    if (!calcUI.grossReturnMode) calcUI.grossReturnMode = 'auto';
+    if (!calcUI._varSwingCount) calcUI._varSwingCount = 2;
+
+    // Helper: read variable inputs and push into calcUI
+    function commitVarInputs() {
+        const container = document.getElementById('gross-var-inputs');
+        if (!container) return;
+        const vals = Array.from(container.querySelectorAll('input[data-swing-idx]'))
+            .map(inp => parseFloat(inp.value))
+            .filter(isFinite);
+        if (vals.length === 0) { calcUI.userSet.grossOverride = false; calcUI.values.grossOverride = null; }
+        else if (vals.length === 1) { calcUI.userSet.grossOverride = true; calcUI.values.grossOverride = vals[0]; }
+        else { calcUI.userSet.grossOverride = true; calcUI.values.grossOverride = vals; }
+    }
+
+    // Helper: rebuild the variable swing inputs DOM (count = calcUI._varSwingCount)
+    window.syncVarInputs = function() {
+        const container = document.getElementById('gross-var-inputs');
+        const countDisplay = document.getElementById('gross-var-count-display');
+        if (!container) return;
+        const count = calcUI._varSwingCount;
+        if (countDisplay) countDisplay.textContent = count;
+        // Read existing values so they survive rebuilds
+        const existing = Array.from(container.querySelectorAll('input[data-swing-idx]'))
+            .map(inp => inp.value);
+        // Seed from calcUI if available
+        const seed = (calcUI.userSet.grossOverride && Array.isArray(calcUI.values.grossOverride))
+            ? calcUI.values.grossOverride : [];
+        container.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+            const val = existing[i] !== undefined ? existing[i] : (seed[i] !== undefined ? seed[i] : '');
+            const row = document.createElement('div');
+            row.className = 'swing-var-row';
+            row.innerHTML = `
+                <span class="swing-var-lbl" data-tooltip="Gross return % for Swing ${i+1} in the repeating pattern">Swing ${i+1}</span>
+                <input class="calc-input" type="number" min="0" max="2000" step="1"
+                    data-swing-idx="${i}"
+                    placeholder="e.g. ${60 + i * 10}"
+                    value="${val}"
+                    data-tooltip="Enter the gross return % for Swing ${i+1} (e.g. 60 means 60%). This pattern repeats every ${count} swings through the full horizon.">
+            `;
+            const inp = row.querySelector('input');
+            inp.addEventListener('input', () => { commitVarInputs(); renderCalc(); });
+            inp.addEventListener('blur',  () => { commitVarInputs(); renderCalc(); });
+            container.appendChild(row);
+        }
+    };
+
+    // Mode buttons
+    ['auto','single','var'].forEach(mode => {
+        const btn = document.getElementById('gross-mode-' + mode);
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+            calcUI.grossReturnMode = mode;
+            if (mode === 'auto') {
                 calcUI.userSet.grossOverride = false;
                 calcUI.values.grossOverride = null;
-                renderCalc();
-                return;
+            } else if (mode === 'single') {
+                // keep whatever was in single input if it exists
+                const sv = document.getElementById('calc-gross-single');
+                const v = sv ? parseFloat(sv.value) : NaN;
+                if (isFinite(v)) { calcUI.userSet.grossOverride = true; calcUI.values.grossOverride = v; }
+                else { calcUI.userSet.grossOverride = false; calcUI.values.grossOverride = null; }
+            } else {
+                syncVarInputs();
+                commitVarInputs();
             }
-            const parts = raw.split(',').map(s => parseFloat(s.trim())).filter(isFinite);
-            if (parts.length === 0) return;
-            calcUI.userSet.grossOverride = true;
-            calcUI.values.grossOverride = parts.length === 1 ? parts[0] : parts;
             renderCalc();
         });
-        grossOverrideEl.addEventListener('blur', () => {
+    });
+
+    // Single input
+    const singleInp = document.getElementById('calc-gross-single');
+    if (singleInp) {
+        singleInp.addEventListener('input', () => {
+            const v = parseFloat(singleInp.value);
+            if (!isFinite(v) || singleInp.value.trim() === '') {
+                calcUI.userSet.grossOverride = false; calcUI.values.grossOverride = null;
+            } else {
+                calcUI.userSet.grossOverride = true; calcUI.values.grossOverride = v;
+            }
             renderCalc();
         });
+        singleInp.addEventListener('blur', () => renderCalc());
     }
+
+    // +/− count buttons for variable mode
+    const minusBtn = document.getElementById('gross-var-minus');
+    const plusBtn  = document.getElementById('gross-var-plus');
+    if (minusBtn) minusBtn.addEventListener('click', () => {
+        if (calcUI._varSwingCount > 2) { calcUI._varSwingCount--; syncVarInputs(); commitVarInputs(); renderCalc(); }
+    });
+    if (plusBtn) plusBtn.addEventListener('click', () => {
+        if (calcUI._varSwingCount < 10) { calcUI._varSwingCount++; syncVarInputs(); commitVarInputs(); renderCalc(); }
+    });
+
+    // Reset button for the whole grossOverride field
+    const grossResetBtn = document.getElementById('gross-override-reset');
+    if (grossResetBtn) grossResetBtn.addEventListener('click', () => {
+        calcUI.grossReturnMode = 'auto';
+        calcUI.userSet.grossOverride = false;
+        calcUI.values.grossOverride = null;
+        calcUI._varSwingCount = 2;
+        renderCalc();
+    });
 
     const capEl = document.getElementById('calc-capture');
     if (capEl) capEl.addEventListener('input', () => {
