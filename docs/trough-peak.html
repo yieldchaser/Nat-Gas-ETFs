@@ -453,6 +453,15 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 .calc-title { font-size: 1rem; font-weight: 800; color: var(--text-bright); letter-spacing: 1px; text-transform: uppercase; }
 .calc-sub { font-size: 0.7rem; color: #fff; opacity: 0.7; font-weight: 600; margin-top: 4px; letter-spacing: 0.5px; }
 .calc-chevron { font-size: 1.1rem; color: var(--cyan); transition: transform 0.2s; }
+.calc-head-actions { display: flex; align-items: center; gap: 12px; }
+.calc-share {
+    font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+    padding: 5px 10px; border-radius: 4px; background: rgba(0,255,255,0.08);
+    color: var(--cyan); border: 1px solid rgba(80,144,160,0.4); cursor: pointer;
+    font-family: 'JetBrains Mono', monospace; transition: all 0.2s;
+}
+.calc-share:hover { background: var(--cyan); color: #000; }
+.calc-share.copied { background: var(--green); color: #000; border-color: var(--green); }
 .calc-panel[data-open="true"] .calc-chevron { transform: rotate(180deg); }
 .calc-body { display: none; margin-top: 20px; }
 .calc-panel[data-open="true"] .calc-body { display: block; }
@@ -476,6 +485,12 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 }
 .calc-field.user-set .calc-input { border-color: #4d7da8; color: #cfe6f7; }
 .calc-input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+.calc-toggle:focus-visible, .calc-seg-btn:focus-visible, .calc-preset:focus-visible,
+.calc-reset:focus-visible, .calc-ctab:focus-visible, .calc-reset-all:focus-visible,
+.calc-share:focus-visible, .calc-advanced > summary:focus-visible,
+.calc-chart-opts input:focus-visible {
+    outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 4px;
+}
 select.calc-input { cursor: pointer; }
 
 .calc-presets { display: flex; gap: 5px; flex-wrap: wrap; }
@@ -556,7 +571,8 @@ select.calc-input { cursor: pointer; }
 .calc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
 @media (prefers-reduced-motion: reduce) {
-    .calc-chevron, .calc-stat, .calc-reset { transition: none; }
+    .calc-chevron, .calc-stat, .calc-reset, .calc-seg-btn, .calc-preset,
+    .calc-ctab, .calc-reset-all, .calc-share, .calc-input { transition: none; }
     .calc-stat.flash { animation: none; }
 }
 @media (max-width: 768px) {
@@ -705,13 +721,16 @@ select.calc-input { cursor: pointer; }
 
     <!-- ETF CYCLE TAX & COMPOUNDING CALCULATOR -->
     <div class="calc-panel" id="calc-panel" data-open="false">
-        <button class="calc-toggle" id="calc-toggle" role="button" aria-expanded="false" aria-controls="calc-body">
-            <span>
-                <span class="calc-title">Leveraged ETF Cycle Tax &amp; Compounding Calculator</span>
-                <span class="calc-sub">Forward compounding &amp; after-tax wealth, seeded by this page's detected cycles &middot; resident-India LRS</span>
-            </span>
-            <span class="calc-chevron" aria-hidden="true">&#9660;</span>
-        </button>
+        <div class="calc-head-actions">
+            <button class="calc-toggle" id="calc-toggle" role="button" aria-expanded="false" aria-controls="calc-body" style="flex:1">
+                <span>
+                    <span class="calc-title">Leveraged ETF Cycle Tax &amp; Compounding Calculator</span>
+                    <span class="calc-sub">Forward compounding &amp; after-tax wealth, seeded by this page's detected cycles &middot; resident-India LRS</span>
+                </span>
+                <span class="calc-chevron" aria-hidden="true">&#9660;</span>
+            </button>
+            <button class="calc-share" id="calc-share" type="button" data-tooltip="Copy a shareable link that restores these calculator inputs">Share</button>
+        </div>
         <div class="calc-body" id="calc-body">
             <div class="calc-grid">
                 <!-- SETUP COLUMN -->
@@ -2683,8 +2702,11 @@ function calcBuildInputs() {
     };
 }
 
-function calcLeakageSaved(inp) {
-    const withPivot = simulate(inp, calcUI.cfg).terminal;
+// Leakage = terminal with IBKR pivot minus terminal if forced to stay on the
+// costlier INDmoney stack. Reuses the already-computed main sim (withPivot) and
+// performs exactly one extra sim (noPivot) per render.
+function calcLeakageSaved(inp, mainSim) {
+    const withPivot = (mainSim || simulate(inp, calcUI.cfg)).terminal;
     const noPivot = simulate(Object.assign({}, inp, { pivotINR: Infinity }), calcUI.cfg).terminal;
     return withPivot - noPivot;
 }
@@ -2734,7 +2756,7 @@ function renderCalc() {
 
     const sim = simulate(inp, calcUI.cfg);
     calcUI.lastSim = sim;
-    const leak = calcLeakageSaved(inp);
+    const leak = calcLeakageSaved(inp, sim);
 
     // live effective rate display (current-year style: full-corpus gain proxy)
     const sampleGain = sim.years.length ? sim.years[sim.years.length-1].yearGain : 0;
@@ -2945,6 +2967,94 @@ function calcDrawChart(sim, inp) {
     }
 }
 
+// ── URL-hash share / restore (spec §8) ───────────────────────────────────────
+// Only user-set/override fields + ticker + toggles are serialized, to keep the
+// hash short. No localStorage — pure location.hash.
+const CALC_NUM_FIELDS = ['capitalINR','captureFraction','cyclesPerYear','swingsPerYear','horizonYears','otherIncomeINR','pivotINR','grossOverride'];
+
+function calcSerializeToHash() {
+    const p = new URLSearchParams();
+    p.set('t', state.activeTab);
+    for (const f of CALC_NUM_FIELDS) {
+        if (calcUI.userSet[f] && calcUI.values[f] != null) p.set(f, String(calcUI.values[f]));
+    }
+    // toggles only when diverging from defaults
+    if (calcUI.captureBasis !== 'median') p.set('basis', calcUI.captureBasis);
+    if (calcUI.holding !== 'stcg') p.set('hold', calcUI.holding);
+    if (calcUI.vault !== 'on') p.set('vault', calcUI.vault);
+    if (calcUI.mode !== 'auto') p.set('mode', calcUI.mode);
+    return '#calc=' + p.toString();
+}
+
+// Apply a serialized hash. Awaits ticker-dropdown population BEFORE setting its
+// value (proper async/await, no nested setTimeout). Never throws.
+async function calcRestoreFromHash() {
+    try {
+        const h = location.hash || '';
+        const m = h.match(/calc=(.*)$/);
+        if (!m) return;
+        const p = new URLSearchParams(decodeURIComponent(m[1]));
+
+        // 1. ticker — await dropdown population first, then drive a real change so
+        //    the calc reseeds AUTO fields for the restored symbol. user-set/hash
+        //    fields are applied afterwards (steps 2-3) so they win over the reseed.
+        const tickSel = await calcAwaitTickerSelect();
+        const t = p.get('t');
+        if (tickSel && t && TICKERS.some(x => x.label === t)) {
+            const opt = Array.from(tickSel.options).some(o => o.value === t);
+            if (opt) {
+                tickSel.value = t;
+                state.activeTab = t;
+                tickSel.dispatchEvent(new Event('change'));
+            }
+        }
+
+        // 2. toggles (set BEFORE numeric fields so basis-driven seeds are correct)
+        if (p.get('mode')) calcUI.mode = p.get('mode') === 'manual' ? 'manual' : 'auto';
+        if (p.get('basis')) calcUI.captureBasis = p.get('basis') === 'avg' ? 'avg' : 'median';
+        if (p.get('hold')) calcUI.holding = p.get('hold') === 'ltcg' ? 'ltcg' : 'stcg';
+        if (p.get('vault')) calcUI.vault = p.get('vault') === 'off' ? 'off' : 'on';
+        calcSyncToggleAria();
+
+        // 3. numeric fields → mark user-set
+        for (const f of CALC_NUM_FIELDS) {
+            if (!p.has(f)) continue;
+            const v = parseFloat(p.get(f));
+            if (!isFinite(v)) continue;
+            calcUI.userSet[f] = true;
+            calcUI.values[f] = v;
+        }
+    } catch (_) { /* malformed hash → ignore */ }
+}
+
+// Resolve the ticker <select> only once it has been populated with <option>s.
+function calcAwaitTickerSelect() {
+    return new Promise(resolve => {
+        const ready = () => {
+            const el = document.getElementById('calc-ticker');
+            return el && el.options && el.options.length ? el : null;
+        };
+        const immediate = ready();
+        if (immediate) { resolve(immediate); return; }
+        let tries = 0;
+        const poll = () => {
+            const el = ready();
+            if (el || tries++ > 40) { resolve(el || document.getElementById('calc-ticker')); return; }
+            requestAnimationFrame(poll);
+        };
+        requestAnimationFrame(poll);
+    });
+}
+
+// Reflect calcUI toggle state onto aria-checked of the segmented controls.
+function calcSyncToggleAria() {
+    const set = (id, on) => { const el = document.getElementById(id); if (el) el.setAttribute('aria-checked', String(on)); };
+    set('calc-mode-auto', calcUI.mode === 'auto');     set('calc-mode-manual', calcUI.mode === 'manual');
+    set('calc-basis-median', calcUI.captureBasis === 'median'); set('calc-basis-avg', calcUI.captureBasis === 'avg');
+    set('calc-hold-stcg', calcUI.holding === 'stcg');  set('calc-hold-ltcg', calcUI.holding === 'ltcg');
+    set('calc-vault-on', calcUI.vault === 'on');       set('calc-vault-off', calcUI.vault === 'off');
+}
+
 // ── Init (lazy on first open) ─────────────────────────────────────────────────
 function calcInit() {
     if (calcUI.initialized) return;
@@ -2978,7 +3088,8 @@ function calcInit() {
         if (!el) return;
         el.addEventListener('input', () => {
             const raw = el.value;
-            if (raw === '' && field === 'grossOverride') { calcUI.userSet[field] = false; calcUI.values[field] = null; renderCalc(); return; }
+            // Clearing any field reverts it to the seeded default (drop user-set flag, reseed).
+            if (raw.trim() === '') { calcUI.userSet[field] = false; calcUI.values[field] = null; renderCalc(); return; }
             const v = parseFloat(raw);
             if (!isFinite(v)) return;
             calcUI.userSet[field] = true;
@@ -3096,6 +3207,25 @@ function calcInit() {
     const cmpEl = document.getElementById('calc-compare');
     if (cmpEl) cmpEl.addEventListener('change', () => { calcUI.compare = cmpEl.checked; renderCalc(); });
 
+    // share button → serialize current inputs to location.hash + copy link
+    const shareEl = document.getElementById('calc-share');
+    if (shareEl) shareEl.addEventListener('click', () => {
+        try {
+            const hash = calcSerializeToHash();
+            history.replaceState(null, '', location.pathname + location.search + hash);
+            const link = location.href;
+            const done = () => {
+                shareEl.classList.add('copied');
+                const orig = shareEl.textContent;
+                shareEl.textContent = 'Copied!';
+                setTimeout(() => { shareEl.classList.remove('copied'); shareEl.textContent = orig; }, 1600);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(link).then(done).catch(done);
+            } else { done(); }
+        } catch (_) { /* ignore */ }
+    });
+
     window.addEventListener('resize', () => { if (calcUI.open && calcUI.lastSim) renderCalc(); });
 }
 
@@ -3104,12 +3234,28 @@ function calcInit() {
     const panel = document.getElementById('calc-panel');
     const toggle = document.getElementById('calc-toggle');
     if (!panel || !toggle) return;
-    toggle.addEventListener('click', () => {
-        calcUI.open = !calcUI.open;
-        panel.setAttribute('data-open', calcUI.open);
-        toggle.setAttribute('aria-expanded', calcUI.open);
-        if (calcUI.open) { calcInit(); renderCalc(); }
-    });
+
+    // Open the panel, lazily init, restore from hash (once), then render.
+    async function openCalc() {
+        calcUI.open = true;
+        panel.setAttribute('data-open', 'true');
+        toggle.setAttribute('aria-expanded', 'true');
+        const firstInit = !calcUI.initialized;
+        calcInit();
+        if (firstInit && /[#&]calc=/.test(location.hash)) {
+            await calcRestoreFromHash(); // awaits dropdown population internally
+        }
+        renderCalc();
+    }
+    function closeCalc() {
+        calcUI.open = false;
+        panel.setAttribute('data-open', 'false');
+        toggle.setAttribute('aria-expanded', 'false');
+    }
+    toggle.addEventListener('click', () => { calcUI.open ? closeCalc() : openCalc(); });
+
+    // Deep-link: auto-open when the page is loaded with a #calc= hash.
+    if (/[#&]calc=/.test(location.hash)) openCalc();
 })();
 
 (async () => {
