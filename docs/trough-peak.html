@@ -2873,6 +2873,25 @@ function calcSyncFields() {
     setVal('calc-pivot', calcGetVal('pivotINR', def));
     setVal('calc-fx-drift', calcGetVal('fxDrift', def));
 
+    // Dynamic button text for Median/Avg cycle gains
+    const sym = calcActiveSym();
+    const s = getCycleStatsForTicker(sym);
+    const medVal = s.sampleN > 0 ? `${s.medianGainPct.toFixed(1)}%` : '--%';
+    const avgVal = s.sampleN > 0 ? `${s.avgGainPct.toFixed(1)}%` : '--%';
+
+    const medBtn = document.getElementById('calc-basis-median');
+    if (medBtn) medBtn.textContent = `× MEDIAN (${medVal})`;
+    const avgBtn = document.getElementById('calc-basis-avg');
+    if (avgBtn) avgBtn.textContent = `× AVG (${avgVal} - optimistic)`;
+
+    // Dynamic placeholder for gross return override
+    const grossOverrideEl = document.getElementById('calc-gross-override');
+    if (grossOverrideEl) {
+        const basisVal = calcUI.captureBasis === 'median' ? s.medianGainPct : s.avgGainPct;
+        const autoPct = basisVal * (cap / 100);
+        grossOverrideEl.placeholder = `auto = ${autoPct.toFixed(2)}%`;
+    }
+
     // Sync TCS drag segment
     const tcsDragVal = calcGetVal('tcsDrag', def);
     const tcsDragState = (tcsDragVal === true || tcsDragVal === 'on');
