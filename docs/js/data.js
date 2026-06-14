@@ -161,7 +161,7 @@ const DataService = {
     // Try to load pre-computed data from GitHub Actions pipeline
     async fetchPrecomputed() {
         try {
-            const resp = await fetch(CONFIG.dataUrl + '?t=' + Date.now());
+            const resp = await fetch(CONFIG.dataUrl);
             if (!resp.ok) return null;
             return await resp.json();
         } catch {
