@@ -436,6 +436,134 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     .matrix-table { min-width: 580px; }
     .matrix-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
+
+/* ---- ETF CYCLE TAX & COMPOUNDING CALCULATOR ---- */
+.calc-panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-primary);
+    border-left: 3px solid var(--cyan);
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+.calc-toggle {
+    display: flex; justify-content: space-between; align-items: center;
+    width: 100%; background: none; border: none; cursor: pointer; padding: 0; text-align: left;
+}
+.calc-title { font-size: 1rem; font-weight: 800; color: var(--text-bright); letter-spacing: 1px; text-transform: uppercase; }
+.calc-sub { font-size: 0.7rem; color: #fff; opacity: 0.7; font-weight: 600; margin-top: 4px; letter-spacing: 0.5px; }
+.calc-chevron { font-size: 1.1rem; color: var(--cyan); transition: transform 0.2s; }
+.calc-panel[data-open="true"] .calc-chevron { transform: rotate(180deg); }
+.calc-body { display: none; margin-top: 20px; }
+.calc-panel[data-open="true"] .calc-body { display: block; }
+
+.calc-grid { display: grid; grid-template-columns: 320px 1fr; gap: 24px; }
+@media (max-width: 1100px) { .calc-grid { grid-template-columns: 1fr; } }
+
+.calc-setup { display: flex; flex-direction: column; gap: 14px; }
+.calc-section-lbl { font-size: 0.65rem; letter-spacing: 2px; color: #fff; opacity: 0.75; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px; }
+
+.calc-field { display: flex; flex-direction: column; gap: 5px; }
+.calc-field-head { display: flex; justify-content: space-between; align-items: center; }
+.calc-flbl { font-size: 0.62rem; letter-spacing: 1px; color: #fff; opacity: 0.85; font-weight: 700; text-transform: uppercase; }
+.calc-reset { font-size: 0.65rem; background: none; border: none; color: var(--cyan); cursor: pointer; opacity: 0; transition: opacity 0.15s; padding: 0 2px; }
+.calc-field.user-set .calc-reset { opacity: 0.8; }
+.calc-field.user-set .calc-flbl { color: #7fb4d8; }
+.calc-input {
+    background: var(--bg-secondary); border: 1px solid var(--border-primary);
+    border-radius: 4px; color: var(--text-bright); padding: 7px 10px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; width: 100%;
+}
+.calc-field.user-set .calc-input { border-color: #4d7da8; color: #cfe6f7; }
+.calc-input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+select.calc-input { cursor: pointer; }
+
+.calc-presets { display: flex; gap: 5px; flex-wrap: wrap; }
+.calc-preset {
+    font-size: 0.6rem; font-weight: 700; padding: 3px 8px; border-radius: 4px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary);
+    color: #fff; opacity: 0.8; cursor: pointer; font-family: 'JetBrains Mono', monospace;
+}
+.calc-preset:hover { border-color: var(--cyan); color: var(--cyan); opacity: 1; }
+
+.calc-seg { display: flex; background: #1a1a28; padding: 3px; border-radius: 6px; }
+.calc-seg-btn {
+    flex: 1; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.5px;
+    padding: 6px 8px; border-radius: 4px; border: none; background: transparent;
+    color: #fff; opacity: 0.7; cursor: pointer; transition: all 0.2s;
+}
+.calc-seg-btn[aria-checked="true"] { background: var(--bg-secondary); color: var(--cyan); opacity: 1; }
+
+.calc-range-val { font-size: 0.7rem; font-weight: 800; color: var(--cyan); font-family: 'JetBrains Mono', monospace; }
+
+.calc-advanced { border: 1px solid var(--border-primary); border-radius: 6px; padding: 0; margin-top: 6px; }
+.calc-advanced > summary { font-size: 0.62rem; letter-spacing: 1.5px; color: #fff; opacity: 0.8; font-weight: 700; text-transform: uppercase; cursor: pointer; padding: 10px 12px; list-style: none; }
+.calc-advanced > summary::-webkit-details-marker { display: none; }
+.calc-advanced[open] > summary { border-bottom: 1px solid var(--border-primary); }
+.calc-adv-body { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.calc-adv-body .calc-flbl { font-size: 0.55rem; }
+.calc-adv-body .calc-input { font-size: 0.72rem; padding: 5px 7px; }
+
+.calc-reset-all {
+    font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+    padding: 8px 12px; border-radius: 4px; background: rgba(0,255,255,0.08);
+    color: var(--cyan); border: 1px solid rgba(80,144,160,0.4); cursor: pointer; margin-top: 4px;
+}
+.calc-reset-all:hover { background: var(--cyan); color: #000; }
+
+.calc-output { display: flex; flex-direction: column; gap: 18px; }
+.calc-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+@media (max-width: 900px) { .calc-stat-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .calc-stat-grid { grid-template-columns: 1fr; } }
+.calc-stat {
+    background: var(--bg-secondary); border: 1px solid var(--border-primary);
+    border-top: 2px solid var(--cyan); border-radius: 6px; padding: 12px 14px;
+    transition: transform 0.15s, border-color 0.2s;
+}
+.calc-stat:hover { transform: translateY(-2px); border-color: var(--border-accent); }
+.calc-stat.headline { border-top-color: var(--green); }
+.calc-stat.amber { border-top-color: #d4a830; }
+.calc-stat-lbl { font-size: 0.58rem; letter-spacing: 1px; color: #fff; opacity: 0.7; font-weight: 700; text-transform: uppercase; }
+.calc-stat-val { font-size: 1.25rem; font-weight: 800; color: var(--text-bright); font-family: 'JetBrains Mono', monospace; margin-top: 5px; line-height: 1.1; }
+.calc-stat-sub { font-size: 0.6rem; color: #fff; opacity: 0.65; font-weight: 600; margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
+@keyframes calcFlash { 0% { background: rgba(80,144,160,0.25); } 100% { background: var(--bg-secondary); } }
+.calc-stat.flash { animation: calcFlash 0.6s ease-out; }
+
+.calc-chart-card { background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 6px; padding: 16px; }
+.calc-chart-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
+.calc-ctab {
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.5px; padding: 5px 10px; border-radius: 4px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary); color: #fff; opacity: 0.75; cursor: pointer;
+}
+.calc-ctab.active { border-color: var(--cyan); color: var(--cyan); opacity: 1; background: rgba(80,144,160,0.1); }
+.calc-canvas-wrap { position: relative; height: 300px; width: 100%; }
+#calc-canvas { width: 100%; height: 100%; }
+.calc-chart-opts { display: flex; gap: 14px; align-items: center; margin-top: 10px; font-size: 0.62rem; color: #fff; opacity: 0.8; font-weight: 600; }
+.calc-chart-opts label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+
+.calc-compliance { display: flex; flex-direction: column; gap: 8px; }
+.calc-caveat {
+    display: flex; gap: 10px; font-size: 0.7rem; line-height: 1.5; color: var(--text-primary);
+    padding: 10px 12px; border-radius: 6px; border-left: 3px solid;
+    background: rgba(255,255,255,0.02);
+}
+.calc-caveat .cv-icon { font-size: 0.85rem; flex-shrink: 0; }
+.calc-caveat.cv-red { border-left-color: var(--red); background: rgba(192,64,64,0.08); }
+.calc-caveat.cv-red strong { color: #e89090; }
+.calc-caveat.cv-amber { border-left-color: #d4a830; background: rgba(212,168,48,0.06); }
+.calc-caveat.cv-green { border-left-color: var(--green); background: rgba(61,184,122,0.05); }
+.calc-empty { padding: 40px; text-align: center; color: #fff; opacity: 0.6; font-size: 0.85rem; font-weight: 600; }
+.calc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+@media (prefers-reduced-motion: reduce) {
+    .calc-chevron, .calc-stat, .calc-reset { transition: none; }
+    .calc-stat.flash { animation: none; }
+}
+@media (max-width: 768px) {
+    .calc-panel { padding: 14px; }
+    .calc-stat-grid { grid-template-columns: 1fr 1fr; }
+    .calc-canvas-wrap { height: 240px; }
+}
 </style>
 </head>
 <body>
@@ -572,6 +700,145 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
         <div class="matrix-table-wrap" id="matrix-container">
             <!-- populated by JS -->
+        </div>
+    </div>
+
+    <!-- ETF CYCLE TAX & COMPOUNDING CALCULATOR -->
+    <div class="calc-panel" id="calc-panel" data-open="false">
+        <button class="calc-toggle" id="calc-toggle" role="button" aria-expanded="false" aria-controls="calc-body">
+            <span>
+                <span class="calc-title">Leveraged ETF Cycle Tax &amp; Compounding Calculator</span>
+                <span class="calc-sub">Forward compounding &amp; after-tax wealth, seeded by this page's detected cycles &middot; resident-India LRS</span>
+            </span>
+            <span class="calc-chevron" aria-hidden="true">&#9660;</span>
+        </button>
+        <div class="calc-body" id="calc-body">
+            <div class="calc-grid">
+                <!-- SETUP COLUMN -->
+                <div class="calc-setup" id="calc-setup">
+                    <div class="calc-section-lbl">Mode</div>
+                    <div class="calc-seg" role="radiogroup" aria-label="Input mode">
+                        <button class="calc-seg-btn" id="calc-mode-auto" role="radio" aria-checked="true">Seed from detected cycles</button>
+                        <button class="calc-seg-btn" id="calc-mode-manual" role="radio" aria-checked="false">Manual override</button>
+                    </div>
+
+                    <div class="calc-section-lbl">Setup</div>
+                    <div class="calc-field" data-field="ticker">
+                        <div class="calc-field-head"><span class="calc-flbl">Ticker</span></div>
+                        <select class="calc-input" id="calc-ticker"></select>
+                    </div>
+
+                    <div class="calc-field" data-field="capitalINR">
+                        <div class="calc-field-head"><span class="calc-flbl">Initial Capital (₹)</span><button class="calc-reset" data-reset="capitalINR" title="Reset to data default">&#8635;</button></div>
+                        <input class="calc-input" id="calc-capital" type="number" min="0" step="100000">
+                        <div class="calc-presets">
+                            <button class="calc-preset" data-cap="500000">5L</button>
+                            <button class="calc-preset" data-cap="1000000">10L</button>
+                            <button class="calc-preset" data-cap="2000000">20L</button>
+                            <button class="calc-preset" data-cap="5000000">50L</button>
+                            <button class="calc-preset" data-cap="10000000">1Cr</button>
+                        </div>
+                    </div>
+
+                    <div class="calc-field" data-field="captureFraction">
+                        <div class="calc-field-head"><span class="calc-flbl">Capture / Cycle <span class="calc-range-val" id="calc-capture-val">40%</span></span><button class="calc-reset" data-reset="captureFraction" title="Reset to data default">&#8635;</button></div>
+                        <input class="calc-input" id="calc-capture" type="range" min="10" max="100" step="5" value="40" style="padding:0">
+                        <div class="calc-seg" role="radiogroup" aria-label="Capture basis" style="margin-top:4px">
+                            <button class="calc-seg-btn" id="calc-basis-median" role="radio" aria-checked="true">× MEDIAN</button>
+                            <button class="calc-seg-btn" id="calc-basis-avg" role="radio" aria-checked="false">× AVG (optimistic)</button>
+                        </div>
+                    </div>
+
+                    <div class="calc-field" data-field="grossOverride">
+                        <div class="calc-field-head"><span class="calc-flbl">Gross Return / Cycle override (%)</span><button class="calc-reset" data-reset="grossOverride" title="Clear override">&#8635;</button></div>
+                        <input class="calc-input" id="calc-gross-override" type="number" min="0" step="1" placeholder="auto = median × capture">
+                    </div>
+
+                    <div class="calc-field" data-field="cyclesPerYear">
+                        <div class="calc-field-head"><span class="calc-flbl">Cycles / Year</span><button class="calc-reset" data-reset="cyclesPerYear" title="Reset to data default">&#8635;</button></div>
+                        <input class="calc-input" id="calc-cycles" type="number" min="0" step="0.1">
+                    </div>
+
+                    <div class="calc-field" data-field="swingsPerYear">
+                        <div class="calc-field-head"><span class="calc-flbl">Swings / Year</span><button class="calc-reset" data-reset="swingsPerYear" title="Reset to cycles/year">&#8635;</button></div>
+                        <input class="calc-input" id="calc-swings" type="number" min="0" step="0.1">
+                    </div>
+
+                    <div class="calc-field" data-field="horizonYears">
+                        <div class="calc-field-head"><span class="calc-flbl">Horizon (years)</span><button class="calc-reset" data-reset="horizonYears" title="Reset to default">&#8635;</button></div>
+                        <input class="calc-input" id="calc-horizon" type="number" min="1" max="15" step="1">
+                    </div>
+
+                    <div class="calc-field" data-field="holding">
+                        <div class="calc-field-head"><span class="calc-flbl">Holding Period <span class="calc-range-val" id="calc-eff-rate">31.20%</span></span></div>
+                        <div class="calc-seg" role="radiogroup" aria-label="Holding period">
+                            <button class="calc-seg-btn" id="calc-hold-stcg" role="radio" aria-checked="true">&lt;24mo STCG</button>
+                            <button class="calc-seg-btn" id="calc-hold-ltcg" role="radio" aria-checked="false">&ge;24mo LTCG</button>
+                        </div>
+                    </div>
+
+                    <div class="calc-field" data-field="otherIncomeINR">
+                        <div class="calc-field-head"><span class="calc-flbl">Other Annual Income (₹)</span><button class="calc-reset" data-reset="otherIncomeINR" title="Reset to 0">&#8635;</button></div>
+                        <input class="calc-input" id="calc-other-income" type="number" min="0" step="100000">
+                    </div>
+
+                    <div class="calc-field" data-field="pivotINR">
+                        <div class="calc-field-head"><span class="calc-flbl">Pivot Threshold ₹ (INDmoney→IBKR)</span><button class="calc-reset" data-reset="pivotINR" title="Reset to ₹2Cr">&#8635;</button></div>
+                        <input class="calc-input" id="calc-pivot" type="number" min="0" step="1000000">
+                    </div>
+
+                    <div class="calc-field" data-field="vault">
+                        <div class="calc-field-head"><span class="calc-flbl">USD Vault (compound in-platform, TCS once)</span></div>
+                        <div class="calc-seg" role="radiogroup" aria-label="USD vault">
+                            <button class="calc-seg-btn" id="calc-vault-on" role="radio" aria-checked="true">ON</button>
+                            <button class="calc-seg-btn" id="calc-vault-off" role="radio" aria-checked="false">OFF (annual repat)</button>
+                        </div>
+                    </div>
+
+                    <details class="calc-advanced">
+                        <summary>Advanced &middot; Tax &amp; Cost Constants</summary>
+                        <div class="calc-adv-body">
+                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">Base Slab</span></div><input class="calc-input" id="adv-slab" type="number" step="0.01"></div>
+                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">Cess</span></div><input class="calc-input" id="adv-cess" type="number" step="0.01"></div>
+                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">LTCG Rate</span></div><input class="calc-input" id="adv-ltcg" type="number" step="0.005"></div>
+                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">LTCG Surch Cap</span></div><input class="calc-input" id="adv-ltcgcap" type="number" step="0.01"></div>
+                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">TCS Rate</span></div><input class="calc-input" id="adv-tcs" type="number" step="0.01"></div>
+                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">TCS Exemption ₹</span></div><input class="calc-input" id="adv-tcsex" type="number" step="100000"></div>
+                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">INDmoney Brk/side</span></div><input class="calc-input" id="adv-ind-brk" type="number" step="0.0005"></div>
+                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">INDmoney FX</span></div><input class="calc-input" id="adv-ind-fx" type="number" step="0.0005"></div>
+                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">IBKR Brk/side</span></div><input class="calc-input" id="adv-ibkr-brk" type="number" step="0.0005"></div>
+                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">IBKR FX</span></div><input class="calc-input" id="adv-ibkr-fx" type="number" step="0.0005"></div>
+                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">USD/INR</span></div><input class="calc-input" id="adv-fx" type="number" step="0.5"></div>
+                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">Surch >2Cr (STCG)</span></div><input class="calc-input" id="adv-surch2cr" type="number" step="0.05"></div>
+                        </div>
+                    </details>
+
+                    <button class="calc-reset-all" id="calc-reset-all">Reset all to detected-cycle defaults</button>
+                </div>
+
+                <!-- OUTPUT COLUMN -->
+                <div class="calc-output" id="calc-output">
+                    <div class="calc-stat-grid" id="calc-stats" role="status" aria-live="polite"></div>
+                    <span class="calc-sr" id="calc-announcer" role="status" aria-live="polite"></span>
+
+                    <div class="calc-chart-card">
+                        <div class="calc-chart-tabs" id="calc-chart-tabs" role="tablist">
+                            <button class="calc-ctab active" data-ctab="corpus" role="tab">Corpus Growth</button>
+                            <button class="calc-ctab" data-ctab="tax" role="tab">Annual Tax</button>
+                            <button class="calc-ctab" data-ctab="wedge" role="tab">Gross vs Net</button>
+                            <button class="calc-ctab" data-ctab="effrate" role="tab">Eff. Tax Rate</button>
+                        </div>
+                        <div class="calc-canvas-wrap"><canvas id="calc-canvas"></canvas></div>
+                        <div class="calc-chart-opts">
+                            <label><input type="checkbox" id="calc-log"> Log scale</label>
+                            <label><input type="checkbox" id="calc-compare"> Compare vs unlevered equivalent</label>
+                        </div>
+                    </div>
+
+                    <div class="calc-section-lbl">Reality &amp; Compliance</div>
+                    <div class="calc-compliance" id="calc-compliance" role="status" aria-live="polite"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1135,6 +1402,7 @@ function renderChartTabs() {
             renderChartTabs();
             renderChart();
             renderTable();
+            if (typeof renderCalc === 'function') renderCalc();
         });
         container.appendChild(chip);
     });
@@ -1574,6 +1842,7 @@ function renderAll() {
     renderChartTabs();
     renderChart();
     renderTable();
+    if (typeof renderCalc === 'function') renderCalc();
 }
 
 // ── Slider ────────────────────────────────────────────────────────────────────
@@ -2184,6 +2453,664 @@ function drawChartOverlay(canvas, data, cycles, tickerColor) {
         }
     }, { passive: true });
 }());
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ETF CYCLE TAX & COMPOUNDING CALCULATOR
+// Pure engine + UI. Binds to existing `state`, `TICKERS`, `state.cycles`.
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── Single source of truth for all rates/costs ────────────────────────────────
+const TAX_CONFIG = {
+    tax: {
+        baseSlabRate: 0.30,
+        cess: 0.04,
+        // [thresholdINR, surchargeRate] — >₹2Cr STCG tier is 0.25 (NOT 0.15)
+        surchargeLadder: [[0,0],[5000000,0.10],[10000000,0.15],[20000000,0.25],[50000000,0.25]],
+        ltcg: { rate: 0.125, surchargeCap: 0.15 },
+    },
+    tcs: { exemptionINR: 1000000, rate: 0.20 },
+    costs: {
+        indmoney: { brokeragePerSide: 0.0025, fxMarkup: 0.0070 },
+        ibkr:     { brokeragePerSide: 0.0005, fxMarkup: 0.0040, wireFeeINR: 1000, execProxyUSD: 2 },
+    },
+    fx: { usdInr: 86 },
+};
+
+// ── Formatters (one Indian lakh/crore, one US) ────────────────────────────────
+function fmtINR(n) {
+    if (n == null || !isFinite(n)) return '—';
+    const a = Math.abs(n), sign = n < 0 ? '-' : '';
+    if (a >= 1e7) return `${sign}₹${(a/1e7).toFixed(2)} Cr`;
+    if (a >= 1e5) return `${sign}₹${(a/1e5).toFixed(2)} L`;
+    return `${sign}₹${Math.round(a).toLocaleString('en-IN')}`;
+}
+function fmtUSD(n) {
+    if (n == null || !isFinite(n)) return '—';
+    if (Math.abs(n) >= 1e6) return `$${(n/1e6).toFixed(2)}M`;
+    if (Math.abs(n) >= 1e3) return `$${(n/1e3).toFixed(1)}K`;
+    return `$${Math.round(n).toLocaleString('en-US')}`;
+}
+
+// ── Thin adapter: read existing detected cycles (do NOT recompute) ─────────────
+function getCycleStatsForTicker(sym) {
+    const cyc = state.cycles[sym] || [];
+    const n = cyc.length;
+    if (!n) return { avgGainPct: 0, medianGainPct: 0, avgDays: 0, avgGapDays: 0, cyclesPerYear: 0, sampleN: 0 };
+    const gains = cyc.map(c => c.gain);
+    const days = cyc.map(c => c.days);
+    const avg = a => a.reduce((x,y)=>x+y,0) / a.length;
+    const median = a => { const s = [...a].sort((x,y)=>x-y); const m = Math.floor(s.length/2); return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
+    // gap = peak[i] → trough[i+1]
+    const gaps = [];
+    for (let i = 0; i < n - 1; i++) {
+        const g = Math.round((new Date(cyc[i+1].troughDate) - new Date(cyc[i].peakDate)) / 86400000);
+        if (g >= 0) gaps.push(g);
+    }
+    const avgDays = avg(days);
+    const avgGapDays = gaps.length ? avg(gaps) : avgDays;
+    const cyclesPerYear = (avgDays + avgGapDays) > 0 ? 365 / (avgDays + avgGapDays) : 0;
+    return {
+        avgGainPct: avg(gains), medianGainPct: median(gains),
+        avgDays, avgGapDays, cyclesPerYear, sampleN: n,
+    };
+}
+
+// ── Pure tax helpers (ladder lookup, no hardcoded per-tier branches) ──────────
+function calcSurchargeRate(totalIncome, ladder) {
+    let r = 0;
+    for (let i = 0; i < ladder.length; i++) {
+        if (totalIncome >= ladder[i][0]) r = ladder[i][1]; else break;
+    }
+    return r;
+}
+function calcEffSTCG(yearGain, otherIncome, tax) {
+    const sur = calcSurchargeRate(yearGain + otherIncome, tax.surchargeLadder);
+    return tax.baseSlabRate * (1 + sur) * (1 + tax.cess);
+}
+function calcEffLTCG(yearGain, otherIncome, tax) {
+    let sur = calcSurchargeRate(yearGain + otherIncome, tax.surchargeLadder);
+    if (sur > tax.ltcg.surchargeCap) sur = tax.ltcg.surchargeCap;
+    return tax.ltcg.rate * (1 + sur) * (1 + tax.cess);
+}
+function calcTaxForYear(yearGain, otherIncome, holding, tax) {
+    if (yearGain <= 0) return { tax: 0, rate: 0 };
+    const rate = holding === 'ltcg' ? calcEffLTCG(yearGain, otherIncome, tax) : calcEffSTCG(yearGain, otherIncome, tax);
+    return { tax: yearGain * rate, rate };
+}
+function calcTcsLockup(remitINR, tcs) {
+    return Math.max(0, remitINR - tcs.exemptionINR) * tcs.rate;
+}
+function calcNetPerf(grossCaptured, stack) {
+    const brk = stack.brokeragePerSide, fx = stack.fxMarkup;
+    return (1 + grossCaptured) * (1 - brk) / (1 + brk + fx) - 1;
+}
+
+// ── PURE simulate (zero DOM access) ───────────────────────────────────────────
+function simulate(inp, cfg) {
+    cfg = cfg || TAX_CONFIG;
+    const tax = cfg.tax, tcs = cfg.tcs, costs = cfg.costs;
+    const years = [];
+    let corpus = inp.capitalINR;
+    let taxTotal = 0, costTotal = 0, grossCum = 0, netCum = 0;
+    let pivotYear = null, cross2cr = null, cross5cr = null, cross10cr = null;
+
+    const grossCaptured = (inp.grossPerCycleOverride != null && isFinite(inp.grossPerCycleOverride))
+        ? inp.grossPerCycleOverride
+        : (inp.medianGainPct / 100) * inp.captureFraction;
+    const swingsPerYear = (inp.swingsPerYear != null) ? inp.swingsPerYear : inp.cyclesPerYear;
+
+    const initialTCS = calcTcsLockup(inp.capitalINR, tcs);
+    let tcsLockTotal = initialTCS;
+
+    for (let y = 1; y <= inp.horizonYears; y++) {
+        const onIBKR = corpus >= inp.pivotINR;
+        if (onIBKR && pivotYear === null) pivotYear = y;
+        const stack = onIBKR ? costs.ibkr : costs.indmoney;
+        const startCorpus = corpus;
+        let yearCost = 0;
+        const netPerf = calcNetPerf(grossCaptured, stack);
+        // Fractional-power compounding so partial swings (e.g. 2.7/yr) are counted.
+        const netMult = Math.pow(1 + netPerf, swingsPerYear);
+        const grossMult = Math.pow(1 + grossCaptured, swingsPerYear);
+        const netNew = startCorpus * netMult;
+        const grossNew = startCorpus * grossMult;
+        yearCost += (grossNew - netNew);
+        grossCum += (grossNew - startCorpus);
+        corpus = netNew;
+        const yearGain = corpus - startCorpus;
+
+        if (!inp.vault) {
+            tcsLockTotal += calcTcsLockup(Math.max(0, yearGain), tcs);
+        }
+
+        const { tax: yTax, rate: yRate } = calcTaxForYear(yearGain, inp.otherIncomeINR, inp.holding, tax);
+        corpus -= yTax;
+        taxTotal += yTax;
+        costTotal += yearCost;
+        netCum = corpus;
+
+        if (cross2cr === null && corpus >= 20000000) cross2cr = y;
+        if (cross5cr === null && corpus >= 50000000) cross5cr = y;
+        if (cross10cr === null && corpus >= 100000000) cross10cr = y;
+
+        years.push({
+            year: y, corpus, yearGain, tax: yTax, effRate: yRate, cost: yearCost, onIBKR,
+            grossWealth: inp.capitalINR + grossCum,
+            netWealth: corpus,
+        });
+    }
+
+    const terminal = corpus;
+    const cagr = (inp.horizonYears > 0 && inp.capitalINR > 0 && terminal > 0)
+        ? Math.pow(terminal / inp.capitalINR, 1 / inp.horizonYears) - 1 : 0;
+
+    return {
+        years, terminal, terminalUSD: terminal / cfg.fx.usdInr,
+        taxTotal, costTotal, pivotYear, cross2cr, cross5cr, cross10cr,
+        cagr, grossCaptured, initialTCS, tcsLockTotal,
+        effRateOverall: terminal > inp.capitalINR && (terminal - inp.capitalINR + taxTotal) > 0
+            ? taxTotal / (terminal - inp.capitalINR + taxTotal) : 0,
+    };
+}
+
+// ── Calculator UI state ───────────────────────────────────────────────────────
+const calcUI = {
+    initialized: false,
+    open: false,
+    mode: 'auto',
+    captureBasis: 'median',
+    holding: 'stcg',
+    vault: 'on',
+    chartTab: 'corpus',
+    logScale: false,
+    compare: false,
+    userSet: {},      // field → true if user-overridden
+    values: {},       // field → current value
+    cfg: JSON.parse(JSON.stringify(TAX_CONFIG)),
+    lastSim: null,
+    prevStats: {},
+};
+
+function calcActiveSym() {
+    const t = TICKERS.find(x => x.label === state.activeTab) || TICKERS[0];
+    return t.symbol;
+}
+
+// Seeded defaults pulled from data + config for the active ticker
+function calcSeedDefaults() {
+    const sym = calcActiveSym();
+    const s = getCycleStatsForTicker(sym);
+    const basisGain = calcUI.captureBasis === 'avg' ? s.avgGainPct : s.medianGainPct;
+    return {
+        capitalINR: 2000000,
+        captureFraction: 0.40,
+        grossOverride: null,
+        cyclesPerYear: +s.cyclesPerYear.toFixed(2),
+        swingsPerYear: +s.cyclesPerYear.toFixed(2),
+        horizonYears: 10,
+        otherIncomeINR: 0,
+        pivotINR: 20000000,
+        _basisGain: basisGain,
+        _sampleN: s.sampleN,
+    };
+}
+
+function calcGetVal(field, def) {
+    if (calcUI.userSet[field] && calcUI.values[field] != null) return calcUI.values[field];
+    return def[field];
+}
+
+// Build the pure-engine input object from UI + seeds
+function calcBuildInputs() {
+    const def = calcSeedDefaults();
+    const captureFraction = calcGetVal('captureFraction', def);
+    const grossOverride = calcUI.userSet.grossOverride && calcUI.values.grossOverride != null
+        ? calcUI.values.grossOverride / 100 : null;
+    return {
+        capitalINR: calcGetVal('capitalINR', def),
+        medianGainPct: def._basisGain,
+        captureFraction,
+        grossPerCycleOverride: grossOverride,
+        cyclesPerYear: calcGetVal('cyclesPerYear', def),
+        swingsPerYear: calcGetVal('swingsPerYear', def),
+        horizonYears: Math.max(1, Math.round(calcGetVal('horizonYears', def))),
+        holding: calcUI.holding,
+        otherIncomeINR: calcGetVal('otherIncomeINR', def),
+        pivotINR: calcGetVal('pivotINR', def),
+        vault: calcUI.vault === 'on',
+        _sampleN: def._sampleN,
+        _basisGain: def._basisGain,
+    };
+}
+
+function calcLeakageSaved(inp) {
+    const withPivot = simulate(inp, calcUI.cfg).terminal;
+    const noPivot = simulate(Object.assign({}, inp, { pivotINR: Infinity }), calcUI.cfg).terminal;
+    return withPivot - noPivot;
+}
+
+// ── Render: sync input field values from current state ─────────────────────────
+function calcSyncFields() {
+    const def = calcSeedDefaults();
+    const setVal = (id, v) => { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = v; };
+    setVal('calc-capital', calcGetVal('capitalINR', def));
+    const cap = Math.round(calcGetVal('captureFraction', def) * 100);
+    setVal('calc-capture', cap);
+    const cv = document.getElementById('calc-capture-val'); if (cv) cv.textContent = cap + '%';
+    setVal('calc-cycles', calcGetVal('cyclesPerYear', def));
+    setVal('calc-swings', calcGetVal('swingsPerYear', def));
+    setVal('calc-horizon', Math.round(calcGetVal('horizonYears', def)));
+    setVal('calc-other-income', calcGetVal('otherIncomeINR', def));
+    setVal('calc-pivot', calcGetVal('pivotINR', def));
+    if (calcUI.userSet.grossOverride && calcUI.values.grossOverride != null) setVal('calc-gross-override', calcUI.values.grossOverride);
+    else { const g = document.getElementById('calc-gross-override'); if (g && document.activeElement !== g) g.value = ''; }
+    // mark user-set fields
+    document.querySelectorAll('#calc-setup .calc-field[data-field]').forEach(f => {
+        const fld = f.getAttribute('data-field');
+        f.classList.toggle('user-set', !!calcUI.userSet[fld]);
+    });
+}
+
+// ── Master render (guarded; no-op until initialized) ──────────────────────────
+function renderCalc() {
+    if (!calcUI.initialized || !calcUI.open) return;
+    // keep ticker dropdown in sync with active chip
+    const tickSel = document.getElementById('calc-ticker');
+    if (tickSel && tickSel.value !== state.activeTab) tickSel.value = state.activeTab;
+
+    calcSyncFields();
+
+    const inp = calcBuildInputs();
+    const statsEl = document.getElementById('calc-stats');
+    if (!statsEl) return;
+
+    if (!inp._sampleN || (inp._basisGain <= 0 && inp.grossPerCycleOverride == null)) {
+        statsEl.innerHTML = `<div class="calc-empty" style="grid-column:1/-1">No cycles detected for ${state.activeTab} at ${state.threshold}% threshold &mdash; lower the threshold to model this ticker.</div>`;
+        const canvas = document.getElementById('calc-canvas');
+        if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }
+        calcRenderCompliance(null);
+        return;
+    }
+
+    const sim = simulate(inp, calcUI.cfg);
+    calcUI.lastSim = sim;
+    const leak = calcLeakageSaved(inp);
+
+    // live effective rate display (current-year style: full-corpus gain proxy)
+    const sampleGain = sim.years.length ? sim.years[sim.years.length-1].yearGain : 0;
+    const effRate = calcUI.holding === 'ltcg'
+        ? calcEffLTCG(sampleGain, inp.otherIncomeINR, calcUI.cfg.tax)
+        : calcEffSTCG(sampleGain, inp.otherIncomeINR, calcUI.cfg.tax);
+    const effEl = document.getElementById('calc-eff-rate');
+    if (effEl) effEl.textContent = (effRate*100).toFixed(2) + '%';
+
+    const captureHigh = inp.grossPerCycleOverride == null && inp.captureFraction > 0.60;
+    const crossTxt = y => y ? `Year ${y}` : '—';
+
+    const cards = [
+        { lbl: 'Terminal Wealth', val: fmtINR(sim.terminal), sub: `${inp.horizonYears}y horizon`, cls: 'headline' },
+        { lbl: 'Terminal (USD)', val: fmtUSD(sim.terminalUSD), sub: `@ ₹${calcUI.cfg.fx.usdInr}/USD` },
+        { lbl: 'Net After-Tax CAGR', val: (sim.cagr*100).toFixed(1)+'%', sub: captureHigh ? 'capture >60% — optimistic' : `capture ${(inp.captureFraction*100).toFixed(0)}%`, cls: captureHigh ? 'amber' : '' },
+        { lbl: 'Total Tax', val: fmtINR(sim.taxTotal), sub: `eff ${(sim.effRateOverall*100).toFixed(1)}%` },
+        { lbl: 'Total Cost / FX Drag', val: fmtINR(sim.costTotal), sub: 'brokerage + FX markup' },
+        { lbl: 'Leakage Saved by IBKR Pivot', val: fmtINR(leak), sub: sim.pivotYear ? `pivot @ Year ${sim.pivotYear}` : 'no pivot reached' },
+        { lbl: 'Initial TCS Lockup', val: fmtINR(sim.initialTCS), sub: calcUI.vault==='on' ? 'refundable · vault: once' : `total ${fmtINR(sim.tcsLockTotal)} (annual)` },
+        { lbl: 'Corpus Milestones', val: crossTxt(sim.cross2cr), sub: `₹5Cr: ${crossTxt(sim.cross5cr)} · ₹10Cr: ${crossTxt(sim.cross10cr)}` },
+    ];
+
+    statsEl.innerHTML = cards.map((c,i) => {
+        const prev = calcUI.prevStats[i];
+        const flash = (prev != null && prev !== c.val) ? ' flash' : '';
+        return `<div class="calc-stat ${c.cls||''}${flash}"><div class="calc-stat-lbl">${c.lbl}</div><div class="calc-stat-val">${c.val}</div><div class="calc-stat-sub">${c.sub}</div></div>`;
+    }).join('');
+    cards.forEach((c,i)=> calcUI.prevStats[i] = c.val);
+
+    const ann = document.getElementById('calc-announcer');
+    if (ann) ann.textContent = `Terminal wealth ${fmtINR(sim.terminal)}, net CAGR ${(sim.cagr*100).toFixed(1)} percent.`;
+
+    calcDrawChart(sim, inp);
+    calcRenderCompliance(inp);
+}
+
+// ── Compliance panel (percentages COMPUTED from constants) ────────────────────
+function calcRenderCompliance(inp) {
+    const el = document.getElementById('calc-compliance');
+    if (!el) return;
+    const tax = calcUI.cfg.tax;
+    const p = r => (r*100).toFixed(2) + '%';
+    const r50 = calcEffSTCG(4000000, 0, tax);
+    const r50_1 = calcEffSTCG(7500000, 0, tax);
+    const r1_2 = calcEffSTCG(15000000, 0, tax);
+    const rg2 = calcEffSTCG(30000000, 0, tax);
+    const rltcg = calcEffLTCG(30000000, 0, tax);
+    const tcsRate = (calcUI.cfg.tcs.rate*100).toFixed(0);
+    const tcsEx = fmtINR(calcUI.cfg.tcs.exemptionINR);
+    const otherFlag = inp && inp.otherIncomeINR > 0
+        ? ` Your ₹${(inp.otherIncomeINR/1e5).toFixed(1)}L other income pushes the 39% bracket to a lower gain.` : '';
+
+    const caveats = [
+        { cls: 'cv-red', icon: '🔴', html: `<strong>LRS ELIGIBILITY — GRAY AREA, POSSIBLY A CONTRAVENTION.</strong> RBI LRS bars margin/leveraged instruments abroad; leveraged/inverse ETFs use internal swaps. It is unsettled whether daily-reset leveraged ETFs are prohibited — a bank may reject, or an AO may later reclassify as a technical FEMA contravention. Plain ETFs (VOO/QQQ) are clearly permitted; these are not. Worst realistic case is a compounding settlement (RBI 2025 capped technical LRS contraventions at ₹2 lakh), not prosecution — confirm with a CA.` },
+        { cls: 'cv-amber', icon: '🟠', html: `<strong>TCS IS ANNUAL.</strong> ${tcsRate}% above ${tcsEx}/PAN/FY. Vault-ON (TCS once) holds only with zero fresh remittances. Split funding across two FYs to keep each ≤ ${tcsEx}.` },
+        { cls: 'cv-amber', icon: '🟠', html: `<strong>CAPTURE FRACTION IS THE WHOLE BALLGAME.</strong> Page gains are full trough→peak, hindsight-perfect. Default is MEDIAN × 40%; headline CAGR turns amber above 60% capture.` },
+        { cls: 'cv-amber', icon: '🟠', html: `<strong>SURCHARGE KEYS ON TOTAL INCOME.</strong> Other income > 0 → the 39% bracket arrives at a lower gain.${otherFlag}` },
+        { cls: 'cv-amber', icon: '🟠', html: `<strong>HOLDING-PERIOD CONTRADICTION.</strong> ${p(rg2)} STCG only if held <24mo (the swing thesis); ${p(rltcg)} LTCG contradicts swinging. Both shown.` },
+        { cls: 'cv-green', icon: '🟢', html: `<strong>TAX RATES WEB-VERIFIED (Jun 2026):</strong> STCG-at-slab, no 15% cap for unlisted-foreign → ${p(r50)} ≤50L · ${p(r50_1)} 50L–1Cr · ${p(r1_2)} 1Cr–2Cr · ${p(rg2)} >2Cr; LTCG >2Cr ${p(rltcg)}. 20% TCS above ₹10L unchanged by Budget-2026. (ITD, Winvesta, Zerodha, Bajaj Finserv.)` },
+        { cls: 'cv-green', icon: '🟢', html: `<strong>NOT TAX/LEGAL ADVICE.</strong> Confirm with a CA; rates change every Budget.` },
+    ];
+    el.innerHTML = caveats.map(c => `<div class="calc-caveat ${c.cls}"><span class="cv-icon">${c.icon}</span><span>${c.html}</span></div>`).join('');
+}
+
+// ── Canvas chart (page's raw-canvas technique; no Chart.js) ───────────────────
+function calcDrawChart(sim, inp) {
+    const canvas = document.getElementById('calc-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width < 2) return;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    const w = rect.width, h = rect.height;
+    const pad = { top: 24, right: 18, bottom: 30, left: 64 };
+    const cw = w - pad.left - pad.right, ch = h - pad.top - pad.bottom;
+    const years = sim.years;
+    if (!years.length) return;
+    const n = years.length;
+    const cyan = '#5090a0', green = '#3db87a', red = '#c04040', gold = '#d4a830';
+
+    ctx.font = "10px 'JetBrains Mono', monospace";
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+
+    const getX = i => pad.left + (n === 1 ? cw/2 : (i/(n-1))*cw);
+
+    const safeMax = arr => { let m = -Infinity; for (let i=0;i<arr.length;i++) if (arr[i] > m) m = arr[i]; return m === -Infinity ? 1 : m; };
+
+    const drawAxes = (maxV, fmtY) => {
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        for (let g = 0; g <= 4; g++) {
+            const y = pad.top + (ch/4)*g;
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left+cw, y); ctx.stroke();
+            const v = maxV * (1 - g/4);
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+            ctx.fillText(fmtY(v), pad.left - 6, y);
+        }
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        const step = Math.max(1, Math.ceil(n/8));
+        for (let i = 0; i < n; i += step) {
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.fillText('Y'+years[i].year, getX(i), pad.top+ch+6);
+        }
+    };
+
+    const plotLine = (vals, maxV, color, fill) => {
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+            const x = getX(i);
+            const y = pad.top + ch - (maxV>0 ? (vals[i]/maxV)*ch : 0);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        if (fill) {
+            const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top+ch);
+            grad.addColorStop(0, color.replace(')', ',0.30)').replace('rgb','rgba'));
+            grad.addColorStop(1, color.replace(')', ',0.02)').replace('rgb','rgba'));
+            ctx.lineTo(getX(n-1), pad.top+ch); ctx.lineTo(getX(0), pad.top+ch); ctx.closePath();
+            ctx.fillStyle = grad; ctx.fill();
+            // re-stroke line on top
+            ctx.beginPath();
+            for (let i = 0; i < n; i++) {
+                const x = getX(i), y = pad.top + ch - (maxV>0 ? (vals[i]/maxV)*ch : 0);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+        }
+        ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+    };
+    const rgbOf = hex => {
+        const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+        return `rgb(${r},${g},${b})`;
+    };
+
+    const tab = calcUI.chartTab;
+    if (tab === 'corpus') {
+        let corpus = years.map(y => y.corpus);
+        let plotVals = corpus.slice();
+        let cmpVals = null;
+        if (calcUI.compare) {
+            // unlevered equivalent: same capture, gain ÷ leverage (assume 2×), no FEMA flag
+            const lev = (calcActiveSym().includes('3N')) ? 3 : 2;
+            const cmpInp = Object.assign({}, inp, {
+                medianGainPct: inp._basisGain / lev,
+                grossPerCycleOverride: inp.grossPerCycleOverride != null ? inp.grossPerCycleOverride/lev : null,
+            });
+            cmpVals = simulate(cmpInp, calcUI.cfg).years.map(y => y.corpus);
+        }
+        const allMax = safeMax(cmpVals ? plotVals.concat(cmpVals) : plotVals);
+        if (calcUI.logScale) {
+            const lg = v => Math.log10(Math.max(1, v));
+            const lmax = lg(allMax);
+            plotVals = corpus.map(lg);
+            const lvals = plotVals;
+            drawAxes(lmax, v => fmtINR(Math.pow(10, v)));
+            plotLine(lvals, lmax, rgbOf(cyan), true);
+            if (cmpVals) plotLine(cmpVals.map(lg), lmax, rgbOf(gold), false);
+        } else {
+            drawAxes(allMax, fmtINR);
+            plotLine(plotVals, allMax, rgbOf(cyan), true);
+            if (cmpVals) plotLine(cmpVals, allMax, rgbOf(gold), false);
+        }
+        // pivot node
+        if (sim.pivotYear) {
+            const i = sim.pivotYear - 1;
+            const mv = calcUI.logScale ? Math.log10(Math.max(1, safeMax(corpus))) : allMax;
+            const val = calcUI.logScale ? Math.log10(Math.max(1, corpus[i])) : corpus[i];
+            const x = getX(i), y = pad.top + ch - (mv>0 ? (val/mv)*ch : 0);
+            ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2);
+            ctx.fillStyle = green; ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.fillStyle = green; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+            ctx.fillText('IBKR pivot', x, y - 8);
+        }
+    } else if (tab === 'tax') {
+        const vals = years.map(y => y.tax);
+        const maxV = safeMax(vals);
+        drawAxes(maxV, fmtINR);
+        const bw = Math.max(3, cw / n * 0.6);
+        for (let i = 0; i < n; i++) {
+            const x = getX(i), bh = maxV>0 ? (vals[i]/maxV)*ch : 0;
+            ctx.fillStyle = 'rgba(192,64,64,0.75)';
+            ctx.fillRect(x - bw/2, pad.top+ch-bh, bw, bh);
+        }
+    } else if (tab === 'wedge') {
+        const grossV = years.map(y => y.grossWealth);
+        const netV = years.map(y => y.netWealth);
+        const maxV = safeMax(grossV);
+        drawAxes(maxV, fmtINR);
+        plotLine(grossV, maxV, rgbOf(gold), false);
+        plotLine(netV, maxV, rgbOf(green), true);
+    } else if (tab === 'effrate') {
+        const vals = years.map(y => y.effRate*100);
+        const maxV = Math.max(40, safeMax(vals)*1.1);
+        drawAxes(maxV, v => v.toFixed(0)+'%');
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+            const x = getX(i), y = pad.top + ch - (vals[i]/maxV)*ch;
+            if (i === 0) ctx.moveTo(x, y);
+            else { ctx.lineTo(getX(i), pad.top + ch - (vals[i-1]/maxV)*ch); ctx.lineTo(x, y); }
+        }
+        ctx.strokeStyle = cyan; ctx.lineWidth = 2; ctx.stroke();
+    }
+}
+
+// ── Init (lazy on first open) ─────────────────────────────────────────────────
+function calcInit() {
+    if (calcUI.initialized) return;
+    calcUI.initialized = true;
+
+    // populate ticker dropdown
+    const tickSel = document.getElementById('calc-ticker');
+    if (tickSel) {
+        tickSel.innerHTML = TICKERS.map(t => `<option value="${t.label}">${t.label}</option>`).join('');
+        tickSel.value = state.activeTab;
+        tickSel.addEventListener('change', () => {
+            state.activeTab = tickSel.value;
+            renderChartTabs(); renderChart(); renderTable();
+            renderCalc();
+        });
+    }
+
+    // seed advanced constant inputs
+    const cfg = calcUI.cfg;
+    const setAdv = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+    setAdv('adv-slab', cfg.tax.baseSlabRate); setAdv('adv-cess', cfg.tax.cess);
+    setAdv('adv-ltcg', cfg.tax.ltcg.rate); setAdv('adv-ltcgcap', cfg.tax.ltcg.surchargeCap);
+    setAdv('adv-tcs', cfg.tcs.rate); setAdv('adv-tcsex', cfg.tcs.exemptionINR);
+    setAdv('adv-ind-brk', cfg.costs.indmoney.brokeragePerSide); setAdv('adv-ind-fx', cfg.costs.indmoney.fxMarkup);
+    setAdv('adv-ibkr-brk', cfg.costs.ibkr.brokeragePerSide); setAdv('adv-ibkr-fx', cfg.costs.ibkr.fxMarkup);
+    setAdv('adv-fx', cfg.fx.usdInr); setAdv('adv-surch2cr', cfg.tax.surchargeLadder[3][1]);
+
+    // number/range field bindings
+    const bindNum = (id, field, scale) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', () => {
+            const raw = el.value;
+            if (raw === '' && field === 'grossOverride') { calcUI.userSet[field] = false; calcUI.values[field] = null; renderCalc(); return; }
+            const v = parseFloat(raw);
+            if (!isFinite(v)) return;
+            calcUI.userSet[field] = true;
+            calcUI.values[field] = scale ? v*scale : v;
+            renderCalc();
+        });
+    };
+    bindNum('calc-capital', 'capitalINR');
+    bindNum('calc-cycles', 'cyclesPerYear');
+    bindNum('calc-swings', 'swingsPerYear');
+    bindNum('calc-horizon', 'horizonYears');
+    bindNum('calc-other-income', 'otherIncomeINR');
+    bindNum('calc-pivot', 'pivotINR');
+    bindNum('calc-gross-override', 'grossOverride');
+
+    const capEl = document.getElementById('calc-capture');
+    if (capEl) capEl.addEventListener('input', () => {
+        calcUI.userSet.captureFraction = true;
+        calcUI.values.captureFraction = parseInt(capEl.value)/100;
+        const cv = document.getElementById('calc-capture-val'); if (cv) cv.textContent = capEl.value + '%';
+        renderCalc();
+    });
+
+    // capital presets
+    document.querySelectorAll('.calc-preset').forEach(b => b.addEventListener('click', () => {
+        calcUI.userSet.capitalINR = true; calcUI.values.capitalINR = +b.dataset.cap; renderCalc();
+    }));
+
+    // per-field reset
+    document.querySelectorAll('.calc-reset[data-reset]').forEach(b => b.addEventListener('click', () => {
+        const f = b.dataset.reset; calcUI.userSet[f] = false; calcUI.values[f] = null; renderCalc();
+    }));
+
+    // mode toggle
+    const setMode = m => {
+        calcUI.mode = m;
+        document.getElementById('calc-mode-auto').setAttribute('aria-checked', m==='auto');
+        document.getElementById('calc-mode-manual').setAttribute('aria-checked', m==='manual');
+        if (m === 'auto') { calcUI.userSet = {}; calcUI.values = {}; }
+        renderCalc();
+    };
+    document.getElementById('calc-mode-auto').addEventListener('click', () => setMode('auto'));
+    document.getElementById('calc-mode-manual').addEventListener('click', () => setMode('manual'));
+
+    // capture basis
+    const setBasis = b => {
+        calcUI.captureBasis = b;
+        document.getElementById('calc-basis-median').setAttribute('aria-checked', b==='median');
+        document.getElementById('calc-basis-avg').setAttribute('aria-checked', b==='avg');
+        renderCalc();
+    };
+    document.getElementById('calc-basis-median').addEventListener('click', () => setBasis('median'));
+    document.getElementById('calc-basis-avg').addEventListener('click', () => setBasis('avg'));
+
+    // holding
+    const setHold = hh => {
+        calcUI.holding = hh;
+        document.getElementById('calc-hold-stcg').setAttribute('aria-checked', hh==='stcg');
+        document.getElementById('calc-hold-ltcg').setAttribute('aria-checked', hh==='ltcg');
+        renderCalc();
+    };
+    document.getElementById('calc-hold-stcg').addEventListener('click', () => setHold('stcg'));
+    document.getElementById('calc-hold-ltcg').addEventListener('click', () => setHold('ltcg'));
+
+    // vault
+    const setVault = vv => {
+        calcUI.vault = vv;
+        document.getElementById('calc-vault-on').setAttribute('aria-checked', vv==='on');
+        document.getElementById('calc-vault-off').setAttribute('aria-checked', vv==='off');
+        renderCalc();
+    };
+    document.getElementById('calc-vault-on').addEventListener('click', () => setVault('on'));
+    document.getElementById('calc-vault-off').addEventListener('click', () => setVault('off'));
+
+    // advanced constant edits → mutate cfg live
+    const bindAdv = (id, apply) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', () => { const v = parseFloat(el.value); if (isFinite(v)) { apply(v); renderCalc(); } });
+    };
+    bindAdv('adv-slab', v => cfg.tax.baseSlabRate = v);
+    bindAdv('adv-cess', v => cfg.tax.cess = v);
+    bindAdv('adv-ltcg', v => cfg.tax.ltcg.rate = v);
+    bindAdv('adv-ltcgcap', v => cfg.tax.ltcg.surchargeCap = v);
+    bindAdv('adv-tcs', v => cfg.tcs.rate = v);
+    bindAdv('adv-tcsex', v => cfg.tcs.exemptionINR = v);
+    bindAdv('adv-ind-brk', v => cfg.costs.indmoney.brokeragePerSide = v);
+    bindAdv('adv-ind-fx', v => cfg.costs.indmoney.fxMarkup = v);
+    bindAdv('adv-ibkr-brk', v => cfg.costs.ibkr.brokeragePerSide = v);
+    bindAdv('adv-ibkr-fx', v => cfg.costs.ibkr.fxMarkup = v);
+    bindAdv('adv-fx', v => cfg.fx.usdInr = v);
+    bindAdv('adv-surch2cr', v => { cfg.tax.surchargeLadder[3][1] = v; cfg.tax.surchargeLadder[4][1] = v; });
+
+    // reset all
+    document.getElementById('calc-reset-all').addEventListener('click', () => {
+        calcUI.userSet = {}; calcUI.values = {};
+        calcUI.cfg = JSON.parse(JSON.stringify(TAX_CONFIG));
+        const c = calcUI.cfg;
+        setAdv('adv-slab', c.tax.baseSlabRate); setAdv('adv-cess', c.tax.cess);
+        setAdv('adv-ltcg', c.tax.ltcg.rate); setAdv('adv-ltcgcap', c.tax.ltcg.surchargeCap);
+        setAdv('adv-tcs', c.tcs.rate); setAdv('adv-tcsex', c.tcs.exemptionINR);
+        setAdv('adv-ind-brk', c.costs.indmoney.brokeragePerSide); setAdv('adv-ind-fx', c.costs.indmoney.fxMarkup);
+        setAdv('adv-ibkr-brk', c.costs.ibkr.brokeragePerSide); setAdv('adv-ibkr-fx', c.costs.ibkr.fxMarkup);
+        setAdv('adv-fx', c.fx.usdInr); setAdv('adv-surch2cr', c.tax.surchargeLadder[3][1]);
+        setMode('auto');
+    });
+
+    // chart tabs + options
+    document.querySelectorAll('.calc-ctab').forEach(b => b.addEventListener('click', () => {
+        document.querySelectorAll('.calc-ctab').forEach(x => x.classList.remove('active'));
+        b.classList.add('active'); calcUI.chartTab = b.dataset.ctab; renderCalc();
+    }));
+    const logEl = document.getElementById('calc-log');
+    if (logEl) logEl.addEventListener('change', () => { calcUI.logScale = logEl.checked; renderCalc(); });
+    const cmpEl = document.getElementById('calc-compare');
+    if (cmpEl) cmpEl.addEventListener('change', () => { calcUI.compare = cmpEl.checked; renderCalc(); });
+
+    window.addEventListener('resize', () => { if (calcUI.open && calcUI.lastSim) renderCalc(); });
+}
+
+// collapsible toggle
+(function initCalcToggle() {
+    const panel = document.getElementById('calc-panel');
+    const toggle = document.getElementById('calc-toggle');
+    if (!panel || !toggle) return;
+    toggle.addEventListener('click', () => {
+        calcUI.open = !calcUI.open;
+        panel.setAttribute('data-open', calcUI.open);
+        toggle.setAttribute('aria-expanded', calcUI.open);
+        if (calcUI.open) { calcInit(); renderCalc(); }
+    });
+})();
 
 (async () => {
     // 1. Try pre-built static JSON first (no CORS, instant)
