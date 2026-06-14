@@ -802,9 +802,14 @@ select.calc-input { cursor: pointer; }
                         </div>
                     </div>
 
-                    <div class="calc-field" data-field="grossOverride" data-tooltip="Manually specify a custom gross return percentage per trade cycle. Bypasses and disables the 'Capture / Cycle' slider and basis buttons (× MEDIAN, × AVG) to use this exact number instead.">
+                    <div class="calc-field" data-field="grossOverride" data-tooltip="Manually specify a custom gross return percentage per trade cycle. You can also enter different returns for individual swings (e.g., '60, 70' for two swings). Bypasses and disables the 'Capture / Cycle' slider and basis buttons (× MEDIAN, × AVG) to use this instead.">
                         <div class="calc-field-head"><span class="calc-flbl">Gross Return / Cycle override (%)</span><button class="calc-reset" data-reset="grossOverride" title="Clear override">&#8635;</button></div>
-                        <input class="calc-input" id="calc-gross-override" type="number" min="0" step="1" placeholder="auto = median × capture" data-tooltip="Enter custom gross return percentage per cycle. Clear this field to re-enable the Capture / Cycle settings.">
+                        <input class="calc-input" id="calc-gross-override" type="text" placeholder="auto = median × capture" data-tooltip="Enter custom gross return percentage per cycle. You can also specify different returns for individual swings as a comma-separated list (e.g. '60, 70'). Clear this field to re-enable the Capture / Cycle settings.">
+                    </div>
+
+                    <div class="calc-field" data-field="capitalRisked" data-tooltip="Capital Risked / Trade (%): The percentage of the active compounding corpus that is actually deployed into each trade cycle/swing. The remaining percentage stays in idle cash/safe assets and is not exposed to the trade return or transaction costs. Default is 100%.">
+                        <div class="calc-field-head"><span class="calc-flbl">Capital Risked / Trade (%)</span><button class="calc-reset" data-reset="capitalRisked" title="Reset to 100%">&#8635;</button></div>
+                        <input class="calc-input" id="calc-capital-risked" type="number" min="10" max="100" step="5" placeholder="100" data-tooltip="E.g. enter 80 to deploy only 80% of active capital per trade swing. Clear to reset to 100%.">
                     </div>
 
                     <div class="calc-field" data-field="cyclesPerYear" data-tooltip="Cycles / Year: The average number of complete cycles (active trade duration + idle waiting days) that fit into a 365-day year based on historical data. Uses decimals (like 2.5) to avoid long-term rounding errors in multi-year simulations.">
@@ -2662,6 +2667,11 @@ function calcNetPerf(grossCaptured, stack) {
     const brk = stack.brokeragePerSide, fx = stack.fxMarkup;
     return (1 + grossCaptured) * (1 - brk) / (1 + brk + fx) - 1;
 }
+function scaleOverride(override, factor) {
+    if (override == null) return null;
+    if (Array.isArray(override)) return override.map(x => x * factor);
+    return override * factor;
+}
 
 // ── PURE simulate (zero DOM access) ───────────────────────────────────────────
 function simulate(inp, cfg) {
@@ -2672,7 +2682,8 @@ function simulate(inp, cfg) {
     let taxTotal = 0, costTotal = 0, grossCum = 0;
     let pivotYear = null, cross2cr = null, cross5cr = null, cross10cr = null;
 
-    const grossCaptured = (inp.grossPerCycleOverride != null && isFinite(inp.grossPerCycleOverride))
+    const isOverrideArray = Array.isArray(inp.grossPerCycleOverride);
+    const grossCaptured = (inp.grossPerCycleOverride != null && (isOverrideArray || isFinite(inp.grossPerCycleOverride)))
         ? inp.grossPerCycleOverride
         : (inp.medianGainPct / 100) * inp.captureFraction;
     const swingsPerYear = (inp.swingsPerYear != null) ? inp.swingsPerYear : inp.cyclesPerYear;
@@ -2692,11 +2703,27 @@ function simulate(inp, cfg) {
         const stack = onIBKR ? costs.ibkr : costs.indmoney;
         const startCorpus = activeCorpus;
         let yearCost = 0;
-        const netPerf = calcNetPerf(grossCaptured, stack);
         
-        // Multiplier scales with FX Drift annually
-        const netMult = Math.pow(1 + netPerf, swingsPerYear) * (1 + fxDrift);
-        const grossMult = Math.pow(1 + grossCaptured, swingsPerYear) * (1 + fxDrift);
+        const riskFraction = (inp.capitalRisked != null) ? inp.capitalRisked / 100 : 1.0;
+        
+        let netMult, grossMult;
+        if (Array.isArray(grossCaptured)) {
+            let netProduct = 1;
+            let grossProduct = 1;
+            for (let j = 0; j < grossCaptured.length; j++) {
+                const g = grossCaptured[j];
+                const n = calcNetPerf(g, stack);
+                netProduct *= (1 + riskFraction * n);
+                grossProduct *= (1 + riskFraction * g);
+            }
+            const exp = swingsPerYear / grossCaptured.length;
+            netMult = Math.pow(netProduct, exp) * (1 + fxDrift);
+            grossMult = Math.pow(grossProduct, exp) * (1 + fxDrift);
+        } else {
+            const netPerf = calcNetPerf(grossCaptured, stack);
+            netMult = Math.pow(1 + riskFraction * netPerf, swingsPerYear) * (1 + fxDrift);
+            grossMult = Math.pow(1 + riskFraction * grossCaptured, swingsPerYear) * (1 + fxDrift);
+        }
         
         const netNew = startCorpus * netMult;
         const grossNew = startCorpus * grossMult;
@@ -2803,6 +2830,7 @@ function calcSeedDefaults() {
         capitalINR: 2000000,
         captureFraction: 0.40,
         grossOverride: null,
+        capitalRisked: 100,
         cyclesPerYear: +s.cyclesPerYear.toFixed(2),
         swingsPerYear: +s.cyclesPerYear.toFixed(2),
         horizonYears: 10,
@@ -2826,15 +2854,29 @@ function calcGetVal(field, def) {
 function calcBuildInputs() {
     const def = calcSeedDefaults();
     const captureFraction = calcGetVal('captureFraction', def);
-    const grossOverride = calcUI.userSet.grossOverride && calcUI.values.grossOverride != null
-        ? calcUI.values.grossOverride / 100 : null;
+    
+    let grossOverride = null;
+    if (calcUI.userSet.grossOverride && calcUI.values.grossOverride != null) {
+        if (Array.isArray(calcUI.values.grossOverride)) {
+            grossOverride = calcUI.values.grossOverride.map(x => x / 100);
+        } else {
+            grossOverride = calcUI.values.grossOverride / 100;
+        }
+    }
+
+    let swingsPerYear = calcGetVal('swingsPerYear', def);
+    if (Array.isArray(calcUI.values.grossOverride) && !calcUI.userSet.swingsPerYear) {
+        swingsPerYear = calcUI.values.grossOverride.length;
+    }
+
     return {
         capitalINR: calcGetVal('capitalINR', def),
         medianGainPct: def._basisGain,
         captureFraction,
         grossPerCycleOverride: grossOverride,
+        capitalRisked: calcGetVal('capitalRisked', def),
         cyclesPerYear: calcGetVal('cyclesPerYear', def),
-        swingsPerYear: calcGetVal('swingsPerYear', def),
+        swingsPerYear: swingsPerYear,
         horizonYears: Math.max(1, Math.round(calcGetVal('horizonYears', def))),
         holding: calcUI.holding,
         otherIncomeINR: calcGetVal('otherIncomeINR', def),
@@ -2867,11 +2909,16 @@ function calcSyncFields() {
     const cv = document.getElementById('calc-capture-val'); if (cv) cv.textContent = cap + '%';
     updateCalcCaptureFill();
     setVal('calc-cycles', calcGetVal('cyclesPerYear', def));
-    setVal('calc-swings', calcGetVal('swingsPerYear', def));
+    let swingsVal = calcGetVal('swingsPerYear', def);
+    if (Array.isArray(calcUI.values.grossOverride) && !calcUI.userSet.swingsPerYear) {
+        swingsVal = calcUI.values.grossOverride.length;
+    }
+    setVal('calc-swings', swingsVal);
     setVal('calc-horizon', Math.round(calcGetVal('horizonYears', def)));
     setVal('calc-other-income', calcGetVal('otherIncomeINR', def));
     setVal('calc-pivot', calcGetVal('pivotINR', def));
     setVal('calc-fx-drift', calcGetVal('fxDrift', def));
+    setVal('calc-capital-risked', calcGetVal('capitalRisked', def));
 
     // Dynamic button text for Median/Avg cycle gains
     const sym = calcActiveSym();
@@ -2899,7 +2946,12 @@ function calcSyncFields() {
     setTcsDragUI('calc-tcsdrag-on', tcsDragState);
     setTcsDragUI('calc-tcsdrag-off', !tcsDragState);
 
-    if (calcUI.userSet.grossOverride && calcUI.values.grossOverride != null) setVal('calc-gross-override', calcUI.values.grossOverride);
+    if (calcUI.userSet.grossOverride && calcUI.values.grossOverride != null) {
+        const displayVal = Array.isArray(calcUI.values.grossOverride) 
+            ? calcUI.values.grossOverride.join(', ') 
+            : calcUI.values.grossOverride;
+        setVal('calc-gross-override', displayVal);
+    }
     else { const g = document.getElementById('calc-gross-override'); if (g && document.activeElement !== g) g.value = ''; }
 
     const hasOverride = calcUI.userSet.grossOverride && calcUI.values.grossOverride != null;
@@ -3144,7 +3196,7 @@ function calcDrawChart(sim, inp) {
             const lev = (calcActiveSym().includes('3N')) ? 3 : 2;
             const cmpInp = Object.assign({}, inp, {
                 medianGainPct: inp._basisGain / lev,
-                grossPerCycleOverride: inp.grossPerCycleOverride != null ? inp.grossPerCycleOverride/lev : null,
+                grossPerCycleOverride: scaleOverride(inp.grossPerCycleOverride, 1/lev),
             });
             cmpVals = simulate(cmpInp, calcUI.cfg).years.map(y => y.corpus);
         }
@@ -3155,11 +3207,11 @@ function calcDrawChart(sim, inp) {
             const ratio75 = inp._basisGain > 0 ? inp._p75GainPct / inp._basisGain : 1;
             const p25Inp = Object.assign({}, inp, {
                 medianGainPct: inp._p25GainPct,
-                grossPerCycleOverride: inp.grossPerCycleOverride != null ? inp.grossPerCycleOverride * ratio25 : null
+                grossPerCycleOverride: scaleOverride(inp.grossPerCycleOverride, ratio25)
             });
             const p75Inp = Object.assign({}, inp, {
                 medianGainPct: inp._p75GainPct,
-                grossPerCycleOverride: inp.grossPerCycleOverride != null ? inp.grossPerCycleOverride * ratio75 : null
+                grossPerCycleOverride: scaleOverride(inp.grossPerCycleOverride, ratio75)
             });
             p25Vals = simulate(p25Inp, calcUI.cfg).years.map(y => y.corpus);
             p75Vals = simulate(p75Inp, calcUI.cfg).years.map(y => y.corpus);
@@ -3327,7 +3379,7 @@ function calcDrawChart(sim, inp) {
                 const lev = (calcActiveSym().includes('3N')) ? 3 : 2;
                 const cmpInp = Object.assign({}, inp, {
                     medianGainPct: inp._basisGain / lev,
-                    grossPerCycleOverride: inp.grossPerCycleOverride != null ? inp.grossPerCycleOverride/lev : null,
+                    grossPerCycleOverride: scaleOverride(inp.grossPerCycleOverride, 1/lev),
                 });
                 cmpVals = simulate(cmpInp, calcUI.cfg).years.map(y => y.corpus);
             }
@@ -3338,11 +3390,11 @@ function calcDrawChart(sim, inp) {
                 const ratio75 = inp._basisGain > 0 ? inp._p75GainPct / inp._basisGain : 1;
                 const p25Inp = Object.assign({}, inp, {
                     medianGainPct: inp._p25GainPct,
-                    grossPerCycleOverride: inp.grossPerCycleOverride != null ? inp.grossPerCycleOverride * ratio25 : null
+                    grossPerCycleOverride: scaleOverride(inp.grossPerCycleOverride, ratio25)
                 });
                 const p75Inp = Object.assign({}, inp, {
                     medianGainPct: inp._p75GainPct,
-                    grossPerCycleOverride: inp.grossPerCycleOverride != null ? inp.grossPerCycleOverride * ratio75 : null
+                    grossPerCycleOverride: scaleOverride(inp.grossPerCycleOverride, ratio75)
                 });
                 p25Vals = simulate(p25Inp, calcUI.cfg).years.map(y => y.corpus);
                 p75Vals = simulate(p75Inp, calcUI.cfg).years.map(y => y.corpus);
@@ -3465,7 +3517,7 @@ function calcDrawChart(sim, inp) {
 // ── URL-hash share / restore (spec §8) ───────────────────────────────────────
 // Only user-set/override fields + ticker + toggles are serialized, to keep the
 // hash short. No localStorage — pure location.hash.
-const CALC_NUM_FIELDS = ['capitalINR','captureFraction','cyclesPerYear','swingsPerYear','horizonYears','otherIncomeINR','pivotINR','grossOverride','fxDrift'];
+const CALC_NUM_FIELDS = ['capitalINR','captureFraction','cyclesPerYear','swingsPerYear','horizonYears','otherIncomeINR','pivotINR','grossOverride','fxDrift','capitalRisked'];
 
 function calcSerializeToHash() {
     const p = new URLSearchParams();
@@ -3519,6 +3571,15 @@ async function calcRestoreFromHash() {
         // 3. numeric fields → mark user-set
         for (const f of CALC_NUM_FIELDS) {
             if (!p.has(f)) continue;
+            if (f === 'grossOverride') {
+                const rawVal = p.get(f);
+                const parts = rawVal.split(',').map(s => parseFloat(s.trim())).filter(isFinite);
+                if (parts.length > 0) {
+                    calcUI.userSet[f] = true;
+                    calcUI.values[f] = parts.length === 1 ? parts[0] : parts;
+                }
+                continue;
+            }
             const v = parseFloat(p.get(f));
             if (!isFinite(v)) continue;
             calcUI.userSet[f] = true;
@@ -3603,7 +3664,25 @@ function calcInit() {
     bindNum('calc-horizon', 'horizonYears');
     bindNum('calc-other-income', 'otherIncomeINR');
     bindNum('calc-pivot', 'pivotINR');
-    bindNum('calc-gross-override', 'grossOverride');
+    bindNum('calc-capital-risked', 'capitalRisked');
+
+    const grossOverrideEl = document.getElementById('calc-gross-override');
+    if (grossOverrideEl) {
+        grossOverrideEl.addEventListener('input', () => {
+            const raw = grossOverrideEl.value;
+            if (raw.trim() === '') {
+                calcUI.userSet.grossOverride = false;
+                calcUI.values.grossOverride = null;
+                renderCalc();
+                return;
+            }
+            const parts = raw.split(',').map(s => parseFloat(s.trim())).filter(isFinite);
+            if (parts.length === 0) return;
+            calcUI.userSet.grossOverride = true;
+            calcUI.values.grossOverride = parts.length === 1 ? parts[0] : parts;
+            renderCalc();
+        });
+    }
 
     const capEl = document.getElementById('calc-capture');
     if (capEl) capEl.addEventListener('input', () => {
@@ -3796,7 +3875,7 @@ function calcInit() {
                                 const lev = (calcActiveSym().includes('3N')) ? 3 : 2;
                                 const cmpInp = Object.assign({}, calcBuildInputs(), {
                                     medianGainPct: calcBuildInputs()._basisGain / lev,
-                                    grossPerCycleOverride: calcBuildInputs().grossPerCycleOverride != null ? calcBuildInputs().grossPerCycleOverride/lev : null,
+                                    grossPerCycleOverride: scaleOverride(calcBuildInputs().grossPerCycleOverride, 1/lev),
                                 });
                                 const cmpSim = simulate(cmpInp, calcUI.cfg);
                                 const cmpVal = cmpSim.years[i].corpus;
@@ -3811,11 +3890,11 @@ function calcInit() {
                                 const ratio75 = inp._basisGain > 0 ? inp._p75GainPct / inp._basisGain : 1;
                                 const p25Inp = Object.assign({}, inp, {
                                     medianGainPct: inp._p25GainPct,
-                                    grossPerCycleOverride: inp.grossPerCycleOverride != null ? inp.grossPerCycleOverride * ratio25 : null
+                                    grossPerCycleOverride: scaleOverride(inp.grossPerCycleOverride, ratio25)
                                 });
                                 const p75Inp = Object.assign({}, inp, {
                                     medianGainPct: inp._p75GainPct,
-                                    grossPerCycleOverride: inp.grossPerCycleOverride != null ? inp.grossPerCycleOverride * ratio75 : null
+                                    grossPerCycleOverride: scaleOverride(inp.grossPerCycleOverride, ratio75)
                                 });
                                 const p25Val = simulate(p25Inp, calcUI.cfg).years[i].corpus;
                                 const p75Val = simulate(p75Inp, calcUI.cfg).years[i].corpus;
