@@ -614,7 +614,150 @@ select.calc-input { cursor: pointer; }
     .calc-canvas-wrap { height: 240px; }
 }
 
-/* ---- VARIABLE SWING RETURN INPUTS ---- */
+/* ---- HOW TO USE MODAL ---- */
+.calc-howto-btn {
+    padding: 5px 12px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-primary);
+    color: var(--text-muted);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    white-space: nowrap;
+}
+.calc-howto-btn:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(0,255,255,0.06); }
+
+.calc-howto-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(5, 7, 15, 0.88);
+    backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.calc-howto-overlay.open { display: flex; }
+.calc-howto-modal {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    width: min(780px, 100%);
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.8);
+    overflow: hidden;
+}
+.calc-howto-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid var(--border-primary);
+    flex-shrink: 0;
+}
+.calc-howto-head-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--cyan);
+}
+.calc-howto-close {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border-primary);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s, color 0.15s;
+}
+.calc-howto-close:hover { border-color: var(--red, #e06060); color: #e06060; }
+.calc-howto-body {
+    overflow-y: auto;
+    padding: 22px 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+.howto-section {}
+.howto-section-title {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(0,255,255,0.12);
+}
+.howto-p {
+    font-size: 0.68rem;
+    color: rgba(255,255,255,0.72);
+    line-height: 1.7;
+    margin-bottom: 6px;
+}
+.howto-p strong { color: var(--text-bright); }
+.howto-p code {
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--cyan);
+}
+.howto-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.64rem;
+    margin-top: 6px;
+}
+.howto-table th {
+    text-align: left;
+    color: rgba(255,255,255,0.4);
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--border-primary);
+}
+.howto-table td {
+    padding: 6px 8px;
+    color: rgba(255,255,255,0.72);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: top;
+    line-height: 1.5;
+}
+.howto-table td:first-child { color: var(--text-bright); font-weight: 700; white-space: nowrap; }
+.howto-callout {
+    background: rgba(0,255,255,0.05);
+    border-left: 3px solid var(--cyan);
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    font-size: 0.67rem;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.65;
+}
+.howto-callout strong { color: var(--cyan); }
+.howto-formula {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.66rem;
+    color: var(--text-bright);
+    margin: 6px 0;
+    line-height: 1.8;
+}
 .swing-var-inputs {
     display: flex;
     flex-direction: column;
@@ -903,6 +1046,108 @@ select.calc-input { cursor: pointer; }
             </button>
             <button class="calc-share" id="calc-share" type="button" data-tooltip="Copy a shareable link that restores these calculator inputs">Share</button>
             <button class="calc-share" id="calc-export-csv" type="button" data-tooltip="Download the current year-by-year projection as a CSV file">Download CSV</button>
+            <button class="calc-howto-btn" id="calc-howto-open" type="button" data-tooltip="Open a detailed guide explaining every input and concept in this calculator">? How to Use</button>
+        </div>
+
+        <!-- HOW TO USE MODAL -->
+        <div class="calc-howto-overlay" id="calc-howto-overlay" role="dialog" aria-modal="true" aria-label="How to Use the Calculator">
+            <div class="calc-howto-modal" id="calc-howto-modal">
+                <div class="calc-howto-head">
+                    <span class="calc-howto-head-title">📖 How to Use This Calculator</span>
+                    <button class="calc-howto-close" id="calc-howto-close" title="Close">✕</button>
+                </div>
+                <div class="calc-howto-body">
+
+                    <div class="howto-section">
+                        <div class="howto-section-title">What This Calculator Does</div>
+                        <p class="howto-p">This calculator models <strong>forward wealth compounding</strong> from repeatedly trading leveraged ETF cycles — accounting for brokerage fees, FX markup, India LRS/TCS rules, STCG/LTCG tax slabs, and surcharges. Every number is after-tax and after-cost.</p>
+                        <div class="howto-callout"><strong>Key idea:</strong> You set how much capital you start with, what return you target per cycle, how many cycles per year, and over how many years — and the calculator compounds it forward realistically, deducting taxes each year.</div>
+                    </div>
+
+                    <div class="howto-section">
+                        <div class="howto-section-title">Step 1 — Choose a Mode</div>
+                        <table class="howto-table">
+                            <tr><th>Mode</th><th>What it does</th></tr>
+                            <tr><td>Seed from detected cycles</td><td>Auto-fills Gross Return and Cycles/Year from the actual historical trough-to-peak cycles detected on this page for the selected ticker. Numbers change when you switch tickers.</td></tr>
+                            <tr><td>Manual override</td><td>Ignores all historical data. You manually set every parameter yourself. Use this when you want full control, e.g. modelling a specific strategy independent of any ticker's history.</td></tr>
+                        </table>
+                    </div>
+
+                    <div class="howto-section">
+                        <div class="howto-section-title">Step 2 — Understand How Gross Return Is Calculated</div>
+                        <p class="howto-p">This is the most important concept. There are <strong>three ways</strong> to set it via the <strong>"Gross Return / Cycle"</strong> field:</p>
+                        <table class="howto-table">
+                            <tr><th>Mode</th><th>Formula</th><th>When to use</th></tr>
+                            <tr><td>Auto</td><td>Median (or Avg) historical cycle gain × Capture fraction %</td><td>When you want the return driven by the ticker's real cycle history, and the Capture slider represents how much of the full move you realistically catch (e.g. 60% = you captured 60% of the full trough-to-peak move).</td></tr>
+                            <tr><td>Single</td><td>Exactly the % you type (e.g. type 60 → 60% gross per cycle)</td><td>When you are targeting a specific return per trade regardless of ticker history. This directly sets the gross return and disables the Capture slider.</td></tr>
+                            <tr><td>Variable</td><td>Different % per swing in a repeating pattern (e.g. Swing 1 = 60%, Swing 2 = 70%)</td><td>When you expect your alternating trade setups to have different return profiles. The pattern repeats every N swings across the full horizon.</td></tr>
+                        </table>
+                        <div class="howto-callout" style="margin-top:10px"><strong>Common confusion:</strong> The Capture slider does NOT directly set your return to e.g. 60%. It multiplies the historical median. If KOLD's median cycle is 86% and you set Capture to 60%, your actual gross return is 86% × 60% = <strong>51.7% per cycle</strong> — not 60%. To directly target 60%, use <strong>Single mode and type 60</strong>.</div>
+                    </div>
+
+                    <div class="howto-section">
+                        <div class="howto-section-title">Step 3 — Cycles vs Swings Per Year</div>
+                        <table class="howto-table">
+                            <tr><th>Field</th><th>Meaning</th></tr>
+                            <tr><td>Cycles / Year</td><td>Historical physical limit — how many full trough-to-peak-to-trough cycles physically fit in a year based on detected cycle + gap durations. Auto-seeded from data. E.g. 2.5 means one cycle takes ~146 days on average.</td></tr>
+                            <tr><td>Swings / Year</td><td>How many trades <em>you</em> actually intend to execute per year. Can differ from Cycles/Year — e.g. if cycles happen 3×/yr but you only trade 2 of them, set Swings = 2. In Variable mode, this also controls how many times the return pattern repeats per year.</td></tr>
+                        </table>
+                        <div class="howto-callout"><strong>Example:</strong> Cycles/Year = 3, Swings/Year = 2 means you only take 2 of the 3 available opportunities per year. The simulation compounds at 2 swings/year frequency.</div>
+                    </div>
+
+                    <div class="howto-section">
+                        <div class="howto-section-title">Step 4 — Capital Risked / Trade (%)</div>
+                        <p class="howto-p">The percentage of your active corpus deployed into each trade. The remainder sits in idle cash and earns nothing (conservative assumption).</p>
+                        <div class="howto-formula">Effective gain = Capital × Capital Risked% × Net Return per cycle<br>E.g. ₹20L corpus, 80% risked, 50% net return → gain = ₹20L × 0.80 × 0.50 = ₹8L</div>
+                        <p class="howto-p">Default is 100% (all capital deployed). Set to e.g. 80 to model keeping 20% in cash as a safety buffer.</p>
+                    </div>
+
+                    <div class="howto-section">
+                        <div class="howto-section-title">Step 5 — Tax, TCS &amp; Vault Settings</div>
+                        <table class="howto-table">
+                            <tr><th>Setting</th><th>Meaning</th></tr>
+                            <tr><td>&lt;24mo STCG</td><td>Short-term capital gains tax (30% base + surcharge + 4% cess). Applies if you hold each position under 24 months. Higher tax rate.</td></tr>
+                            <tr><td>&gt;24mo LTCG</td><td>Long-term capital gains tax (12.5% base + surcharge capped at 15% + 4% cess). Applies if you hold over 24 months. Significantly lower rate.</td></tr>
+                            <tr><td>TCS Drag ON</td><td>Models the 20% Tax Collected at Source on LRS remittances above ₹10L/year. This cash is locked up (refundable at tax filing) but unavailable for compounding during the year — a real drag on growth.</td></tr>
+                            <tr><td>TCS Drag OFF</td><td>Ignores TCS lockup. Use this if you are below the ₹10L exemption threshold or have pre-funded your overseas account.</td></tr>
+                            <tr><td>Vault (repatriation)</td><td>When ON, gains stay offshore and TCS is only on the initial remittance. When OFF, models yearly repatriation with TCS applying to annual gains.</td></tr>
+                        </table>
+                    </div>
+
+                    <div class="howto-section">
+                        <div class="howto-section-title">Reading the Output</div>
+                        <table class="howto-table">
+                            <tr><th>Card</th><th>What it means</th></tr>
+                            <tr><td>Terminal Wealth</td><td>Your net after-tax, after-cost corpus at the end of the horizon. This is real take-home value.</td></tr>
+                            <tr><td>Terminal (USD)</td><td>Same wealth converted to USD at the projected FX rate (INR depreciates ~3%/yr by default).</td></tr>
+                            <tr><td>Net After-Tax CAGR</td><td>The true annualised growth rate of your net corpus. This is after all fees and taxes — the number that actually matters.</td></tr>
+                            <tr><td>Leakage Saved by IBKR Pivot</td><td>Extra wealth you gain by switching to IBKR (lower brokerage + FX) once your corpus exceeds the pivot threshold vs staying on INDmoney the whole time.</td></tr>
+                            <tr><td>Initial TCS Lockup</td><td>Amount locked up as TCS on your initial capital remittance. Refundable but unavailable for compounding.</td></tr>
+                            <tr><td>Corpus Milestones</td><td>Which year your net wealth first crosses ₹2Cr, ₹5Cr, ₹10Cr.</td></tr>
+                        </table>
+                    </div>
+
+                    <div class="howto-section">
+                        <div class="howto-section-title">⚡ Swing Schedule &amp; Year-wise Goals</div>
+                        <p class="howto-p">The table below the chart shows a <strong>year-by-year breakdown</strong> of your swing plan:</p>
+                        <table class="howto-table">
+                            <tr><th>Column</th><th>What it means</th></tr>
+                            <tr><td>Swings</td><td>Complete trades that land in this year. Fractional Swings/Year (e.g. 2.5) means some years get 2 trades, others get 3 — this table shows exactly which years get which.</td></tr>
+                            <tr><td>Cumul.</td><td>Running total of completed swings since Year 1. The partial decimal (e.g. 2.5 done) reflects fractional progress through the annual cycle.</td></tr>
+                            <tr><td>Return(s)</td><td>Gross return tag(s) for each swing this year. In Variable mode, each tag shows its exact targeted return. In Single/Auto mode, all swings have the same return.</td></tr>
+                            <tr><td>Corpus</td><td>Net after-tax corpus at the end of this year.</td></tr>
+                            <tr><td>Tax Paid</td><td>Tax deducted this year (STCG or LTCG depending on your holding setting).</td></tr>
+                        </table>
+                    </div>
+
+                    <div class="howto-section">
+                        <div class="howto-section-title">Sharing &amp; Saving Your Setup</div>
+                        <p class="howto-p">Click <strong>Share</strong> to copy a URL that encodes all your current inputs. Send it to anyone — opening the link restores your exact setup including ticker, capital, return mode, variable swing values, tax settings, and horizon.</p>
+                        <p class="howto-p">Click <strong>Download CSV</strong> to export the full year-by-year projection table as a spreadsheet.</p>
+                    </div>
+
+                </div>
+            </div>
         </div>
         <div class="calc-body" id="calc-body">
             <div class="calc-grid">
@@ -4263,6 +4508,18 @@ function calcInit() {
     // download CSV button → export the current year-by-year projection
     const exportEl = document.getElementById('calc-export-csv');
     if (exportEl) exportEl.addEventListener('click', calcExportCSV);
+
+    // how-to-use modal
+    const howtoOverlay = document.getElementById('calc-howto-overlay');
+    const howtoOpen    = document.getElementById('calc-howto-open');
+    const howtoClose   = document.getElementById('calc-howto-close');
+    const howtoModal   = document.getElementById('calc-howto-modal');
+    const openHowto  = () => { if (howtoOverlay) howtoOverlay.classList.add('open'); };
+    const closeHowto = () => { if (howtoOverlay) howtoOverlay.classList.remove('open'); };
+    if (howtoOpen)  howtoOpen.addEventListener('click', openHowto);
+    if (howtoClose) howtoClose.addEventListener('click', closeHowto);
+    if (howtoOverlay) howtoOverlay.addEventListener('click', e => { if (e.target === howtoOverlay) closeHowto(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && howtoOverlay && howtoOverlay.classList.contains('open')) closeHowto(); });
 
     const calcCanvas = document.getElementById('calc-canvas');
     if (calcCanvas) {
