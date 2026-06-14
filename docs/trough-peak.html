@@ -793,14 +793,14 @@ select.calc-input { cursor: pointer; }
                         <input class="calc-input" id="calc-gross-override" type="number" min="0" step="1" placeholder="auto = median × capture" data-tooltip="Enter custom gross return percentage per cycle. Clear to revert to auto.">
                     </div>
 
-                    <div class="calc-field" data-field="cyclesPerYear" data-tooltip="Number of compounding cycles per year, based on historical duration and wait times.">
+                    <div class="calc-field" data-field="cyclesPerYear" data-tooltip="Cycles / Year: The maximum number of complete cycle cycles (active trade duration + inactive gap days) that physically fit into a 365-day calendar year based on historical data.">
                         <div class="calc-field-head"><span class="calc-flbl">Cycles / Year</span><button class="calc-reset" data-reset="cyclesPerYear" title="Reset to data default">&#8635;</button></div>
-                        <input class="calc-input" id="calc-cycles" type="number" min="0" step="0.1" data-tooltip="Specify the expected number of trade cycles per calendar year.">
+                        <input class="calc-input" id="calc-cycles" type="number" min="0" step="0.1" data-tooltip="The physical calendar limit: How many full active+waiting cycles fit in a year. Clear to reset to historical default.">
                     </div>
 
-                    <div class="calc-field" data-field="swingsPerYear" data-tooltip="Number of price swings (trades) per year. Defaults to cycles per year.">
+                    <div class="calc-field" data-field="swingsPerYear" data-tooltip="Swings / Year: The actual number of trades (compounding gain events) you execute per year in the simulation. Defaults to Cycles/Year, but can be set lower to model missed trades.">
                         <div class="calc-field-head"><span class="calc-flbl">Swings / Year</span><button class="calc-reset" data-reset="swingsPerYear" title="Reset to cycles/year">&#8635;</button></div>
-                        <input class="calc-input" id="calc-swings" type="number" min="0" step="0.1" data-tooltip="Specify custom trade frequency (swings) per year.">
+                        <input class="calc-input" id="calc-swings" type="number" min="0" step="0.1" data-tooltip="The active compounding frequency: Number of actual trade gains compounded per year. Clear to default to Cycles/Year.">
                     </div>
 
                     <div class="calc-field" data-field="horizonYears" data-tooltip="The length of the investment simulation in years.">
