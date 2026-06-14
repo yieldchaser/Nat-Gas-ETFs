@@ -613,6 +613,98 @@ select.calc-input { cursor: pointer; }
     .calc-stat-grid { grid-template-columns: 1fr 1fr; }
     .calc-canvas-wrap { height: 240px; }
 }
+
+/* ---- SWING SCHEDULE PANEL ---- */
+.swing-schedule {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-left: 3px solid var(--cyan);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+}
+.swing-schedule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.swing-schedule-title {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--cyan);
+    text-transform: uppercase;
+}
+.swing-schedule-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.swing-pill {
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+.swing-pill.pill-cyan { border-color: rgba(0,255,255,0.35); color: var(--cyan); background: rgba(0,255,255,0.06); }
+.swing-pill.pill-green { border-color: rgba(61,184,122,0.35); color: var(--green); background: rgba(61,184,122,0.06); }
+.swing-pill.pill-gold { border-color: rgba(212,168,48,0.35); color: #d4a830; background: rgba(212,168,48,0.06); }
+.swing-schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.62rem;
+}
+.swing-schedule-table th {
+    font-size: 0.58rem;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.5);
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 5px 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    white-space: nowrap;
+}
+.swing-schedule-table td {
+    padding: 5px 6px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+.swing-schedule-table td:first-child {
+    text-align: left;
+    color: var(--cyan);
+    font-weight: 800;
+}
+.swing-schedule-table tr:last-child td { border-bottom: none; }
+.swing-schedule-table .swing-ret-tags {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.swing-ret-tag {
+    font-size: 0.55rem;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 700;
+    background: rgba(0,255,255,0.08);
+    border: 1px solid rgba(0,255,255,0.2);
+    color: var(--cyan);
+}
+.swing-ret-tag.tag-alt { background: rgba(212,168,48,0.08); border-color: rgba(212,168,48,0.2); color: #d4a830; }
+.swing-ret-tag.tag-purple { background: rgba(136,85,187,0.10); border-color: rgba(136,85,187,0.3); color: #bb88ee; }
+@media (max-width: 768px) {
+    .swing-schedule-table { font-size: 0.58rem; min-width: 480px; }
+    .swing-schedule-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
 </style>
 </head>
 <body>
@@ -891,6 +983,9 @@ select.calc-input { cursor: pointer; }
                 <div class="calc-output" id="calc-output">
                     <div class="calc-stat-grid" id="calc-stats" role="status" aria-live="polite"></div>
                     <span class="calc-sr" id="calc-announcer" role="status" aria-live="polite"></span>
+
+                    <!-- SWING SCHEDULE -->
+                    <div id="calc-swing-schedule" style="display:none;"></div>
 
                     <div class="calc-chart-card">
                         <div class="calc-chart-tabs" id="calc-chart-tabs" role="tablist">
@@ -3064,6 +3159,7 @@ function renderCalc() {
     const ann = document.getElementById('calc-announcer');
     if (ann) ann.textContent = `Terminal wealth ${fmtINR(sim.terminal)}, net CAGR ${(sim.cagr*100).toFixed(1)} percent.`;
 
+    renderSwingSchedule(inp, sim);
     calcDrawChart(sim, inp);
     calcRenderCompliance(inp);
 }
@@ -3094,6 +3190,156 @@ function calcRenderCompliance(inp) {
         { cls: 'cv-green', icon: '🟢', html: `<strong>NOT TAX/LEGAL ADVICE.</strong> Confirm with a CA; rates change every Budget.` },
     ];
     el.innerHTML = caveats.map(c => `<div class="calc-caveat ${c.cls}"><span class="cv-icon">${c.icon}</span><span>${c.html}</span></div>`).join('');
+}
+
+// ── Swing Schedule renderer ───────────────────────────────────────────────────
+function renderSwingSchedule(inp, sim) {
+    const el = document.getElementById('calc-swing-schedule');
+    if (!el) return;
+
+    const spy = inp.swingsPerYear;  // can be decimal e.g. 2.5
+    const horizon = inp.horizonYears;
+    const totalSwings = spy * horizon;  // e.g. 25 for 2.5 × 10yr
+
+    // resolve returns — what does each swing earn?
+    const isArray = Array.isArray(inp.grossPerCycleOverride);
+    const overrides = isArray ? inp.grossPerCycleOverride : null;
+    // Single gross return (scalar)
+    const singleGross = !isArray
+        ? (inp.grossPerCycleOverride != null
+            ? inp.grossPerCycleOverride
+            : (inp.medianGainPct / 100) * inp.captureFraction)
+        : null;
+
+    // Build year rows
+    // swingsThisYear = fractional for the current year
+    // We use a running cumulative counter to properly handle decimals like 2.5/yr
+    const rows = [];
+    let cumSwings = 0;
+    for (let y = 1; y <= horizon; y++) {
+        cumSwings += spy;
+        const yr = sim.years[y - 1];
+
+        // Whole swings that COMPLETE in this year (floor of cumulative minus prev)
+        const prevCum = cumSwings - spy;
+        const swingsComplete = Math.floor(cumSwings) - Math.floor(prevCum);
+        // Fractional progress within the year for decimals
+        const fracProgress = ((cumSwings % 1) === 0) ? spy : (cumSwings % 1);
+
+        // Per-swing return labels for this year
+        let retLabels = [];
+        if (overrides) {
+            // cycle through the array of overrides in order
+            const prevCount = Math.floor(prevCum);
+            for (let s = 0; s < swingsComplete; s++) {
+                const idx = (prevCount + s) % overrides.length;
+                retLabels.push({ val: (overrides[idx] * 100).toFixed(1) + '%', idx });
+            }
+        } else {
+            for (let s = 0; s < swingsComplete; s++) {
+                retLabels.push({ val: singleGross != null ? (singleGross * 100).toFixed(1) + '%' : '—', idx: 0 });
+            }
+        }
+
+        rows.push({
+            year: y,
+            swingsThisYear: spy,
+            swingsComplete,
+            cumSwings,
+            retLabels,
+            corpus: yr ? yr.corpus : null,
+            tax: yr ? yr.tax : null,
+        });
+    }
+
+    // Whether any variable returns (more than 1 unique)
+    const isVariable = isArray && overrides.length > 1;
+
+    // Summary pills
+    const totalStr = Number.isInteger(totalSwings) ? totalSwings.toString() : totalSwings.toFixed(1);
+    const spyStr = Number.isInteger(spy) ? spy.toString() : spy.toFixed(2);
+    const returnsLabel = isArray
+        ? overrides.map(r => (r * 100).toFixed(1) + '%').join(', ')
+        : singleGross != null ? (singleGross * 100).toFixed(1) + '% each' : 'auto';
+
+    let html = `
+    <div class="swing-schedule" data-tooltip="Swing Schedule: Shows exactly how many trade cycles (swings) are targeted each year, the cumulative running total, and the gross return assigned to each swing. Useful when using decimal swings/year (e.g. 2.5/yr = 25 swings over 10 years) or variable per-swing returns (e.g. '60, 70' alternating).">\n
+        <div class="swing-schedule-header">
+            <span class="swing-schedule-title">⚡ Swing Schedule &amp; Year-wise Goals</span>
+            <div class="swing-schedule-pills">
+                <span class="swing-pill pill-cyan" data-tooltip="Total compounding events (swings) over the entire horizon = Swings/Year × Horizon Years">${totalStr} total swings</span>
+                <span class="swing-pill pill-green" data-tooltip="Number of swings targeted per year (can be fractional). Compounding math applies this as an exponent.">${spyStr} swings / yr</span>
+                <span class="swing-pill pill-gold" data-tooltip="The gross return(s) modeled per swing (before fees/tax).">Returns: ${returnsLabel}</span>
+            </div>
+        </div>
+
+        <div class="swing-schedule-table-wrap">
+        <table class="swing-schedule-table">
+            <thead>
+                <tr>
+                    <th data-tooltip="Investment year">Year</th>
+                    <th data-tooltip="Number of complete swing cycles targeted in this calendar year. Fractional swings/year means some years have more, some less.">Swings</th>
+                    <th data-tooltip="Running total of all swings completed since day 1. E.g., 2.5/yr means Year 1=2 complete, Year 2=5, Year 3=7...">Cumul.</th>
+                    <th data-tooltip="The gross return (before fees and tax) assigned to each swing in this year. Multiple values shown when variable swing returns are configured.">Return(s)</th>
+                    <th data-tooltip="Net corpus at end of this year after all taxes and fees.">Corpus</th>
+                    <th data-tooltip="Tax paid this year on swing gains.">Tax paid</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    rows.forEach((r, i) => {
+        const cumStr = r.cumSwings % 1 === 0
+            ? r.cumSwings.toFixed(0)
+            : r.cumSwings.toFixed(2) + ` (${Math.floor(r.cumSwings)} done)`;
+
+        const swingsStr = r.swingsComplete > 0
+            ? r.swingsComplete.toString()
+            : `0 <span style="opacity:0.5;font-size:0.55rem">(${r.cumSwings.toFixed(2)})</span>`;
+
+        // Build colored tags for each return
+        const tagColors = ['', 'tag-alt', 'tag-purple'];
+        const tags = r.retLabels.length > 0
+            ? r.retLabels.map((lbl, li) => `<span class="swing-ret-tag ${tagColors[lbl.idx % 3]}" data-tooltip="Swing #${Math.floor(r.cumSwings - r.swingsThisYear) + li + 1} gross return (before fees/tax)">${lbl.val}</span>`).join('')
+            : `<span style="opacity:0.35;font-size:0.55rem">≈ partial</span>`;
+
+        const corpusStr = r.corpus != null ? fmtINR(r.corpus) : '—';
+        const taxStr = r.tax != null && r.tax > 0 ? fmtINR(r.tax) : '—';
+
+        html += `
+                <tr data-tooltip="Year ${r.year}: ${r.swingsComplete} swing(s) targeted, cumulative ${r.cumSwings.toFixed(r.cumSwings % 1 === 0 ? 0 : 2)} swings, corpus ${corpusStr}">
+                    <td>Y${r.year}</td>
+                    <td>${swingsStr}</td>
+                    <td>${cumStr}</td>
+                    <td><div class="swing-ret-tags">${tags}</div></td>
+                    <td>${corpusStr}</td>
+                    <td style="color:rgba(239,68,68,0.85)">${taxStr}</td>
+                </tr>
+        `;
+    });
+
+    // Totals row
+    const totalCorpus = sim.terminal != null ? fmtINR(sim.terminal) : '—';
+    const totalTax = sim.taxTotal != null ? fmtINR(sim.taxTotal) : '—';
+    html += `
+                <tr style="border-top: 1px solid rgba(255,255,255,0.12); font-weight:800;">
+                    <td style="color:var(--text-bright)">TOTAL</td>
+                    <td style="color:var(--cyan)" data-tooltip="Total complete swings over the full horizon">${Math.floor(totalSwings)}</td>
+                    <td style="color:var(--cyan)" data-tooltip="Cumulative swings = swings/yr × horizon">${totalStr}</td>
+                    <td>—</td>
+                    <td style="color:var(--green)" data-tooltip="Terminal net wealth">${totalCorpus}</td>
+                    <td style="color:rgba(239,68,68,0.85)" data-tooltip="Total tax paid over full horizon">${totalTax}</td>
+                </tr>
+    `;
+
+    html += `
+            </tbody>
+        </table>
+        </div>
+    </div>`;
+
+    el.style.display = 'block';
+    el.innerHTML = html;
 }
 
 // ── Canvas chart (page's raw-canvas technique; no Chart.js) ───────────────────
