@@ -406,14 +406,48 @@ Professional-grade recovery cycle identification:
 
 #### Leveraged ETF Cycle Tax & Compounding Calculator
 
-An institutional-grade compounding simulator that models the real-world friction of trading offshore leveraged ETFs from India under LRS guidelines:
+An institutional-grade compounding simulator that models the real-world friction of trading offshore leveraged ETFs from India under LRS guidelines. 
 
-*   **Live USD/INR Exchange Rates:** Automatically queries `USDINR=X` live from Yahoo Finance at load time using proxy fallbacks to seed the base conversion rate (falls back to a default rate of `86` if queries fail).
-*   **TCS Cash Drag Modeling:** Models the actual cash flow impact of LRS Tax Collected at Source (TCS). Compounds only the post-TCS active capital during the fiscal year, and credits the locked TCS back into active capital in the subsequent year (modeling the annual tax refund/offset cycle).
-*   **USD/INR FX Drift:** Supports custom annual USD/INR currency depreciation/appreciation rates (default 3.0% annual USD tailwind). The simulator compounds this drift into the INR-converted asset value, properly calculating capital gains taxes on total INR gains.
-*   **Scenario Probability Cones:** Computes the 25th percentile (P25/Conservative) and 75th percentile (P75/Optimistic) cycle gains directly from the selected ticker's historical cycle distribution. Runs parallel simulations to draw translucent probability cones around the Expected (P50/Median) trajectory.
-*   **Tax Wedge Stacked Area Chart:** Replaces basic lines on the "Gross vs Net" tab with translucent stacked areas to visually decompose Net Wealth, Cumulative Tax Paid, and Cumulative Cost/FX Drag.
-*   **High-Context Hover Crosshairs:** Redraws the canvas on hover to overlay a vertical dashed crosshair line, place circular anchors on all active curves, and display a floating detail card.
+##### ⚖️ Regulatory & Tax Context (Indian LRS Guidelines)
+*   **LRS & FEMA Gray Area:** The RBI Liberalised Remittance Scheme (LRS) prohibits the use of remitted funds for margin trading, leveraged instruments, or derivatives abroad. Because daily-reset leveraged ETFs achieve leverage internally using swaps/derivatives rather than exposing the investor to margin calls, their classification remains an unsettled gray area. The worst-case FEMA consequence is typically a compounding settlement fee (capped at ₹2 Lakh under RBI 2025 guidelines) rather than prosecution.
+*   **Holding Period & Tax Treatment:** Offshore unlisted foreign shares are classified as Short-Term Capital Assets if held for $<24$ months, and Long-Term Capital Assets if held for $\ge 24$ months. 
+    *   **STCG:** Taxed at the investor's progressive income tax slab rate (e.g., 30% base slab + surcharge + 4% cess). Surcharges are progressive based on total taxable income: 10% ($>50$L), 15% ($>1$Cr), and 25% ($>2$Cr).
+    *   **LTCG:** Taxed at a flat 12.5% rate (Budget 2024/2026), with the surcharge capped at 15%.
+*   **LRS TCS:** Under LRS, outward remittances exceeding ₹7 Lakh per PAN per FY trigger a 20% Tax Collected at Source (TCS) (or 5% if for education/medical). While TCS is refundable or offsettable against regular tax liability at the end of the fiscal year, it creates a severe intraday/intrayear cash flow lockup.
+
+##### 🧮 Mathematical Model & Fee Drag
+The simulation compounds the capital year-by-year, factoring in brokerage fees, exchange rate markups, and structural drift:
+
+1.  **Net Return per Trade Swing ($R_{net}$):**
+    $$R_{net} = \frac{(1 + R_{gross}) \times (1 - C_{brk})}{1 + C_{brk} + C_{fx}} - 1$$
+    Where $R_{gross}$ is the gross captured return per cycle, $C_{brk}$ is the brokerage percentage per side (e.g. 0.25% for INDmoney, 0.05% for IBKR), and $C_{fx}$ is the currency markup (e.g. 0.70% for INDmoney, 0.40% for IBKR).
+2.  **Annual Compounding with FX Drift:**
+    $$Corpus_{y} = StartCorpus_{y} \times (1 + R_{net})^{SwingsPerYear} \times (1 + FX_{drift})$$
+    Where $FX_{drift}$ is the annual depreciation of INR against the USD (e.g., 3.0% annual tailwind). The currency gains compound into the INR corpus, making them fully taxable under capital gains rules.
+
+##### ⏳ TCS Cash Drag Modeling
+TCS is not just a tax; it is a temporary capital drain. The calculator simulates this drag dynamically:
+*   **Start of Year 1:** The initial remittance is reduced by the TCS paid:
+    $$TCS_{initial} = \max(0, Remittance - Exemption) \times TCS_{rate}$$
+    The active capital starting the compounding loop is $Corpus - TCS_{initial}$.
+*   **Fiscal Year Transition (Year $y$ to Year $y+1$):** At the start of Year $y+1$, the locked TCS from Year $y$ is credited/refunded back into the compounding active corpus. Concurrently, if the **USD Vault** is OFF (annual repatriation), the new TCS on the gains remitted back is computed and locked up for that year.
+*   **Net Wealth:** At the end of Year $y$, the user's Net Wealth is defined as the active compounding corpus plus any currently locked TCS:
+    $$NetWealth_y = ActiveCorpus_y + TCS_{locked, y}$$
+
+##### 📈 Scenario Probability Cones
+Rather than relying on static average returns, the calculator derives historical cycle gain distributions:
+*   **ZigZag Distribution:** The P25 (25th percentile / Conservative), P50 (Median / Expected), and P75 (75th percentile / Optimistic) gains are computed directly from the confirmed trough-to-peak cycles.
+*   **Translucent Cones:** Runs three parallel simulations (P25, P50, P75). On the *Corpus Growth* tab, it renders the Expected path as a solid cyan line, while plotting the P25 and P75 bounds as dashed lines. The region between them is filled with a translucent shadow (`rgba(80, 144, 160, 0.08)`) to represent the confidence range.
+*   **Hover Interactivity:** Hovering over any year on the chart renders dots on the P25, P50, and P75 points and shows their exact values in the floating tooltip card.
+
+##### 📉 Tax Wedge & Drag Decomposition
+On the *Gross vs Net* tab, the calculator visualizes how the wealth gets eroded over the horizon:
+*   **Gross Wealth:** The theoretical wealth if the captured return compounded with zero taxes, zero brokerage fees, and zero currency markups.
+*   **Net Wealth:** The actual wealth remaining after all costs and taxes are deducted.
+*   **Drag Decomposition:** Renders a stacked translucent area chart decomposing:
+    $$GrossWealth_y = NetWealth_y + Tax_{cumulative, y} + Cost_{cumulative, y}$$
+    Where $Tax_{cumulative}$ is filled in translucent red and $Cost_{cumulative}$ is filled in translucent gold, showing the relative impact of tax vs. transaction drag over time.
+
 
 #### Vol Regime Monitor
 
