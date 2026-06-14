@@ -2901,6 +2901,34 @@ function calcSyncFields() {
 
     if (calcUI.userSet.grossOverride && calcUI.values.grossOverride != null) setVal('calc-gross-override', calcUI.values.grossOverride);
     else { const g = document.getElementById('calc-gross-override'); if (g && document.activeElement !== g) g.value = ''; }
+
+    const hasOverride = calcUI.userSet.grossOverride && calcUI.values.grossOverride != null;
+    const captureInput = document.getElementById('calc-capture');
+    const captureField = document.querySelector('.calc-field[data-field="captureFraction"]');
+    const medianBtn = document.getElementById('calc-basis-median');
+    const avgBtn = document.getElementById('calc-basis-avg');
+    const resetBtn = captureField ? captureField.querySelector('.calc-reset') : null;
+
+    if (captureInput && captureField) {
+        if (hasOverride) {
+            captureInput.disabled = true;
+            captureInput.style.cursor = 'not-allowed';
+            captureField.style.opacity = '0.45';
+            captureField.setAttribute('data-tooltip', 'Capture Fraction is disabled because a Gross Return / Cycle Override is currently active. Clear the override field to reactivate this.');
+            if (medianBtn) { medianBtn.disabled = true; medianBtn.style.cursor = 'not-allowed'; }
+            if (avgBtn) { avgBtn.disabled = true; avgBtn.style.cursor = 'not-allowed'; }
+            if (resetBtn) { resetBtn.disabled = true; resetBtn.style.cursor = 'not-allowed'; resetBtn.style.opacity = '0.3'; }
+        } else {
+            captureInput.disabled = false;
+            captureInput.style.cursor = '';
+            captureField.style.opacity = '1';
+            captureField.setAttribute('data-tooltip', 'The percentage of the total historical cycle move you expect to capture per trade. Default is 40% because entering/exiting at perfect troughs/peaks is impossible; typical realistic capture ranges between 30% to 50% due to confirmation lag and execution friction.');
+            if (medianBtn) { medianBtn.disabled = false; medianBtn.style.cursor = ''; }
+            if (avgBtn) { avgBtn.disabled = false; avgBtn.style.cursor = ''; }
+            if (resetBtn) { resetBtn.disabled = false; resetBtn.style.cursor = ''; resetBtn.style.opacity = ''; }
+        }
+    }
+
     // mark user-set fields
     document.querySelectorAll('#calc-setup .calc-field[data-field]').forEach(f => {
         const fld = f.getAttribute('data-field');
