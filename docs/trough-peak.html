@@ -3062,11 +3062,18 @@ function calcDrawChart(sim, inp) {
     if (!years.length) return;
     const n = years.length;
     const cyan = '#5090a0', green = '#3db87a', red = '#c04040', gold = '#d4a830';
+    const tab = calcUI.chartTab;
 
     ctx.font = "10px 'JetBrains Mono', monospace";
     ctx.fillStyle = 'rgba(255,255,255,0.55)';
 
-    const getX = i => pad.left + (n === 1 ? cw/2 : (i/(n-1))*cw);
+    const getX = i => {
+        if (tab === 'tax') {
+            const binWidth = cw / n;
+            return pad.left + binWidth * (i + 0.5);
+        }
+        return pad.left + (n === 1 ? cw/2 : (i/(n-1))*cw);
+    };
 
     const safeMax = arr => { let m = -Infinity; for (let i=0;i<arr.length;i++) if (arr[i] > m) m = arr[i]; return m === -Infinity ? 1 : m; };
 
@@ -3128,7 +3135,6 @@ function calcDrawChart(sim, inp) {
         ctx.setLineDash([]);
     };
 
-    const tab = calcUI.chartTab;
     if (tab === 'corpus') {
         let corpus = years.map(y => y.corpus);
         let plotVals = corpus.slice();
@@ -3757,8 +3763,13 @@ function calcInit() {
             const n = calcUI.lastSim.years.length;
 
             if (x >= pad.left && x <= rect.width - pad.right) {
-                const pct = (x - pad.left) / cw;
-                const i = Math.round(pct * (n - 1));
+                let i;
+                if (calcUI.chartTab === 'tax') {
+                    i = Math.floor((x - pad.left) / (cw / n));
+                } else {
+                    const pct = (x - pad.left) / cw;
+                    i = Math.round(pct * (n - 1));
+                }
                 if (i >= 0 && i < n) {
                     calcUI.hoverIndex = i;
                     
