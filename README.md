@@ -433,22 +433,34 @@ The simulation compounds the capital year-by-year, factoring in brokerage fees, 
 1.  **Net Return per Trade Swing ($R_{net}$):**
     $$R_{net} = \frac{(1 + R_{gross}) \times (1 - C_{brk})}{1 + C_{brk} + C_{fx}} - 1$$
     Where $C_{brk}$ is the brokerage percentage per side, and $C_{fx}$ is the currency markup. 
-    $R_{gross}$ is the gross captured return per cycle, computed as:
+    $R_{gross}$ is the gross captured return per cycle. By default, it is:
     $$R_{gross} = \text{Historical Cycle Gain} \times \text{Capture Fraction}$$
     *The Capture Fraction (default 40%) accounts for the fact that perfect entry at absolute troughs and exit at absolute peaks is physically impossible due to signal lag and execution slippage.*
+    
+    *Alternatively, users can enter a **Gross Return Override** (either a single number or a comma-separated list of values like `60, 70` representing different returns for individual trade swings).*
 
-2.  **Annual Compounding with FX Drift:**
-    $$Corpus_{y} = StartCorpus_{y} \times (1 + R_{net})^{SwingsPerYear} \times (1 + FX_{drift})$$
+2.  **Capital Risked / Trade ($f_{risk}$):**
+    Specifies the fraction of active capital deployed in each trade (default $100\%$ or $f_{risk}=1.0$). The unrisked portion ($1 - f_{risk}$) remains in idle cash. For a swing with gross return $R_{gross}$ and transaction-adjusted net return $R_{net}$:
+    *   **Net Swing Factor:** $1 + f_{risk} \times R_{net}$ (brokerage/FX markups are paid only on the risked portion).
+    *   **Gross Swing Factor:** $1 + f_{risk} \times R_{gross}$ (gross gains compile only on the risked portion).
+
+3.  **Annual Compounding with FX Drift:**
+    $$Corpus_{y} = StartCorpus_{y} \times \text{Compounded Factor} \times (1 + FX_{drift})$$
     Where $FX_{drift}$ is the annual depreciation of INR against the USD (e.g., 3.0% annual tailwind). The currency gains compound into the INR corpus, making them fully taxable under capital gains rules.
 
 ##### 🔄 Compounding Frequency (Decimal Swings)
 The historical average frequency of complete cycles is derived as:
 $$\text{Cycles / Year} = \frac{365 \text{ days}}{\text{Average Cycle Duration (Days)} + \text{Average Waiting/Gap Days}}$$
-To prevent step-function rounding errors over long horizons, **Swings / Year** is modeled as a decimal number (e.g., 2.5 swings/year). In the simulation, the annual compounding factor uses the decimal swings directly as the exponent:
-$$\text{Compounded Factor} = (1 + R_{net})^{SwingsPerYear}$$
-For a 10-year simulation at 2.5 swings/year, this results in exactly 25 compounding trades:
-$$\text{10-Year Factor} = \left((1 + R_{net})^{2.5}\right)^{10} = (1 + R_{net})^{25}$$
-This matches the historical timeline without under- or over-estimating transaction frequencies.
+To prevent step-function rounding errors over long horizons, **Swings / Year** is modeled as a decimal number (e.g., 2.5 swings/year). If the user enters a list of overrides $R_{gross, 1}, R_{gross, 2}, \dots, R_{gross, k}$:
+*   **Auto-Syncing:** If not manually overridden, **Swings / Year** automatically synchronizes to the list length $k$.
+*   **Compounding Multiplier:** The annual compounding factor is calculated as the product of all swing elements, raised to the exponent scaling for `Swings / Year`:
+    $$\text{Compounded Net Factor} = \left(\prod_{j=1}^{k} (1 + f_{risk} \times R_{net, j})\right)^{\frac{SwingsPerYear}{k}}$$
+    $$\text{Compounded Gross Factor} = \left(\prod_{j=1}^{k} (1 + f_{risk} \times R_{gross, j})\right)^{\frac{SwingsPerYear}{k}}$$
+    Where $R_{net, j} = \text{calcNetPerf}(R_{gross, j}, \text{stack})$.
+    
+    If it is a single override $R_{gross}$:
+    $$\text{Compounded Net Factor} = (1 + f_{risk} \times R_{net})^{SwingsPerYear}$$
+    $$\text{Compounded Gross Factor} = (1 + f_{risk} \times R_{gross})^{SwingsPerYear}$$
 
 ##### ⏳ TCS Cash Drag Modeling
 TCS acts as an interest-free loan to the government, temporarily draining investable capital:
@@ -481,12 +493,17 @@ On the *Gross vs Net* tab, the calculator visualizes how the wealth gets eroded 
 ##### 🔀 Step-by-Step Simulation Algorithm
 For each year $y \in [1, Horizon]$:
 1.  **Check Platform State:** Compare active corpus against `pivotINR`. Set fees to IBKR if $Corpus_{y-1} \ge \text{pivotINR}$, else INDmoney.
-2.  **Calculate round-trip swing performance:**
-    $$R_{net} = \frac{(1 + R_{gross}) \times (1 - C_{brk})}{1 + C_{brk} + C_{fx}} - 1$$
-3.  **Compound active corpus over Swings / Year:**
-    $$Corpus_{gross\_year} = Corpus_{y-1} \times (1 + R_{net})^{swingsPerYear}$$
-4.  **Apply Annual Exchange Rate Tailwind:**
-    $$Corpus_{net\_year} = Corpus_{gross\_year} \times (1 + FX_{drift})$$
+2.  **Calculate compounded swing factors:**
+    Determine the annual multiplier factoring in capital risked fraction ($f_{risk}$) and potential swing-by-swing return lists:
+    *   If using a list of overrides $R_{gross, 1}, \dots, R_{gross, k}$:
+        $$\text{netMult} = \left(\prod_{j=1}^{k} (1 + f_{risk} \times R_{net, j})\right)^{\frac{swingsPerYear}{k}}$$
+        $$\text{grossMult} = \left(\prod_{j=1}^{k} (1 + f_{risk} \times R_{gross, j})\right)^{\frac{swingsPerYear}{k}}$$
+    *   If using a single gross return $R_{gross}$ (or data-default auto):
+        $$\text{netMult} = (1 + f_{risk} \times R_{net})^{swingsPerYear}$$
+        $$\text{grossMult} = (1 + f_{risk} \times R_{gross})^{swingsPerYear}$$
+3.  **Compound active corpus and apply FX Drift:**
+    $$Corpus_{net\_year} = Corpus_{y-1} \times \text{netMult} \times (1 + FX_{drift})$$
+    $$Corpus_{gross\_year} = Corpus_{y-1} \times \text{grossMult} \times (1 + FX_{drift})$$
 5.  **Compute Capital Gain for the year:**
     $$Gain_y = Corpus_{net\_year} - Corpus_{start\_of\_year}$$
 6.  **Calculate Progressive Surcharges & Taxes:**
