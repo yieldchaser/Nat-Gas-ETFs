@@ -61,6 +61,25 @@ input[type=range] {
     border-radius: 3px;
 }
 
+/* Track styles - Capture slider in calculator */
+#calc-capture::-webkit-slider-runnable-track {
+    height: 6px;
+    background: linear-gradient(to right, #fff var(--calc-fill-pct, 40%), rgba(255,255,255,0.15) var(--calc-fill-pct, 40%));
+    border-radius: 3px;
+    border: none;
+}
+#calc-capture::-moz-range-track {
+    height: 6px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 3px;
+    border: none;
+}
+#calc-capture::-moz-range-progress {
+    height: 6px;
+    background: #fff;
+    border-radius: 3px;
+}
+
 /* Thumb styles */
 input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
@@ -738,102 +757,102 @@ select.calc-input { cursor: pointer; }
                 <div class="calc-setup" id="calc-setup">
                     <div class="calc-section-lbl">Mode</div>
                     <div class="calc-seg" role="radiogroup" aria-label="Input mode">
-                        <button class="calc-seg-btn" id="calc-mode-auto" role="radio" aria-checked="true">Seed from detected cycles</button>
-                        <button class="calc-seg-btn" id="calc-mode-manual" role="radio" aria-checked="false">Manual override</button>
+                        <button class="calc-seg-btn" id="calc-mode-auto" role="radio" aria-checked="true" data-tooltip="Auto Mode: Seed settings from actual historical cycles detected on this page.">Seed from detected cycles</button>
+                        <button class="calc-seg-btn" id="calc-mode-manual" role="radio" aria-checked="false" data-tooltip="Manual Mode: Manually override return, frequency, and swing parameters.">Manual override</button>
                     </div>
 
                     <div class="calc-section-lbl">Setup</div>
-                    <div class="calc-field" data-field="ticker">
+                    <div class="calc-field" data-field="ticker" data-tooltip="Choose which ETF to use as the base for the compounding simulation.">
                         <div class="calc-field-head"><span class="calc-flbl">Ticker</span></div>
-                        <select class="calc-input" id="calc-ticker"></select>
+                        <select class="calc-input" id="calc-ticker" data-tooltip="Choose ETF to load historical cycle return and frequency parameters."></select>
                     </div>
 
-                    <div class="calc-field" data-field="capitalINR">
+                    <div class="calc-field" data-field="capitalINR" data-tooltip="Starting investment capital in Indian Rupees (₹) to compound.">
                         <div class="calc-field-head"><span class="calc-flbl">Initial Capital (₹)</span><button class="calc-reset" data-reset="capitalINR" title="Reset to data default">&#8635;</button></div>
-                        <input class="calc-input" id="calc-capital" type="number" min="0" step="100000">
+                        <input class="calc-input" id="calc-capital" type="number" min="0" step="100000" data-tooltip="Enter your starting investment corpus in INR.">
                         <div class="calc-presets">
-                            <button class="calc-preset" data-cap="500000">5L</button>
-                            <button class="calc-preset" data-cap="1000000">10L</button>
-                            <button class="calc-preset" data-cap="2000000">20L</button>
-                            <button class="calc-preset" data-cap="5000000">50L</button>
-                            <button class="calc-preset" data-cap="10000000">1Cr</button>
+                            <button class="calc-preset" data-cap="500000" data-tooltip="Set initial capital to ₹5 Lakh (₹5,00,000)">5L</button>
+                            <button class="calc-preset" data-cap="1000000" data-tooltip="Set initial capital to ₹10 Lakh (₹10,00,000)">10L</button>
+                            <button class="calc-preset" data-cap="2000000" data-tooltip="Set initial capital to ₹20 Lakh (₹20,00,000)">20L</button>
+                            <button class="calc-preset" data-cap="5000000" data-tooltip="Set initial capital to ₹50 Lakh (₹50,00,000)">50L</button>
+                            <button class="calc-preset" data-cap="10000000" data-tooltip="Set initial capital to ₹1 Crore (₹1,00,000,00)">1Cr</button>
                         </div>
                     </div>
 
-                    <div class="calc-field" data-field="captureFraction">
+                    <div class="calc-field" data-field="captureFraction" data-tooltip="The percentage of the total historical cycle move you expect to capture per trade.">
                         <div class="calc-field-head"><span class="calc-flbl">Capture / Cycle <span class="calc-range-val" id="calc-capture-val">40%</span></span><button class="calc-reset" data-reset="captureFraction" title="Reset to data default">&#8635;</button></div>
-                        <input class="calc-input" id="calc-capture" type="range" min="10" max="100" step="5" value="40" style="padding:0">
+                        <input class="calc-input" id="calc-capture" type="range" min="10" max="100" step="5" value="40" style="padding:0" data-tooltip="Slide to adjust your expected capture fraction per cycle (10% to 100%).">
                         <div class="calc-seg" role="radiogroup" aria-label="Capture basis" style="margin-top:4px">
-                            <button class="calc-seg-btn" id="calc-basis-median" role="radio" aria-checked="true">× MEDIAN</button>
-                            <button class="calc-seg-btn" id="calc-basis-avg" role="radio" aria-checked="false">× AVG (optimistic)</button>
+                            <button class="calc-seg-btn" id="calc-basis-median" role="radio" aria-checked="true" data-tooltip="× MEDIAN: Base the gross return on the median of historical cycles (more robust).">× MEDIAN</button>
+                            <button class="calc-seg-btn" id="calc-basis-avg" role="radio" aria-checked="false" data-tooltip="× AVG: Base the gross return on the average of historical cycles (optimistic).">× AVG (optimistic)</button>
                         </div>
                     </div>
 
-                    <div class="calc-field" data-field="grossOverride">
+                    <div class="calc-field" data-field="grossOverride" data-tooltip="Manually specify a gross return percentage per cycle. Overrides the capture fraction.">
                         <div class="calc-field-head"><span class="calc-flbl">Gross Return / Cycle override (%)</span><button class="calc-reset" data-reset="grossOverride" title="Clear override">&#8635;</button></div>
-                        <input class="calc-input" id="calc-gross-override" type="number" min="0" step="1" placeholder="auto = median × capture">
+                        <input class="calc-input" id="calc-gross-override" type="number" min="0" step="1" placeholder="auto = median × capture" data-tooltip="Enter custom gross return percentage per cycle. Clear to revert to auto.">
                     </div>
 
-                    <div class="calc-field" data-field="cyclesPerYear">
+                    <div class="calc-field" data-field="cyclesPerYear" data-tooltip="Number of compounding cycles per year, based on historical duration and wait times.">
                         <div class="calc-field-head"><span class="calc-flbl">Cycles / Year</span><button class="calc-reset" data-reset="cyclesPerYear" title="Reset to data default">&#8635;</button></div>
-                        <input class="calc-input" id="calc-cycles" type="number" min="0" step="0.1">
+                        <input class="calc-input" id="calc-cycles" type="number" min="0" step="0.1" data-tooltip="Specify the expected number of trade cycles per calendar year.">
                     </div>
 
-                    <div class="calc-field" data-field="swingsPerYear">
+                    <div class="calc-field" data-field="swingsPerYear" data-tooltip="Number of price swings (trades) per year. Defaults to cycles per year.">
                         <div class="calc-field-head"><span class="calc-flbl">Swings / Year</span><button class="calc-reset" data-reset="swingsPerYear" title="Reset to cycles/year">&#8635;</button></div>
-                        <input class="calc-input" id="calc-swings" type="number" min="0" step="0.1">
+                        <input class="calc-input" id="calc-swings" type="number" min="0" step="0.1" data-tooltip="Specify custom trade frequency (swings) per year.">
                     </div>
 
-                    <div class="calc-field" data-field="horizonYears">
+                    <div class="calc-field" data-field="horizonYears" data-tooltip="The length of the investment simulation in years.">
                         <div class="calc-field-head"><span class="calc-flbl">Horizon (years)</span><button class="calc-reset" data-reset="horizonYears" title="Reset to default">&#8635;</button></div>
-                        <input class="calc-input" id="calc-horizon" type="number" min="1" max="15" step="1">
+                        <input class="calc-input" id="calc-horizon" type="number" min="1" max="15" step="1" data-tooltip="Enter investment horizon in years (1 to 15).">
                     </div>
 
-                    <div class="calc-field" data-field="holding">
-                        <div class="calc-field-head"><span class="calc-flbl">Holding Period <span class="calc-range-val" id="calc-eff-rate">31.20%</span></span></div>
+                    <div class="calc-field" data-field="holding" data-tooltip="Expected hold duration per trade. Determines tax classification (STCG vs LTCG) under Indian tax laws.">
+                        <div class="calc-field-head"><span class="calc-flbl">Holding Period (Eff. Tax Rate: <span class="calc-range-val" id="calc-eff-rate">31.20%</span>)</span></div>
                         <div class="calc-seg" role="radiogroup" aria-label="Holding period">
-                            <button class="calc-seg-btn" id="calc-hold-stcg" role="radio" aria-checked="true">&lt;24mo STCG</button>
-                            <button class="calc-seg-btn" id="calc-hold-ltcg" role="radio" aria-checked="false">&ge;24mo LTCG</button>
+                            <button class="calc-seg-btn" id="calc-hold-stcg" role="radio" aria-checked="true" data-tooltip="&lt;24mo STCG: Gains taxed as unlisted foreign shares Short Term Capital Gains (at slab rates).">&lt;24mo STCG</button>
+                            <button class="calc-seg-btn" id="calc-hold-ltcg" role="radio" aria-checked="false" data-tooltip="&ge;24mo LTCG: Gains taxed as unlisted foreign shares Long Term Capital Gains (12.5% + surcharge cap).">&ge;24mo LTCG</button>
                         </div>
                     </div>
 
-                    <div class="calc-field" data-field="otherIncomeINR">
+                    <div class="calc-field" data-field="otherIncomeINR" data-tooltip="Your other annual taxable income in India. Determines surcharge tier for STCG tax.">
                         <div class="calc-field-head"><span class="calc-flbl">Other Annual Income (₹)</span><button class="calc-reset" data-reset="otherIncomeINR" title="Reset to 0">&#8635;</button></div>
-                        <input class="calc-input" id="calc-other-income" type="number" min="0" step="100000">
+                        <input class="calc-input" id="calc-other-income" type="number" min="0" step="100000" data-tooltip="Enter other taxable income to calculate precise surcharge rates.">
                     </div>
 
-                    <div class="calc-field" data-field="pivotINR">
+                    <div class="calc-field" data-field="pivotINR" data-tooltip="Net worth threshold at which account pivots from INDmoney (high fees) to Interactive Brokers (low fees).">
                         <div class="calc-field-head"><span class="calc-flbl">Pivot Threshold ₹ (INDmoney→IBKR)</span><button class="calc-reset" data-reset="pivotINR" title="Reset to ₹2Cr">&#8635;</button></div>
-                        <input class="calc-input" id="calc-pivot" type="number" min="0" step="1000000">
+                        <input class="calc-input" id="calc-pivot" type="number" min="0" step="1000000" data-tooltip="Set the capital size at which the platform switches to IBKR to reduce FX/brokerage drag.">
                     </div>
 
-                    <div class="calc-field" data-field="vault">
+                    <div class="calc-field" data-field="vault" data-tooltip="USD Vault Mode: Compound gains directly inside the offshore brokerage platform without annual repatriation, deferring TCS.">
                         <div class="calc-field-head"><span class="calc-flbl">USD Vault (compound in-platform, TCS once)</span></div>
                         <div class="calc-seg" role="radiogroup" aria-label="USD vault">
-                            <button class="calc-seg-btn" id="calc-vault-on" role="radio" aria-checked="true">ON</button>
-                            <button class="calc-seg-btn" id="calc-vault-off" role="radio" aria-checked="false">OFF (annual repat)</button>
+                            <button class="calc-seg-btn" id="calc-vault-on" role="radio" aria-checked="true" data-tooltip="ON: Reinvest gains directly in USD; TCS is paid only once on initial remittance.">ON</button>
+                            <button class="calc-seg-btn" id="calc-vault-off" role="radio" aria-checked="false" data-tooltip="OFF: Repatriate funds to India annually, triggering annual TCS on remittances above the exemption limit.">OFF (annual repat)</button>
                         </div>
                     </div>
 
-                    <details class="calc-advanced">
+                    <details class="calc-advanced" data-tooltip="Adjust Indian tax slabs, surcharges, brokerage, and FX markups for INDmoney and IBKR.">
                         <summary>Advanced &middot; Tax &amp; Cost Constants</summary>
                         <div class="calc-adv-body">
-                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">Base Slab</span></div><input class="calc-input" id="adv-slab" type="number" step="0.01"></div>
-                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">Cess</span></div><input class="calc-input" id="adv-cess" type="number" step="0.01"></div>
-                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">LTCG Rate</span></div><input class="calc-input" id="adv-ltcg" type="number" step="0.005"></div>
-                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">LTCG Surch Cap</span></div><input class="calc-input" id="adv-ltcgcap" type="number" step="0.01"></div>
-                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">TCS Rate</span></div><input class="calc-input" id="adv-tcs" type="number" step="0.01"></div>
-                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">TCS Exemption ₹</span></div><input class="calc-input" id="adv-tcsex" type="number" step="100000"></div>
-                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">INDmoney Brk/side</span></div><input class="calc-input" id="adv-ind-brk" type="number" step="0.0005"></div>
-                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">INDmoney FX</span></div><input class="calc-input" id="adv-ind-fx" type="number" step="0.0005"></div>
-                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">IBKR Brk/side</span></div><input class="calc-input" id="adv-ibkr-brk" type="number" step="0.0005"></div>
-                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">IBKR FX</span></div><input class="calc-input" id="adv-ibkr-fx" type="number" step="0.0005"></div>
-                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">USD/INR</span></div><input class="calc-input" id="adv-fx" type="number" step="0.5"></div>
-                            <div class="calc-field"><div class="calc-field-head"><span class="calc-flbl">Surch >2Cr (STCG)</span></div><input class="calc-input" id="adv-surch2cr" type="number" step="0.05"></div>
+                            <div class="calc-field" data-tooltip="Advanced: Base income tax slab rate (default 30%)."><div class="calc-field-head"><span class="calc-flbl">Base Slab</span></div><input class="calc-input" id="adv-slab" type="number" step="0.01"></div>
+                            <div class="calc-field" data-tooltip="Advanced: Education & health cess (default 4%)."><div class="calc-field-head"><span class="calc-flbl">Cess</span></div><input class="calc-input" id="adv-cess" type="number" step="0.01"></div>
+                            <div class="calc-field" data-tooltip="Advanced: Long Term Capital Gains rate for unlisted foreign shares (default 12.5%)."><div class="calc-field-head"><span class="calc-flbl">LTCG Rate</span></div><input class="calc-input" id="adv-ltcg" type="number" step="0.005"></div>
+                            <div class="calc-field" data-tooltip="Advanced: Surcharge cap on LTCG (default 15%)."><div class="calc-field-head"><span class="calc-flbl">LTCG Surch Cap</span></div><input class="calc-input" id="adv-ltcgcap" type="number" step="0.01"></div>
+                            <div class="calc-field" data-tooltip="Advanced: Tax Collected at Source rate for foreign remittances (default 20%)."><div class="calc-field-head"><span class="calc-flbl">TCS Rate</span></div><input class="calc-input" id="adv-tcs" type="number" step="0.01"></div>
+                            <div class="calc-field" data-tooltip="Advanced: Annual TCS exemption limit per PAN (default ₹10 Lakh)."><div class="calc-field-head"><span class="calc-flbl">TCS Exemption ₹</span></div><input class="calc-input" id="adv-tcsex" type="number" step="100000"></div>
+                            <div class="calc-field" data-tooltip="Advanced: INDmoney brokerage fee per side (default 0.25%)."><div class="calc-field-head"><span class="calc-flbl">INDmoney Brk/side</span></div><input class="calc-input" id="adv-ind-brk" type="number" step="0.0005"></div>
+                            <div class="calc-field" data-tooltip="Advanced: INDmoney exchange rate markup (default 0.70%)."><div class="calc-field-head"><span class="calc-flbl">INDmoney FX</span></div><input class="calc-input" id="adv-ind-fx" type="number" step="0.0005"></div>
+                            <div class="calc-field" data-tooltip="Advanced: IBKR brokerage fee per side (default 0.05%)."><div class="calc-field-head"><span class="calc-flbl">IBKR Brk/side</span></div><input class="calc-input" id="adv-ibkr-brk" type="number" step="0.0005"></div>
+                            <div class="calc-field" data-tooltip="Advanced: IBKR exchange rate markup (default 0.40%)."><div class="calc-field-head"><span class="calc-flbl">IBKR FX</span></div><input class="calc-input" id="adv-ibkr-fx" type="number" step="0.0005"></div>
+                            <div class="calc-field" data-tooltip="Advanced: Base currency conversion rate."><div class="calc-field-head"><span class="calc-flbl">USD/INR</span></div><input class="calc-input" id="adv-fx" type="number" step="0.5"></div>
+                            <div class="calc-field" data-tooltip="Advanced: Surcharge rate for income tax above ₹2 Crore (default 25%)."><div class="calc-field-head"><span class="calc-flbl">Surch >2Cr (STCG)</span></div><input class="calc-input" id="adv-surch2cr" type="number" step="0.05"></div>
                         </div>
                     </details>
 
-                    <button class="calc-reset-all" id="calc-reset-all">Reset all to detected-cycle defaults</button>
+                    <button class="calc-reset-all" id="calc-reset-all" data-tooltip="Revert all settings and advanced constants back to historical detected-cycle defaults.">Reset all to detected-cycle defaults</button>
                 </div>
 
                 <!-- OUTPUT COLUMN -->
@@ -843,15 +862,18 @@ select.calc-input { cursor: pointer; }
 
                     <div class="calc-chart-card">
                         <div class="calc-chart-tabs" id="calc-chart-tabs" role="tablist">
-                            <button class="calc-ctab active" data-ctab="corpus" role="tab">Corpus Growth</button>
-                            <button class="calc-ctab" data-ctab="tax" role="tab">Annual Tax</button>
-                            <button class="calc-ctab" data-ctab="wedge" role="tab">Gross vs Net</button>
-                            <button class="calc-ctab" data-ctab="effrate" role="tab">Eff. Tax Rate</button>
+                            <button class="calc-ctab active" data-ctab="corpus" role="tab" data-tooltip="Plot the growth of your net corpus over the investment horizon.">Corpus Growth</button>
+                            <button class="calc-ctab" data-ctab="tax" role="tab" data-tooltip="Plot the annual tax paid (STCG/LTCG) for each year.">Annual Tax</button>
+                            <button class="calc-ctab" data-ctab="wedge" role="tab" data-tooltip="Compare your gross wealth (before tax and fees) vs. your net actual wealth over time.">Gross vs Net</button>
+                            <button class="calc-ctab" data-ctab="effrate" role="tab" data-tooltip="Plot the effective tax rate (base slab + surcharge + cess) for each year.">Eff. Tax Rate</button>
                         </div>
-                        <div class="calc-canvas-wrap"><canvas id="calc-canvas"></canvas></div>
+                        <div class="calc-canvas-wrap" style="position: relative;">
+                            <canvas id="calc-canvas"></canvas>
+                            <div id="calc-chart-tooltip" style="position: absolute; display: none; z-index: 100; background: rgba(13, 17, 28, 0.97); border: 1px solid var(--border-primary); border-radius: 6px; padding: 10px 12px; pointer-events: none; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; box-shadow: 0 8px 24px rgba(0,0,0,0.6); width: 180px;"></div>
+                        </div>
                         <div class="calc-chart-opts">
-                            <label><input type="checkbox" id="calc-log"> Log scale</label>
-                            <label><input type="checkbox" id="calc-compare"> Compare vs unlevered equivalent</label>
+                            <label data-tooltip="Toggle logarithmic scale (helpful for exponential compound growth visualization)."><input type="checkbox" id="calc-log"> Log scale</label>
+                            <label data-tooltip="Plot the performance of an unlevered ETF strategy (same capture but divided by leverage factor) to measure the value of leverage."><input type="checkbox" id="calc-compare"> Compare vs unlevered equivalent</label>
                         </div>
                     </div>
 
@@ -2510,6 +2532,13 @@ function fmtUSD(n) {
     if (Math.abs(n) >= 1e3) return `$${(n/1e3).toFixed(1)}K`;
     return `$${Math.round(n).toLocaleString('en-US')}`;
 }
+function updateCalcCaptureFill() {
+    const el = document.getElementById('calc-capture');
+    if (el) {
+        const pct = ((+el.value - +el.min) / (+el.max - +el.min)) * 100;
+        el.style.setProperty('--calc-fill-pct', pct + '%');
+    }
+}
 
 // ── Thin adapter: read existing detected cycles (do NOT recompute) ─────────────
 function getCycleStatsForTicker(sym) {
@@ -2649,6 +2678,7 @@ const calcUI = {
     cfg: JSON.parse(JSON.stringify(TAX_CONFIG)),
     lastSim: null,
     prevStats: {},
+    hoverIndex: null, // Track hovered index on calculator chart
 };
 
 function calcActiveSym() {
@@ -2720,6 +2750,7 @@ function calcSyncFields() {
     const cap = Math.round(calcGetVal('captureFraction', def) * 100);
     setVal('calc-capture', cap);
     const cv = document.getElementById('calc-capture-val'); if (cv) cv.textContent = cap + '%';
+    updateCalcCaptureFill();
     setVal('calc-cycles', calcGetVal('cyclesPerYear', def));
     setVal('calc-swings', calcGetVal('swingsPerYear', def));
     setVal('calc-horizon', Math.round(calcGetVal('horizonYears', def)));
@@ -2771,20 +2802,20 @@ function renderCalc() {
     const crossTxt = y => y ? `Year ${y}` : '—';
 
     const cards = [
-        { lbl: 'Terminal Wealth', val: fmtINR(sim.terminal), sub: `${inp.horizonYears}y horizon`, cls: 'headline' },
-        { lbl: 'Terminal (USD)', val: fmtUSD(sim.terminalUSD), sub: `@ ₹${calcUI.cfg.fx.usdInr}/USD` },
-        { lbl: 'Net After-Tax CAGR', val: (sim.cagr*100).toFixed(1)+'%', sub: captureHigh ? 'capture >60% — optimistic' : `capture ${(inp.captureFraction*100).toFixed(0)}%`, cls: captureHigh ? 'amber' : '' },
-        { lbl: 'Total Tax', val: fmtINR(sim.taxTotal), sub: `eff ${(sim.effRateOverall*100).toFixed(1)}%` },
-        { lbl: 'Total Cost / FX Drag', val: fmtINR(sim.costTotal), sub: 'brokerage + FX markup' },
-        { lbl: 'Leakage Saved by IBKR Pivot', val: fmtINR(leak), sub: sim.pivotYear ? `pivot @ Year ${sim.pivotYear}` : 'no pivot reached' },
-        { lbl: 'Initial TCS Lockup', val: fmtINR(sim.initialTCS), sub: calcUI.vault==='on' ? 'refundable · vault: once' : `total ${fmtINR(sim.tcsLockTotal)} (annual)` },
-        { lbl: 'Corpus Milestones', val: crossTxt(sim.cross2cr), sub: `₹5Cr: ${crossTxt(sim.cross5cr)} · ₹10Cr: ${crossTxt(sim.cross10cr)}` },
+        { lbl: 'Terminal Wealth', val: fmtINR(sim.terminal), sub: `${inp.horizonYears}y horizon`, cls: 'headline', tip: 'The projected net after-tax value of your corpus at the end of the investment horizon.' },
+        { lbl: 'Terminal (USD)', val: fmtUSD(sim.terminalUSD), sub: `@ ₹${calcUI.cfg.fx.usdInr}/USD`, tip: 'The terminal wealth converted to USD at the specified currency exchange rate.' },
+        { lbl: 'Net After-Tax CAGR', val: (sim.cagr*100).toFixed(1)+'%', sub: captureHigh ? 'capture >60% — optimistic' : `capture ${(inp.captureFraction*100).toFixed(0)}%`, cls: captureHigh ? 'amber' : '', tip: 'Annualized compounding growth rate of your investment after deducting all taxes, brokerage, and FX costs.' },
+        { lbl: 'Total Tax', val: fmtINR(sim.taxTotal), sub: `eff ${(sim.effRateOverall*100).toFixed(1)}%`, tip: 'The cumulative income tax paid over the full horizon. eff shows overall tax as % of gross gains.' },
+        { lbl: 'Total Cost / FX Drag', val: fmtINR(sim.costTotal), sub: 'brokerage + FX markup', tip: 'The cumulative amount lost to platform fees, brokerage, and currency exchange markups.' },
+        { lbl: 'Leakage Saved by IBKR Pivot', val: fmtINR(leak), sub: sim.pivotYear ? `pivot @ Year ${sim.pivotYear}` : 'no pivot reached', tip: 'Total wealth saved by switching from INDmoney to IBKR when the pivot threshold was crossed. Re-simulates without a pivot for comparison.' },
+        { lbl: 'Initial TCS Lockup', val: fmtINR(sim.initialTCS), sub: calcUI.vault==='on' ? 'refundable · vault: once' : `total ${fmtINR(sim.tcsLockTotal)} (annual)`, tip: 'Tax Collected at Source (TCS) paid on remittances. Refundable via annual tax return or offset against slab liability.' },
+        { lbl: 'Corpus Milestones', val: crossTxt(sim.cross2cr), sub: `₹5Cr: ${crossTxt(sim.cross5cr)} · ₹10Cr: ${crossTxt(sim.cross10cr)}`, tip: 'The year in which the corpus crosses ₹2 Crore, ₹5 Crore, and ₹10 Crore benchmarks.' },
     ];
 
     statsEl.innerHTML = cards.map((c,i) => {
         const prev = calcUI.prevStats[i];
         const flash = (prev != null && prev !== c.val) ? ' flash' : '';
-        return `<div class="calc-stat ${c.cls||''}${flash}"><div class="calc-stat-lbl">${c.lbl}</div><div class="calc-stat-val">${c.val}</div><div class="calc-stat-sub">${c.sub}</div></div>`;
+        return `<div class="calc-stat ${c.cls||''}${flash}" data-tooltip="${c.tip}"><div class="calc-stat-lbl">${c.lbl}</div><div class="calc-stat-val">${c.val}</div><div class="calc-stat-sub">${c.sub}</div></div>`;
     }).join('');
     cards.forEach((c,i)=> calcUI.prevStats[i] = c.val);
 
@@ -2966,6 +2997,98 @@ function calcDrawChart(sim, inp) {
         }
         ctx.strokeStyle = cyan; ctx.lineWidth = 2; ctx.stroke();
     }
+
+    // -- Hover indicators --
+    if (calcUI.hoverIndex !== null && calcUI.hoverIndex < n) {
+        const hIdx = calcUI.hoverIndex;
+        const hX = getX(hIdx);
+
+        // Draw vertical dotted line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(hX, pad.top);
+        ctx.lineTo(hX, pad.top + ch);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Draw dots on the lines/bars at hIdx
+        if (tab === 'corpus') {
+            let corpus = years.map(y => y.corpus);
+            let plotVals = corpus.slice();
+            let cmpVals = null;
+            if (calcUI.compare) {
+                const lev = (calcActiveSym().includes('3N')) ? 3 : 2;
+                const cmpInp = Object.assign({}, inp, {
+                    medianGainPct: inp._basisGain / lev,
+                    grossPerCycleOverride: inp.grossPerCycleOverride != null ? inp.grossPerCycleOverride/lev : null,
+                });
+                cmpVals = simulate(cmpInp, calcUI.cfg).years.map(y => y.corpus);
+            }
+            const allMax = safeMax(cmpVals ? plotVals.concat(cmpVals) : plotVals);
+
+            if (calcUI.logScale) {
+                const lg = v => Math.log10(Math.max(1, v));
+                const lmax = lg(allMax);
+
+                const yVal = pad.top + ch - (lmax > 0 ? (lg(corpus[hIdx]) / lmax) * ch : 0);
+                ctx.beginPath(); ctx.arc(hX, yVal, 4, 0, Math.PI * 2);
+                ctx.fillStyle = cyan; ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+
+                if (cmpVals) {
+                    const yValCmp = pad.top + ch - (lmax > 0 ? (lg(cmpVals[hIdx]) / lmax) * ch : 0);
+                    ctx.beginPath(); ctx.arc(hX, yValCmp, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = gold; ctx.fill();
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+                }
+            } else {
+                const yVal = pad.top + ch - (allMax > 0 ? (corpus[hIdx] / allMax) * ch : 0);
+                ctx.beginPath(); ctx.arc(hX, yVal, 4, 0, Math.PI * 2);
+                ctx.fillStyle = cyan; ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+
+                if (cmpVals) {
+                    const yValCmp = pad.top + ch - (allMax > 0 ? (cmpVals[hIdx] / allMax) * ch : 0);
+                    ctx.beginPath(); ctx.arc(hX, yValCmp, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = gold; ctx.fill();
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+                }
+            }
+        } else if (tab === 'tax') {
+            const vals = years.map(y => y.tax);
+            const maxV = safeMax(vals);
+            const bw = Math.max(3, cw / n * 0.6);
+            const bh = maxV > 0 ? (vals[hIdx] / maxV) * ch : 0;
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.fillRect(hX - bw/2 - 2, pad.top, bw + 4, ch);
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.fillRect(hX - bw/2, pad.top + ch - bh, bw, bh);
+        } else if (tab === 'wedge') {
+            const grossV = years.map(y => y.grossWealth);
+            const netV = years.map(y => y.netWealth);
+            const maxV = safeMax(grossV);
+
+            const yGross = pad.top + ch - (maxV > 0 ? (grossV[hIdx] / maxV) * ch : 0);
+            ctx.beginPath(); ctx.arc(hX, yGross, 4, 0, Math.PI * 2);
+            ctx.fillStyle = gold; ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+
+            const yNet = pad.top + ch - (maxV > 0 ? (netV[hIdx] / maxV) * ch : 0);
+            ctx.beginPath(); ctx.arc(hX, yNet, 4, 0, Math.PI * 2);
+            ctx.fillStyle = green; ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+        } else if (tab === 'effrate') {
+            const vals = years.map(y => y.effRate*100);
+            const maxV = Math.max(40, safeMax(vals)*1.1);
+
+            const yVal = pad.top + ch - (maxV > 0 ? (vals[hIdx] / maxV) * ch : 0);
+            ctx.beginPath(); ctx.arc(hX, yVal, 4, 0, Math.PI * 2);
+            ctx.fillStyle = cyan; ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+    }
 }
 
 // ── URL-hash share / restore (spec §8) ───────────────────────────────────────
@@ -3111,6 +3234,7 @@ function calcInit() {
         calcUI.userSet.captureFraction = true;
         calcUI.values.captureFraction = parseInt(capEl.value)/100;
         const cv = document.getElementById('calc-capture-val'); if (cv) cv.textContent = capEl.value + '%';
+        updateCalcCaptureFill();
         renderCalc();
     });
 
@@ -3231,7 +3355,128 @@ function calcInit() {
     const exportEl = document.getElementById('calc-export-csv');
     if (exportEl) exportEl.addEventListener('click', calcExportCSV);
 
+    const calcCanvas = document.getElementById('calc-canvas');
+    if (calcCanvas) {
+        calcCanvas.addEventListener('mousemove', e => {
+            if (!calcUI.lastSim || !calcUI.lastSim.years || !calcUI.lastSim.years.length) return;
+            const rect = calcCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const pad = { top: 24, right: 18, bottom: 30, left: 64 };
+            const cw = rect.width - pad.left - pad.right;
+            const n = calcUI.lastSim.years.length;
+
+            if (x >= pad.left && x <= rect.width - pad.right) {
+                const pct = (x - pad.left) / cw;
+                const i = Math.round(pct * (n - 1));
+                if (i >= 0 && i < n) {
+                    calcUI.hoverIndex = i;
+                    
+                    // Show/Update tooltip
+                    const tooltip = document.getElementById('calc-chart-tooltip');
+                    if (tooltip) {
+                        const tipW = 180;
+                        const leftPos = (x + 15 + tipW > rect.width) ? x - tipW - 10 : x + 15;
+                        tooltip.style.display = 'block';
+                        tooltip.style.left = `${leftPos}px`;
+                        
+                        // Populate tooltip content based on tab
+                        const yearData = calcUI.lastSim.years[i];
+                        const tab = calcUI.chartTab;
+                        let html = `<div class="tooltip-date">Year ${yearData.year}</div>`;
+                        
+                        if (tab === 'corpus') {
+                            html += `
+                            <div class="tooltip-row">
+                                <span class="tooltip-lbl" style="color:#5090a0">Net Corpus</span>
+                                <span class="tooltip-val" style="color:var(--text-bright)">${fmtINR(yearData.corpus)}</span>
+                            </div>`;
+                            if (calcUI.compare) {
+                                const lev = (calcActiveSym().includes('3N')) ? 3 : 2;
+                                const cmpInp = Object.assign({}, calcBuildInputs(), {
+                                    medianGainPct: calcBuildInputs()._basisGain / lev,
+                                    grossPerCycleOverride: calcBuildInputs().grossPerCycleOverride != null ? calcBuildInputs().grossPerCycleOverride/lev : null,
+                                });
+                                const cmpSim = simulate(cmpInp, calcUI.cfg);
+                                const cmpVal = cmpSim.years[i].corpus;
+                                html += `
+                                <div class="tooltip-row">
+                                    <span class="tooltip-lbl" style="color:#d4a830">Unlevered</span>
+                                    <span class="tooltip-val" style="color:#d4a830">${fmtINR(cmpVal)}</span>
+                                </div>`;
+                            }
+                            html += `
+                            <div class="tooltip-row">
+                                <span class="tooltip-lbl">Year Gain</span>
+                                <span class="tooltip-val" style="color:#fff">${fmtINR(yearData.yearGain)}</span>
+                            </div>`;
+                        } else if (tab === 'tax') {
+                            html += `
+                            <div class="tooltip-row">
+                                <span class="tooltip-lbl" style="color:#e06060">Tax Paid</span>
+                                <span class="tooltip-val" style="color:var(--text-bright)">${fmtINR(yearData.tax)}</span>
+                            </div>
+                            <div class="tooltip-row">
+                                <span class="tooltip-lbl">Eff. Rate</span>
+                                <span class="tooltip-val" style="color:#fff">${(yearData.effRate*100).toFixed(2)}%</span>
+                            </div>`;
+                        } else if (tab === 'wedge') {
+                            html += `
+                            <div class="tooltip-row">
+                                <span class="tooltip-lbl" style="color:#d4a830">Gross Wealth</span>
+                                <span class="tooltip-val" style="color:var(--text-bright)">${fmtINR(yearData.grossWealth)}</span>
+                            </div>
+                            <div class="tooltip-row">
+                                <span class="tooltip-lbl" style="color:#3db87a">Net Wealth</span>
+                                <span class="tooltip-val" style="color:var(--text-bright)">${fmtINR(yearData.netWealth)}</span>
+                            </div>
+                            <div class="tooltip-row">
+                                <span class="tooltip-lbl" style="color:#ef4444">Tax/Cost Drag</span>
+                                <span class="tooltip-val" style="color:#ef4444">${fmtINR(yearData.grossWealth - yearData.netWealth)}</span>
+                            </div>`;
+                        } else if (tab === 'effrate') {
+                            html += `
+                            <div class="tooltip-row">
+                                <span class="tooltip-lbl" style="color:#5090a0">Eff. Tax Rate</span>
+                                <span class="tooltip-val" style="color:var(--text-bright)">${(yearData.effRate*100).toFixed(2)}%</span>
+                            </div>
+                            <div class="tooltip-row">
+                                <span class="tooltip-lbl">Year Gain</span>
+                                <span class="tooltip-val" style="color:#fff">${fmtINR(yearData.yearGain)}</span>
+                            </div>
+                            <div class="tooltip-row">
+                                <span class="tooltip-lbl">Year Tax</span>
+                                <span class="tooltip-val" style="color:#fff">${fmtINR(yearData.tax)}</span>
+                            </div>`;
+                        }
+                        
+                        tooltip.innerHTML = html;
+                        tooltip.style.top = `${Math.max(5, Math.min(rect.height - tooltip.offsetHeight - 5, y - 15))}px`;
+                    }
+                } else {
+                    calcUI.hoverIndex = null;
+                    const tooltip = document.getElementById('calc-chart-tooltip');
+                    if (tooltip) tooltip.style.display = 'none';
+                }
+            } else {
+                calcUI.hoverIndex = null;
+                const tooltip = document.getElementById('calc-chart-tooltip');
+                if (tooltip) tooltip.style.display = 'none';
+            }
+            renderCalc();
+        });
+        
+        calcCanvas.addEventListener('mouseleave', () => {
+            calcUI.hoverIndex = null;
+            const tooltip = document.getElementById('calc-chart-tooltip');
+            if (tooltip) tooltip.style.display = 'none';
+            renderCalc();
+        });
+    }
+
     window.addEventListener('resize', () => { if (calcUI.open && calcUI.lastSim) renderCalc(); });
+    updateCalcCaptureFill();
 }
 
 // Export the current simulation's year-by-year rows as CSV (raw values for spreadsheets)
