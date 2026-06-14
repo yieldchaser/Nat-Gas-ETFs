@@ -802,19 +802,19 @@ select.calc-input { cursor: pointer; }
                         </div>
                     </div>
 
-                    <div class="calc-field" data-field="grossOverride" data-tooltip="Manually specify a gross return percentage per cycle. Overrides the capture fraction.">
+                    <div class="calc-field" data-field="grossOverride" data-tooltip="Manually specify a custom gross return percentage per trade cycle. Bypasses and disables the 'Capture / Cycle' slider and basis buttons (× MEDIAN, × AVG) to use this exact number instead.">
                         <div class="calc-field-head"><span class="calc-flbl">Gross Return / Cycle override (%)</span><button class="calc-reset" data-reset="grossOverride" title="Clear override">&#8635;</button></div>
-                        <input class="calc-input" id="calc-gross-override" type="number" min="0" step="1" placeholder="auto = median × capture" data-tooltip="Enter custom gross return percentage per cycle. Clear to revert to auto.">
+                        <input class="calc-input" id="calc-gross-override" type="number" min="0" step="1" placeholder="auto = median × capture" data-tooltip="Enter custom gross return percentage per cycle. Clear this field to re-enable the Capture / Cycle settings.">
                     </div>
 
-                    <div class="calc-field" data-field="cyclesPerYear" data-tooltip="Cycles / Year: The maximum number of complete cycle cycles (active trade duration + inactive gap days) that physically fit into a 365-day calendar year based on historical data.">
+                    <div class="calc-field" data-field="cyclesPerYear" data-tooltip="Cycles / Year: The average number of complete cycles (active trade duration + idle waiting days) that fit into a 365-day year based on historical data. Uses decimals (like 2.5) to avoid long-term rounding errors in multi-year simulations.">
                         <div class="calc-field-head"><span class="calc-flbl">Cycles / Year</span><button class="calc-reset" data-reset="cyclesPerYear" title="Reset to data default">&#8635;</button></div>
-                        <input class="calc-input" id="calc-cycles" type="number" min="0" step="0.1" data-tooltip="The physical calendar limit: How many full active+waiting cycles fit in a year. Clear to reset to historical default.">
+                        <input class="calc-input" id="calc-cycles" type="number" min="0" step="0.1" data-tooltip="Historical physical limit. E.g., if a cycle + wait gap takes 146 days, then 365 / 146 = 2.5 cycles per year. Clear to reset to default.">
                     </div>
 
-                    <div class="calc-field" data-field="swingsPerYear" data-tooltip="Swings / Year: The actual number of trades (compounding gain events) you execute per year in the simulation. Defaults to Cycles/Year, but can be set lower to model missed trades.">
+                    <div class="calc-field" data-field="swingsPerYear" data-tooltip="Swings / Year: The actual compounding frequency (number of trade gains compounded per year in the simulation). Defaults to Cycles/Year, but can be set lower to model missed trades. Uses decimals directly in the exponent (e.g. 2.5 swings/year compounds exactly 25 times over 10 years).">
                         <div class="calc-field-head"><span class="calc-flbl">Swings / Year</span><button class="calc-reset" data-reset="swingsPerYear" title="Reset to cycles/year">&#8635;</button></div>
-                        <input class="calc-input" id="calc-swings" type="number" min="0" step="0.1" data-tooltip="The active compounding frequency: Number of actual trade gains compounded per year. Clear to default to Cycles/Year.">
+                        <input class="calc-input" id="calc-swings" type="number" min="0" step="0.1" data-tooltip="Number of compounding events per year in the math model. E.g. 2.5 compounds by (1 + R_net)^2.5 per year. Clear to default to Cycles/Year.">
                     </div>
 
                     <div class="calc-field" data-field="horizonYears" data-tooltip="The length of the investment simulation in years.">
@@ -825,8 +825,8 @@ select.calc-input { cursor: pointer; }
                     <div class="calc-field" data-field="holding" data-tooltip="Expected hold duration per trade. Determines tax classification (STCG vs LTCG) under Indian tax laws.">
                         <div class="calc-field-head"><span class="calc-flbl">Holding Period (Eff. Tax Rate: <span class="calc-range-val" id="calc-eff-rate">31.20%</span>)</span></div>
                         <div class="calc-seg" role="radiogroup" aria-label="Holding period">
-                            <button class="calc-seg-btn" id="calc-hold-stcg" role="radio" aria-checked="true" data-tooltip="&lt;24mo STCG: Gains taxed as unlisted foreign shares Short Term Capital Gains (at slab rates).">&lt;24mo STCG</button>
-                            <button class="calc-seg-btn" id="calc-hold-ltcg" role="radio" aria-checked="false" data-tooltip="&ge;24mo LTCG: Gains taxed as unlisted foreign shares Long Term Capital Gains (12.5% + surcharge cap).">&ge;24mo LTCG</button>
+                            <button class="calc-seg-btn" id="calc-hold-stcg" role="radio" aria-checked="true" data-tooltip="&lt;24mo STCG: Gains taxed as unlisted foreign shares Short Term Capital Gains (at progressive slab rates).">&lt;24mo STCG</button>
+                            <button class="calc-seg-btn" id="calc-hold-ltcg" role="radio" aria-checked="false" data-tooltip="&ge;24mo LTCG: Gains taxed as unlisted foreign shares Long Term Capital Gains (flat 12.5% + capped surcharge).">&ge;24mo LTCG</button>
                         </div>
                     </div>
 
@@ -840,11 +840,11 @@ select.calc-input { cursor: pointer; }
                         <input class="calc-input" id="calc-pivot" type="number" min="0" step="1000000" data-tooltip="Set the capital size at which the platform switches to IBKR to reduce FX/brokerage drag.">
                     </div>
 
-                    <div class="calc-field" data-field="vault" data-tooltip="USD Vault Mode: Defer TCS by compounding gains directly in USD inside the offshore brokerage platform without annual repatriation.">
+                    <div class="calc-field" data-field="vault" data-tooltip="USD Vault Mode: When ON, trade gains compound directly inside the USD platform. TCS (Tax Collected at Source) is paid only once on the initial remittance. When OFF, gains are repatriated to India annually, triggering 20% TCS lockup on outward remittances above the ₹7L limit.">
                         <div class="calc-field-head"><span class="calc-flbl">USD Vault (compound in-platform, TCS once)</span></div>
                         <div class="calc-seg" role="radiogroup" aria-label="USD vault">
-                            <button class="calc-seg-btn" id="calc-vault-on" role="radio" aria-checked="true" data-tooltip="ON: Reinvest gains directly in USD; TCS is paid only once on initial remittance.">ON</button>
-                            <button class="calc-seg-btn" id="calc-vault-off" role="radio" aria-checked="false" data-tooltip="OFF: Repatriate funds to India annually, triggering annual TCS on remittances above the exemption limit.">OFF (annual repat)</button>
+                            <button class="calc-seg-btn" id="calc-vault-on" role="radio" aria-checked="true" data-tooltip="ON: Reinvest and compound gains in USD inside the broker; pay LRS TCS only once on the initial setup capital.">ON</button>
+                            <button class="calc-seg-btn" id="calc-vault-off" role="radio" aria-checked="false" data-tooltip="OFF: Repatriate and re-remit funds annually, triggering 20% TCS lockup on subsequent years' outbound transfers.">OFF (annual repat)</button>
                         </div>
                     </div>
 
@@ -853,11 +853,11 @@ select.calc-input { cursor: pointer; }
                         <input class="calc-input" id="calc-fx-drift" type="number" min="-10" max="20" step="0.1" placeholder="3.0" data-tooltip="Enter annual percentage depreciation of INR (e.g. 3.0 to compound USD growth into INR returns).">
                     </div>
 
-                    <div class="calc-field" data-field="tcsDrag" data-tooltip="Model TCS Cash Drag: Start year with capital reduced by TCS, then credit/refund the TCS back into active capital in the next year (LRS refund cycle).">
+                    <div class="calc-field" data-field="tcsDrag" data-tooltip="Model TCS Cash Drag: When ON, models LRS regulatory friction. The starting corpus for the year is reduced by the 20% TCS paid, which is then credited/refunded/offset back into your active corpus at the start of the next year (representing the LRS tax refund lag).">
                         <div class="calc-field-head"><span class="calc-flbl">TCS Cash Drag</span></div>
                         <div class="calc-seg" role="radiogroup" aria-label="TCS cash drag">
-                            <button class="calc-seg-btn" id="calc-tcsdrag-on" role="radio" aria-checked="true" data-tooltip="ON: Reduce Year y starting corpus by TCS paid, and credit/refund/offset it in Year y+1.">ON</button>
-                            <button class="calc-seg-btn" id="calc-tcsdrag-off" role="radio" aria-checked="false" data-tooltip="OFF: Ignore TCS cash drag (assume TCS is instantly offset or has no cash flow impact).">OFF</button>
+                            <button class="calc-seg-btn" id="calc-tcsdrag-on" role="radio" aria-checked="true" data-tooltip="ON: Reduce Year y starting corpus by TCS paid, and credit/refund/offset it in Year y+1 (models tax return refund lag).">ON</button>
+                            <button class="calc-seg-btn" id="calc-tcsdrag-off" role="radio" aria-checked="false" data-tooltip="OFF: Ignore TCS cash drag (assume TCS is instantly offset or has no cash flow impact on compounding).">OFF</button>
                         </div>
                     </div>
 
