@@ -967,6 +967,7 @@ select.calc-input { cursor: pointer; }
                     <button class="horizon-btn" data-range="1y" data-tooltip="Last 12 months">1Y</button>
                     <button class="horizon-btn active" data-range="all" data-tooltip="Full available history">ALL</button>
                 </div>
+                <button class="download-btn" id="download-price-csv" data-tooltip="Export daily price, volume, and dollar volume for all ETFs as a single CSV file">Download CSV</button>
             </div>
         </div>
         
@@ -2139,6 +2140,66 @@ function downloadCSV() {
     document.body.removeChild(link);
 }
 
+function downloadAllEtfPricesCSV() {
+    const rows = [];
+    for (const t of TICKERS) {
+        const d = state.rawData[t.symbol];
+        if (!d) continue;
+        const dates = d.dates || [];
+        const closes = d.closes || [];
+        const volumes = d.volumes || [];
+        for (let i = 0; i < dates.length; i++) {
+            const dateStr = dates[i];
+            const price = closes[i];
+            const volume = volumes[i];
+            const dollarVol = price * volume;
+            rows.push({
+                date: dateStr,
+                ticker: t.symbol,
+                price: price,
+                volume: volume,
+                dollarVol: dollarVol
+            });
+        }
+    }
+
+    if (!rows.length) {
+        alert('No price data available to export.');
+        return;
+    }
+
+    // Sort chronologically by date ascending, then by ticker alphabetically
+    rows.sort((a, b) => {
+        if (a.date !== b.date) {
+            return a.date.localeCompare(b.date);
+        }
+        return a.ticker.localeCompare(b.ticker);
+    });
+
+    const headers = ['Date', 'Ticker', 'Close Price', 'Volume (Shares)', 'Dollar Volume'];
+    const csvRows = [headers.join(',')];
+    for (const r of rows) {
+        csvRows.push([
+            r.date,
+            r.ticker,
+            r.price.toFixed(4),
+            r.volume.toFixed(0),
+            r.dollarVol.toFixed(2)
+        ].join(','));
+    }
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `all_etfs_price_volume_history.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 // ── Table ─────────────────────────────────────────────────────────────────────
 function renderTable() {
     const t = TICKERS.find(x => x.label === state.activeTab) || TICKERS[0];
@@ -2408,6 +2469,10 @@ function updateBadge() {
 updateBadge();
 initFilterTabs();
 initHorizonControls();
+
+// Initialize price download button
+const priceDl = document.getElementById('download-price-csv');
+if (priceDl) priceDl.addEventListener('click', downloadAllEtfPricesCSV);
 initRangeSlider();
 initChartHover();
 renderChartTabs();
