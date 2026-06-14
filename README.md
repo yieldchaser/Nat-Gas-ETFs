@@ -420,7 +420,7 @@ The simulation compounds the capital year-by-year, factoring in brokerage fees, 
 
 1.  **Net Return per Trade Swing ($R_{net}$):**
     $$R_{net} = \frac{(1 + R_{gross}) \times (1 - C_{brk})}{1 + C_{brk} + C_{fx}} - 1$$
-    Where $R_{gross}$ is the gross captured return per cycle, $C_{brk}$ is the brokerage percentage per side (e.g. 0.25% for INDmoney, 0.05% for IBKR), and $C_{fx}$ is the currency markup (e.g. 0.70% for INDmoney, 0.40% for IBKR).
+    Where $R_{gross}$ is the gross captured return per cycle, computed as $R_{gross} = \text{historical cycle gain} \times \text{captureFraction}$ (default 40% to account for trading slippage, signal confirmation delays, and execution friction). $C_{brk}$ is the brokerage percentage per side (e.g. 0.25% for INDmoney, 0.05% for IBKR), and $C_{fx}$ is the currency markup (e.g. 0.70% for INDmoney, 0.40% for IBKR).
 2.  **Annual Compounding with FX Drift:**
     $$Corpus_{y} = StartCorpus_{y} \times (1 + R_{net})^{SwingsPerYear} \times (1 + FX_{drift})$$
     Where $FX_{drift}$ is the annual depreciation of INR against the USD (e.g., 3.0% annual tailwind). The currency gains compound into the INR corpus, making them fully taxable under capital gains rules.

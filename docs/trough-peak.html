@@ -793,9 +793,9 @@ select.calc-input { cursor: pointer; }
                         </div>
                     </div>
 
-                    <div class="calc-field" data-field="captureFraction" data-tooltip="The percentage of the total historical cycle move you expect to capture per trade.">
+                    <div class="calc-field" data-field="captureFraction" data-tooltip="The percentage of the total historical cycle move you expect to capture per trade. Default is 40% because entering/exiting at perfect troughs/peaks is impossible; typical realistic capture ranges between 30% to 50% due to confirmation lag and execution friction.">
                         <div class="calc-field-head"><span class="calc-flbl">Capture / Cycle <span class="calc-range-val" id="calc-capture-val">40%</span></span><button class="calc-reset" data-reset="captureFraction" title="Reset to data default">&#8635;</button></div>
-                        <input class="calc-input" id="calc-capture" type="range" min="10" max="100" step="5" value="40" style="padding:0" data-tooltip="Slide to adjust your expected capture fraction per cycle (10% to 100%).">
+                        <input class="calc-input" id="calc-capture" type="range" min="10" max="100" step="5" value="40" style="padding:0" data-tooltip="Slide to adjust your expected capture fraction per cycle (10% to 100%). Default 40% accounts for trading slippage, signal delays, and execution friction. Over 60% is optimistic.">
                         <div class="calc-seg" role="radiogroup" aria-label="Capture basis" style="margin-top:4px">
                             <button class="calc-seg-btn" id="calc-basis-median" role="radio" aria-checked="true" data-tooltip="× MEDIAN: Base the gross return on the median of historical cycles (more robust).">× MEDIAN</button>
                             <button class="calc-seg-btn" id="calc-basis-avg" role="radio" aria-checked="false" data-tooltip="× AVG: Base the gross return on the average of historical cycles (optimistic).">× AVG (optimistic)</button>
@@ -2966,7 +2966,7 @@ function renderCalc() {
     const cards = [
         { lbl: 'Terminal Wealth', val: fmtINR(sim.terminal), sub: `${inp.horizonYears}y horizon`, cls: 'headline', tip: 'The projected net after-tax value of your corpus at the end of the investment horizon.' },
         { lbl: 'Terminal (USD)', val: fmtUSD(sim.terminalUSD), sub: `@ ₹${calcUI.cfg.fx.usdInr}/USD`, tip: 'The terminal wealth converted to USD at the specified currency exchange rate.' },
-        { lbl: 'Net After-Tax CAGR', val: (sim.cagr*100).toFixed(1)+'%', sub: captureHigh ? 'capture >60% — optimistic' : `capture ${(inp.captureFraction*100).toFixed(0)}%`, cls: captureHigh ? 'amber' : '', tip: 'Annualized compounding growth rate of your investment after deducting all taxes, brokerage, and FX costs.' },
+        { lbl: 'Net After-Tax CAGR', val: (sim.cagr*100).toFixed(1)+'%', sub: captureHigh ? 'capture >60% — optimistic' : `capture ${(inp.captureFraction*100).toFixed(0)}%`, cls: captureHigh ? 'amber' : '', tip: 'Annualized compounding growth rate of your investment after deducting all taxes, brokerage, and FX costs. Uses the selected capture fraction (default 40%) applied to historical cycles to avoid perfect hindsight bias.' },
         { lbl: 'Total Tax', val: fmtINR(sim.taxTotal), sub: `eff ${(sim.effRateOverall*100).toFixed(1)}%`, tip: 'The cumulative income tax paid over the full horizon. eff shows overall tax as % of gross gains.' },
         { lbl: 'Total Cost / FX Drag', val: fmtINR(sim.costTotal), sub: 'brokerage + FX markup', tip: 'The cumulative amount lost to platform fees, brokerage, and currency exchange markups.' },
         { lbl: 'Leakage Saved by IBKR Pivot', val: fmtINR(leak), sub: sim.pivotYear ? `pivot @ Year ${sim.pivotYear}` : 'no pivot reached', tip: 'Total wealth saved by switching from INDmoney to IBKR when the pivot threshold was crossed. Re-simulates without a pivot for comparison.' },
