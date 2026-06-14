@@ -1352,7 +1352,7 @@ const colors = {
 
 async function init() {
     try {
-        const res = await fetch('data/flows/all_flows_summary.json?t=' + Date.now());
+        const res = await fetch('data/flows/all_flows_summary.json');
         state.summary = await res.json();
         (function() {
             const updatedStr = state.summary.updated; // "YYYY-MM-DD"
