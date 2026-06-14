@@ -984,9 +984,6 @@ select.calc-input { cursor: pointer; }
                     <div class="calc-stat-grid" id="calc-stats" role="status" aria-live="polite"></div>
                     <span class="calc-sr" id="calc-announcer" role="status" aria-live="polite"></span>
 
-                    <!-- SWING SCHEDULE -->
-                    <div id="calc-swing-schedule" style="display:none;"></div>
-
                     <div class="calc-chart-card">
                         <div class="calc-chart-tabs" id="calc-chart-tabs" role="tablist">
                             <button class="calc-ctab active" data-ctab="corpus" role="tab" data-tooltip="Plot the growth of your net corpus over the investment horizon.">Corpus Growth</button>
@@ -1004,6 +1001,9 @@ select.calc-input { cursor: pointer; }
                             <label data-tooltip="Show Conservative (P25) and Optimistic (P75) scenario bands around the Expected (P50) trajectory."><input type="checkbox" id="calc-cones" checked> Show Scenario Cones</label>
                         </div>
                     </div>
+
+                    <!-- SWING SCHEDULE -->
+                    <div id="calc-swing-schedule" style="display:none;"></div>
 
                     <div class="calc-section-lbl">Reality &amp; Compliance</div>
                     <div class="calc-compliance" id="calc-compliance" role="status" aria-live="polite"></div>
