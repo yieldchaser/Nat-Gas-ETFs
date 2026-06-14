@@ -3921,6 +3921,7 @@ function calcExportCSV() {
     if (/[#&]calc=/.test(location.hash)) openCalc();
 })();
 
+(async () => {
     // Fetch live USD/INR exchange rate first (non-blocking)
     fetchUSDINRLive().then(liveRate => {
         if (liveRate && isFinite(liveRate) && liveRate > 40 && liveRate < 150) {
