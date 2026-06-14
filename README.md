@@ -402,6 +402,18 @@ Professional-grade recovery cycle identification:
 - **Visual Turn Identification:** Volume bars are color-accented (Red = Trough, Green = Peak) to highlight high-conviction turning points
 - **Cycle Detail Table:** Filterable history with **Summary Footer row** (aggregate count, avg/med gain, avg duration) and CSV export
 - **Yearly Opportunity Matrix:** Heatmap of cycle count and avg gain per year per ETF with side-aware color coding (3NGS corrected to Red)
+- **Leveraged ETF Cycle Tax & Compounding Calculator** — Advanced Indian LRS compounding model with interactive modal UI, dynamic tooltips, and deep-link serialization (detailed below).
+
+#### Leveraged ETF Cycle Tax & Compounding Calculator
+
+An institutional-grade compounding simulator that models the real-world friction of trading offshore leveraged ETFs from India under LRS guidelines:
+
+*   **Live USD/INR Exchange Rates:** Automatically queries `USDINR=X` live from Yahoo Finance at load time using proxy fallbacks to seed the base conversion rate (falls back to a default rate of `86` if queries fail).
+*   **TCS Cash Drag Modeling:** Models the actual cash flow impact of LRS Tax Collected at Source (TCS). Compounds only the post-TCS active capital during the fiscal year, and credits the locked TCS back into active capital in the subsequent year (modeling the annual tax refund/offset cycle).
+*   **USD/INR FX Drift:** Supports custom annual USD/INR currency depreciation/appreciation rates (default 3.0% annual USD tailwind). The simulator compounds this drift into the INR-converted asset value, properly calculating capital gains taxes on total INR gains.
+*   **Scenario Probability Cones:** Computes the 25th percentile (P25/Conservative) and 75th percentile (P75/Optimistic) cycle gains directly from the selected ticker's historical cycle distribution. Runs parallel simulations to draw translucent probability cones around the Expected (P50/Median) trajectory.
+*   **Tax Wedge Stacked Area Chart:** Replaces basic lines on the "Gross vs Net" tab with translucent stacked areas to visually decompose Net Wealth, Cumulative Tax Paid, and Cumulative Cost/FX Drag.
+*   **High-Context Hover Crosshairs:** Redraws the canvas on hover to overlay a vertical dashed crosshair line, place circular anchors on all active curves, and display a floating detail card.
 
 #### Vol Regime Monitor
 
