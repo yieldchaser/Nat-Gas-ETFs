@@ -2905,8 +2905,11 @@ function handleCrossHover(e) {
 
         let html = `<div style="color:#00ffff; font-weight:800; margin-bottom:6px; font-size:0.68rem; letter-spacing:0.5px; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:4px;">${fmtDateLong(date)}</div>`;
         
-        const tickers = Object.keys(state.crossToggles).filter(tk => state.crossToggles[tk]);
-        tickers.forEach(tk => {
+        let activeTickers = Object.keys(state.crossToggles).filter(tk => state.crossToggles[tk]);
+        if (activeTickers.length === 0 && !state.crossShowSpread) {
+            activeTickers = ['BOIL'];
+        }
+        activeTickers.forEach(tk => {
             const val = state._crossSeries[tk]?.[idx];
             if (val !== undefined) {
                 const formatted = isPct ? (val >= 0 ? '+' : '') + val.toFixed(2) + '%' : fmtUsd(val);
@@ -3767,7 +3770,8 @@ function renderCrossChart() {
     const isPct = state.crossMode === 'pctAum';
 
     let tickers = Object.keys(state.crossToggles).filter(tk => state.crossToggles[tk]);
-    if (tickers.length === 0 && !state.crossShowSpread) tickers = ['BOIL'];
+    const isFallback = (tickers.length === 0 && !state.crossShowSpread);
+    if (isFallback) tickers = ['BOIL'];
     
     const baseData = state.cache['BOIL'].data;
     let days = {'1w':7,'1m':30,'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095,'5y':1825}[state.timeRange] || 9999;
@@ -3781,88 +3785,124 @@ function renderCrossChart() {
     const zE = Math.ceil(state.zoomCross.end   * baseDates.length);
     const visibleDates = baseDates.slice(Math.max(0, zS), Math.min(baseDates.length, zE));
     
-    const series = {};
-    const rawDaily = {}; // for correlation: ticker -> [daily flow values aligned to visibleDates]
-    let globalMax = -Infinity, globalMin = Infinity;
-    
-    const allTickers = ['BOIL','HNU','3NGL','KOLD','HND','3NGS'];
-    allTickers.forEach(tk => {
-        const d = state.cache[tk].data;
-        const dateIdx = {};
-        for (let j = 0; j < d.length; j++) dateIdx[d[j].date] = d[j];
-        state.cache[tk]._dateIdx = dateIdx;
+    if (visibleDates.length < 2) return;
+
+    const cacheKey = `${state.zoomCross.start}_${state.zoomCross.end}_${state.crossMode}_${state.timeRange}_${tickers.join(',')}_${state.crossShowSpread}_${state.crossShowInflections}`;
+
+    if (state._crossCacheKey !== cacheKey || !state._crossCachedData) {
+        const series = {};
+        const rawDaily = {};
+        let globalMax = -Infinity, globalMin = Infinity;
         
-        let startIdx = d.findIndex(x => x.date >= visibleDates[0]);
-        if (startIdx === -1) startIdx = 0;
-        
-        let cumulative = 0;
-        const vals = [];
-        const dailyVals = [];
-        
-        for (let i = 0; i < visibleDates.length; i++) {
-            const date = visibleDates[i];
-            const match = dateIdx[date];
-            if (match) {
-                if (isPct) {
-                    const aum = LATEST_AUMS[tk] || 100000000;
-                    const dayFlow = (match.usd_flow || 0) / aum * 100;
-                    cumulative += dayFlow;
-                    dailyVals.push(match.usd_flow || 0);
-                } else {
-                    if (vals.length === 0) {
-                        cumulative = 0;
+        const allTickers = ['BOIL','HNU','3NGL','KOLD','HND','3NGS'];
+        allTickers.forEach(tk => {
+            const d = state.cache[tk].data;
+            const dateIdx = {};
+            for (let j = 0; j < d.length; j++) dateIdx[d[j].date] = d[j];
+            state.cache[tk]._dateIdx = dateIdx;
+            
+            let sIdx = d.findIndex(x => x.date >= visibleDates[0]);
+            if (sIdx === -1) sIdx = 0;
+            const offset = d[sIdx]?.cumulative_flow || 0;
+            
+            let cumulative = 0;
+            const vals = [];
+            const dailyVals = [];
+            
+            for (let i = 0; i < visibleDates.length; i++) {
+                const date = visibleDates[i];
+                const match = dateIdx[date];
+                if (match) {
+                    if (isPct) {
+                        const aum = LATEST_AUMS[tk] || 100000000;
+                        const dayFlow = (match.usd_flow || 0) / aum * 100;
+                        cumulative += dayFlow;
+                        dailyVals.push(match.usd_flow || 0);
+                    } else {
+                        cumulative = (match.cumulative_flow || 0) - offset;
+                        dailyVals.push(match.usd_flow || 0);
                     }
-                    let sIdx = d.findIndex(x => x.date >= visibleDates[0]);
-                    if (sIdx === -1) sIdx = 0;
-                    const offset = d[sIdx].cumulative_flow || 0;
-                    cumulative = (match.cumulative_flow || 0) - offset;
-                    dailyVals.push(match.usd_flow || 0);
+                    vals.push(cumulative);
+                } else {
+                    vals.push(vals.length > 0 ? vals[vals.length - 1] : 0);
+                    dailyVals.push(0);
                 }
-                vals.push(cumulative);
-            } else {
-                vals.push(vals.length > 0 ? vals[vals.length - 1] : 0);
-                dailyVals.push(0);
+            }
+            series[tk] = vals;
+            rawDaily[tk] = dailyVals;
+            
+            const isTkFallback = (isFallback && tk === 'BOIL');
+            if (state.crossToggles[tk] || isTkFallback) {
+                vals.forEach(v => {
+                    if (v > globalMax) globalMax = v;
+                    if (v < globalMin) globalMin = v;
+                });
+            }
+        });
+        
+        let spreadSeries = null;
+        if (state.crossShowSpread) {
+            let activeLongs = ['BOIL','HNU','3NGL'].filter(tk => state.cache[tk] && state.crossToggles[tk]);
+            let activeShorts = ['KOLD','HND','3NGS'].filter(tk => state.cache[tk] && state.crossToggles[tk]);
+            
+            if (activeLongs.length === 0 && activeShorts.length === 0) {
+                activeLongs = ['BOIL','HNU','3NGL'].filter(tk => state.cache[tk]);
+                activeShorts = ['KOLD','HND','3NGS'].filter(tk => state.cache[tk]);
+            }
+            
+            spreadSeries = [];
+            for (let i = 0; i < visibleDates.length; i++) {
+                let longSum = 0, shortSum = 0;
+                activeLongs.forEach(tk => {
+                    longSum += (series[tk] ? series[tk][i] : 0);
+                });
+                activeShorts.forEach(tk => {
+                    shortSum += (series[tk] ? series[tk][i] : 0);
+                });
+                const sv = longSum - shortSum;
+                spreadSeries.push(sv);
+                if (sv > globalMax) globalMax = sv;
+                if (sv < globalMin) globalMin = sv;
             }
         }
-        series[tk] = vals;
-        rawDaily[tk] = dailyVals;
         
-        // Only include in min/max if this ticker is toggled active
-        if (state.crossToggles[tk]) {
-            vals.forEach(v => {
-                if (v > globalMax) globalMax = v;
-                if (v < globalMin) globalMin = v;
+        const inflectionCache = {};
+        if (state.crossShowInflections) {
+            tickers.forEach(tk => {
+                const vals = series[tk];
+                if (!vals || vals.length < 32) return;
+                const inflections = [];
+                const rocs = [];
+                for (let i = 0; i < vals.length; i++) {
+                    if (i < 5) { rocs.push(0); continue; }
+                    rocs.push(vals[i] - vals[i - 5]);
+                }
+                for (let i = 30; i < rocs.length; i++) {
+                    const window = rocs.slice(i - 30, i);
+                    const mean = window.reduce((a, b) => a + b, 0) / window.length;
+                    const variance = window.reduce((a, b) => a + (b - mean) ** 2, 0) / window.length;
+                    const std = Math.sqrt(variance) || 1;
+                    const zScore = (rocs[i] - mean) / std;
+                    if (Math.abs(zScore) >= 2.0) {
+                        inflections.push({ idx: i, type: zScore > 0 ? 'accel' : 'decel', magnitude: Math.abs(zScore) });
+                    }
+                }
+                inflectionCache[tk] = inflections;
             });
         }
-    });
-    
-    // Store for hover/pin
-    state._crossSeries = series;
-    state._crossDates = visibleDates;
-    state._crossRawDaily = rawDaily;
-    state._crossIsPct = isPct;
-    
-    // Net spread series (longs - shorts)
-    let spreadSeries = null;
-    if (state.crossShowSpread) {
-        const longs = ['BOIL','HNU','3NGL'].filter(tk => state.cache[tk]);
-        const shorts = ['KOLD','HND','3NGS'].filter(tk => state.cache[tk]);
-        spreadSeries = [];
-        for (let i = 0; i < visibleDates.length; i++) {
-            let longSum = 0, shortSum = 0;
-            longs.forEach(tk => {
-                longSum += (series[tk] ? series[tk][i] : 0);
-            });
-            shorts.forEach(tk => {
-                shortSum += (series[tk] ? series[tk][i] : 0);
-            });
-            const sv = longSum - shortSum;
-            spreadSeries.push(sv);
-            if (sv > globalMax) globalMax = sv;
-            if (sv < globalMin) globalMin = sv;
-        }
+        
+        state._crossCachedData = { series, rawDaily, globalMax, globalMin, spreadSeries, visibleDates, inflectionCache };
+        state._crossCacheKey = cacheKey;
+        
+        state._crossSeries = series;
+        state._crossDates = visibleDates;
+        state._crossRawDaily = rawDaily;
+        state._crossIsPct = isPct;
         state._crossSpread = spreadSeries;
+        state.crossInflectionCache = inflectionCache;
     }
+    
+    const { series, rawDaily, globalMax, globalMin, spreadSeries, visibleDates, inflectionCache } = state._crossCachedData;
     
     if (globalMax === -Infinity) return;
     if (globalMax === globalMin) { globalMax += 1; globalMin -= 1; }
@@ -3870,35 +3910,7 @@ function renderCrossChart() {
     const range = globalMax - globalMin;
     const getX = i => pad.left + (i / (visibleDates.length - 1)) * chartW;
     const getY = val => pad.top + chartH - ((val - globalMin) / range) * chartH;
-    
-    // -- Inflection detection --
-    if (state.crossShowInflections) {
-        state.crossInflectionCache = {};
-        tickers.forEach(tk => {
-            const vals = series[tk];
-            if (!vals || vals.length < 32) return;
-            const inflections = [];
-            // Compute rolling ROC (5-day)
-            const rocs = [];
-            for (let i = 0; i < vals.length; i++) {
-                if (i < 5) { rocs.push(0); continue; }
-                rocs.push(vals[i] - vals[i - 5]);
-            }
-            // Rolling mean and std of ROC (30-day window)
-            for (let i = 30; i < rocs.length; i++) {
-                const window = rocs.slice(i - 30, i);
-                const mean = window.reduce((a, b) => a + b, 0) / window.length;
-                const variance = window.reduce((a, b) => a + (b - mean) ** 2, 0) / window.length;
-                const std = Math.sqrt(variance) || 1;
-                const zScore = (rocs[i] - mean) / std;
-                if (Math.abs(zScore) >= 2.0) {
-                    inflections.push({ idx: i, type: zScore > 0 ? 'accel' : 'decel', magnitude: Math.abs(zScore) });
-                }
-            }
-            state.crossInflectionCache[tk] = inflections;
-        });
-    }
-    
+
     // Grid lines
     const crossTicks = niceAxisTicks(globalMin, globalMax, 5);
     crossTicks.forEach(tick => {
@@ -4104,8 +4116,16 @@ function buildSnapshotCard(date, idx) {
     if (!card) return;
     const isPct = state._crossIsPct;
     const tickers = ['BOIL','HNU','3NGL','KOLD','HND','3NGS'];
-    const longs = ['BOIL','HNU','3NGL'];
-    const shorts = ['KOLD','HND','3NGS'];
+    
+    // Determine active longs and shorts
+    let activeLongs = ['BOIL','HNU','3NGL'].filter(tk => state.crossToggles[tk]);
+    let activeShorts = ['KOLD','HND','3NGS'].filter(tk => state.crossToggles[tk]);
+    
+    // Fall back to all if none are toggled active
+    if (activeLongs.length === 0 && activeShorts.length === 0) {
+        activeLongs = ['BOIL','HNU','3NGL'];
+        activeShorts = ['KOLD','HND','3NGS'];
+    }
 
     let longTotal = 0, shortTotal = 0;
     let itemsHtml = '';
@@ -4114,9 +4134,16 @@ function buildSnapshotCard(date, idx) {
         if (val === undefined) return;
         const formatted = isPct ? (val >= 0 ? '+' : '') + val.toFixed(2) + '%' : fmtUsd(val);
         const color = val >= 0 ? '#3db87a' : '#ef4444';
-        if (longs.includes(tk)) longTotal += (val || 0);
-        else shortTotal += (val || 0);
-        itemsHtml += `<div class="snapshot-item">
+        
+        const isLong = ['BOIL','HNU','3NGL'].includes(tk);
+        const active = state.crossToggles[tk] || (activeLongs.includes(tk) && activeShorts.includes(tk));
+        
+        if (active) {
+            if (isLong) longTotal += val;
+            else shortTotal += val;
+        }
+
+        itemsHtml += `<div class="snapshot-item" style="opacity: ${active ? 1 : 0.45}">
             <div class="snapshot-item-label" style="color:${colors[tk]}">${tk}</div>
             <div class="snapshot-item-value" style="color:${color}">${formatted}</div>
         </div>`;
@@ -4157,7 +4184,8 @@ function buildSnapshotCard(date, idx) {
         tickers.forEach(tk => {
             const val = state._crossSeries[tk]?.[idx];
             if (val === undefined) return;
-            lines.push(`  ${tk}: ${isPct ? (val >= 0 ? '+' : '') + val.toFixed(2) + '%' : fmtUsd(val)}`);
+            const active = state.crossToggles[tk] || (activeLongs.includes(tk) && activeShorts.includes(tk));
+            lines.push(`  ${tk}: ${isPct ? (val >= 0 ? '+' : '') + val.toFixed(2) + '%' : fmtUsd(val)}${active ? '' : ' (inactive)'}`);
         });
         lines.push(`Net Spread: ${netFormatted} | L/S Ratio: ${ratio}:1`);
         navigator.clipboard.writeText(lines.join('\n')).then(() => {
