@@ -3717,6 +3717,35 @@ toggleOverlayChip('toggle-correlation', 'crossShowCorrelation', () => {
 el('chartCross').addEventListener('click', handleCrossPin);
 
 // ---- Cross ETF Chart ----
+const LATEST_AUMS = {
+    'BOIL': 350000000,
+    'KOLD': 130000000,
+    'HNU': 125000000,
+    'HND': 58000000,
+    '3NGL': 50000000,
+    '3NGS': 26000000
+};
+
+function computeHistoricalAum(ticker) {
+    const cache = state.cache[ticker];
+    if (!cache || !cache.data) return;
+    const d = cache.data;
+    if (d.length === 0) return;
+    
+    const latestAum = LATEST_AUMS[ticker] || 100000000;
+    d[d.length - 1].aum = latestAum;
+    for (let i = d.length - 2; i >= 0; i--) {
+        const next = d[i + 1];
+        const flow = next.usd_flow || 0;
+        const perf = next.perf_pct || 0;
+        let prevAum = (next.aum - flow) / (1 + perf);
+        if (prevAum <= 0 || isNaN(prevAum)) {
+            prevAum = latestAum;
+        }
+        d[i].aum = prevAum;
+    }
+}
+
 async function loadAllTickersForCross() {
     const tickers = ['BOIL', 'HNU', '3NGL', 'KOLD', 'HND', '3NGS'];
     const proms = tickers.map(tk => {
@@ -3727,6 +3756,7 @@ async function loadAllTickersForCross() {
     });
     
     await Promise.all(proms);
+    tickers.forEach(computeHistoricalAum);
     loadNGHistory();
     computeCompositeZ();
     computeFlowHeatGlobalPercentiles();
@@ -3794,8 +3824,8 @@ function renderCrossChart() {
             const match = dateIdx[date];
             if (match) {
                 if (isPct) {
-                    const nav = match.nav || 1;
-                    const dayFlow = (match.usd_flow || 0) / nav * 100;
+                    const aum = match.aum || 100000000;
+                    const dayFlow = (match.usd_flow || 0) / aum * 100;
                     cumulative += dayFlow;
                     dailyVals.push(match.usd_flow || 0);
                 } else {
