@@ -4265,11 +4265,14 @@ function renderCorrHeatmap() {
 
         state._corrMatrixCache = corrMatrix;
         state._corrTickersCache = tickers;
+        corrTickers = tickers;
         state._corrCacheKey = cacheKey;
     }
 
     // Render
-    const size = canvas.parentElement.clientWidth - 20;
+    let parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth : 0;
+    if (parentWidth <= 0) parentWidth = 180;
+    const size = parentWidth - 20;
     const cellSize = Math.floor(size / n);
     const totalSize = cellSize * n;
     const dpr = window.devicePixelRatio || 1;
