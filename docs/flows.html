@@ -2893,6 +2893,7 @@ function handleCrossHover(e) {
     const crossTooltip = el('cross-tooltip');
     const visibleDates = state._crossDates;
     if (!visibleDates || visibleDates.length < 2) return;
+    const tickers = ['BOIL','HNU','3NGL','KOLD','HND','3NGS'];
 
     if (x >= padL && x <= rect.width - padR) {
         let pct = (x - padL) / chartW;
