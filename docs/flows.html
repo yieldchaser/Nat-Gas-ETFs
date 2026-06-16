@@ -3902,7 +3902,7 @@ function renderCrossChart() {
         state.crossInflectionCache = inflectionCache;
     }
     
-    const { series, rawDaily, globalMax, globalMin, spreadSeries, visibleDates, inflectionCache } = state._crossCachedData;
+    const { series, rawDaily, globalMax, globalMin, spreadSeries, inflectionCache } = state._crossCachedData;
     
     if (globalMax === -Infinity) return;
     if (globalMax === globalMin) { globalMax += 1; globalMin -= 1; }
