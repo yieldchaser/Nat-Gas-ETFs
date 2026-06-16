@@ -240,12 +240,14 @@ Full historical chart of the rolling flow Z-Score with:
 #### Cross-ETF Cumulative Flow Comparison
 
 Overlaid cumulative flow lines for all 6 ETFs (normalized to zero at start of visible range). Features:
-- ETF toggle chips (click to show/hide individual ETFs)
-- Filter by side: ALL / LONG / SHORT
-- HTML legend below the chart (no canvas overlap or label collision)
-- Active ETF highlighted with thicker line and bold legend entry
-- Hover crosshair showing all visible ETF values at any date
-- Controlled by the global range slider
+- **USD / % AUM Scale Modes**: Toggle between raw cumulative USD flows (absolute dollar magnitude) and % AUM flows (normalized daily flow divided by constant AUM) to compare small and large funds on equal footing.
+- **ETF Toggle Chips**: Click to show/hide individual ETFs; filters by side (ALL / LONG / SHORT) quickly align active groups.
+- **Dynamic Net Spread Overlay**: Toggle a dashed line and green/red shaded area showing the net capital positioning (Long side minus Short side cumulative flow) of active ETFs.
+- **Regime Shift Inflections**: Marks sudden flow accelerations or decelerations (triangular markers) when the 5-day Rate of Change (ROC) deviates by $\ge 2\sigma$ from its trailing 30-day baseline.
+- **Interactive Rolling Flow Correlation Sidebar**: Displays a rolling pairwise Pearson correlation heatmap of daily flows over the visible timeframe. Cells show correlation coefficients (−1 to +1) with hover tooltips and support click-to-isolate ticker flows on the main chart.
+- **Pinned Date Snapshot Card**: Click any point on the chart to pin a shareable snapshot card of all active and inactive ETF flows, net spread, and L/S ratio, complete with a copy-to-clipboard summary action.
+- **HTML Legend**: Displayed below the chart to prevent canvas overlap, dynamically highlighting the active ETF with a thicker path.
+- **Global & Wheel Zoom**: Zoom the visible date window using the independent range slider or mouse wheel.
 
 #### Cross-Side Flow Divergence Scanner
 
