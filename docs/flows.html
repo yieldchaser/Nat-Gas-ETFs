@@ -914,7 +914,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                         <span class="cross-mode-label">SCALE</span>
                         <div class="tab-group" id="cross-mode-tabs">
                             <button class="tab-btn active" data-mode="usd" data-tooltip="Raw cumulative USD flows — shows absolute dollar magnitude">USD</button>
-                            <button class="tab-btn" data-mode="pctAum" data-tooltip="Percentage of AUM: flow ÷ NAV per day, then cumulated. Normalizes across fund sizes so smaller ETFs are comparable.">% AUM</button>
+                            <button class="tab-btn" data-mode="pctAum" data-tooltip="Percentage of AUM: daily flow divided by constant AUM, cumulated. Normalizes across fund sizes so smaller ETFs are comparable.">% AUM</button>
                         </div>
                     </div>
                     <div class="tab-group time-tabs" id="cross-time-tabs">
@@ -1412,6 +1412,7 @@ const state = {
     crossShowSpread: false,         // Long/Short net spread overlay
     crossShowInflections: false,    // Inflection point markers
     crossShowCorrelation: false,    // Correlation heatmap sidebar
+    _hoveredCorrCell: null,         // hovered cell in correlation heatmap { row, col }
     pinnedCrossDate: null,          // Pinned snapshot date string
     crossInflectionCache: {},       // ticker -> [{idx, type, magnitude}]
     zoom:      { start: 0, end: 1 }, // deep dive (chartA + chartB)
@@ -3726,26 +3727,6 @@ const LATEST_AUMS = {
     '3NGS': 26000000
 };
 
-function computeHistoricalAum(ticker) {
-    const cache = state.cache[ticker];
-    if (!cache || !cache.data) return;
-    const d = cache.data;
-    if (d.length === 0) return;
-    
-    const latestAum = LATEST_AUMS[ticker] || 100000000;
-    d[d.length - 1].aum = latestAum;
-    for (let i = d.length - 2; i >= 0; i--) {
-        const next = d[i + 1];
-        const flow = next.usd_flow || 0;
-        const perf = next.perf_pct || 0;
-        let prevAum = (next.aum - flow) / (1 + perf);
-        if (prevAum <= 0 || isNaN(prevAum)) {
-            prevAum = latestAum;
-        }
-        d[i].aum = prevAum;
-    }
-}
-
 async function loadAllTickersForCross() {
     const tickers = ['BOIL', 'HNU', '3NGL', 'KOLD', 'HND', '3NGS'];
     const proms = tickers.map(tk => {
@@ -3756,7 +3737,6 @@ async function loadAllTickersForCross() {
     });
     
     await Promise.all(proms);
-    tickers.forEach(computeHistoricalAum);
     loadNGHistory();
     computeCompositeZ();
     computeFlowHeatGlobalPercentiles();
@@ -3824,7 +3804,7 @@ function renderCrossChart() {
             const match = dateIdx[date];
             if (match) {
                 if (isPct) {
-                    const aum = match.aum || 100000000;
+                    const aum = LATEST_AUMS[tk] || 100000000;
                     const dayFlow = (match.usd_flow || 0) / aum * 100;
                     cumulative += dayFlow;
                     dailyVals.push(match.usd_flow || 0);
@@ -4208,45 +4188,56 @@ function renderCorrHeatmap() {
     const visibleDates = state._crossDates || [];
     if (visibleDates.length < 10) return;
 
-    // Build aligned daily flow arrays
-    const flowArrays = {};
-    tickers.forEach(tk => {
-        if (rawDaily[tk]) {
-            flowArrays[tk] = rawDaily[tk];
-        } else {
-            // Build from cache if not in series
-            const d = state.cache[tk].data;
-            const dateIdx = {};
-            d.forEach(row => { dateIdx[row.date] = row; });
-            flowArrays[tk] = visibleDates.map(date => {
-                const match = dateIdx[date];
-                return match ? (match.usd_flow || 0) : 0;
-            });
-        }
-    });
+    const cacheKey = visibleDates[0] + '_' + visibleDates[visibleDates.length - 1];
+    
+    let corrMatrix = state._corrMatrixCache;
+    let corrTickers = state._corrTickersCache;
 
-    // Compute pairwise Pearson correlation
-    function pearson(a, b) {
-        const n = Math.min(a.length, b.length);
-        if (n < 5) return 0;
-        let sumA = 0, sumB = 0;
-        for (let i = 0; i < n; i++) { sumA += a[i]; sumB += b[i]; }
-        const meanA = sumA / n, meanB = sumB / n;
-        let num = 0, denA = 0, denB = 0;
+    if (state._corrCacheKey !== cacheKey || !corrMatrix || !corrTickers) {
+        // Build aligned daily flow arrays
+        const flowArrays = {};
+        tickers.forEach(tk => {
+            if (rawDaily[tk]) {
+                flowArrays[tk] = rawDaily[tk];
+            } else {
+                // Build from cache if not in series
+                const d = state.cache[tk].data;
+                const dateIdx = {};
+                d.forEach(row => { dateIdx[row.date] = row; });
+                flowArrays[tk] = visibleDates.map(date => {
+                    const match = dateIdx[date];
+                    return match ? (match.usd_flow || 0) : 0;
+                });
+            }
+        });
+
+        // Compute pairwise Pearson correlation
+        function pearson(a, b) {
+            const n = Math.min(a.length, b.length);
+            if (n < 5) return 0;
+            let sumA = 0, sumB = 0;
+            for (let i = 0; i < n; i++) { sumA += a[i]; sumB += b[i]; }
+            const meanA = sumA / n, meanB = sumB / n;
+            let num = 0, denA = 0, denB = 0;
+            for (let i = 0; i < n; i++) {
+                const da = a[i] - meanA, db = b[i] - meanB;
+                num += da * db; denA += da * da; denB += db * db;
+            }
+            const den = Math.sqrt(denA * denB);
+            return den === 0 ? 0 : num / den;
+        }
+
+        corrMatrix = [];
         for (let i = 0; i < n; i++) {
-            const da = a[i] - meanA, db = b[i] - meanB;
-            num += da * db; denA += da * da; denB += db * db;
+            corrMatrix[i] = [];
+            for (let j = 0; j < n; j++) {
+                corrMatrix[i][j] = i === j ? 1 : pearson(flowArrays[tickers[i]], flowArrays[tickers[j]]);
+            }
         }
-        const den = Math.sqrt(denA * denB);
-        return den === 0 ? 0 : num / den;
-    }
 
-    const corrMatrix = [];
-    for (let i = 0; i < n; i++) {
-        corrMatrix[i] = [];
-        for (let j = 0; j < n; j++) {
-            corrMatrix[i][j] = i === j ? 1 : pearson(flowArrays[tickers[i]], flowArrays[tickers[j]]);
-        }
+        state._corrMatrixCache = corrMatrix;
+        state._corrTickersCache = tickers;
+        state._corrCacheKey = cacheKey;
     }
 
     // Render
@@ -4277,17 +4268,52 @@ function renderCorrHeatmap() {
         }
     }
 
+    const hoverCell = state._hoveredCorrCell;
+
     for (let i = 0; i < n; i++) {
         for (let j = 0; j < n; j++) {
             const x = j * cellSize, y = i * cellSize;
+            
+            ctx.save();
+            
+            if (hoverCell) {
+                const isHovered = hoverCell.row === i && hoverCell.col === j;
+                const isRowOrCol = hoverCell.row === i || hoverCell.col === j;
+                if (isHovered) {
+                    ctx.globalAlpha = 1.0;
+                } else if (isRowOrCol) {
+                    ctx.globalAlpha = 0.85;
+                } else {
+                    ctx.globalAlpha = 0.25;
+                }
+            } else {
+                ctx.globalAlpha = 1.0;
+            }
+
             ctx.fillStyle = corrColor(corrMatrix[i][j]);
             ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+
             // Value text
             ctx.font = `bold ${Math.max(8, cellSize * 0.28)}px 'JetBrains Mono', monospace`;
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = Math.abs(corrMatrix[i][j]) > 0.5 ? '#fff' : 'rgba(255,255,255,0.6)';
-            const label = i === j ? tickers[i] : (corrMatrix[i][j] >= 0 ? '+' : '') + corrMatrix[i][j].toFixed(2);
+            
+            if (hoverCell && hoverCell.row === i && hoverCell.col === j) {
+                ctx.fillStyle = '#fff';
+            } else {
+                ctx.fillStyle = Math.abs(corrMatrix[i][j]) > 0.5 ? '#fff' : 'rgba(255,255,255,0.6)';
+            }
+            
+            const label = i === j ? corrTickers[i] : (corrMatrix[i][j] >= 0 ? '+' : '') + corrMatrix[i][j].toFixed(2);
             ctx.fillText(label, x + cellSize / 2, y + cellSize / 2);
+
+            // Highlight hovered cell with border
+            if (hoverCell && hoverCell.row === i && hoverCell.col === j) {
+                ctx.strokeStyle = '#00e5ff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+            }
+            
+            ctx.restore();
         }
     }
 
@@ -4296,14 +4322,29 @@ function renderCorrHeatmap() {
         const rect = canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left, my = e.clientY - rect.top;
         const ci = Math.floor(my / (rect.height / n)), cj = Math.floor(mx / (rect.width / n));
-        if (ci < 0 || ci >= n || cj < 0 || cj >= n) { el('corr-tooltip').style.display = 'none'; return; }
+        
+        if (ci < 0 || ci >= n || cj < 0 || cj >= n) {
+            if (state._hoveredCorrCell !== null) {
+                state._hoveredCorrCell = null;
+                renderCorrHeatmap();
+            }
+            el('corr-tooltip').style.display = 'none';
+            return;
+        }
+        
+        // Update hovered cell and redraw if changed
+        if (!state._hoveredCorrCell || state._hoveredCorrCell.row !== ci || state._hoveredCorrCell.col !== cj) {
+            state._hoveredCorrCell = { row: ci, col: cj };
+            renderCorrHeatmap();
+        }
+
         const tip = el('corr-tooltip');
         const v = corrMatrix[ci][cj];
-        const label = ci === cj ? `${tickers[ci]} (self)` : `${tickers[ci]} ↔ ${tickers[cj]}`;
+        const label = ci === cj ? `${corrTickers[ci]} (self)` : `${corrTickers[ci]} ↔ ${corrTickers[cj]}`;
         let interpretation = '';
         if (ci !== cj) {
-            const isLongShort = (['BOIL','HNU','3NGL'].includes(tickers[ci]) && ['KOLD','HND','3NGS'].includes(tickers[cj])) ||
-                               (['KOLD','HND','3NGS'].includes(tickers[ci]) && ['BOIL','HNU','3NGL'].includes(tickers[cj]));
+            const isLongShort = (['BOIL','HNU','3NGL'].includes(corrTickers[ci]) && ['KOLD','HND','3NGS'].includes(corrTickers[cj])) ||
+                               (['KOLD','HND','3NGS'].includes(corrTickers[ci]) && ['BOIL','HNU','3NGL'].includes(corrTickers[cj]));
             if (isLongShort && v > 0.3) {
                 interpretation = '<div style="color:#f59e0b;font-size:0.55rem;font-weight:700;margin-top:3px;">⚠ UNUSUAL: Long/Short positively correlated</div>';
             } else if (isLongShort && v < -0.3) {
@@ -4312,12 +4353,42 @@ function renderCorrHeatmap() {
         }
         tip.innerHTML = `<div style="font-weight:800;font-size:0.62rem;color:var(--cyan);">${label}</div>
             <div style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:0.75rem;color:${v >= 0 ? '#ef4444' : '#4A9CF5'};margin-top:2px;">${v >= 0 ? '+' : ''}${v.toFixed(3)}</div>
-            ${interpretation}`;
+            ${interpretation}
+            <div style="font-size:0.5rem;color:rgba(255,255,255,0.4);margin-top:5px;border-top:1px solid rgba(255,255,255,0.1);padding-top:3px;text-align:center;">CLICK cell to isolate tickers</div>`;
         tip.style.display = 'block';
         tip.style.left = (mx + 15) + 'px';
         tip.style.top = (my - 10) + 'px';
     };
-    canvas.onmouseleave = () => { el('corr-tooltip').style.display = 'none'; };
+    
+    canvas.onmouseleave = () => {
+        state._hoveredCorrCell = null;
+        renderCorrHeatmap();
+        el('corr-tooltip').style.display = 'none';
+    };
+
+    canvas.onclick = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        const ci = Math.floor(my / (rect.height / n)), cj = Math.floor(mx / (rect.width / n));
+        if (ci < 0 || ci >= n || cj < 0 || cj >= n) return;
+        
+        const tk1 = corrTickers[ci];
+        const tk2 = corrTickers[cj];
+        
+        // Set state.crossToggles
+        Object.keys(state.crossToggles).forEach(tk => {
+            state.crossToggles[tk] = (tk === tk1 || tk === tk2);
+        });
+        
+        // De-select cross-tabs filter active styles
+        document.querySelectorAll('#cross-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+        state.crossFilter = null;
+        
+        // Update UI components
+        updateCrossToggleUI();
+        renderCrossChart();
+        renderCorrHeatmap();
+    };
 }
 </script>
 <script src="js/flow-composite.js"></script>
