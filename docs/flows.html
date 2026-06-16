@@ -252,6 +252,70 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .etf-chip.active { opacity: 1; }
 .etf-chip.inactive { opacity: 0.3; background: transparent !important; }
 
+/* ---- Cross-ETF Enhanced Features ---- */
+/* Mode toggle (USD / %AUM) */
+.cross-mode-group { display: flex; align-items: center; gap: 6px; }
+.cross-mode-label { font-size: 0.58rem; font-weight: 800; color: rgba(255,255,255,0.45); letter-spacing: 0.8px; }
+/* Overlay toggle chips */
+.overlay-chip {
+    font-size: 0.58rem; font-weight: 800; letter-spacing: 0.5px;
+    padding: 3px 8px; border-radius: 4px; border: 1px solid;
+    cursor: pointer; transition: all 0.25s; user-select: none;
+    font-family: 'JetBrains Mono', monospace; white-space: nowrap;
+}
+.overlay-chip.active { opacity: 1; }
+.overlay-chip.inactive { opacity: 0.35; background: transparent !important; border-style: dashed; }
+/* Correlation heatmap sidebar */
+.cross-chart-layout { display: flex; gap: 16px; align-items: stretch; }
+.cross-chart-main { flex: 1; min-width: 0; }
+.cross-corr-sidebar {
+    width: 180px; flex-shrink: 0; display: flex; flex-direction: column;
+    background: rgba(255,255,255,0.015); border: 1px solid var(--border-primary);
+    border-radius: 8px; padding: 10px; gap: 6px;
+}
+.cross-corr-sidebar.hidden { display: none; }
+.corr-title { font-size: 0.58rem; font-weight: 800; color: rgba(255,255,255,0.55); letter-spacing: 1px; text-transform: uppercase; text-align: center; }
+#corrHeatCanvas { width: 100%; aspect-ratio: 1; border-radius: 4px; }
+.corr-legend { display: flex; justify-content: space-between; font-size: 0.5rem; color: rgba(255,255,255,0.4); font-weight: 700; letter-spacing: 0.3px; }
+.corr-legend-bar { width: 100%; height: 6px; border-radius: 3px; margin: 3px 0; background: linear-gradient(90deg, #4A9CF5, #1a1a28, #ef4444); }
+/* Snapshot card */
+.cross-snapshot-card {
+    display: none; margin-top: 10px; padding: 14px 18px;
+    background: rgba(0,229,255,0.03); border: 1px solid rgba(0,229,255,0.15);
+    border-radius: 8px; position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 30px rgba(0,229,255,0.02);
+}
+.cross-snapshot-card.visible { display: block; animation: snapshotFadeIn 0.3s ease-out; }
+@keyframes snapshotFadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+.snapshot-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.snapshot-date { font-size: 0.72rem; font-weight: 800; color: var(--cyan); letter-spacing: 1px; }
+.snapshot-actions { display: flex; gap: 6px; }
+.snapshot-btn {
+    font-size: 0.55rem; font-weight: 800; letter-spacing: 0.8px;
+    padding: 4px 10px; border-radius: 4px; border: 1px solid;
+    cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+}
+.snapshot-btn-copy { background: rgba(0,229,255,0.1); color: var(--cyan); border-color: rgba(0,229,255,0.25); }
+.snapshot-btn-copy:hover { background: var(--cyan); color: #000; }
+.snapshot-btn-close { background: transparent; color: rgba(255,255,255,0.5); border-color: rgba(255,255,255,0.1); }
+.snapshot-btn-close:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+.snapshot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.snapshot-item { display: flex; flex-direction: column; gap: 2px; }
+.snapshot-item-label { font-size: 0.55rem; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 0.8px; text-transform: uppercase; }
+.snapshot-item-value { font-size: 0.82rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.snapshot-summary { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.snapshot-summary-item { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px; }
+/* Overlay toolstrip */
+.cross-overlay-strip {
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    padding: 5px 10px; background: rgba(26,26,40,0.4); border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 6px; margin-top: 6px;
+}
+.cross-overlay-label { font-size: 0.55rem; font-weight: 800; color: rgba(255,255,255,0.35); letter-spacing: 1px; margin-right: 4px; }
+/* Pin instruction hint */
+.cross-pin-hint { font-size: 0.52rem; color: rgba(255,255,255,0.3); font-style: italic; margin-left: auto; }
+
 /* Canvas interactivity hints */
 #chartA, #chartB, #chartZ, #chartCross, #chartCompZ, #chartFlowNG, #chartReactivity { cursor: crosshair; }
 
@@ -341,6 +405,10 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
     .div-table th, .div-table td { padding: 8px 6px; }
     .chart-footer { flex-direction: column; gap: 8px; align-items: flex-start; }
     .chart-legend { flex-wrap: wrap; gap: 10px; }
+    .cross-chart-layout { flex-direction: column; }
+    .cross-corr-sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+    #corrHeatCanvas { width: 160px; aspect-ratio: 1; }
+    .snapshot-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* Responsive — 768px */
@@ -837,24 +905,47 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         </div>
 
         <!-- Section 6 -->
-        <div class="panel">
+        <div class="panel" id="cross-etf-panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Cumulative flow across all ETFs on one chart. Toggle tickers with the chips below." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Cross-ETF Cumulative Flow Comparison</div>
-                <div class="tab-group time-tabs" id="cross-time-tabs">
-                    <button class="tab-btn" data-range="1w">1W</button>
-                    <button class="tab-btn" data-range="1m">1M</button>
-                    <button class="tab-btn" data-range="3m">3M</button>
-                    <button class="tab-btn" data-range="6m">6M</button>
-                    <button class="tab-btn" data-range="1y">1Y</button>
-                    <button class="tab-btn" data-range="2y">2Y</button>
-                    <button class="tab-btn" data-range="3y">3Y</button>
-                    <button class="tab-btn" data-range="5y">5Y</button>
-                    <button class="tab-btn active" data-range="all">ALL</button>
+                <div class="panel-title" data-tooltip="Cumulative flow across all ETFs on one chart. Toggle tickers with the chips below. Click a date to pin a shareable snapshot." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Cross-ETF Cumulative Flow Comparison</div>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <!-- Mode toggle: USD / %AUM -->
+                    <div class="cross-mode-group">
+                        <span class="cross-mode-label">SCALE</span>
+                        <div class="tab-group" id="cross-mode-tabs">
+                            <button class="tab-btn active" data-mode="usd" data-tooltip="Raw cumulative USD flows — shows absolute dollar magnitude">USD</button>
+                            <button class="tab-btn" data-mode="pctAum" data-tooltip="Percentage of AUM: flow ÷ NAV per day, then cumulated. Normalizes across fund sizes so smaller ETFs are comparable.">% AUM</button>
+                        </div>
+                    </div>
+                    <div class="tab-group time-tabs" id="cross-time-tabs">
+                        <button class="tab-btn" data-range="1w">1W</button>
+                        <button class="tab-btn" data-range="1m">1M</button>
+                        <button class="tab-btn" data-range="3m">3M</button>
+                        <button class="tab-btn" data-range="6m">6M</button>
+                        <button class="tab-btn" data-range="1y">1Y</button>
+                        <button class="tab-btn" data-range="2y">2Y</button>
+                        <button class="tab-btn" data-range="3y">3Y</button>
+                        <button class="tab-btn" data-range="5y">5Y</button>
+                        <button class="tab-btn active" data-range="all">ALL</button>
+                    </div>
                 </div>
             </div>
-            <div class="chart-wrap">
-                <canvas id="chartCross"></canvas>
-                <div id="cross-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:6px; font-size:0.7rem; pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:140px;"></div>
+            <!-- Chart + Correlation Sidebar Layout -->
+            <div class="cross-chart-layout">
+                <div class="cross-chart-main">
+                    <div class="chart-wrap">
+                        <canvas id="chartCross"></canvas>
+                        <div id="cross-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid rgba(255,255,255,0.1); padding:10px 14px; border-radius:6px; font-size:0.7rem; pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:200px;"></div>
+                    </div>
+                </div>
+                <!-- Correlation Heatmap Sidebar -->
+                <div class="cross-corr-sidebar hidden" id="cross-corr-sidebar">
+                    <div class="corr-title" data-tooltip="Rolling pairwise correlation of daily USD flows between ETFs over the visible window. Red = correlated (same direction), Blue = anti-correlated (opposite direction). Positive BOIL-KOLD correlation is unusual and signals different investor cohorts acting simultaneously.">FLOW CORRELATION</div>
+                    <canvas id="corrHeatCanvas"></canvas>
+                    <div class="corr-legend-bar"></div>
+                    <div class="corr-legend"><span>−1 ANTI</span><span>0</span><span>+1 CORR</span></div>
+                    <div id="corr-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.97); border:1px solid rgba(255,255,255,0.12); padding:8px 12px; border-radius:5px; font-size:0.65rem; pointer-events:none; z-index:110; box-shadow:0 6px 18px rgba(0,0,0,0.5); color:var(--text-bright);"></div>
+                </div>
             </div>
             <!-- Filter + ETF toggles row -->
             <div style="display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; margin-top:8px;">
@@ -864,6 +955,18 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <button class="tab-btn" data-filter="short">SHORT</button>
                 </div>
                 <div id="cross-etf-toggles" style="display:flex; gap:4px; flex-wrap:wrap;"></div>
+            </div>
+            <!-- Overlay Toggles Strip -->
+            <div class="cross-overlay-strip">
+                <span class="cross-overlay-label">OVERLAYS</span>
+                <span class="overlay-chip inactive" id="toggle-spread" data-tooltip="Toggle a dashed line showing the aggregate Long minus Short cumulative flow — the net structural positioning of the gas complex. Positive = capital is net-long. Negative = capital is net-short." style="color:#00e5ff; border-color:#00e5ff;">NET SPREAD</span>
+                <span class="overlay-chip inactive" id="toggle-inflections" data-tooltip="Mark sudden accelerations or decelerations in cumulative flow. Triangular markers appear when the rate-of-change exceeds 2σ of its trailing 30-day history — regime shift detection." style="color:#f59e0b; border-color:#f59e0b;">INFLECTIONS</span>
+                <span class="overlay-chip inactive" id="toggle-correlation" data-tooltip="Show a rolling pairwise flow correlation heatmap in a sidebar. Detects unusual regimes when normally anti-correlated ETFs (e.g. BOIL/KOLD) become positively correlated." style="color:#a78bfa; border-color:#a78bfa;">CORRELATION</span>
+                <span class="cross-pin-hint" id="cross-pin-hint">CLICK chart to pin a date snapshot</span>
+            </div>
+            <!-- Pinned Snapshot Card -->
+            <div class="cross-snapshot-card" id="cross-snapshot-card">
+                <!-- Populated dynamically -->
             </div>
             <!-- Cross ETF independent range slider -->
             <div class="range-slider-container" style="margin-top:8px;">
@@ -1305,6 +1408,12 @@ const state = {
     hoverZIdx: null,
     hoverCrossIdx: null,
     crossToggles: { 'BOIL': true, 'HNU': true, '3NGL': true, 'KOLD': true, 'HND': true, '3NGS': true },
+    crossMode: 'usd',              // 'usd' | 'pctAum'
+    crossShowSpread: false,         // Long/Short net spread overlay
+    crossShowInflections: false,    // Inflection point markers
+    crossShowCorrelation: false,    // Correlation heatmap sidebar
+    pinnedCrossDate: null,          // Pinned snapshot date string
+    crossInflectionCache: {},       // ticker -> [{idx, type, magnitude}]
     zoom:      { start: 0, end: 1 }, // deep dive (chartA + chartB)
     zoomZ:     { start: 0, end: 1 }, // Z-Score history (chartZ) — independent
     zoomCross: { start: 0, end: 1 }, // cross ETF comparison — independent
@@ -1408,6 +1517,7 @@ async function init() {
             syncRangeSlider();
             syncZSlider();
             renderCrossChart();
+            if (state.crossShowCorrelation) renderCorrHeatmap();
             syncCrossSlider();
             renderCompZChart();
             syncCompZSlider();
@@ -2514,6 +2624,7 @@ function handleChartWheel(e) {
     if (isCross) {
         renderCrossChart();
         syncCrossSlider();
+        if (state.crossShowCorrelation) renderCorrHeatmap();
     } else if (isZ) {
         const zData = getZVisibleData();
         if (zData && zData.length > 0) drawChartZ(zData);
@@ -2653,6 +2764,7 @@ function initCrossSlider() {
         state.zoomCross.end   = v2 / max;
         updateCrossSliderUI();
         renderCrossChart();
+        if (state.crossShowCorrelation) renderCorrHeatmap();
     };
     s1.addEventListener('input', onChange);
     s2.addEventListener('input', onChange);
@@ -2775,53 +2887,67 @@ function handleCrossHover(e) {
     const cvs = el('chartCross');
     const rect = cvs.getBoundingClientRect();
     const x = e.clientX - rect.left;
-
     const padL = 60, padR = 60;
     const chartW = rect.width - padL - padR;
     const crossTooltip = el('cross-tooltip');
+    const visibleDates = state._crossDates;
+    if (!visibleDates || visibleDates.length < 2) return;
+
     if (x >= padL && x <= rect.width - padR) {
-        const baseData = state.cache['BOIL']?.data;
-        if (!baseData) return;
-
-        let days2 = {'1w':7,'1m':30,'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095,'5y':1825}[state.timeRange] || 9999;
-        const cutoffDate2 = new Date();
-        cutoffDate2.setDate(cutoffDate2.getDate() - days2);
-        const cutoffStr2 = cutoffDate2.toISOString().slice(0, 10);
-        let startIdxBase2 = baseData.findIndex(d => d.date >= cutoffStr2);
-        if (startIdxBase2 === -1) startIdxBase2 = 0;
-        const baseDates2 = baseData.slice(startIdxBase2).map(d => d.date);
-        const zS2 = Math.floor(state.zoomCross.start * baseDates2.length);
-        const zE2 = Math.ceil(state.zoomCross.end   * baseDates2.length);
-        const visibleDates = baseDates2.slice(Math.max(0, zS2), Math.min(baseDates2.length, zE2));
-
         let pct = (x - padL) / chartW;
         let idx = Math.round(pct * (visibleDates.length - 1));
         idx = Math.max(0, Math.min(idx, visibleDates.length - 1));
         state.hoverCrossIdx = idx;
-
         const date = visibleDates[idx];
-        let html = `<div style="color:#00ffff; font-weight:800; margin-bottom:4px; font-size:0.65rem;">${date}</div>`;
+        const isPct = state._crossIsPct;
+        const unitLabel = isPct ? '% AUM' : '';
+
+        let html = `<div style="color:#00ffff; font-weight:800; margin-bottom:6px; font-size:0.68rem; letter-spacing:0.5px; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:4px;">${fmtDateLong(date)}</div>`;
+        
         const tickers = Object.keys(state.crossToggles).filter(tk => state.crossToggles[tk]);
         tickers.forEach(tk => {
-            const cache = state.cache[tk];
-            if (!cache) return;
-            // Use pre-built date-index (Fix #7 — avoids O(n) rebuild per hover frame)
-            const dateIdx = cache._dateIdx || {};
-            const match = dateIdx[date];
-            if (match) {
-                const d = cache.data;
-                let startIdx = d.findIndex(x => x.date >= visibleDates[0]);
-                if (startIdx === -1) startIdx = 0;
-                const offset = d[startIdx].cumulative_flow;
-                const norm = match.cumulative_flow - offset;
-                html += `<div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:${colors[tk]};font-weight:700;">${tk}</span><span style="font-family:monospace;">${fmtUsd(norm)}</span></div>`;
+            const val = state._crossSeries[tk]?.[idx];
+            if (val !== undefined) {
+                const formatted = isPct ? (val >= 0 ? '+' : '') + val.toFixed(2) + '%' : fmtUsd(val);
+                html += `<div style="display:flex;justify-content:space-between;gap:14px;padding:1px 0;">`;
+                html += `<span style="color:${colors[tk]};font-weight:700;font-size:0.65rem;">${tk}</span>`;
+                html += `<span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.65rem;color:${val >= 0 ? 'rgba(61,184,122,0.9)' : 'rgba(239,68,68,0.9)'}">${formatted}</span></div>`;
             }
         });
+
+        if (state.crossShowSpread && state._crossSpread) {
+            const sv = state._crossSpread[idx];
+            const formatted = isPct ? (sv >= 0 ? '+' : '') + sv.toFixed(2) + '%' : fmtUsd(sv);
+            html += `<div style="display:flex;justify-content:space-between;gap:14px;margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.06);">`;
+            html += `<span style="color:#00e5ff;font-weight:800;font-size:0.6rem;letter-spacing:0.5px;">NET SPREAD</span>`;
+            html += `<span style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:0.68rem;color:${sv >= 0 ? '#00e5ff' : '#ef4444'}">${formatted}</span></div>`;
+        }
+
+        // Check for inflection at this point
+        if (state.crossShowInflections) {
+            let inflectionHits = [];
+            tickers.forEach(tk => {
+                const infs = state.crossInflectionCache[tk];
+                if (!infs) return;
+                const hit = infs.find(inf => inf.idx === idx);
+                if (hit) inflectionHits.push({ tk, ...hit });
+            });
+            if (inflectionHits.length > 0) {
+                html += `<div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.06);">`;
+                inflectionHits.forEach(h => {
+                    const icon = h.type === 'accel' ? '▲' : '▼';
+                    const label = h.type === 'accel' ? 'ACCELERATION' : 'DECELERATION';
+                    const col = h.type === 'accel' ? '#f59e0b' : '#a855f7';
+                    html += `<div style="color:${col};font-size:0.58rem;font-weight:800;">${icon} ${h.tk} ${label} (${h.magnitude.toFixed(1)}σ)</div>`;
+                });
+                html += `</div>`;
+            }
+        }
 
         crossTooltip.style.display = 'block';
         crossTooltip.innerHTML = html;
         let tx = e.clientX - rect.left + 15;
-        if (tx + 160 > rect.width) tx = e.clientX - rect.left - 160 - 15;
+        if (tx + 220 > rect.width) tx = e.clientX - rect.left - 220 - 15;
         crossTooltip.style.left = tx + 'px';
         crossTooltip.style.top = (e.clientY - rect.top - 40) + 'px';
     } else {
@@ -3535,6 +3661,7 @@ function buildCrossToggles() {
             state.crossToggles[tk] = !state.crossToggles[tk];
             updateCrossToggleUI();
             renderCrossChart();
+            if (state.crossShowCorrelation) renderCorrHeatmap();
         });
         container.appendChild(chip);
     });
@@ -3556,6 +3683,39 @@ function updateCrossToggleUI() {
     });
 }
 
+// ---- Cross-ETF Enhanced Feature Wiring ----
+document.querySelectorAll('#cross-mode-tabs .tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('#cross-mode-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.crossMode = btn.dataset.mode;
+        renderCrossChart();
+        if (state.crossShowCorrelation) renderCorrHeatmap();
+    });
+});
+
+function toggleOverlayChip(chipId, stateKey, extraFn) {
+    const chip = el(chipId);
+    if (!chip) return;
+    chip.addEventListener('click', () => {
+        state[stateKey] = !state[stateKey];
+        chip.className = state[stateKey] ? 'overlay-chip active' : 'overlay-chip inactive';
+        chip.style.background = state[stateKey] ? chip.style.color + '15' : 'transparent';
+        if (extraFn) extraFn();
+        renderCrossChart();
+    });
+}
+toggleOverlayChip('toggle-spread', 'crossShowSpread');
+toggleOverlayChip('toggle-inflections', 'crossShowInflections');
+toggleOverlayChip('toggle-correlation', 'crossShowCorrelation', () => {
+    const sidebar = el('cross-corr-sidebar');
+    if (sidebar) sidebar.className = state.crossShowCorrelation ? 'cross-corr-sidebar' : 'cross-corr-sidebar hidden';
+    if (state.crossShowCorrelation) renderCorrHeatmap();
+});
+
+// Click-to-pin snapshot
+el('chartCross').addEventListener('click', handleCrossPin);
+
 // ---- Cross ETF Chart ----
 async function loadAllTickersForCross() {
     const tickers = ['BOIL', 'HNU', '3NGL', 'KOLD', 'HND', '3NGS'];
@@ -3572,6 +3732,7 @@ async function loadAllTickersForCross() {
     computeFlowHeatGlobalPercentiles();
     renderFlowHeatCalendar(state.flowHeatOffset);
     renderCrossChart();
+    if (state.crossShowCorrelation) renderCorrHeatmap();
     syncCrossSlider();
     renderYearlyMatrix();
     renderCrossDivergence();
@@ -3593,59 +3754,127 @@ function renderCrossChart() {
     const chartW = w - pad.left - pad.right;
     const chartH = h - pad.top - pad.bottom;
 
-    // Use toggle state for which ETFs to show
-    let tickers = Object.keys(state.crossToggles).filter(tk => state.crossToggles[tk]);
-    if (tickers.length === 0) tickers = ['BOIL']; // fallback
-    
-    // Find common date domain length based on timeRange
-    // To simplify, use BOIL dates to align
-    const baseData = state.cache['BOIL'].data;
-    
-    let days = {'1w':7,'1m':30,'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095,'5y':1825}[state.timeRange] || 9999;
+    const isPct = state.crossMode === 'pctAum';
 
+    let tickers = Object.keys(state.crossToggles).filter(tk => state.crossToggles[tk]);
+    if (tickers.length === 0) tickers = ['BOIL'];
+    
+    const baseData = state.cache['BOIL'].data;
+    let days = {'1w':7,'1m':30,'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095,'5y':1825}[state.timeRange] || 9999;
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
     const cutoffStr = cutoffDate.toISOString().slice(0, 10);
-
     let startIdxBase = baseData.findIndex(d => d.date >= cutoffStr);
     if (startIdxBase === -1) startIdxBase = 0;
     const baseDates = baseData.slice(startIdxBase).map(d => d.date);
-    // Apply cross-specific independent zoom
     const zS = Math.floor(state.zoomCross.start * baseDates.length);
     const zE = Math.ceil(state.zoomCross.end   * baseDates.length);
     const visibleDates = baseDates.slice(Math.max(0, zS), Math.min(baseDates.length, zE));
     
-    const series = {}; // ticker -> [normalized flows aligned to visibleDates]
-    
+    const series = {};
+    const rawDaily = {}; // for correlation: ticker -> [daily flow values aligned to visibleDates]
     let globalMax = -Infinity, globalMin = Infinity;
     
     tickers.forEach(tk => {
         const d = state.cache[tk].data;
-        // BUG 7 FIX: Pre-index dates to O(1)
         const dateIdx = {};
         for (let j = 0; j < d.length; j++) dateIdx[d[j].date] = d[j];
+        // Store dateIdx for hover
+        state.cache[tk]._dateIdx = dateIdx;
         
-        // align
         let startIdx = d.findIndex(x => x.date >= visibleDates[0]);
         if (startIdx === -1) startIdx = 0;
         
-        const offset = d[startIdx] ? d[startIdx].cumulative_flow : 0;
+        let cumulative = 0;
         const vals = [];
+        const dailyVals = [];
         
         for (let i = 0; i < visibleDates.length; i++) {
             const date = visibleDates[i];
             const match = dateIdx[date];
             if (match) {
-                const norm = match.cumulative_flow - offset;
-                vals.push(norm);
-                if (norm > globalMax) globalMax = norm;
-                if (norm < globalMin) globalMin = norm;
+                if (isPct) {
+                    const nav = match.nav || 1;
+                    const dayFlow = (match.usd_flow || 0) / nav * 100;
+                    cumulative += dayFlow;
+                    dailyVals.push(match.usd_flow || 0);
+                } else {
+                    if (vals.length === 0) {
+                        // First visible point: offset so line starts at 0
+                        cumulative = 0;
+                    }
+                    // For USD mode, use existing cumulative_flow with offset
+                    let sIdx = d.findIndex(x => x.date >= visibleDates[0]);
+                    if (sIdx === -1) sIdx = 0;
+                    const offset = d[sIdx].cumulative_flow || 0;
+                    cumulative = (match.cumulative_flow || 0) - offset;
+                    dailyVals.push(match.usd_flow || 0);
+                }
+                vals.push(cumulative);
+                if (cumulative > globalMax) globalMax = cumulative;
+                if (cumulative < globalMin) globalMin = cumulative;
             } else {
                 vals.push(vals.length > 0 ? vals[vals.length - 1] : 0);
+                dailyVals.push(0);
             }
         }
         series[tk] = vals;
+        rawDaily[tk] = dailyVals;
     });
+    
+    // Store for hover/pin
+    state._crossSeries = series;
+    state._crossDates = visibleDates;
+    state._crossRawDaily = rawDaily;
+    state._crossIsPct = isPct;
+    
+    // Net spread series (longs - shorts)
+    let spreadSeries = null;
+    if (state.crossShowSpread) {
+        const longs = ['BOIL','HNU','3NGL'].filter(tk => state.cache[tk]);
+        const shorts = ['KOLD','HND','3NGS'].filter(tk => state.cache[tk]);
+        spreadSeries = [];
+        for (let i = 0; i < visibleDates.length; i++) {
+            let longSum = 0, shortSum = 0;
+            longs.forEach(tk => {
+                const d = state.cache[tk].data;
+                const dateIdx = state.cache[tk]._dateIdx || {};
+                const match = dateIdx[visibleDates[i]];
+                if (match) {
+                    if (isPct) {
+                        // We need to rebuild cumulative for spread regardless of toggle state
+                        // Just approximate from series if available
+                        longSum += (series[tk] ? series[tk][i] : 0);
+                    } else {
+                        let sIdx = d.findIndex(x => x.date >= visibleDates[0]);
+                        if (sIdx === -1) sIdx = 0;
+                        const offset = d[sIdx].cumulative_flow || 0;
+                        longSum += (match.cumulative_flow || 0) - offset;
+                    }
+                }
+            });
+            shorts.forEach(tk => {
+                const d = state.cache[tk].data;
+                const dateIdx = state.cache[tk]._dateIdx || {};
+                const match = dateIdx[visibleDates[i]];
+                if (match) {
+                    if (isPct) {
+                        shortSum += (series[tk] ? series[tk][i] : 0);
+                    } else {
+                        let sIdx = d.findIndex(x => x.date >= visibleDates[0]);
+                        if (sIdx === -1) sIdx = 0;
+                        const offset = d[sIdx].cumulative_flow || 0;
+                        shortSum += (match.cumulative_flow || 0) - offset;
+                    }
+                }
+            });
+            const sv = longSum - shortSum;
+            spreadSeries.push(sv);
+            if (sv > globalMax) globalMax = sv;
+            if (sv < globalMin) globalMin = sv;
+        }
+        state._crossSpread = spreadSeries;
+    }
     
     if (globalMax === -Infinity) return;
     if (globalMax === globalMin) { globalMax += 1; globalMin -= 1; }
@@ -3654,7 +3883,35 @@ function renderCrossChart() {
     const getX = i => pad.left + (i / (visibleDates.length - 1)) * chartW;
     const getY = val => pad.top + chartH - ((val - globalMin) / range) * chartH;
     
-    // Cross chart Y-axis grid lines (behind lines)
+    // -- Inflection detection --
+    if (state.crossShowInflections) {
+        state.crossInflectionCache = {};
+        tickers.forEach(tk => {
+            const vals = series[tk];
+            if (!vals || vals.length < 32) return;
+            const inflections = [];
+            // Compute rolling ROC (5-day)
+            const rocs = [];
+            for (let i = 0; i < vals.length; i++) {
+                if (i < 5) { rocs.push(0); continue; }
+                rocs.push(vals[i] - vals[i - 5]);
+            }
+            // Rolling mean and std of ROC (30-day window)
+            for (let i = 30; i < rocs.length; i++) {
+                const window = rocs.slice(i - 30, i);
+                const mean = window.reduce((a, b) => a + b, 0) / window.length;
+                const variance = window.reduce((a, b) => a + (b - mean) ** 2, 0) / window.length;
+                const std = Math.sqrt(variance) || 1;
+                const zScore = (rocs[i] - mean) / std;
+                if (Math.abs(zScore) >= 2.0) {
+                    inflections.push({ idx: i, type: zScore > 0 ? 'accel' : 'decel', magnitude: Math.abs(zScore) });
+                }
+            }
+            state.crossInflectionCache[tk] = inflections;
+        });
+    }
+    
+    // Grid lines
     const crossTicks = niceAxisTicks(globalMin, globalMax, 5);
     crossTicks.forEach(tick => {
         const gy = getY(tick);
@@ -3664,19 +3921,49 @@ function renderCrossChart() {
         ctxCross.setLineDash(tick === 0 ? [4,4] : []); ctxCross.lineWidth = 1; ctxCross.stroke(); ctxCross.setLineDash([]);
     });
 
-    // Zero line (if in range) — more prominent than grid lines
+    // Zero line
     if (globalMax > 0 && globalMin < 0) {
         ctxCross.beginPath(); ctxCross.moveTo(pad.left, getY(0)); ctxCross.lineTo(pad.left+chartW, getY(0));
         ctxCross.strokeStyle = 'rgba(255,255,255,0.18)'; ctxCross.setLineDash([4,4]); ctxCross.stroke(); ctxCross.setLineDash([]);
     }
 
-    // Draw lines
+    // Net Spread area fill + dashed line
+    if (state.crossShowSpread && spreadSeries) {
+        const y0 = getY(0);
+        // Filled area
+        ctxCross.beginPath();
+        ctxCross.moveTo(getX(0), y0);
+        for (let i = 0; i < spreadSeries.length; i++) ctxCross.lineTo(getX(i), getY(spreadSeries[i]));
+        ctxCross.lineTo(getX(spreadSeries.length - 1), y0);
+        ctxCross.closePath();
+        ctxCross.save(); ctxCross.clip();
+        // Positive fill
+        const gUp = ctxCross.createLinearGradient(0, pad.top, 0, y0);
+        gUp.addColorStop(0, 'rgba(0,229,255,0.12)'); gUp.addColorStop(1, 'rgba(0,229,255,0.02)');
+        ctxCross.fillStyle = gUp;
+        ctxCross.fillRect(pad.left, pad.top, chartW, y0 - pad.top);
+        // Negative fill
+        const gDn = ctxCross.createLinearGradient(0, y0, 0, pad.top + chartH);
+        gDn.addColorStop(0, 'rgba(255,100,100,0.02)'); gDn.addColorStop(1, 'rgba(255,100,100,0.12)');
+        ctxCross.fillStyle = gDn;
+        ctxCross.fillRect(pad.left, y0, chartW, pad.top + chartH - y0);
+        ctxCross.restore();
+        // Dashed line
+        ctxCross.beginPath(); ctxCross.setLineDash([6, 4]);
+        for (let i = 0; i < spreadSeries.length; i++) {
+            if (i === 0) ctxCross.moveTo(getX(i), getY(spreadSeries[i]));
+            else ctxCross.lineTo(getX(i), getY(spreadSeries[i]));
+        }
+        ctxCross.strokeStyle = 'rgba(0,229,255,0.65)'; ctxCross.lineWidth = 1.5; ctxCross.stroke();
+        ctxCross.setLineDash([]);
+    }
+
+    // Draw ETF lines
     tickers.forEach(tk => {
         const vals = series[tk];
         ctxCross.beginPath();
         ctxCross.strokeStyle = colors[tk];
         ctxCross.lineWidth = tk === state.activeTicker ? 2.5 : 1.2;
-
         for (let i = 0; i < vals.length; i++) {
             if (i===0) ctxCross.moveTo(getX(i), getY(vals[i]));
             else ctxCross.lineTo(getX(i), getY(vals[i]));
@@ -3684,12 +3971,43 @@ function renderCrossChart() {
         ctxCross.stroke();
     });
 
-    // End-of-line ticker labels (Bloomberg-style, right edge)
+    // Inflection markers
+    if (state.crossShowInflections) {
+        tickers.forEach(tk => {
+            const inflections = state.crossInflectionCache[tk];
+            if (!inflections) return;
+            const vals = series[tk];
+            inflections.forEach(inf => {
+                const x = getX(inf.idx);
+                const y = getY(vals[inf.idx]);
+                const sz = 4 + Math.min(inf.magnitude * 0.8, 3);
+                ctxCross.save();
+                ctxCross.translate(x, y);
+                if (inf.type === 'decel') ctxCross.rotate(Math.PI);
+                ctxCross.beginPath();
+                ctxCross.moveTo(0, -sz);
+                ctxCross.lineTo(-sz * 0.7, sz * 0.5);
+                ctxCross.lineTo(sz * 0.7, sz * 0.5);
+                ctxCross.closePath();
+                ctxCross.fillStyle = inf.type === 'accel' ? 'rgba(245,158,11,0.85)' : 'rgba(168,85,247,0.85)';
+                ctxCross.fill();
+                ctxCross.strokeStyle = '#fff';
+                ctxCross.lineWidth = 0.7;
+                ctxCross.stroke();
+                ctxCross.restore();
+            });
+        });
+    }
+
+    // End-of-line ticker labels
     const endLabels = tickers.map(tk => {
         const vals = series[tk];
         return { tk, y: getY(vals[vals.length - 1]), color: colors[tk] };
-    }).sort((a, b) => a.y - b.y);
-    // Collision avoidance: minimum 13px gap
+    });
+    if (state.crossShowSpread && spreadSeries) {
+        endLabels.push({ tk: 'SPREAD', y: getY(spreadSeries[spreadSeries.length - 1]), color: '#00e5ff' });
+    }
+    endLabels.sort((a, b) => a.y - b.y);
     for (let i = 1; i < endLabels.length; i++) {
         if (endLabels[i].y - endLabels[i-1].y < 13)
             endLabels[i].y = endLabels[i-1].y + 13;
@@ -3700,7 +4018,7 @@ function renderCrossChart() {
         ctxCross.fillText(tk, pad.left + chartW + 5, Math.min(pad.top + chartH, Math.max(pad.top + 8, y + 3)));
     });
     
-    // HTML legend (outside canvas — no collision)
+    // HTML legend
     const legendEl = document.getElementById('cross-html-legend');
     if (legendEl) {
         const allTickers = ['BOIL','HNU','3NGL','KOLD','HND','3NGS'];
@@ -3714,25 +4032,37 @@ function renderCrossChart() {
         }).join('');
     }
     
-    // Cross chart Y-axis tick labels
+    // Y-axis labels
     ctxCross.font = '9px monospace'; ctxCross.textAlign = 'right';
     crossTicks.forEach(tick => {
         const gy = getY(tick);
         if (gy < pad.top - 2 || gy > pad.top + chartH + 2) return;
         ctxCross.fillStyle = tick === 0 ? 'rgba(148,163,184,0.6)' : '#94a3b8';
-        ctxCross.fillText(fmtAxisUsd(tick), pad.left - 5, gy + 3);
+        ctxCross.fillText(isPct ? (tick >= 0 ? '+' : '') + tick.toFixed(1) + '%' : fmtAxisUsd(tick), pad.left - 5, gy + 3);
     });
 
-    // Adaptive X-axis for Cross chart (grid lines included via drawXAxis)
+    // X-axis
     drawXAxis(ctxCross, visibleDates, getX, chartW, pad.top + chartH + 15, pad);
 
-    // Crosshair on hover
+    // Pinned date vertical marker
+    if (state.pinnedCrossDate) {
+        const pIdx = visibleDates.indexOf(state.pinnedCrossDate);
+        if (pIdx >= 0) {
+            const px = getX(pIdx);
+            ctxCross.beginPath(); ctxCross.moveTo(px, pad.top); ctxCross.lineTo(px, pad.top + chartH);
+            ctxCross.strokeStyle = 'rgba(0,229,255,0.45)'; ctxCross.lineWidth = 1.5; ctxCross.setLineDash([3, 3]); ctxCross.stroke(); ctxCross.setLineDash([]);
+            // Small diamond marker at top
+            ctxCross.save(); ctxCross.translate(px, pad.top - 2);
+            ctxCross.beginPath(); ctxCross.moveTo(0, -5); ctxCross.lineTo(4, 0); ctxCross.lineTo(0, 5); ctxCross.lineTo(-4, 0); ctxCross.closePath();
+            ctxCross.fillStyle = '#00e5ff'; ctxCross.fill(); ctxCross.restore();
+        }
+    }
+
+    // Hover crosshair
     if (state.hoverCrossIdx !== null && state.hoverCrossIdx < visibleDates.length) {
         const hx = getX(state.hoverCrossIdx);
         ctxCross.beginPath(); ctxCross.moveTo(hx, pad.top); ctxCross.lineTo(hx, pad.top + chartH);
         ctxCross.strokeStyle = 'rgba(0,255,255,0.22)'; ctxCross.lineWidth = 1; ctxCross.setLineDash([]); ctxCross.stroke();
-
-        // Dots on each line
         tickers.forEach(tk => {
             const val = series[tk]?.[state.hoverCrossIdx];
             if (val !== undefined) {
@@ -3741,9 +4071,246 @@ function renderCrossChart() {
                 ctxCross.strokeStyle = '#fff'; ctxCross.lineWidth = 1; ctxCross.stroke();
             }
         });
+        if (state.crossShowSpread && spreadSeries) {
+            const sv = spreadSeries[state.hoverCrossIdx];
+            if (sv !== undefined) {
+                ctxCross.beginPath(); ctxCross.arc(hx, getY(sv), 4, 0, Math.PI*2);
+                ctxCross.fillStyle = '#00e5ff'; ctxCross.fill();
+                ctxCross.strokeStyle = '#fff'; ctxCross.lineWidth = 1; ctxCross.stroke();
+            }
+        }
     }
 }
 
+// ---- Click-to-Pin Snapshot ----
+function handleCrossPin(e) {
+    const cvs = el('chartCross');
+    const rect = cvs.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const padL = 60, padR = 60;
+    const chartW = rect.width - padL - padR;
+    const visibleDates = state._crossDates;
+    if (!visibleDates || visibleDates.length < 2) return;
+    if (x < padL || x > rect.width - padR) return;
+
+    let pct = (x - padL) / chartW;
+    let idx = Math.round(pct * (visibleDates.length - 1));
+    idx = Math.max(0, Math.min(idx, visibleDates.length - 1));
+    const date = visibleDates[idx];
+
+    // Toggle off if same date
+    if (state.pinnedCrossDate === date) {
+        state.pinnedCrossDate = null;
+        el('cross-snapshot-card').className = 'cross-snapshot-card';
+        renderCrossChart();
+        return;
+    }
+
+    state.pinnedCrossDate = date;
+    renderCrossChart();
+    buildSnapshotCard(date, idx);
+}
+
+function buildSnapshotCard(date, idx) {
+    const card = el('cross-snapshot-card');
+    if (!card) return;
+    const isPct = state._crossIsPct;
+    const tickers = ['BOIL','HNU','3NGL','KOLD','HND','3NGS'];
+    const longs = ['BOIL','HNU','3NGL'];
+    const shorts = ['KOLD','HND','3NGS'];
+
+    let longTotal = 0, shortTotal = 0;
+    let itemsHtml = '';
+    tickers.forEach(tk => {
+        const val = state._crossSeries[tk]?.[idx];
+        if (val === undefined) return;
+        const formatted = isPct ? (val >= 0 ? '+' : '') + val.toFixed(2) + '%' : fmtUsd(val);
+        const color = val >= 0 ? '#3db87a' : '#ef4444';
+        if (longs.includes(tk)) longTotal += (val || 0);
+        else shortTotal += (val || 0);
+        itemsHtml += `<div class="snapshot-item">
+            <div class="snapshot-item-label" style="color:${colors[tk]}">${tk}</div>
+            <div class="snapshot-item-value" style="color:${color}">${formatted}</div>
+        </div>`;
+    });
+
+    const netSpread = longTotal - shortTotal;
+    const netFormatted = isPct ? (netSpread >= 0 ? '+' : '') + netSpread.toFixed(2) + '%' : fmtUsd(netSpread);
+    const longFormatted = isPct ? (longTotal >= 0 ? '+' : '') + longTotal.toFixed(2) + '%' : fmtUsd(longTotal);
+    const shortFormatted = isPct ? (shortTotal >= 0 ? '+' : '') + shortTotal.toFixed(2) + '%' : fmtUsd(shortTotal);
+    const ratio = shortTotal !== 0 ? Math.abs(longTotal / shortTotal).toFixed(1) : '∞';
+
+    const summaryText = `As of ${date}: Net Spread ${netFormatted}, L/S Ratio ${ratio}:1`;
+
+    card.innerHTML = `
+        <div class="snapshot-header">
+            <div class="snapshot-date">📌 SNAPSHOT — ${fmtDateLong(date)}</div>
+            <div class="snapshot-actions">
+                <button class="snapshot-btn snapshot-btn-copy" id="snapshot-copy-btn" data-tooltip="Copy summary to clipboard">
+                    📋 COPY
+                </button>
+                <button class="snapshot-btn snapshot-btn-close" id="snapshot-close-btn" data-tooltip="Unpin snapshot">
+                    ✕
+                </button>
+            </div>
+        </div>
+        <div class="snapshot-grid">${itemsHtml}</div>
+        <div class="snapshot-summary">
+            <div class="snapshot-summary-item" style="color:rgba(61,184,122,0.9);">LONGS: ${longFormatted}</div>
+            <div class="snapshot-summary-item" style="color:rgba(239,68,68,0.9);">SHORTS: ${shortFormatted}</div>
+            <div class="snapshot-summary-item" style="color:#00e5ff;">NET SPREAD: <span style="font-family:'JetBrains Mono',monospace;font-weight:900;">${netFormatted}</span></div>
+            <div class="snapshot-summary-item" style="color:rgba(255,255,255,0.65);">L/S RATIO: <span style="font-family:'JetBrains Mono',monospace;font-weight:900;">${ratio}:1</span></div>
+        </div>`;
+
+    card.className = 'cross-snapshot-card visible';
+
+    el('snapshot-copy-btn').addEventListener('click', () => {
+        const lines = [`Cross-ETF Flow Snapshot — ${fmtDateLong(date)}`];
+        tickers.forEach(tk => {
+            const val = state._crossSeries[tk]?.[idx];
+            if (val === undefined) return;
+            lines.push(`  ${tk}: ${isPct ? (val >= 0 ? '+' : '') + val.toFixed(2) + '%' : fmtUsd(val)}`);
+        });
+        lines.push(`Net Spread: ${netFormatted} | L/S Ratio: ${ratio}:1`);
+        navigator.clipboard.writeText(lines.join('\n')).then(() => {
+            const btn = el('snapshot-copy-btn');
+            btn.textContent = '✓ COPIED';
+            setTimeout(() => { btn.innerHTML = '📋 COPY'; }, 1500);
+        });
+    });
+
+    el('snapshot-close-btn').addEventListener('click', () => {
+        state.pinnedCrossDate = null;
+        card.className = 'cross-snapshot-card';
+        renderCrossChart();
+    });
+}
+
+// ---- Correlation Heatmap ----
+function renderCorrHeatmap() {
+    const canvas = el('corrHeatCanvas');
+    if (!canvas) return;
+    const sidebar = el('cross-corr-sidebar');
+    const tickers = ['BOIL','HNU','3NGL','KOLD','HND','3NGS'].filter(tk => state.cache[tk]);
+    const n = tickers.length;
+    if (n < 2) return;
+
+    // Get daily flows for visible window
+    const rawDaily = state._crossRawDaily || {};
+    const visibleDates = state._crossDates || [];
+    if (visibleDates.length < 10) return;
+
+    // Build aligned daily flow arrays
+    const flowArrays = {};
+    tickers.forEach(tk => {
+        if (rawDaily[tk]) {
+            flowArrays[tk] = rawDaily[tk];
+        } else {
+            // Build from cache if not in series
+            const d = state.cache[tk].data;
+            const dateIdx = {};
+            d.forEach(row => { dateIdx[row.date] = row; });
+            flowArrays[tk] = visibleDates.map(date => {
+                const match = dateIdx[date];
+                return match ? (match.usd_flow || 0) : 0;
+            });
+        }
+    });
+
+    // Compute pairwise Pearson correlation
+    function pearson(a, b) {
+        const n = Math.min(a.length, b.length);
+        if (n < 5) return 0;
+        let sumA = 0, sumB = 0;
+        for (let i = 0; i < n; i++) { sumA += a[i]; sumB += b[i]; }
+        const meanA = sumA / n, meanB = sumB / n;
+        let num = 0, denA = 0, denB = 0;
+        for (let i = 0; i < n; i++) {
+            const da = a[i] - meanA, db = b[i] - meanB;
+            num += da * db; denA += da * da; denB += db * db;
+        }
+        const den = Math.sqrt(denA * denB);
+        return den === 0 ? 0 : num / den;
+    }
+
+    const corrMatrix = [];
+    for (let i = 0; i < n; i++) {
+        corrMatrix[i] = [];
+        for (let j = 0; j < n; j++) {
+            corrMatrix[i][j] = i === j ? 1 : pearson(flowArrays[tickers[i]], flowArrays[tickers[j]]);
+        }
+    }
+
+    // Render
+    const size = canvas.parentElement.clientWidth - 20;
+    const cellSize = Math.floor(size / n);
+    const totalSize = cellSize * n;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = totalSize * dpr;
+    canvas.height = totalSize * dpr;
+    canvas.style.width = totalSize + 'px';
+    canvas.style.height = totalSize + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, totalSize, totalSize);
+
+    function corrColor(v) {
+        const abs = Math.abs(v);
+        if (v > 0) {
+            const r = Math.round(239 * abs + 26 * (1 - abs));
+            const g = Math.round(68 * abs + 26 * (1 - abs));
+            const b = Math.round(68 * abs + 40 * (1 - abs));
+            return `rgba(${r},${g},${b},${0.3 + abs * 0.6})`;
+        } else {
+            const r = Math.round(74 * abs + 26 * (1 - abs));
+            const g = Math.round(156 * abs + 26 * (1 - abs));
+            const b = Math.round(245 * abs + 40 * (1 - abs));
+            return `rgba(${r},${g},${b},${0.3 + abs * 0.6})`;
+        }
+    }
+
+    for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+            const x = j * cellSize, y = i * cellSize;
+            ctx.fillStyle = corrColor(corrMatrix[i][j]);
+            ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+            // Value text
+            ctx.font = `bold ${Math.max(8, cellSize * 0.28)}px 'JetBrains Mono', monospace`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = Math.abs(corrMatrix[i][j]) > 0.5 ? '#fff' : 'rgba(255,255,255,0.6)';
+            const label = i === j ? tickers[i] : (corrMatrix[i][j] >= 0 ? '+' : '') + corrMatrix[i][j].toFixed(2);
+            ctx.fillText(label, x + cellSize / 2, y + cellSize / 2);
+        }
+    }
+
+    // Hover tooltip for correlation cells
+    canvas.onmousemove = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        const ci = Math.floor(my / (rect.height / n)), cj = Math.floor(mx / (rect.width / n));
+        if (ci < 0 || ci >= n || cj < 0 || cj >= n) { el('corr-tooltip').style.display = 'none'; return; }
+        const tip = el('corr-tooltip');
+        const v = corrMatrix[ci][cj];
+        const label = ci === cj ? `${tickers[ci]} (self)` : `${tickers[ci]} ↔ ${tickers[cj]}`;
+        let interpretation = '';
+        if (ci !== cj) {
+            const isLongShort = (['BOIL','HNU','3NGL'].includes(tickers[ci]) && ['KOLD','HND','3NGS'].includes(tickers[cj])) ||
+                               (['KOLD','HND','3NGS'].includes(tickers[ci]) && ['BOIL','HNU','3NGL'].includes(tickers[cj]));
+            if (isLongShort && v > 0.3) {
+                interpretation = '<div style="color:#f59e0b;font-size:0.55rem;font-weight:700;margin-top:3px;">⚠ UNUSUAL: Long/Short positively correlated</div>';
+            } else if (isLongShort && v < -0.3) {
+                interpretation = '<div style="color:#3db87a;font-size:0.55rem;font-weight:700;margin-top:3px;">✓ NORMAL: Long/Short anti-correlated</div>';
+            }
+        }
+        tip.innerHTML = `<div style="font-weight:800;font-size:0.62rem;color:var(--cyan);">${label}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:0.75rem;color:${v >= 0 ? '#ef4444' : '#4A9CF5'};margin-top:2px;">${v >= 0 ? '+' : ''}${v.toFixed(3)}</div>
+            ${interpretation}`;
+        tip.style.display = 'block';
+        tip.style.left = (mx + 15) + 'px';
+        tip.style.top = (my - 10) + 'px';
+    };
+    canvas.onmouseleave = () => { el('corr-tooltip').style.display = 'none'; };
+}
 </script>
 <script src="js/flow-composite.js"></script>
 <script>
@@ -3754,6 +4321,7 @@ window.addEventListener('resize', () => {
     renderCharts();
     const zd = getZVisibleData(); if (zd && zd.length > 0) drawChartZ(zd);
     renderCrossChart();
+    if (state.crossShowCorrelation) renderCorrHeatmap();
     renderCompZChart();
     renderFlowNGChart();
     renderReactivityChart();
