@@ -4216,7 +4216,7 @@ function renderCorrHeatmap() {
     const visibleDates = state._crossDates || [];
     if (visibleDates.length < 10) return;
 
-    const cacheKey = visibleDates[0] + '_' + visibleDates[visibleDates.length - 1];
+    const cacheKey = visibleDates[0] + '_' + visibleDates[visibleDates.length - 1] + '_' + tickers.join(',');
     
     let corrMatrix = state._corrMatrixCache;
     let corrTickers = state._corrTickersCache;
