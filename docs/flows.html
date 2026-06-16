@@ -3787,7 +3787,7 @@ function renderCrossChart() {
     const isPct = state.crossMode === 'pctAum';
 
     let tickers = Object.keys(state.crossToggles).filter(tk => state.crossToggles[tk]);
-    if (tickers.length === 0) tickers = ['BOIL'];
+    if (tickers.length === 0 && !state.crossShowSpread) tickers = ['BOIL'];
     
     const baseData = state.cache['BOIL'].data;
     let days = {'1w':7,'1m':30,'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095,'5y':1825}[state.timeRange] || 9999;
@@ -3805,11 +3805,11 @@ function renderCrossChart() {
     const rawDaily = {}; // for correlation: ticker -> [daily flow values aligned to visibleDates]
     let globalMax = -Infinity, globalMin = Infinity;
     
-    tickers.forEach(tk => {
+    const allTickers = ['BOIL','HNU','3NGL','KOLD','HND','3NGS'];
+    allTickers.forEach(tk => {
         const d = state.cache[tk].data;
         const dateIdx = {};
         for (let j = 0; j < d.length; j++) dateIdx[d[j].date] = d[j];
-        // Store dateIdx for hover
         state.cache[tk]._dateIdx = dateIdx;
         
         let startIdx = d.findIndex(x => x.date >= visibleDates[0]);
@@ -3830,10 +3830,8 @@ function renderCrossChart() {
                     dailyVals.push(match.usd_flow || 0);
                 } else {
                     if (vals.length === 0) {
-                        // First visible point: offset so line starts at 0
                         cumulative = 0;
                     }
-                    // For USD mode, use existing cumulative_flow with offset
                     let sIdx = d.findIndex(x => x.date >= visibleDates[0]);
                     if (sIdx === -1) sIdx = 0;
                     const offset = d[sIdx].cumulative_flow || 0;
@@ -3841,8 +3839,6 @@ function renderCrossChart() {
                     dailyVals.push(match.usd_flow || 0);
                 }
                 vals.push(cumulative);
-                if (cumulative > globalMax) globalMax = cumulative;
-                if (cumulative < globalMin) globalMin = cumulative;
             } else {
                 vals.push(vals.length > 0 ? vals[vals.length - 1] : 0);
                 dailyVals.push(0);
@@ -3850,6 +3846,14 @@ function renderCrossChart() {
         }
         series[tk] = vals;
         rawDaily[tk] = dailyVals;
+        
+        // Only include in min/max if this ticker is toggled active
+        if (state.crossToggles[tk]) {
+            vals.forEach(v => {
+                if (v > globalMax) globalMax = v;
+                if (v < globalMin) globalMin = v;
+            });
+        }
     });
     
     // Store for hover/pin
@@ -3867,36 +3871,10 @@ function renderCrossChart() {
         for (let i = 0; i < visibleDates.length; i++) {
             let longSum = 0, shortSum = 0;
             longs.forEach(tk => {
-                const d = state.cache[tk].data;
-                const dateIdx = state.cache[tk]._dateIdx || {};
-                const match = dateIdx[visibleDates[i]];
-                if (match) {
-                    if (isPct) {
-                        // We need to rebuild cumulative for spread regardless of toggle state
-                        // Just approximate from series if available
-                        longSum += (series[tk] ? series[tk][i] : 0);
-                    } else {
-                        let sIdx = d.findIndex(x => x.date >= visibleDates[0]);
-                        if (sIdx === -1) sIdx = 0;
-                        const offset = d[sIdx].cumulative_flow || 0;
-                        longSum += (match.cumulative_flow || 0) - offset;
-                    }
-                }
+                longSum += (series[tk] ? series[tk][i] : 0);
             });
             shorts.forEach(tk => {
-                const d = state.cache[tk].data;
-                const dateIdx = state.cache[tk]._dateIdx || {};
-                const match = dateIdx[visibleDates[i]];
-                if (match) {
-                    if (isPct) {
-                        shortSum += (series[tk] ? series[tk][i] : 0);
-                    } else {
-                        let sIdx = d.findIndex(x => x.date >= visibleDates[0]);
-                        if (sIdx === -1) sIdx = 0;
-                        const offset = d[sIdx].cumulative_flow || 0;
-                        shortSum += (match.cumulative_flow || 0) - offset;
-                    }
-                }
+                shortSum += (series[tk] ? series[tk][i] : 0);
             });
             const sv = longSum - shortSum;
             spreadSeries.push(sv);
