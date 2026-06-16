@@ -2937,12 +2937,20 @@ function handleCrossHover(e) {
                 const hit = infs.find(inf => inf.idx === idx);
                 if (hit) inflectionHits.push({ tk, ...hit });
             });
+
+            // Also check Net Spread inflection hit
+            if (state.crossShowSpread && state.crossInflectionCache['SPREAD']) {
+                const infs = state.crossInflectionCache['SPREAD'];
+                const hit = infs.find(inf => inf.idx === idx);
+                if (hit) inflectionHits.push({ tk: 'NET SPREAD', ...hit });
+            }
+
             if (inflectionHits.length > 0) {
                 html += `<div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.06);">`;
                 inflectionHits.forEach(h => {
                     const icon = h.type === 'accel' ? '▲' : '▼';
                     const label = h.type === 'accel' ? 'ACCELERATION' : 'DECELERATION';
-                    const col = h.type === 'accel' ? '#f59e0b' : '#a855f7';
+                    const col = h.tk === 'NET SPREAD' ? '#00e5ff' : (h.type === 'accel' ? '#f59e0b' : '#a855f7');
                     html += `<div style="color:${col};font-size:0.58rem;font-weight:800;">${icon} ${h.tk} ${label} (${h.magnitude.toFixed(1)}σ)</div>`;
                 });
                 html += `</div>`;
@@ -3890,6 +3898,27 @@ function renderCrossChart() {
                 }
                 inflectionCache[tk] = inflections;
             });
+
+            if (spreadSeries && spreadSeries.length >= 32) {
+                const vals = spreadSeries;
+                const inflections = [];
+                const rocs = [];
+                for (let i = 0; i < vals.length; i++) {
+                    if (i < 5) { rocs.push(0); continue; }
+                    rocs.push(vals[i] - vals[i - 5]);
+                }
+                for (let i = 30; i < rocs.length; i++) {
+                    const window = rocs.slice(i - 30, i);
+                    const mean = window.reduce((a, b) => a + b, 0) / window.length;
+                    const variance = window.reduce((a, b) => a + (b - mean) ** 2, 0) / window.length;
+                    const std = Math.sqrt(variance) || 1;
+                    const zScore = (rocs[i] - mean) / std;
+                    if (Math.abs(zScore) >= 2.0) {
+                        inflections.push({ idx: i, type: zScore > 0 ? 'accel' : 'decel', magnitude: Math.abs(zScore) });
+                    }
+                }
+                inflectionCache['SPREAD'] = inflections;
+            }
         }
         
         state._crossCachedData = { series, rawDaily, globalMax, globalMin, spreadSeries, visibleDates, inflectionCache };
@@ -3998,6 +4027,31 @@ function renderCrossChart() {
                 ctxCross.restore();
             });
         });
+
+        // Draw Net Spread inflections
+        if (state.crossShowSpread && state.crossInflectionCache['SPREAD']) {
+            const inflections = state.crossInflectionCache['SPREAD'];
+            const vals = spreadSeries;
+            inflections.forEach(inf => {
+                const x = getX(inf.idx);
+                const y = getY(vals[inf.idx]);
+                const sz = 5 + Math.min(inf.magnitude * 0.8, 3.5); // Slightly larger for Net Spread to distinguish it
+                ctxCross.save();
+                ctxCross.translate(x, y);
+                if (inf.type === 'decel') ctxCross.rotate(Math.PI);
+                ctxCross.beginPath();
+                ctxCross.moveTo(0, -sz);
+                ctxCross.lineTo(-sz * 0.7, sz * 0.5);
+                ctxCross.lineTo(sz * 0.7, sz * 0.5);
+                ctxCross.closePath();
+                ctxCross.fillStyle = inf.type === 'accel' ? 'rgba(245,158,11,0.95)' : 'rgba(168,85,247,0.95)';
+                ctxCross.fill();
+                ctxCross.strokeStyle = '#00e5ff'; // Cyan border for Net Spread inflections
+                ctxCross.lineWidth = 1.2;
+                ctxCross.stroke();
+                ctxCross.restore();
+            });
+        }
     }
 
     // End-of-line ticker labels
