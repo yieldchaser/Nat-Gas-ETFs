@@ -1,40 +1,61 @@
 {
-  "last_updated": "2026-07-14T14:59:04.707085+00:00",
+  "last_updated": "2026-07-14T16:23:43.422726+00:00",
   "market_status": "open",
   "signals": [
     {
       "type": "vcvi_warning",
       "side": "long",
-      "message": "VCVI (63d) = 59.6 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
-      "timestamp": "2026-07-14T14:59:02.668150+00:00",
+      "message": "VCVI (21d) = 55.4 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
+      "timestamp": "2026-07-14T16:23:40.921728+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_warning",
       "side": "long",
-      "message": "VCVI (126d) = 56.6 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
-      "timestamp": "2026-07-14T14:59:02.668150+00:00",
+      "message": "VCVI (63d) = 64.1 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
+      "timestamp": "2026-07-14T16:23:40.921728+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "long",
+      "message": "VCVI (126d) = 62.2 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
+      "timestamp": "2026-07-14T16:23:40.921728+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
-      "message": "VCVI (252d) = 76.0 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
-      "timestamp": "2026-07-14T14:59:02.668150+00:00",
+      "message": "VCVI (252d) = 78.7 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
+      "timestamp": "2026-07-14T16:23:40.921728+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "cvi_warning",
       "side": "long",
-      "message": "CVI (252d) = 74.1 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
-      "timestamp": "2026-07-14T14:59:02.668150+00:00",
+      "message": "CVI (63d) = 62.4 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
+      "timestamp": "2026-07-14T16:23:40.921728+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "long",
+      "message": "CVI (126d) = 60.6 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
+      "timestamp": "2026-07-14T16:23:40.921728+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "long",
+      "message": "CVI (252d) = 76.7 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
+      "timestamp": "2026-07-14T16:23:40.921728+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "swvc_converged",
       "ticker": "long_side",
       "message": "All 3 long ETFs (BOIL, HNU.TO, 3NGL.L) spiked within 1 calendar days \u2014 cross-market side-wide convergence",
-      "timestamp": "2026-07-14T14:59:04.707065+00:00"
+      "timestamp": "2026-07-14T16:23:43.422711+00:00"
     }
   ],
   "pair_status": {
@@ -44,52 +65,52 @@
   },
   "etf_summary": {
     "BOIL": {
-      "price": 21.96,
-      "change_pct": -99.999715,
-      "vps": 20.656925,
+      "price": 22.245,
+      "change_pct": -99.999711,
+      "vps": 29.296747,
       "mwca": false,
       "vol_regime_pct": 18.326693,
-      "hv_term_structure": 1.00883
+      "hv_term_structure": 1.027459
     },
     "HNU.TO": {
-      "price": 8.48,
+      "price": 8.59,
       "change_pct": -99.999999,
-      "vps": 19.769381,
+      "vps": 25.593052,
       "mwca": false,
       "vol_regime_pct": 18.7251,
-      "hv_term_structure": 1.039361
+      "hv_term_structure": 1.055534
     },
     "3NGL.L": {
-      "price": 0.7762,
+      "price": 0.7822,
       "change_pct": -99.99999,
-      "vps": 35.34993,
+      "vps": 39.130554,
       "mwca": false,
       "vol_regime_pct": 47.410359,
-      "hv_term_structure": 1.015048
+      "hv_term_structure": 1.02132
     },
     "KOLD": {
-      "price": 27.87,
-      "change_pct": -84.864201,
-      "vps": 16.812749,
+      "price": 27.46,
+      "change_pct": -85.086867,
+      "vps": 17.818141,
       "mwca": false,
-      "vol_regime_pct": 15.936255,
-      "hv_term_structure": 0.937781
+      "vol_regime_pct": 16.334661,
+      "hv_term_structure": 0.959903
     },
     "HND.TO": {
-      "price": 25.06,
-      "change_pct": -50.449827,
-      "vps": 18.001594,
+      "price": 24.78,
+      "change_pct": -51.00346,
+      "vps": 18.30411,
       "mwca": false,
-      "vol_regime_pct": 14.342629,
-      "hv_term_structure": 0.969739
+      "vol_regime_pct": 15.139442,
+      "hv_term_structure": 0.98389
     },
     "3NGS.L": {
-      "price": 17.34,
-      "change_pct": -80.84507,
-      "vps": 18.861914,
+      "price": 16.92,
+      "change_pct": -81.309031,
+      "vps": 18.623848,
       "mwca": false,
-      "vol_regime_pct": 44.223108,
-      "hv_term_structure": 0.936301
+      "vol_regime_pct": 45.418327,
+      "hv_term_structure": 0.95784
     }
   }
 }
