@@ -1,47 +1,68 @@
 {
-  "last_updated": "2026-07-23T16:59:34.919793+00:00",
+  "last_updated": "2026-07-23T18:20:12.284597+00:00",
   "market_status": "open",
   "signals": [
     {
       "type": "vcvi_warning",
       "side": "long",
+      "message": "VCVI (252d) = 63.7 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
+      "timestamp": "2026-07-23T18:20:10.639134+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "long",
       "message": "VCVI (252d) = 55.3 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
-      "timestamp": "2026-07-23T16:59:32.432514+00:00",
+      "timestamp": "2026-07-23T18:20:10.993355+00:00",
       "ticker": "3NGL.L"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "short",
+      "message": "VCVI (5d) = 67.0 \u2014 potential GAS TOP \u2014 short/inverse setup",
+      "timestamp": "2026-07-23T18:20:11.348240+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "short",
+      "message": "VCVI (10d) = 59.6 \u2014 potential GAS TOP \u2014 short/inverse setup",
+      "timestamp": "2026-07-23T18:20:11.348240+00:00",
+      "ticker": "KOLD"
     },
     {
       "type": "vcvi_critical",
       "side": "short",
       "message": "VCVI (5d) = 116.1 \u2014 potential GAS TOP \u2014 short/inverse setup",
-      "timestamp": "2026-07-23T16:59:34.615660+00:00",
+      "timestamp": "2026-07-23T18:20:12.122344+00:00",
       "ticker": "3NGS.L"
     },
     {
       "type": "vcvi_critical",
       "side": "short",
       "message": "VCVI (10d) = 116.1 \u2014 potential GAS TOP \u2014 short/inverse setup",
-      "timestamp": "2026-07-23T16:59:34.615660+00:00",
+      "timestamp": "2026-07-23T18:20:12.122344+00:00",
       "ticker": "3NGS.L"
     },
     {
       "type": "cvi_critical",
       "side": "short",
       "message": "CVI (5d) = 100.0 \u2014 potential GAS TOP \u2014 short/inverse setup",
-      "timestamp": "2026-07-23T16:59:34.615660+00:00",
+      "timestamp": "2026-07-23T18:20:12.122344+00:00",
       "ticker": "3NGS.L"
     },
     {
       "type": "cvi_critical",
       "side": "short",
       "message": "CVI (10d) = 100.0 \u2014 potential GAS TOP \u2014 short/inverse setup",
-      "timestamp": "2026-07-23T16:59:34.615660+00:00",
+      "timestamp": "2026-07-23T18:20:12.122344+00:00",
       "ticker": "3NGS.L"
     },
     {
       "type": "ipsi_stress",
       "ticker": "3NGL.L_3NGS.L",
       "message": "IPSI stress for 3NGL.L_3NGS.L \u2014 ratio 2.85",
-      "timestamp": "2026-07-23T16:59:34.808118+00:00"
+      "timestamp": "2026-07-23T18:20:12.218306+00:00"
     }
   ],
   "pair_status": {
@@ -51,20 +72,20 @@
   },
   "etf_summary": {
     "BOIL": {
-      "price": 22.999,
+      "price": 22.96,
       "change_pct": -99.999702,
-      "vps": 22.080499,
+      "vps": 25.333634,
       "mwca": false,
       "vol_regime_pct": 16.733068,
-      "hv_term_structure": 0.673479
+      "hv_term_structure": 0.672402
     },
     "HNU.TO": {
-      "price": 8.88,
+      "price": 8.85,
       "change_pct": -99.999998,
-      "vps": 25.796003,
+      "vps": 37.922607,
       "mwca": false,
-      "vol_regime_pct": 16.733068,
-      "hv_term_structure": 0.655898
+      "vol_regime_pct": 16.334661,
+      "hv_term_structure": 0.653383
     },
     "3NGL.L": {
       "price": 0.8516,
@@ -75,20 +96,20 @@
       "hv_term_structure": 0.773453
     },
     "KOLD": {
-      "price": 26.45,
-      "change_pct": -85.635383,
-      "vps": 21.754832,
+      "price": 26.455,
+      "change_pct": -85.632668,
+      "vps": 29.408074,
       "mwca": false,
       "vol_regime_pct": 15.936255,
-      "hv_term_structure": 0.672512
+      "hv_term_structure": 0.672402
     },
     "HND.TO": {
-      "price": 23.8,
-      "change_pct": -52.941176,
-      "vps": 20.718108,
+      "price": 23.9,
+      "change_pct": -52.74345,
+      "vps": 25.573654,
       "mwca": false,
       "vol_regime_pct": 13.14741,
-      "hv_term_structure": 0.64607
+      "hv_term_structure": 0.643784
     },
     "3NGS.L": {
       "price": 15.6,
