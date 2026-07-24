@@ -14,7 +14,11 @@ Tests performed per ETF:
 
 import json
 import os
+import sys
 import warnings
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 from datetime import datetime, timedelta
 
 import numpy as np
