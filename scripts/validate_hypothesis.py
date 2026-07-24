@@ -25,8 +25,9 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 # ── Configuration ──────────────────────────────────────────────────────────────
 
-EXCEL_PATH = "/home/user/Nat-Gas-ETFs/Natural Gas ETFs.xlsx"
-OUTPUT_PATH = "/home/user/Nat-Gas-ETFs/data/validation_results.json"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EXCEL_PATH = os.path.join(BASE_DIR, "data", "excel", "Natural Gas ETFs.xlsx")
+OUTPUT_PATH = os.path.join(BASE_DIR, "data", "validation_results.json")
 
 # Sheet layout: (sheet_name, etf1_name, etf1_cols, etf2_name, etf2_cols)
 # Columns are 0-indexed (A=0, B=1, ...)
