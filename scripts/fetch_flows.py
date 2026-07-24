@@ -11,6 +11,7 @@ import ssl
 
 import pandas as pd
 import numpy as np
+from playwright.sync_api import sync_playwright
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("fetch_flows")
@@ -78,9 +79,32 @@ def parse_snapshots(data: list | dict, ticker: str) -> pd.DataFrame:
 
     return df
 
-def fetch_live_data(ticker: str, start_date: str, end_date: str) -> pd.DataFrame:
+# JS run inside the real browser page — this is exactly the fetch() call that was
+# confirmed working manually in the DevTools console (same-origin, so it automatically
+# carries whatever cookies/headers a plain script can't replicate, e.g. aws-waf-token).
+_FETCH_JS = """
+async (payload) => {
+    try {
+        const resp = await fetch('%s', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!resp.ok) {
+            return {__error: true, status: resp.status, statusText: resp.statusText};
+        }
+        return await resp.json();
+    } catch (e) {
+        return {__error: true, status: 0, statusText: String(e)};
+    }
+}
+""" % ENDPOINT
+
+def fetch_live_data(ticker: str, start_date: str, end_date: str, page) -> pd.DataFrame:
     payload = {
-        "enterpriseId": None,
         "requests": [{
             "fund": ticker,
             "startDate": start_date,
@@ -88,48 +112,29 @@ def fetch_live_data(ticker: str, start_date: str, end_date: str) -> pd.DataFrame
             "columns": ["stamp", "USD:flow", "nav", "perf"]
         }]
     }
-    
-    req = urllib.request.Request(
-        ENDPOINT,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-            "Content-Type": "application/json",
-            "Accept": "application/json, */*",
-        },
-        method="POST"
-    )
-    
-    def _do_request(r):
+
+    def _do_request(pl):
         for attempt, wait in enumerate([0, 15, 30, 60]):
             if wait:
                 logger.info(f"Rate limited for {ticker}, waiting {wait}s (attempt {attempt+1}/4)...")
                 time.sleep(wait)
             try:
-                with urllib.request.urlopen(r, timeout=30) as response:
-                    if response.status == 200:
-                        return json.loads(response.read().decode())
+                result = page.evaluate(_FETCH_JS, pl)
+                if isinstance(result, dict) and result.get("__error"):
+                    logger.warning(f"Request error for {ticker}: {result['status']} {result['statusText']}")
+                    continue
+                return result
             except Exception as e:
                 logger.warning(f"Request error for {ticker}: {e}")
         return None
 
-    raw_data = _do_request(req)
+    raw_data = _do_request(payload)
     if raw_data is not None:
         return parse_snapshots(raw_data, ticker)
 
     # Retry without endDate
     payload["requests"][0].pop("endDate", None)
-    req = urllib.request.Request(
-        ENDPOINT,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-            "Content-Type": "application/json",
-            "Accept": "application/json, */*",
-        },
-        method="POST"
-    )
-    raw_data = _do_request(req)
+    raw_data = _do_request(payload)
     if raw_data is not None:
         return parse_snapshots(raw_data, ticker)
 
@@ -221,6 +226,29 @@ def main():
     flow_30d_bull = 0.0
     flow_30d_bear = 0.0
 
+    # One browser session for the whole run: loading a real fund page first lets
+    # any bot-check (e.g. AWS WAF) cookies get set exactly like a real visit would,
+    # then every ticker's fetch() call below reuses that same session.
+    pw = sync_playwright().start()
+    browser = pw.chromium.launch(
+        headless=True,
+        args=[
+            "--disable-blink-features=AutomationControlled",
+            "--no-sandbox",
+            "--disable-setuid-sandbox"
+        ]
+    )
+    context = browser.new_context(
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                   "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        viewport={"width": 1920, "height": 1080}
+    )
+    page = context.new_page()
+    page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    logger.info("Warming up browser session on trackinsight.com...")
+    page.goto("https://www.trackinsight.com/en/fund/BOIL/flows", wait_until="domcontentloaded", timeout=60000)
+    time.sleep(3)  # let AWS WAF challenge script solve and set aws-waf-token cookie
+
     for ticker in TICKERS:
         logger.info(f"Processing {ticker}...")
         time.sleep(1)
@@ -238,10 +266,10 @@ def main():
                 continue
         elif args.full or not json_out.exists():
             # First run or forced full re-fetch
-            df = fetch_live_data(ticker, "2010-01-01", today_str)
+            df = fetch_live_data(ticker, "2010-01-01", today_str, page)
             if df.empty:
                 logger.warning(f"Extended history unavailable for {ticker}, falling back to 2021-01-01")
-                df = fetch_live_data(ticker, "2021-01-01", today_str)
+                df = fetch_live_data(ticker, "2021-01-01", today_str, page)
         else:
             # Incremental: load existing, fetch only new rows
             existing_df = load_existing(json_out)
@@ -252,7 +280,7 @@ def main():
                 start_date = last_date  # API will return last_date again; we deduplicate below
                 logger.info(f"{ticker}: have data through {last_date}, fetching from {start_date}")
 
-            new_df = fetch_live_data(ticker, start_date, today_str)
+            new_df = fetch_live_data(ticker, start_date, today_str, page)
 
             if new_df.empty and existing_df.empty:
                 logger.error(f"No data for {ticker}. Skipping.")
@@ -323,6 +351,9 @@ def main():
             flow_30d_bull += last_30d_net
         else:
             flow_30d_bear += last_30d_net
+
+    browser.close()
+    pw.stop()
 
     # Use the actual latest data date (min across all tickers = most conservative/accurate)
     # This prevents the "updated" field from showing today's run date when data lags by 1-4 days

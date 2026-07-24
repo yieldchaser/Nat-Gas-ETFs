@@ -31,7 +31,9 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install pandas numpy
+        run: |
+          pip install pandas numpy playwright
+          playwright install chromium
 
       - name: Fetch ETF Flows Data
         run: python scripts/fetch_flows.py
