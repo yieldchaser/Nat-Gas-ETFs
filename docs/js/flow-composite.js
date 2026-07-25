@@ -1213,6 +1213,7 @@ function drawChartFlowVelocity(flow, ng) {
         
         let cycleState = 'NEUTRAL';
         let timingStatus = 'REVERSAL CONFIRMATION';
+        let actionGuidance = 'Flow velocity within normal equilibrium range.';
         
         const isHigh30 = ngP && validNG.length > 30 && ngP >= Math.max(...ngVals.slice(Math.max(0, i - 30), i + 1)) * 0.95;
         const isLow30 = ngP && validNG.length > 30 && ngP <= Math.min(...ngVals.slice(Math.max(0, i - 30), i + 1)) * 1.05;
@@ -1220,18 +1221,22 @@ function drawChartFlowVelocity(flow, ng) {
         if (isHigh30 && v3 < -0.5) {
             cycleState = 'FLOW EXHAUSTION WARNING';
             timingStatus = 'LEAD WARNING (-30d to -60d)';
+            actionGuidance = 'Buyer depletion near 30d high. Exit BOIL / Prepare KOLD.';
         } else if (isLow30 && (f.longZ > 1.0 || v1 >= 1.8)) {
             cycleState = 'BULL LAUNCH IMPULSE';
             timingStatus = 'ANTICIPATORY LEAD WARNING';
+            actionGuidance = 'Institutional accumulation near 30d low (1-5d early). Buy BOIL.';
         } else if (v1 <= -1.8) {
             cycleState = 'SHORT SURGE IMPULSE';
             timingStatus = 'BREAKDOWN ACCELERATION';
+            actionGuidance = 'Short ETF surge spike. Downside breakdown momentum active.';
         } else if (isLow30 && f.shortZ > 1.5) {
             cycleState = 'SHORT EXHAUSTION BOTTOM';
             timingStatus = 'SHORT SQUEEZE BOTTOMING';
+            actionGuidance = 'Short seller capacity oversaturated. Prepare BOIL squeeze.';
         }
 
-        return { vel1d: v1, vel3d: v3, longZ: f.longZ, shortZ: f.shortZ, cycleState, timingStatus };
+        return { vel1d: v1, vel3d: v3, longZ: f.longZ, shortZ: f.shortZ, cycleState, timingStatus, actionGuidance };
     });
 
     const rawMax = Math.max(2.5, ...velZ1d.map(v => isFinite(v) ? Math.abs(v) : 0), ...velZ3d.map(v => isFinite(v) ? Math.abs(v) : 0));
@@ -1414,13 +1419,13 @@ function handleFlowVelocityHover(e) {
             <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">3D VELOCITY Z</span>
             <span style="color:${v3Color}; font-weight:800; font-family:'JetBrains Mono',monospace;">${v3Str}</span>
         </div>
-        <div style="color:${stateColor}; font-size:0.62rem; font-weight:800; margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06); text-transform:uppercase;">
+        <div style="color:${stateColor}; font-size:0.64rem; font-weight:800; margin-top:6px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06); text-transform:uppercase;">
             [${cache.cycleState}]
         </div>
-        <div style="color:rgba(255,255,255,0.5); font-size:0.58rem; margin-top:1px; font-weight:600;">
-            ${cache.timingStatus}
+        <div style="color:rgba(255,255,255,0.7); font-size:0.58rem; margin-top:2px; font-weight:600; line-height:1.35;">
+            ${cache.actionGuidance || cache.timingStatus}
         </div>
-        <div style="display:flex; justify-content:space-between; gap:16px; margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex; justify-content:space-between; gap:16px; margin-top:6px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
             <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">NG=F PRICE</span>
             <span style="color:#4ab8d8; font-weight:800; font-family:'JetBrains Mono',monospace;">${ngClose !== null ? '$' + ngClose.toFixed(3) : 'N/A'}</span>
         </div>`;
