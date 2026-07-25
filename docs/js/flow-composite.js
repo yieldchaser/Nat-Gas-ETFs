@@ -1145,3 +1145,167 @@ function setupFlowHeatTooltip() {
         });
     });
 }
+
+// ---- Flow Velocity & Exhaustion Engine ----
+
+function getFlowVelVisible() {
+    const cz = state.compositeZ;
+    if (!cz || cz.length === 0) return { flow: [], ng: [] };
+    const base = applyTimeFilter(cz);
+    const z = state.zoomFlowVel || { start: 0, end: 1 };
+    const s = Math.floor(z.start * base.length);
+    const e = Math.ceil(z.end * base.length);
+    const flow = base.slice(s, e);
+    const ng = flow.map(f => ({ date: f.date, close: state.ngHistory[f.date] || null }));
+    return { flow, ng };
+}
+
+function renderFlowVelChart() {
+    const { flow, ng } = getFlowVelVisible();
+    if (!flow || flow.length < 2) return;
+    drawChartFlowVelocity(flow, ng);
+}
+
+function drawChartFlowVelocity(flow, ng) {
+    const cvs = el('chartFlowVelocity');
+    if (!cvs) return;
+    const { w, h, dpr } = resizeCanvas(cvs);
+    const ctx = cvs.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    const pad = { top: 24, right: 60, bottom: 32, left: 55 };
+    const cw = w - pad.left - pad.right;
+    const ch = h - pad.top - pad.bottom;
+    if (cw < 20 || ch < 20) return;
+
+    const dates = flow.map(d => d.date);
+    const ngVals = ng.map(d => d.close);
+    const validNG = ngVals.filter(v => v !== null);
+
+    const zVals = flow.map(f => f.z || 0);
+    const vel1d = [0];
+    for (let i = 1; i < zVals.length; i++) vel1d.push(zVals[i] - zVals[i-1]);
+
+    const vel3d = [0, 0, 0];
+    for (let i = 3; i < zVals.length; i++) vel3d.push(zVals[i] - zVals[i-3]);
+
+    const velZ1d = [];
+    const velZ3d = [];
+    for (let i = 0; i < flow.length; i++) {
+        const sub1 = vel1d.slice(Math.max(0, i - 20), i + 1);
+        const m1 = sub1.reduce((a,b)=>a+b,0) / sub1.length;
+        const s1 = Math.sqrt(sub1.reduce((a,b)=>a+Math.pow(b-m1,2),0) / Math.max(1, sub1.length-1)) || 1.0;
+        velZ1d.push((vel1d[i] - m1) / s1);
+
+        const sub3 = vel3d.slice(Math.max(0, i - 20), i + 1);
+        const m3 = sub3.reduce((a,b)=>a+b,0) / sub3.length;
+        const s3 = Math.sqrt(sub3.reduce((a,b)=>a+Math.pow(b-m3,2),0) / Math.max(1, sub3.length-1)) || 1.0;
+        velZ3d.push((vel3d[i] - m3) / s3);
+    }
+
+    state.velValsCache = flow.map((f, i) => {
+        const v1 = velZ1d[i];
+        const v3 = velZ3d[i];
+        const ngP = ngVals[i];
+        
+        let cycleState = 'NEUTRAL';
+        let timingStatus = 'REVERSAL CONFIRMATION';
+        
+        const isHigh30 = ngP && validNG.length > 30 && ngP >= Math.max(...ngVals.slice(Math.max(0, i - 30), i + 1)) * 0.95;
+        const isLow30 = ngP && validNG.length > 30 && ngP <= Math.min(...ngVals.slice(Math.max(0, i - 30), i + 1)) * 1.05;
+
+        if (isHigh30 && v3 < -0.5) {
+            cycleState = 'FLOW EXHAUSTION WARNING';
+            timingStatus = 'LEAD WARNING (-30d to -60d)';
+        } else if (isLow30 && (f.longZ > 1.0 || v1 >= 1.8)) {
+            cycleState = 'BULL LAUNCH IMPULSE';
+            timingStatus = 'ANTICIPATORY LEAD WARNING';
+        } else if (v1 <= -1.8) {
+            cycleState = 'SHORT SURGE IMPULSE';
+            timingStatus = 'BREAKDOWN ACCELERATION';
+        } else if (isLow30 && f.shortZ > 1.5) {
+            cycleState = 'SHORT EXHAUSTION BOTTOM';
+            timingStatus = 'SHORT SQUEEZE BOTTOMING';
+        }
+
+        return { vel1d: v1, vel3d: v3, longZ: f.longZ, shortZ: f.shortZ, cycleState, timingStatus };
+    });
+
+    const maxVelZ = Math.max(2.5, ...velZ1d.map(v => Math.abs(v)), ...velZ3d.map(v => Math.abs(v)));
+    const scale = maxVelZ * 1.1;
+    const y0 = pad.top + ch / 2;
+
+    const getX = i => pad.left + (i / (flow.length - 1)) * cw;
+    const getYVel = v => y0 - (v / scale) * (ch / 2);
+
+    let minNG = validNG.length > 0 ? Math.min(...validNG) : 0;
+    let maxNG = validNG.length > 0 ? Math.max(...validNG) : 10;
+    const ngPad = (maxNG - minNG) * 0.08; minNG = Math.max(0, minNG - ngPad); maxNG += ngPad;
+    const getYNG = v => pad.top + (1 - (v - minNG) / (maxNG - minNG)) * ch;
+
+    // 1. Shaded Exhaustion Zones
+    for (let i = 0; i < flow.length; i++) {
+        if (state.velValsCache[i].cycleState === 'FLOW EXHAUSTION WARNING') {
+            const x = getX(i);
+            const bw = Math.max(1, cw / flow.length);
+            ctx.fillStyle = 'rgba(245,158,11,0.08)';
+            ctx.fillRect(x - bw / 2, pad.top, bw, ch);
+        }
+    }
+
+    // 2. Reference Lines
+    const y2p = getYVel(2.0), y2n = getYVel(-2.0);
+    ctx.setLineDash([4, 3]); ctx.lineWidth = 0.8;
+    ctx.strokeStyle = 'rgba(61,184,122,0.3)';
+    ctx.beginPath(); ctx.moveTo(pad.left, y2p); ctx.lineTo(pad.left + cw, y2p); ctx.stroke();
+    ctx.strokeStyle = 'rgba(239,68,68,0.3)';
+    ctx.beginPath(); ctx.moveTo(pad.left, y2n); ctx.lineTo(pad.left + cw, y2n); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath(); ctx.moveTo(pad.left, y0); ctx.lineTo(pad.left + cw, y0);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1.2; ctx.stroke();
+
+    // 3. Velocity Histogram Bars (1D Velocity Z)
+    const bw = Math.max(1, (cw / flow.length) * 0.8);
+    for (let i = 0; i < flow.length; i++) {
+        const v = velZ1d[i];
+        if (Math.abs(v) < 0.1) continue;
+        const x = getX(i);
+        ctx.fillStyle = v > 0 ? 'rgba(61,184,122,0.75)' : 'rgba(239,68,68,0.75)';
+        const yTop = getYVel(v);
+        ctx.fillRect(x - bw / 2, Math.min(yTop, y0), bw, Math.abs(yTop - y0));
+    }
+
+    // 4. 3D Cumulative Velocity Z Line (Cyan Overlay)
+    ctx.beginPath();
+    let started = false;
+    for (let i = 0; i < flow.length; i++) {
+        const x = getX(i), y = getYVel(velZ3d[i]);
+        started ? ctx.lineTo(x, y) : (ctx.moveTo(x, y), started = true);
+    }
+    ctx.strokeStyle = '#4ab8d8'; ctx.lineWidth = 1.6; ctx.stroke();
+
+    // 5. NG=F Price Line
+    ctx.beginPath();
+    started = false;
+    for (let i = 0; i < ng.length; i++) {
+        if (ngVals[i] === null) continue;
+        const x = getX(i), y = getYNG(ngVals[i]);
+        started ? ctx.lineTo(x, y) : (ctx.moveTo(x, y), started = true);
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.2; ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
+
+    // 6. Axes Ticks
+    const velTicks = niceAxisTicks(-scale, scale, 5);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.font = '9px sans-serif';
+    velTicks.forEach(v => {
+        const y = getYVel(v);
+        if (y < pad.top - 5 || y > pad.top + ch + 5) return;
+        ctx.fillStyle = Math.abs(v) >= 1.9 ? (v >= 0 ? '#3db87a' : '#ef4444') : 'rgba(148,163,184,0.6)';
+        ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1) + 'σ', pad.left - 6, y);
+    });
+
+    drawXAxis(ctx, dates, getX, cw, pad.top + ch + 14, pad);
+}
+

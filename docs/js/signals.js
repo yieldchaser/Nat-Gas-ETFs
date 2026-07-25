@@ -9,7 +9,7 @@ const Signals = {
         const icons = {
             vcvi: '⚡', cvi: '🔥', mwca: '💥', rvol: '📈', vps: '📊',
             atr_breakout: '📐', vov: '🌀', vol_regime: '🌡', ipsi_stress: '⚠',
-            fast_spike: '⚡', weather: '⛈'
+            fast_spike: '⚡', weather: '⛈', flow_accel: '▲'
         };
         return icons[type] || '●';
     },

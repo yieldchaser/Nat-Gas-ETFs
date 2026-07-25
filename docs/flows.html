@@ -1040,6 +1040,51 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
         </div>
 
+        <!-- Section 6.1b-2: Flow Velocity & Cycle Exhaustion Engine -->
+        <div class="panel" id="flow-velocity-panel">
+            <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:nowrap; gap:12px;">
+                <div class="panel-title" data-tooltip="FLOW ACCELERATION & EXHAUSTION ENGINE: Measures 1-Day & 3-Day capital velocity (d/dt Flow). Flags sudden Long/Short acceleration impulses and Flow Exhaustion warnings (when price makes new highs but flow velocity momentum drains 30-60 days before price tops)." style="border-left:3px solid rgba(245,158,11,0.7); padding-left:8px; margin-bottom:0;">FLOW ACCELERATION & EXHAUSTION ENGINE</div>
+                <div class="tab-group time-tabs" id="flowvel-time-tabs">
+                    <button class="tab-btn" data-range="1m">1M</button>
+                    <button class="tab-btn" data-range="3m">3M</button>
+                    <button class="tab-btn" data-range="6m">6M</button>
+                    <button class="tab-btn" data-range="1y">1Y</button>
+                    <button class="tab-btn" data-range="2y">2Y</button>
+                    <button class="tab-btn" data-range="3y">3Y</button>
+                    <button class="tab-btn" data-range="5y">5Y</button>
+                    <button class="tab-btn active" data-range="all">ALL</button>
+                </div>
+            </div>
+            <div class="chart-wrap" style="position:relative;">
+                <canvas id="chartFlowVelocity"></canvas>
+                <div id="flowvel-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:220px;"></div>
+            </div>
+            <!-- Range slider -->
+            <div class="range-slider-container" style="margin-top:8px;">
+                <div class="range-slider-wrap">
+                    <div class="range-inputs">
+                        <div class="range-slider-track"></div>
+                        <div class="range-slider-highlight" id="flowvel-range-highlight"></div>
+                        <input type="range" id="flowvel-range-start" min="0" max="1000" value="0" data-tooltip="Zoom start for Velocity chart">
+                        <input type="range" id="flowvel-range-end" min="0" max="1000" value="1000" data-tooltip="Zoom end for Velocity chart">
+                    </div>
+                </div>
+                <div class="range-labels">
+                    <span id="flowvel-range-label" style="color:var(--text-bright); text-transform:uppercase; letter-spacing:2px;">ALL</span>
+                </div>
+            </div>
+            <!-- Legend + methodology -->
+            <div class="chart-footer">
+                <div class="chart-legend">
+                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(61,184,122,0.8)"></span> LONG ACCELERATION</div>
+                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,0.8)"></span> SHORT ACCELERATION</div>
+                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(245,158,11,0.3)"></span> EXHAUSTION ZONE</div>
+                    <div class="legend-item"><span class="legend-line" style="background:#4ab8d8; height:2px;"></span> 3D VELOCITY Z</div>
+                </div>
+                <span data-tooltip="Methodology: Computes daily velocity Z-scores of ETF flows. Flow Exhaustion occurs when NG price is near 30-day highs while 3-day velocity Z is negative, signalling institutional momentum draining 30-60 days ahead of price tops." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ METHODOLOGY</span>
+            </div>
+        </div>
+
         <!-- Section 6.1b: Flow Activity Heat Map -->
         <div class="panel" id="flow-heat-panel">
             <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:nowrap; gap:12px;">
@@ -1419,11 +1464,13 @@ const state = {
     zoomZ:     { start: 0, end: 1 }, // Z-Score history (chartZ) — independent
     zoomCross: { start: 0, end: 1 }, // cross ETF comparison — independent
     zoomCompZ: { start: 0, end: 1 }, // composite Z-score — independent
+    zoomFlowVel:{ start: 0, end: 1 }, // flow velocity & exhaustion — independent
     zoomFlowNG:{ start: 0, end: 1 }, // flow vs NG price — independent
     compositeZ: [],  // [{date, z, longZ, shortZ}]
     ngHistory: {},   // date -> close  (O(1) lookup)
     ngDates: [],     // sorted date strings
     hoverCompZIdx: null,
+    hoverFlowVelIdx: null,
     hoverFlowNGIdx: null,
     hoverReactivityIdx: null,
     hoverFlowHeatIdx: null,
@@ -1432,6 +1479,7 @@ const state = {
     flowHeatSource: 'all',
     zoomReactivity: { start: 0, end: 1 },  // reactivity chart zoom — independent
     divValsCache: [],  // [{signed, ng5d}] — built per render in drawChartFlowNG, read by hover handler
+    velValsCache: [],  // [{vel1d, vel3d, longVel, shortVel, cycleState, timingStatus}] — built per render in drawChartFlowVelocity
     reactValsCache: [], // [{intensity, ng5d}] — built per render in drawChartReactivity, read by hover handler
     flowHeatPeaksMode: false,
     flowHeatPeaksThreshold: 95,
@@ -1446,6 +1494,7 @@ const ctxB = el('chartB').getContext('2d');
 const ctxZ = el('chartZ').getContext('2d');
 const ctxCross = el('chartCross').getContext('2d');
 const ctxCompZ = el('chartCompZ').getContext('2d');
+const ctxFlowVel = el('chartFlowVelocity') ? el('chartFlowVelocity').getContext('2d') : null;
 const ctxFlowNG = el('chartFlowNG').getContext('2d');
 const ctxReactivity = el('chartReactivity').getContext('2d');
 const tooltip = el('chart-tooltip');
@@ -1506,10 +1555,11 @@ async function init() {
             state.zoomZ     = { start: 0, end: 1 };
             state.zoomCross = { start: 0, end: 1 };
             state.zoomCompZ = { start: 0, end: 1 };
+            state.zoomFlowVel={ start: 0, end: 1 };
             state.zoomFlowNG= { start: 0, end: 1 };
             state.zoomReactivity = { start: 0, end: 1 };
             state.flowHeatOffset = 0;
-            ['#time-tabs', '#z-time-tabs', '#cross-time-tabs', '#compz-time-tabs', '#flowng-time-tabs', '#reactivity-time-tabs'].forEach(sel => {
+            ['#time-tabs', '#z-time-tabs', '#cross-time-tabs', '#compz-time-tabs', '#flowvel-time-tabs', '#flowng-time-tabs', '#reactivity-time-tabs'].forEach(sel => {
                 document.querySelectorAll(sel + ' .tab-btn').forEach(b => {
                     b.classList.toggle('active', b.dataset.range === range);
                 });
@@ -1522,6 +1572,8 @@ async function init() {
             syncCrossSlider();
             renderCompZChart();
             syncCompZSlider();
+            if (typeof renderFlowVelChart === 'function') renderFlowVelChart();
+            if (typeof syncFlowVelSlider === 'function') syncFlowVelSlider();
             renderFlowNGChart();
             syncFlowNGSlider();
             renderReactivityChart();

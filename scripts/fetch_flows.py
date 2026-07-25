@@ -156,6 +156,19 @@ def apply_derived_metrics(df: pd.DataFrame) -> pd.DataFrame:
     df["flow_5d"] = df["usd_flow"].rolling(5, min_periods=1).sum()
     df["flow_20d"] = df["usd_flow"].rolling(20, min_periods=1).sum()
 
+    # Flow Velocity & Acceleration (1D & 3D)
+    df["vel_1d"] = df["usd_flow"].diff(1).fillna(0.0)
+    df["vel_3d"] = df["usd_flow"].diff(3).fillna(0.0)
+    
+    # 21-day rolling velocity Z-scores
+    mean_v1 = df["vel_1d"].rolling(21, min_periods=5).mean()
+    std_v1 = df["vel_1d"].rolling(21, min_periods=5).std()
+    df["vel_z_1d"] = np.where(std_v1 > 0, (df["vel_1d"] - mean_v1) / std_v1, 0.0)
+
+    mean_v3 = df["vel_3d"].rolling(21, min_periods=5).mean()
+    std_v3 = df["vel_3d"].rolling(21, min_periods=5).std()
+    df["vel_z_3d"] = np.where(std_v3 > 0, (df["vel_3d"] - mean_v3) / std_v3, 0.0)
+
     # Flow Regime
     def get_regime(z):
         if pd.isna(z): return "BALANCED"
@@ -189,8 +202,9 @@ def apply_derived_metrics(df: pd.DataFrame) -> pd.DataFrame:
     df = df.drop(columns=["mean_30d", "std_30d"])
     
     # Fill NAs in metrics with 0.0
-    for col in ["flow_zscore", "flow_5d", "flow_20d", "pressure"]:
-        df[col] = df[col].fillna(0.0)
+    for col in ["flow_zscore", "flow_5d", "flow_20d", "pressure", "vel_1d", "vel_3d", "vel_z_1d", "vel_z_3d"]:
+        if col in df.columns:
+            df[col] = df[col].fillna(0.0)
         
     return df
 
@@ -308,7 +322,7 @@ def main():
         json_out = FLOWS_DIR / f"{ticker}_flows.json"
         
         # Round numeric columns for cleaner JSON
-        for col in ["usd_flow", "daily_inflow", "daily_outflow", "cumulative_flow", "nav", "perf_pct", "flow_zscore", "flow_5d", "flow_20d", "pressure"]:
+        for col in ["usd_flow", "daily_inflow", "daily_outflow", "cumulative_flow", "nav", "perf_pct", "flow_zscore", "flow_5d", "flow_20d", "pressure", "vel_1d", "vel_3d", "vel_z_1d", "vel_z_3d"]:
             if col in df.columns:
                 df[col] = df[col].round(4)
                 

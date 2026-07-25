@@ -552,6 +552,17 @@ const Metrics = {
             }
         }
 
+        // Flow Velocity & Acceleration Alerts
+        if (metrics.vel_z_1d != null) {
+            if (metrics.vel_z_1d >= 2.0) {
+                alerts.push({ type: 'flow_accel', level: 'critical', ticker, time: now,
+                    message: `[FLOW ACCELERATION] Vel Z at +${metrics.vel_z_1d.toFixed(2)}σ — Bull Launch Impulse` });
+            } else if (metrics.vel_z_1d <= -2.0) {
+                alerts.push({ type: 'flow_accel', level: 'critical', ticker, time: now,
+                    message: `[FLOW ACCELERATION] Vel Z at ${metrics.vel_z_1d.toFixed(2)}σ — Bear Surge Impulse` });
+            }
+        }
+
         return alerts;
     },
 
