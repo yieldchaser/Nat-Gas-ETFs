@@ -1307,5 +1307,128 @@ function drawChartFlowVelocity(flow, ng) {
     });
 
     drawXAxis(ctx, dates, getX, cw, pad.top + ch + 14, pad);
+
+    // 7. Hover Crosshair
+    if (state.hoverFlowVelIdx !== null && state.hoverFlowVelIdx < flow.length) {
+        const i = state.hoverFlowVelIdx;
+        const x = getX(i);
+        ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + ch);
+        ctx.strokeStyle = 'rgba(0,255,255,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([]); ctx.stroke();
+
+        const v3 = velZ3d[i];
+        ctx.beginPath(); ctx.arc(x, getYVel(v3), 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#4ab8d8'; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+
+        if (ngVals[i] !== null) {
+            ctx.beginPath(); ctx.arc(x, getYNG(ngVals[i]), 4, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+    }
 }
+
+// ---- Velocity Hover Handlers ----
+function handleFlowVelocityHover(e) {
+    const { flow, ng } = getFlowVelVisible();
+    if (!flow || flow.length < 2) return;
+    const rect = e.target.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const padObj = { left: 55, right: 60 };
+    const cw = rect.width - padObj.left - padObj.right;
+    const frac = (x - padObj.left) / cw;
+    const idx = Math.round(frac * (flow.length - 1));
+    if (idx < 0 || idx >= flow.length) { hideFlowVelocityHover(); return; }
+    state.hoverFlowVelIdx = idx;
+    drawChartFlowVelocity(flow, ng);
+    
+    const d = flow[idx];
+    const ngClose = ng[idx] ? ng[idx].close : null;
+    const cache = state.velValsCache[idx] || { vel1d: 0, vel3d: 0, cycleState: 'NEUTRAL', timingStatus: 'REVERSAL CONFIRMATION' };
+    const tip = document.getElementById('flowvel-tooltip');
+    if (!tip) return;
+
+    const v1Str = (cache.vel1d >= 0 ? '+' : '') + cache.vel1d.toFixed(2) + 'σ';
+    const v3Str = (cache.vel3d >= 0 ? '+' : '') + cache.vel3d.toFixed(2) + 'σ';
+    const v3Color = cache.vel3d >= 0 ? '#3db87a' : '#ef4444';
+    
+    const isExhaustion = cache.cycleState === 'FLOW EXHAUSTION WARNING';
+    const isLaunch = cache.cycleState === 'BULL LAUNCH IMPULSE';
+    const isSurge = cache.cycleState === 'SHORT SURGE IMPULSE';
+    const isSqueeze = cache.cycleState === 'SHORT EXHAUSTION BOTTOM';
+
+    let stateColor = '#94a3b8';
+    if (isExhaustion) stateColor = '#f59e0b';
+    else if (isLaunch) stateColor = '#3db87a';
+    else if (isSurge || isSqueeze) stateColor = '#ef4444';
+
+    tip.innerHTML = `
+        <div style="color:var(--cyan); font-size:0.7rem; font-weight:800; margin-bottom:6px;">${fmtDateLong(d.date)}</div>
+        <div style="display:flex; justify-content:space-between; gap:16px;">
+            <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">1D VELOCITY Z</span>
+            <span style="color:${cache.vel1d >= 0 ? '#3db87a' : '#ef4444'}; font-weight:800; font-family:'JetBrains Mono',monospace;">${v1Str}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:16px; margin-top:2px;">
+            <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">3D VELOCITY Z</span>
+            <span style="color:${v3Color}; font-weight:800; font-family:'JetBrains Mono',monospace;">${v3Str}</span>
+        </div>
+        <div style="color:${stateColor}; font-size:0.62rem; font-weight:800; margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06); text-transform:uppercase;">
+            [${cache.cycleState}]
+        </div>
+        <div style="color:rgba(255,255,255,0.5); font-size:0.58rem; margin-top:1px; font-weight:600;">
+            ${cache.timingStatus}
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:16px; margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
+            <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">NG=F PRICE</span>
+            <span style="color:#4ab8d8; font-weight:800; font-family:'JetBrains Mono',monospace;">${ngClose !== null ? '$' + ngClose.toFixed(3) : 'N/A'}</span>
+        </div>`;
+    tip.style.display = 'block';
+    const tx = Math.min(rect.width - 240, Math.max(10, x - 110));
+    tip.style.left = tx + 'px'; tip.style.top = '10px';
+}
+
+function hideFlowVelocityHover() {
+    state.hoverFlowVelIdx = null;
+    const tip = document.getElementById('flowvel-tooltip');
+    if (tip) tip.style.display = 'none';
+    renderFlowVelChart();
+}
+
+function initFlowVelSlider() {
+    const sS = document.getElementById('flowvel-range-start');
+    const sE = document.getElementById('flowvel-range-end');
+    if (!sS || !sE) return;
+    function onInput() {
+        let s = parseInt(sS.value) / 1000, e = parseInt(sE.value) / 1000;
+        if (s > e - 0.02) { s = e - 0.02; sS.value = Math.round(s * 1000); }
+        state.zoomFlowVel = { start: s, end: e };
+        renderFlowVelChart();
+        syncFlowVelSlider();
+    }
+    sS.addEventListener('input', onInput);
+    sE.addEventListener('input', onInput);
+}
+
+function syncFlowVelSlider() {
+    const sS = document.getElementById('flowvel-range-start');
+    const sE = document.getElementById('flowvel-range-end');
+    const hl = document.getElementById('flowvel-range-highlight');
+    const lbl = document.getElementById('flowvel-range-label');
+    if (!sS || !sE) return;
+    sS.value = Math.round((state.zoomFlowVel ? state.zoomFlowVel.start : 0) * 1000);
+    sE.value = Math.round((state.zoomFlowVel ? state.zoomFlowVel.end : 1) * 1000);
+    if (hl) {
+        const start = state.zoomFlowVel ? state.zoomFlowVel.start : 0;
+        const end = state.zoomFlowVel ? state.zoomFlowVel.end : 1;
+        hl.style.left = (start * 100) + '%';
+        hl.style.width = ((end - start) * 100) + '%';
+    }
+    if (lbl) {
+        const start = state.zoomFlowVel ? state.zoomFlowVel.start : 0;
+        const end = state.zoomFlowVel ? state.zoomFlowVel.end : 1;
+        const isZoomed = start > 0.001 || end < 0.999;
+        lbl.textContent = isZoomed ? 'CUSTOM SELECTION' : `PRESET: ${state.timeRange.toUpperCase()}`;
+    }
+}
+
 

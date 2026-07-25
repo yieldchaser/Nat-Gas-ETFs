@@ -3812,6 +3812,8 @@ async function loadAllTickersForCross() {
     renderCrossDivergence();
     renderCompZChart();
     syncCompZSlider();
+    if (typeof renderFlowVelChart === 'function') renderFlowVelChart();
+    if (typeof syncFlowVelSlider === 'function') syncFlowVelSlider();
     renderFlowNGChart();
     syncFlowNGSlider();
     renderReactivityChart();
@@ -4540,6 +4542,7 @@ window.addEventListener('resize', () => {
     renderCrossChart();
     if (state.crossShowCorrelation) renderCorrHeatmap();
     renderCompZChart();
+    if (typeof renderFlowVelChart === 'function') renderFlowVelChart();
     renderFlowNGChart();
     renderReactivityChart();
 });
