@@ -1324,22 +1324,47 @@ function drawChartFlowVelocity(flow, ng) {
 
     drawXAxis(ctx, dates, getX, cw, pad.top + ch + 14, pad);
 
-    // 7. Hover Crosshair
-    if (state.hoverFlowVelIdx !== null && state.hoverFlowVelIdx < flow.length) {
+    // 7. Prominent Hover Crosshair & Glowing Pointer Dots
+    if (state.hoverFlowVelIdx !== null && state.hoverFlowVelIdx >= 0 && state.hoverFlowVelIdx < flow.length) {
         const i = state.hoverFlowVelIdx;
         const x = getX(i);
+
+        // Bright vertical crosshair line
         ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + ch);
-        ctx.strokeStyle = 'rgba(0,255,255,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([]); ctx.stroke();
+        ctx.strokeStyle = 'rgba(0,255,255,0.45)'; ctx.lineWidth = 1.2; ctx.setLineDash([]); ctx.stroke();
 
         const v3 = velZ3d[i];
-        ctx.beginPath(); ctx.arc(x, getYVel(v3), 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#4ab8d8'; ctx.fill();
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+        const v1 = velZ1d[i];
 
-        if (ngVals[i] !== null) {
-            ctx.beginPath(); ctx.arc(x, getYNG(ngVals[i]), 4, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fill();
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+        // Pointer 1: 3D Velocity Z Line (Cyan Glow Pointer)
+        if (isFinite(v3)) {
+            const y3 = getYVel(v3);
+            ctx.beginPath(); ctx.arc(x, y3, 8, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0,255,255,0.25)'; ctx.fill();
+            ctx.beginPath(); ctx.arc(x, y3, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#4ab8d8'; ctx.fill();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+        }
+
+        // Pointer 2: 1D Velocity Bar (Green/Red Glow Pointer)
+        if (isFinite(v1) && Math.abs(v1) >= 0.1) {
+            const y1 = getYVel(v1);
+            const pCol = v1 >= 0 ? '#3db87a' : '#ef4444';
+            ctx.beginPath(); ctx.arc(x, y1, 7, 0, Math.PI * 2);
+            ctx.fillStyle = v1 >= 0 ? 'rgba(61,184,122,0.3)' : 'rgba(239,68,68,0.3)'; ctx.fill();
+            ctx.beginPath(); ctx.arc(x, y1, 4.5, 0, Math.PI * 2);
+            ctx.fillStyle = pCol; ctx.fill();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+
+        // Pointer 3: NG=F Benchmark Price Line (White Glow Pointer)
+        if (ngVals[i] !== null && ngVals[i] !== undefined) {
+            const yNg = getYNG(ngVals[i]);
+            ctx.beginPath(); ctx.arc(x, yNg, 7, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fill();
+            ctx.beginPath(); ctx.arc(x, yNg, 4.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff'; ctx.fill();
+            ctx.strokeStyle = '#4ab8d8'; ctx.lineWidth = 1.5; ctx.stroke();
         }
     }
 }
@@ -1355,12 +1380,13 @@ function handleFlowVelocityHover(e) {
     const frac = (x - padObj.left) / cw;
     const idx = Math.round(frac * (flow.length - 1));
     if (idx < 0 || idx >= flow.length) { hideFlowVelocityHover(); return; }
+    
     state.hoverFlowVelIdx = idx;
     drawChartFlowVelocity(flow, ng);
     
     const d = flow[idx];
     const ngClose = ng[idx] ? ng[idx].close : null;
-    const cache = state.velValsCache[idx] || { vel1d: 0, vel3d: 0, cycleState: 'NEUTRAL', timingStatus: 'REVERSAL CONFIRMATION' };
+    const cache = (state.velValsCache && state.velValsCache[idx]) ? state.velValsCache[idx] : { vel1d: 0, vel3d: 0, cycleState: 'NEUTRAL', timingStatus: 'REVERSAL CONFIRMATION' };
     const tip = document.getElementById('flowvel-tooltip');
     if (!tip) return;
 
@@ -1379,7 +1405,7 @@ function handleFlowVelocityHover(e) {
     else if (isSurge || isSqueeze) stateColor = '#ef4444';
 
     tip.innerHTML = `
-        <div style="color:var(--cyan); font-size:0.7rem; font-weight:800; margin-bottom:6px;">${fmtDateLong(d.date)}</div>
+        <div style="color:var(--cyan); font-size:0.72rem; font-weight:800; margin-bottom:6px;">${fmtDateLong(d.date)}</div>
         <div style="display:flex; justify-content:space-between; gap:16px;">
             <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">1D VELOCITY Z</span>
             <span style="color:${cache.vel1d >= 0 ? '#3db87a' : '#ef4444'}; font-weight:800; font-family:'JetBrains Mono',monospace;">${v1Str}</span>
