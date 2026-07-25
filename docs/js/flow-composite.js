@@ -146,13 +146,15 @@ function getFlowNGVisible() {
 }
 
 function applyTimeFilter(data) {
+    if (!data || data.length === 0) return [];
     if (state.timeRange === 'all') return data;
-    const now = new Date();
-    const map = { '1w': 7, '1m': 30, '3m': 90, '6m': 180, '1y': 365, '2y': 730 };
-    const days = map[state.timeRange] || data.length;
-    const cutoff = new Date(now);
-    cutoff.setDate(cutoff.getDate() - days);
-    const cutStr = cutoff.toISOString().split('T')[0];
+    const map = { '1w': 7, '1m': 30, '3m': 90, '6m': 180, '1y': 365, '2y': 730, '3y': 1095, '5y': 1825 };
+    const days = map[state.timeRange];
+    if (!days) return data;
+    const lastDateStr = data[data.length - 1].date;
+    const refDate = new Date(lastDateStr + 'T12:00:00Z');
+    refDate.setDate(refDate.getDate() - days);
+    const cutStr = refDate.toISOString().split('T')[0];
     return data.filter(d => d.date >= cutStr);
 }
 
