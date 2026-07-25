@@ -1717,8 +1717,8 @@ async function init() {
         });
 
         // Scroll-to-zoom on main charts
-        ['chartA', 'chartB', 'chartZ', 'chartCross', 'chartCompZ', 'chartFlowNG', 'chartReactivity'].forEach(id => {
-            el(id).addEventListener('wheel', handleChartWheel, { passive: false });
+        ['chartA', 'chartB', 'chartZ', 'chartCross', 'chartCompZ', 'chartFlowVelocity', 'chartFlowNG', 'chartReactivity'].forEach(id => {
+            if (el(id)) el(id).addEventListener('wheel', handleChartWheel, { passive: false });
         });
 
         // Z-Score chart hover
@@ -1732,6 +1732,12 @@ async function init() {
         // Composite Z hover
         el('chartCompZ').addEventListener('mousemove', handleCompZHover);
         el('chartCompZ').addEventListener('mouseleave', hideCompZHover);
+
+        // Velocity & Exhaustion hover
+        if (el('chartFlowVelocity')) {
+            el('chartFlowVelocity').addEventListener('mousemove', handleFlowVelocityHover);
+            el('chartFlowVelocity').addEventListener('mouseleave', hideFlowVelocityHover);
+        }
 
         // Flow vs NG hover
         el('chartFlowNG').addEventListener('mousemove', handleFlowNGHover);
