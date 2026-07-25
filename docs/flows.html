@@ -1584,7 +1584,7 @@ async function init() {
             renderFlowHeatCalendar(state.flowHeatOffset);
         }
 
-        ['#time-tabs', '#z-time-tabs', '#cross-time-tabs', '#compz-time-tabs', '#flowng-time-tabs', '#reactivity-time-tabs'].forEach(sel => {
+        ['#time-tabs', '#z-time-tabs', '#cross-time-tabs', '#compz-time-tabs', '#flowvel-time-tabs', '#flowng-time-tabs', '#reactivity-time-tabs'].forEach(sel => {
             document.querySelectorAll(sel + ' .tab-btn').forEach(b => {
                 b.addEventListener('click', () => setTimeRange(b.dataset.range));
             });
