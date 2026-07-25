@@ -1232,24 +1232,33 @@ function drawChartFlowVelocity(flow, ng) {
         return { vel1d: v1, vel3d: v3, longZ: f.longZ, shortZ: f.shortZ, cycleState, timingStatus };
     });
 
-    const maxVelZ = Math.max(2.5, ...velZ1d.map(v => Math.abs(v)), ...velZ3d.map(v => Math.abs(v)));
-    const scale = maxVelZ * 1.1;
+    const rawMax = Math.max(2.5, ...velZ1d.map(v => isFinite(v) ? Math.abs(v) : 0), ...velZ3d.map(v => isFinite(v) ? Math.abs(v) : 0));
+    const scale = Math.min(4.0, rawMax * 1.05);
     const y0 = pad.top + ch / 2;
 
     const getX = i => pad.left + (i / (flow.length - 1)) * cw;
-    const getYVel = v => y0 - (v / scale) * (ch / 2);
+    const getYVel = v => {
+        const clampedV = Math.max(-scale, Math.min(scale, v));
+        return y0 - (clampedV / scale) * (ch / 2);
+    };
 
     let minNG = validNG.length > 0 ? Math.min(...validNG) : 0;
     let maxNG = validNG.length > 0 ? Math.max(...validNG) : 10;
     const ngPad = (maxNG - minNG) * 0.08; minNG = Math.max(0, minNG - ngPad); maxNG += ngPad;
     const getYNG = v => pad.top + (1 - (v - minNG) / (maxNG - minNG)) * ch;
 
+    // Use clip box so chart graphics never overflow into pad margins or date axis
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(pad.left, pad.top, cw, ch);
+    ctx.clip();
+
     // 1. Shaded Exhaustion Zones
     for (let i = 0; i < flow.length; i++) {
-        if (state.velValsCache[i].cycleState === 'FLOW EXHAUSTION WARNING') {
+        if (state.velValsCache[i] && state.velValsCache[i].cycleState === 'FLOW EXHAUSTION WARNING') {
             const x = getX(i);
             const bw = Math.max(1, cw / flow.length);
-            ctx.fillStyle = 'rgba(245,158,11,0.08)';
+            ctx.fillStyle = 'rgba(245,158,11,0.12)';
             ctx.fillRect(x - bw / 2, pad.top, bw, ch);
         }
     }
@@ -1257,9 +1266,9 @@ function drawChartFlowVelocity(flow, ng) {
     // 2. Reference Lines
     const y2p = getYVel(2.0), y2n = getYVel(-2.0);
     ctx.setLineDash([4, 3]); ctx.lineWidth = 0.8;
-    ctx.strokeStyle = 'rgba(61,184,122,0.3)';
+    ctx.strokeStyle = 'rgba(61,184,122,0.35)';
     ctx.beginPath(); ctx.moveTo(pad.left, y2p); ctx.lineTo(pad.left + cw, y2p); ctx.stroke();
-    ctx.strokeStyle = 'rgba(239,68,68,0.3)';
+    ctx.strokeStyle = 'rgba(239,68,68,0.35)';
     ctx.beginPath(); ctx.moveTo(pad.left, y2n); ctx.lineTo(pad.left + cw, y2n); ctx.stroke();
     ctx.setLineDash([]);
 
@@ -1270,7 +1279,7 @@ function drawChartFlowVelocity(flow, ng) {
     const bw = Math.max(1, (cw / flow.length) * 0.8);
     for (let i = 0; i < flow.length; i++) {
         const v = velZ1d[i];
-        if (Math.abs(v) < 0.1) continue;
+        if (!isFinite(v) || Math.abs(v) < 0.1) continue;
         const x = getX(i);
         ctx.fillStyle = v > 0 ? 'rgba(61,184,122,0.75)' : 'rgba(239,68,68,0.75)';
         const yTop = getYVel(v);
@@ -1281,7 +1290,9 @@ function drawChartFlowVelocity(flow, ng) {
     ctx.beginPath();
     let started = false;
     for (let i = 0; i < flow.length; i++) {
-        const x = getX(i), y = getYVel(velZ3d[i]);
+        const v = velZ3d[i];
+        if (!isFinite(v)) continue;
+        const x = getX(i), y = getYVel(v);
         started ? ctx.lineTo(x, y) : (ctx.moveTo(x, y), started = true);
     }
     ctx.strokeStyle = '#4ab8d8'; ctx.lineWidth = 1.6; ctx.stroke();
@@ -1296,14 +1307,17 @@ function drawChartFlowVelocity(flow, ng) {
     }
     ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.2; ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
 
+    ctx.restore(); // Restore clip context
+
     // 6. Axes Ticks
-    const velTicks = niceAxisTicks(-scale, scale, 5);
+    const velTicks = [-2.0, -1.0, 0, 1.0, 2.0];
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.font = '9px sans-serif';
     velTicks.forEach(v => {
         const y = getYVel(v);
-        if (y < pad.top - 5 || y > pad.top + ch + 5) return;
-        ctx.fillStyle = Math.abs(v) >= 1.9 ? (v >= 0 ? '#3db87a' : '#ef4444') : 'rgba(148,163,184,0.6)';
-        ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1) + 'σ', pad.left - 6, y);
+        if (y >= pad.top - 2 && y <= pad.top + ch + 2) {
+            ctx.fillStyle = Math.abs(v) >= 1.5 ? (v >= 0 ? '#3db87a' : '#ef4444') : 'rgba(148,163,184,0.6)';
+            ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1) + 'σ', pad.left - 6, y);
+        }
     });
 
     drawXAxis(ctx, dates, getX, cw, pad.top + ch + 14, pad);
