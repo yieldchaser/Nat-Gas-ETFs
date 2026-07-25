@@ -814,6 +814,9 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <div class="legend-item" data-tooltip="Green bars: net inflow on this trading day"><span class="legend-swatch" style="background:rgba(61,184,122,0.8)"></span> DAILY INFLOW</div>
                     <div class="legend-item" data-tooltip="Red bars: net outflow on this trading day"><span class="legend-swatch" style="background:rgba(239,68,68,0.8)"></span> DAILY OUTFLOW</div>
                 </div>
+                <div>
+                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE DEEP DIVE</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding-left:6px; border-left:3px solid #00e5ff;"><strong style="color:#00e5ff; font-weight:800;">1. PRICE VS CUMULATIVE FLOW DIVERGENCE</strong><br><span style="color:rgba(255,255,255,0.85);">Compare white price line against cumulative flow area.<br>&bull; Price rising while cumulative flow falls = <em>Distribution (Smart money selling into strength)</em><br>&bull; Price falling while cumulative flow rises = <em>Accumulation (Smart money buying weakness)</em></span></div><div style="padding-left:6px; border-left:3px solid #3db87a;"><strong style="color:#3db87a; font-weight:800;">2. DAILY FLOW BARS</strong><br><span style="color:rgba(255,255,255,0.85);">Green bars = Daily net inflows. Red bars = Daily net outflows.<br>&bull; Taller bars indicate high-conviction institutional block orders.</span></div><div style="padding-left:6px; border-left:3px solid #f59e0b;"><strong style="color:#f59e0b; font-weight:800;">3. MEASURE RANGE TOOL</strong><br><span style="color:rgba(255,255,255,0.85);">Click &amp; drag mouse across canvas to calculate exact price % return vs net $ flow accumulation between any two dates.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">❓ HOW TO USE</span>
+                </div>
             </div>
 
         </div>
@@ -905,6 +908,16 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <span id="z-range-label" style="color:var(--text-bright); text-transform:uppercase; letter-spacing:2px;">ALL</span>
                 </div>
             </div>
+            <!-- Legend + methodology -->
+            <div class="chart-footer" style="margin-top:6px;">
+                <div class="chart-legend">
+                    <div class="legend-item" data-tooltip="Z-Score line showing 30-day standardized capital flow intensity"><span class="legend-line" style="background:var(--cyan)"></span> FLOW Z-SCORE</div>
+                    <div class="legend-item" data-tooltip="Standard deviation threshold lines at +1.5&sigma; (bullish anomaly) and -1.5&sigma; (bearish anomaly)"><span class="legend-line" style="background:rgba(255,255,255,0.4); height:1px; border-top:1px dashed rgba(255,255,255,0.4);"></span> &plusmn;1.5&sigma; THRESHOLD</div>
+                </div>
+                <div>
+                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE FLOW Z-SCORES</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding-left:6px; border-left:3px solid #3db87a;"><strong style="color:#3db87a; font-weight:800;">1. EXTREME Z-SCORE ANOMALIES (&ge;&plusmn;2.0&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Spikes beyond +2.0&sigma; or -2.0&sigma; flag statistically rare institutional capital accumulation or distribution events.</span></div><div style="padding-left:6px; border-left:3px solid #ef4444;"><strong style="color:#ef4444; font-weight:800;">2. SHORT ETF SIGN CONVENTION</strong><br><span style="color:rgba(255,255,255,0.85);">On KOLD, HND, 3NGS: Positive Z = short accumulation (bearish gas signal); Negative Z = short unwinding (bullish gas signal).</span></div><div style="padding-left:6px; border-left:3px solid #00e5ff;"><strong style="color:#00e5ff; font-weight:800;">3. MULTI-ETF SELECTOR</strong><br><span style="color:rgba(255,255,255,0.85);">Click ETF chips (BOIL, KOLD, etc.) to isolate individual fund flow volatility over time.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">❓ HOW TO USE</span>
+                </div>
+            </div>
         </div>
 
         <!-- Section 6 -->
@@ -985,6 +998,17 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <span id="cross-range-label" style="color:var(--text-bright); text-transform:uppercase; letter-spacing:2px;">ALL</span>
                 </div>
             </div>
+            <!-- Legend + methodology -->
+            <div class="chart-footer" style="margin-top:6px;">
+                <div class="chart-legend">
+                    <div class="legend-item" data-tooltip="Long ETFs (BOIL, HNU, 3NGL)"><span class="legend-line" style="background:#3db87a"></span> LONGS</div>
+                    <div class="legend-item" data-tooltip="Short ETFs (KOLD, HND, 3NGS)"><span class="legend-line" style="background:#ef4444"></span> SHORTS</div>
+                    <div class="legend-item" data-tooltip="Net Long minus Short cumulative flow spread"><span class="legend-line" style="background:#00e5ff; border-top:1px dashed #00e5ff;"></span> NET SPREAD</div>
+                </div>
+                <div>
+                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE CROSS-ETF FLOWS</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding-left:6px; border-left:3px solid #00e5ff;"><strong style="color:#00e5ff; font-weight:800;">1. NET SPREAD OVERLAY</strong><br><span style="color:rgba(255,255,255,0.85);">Click NET SPREAD to view Aggregate Long minus Short cumulative flow. Positive = complex is net-long gas; Negative = complex is net-short gas.</span></div><div style="padding-left:6px; border-left:3px solid #f59e0b;"><strong style="color:#f59e0b; font-weight:800;">2. INFLECTION MARKERS</strong><br><span style="color:rgba(255,255,255,0.85);">Click INFLECTIONS to mark sudden &ge;2&sigma; rate-of-change accelerations (institutional regime shifts).</span></div><div style="padding-left:6px; border-left:3px solid #a78bfa;"><strong style="color:#a78bfa; font-weight:800;">3. CORRELATION HEATMAP</strong><br><span style="color:rgba(255,255,255,0.85);">Click CORRELATION to inspect rolling pairwise flow correlations. Positive correlation between BOIL and KOLD signals unusual institutional hedging.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">❓ HOW TO USE</span>
+                </div>
+            </div>
         </div>
 
         <!-- Section 6.1: Cross-ETF Composite Z-Score History -->
@@ -1037,9 +1061,12 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <div class="legend-item"><span class="legend-swatch" style="background:rgba(61,184,122,0.5)"></span> UPWARD PRESSURE</div>
                     <div class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,0.5)"></span> DOWNWARD PRESSURE</div>
                     <div class="legend-item"><span class="legend-line" style="background:rgba(255,255,255,0.3); height:2px;"></span> ZERO LINE</div>
-                    <div class="legend-item"><span class="legend-line" style="background:rgba(0,255,255,0.4); height:1px; border-top:1px dashed rgba(0,255,255,0.4);"></span> ±1.5σ THRESHOLDS</div>
+                    <div class="legend-item"><span class="legend-line" style="background:rgba(0,255,255,0.4); height:1px; border-top:1px dashed rgba(0,255,255,0.4);"></span> &plusmn;1.5&sigma; THRESHOLDS</div>
                 </div>
-                <span data-tooltip="Methodology: Equal-weighted average of 6 ETF flow Z-scores with short-side sign inversion (KOLD, HND, 3NGS scores flipped). 30-day rolling window inherited from per-ETF computation. Positive = net upward pressure (longs accumulating / shorts exiting). Negative = net downward pressure." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ METHODOLOGY</span>
+                <div>
+                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE COMPOSITE Z-SCORE</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding-left:6px; border-left:3px solid #3db87a;"><strong style="color:#3db87a; font-weight:800;">1. BULLISH COMPLEX PRESSURE (&ge;+1.5&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Green glow zone. Signals aggregate complex-wide long accumulation and short unwinding across all 6 ETFs.</span></div><div style="padding-left:6px; border-left:3px solid #ef4444;"><strong style="color:#ef4444; font-weight:800;">2. BEARISH COMPLEX PRESSURE (&le;-1.5&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Red glow zone. Signals aggregate short accumulation and long distribution across the complex.</span></div><div style="padding-left:6px; border-left:3px solid #00e5ff;"><strong style="color:#00e5ff; font-weight:800;">3. ZERO LINE CROSSINGS</strong><br><span style="color:rgba(255,255,255,0.85);">Crossings above 0 confirm bullish momentum recovery; crossings below 0 confirm bearish momentum breakdown.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px; margin-right:12px;">❓ HOW TO USE</span>
+                    <span data-tooltip="Methodology: Equal-weighted average of 6 ETF flow Z-scores with short-side sign inversion (KOLD, HND, 3NGS scores flipped). 30-day rolling window inherited from per-ETF computation. Positive = net upward pressure (longs accumulating / shorts exiting). Negative = net downward pressure." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ METHODOLOGY</span>
+                </div>
             </div>
         </div>
 
