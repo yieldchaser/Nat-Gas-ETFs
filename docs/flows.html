@@ -1079,10 +1079,10 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <!-- Legend + methodology -->
             <div class="chart-footer">
                 <div class="chart-legend">
-                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(61,184,122,0.8)"></span> LONG ACCELERATION</div>
-                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,0.8)"></span> SHORT ACCELERATION</div>
-                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(245,158,11,0.3)"></span> EXHAUSTION ZONE</div>
-                    <div class="legend-item"><span class="legend-line" style="background:#4ab8d8; height:2px;"></span> 3D VELOCITY Z</div>
+                    <div class="legend-item" data-tooltip="LONG ACCELERATION: Spikes in long ETF buying velocity (Z &ge; +2.0&sigma;) flagging institutional accumulation 1-5 days before troughs."><span class="legend-swatch" style="background:rgba(61,184,122,0.8)"></span> LONG ACCELERATION</div>
+                    <div class="legend-item" data-tooltip="SHORT ACCELERATION: Spikes in short ETF buying velocity (Z &le; -2.0&sigma;) confirming aggressive downside breakdown momentum."><span class="legend-swatch" style="background:rgba(239,68,68,0.8)"></span> SHORT ACCELERATION</div>
+                    <div class="legend-item" data-tooltip="EXHAUSTION ZONE: Amber window flagging institutional buyer depletion while prices push to 30-day highs (30-60 day lead warning before tops)."><span class="legend-swatch" style="background:rgba(245,158,11,0.3)"></span> EXHAUSTION ZONE</div>
+                    <div class="legend-item" data-tooltip="3D VELOCITY Z: 3-day smoothed rate of change of composite ETF flow Z-score, tracking directional capital momentum."><span class="legend-line" style="background:#4ab8d8; height:2px;"></span> 3D VELOCITY Z</div>
                 </div>
                 <span data-tooltip="Methodology: Computes daily velocity Z-scores of ETF flows. Flow Exhaustion occurs when NG price is near 30-day highs while 3-day velocity Z is negative, signalling institutional momentum draining 30-60 days ahead of price tops." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ METHODOLOGY</span>
             </div>
