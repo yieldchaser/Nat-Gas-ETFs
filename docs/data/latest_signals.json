@@ -1,78 +1,85 @@
 {
-  "last_updated": "2026-08-11T16:28:40.763533+00:00",
+  "last_updated": "2026-08-11T17:33:09.264722+00:00",
   "market_status": "open",
   "signals": [
     {
       "type": "vcvi_warning",
       "side": "long",
       "message": "VCVI (63d) = 57.9 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
-      "timestamp": "2026-08-11T16:28:38.214829+00:00",
+      "timestamp": "2026-08-11T17:33:07.736012+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_warning",
       "side": "long",
       "message": "VCVI (126d) = 58.1 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
-      "timestamp": "2026-08-11T16:28:38.214829+00:00",
+      "timestamp": "2026-08-11T17:33:07.736012+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (252d) = 79.5 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
-      "timestamp": "2026-08-11T16:28:38.214829+00:00",
+      "timestamp": "2026-08-11T17:33:07.736012+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "cvi_warning",
       "side": "long",
       "message": "CVI (252d) = 65.6 \u2014 potential GAS BOTTOM \u2014 long/leveraged setup",
-      "timestamp": "2026-08-11T16:28:38.214829+00:00",
+      "timestamp": "2026-08-11T17:33:07.736012+00:00",
       "ticker": "3NGL.L"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "short",
+      "message": "VCVI (10d) = 57.4 \u2014 potential GAS TOP \u2014 short/inverse setup",
+      "timestamp": "2026-08-11T17:33:08.654397+00:00",
+      "ticker": "HND.TO"
     },
     {
       "type": "vcvi_critical",
       "side": "short",
       "message": "VCVI (5d) = 72.0 \u2014 potential GAS TOP \u2014 short/inverse setup",
-      "timestamp": "2026-08-11T16:28:40.448803+00:00",
+      "timestamp": "2026-08-11T17:33:09.076537+00:00",
       "ticker": "3NGS.L"
     },
     {
       "type": "vcvi_critical",
       "side": "short",
       "message": "VCVI (10d) = 101.2 \u2014 potential GAS TOP \u2014 short/inverse setup",
-      "timestamp": "2026-08-11T16:28:40.448803+00:00",
+      "timestamp": "2026-08-11T17:33:09.076537+00:00",
       "ticker": "3NGS.L"
     },
     {
       "type": "cvi_warning",
       "side": "short",
       "message": "CVI (10d) = 79.0 \u2014 potential GAS TOP \u2014 short/inverse setup",
-      "timestamp": "2026-08-11T16:28:40.448803+00:00",
+      "timestamp": "2026-08-11T17:33:09.076537+00:00",
       "ticker": "3NGS.L"
     }
   ],
   "pair_status": {
     "BOIL_KOLD": "quiet",
-    "HNU.TO_HND.TO": "elevated",
+    "HNU.TO_HND.TO": "quiet",
     "3NGL.L_3NGS.L": "quiet"
   },
   "etf_summary": {
     "BOIL": {
-      "price": 20.39,
-      "change_pct": -99.999735,
-      "vps": 20.632075,
+      "price": 20.605,
+      "change_pct": -99.999733,
+      "vps": 22.40028,
       "mwca": false,
-      "vol_regime_pct": 11.155378,
-      "hv_term_structure": 0.850936
+      "vol_regime_pct": 10.756972,
+      "hv_term_structure": 0.840942
     },
     "HNU.TO": {
-      "price": 7.85,
+      "price": 7.92,
       "change_pct": -99.999999,
-      "vps": 20.298396,
+      "vps": 22.657409,
       "mwca": false,
-      "vol_regime_pct": 3.187251,
-      "hv_term_structure": 0.910552
+      "vol_regime_pct": 2.788845,
+      "hv_term_structure": 0.90629
     },
     "3NGL.L": {
       "price": 0.7143,
@@ -83,20 +90,20 @@
       "hv_term_structure": 0.88289
     },
     "KOLD": {
-      "price": 29.045,
-      "change_pct": -84.226076,
-      "vps": 21.639294,
+      "price": 28.765,
+      "change_pct": -84.37814,
+      "vps": 24.228264,
       "mwca": false,
-      "vol_regime_pct": 11.952191,
-      "hv_term_structure": 0.861994
+      "vol_regime_pct": 11.553785,
+      "hv_term_structure": 0.852646
     },
     "HND.TO": {
-      "price": 26.14,
-      "change_pct": -48.314385,
-      "vps": 29.283333,
+      "price": 25.9,
+      "change_pct": -48.788927,
+      "vps": 31.741976,
       "mwca": false,
       "vol_regime_pct": 4.780876,
-      "hv_term_structure": 0.937181
+      "hv_term_structure": 0.932388
     },
     "3NGS.L": {
       "price": 17.485,
