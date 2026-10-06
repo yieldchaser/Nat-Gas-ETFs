@@ -1366,7 +1366,6 @@ LTCG (&gt;24 months):  12.5% base + surcharge capped at 15% + 4% cess  →  up t
 
 
 <!-- Custom scripts only - No external charting libraries -->
-<script src="js/drawdown.js"></script>
 <script>
 'use strict';
 
@@ -2451,6 +2450,7 @@ function renderAll() {
     renderChart();
     renderTable();
     if (typeof renderCalc === 'function') renderCalc();
+    renderDrawdownChart();
 }
 
 // ── Slider ────────────────────────────────────────────────────────────────────
@@ -2504,6 +2504,152 @@ initChartHover();
 renderChartTabs();
 renderCards(); // show loading skeletons
 window.addEventListener('resize', () => { renderChart(); });
+
+// ── Drawdown Chart Renderer ──────────────────────────────────────────────────
+function renderDrawdownChart() {
+    const canvas = document.getElementById('drawdown-canvas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    
+    const w = rect.width;
+    const h = rect.height;
+    const padding = { top: 30, right: 100, bottom: 50, left: 70 };
+    const chartW = w - padding.left - padding.right;
+    const chartH = h - padding.top - padding.bottom;
+    
+    ctx.clearRect(0, 0, w, h);
+    
+    // ETF colors
+    const colors = {
+        'BOIL': '#c07828',
+        'KOLD': '#5090a0',
+        'HNU': '#3db87a',
+        'HND': '#d4a830',
+        '3NGL': '#8855bb',
+        '3NGS': '#e06060'
+    };
+    
+    const etfs = ['BOIL', 'KOLD', 'HNU', 'HND', '3NGL', '3NGS'];
+    let minDD = 0, allDates = [];
+    const drawdowns = {};
+    
+    // Calculate drawdowns for each ETF
+    etfs.forEach(ticker => {
+        const data = state.rawData[ticker];
+        if (!data || !data.closes || data.closes.length === 0) return;
+        
+        const dd = [];
+        let peak = -Infinity;
+        
+        for (let i = 0; i < data.closes.length; i++) {
+            const price = data.closes[i];
+            if (price > peak) peak = price;
+            const drawdownPct = ((price - peak) / peak) * 100;
+            dd.push({ date: data.dates[i], dd: drawdownPct });
+            if (drawdownPct < minDD) minDD = drawdownPct;
+        }
+        
+        drawdowns[ticker] = dd;
+        if (dd.length > allDates.length) allDates = dd.map(d => d.date);
+    });
+    
+    if (allDates.length === 0) return;
+    
+    // Round minDD down to nearest -10%
+    minDD = Math.floor(minDD / 10) * 10;
+    const ddRange = Math.abs(minDD);
+    
+    // Helper functions
+    const getX = (i) => padding.left + (i / Math.max(1, allDates.length - 1)) * chartW;
+    const getY = (dd) => padding.top + (Math.abs(dd) / ddRange) * chartH;
+    
+    // Draw grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = '11px monospace';
+    ctx.lineWidth = 1;
+    
+    const gridSteps = Math.ceil(Math.abs(minDD) / 10);
+    for (let i = 0; i <= gridSteps; i++) {
+        const ddVal = i * -10;
+        const y = padding.top + (i / gridSteps) * chartH;
+        
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(padding.left + chartW, y);
+        ctx.stroke();
+        
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${ddVal}%`, padding.left - 10, y);
+    }
+    
+    // 0% line thicker
+    ctx.strokeStyle = 'rgba(0,255,255,0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, padding.top);
+    ctx.lineTo(padding.left + chartW, padding.top);
+    ctx.stroke();
+    
+    // X-axis labels (dates)
+    const dateStep = Math.ceil(allDates.length / 8);
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (let i = 0; i < allDates.length; i += dateStep) {
+        const d = new Date(allDates[i]);
+        const label = d.toLocaleDateString('en', { month: 'short', year: '2-digit' });
+        ctx.fillText(label, getX(i), padding.top + chartH + 10);
+    }
+    
+    // Draw lines for each ETF
+    etfs.forEach(ticker => {
+        const dd = drawdowns[ticker];
+        if (!dd || dd.length === 0) return;
+        
+        ctx.strokeStyle = colors[ticker] || '#888';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        dd.forEach((point, i) => {
+            const x = getX(i);
+            const y = getY(point.dd);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        
+        ctx.stroke();
+    });
+    
+    // Legend
+    const legX = w - padding.right + 10;
+    let legY = padding.top + 10;
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'left';
+    
+    etfs.forEach(ticker => {
+        if (!drawdowns[ticker]) return;
+        
+        ctx.fillStyle = colors[ticker];
+        ctx.fillRect(legX, legY - 4, 12, 8);
+        
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fillText(ticker, legX + 18, legY);
+        
+        legY += 18;
+    });
+}
+
+// Initialize drawdown chart
+window.addEventListener('resize', () => { renderDrawdownChart(); });
 
 // ── Custom Canvas Renderer ───────────────────────────────────────────────────
 function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
@@ -4886,11 +5032,9 @@ function calcExportCSV() {
                             }
                         }).catch(() => {});
                         
-                        // Initialize Drawdown Chart
-                        if (typeof DrawdownChart !== 'undefined') {
-                            DrawdownChart.init();
-                            DrawdownChart.loadData(dd);
-                        }
+                        
+                        // Render drawdown chart with loaded data
+                        renderDrawdownChart();
                     }
                 }).catch(() => {});
             }
