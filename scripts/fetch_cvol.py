@@ -102,9 +102,21 @@ def get_fresh_qsid(cme_token: str, userinfo: str) -> tuple[str, requests.Session
 
 
 # ── STEP 2: FETCH DATA PAGE ───────────────────────────────────────────────────
-def fetch_data_page(qsid: str, session: requests.Session) -> str:
+def fetch_data_page(qsid: str, session: requests.Session, use_eod: bool = False) -> str:
+    """
+    Fetch the CVOL history chart page.
+    
+    Args:
+        qsid: Active QuikStrike session ID
+        session: Authenticated requests session
+        use_eod: If True, use dsrc=EOD for end-of-day data (may return more history)
+    """
     params = {**POPUP_PARAMS, "qsid": qsid}
-    resp   = session.get(POPUP_BASE, params=params, timeout=30)
+    if use_eod:
+        params["dsrc"] = "EOD"
+        print("  Using EOD datasource for historical data")
+    
+    resp = session.get(POPUP_BASE, params=params, timeout=30)
     resp.raise_for_status()
     return resp.text
 
@@ -190,8 +202,9 @@ def main():
     print("[1/5] Activating QuikStrike session via CME SSO…")
     qsid, session = get_fresh_qsid(cme_token, userinfo)
 
-    print("\n[2/5] Fetching NGVL CVOL data page…")
-    html = fetch_data_page(qsid, session)
+    # Try EOD datasource first for maximum historical coverage
+    print("\n[2/5] Fetching NGVL CVOL data page (trying EOD datasource)…")
+    html = fetch_data_page(qsid, session, use_eod=True)
     print(f"      {len(html):,} bytes received")
 
     print("\n[3/5] Parsing JSONSettings…")
