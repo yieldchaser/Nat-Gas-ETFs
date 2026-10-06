@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BLUE MERIDIAN</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='60%' r='50%' fx='50%' fy='65%'><stop offset='0%' style='stop-color:%230033ff;stop-opacity:0.5' /><stop offset='100%' style='stop-color:%23001a4d;stop-opacity:0' /></radialGradient></defs><circle cx='50' cy='60' r='40' fill='url(%23g)' /><path d='M50 92 C30 92 18 75 18 52 C18 30 50 5 50 5 C50 5 82 30 82 52 C82 75 70 92 50 92 Z' fill='%230066ff' /><path d='M50 80 C40 80 32 68 32 50 C32 35 50 18 50 18 C50 18 68 35 68 50 C68 68 60 80 50 80 Z' fill='white' /></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="js/icons.js"></script>
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/signals.css">
 <style>
@@ -28,7 +32,7 @@
 }
 .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .slider-label { font-size: 0.75rem; letter-spacing: 2.5px; color: #fff; opacity: 0.85; font-weight: 700; }
-.slider-value { font-size: 1.4rem; font-weight: 800; color: var(--cyan); text-shadow: 0 0 10px rgba(0,255,255,0.2); }
+.slider-value { font-size: 1.4rem; font-weight: 800; color: var(--cyan); text-shadow: 0 0 10px rgba(56,139,253,0.2); }
 .slider-track { position: relative; padding: 10px 0; }
 
 input[type=range] {
@@ -84,34 +88,32 @@ input[type=range] {
 input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 5px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
     background: #fff;
-    border: 2px solid var(--cyan);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    border: 3px solid var(--accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     cursor: pointer;
     margin-top: -7px; /* Centers thumb on 6px track */
-    transition: all 0.2s;
+    transition: transform 0.1s ease;
 }
 input[type=range]::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 5px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
     background: #fff;
-    border: 2px solid var(--cyan);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    border: 3px solid var(--accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: transform 0.1s ease;
 }
 
 input[type=range]:hover::-webkit-slider-thumb {
-    background: var(--cyan);
-    border-color: #fff;
+    transform: scale(1.15);
 }
 input[type=range]:hover::-moz-range-thumb {
-    background: var(--cyan);
-    border-color: #fff;
+    transform: scale(1.15);
 }
 
 .slider-hints { display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.7rem; color: #fff; opacity: 0.85; font-weight: 600; }
@@ -124,30 +126,41 @@ input[type=range]:hover::-moz-range-thumb {
     margin-bottom: 24px; 
 }
 .kpi-card {
-    background: var(--bg-panel);
-    border: 1px solid var(--border-primary);
-    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    background: linear-gradient(145deg, rgba(33, 38, 45, 0.8) 0%, rgba(22, 27, 34, 0.8) 100%);
+    border: 1px solid var(--border);
+    border-radius: 8px;
     padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    transition: border-color 0.2s;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: transform 0.2s var(--ease-structural), border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.kpi-card:hover { border-color: var(--card-color, var(--border-accent)); }
+.kpi-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--bar, linear-gradient(90deg, var(--card-color, rgba(56, 139, 253, 0.6)), transparent));
+    opacity: 0.85;
+    pointer-events: none;
+}
+.kpi-card:hover { transform: translateY(-2px); border-color: rgba(56, 139, 253, 0.4); box-shadow: var(--shadow-lift); }
 .kpi-header { display: flex; justify-content: space-between; align-items: center; }
 .kpi-ticker { font-size: 1rem; font-weight: 800; letter-spacing: 1px; }
 .kpi-cycles { font-size: 0.65rem; color: #fff; opacity: 0.85; font-weight: 700; }
 
 .kpi-main-metric { margin: 4px 0; }
-.kpi-lbl { font-size: 0.65rem; letter-spacing: 1.5px; color: #fff; opacity: 0.85; font-weight: 700; text-transform: uppercase; }
-.kpi-val { font-size: 1.4rem; font-weight: 800; line-height: 1; }
+.kpi-lbl { font-size: 10px; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+.kpi-val { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; line-height: 1; text-shadow: 0 0 20px rgba(255, 255, 255, 0.1); }
 .kpi-median { font-size: 0.62rem; font-weight: 700; color: rgba(255,255,255,0.55); letter-spacing: 1px; margin-top: 2px; }
 
 .kpi-stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
  .stat-item { display: flex; flex-direction: column; gap: 2px; }
  .kpi-stats-row .stat-item:nth-child(2) { text-align: right; align-items: flex-end; }
- .stat-lbl { font-size: 0.6rem; letter-spacing: 1px; color: #fff; opacity: 0.85; font-weight: 700; text-transform: uppercase; }
- .stat-val { font-size: 0.75rem; font-weight: 700; color: var(--text-bright); }
+ .stat-lbl { font-size: 9px; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+ .stat-val { font-size: 13px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--text); }
  
  /* ---- MICRO ANALYTICS (IN-CARD) ---- */
  .micro-analytics {
@@ -174,9 +187,9 @@ input[type=range]:hover::-moz-range-thumb {
  .regime-label { flex: 1; text-align: center; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.8px; color: #fff; opacity: 0.85; }
  .str-val { opacity: 0.85; } /* Secondary hierarchy */
  .ctx-val { opacity: 0.85; color: #fff; font-weight: 600; } /* Tertiary hierarchy */
- .soft-green { color: #3db87a; opacity: 0.85; }
- .soft-red { color: #ef4444; opacity: 0.85; }
- .breakout-text { color: #fff; text-shadow: 0 0 8px rgba(0,255,255,0.6); font-weight: 900; }
+ .soft-green { color: #3fb950; opacity: 0.85; }
+ .soft-red { color: #f85149; opacity: 0.85; }
+ .breakout-text { color: #fff; text-shadow: 0 0 8px rgba(56,139,253,0.6); font-weight: 900; }
 
 /* ---- CHART SECTION ---- */
 .chart-container {
@@ -206,7 +219,7 @@ input[type=range]:hover::-moz-range-thumb {
     color: #fff; opacity: 0.85; cursor: pointer;
 }
 .horizon-btn:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
-.horizon-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,255,255,0.05); }
+.horizon-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(56,139,253,0.05); }
 
 .chart-canvas-wrap { position: relative; height: 400px; width: 100%; margin-bottom: 16px; }
 #tp-canvas { width: 100%; height: 100%; cursor: crosshair; }
@@ -244,7 +257,7 @@ input[type=range]:hover::-moz-range-thumb {
     background: var(--cyan);
     border-radius: 3px;
     z-index: 2;
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    box-shadow: 0 0 10px rgba(56,139,253, 0.3);
 }
 .range-inputs {
     position: relative;
@@ -287,9 +300,9 @@ input[type=range]:hover::-moz-range-thumb {
     letter-spacing: 1px;
     padding: 6px 14px;
     border-radius: 4px;
-    background: rgba(0, 255, 255, 0.1);
+    background: rgba(56,139,253, 0.1);
     color: var(--cyan);
-    border: 1px solid rgba(0, 255, 255, 0.2);
+    border: 1px solid rgba(56,139,253, 0.2);
     cursor: pointer;
     transition: all 0.2s;
     text-transform: uppercase;
@@ -311,13 +324,17 @@ input[type=range]:hover::-moz-range-thumb {
 
 table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.8rem; }
 .cycle-table th {
-    text-align: center; padding: 12px 16px;
-    font-size: 0.75rem; letter-spacing: 2px; color: #fff; opacity: 0.85; font-weight: 700;
-    border-bottom: 2px solid var(--bg-secondary);
+    text-align: center; padding: 9px 12px;
+    font-size: 10px; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600;
+    background: var(--surface2);
+    position: sticky; top: 0; z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 -1px 0 var(--border);
     text-transform: uppercase;
 }
-.cycle-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; }
-.cycle-table tr:hover td { background: rgba(255,255,255,0.04) !important; }
+.cycle-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: center; transition: background 0.15s ease; }
+.cycle-table tr:nth-child(even) td { background: rgba(33, 38, 45, 0.5); }
+.cycle-table tr:hover td { background: rgba(56, 139, 253, 0.04) !important; }
+.cycle-table tr:hover td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
 
 .gain-pos { color: var(--green); font-weight: 700; }
 .val-cyan { color: var(--cyan); }
@@ -326,15 +343,17 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 #chart-tooltip {
     position: absolute;
     display: none;
-    background: rgba(22, 22, 36, 0.95);
-    border: 1px solid var(--border-primary);
-    border-radius: 6px;
+    background: rgba(22,27,34,0.95);
+    border: 1px solid rgba(88,166,255,0.3);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     padding: 10px 14px;
     font-size: 0.75rem;
-    color: var(--text-bright);
+    color: var(--text);
     pointer-events: none;
     z-index: 1000;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
     min-width: 140px;
 }
 .tooltip-date { color: var(--cyan); font-weight: 800; margin-bottom: 4px; font-size: 0.65rem; letter-spacing: 1px; }
@@ -428,22 +447,30 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 
 .matrix-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .matrix-table th { 
-    padding: 10px 8px; 
-    font-size: 0.65rem; 
-    color: #fff; opacity: 0.85; 
+    padding: 9px 8px; 
+    font-size: 10px; 
+    letter-spacing: 0.06em;
+    color: var(--text-muted); 
     text-transform: uppercase; 
     text-align: center;
-    border-bottom: 2px solid var(--bg-secondary);
+    font-weight: 600;
+    background: var(--surface2);
+    position: sticky; top: 0; z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 -1px 0 var(--border);
 }
 .matrix-table td { 
-    padding: 12px 8px; 
-    font-size: 0.75rem; 
-    color: var(--text-primary); 
+    padding: 10px 8px; 
+    font-size: 12px; 
+    color: var(--text); 
     text-align: center; 
-    font-family: 'JetBrains Mono', monospace;
-    border-bottom: 1px solid rgba(255,255,255,0.03);
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s ease;
 }
-.matrix-row:hover td { background: rgba(255,255,255,0.05) !important; }
+.matrix-table tr:nth-child(even) td { background: rgba(33, 38, 45, 0.5); }
+.matrix-row:hover td { background: rgba(56, 139, 253, 0.04) !important; }
+.matrix-row:hover td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
 .matrix-totals td { border-top: 2px solid rgba(255,255,255,0.08); }
 .matrix-year { color: var(--cyan); font-weight: 800; text-align: left !important; width: 80px; }
 .matrix-count { font-weight: 700; }
@@ -475,8 +502,8 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 .calc-head-actions { display: flex; align-items: center; gap: 12px; }
 .calc-share {
     font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
-    padding: 5px 10px; border-radius: 4px; background: rgba(0,255,255,0.08);
-    color: var(--cyan); border: 1px solid rgba(80,144,160,0.4); cursor: pointer;
+    padding: 5px 10px; border-radius: 4px; background: rgba(56,139,253,0.08);
+    color: var(--cyan); border: 1px solid rgba(56,139,253,0.4); cursor: pointer;
     font-family: 'JetBrains Mono', monospace; transition: all 0.2s;
 }
 .calc-share:hover { background: var(--cyan); color: #000; }
@@ -493,22 +520,26 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 
 .calc-field { display: flex; flex-direction: column; gap: 5px; }
 .calc-field-head { display: flex; justify-content: space-between; align-items: center; }
-.calc-flbl { font-size: 0.62rem; letter-spacing: 1px; color: #fff; opacity: 0.85; font-weight: 700; text-transform: uppercase; }
+.calc-flbl { font-size: 11px; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
 .calc-reset { font-size: 0.65rem; background: none; border: none; color: var(--cyan); cursor: pointer; opacity: 0; transition: opacity 0.15s; padding: 0 2px; }
 .calc-field.user-set .calc-reset { opacity: 0.8; }
-.calc-field.user-set .calc-flbl { color: #7fb4d8; }
+.calc-field.user-set .calc-flbl { color: var(--accent); }
 .calc-input {
-    background: var(--bg-secondary); border: 1px solid var(--border-primary);
-    border-radius: 4px; color: var(--text-bright); padding: 7px 10px;
-    font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; width: 100%;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); padding: 7px 10px;
+    font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; width: 100%;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.calc-field.user-set .calc-input { border-color: #4d7da8; color: #cfe6f7; }
-.calc-input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+.calc-input:hover { border-color: rgba(139, 148, 158, 0.55); }
+.calc-input:focus { border-color: var(--accent); box-shadow: var(--ring); }
+.calc-input[aria-invalid="true"] { border-color: var(--accent-red); box-shadow: var(--ring-danger); }
+.calc-field.user-set .calc-input { border-color: var(--accent); color: var(--text); }
+.calc-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .calc-toggle:focus-visible, .calc-seg-btn:focus-visible, .calc-preset:focus-visible,
 .calc-reset:focus-visible, .calc-ctab:focus-visible, .calc-reset-all:focus-visible,
 .calc-share:focus-visible, .calc-advanced > summary:focus-visible,
 .calc-chart-opts input:focus-visible {
-    outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 4px;
+    outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px;
 }
 select.calc-input { cursor: pointer; }
 
@@ -540,8 +571,8 @@ select.calc-input { cursor: pointer; }
 
 .calc-reset-all {
     font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
-    padding: 8px 12px; border-radius: 4px; background: rgba(0,255,255,0.08);
-    color: var(--cyan); border: 1px solid rgba(80,144,160,0.4); cursor: pointer; margin-top: 4px;
+    padding: 8px 12px; border-radius: 4px; background: rgba(56,139,253,0.08);
+    color: var(--cyan); border: 1px solid rgba(56,139,253,0.4); cursor: pointer; margin-top: 4px;
 }
 .calc-reset-all:hover { background: var(--cyan); color: #000; }
 
@@ -550,18 +581,26 @@ select.calc-input { cursor: pointer; }
 @media (max-width: 900px) { .calc-stat-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 480px) { .calc-stat-grid { grid-template-columns: 1fr; } }
 .calc-stat {
-    background: var(--bg-secondary); border: 1px solid var(--border-primary);
-    border-top: 2px solid var(--cyan); border-radius: 6px; padding: 12px 14px;
-    transition: transform 0.15s, border-color 0.2s;
+    position: relative; overflow: hidden; isolation: isolate;
+    background: linear-gradient(145deg, rgba(33, 38, 45, 0.8) 0%, rgba(22, 27, 34, 0.8) 100%);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: transform 0.18s var(--ease-structural), border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.calc-stat:hover { transform: translateY(-2px); border-color: var(--border-accent); }
-.calc-stat.headline { border-top-color: var(--green); }
-.calc-stat.amber { border-top-color: #d4a830; }
-.calc-stat-lbl { font-size: 0.58rem; letter-spacing: 1px; color: #fff; opacity: 0.7; font-weight: 700; text-transform: uppercase; }
-.calc-stat-val { font-size: 1.25rem; font-weight: 800; color: var(--text-bright); font-family: 'JetBrains Mono', monospace; margin-top: 5px; line-height: 1.1; }
+.calc-stat::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--bar, linear-gradient(90deg, rgba(56, 139, 253, 0.85), rgba(56, 139, 253, 0.1), transparent));
+    opacity: 0.85; pointer-events: none;
+}
+.calc-stat:hover { transform: translateY(-2px); border-color: rgba(56, 139, 253, 0.4); box-shadow: var(--shadow-lift); }
+.calc-stat.headline::before { background: linear-gradient(90deg, rgba(63, 185, 80, 0.85), rgba(63, 185, 80, 0.1), transparent); }
+.calc-stat.amber::before { background: linear-gradient(90deg, rgba(251, 143, 68, 0.85), rgba(251, 143, 68, 0.1), transparent); }
+.calc-stat-lbl { font-size: 10px; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+.calc-stat-val { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--text); font-family: var(--font-mono); margin-top: 5px; line-height: 1.1; text-shadow: 0 0 20px rgba(255, 255, 255, 0.1); }
 .calc-stat-sub { font-size: 0.6rem; color: #fff; opacity: 0.65; font-weight: 600; margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
-@keyframes calcFlash { 0% { background: rgba(80,144,160,0.25); } 100% { background: var(--bg-secondary); } }
-.calc-stat.flash { animation: calcFlash 0.6s ease-out; }
+@keyframes calcFlash { 0% { box-shadow: 0 0 0 0 rgba(56, 139, 253, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05); } 100% { box-shadow: 0 0 0 6px rgba(56, 139, 253, 0), inset 0 1px 0 rgba(255, 255, 255, 0.05); } }
+.calc-stat.flash { animation: calcFlash 0.55s ease-out; }
 
 .calc-chart-card { background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 6px; padding: 16px; }
 .calc-chart-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
@@ -569,7 +608,7 @@ select.calc-input { cursor: pointer; }
     font-size: 0.6rem; font-weight: 700; letter-spacing: 0.5px; padding: 5px 10px; border-radius: 4px;
     background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary); color: #fff; opacity: 0.75; cursor: pointer;
 }
-.calc-ctab.active { border-color: var(--cyan); color: var(--cyan); opacity: 1; background: rgba(80,144,160,0.1); }
+.calc-ctab.active { border-color: var(--cyan); color: var(--cyan); opacity: 1; background: rgba(56,139,253,0.1); }
 .calc-canvas-wrap { position: relative; height: 300px; width: 100%; }
 #calc-canvas { width: 100%; height: 100%; }
 .calc-chart-opts { display: flex; gap: 14px; align-items: center; margin-top: 10px; font-size: 0.62rem; color: #fff; opacity: 0.8; font-weight: 600; }
@@ -581,11 +620,14 @@ select.calc-input { cursor: pointer; }
     padding: 10px 12px; border-radius: 6px; border-left: 3px solid;
     background: rgba(255,255,255,0.02);
 }
-.calc-caveat .cv-icon { font-size: 0.85rem; flex-shrink: 0; }
-.calc-caveat.cv-red { border-left-color: var(--red); background: rgba(192,64,64,0.08); }
+.calc-caveat .cv-icon { font-size: 0.85rem; flex-shrink: 0; display: inline-flex; align-items: center; }
+.calc-caveat.cv-red .cv-icon   { color: var(--accent-red); }
+.calc-caveat.cv-amber .cv-icon { color: var(--accent-yellow); }
+.calc-caveat.cv-green .cv-icon { color: var(--accent-green); }
+.calc-caveat.cv-red { border-left-color: var(--red); background: rgba(248,81,73,0.08); }
 .calc-caveat.cv-red strong { color: #e89090; }
-.calc-caveat.cv-amber { border-left-color: #d4a830; background: rgba(212,168,48,0.06); }
-.calc-caveat.cv-green { border-left-color: var(--green); background: rgba(61,184,122,0.05); }
+.calc-caveat.cv-amber { border-left-color: #d29922; background: rgba(210,153,34,0.06); }
+.calc-caveat.cv-green { border-left-color: var(--green); background: rgba(63,185,80,0.05); }
 .calc-empty { padding: 40px; text-align: center; color: #fff; opacity: 0.6; font-size: 0.85rem; font-weight: 600; }
 .calc-spinner {
     display: inline-block;
@@ -629,7 +671,7 @@ select.calc-input { cursor: pointer; }
     transition: border-color 0.15s, color 0.15s, background 0.15s;
     white-space: nowrap;
 }
-.calc-howto-btn:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(0,255,255,0.06); }
+.calc-howto-btn:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(56,139,253,0.06); }
 
 .calc-howto-overlay {
     display: none;
@@ -680,7 +722,7 @@ select.calc-input { cursor: pointer; }
     display: flex; align-items: center; justify-content: center;
     transition: border-color 0.15s, color 0.15s;
 }
-.calc-howto-close:hover { border-color: var(--red, #e06060); color: #e06060; }
+.calc-howto-close:hover { border-color: var(--red, #f85149); color: #f85149; }
 .calc-howto-body {
     overflow-y: auto;
     padding: 22px 24px 28px;
@@ -697,7 +739,7 @@ select.calc-input { cursor: pointer; }
     color: var(--cyan);
     margin-bottom: 8px;
     padding-bottom: 5px;
-    border-bottom: 1px solid rgba(0,255,255,0.12);
+    border-bottom: 1px solid rgba(56,139,253,0.12);
 }
 .howto-p {
     font-size: 0.68rem;
@@ -722,12 +764,13 @@ select.calc-input { cursor: pointer; }
 }
 .howto-table th {
     text-align: left;
-    color: rgba(255,255,255,0.4);
-    font-weight: 700;
-    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    padding: 4px 8px;
-    border-bottom: 1px solid var(--border-primary);
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
 }
 .howto-table td {
     padding: 6px 8px;
@@ -738,7 +781,7 @@ select.calc-input { cursor: pointer; }
 }
 .howto-table td:first-child { color: var(--text-bright); font-weight: 700; white-space: nowrap; }
 .howto-callout {
-    background: rgba(0,255,255,0.05);
+    background: rgba(56,139,253,0.05);
     border-left: 3px solid var(--cyan);
     border-radius: 0 6px 6px 0;
     padding: 10px 14px;
@@ -796,7 +839,7 @@ select.calc-input { cursor: pointer; }
     display: flex; align-items: center; justify-content: center;
     transition: border-color 0.15s, background 0.15s;
 }
-.swing-var-count-btn:hover { border-color: var(--cyan); background: rgba(0,255,255,0.08); color: var(--cyan); }
+.swing-var-count-btn:hover { border-color: var(--cyan); background: rgba(56,139,253,0.08); color: var(--cyan); }
 .swing-var-count-lbl {
     font-size: 0.62rem;
     font-weight: 700;
@@ -842,23 +885,23 @@ select.calc-input { cursor: pointer; }
     color: var(--text-primary);
     white-space: nowrap;
 }
-.swing-pill.pill-cyan { border-color: rgba(0,255,255,0.35); color: var(--cyan); background: rgba(0,255,255,0.06); }
-.swing-pill.pill-green { border-color: rgba(61,184,122,0.35); color: var(--green); background: rgba(61,184,122,0.06); }
-.swing-pill.pill-gold { border-color: rgba(212,168,48,0.35); color: #d4a830; background: rgba(212,168,48,0.06); }
+.swing-pill.pill-cyan { border-color: rgba(56,139,253,0.35); color: var(--cyan); background: rgba(56,139,253,0.06); }
+.swing-pill.pill-green { border-color: rgba(63,185,80,0.35); color: var(--green); background: rgba(63,185,80,0.06); }
+.swing-pill.pill-gold { border-color: rgba(210,153,34,0.35); color: #d29922; background: rgba(210,153,34,0.06); }
 .swing-schedule-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.62rem;
 }
 .swing-schedule-table th {
-    font-size: 0.58rem;
-    letter-spacing: 1px;
-    color: rgba(255,255,255,0.5);
-    font-weight: 700;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-weight: 600;
     text-transform: uppercase;
     text-align: center;
-    padding: 5px 6px;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding: 6px 6px;
+    border-bottom: 1px solid var(--border);
     white-space: nowrap;
 }
 .swing-schedule-table td {
@@ -885,12 +928,12 @@ select.calc-input { cursor: pointer; }
     padding: 1px 5px;
     border-radius: 3px;
     font-weight: 700;
-    background: rgba(0,255,255,0.08);
-    border: 1px solid rgba(0,255,255,0.2);
+    background: rgba(56,139,253,0.08);
+    border: 1px solid rgba(56,139,253,0.2);
     color: var(--cyan);
 }
-.swing-ret-tag.tag-alt { background: rgba(212,168,48,0.08); border-color: rgba(212,168,48,0.2); color: #d4a830; }
-.swing-ret-tag.tag-purple { background: rgba(136,85,187,0.10); border-color: rgba(136,85,187,0.3); color: #bb88ee; }
+.swing-ret-tag.tag-alt { background: rgba(210,153,34,0.08); border-color: rgba(210,153,34,0.2); color: #d29922; }
+.swing-ret-tag.tag-purple { background: rgba(163,113,247,0.10); border-color: rgba(163,113,247,0.3); color: #a371f7; }
 @media (max-width: 768px) {
     .swing-schedule-table { font-size: 0.58rem; min-width: 480px; }
     .swing-schedule-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -956,7 +999,7 @@ select.calc-input { cursor: pointer; }
     <div class="chart-container">
         <div class="chart-header">
             <div style="flex:1">
-                <span id="chart-title" style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;">Price &amp; Cycle Map</span>
+                <span id="chart-title" style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);border-left:3px solid rgba(56,139,253,0.45);padding-left:8px;">Price &amp; Cycle Map</span>
             </div>
             <div class="chart-controls">
                 <div class="horizon-group" id="horizon-controls">
@@ -997,13 +1040,13 @@ select.calc-input { cursor: pointer; }
             <div class="chart-legend">
                 <div class="legend-item" data-tooltip="Adjusted closing price line"><span class="legend-line" style="background:var(--cyan)"></span> PRICE</div>
                 <div class="legend-item" data-tooltip="Daily volume bars (scaled to 30% height). Red/Green accents highlight volume activity at troughs and peaks."><span class="legend-symbol" style="background:rgba(255,255,255,0.1)"></span> VOLUME</div>
-                <div class="legend-item" data-tooltip="Confirmed cycle low — price subsequently rallied ≥ threshold from here"><span class="legend-symbol" style="background:#e06060;border-radius:50%"></span> TROUGH</div>
-                <div class="legend-item" data-tooltip="Confirmed cycle high — price dropped ≥ threshold after this point"><span class="legend-symbol" style="background:#3db87a;border-radius:50%"></span> PEAK</div>
+                <div class="legend-item" data-tooltip="Confirmed cycle low — price subsequently rallied ≥ threshold from here"><span class="legend-symbol" style="background:#f85149;border-radius:50%"></span> TROUGH</div>
+                <div class="legend-item" data-tooltip="Confirmed cycle high — price dropped ≥ threshold after this point"><span class="legend-symbol" style="background:#3fb950;border-radius:50%"></span> PEAK</div>
             </div>
             <div class="chart-legend">
-                <div class="legend-item" data-tooltip="Cycle gain ≥200% — price more than tripled from trough to peak"><span class="legend-symbol" style="background:rgba(61,184,122,0.15)"></span> &ge;200%</div>
-                <div class="legend-item" data-tooltip="Cycle gain 100–200% — price doubled or more"><span class="legend-symbol" style="background:rgba(80,144,160,0.15)"></span> &ge;100%</div>
-                <div class="legend-item" data-tooltip="Cycle gain 50–100% — strong but sub-double rally"><span class="legend-symbol" style="background:rgba(212,168,48,0.15)"></span> &ge;50%</div>
+                <div class="legend-item" data-tooltip="Cycle gain ≥200% — price more than tripled from trough to peak"><span class="legend-symbol" style="background:rgba(63,185,80,0.15)"></span> &ge;200%</div>
+                <div class="legend-item" data-tooltip="Cycle gain 100–200% — price doubled or more"><span class="legend-symbol" style="background:rgba(56,139,253,0.15)"></span> &ge;100%</div>
+                <div class="legend-item" data-tooltip="Cycle gain 50–100% — strong but sub-double rally"><span class="legend-symbol" style="background:rgba(210,153,34,0.15)"></span> &ge;50%</div>
             </div>
         </div>
     </div>
@@ -1028,7 +1071,7 @@ select.calc-input { cursor: pointer; }
     <!-- YEARLY FREQUENCY MATRIX -->
     <div class="matrix-panel">
         <div class="matrix-header">
-            <span class="matrix-title" style="border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;color:var(--text-bright);">Yearly Opportunity Frequency</span>
+            <span class="matrix-title" style="border-left:3px solid rgba(56,139,253,0.45);padding-left:8px;color:var(--text-bright);">Yearly Opportunity Frequency</span>
         </div>
         <div class="matrix-table-wrap" id="matrix-container">
             <!-- populated by JS -->
@@ -1054,43 +1097,43 @@ select.calc-input { cursor: pointer; }
         <div class="calc-howto-overlay" id="calc-howto-overlay" role="dialog" aria-modal="true" aria-label="How to Use the Calculator">
             <div class="calc-howto-modal" id="calc-howto-modal">
                 <div class="calc-howto-head">
-                    <span class="calc-howto-head-title">📖 How to Use This Calculator</span>
+                    <span class="calc-howto-head-title">How to Use This Calculator</span>
                     <button class="calc-howto-close" id="calc-howto-close" title="Close">✕</button>
                 </div>
                 <div class="calc-howto-body">
 
                     <div class="howto-section">
-                        <div class="howto-section-title">🧠 What is this calculator actually doing?</div>
+                        <div class="howto-section-title">What is this calculator actually doing?</div>
                         <p class="howto-p">Simple idea: <strong>you trade a leveraged ETF cycle repeatedly, and this calculator compounds your wealth forward year by year</strong> — after every real cost: brokerage, FX markup, Indian LRS/TCS tax, STCG/LTCG slab, surcharge, cess. Every rupee figure you see is genuinely take-home, not gross.</p>
                         <p class="howto-p">Think of it as a flight simulator for your trade strategy. You set the controls, it simulates where you land after N years of compounding.</p>
                         <div class="howto-callout"><strong>The core loop:</strong> Start with ₹X capital → trade a cycle → earn gross return → subtract broker fees + FX drag → subtract tax → repeat next year. The calculator does this <em>swings/year × horizon years</em> times and shows the result.</div>
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">🔀 Step 1 — Auto vs Manual Mode</div>
+                        <div class="howto-section-title">Step 1 — Auto vs Manual Mode</div>
                         <p class="howto-p">First decision: <strong>where do your numbers come from?</strong></p>
                         <div class="howto-callout" style="border-color:var(--cyan)">
-                            <strong>🤖 Seed from detected cycles (Auto):</strong> The calculator reads actual trough-to-peak cycles detected for your ticker and auto-fills Gross Return and Cycles/Year. Most grounded-in-reality starting point.<br><br>
-                            <strong>✍️ Manual override:</strong> Every number is yours to set freely. Ticker history is ignored. Use when you have your own return target in mind.
+                            <strong>Seed from detected cycles (Auto):</strong> The calculator reads actual trough-to-peak cycles detected for your ticker and auto-fills Gross Return and Cycles/Year. Most grounded-in-reality starting point.<br><br>
+                            <strong>Manual override:</strong> Every number is yours to set freely. Ticker history is ignored. Use when you have your own return target in mind.
                         </div>
-                        <p class="howto-p">💡 <strong>Start in Auto mode</strong>, then override specific fields as you get more opinionated about your strategy.</p>
+                        <p class="howto-p"><strong>Start in Auto mode</strong>, then override specific fields as you get more opinionated about your strategy.</p>
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">🎯 Step 2 — The Most Important Thing: Setting Your Return</div>
+                        <div class="howto-section-title">Step 2 — The Most Important Thing: Setting Your Return</div>
                         <p class="howto-p">This is where most confusion happens. There are <strong>three completely different ways</strong> to tell the calculator what return you expect per cycle — via the <strong>Gross Return / Cycle</strong> field:</p>
-                        <div class="howto-callout" style="border-color:#3db87a; background:rgba(61,184,122,0.05); margin-bottom:10px;">
-                            <strong style="color:#3db87a">AUTO — "Use the historical data as my base"</strong><br><br>
+                        <div class="howto-callout" style="border-color:#3fb950; background:rgba(63,185,80,0.05); margin-bottom:10px;">
+                            <strong style="color:#3fb950">AUTO — "Use the historical data as my base"</strong><br><br>
                             The Capture slider sets your <em>fraction</em> — how much of the full trough-to-peak move you realistically caught. <strong>It is NOT your return directly.</strong><br><br>
                             Formula: <strong>Gross Return = Historical Median × Capture %</strong><br><br>
                             Example: KOLD has an 86% median cycle. Set Capture = 60%.<br>
                             → Gross return = 86% × 60% = <strong>51.7% per cycle</strong> — not 60%.<br><br>
-                            ⚠️ Most common misunderstanding. The slider multiplies the historical median — it doesn't set your return directly.
+                            Most common misunderstanding. The slider multiplies the historical median — it doesn't set your return directly.
                         </div>
                         <div class="howto-callout" style="border-color:var(--cyan); margin-bottom:10px;">
                             <strong style="color:var(--cyan)">SINGLE — "I'm targeting exactly X% per trade"</strong><br><br>
                             Type a number. Type <code>60</code> → every cycle is exactly 60% gross. Capture slider disables. Ticker history becomes irrelevant.<br><br>
-                            ✅ <strong>Use this when you have a specific return target in your head</strong> and want to model that directly.
+                            <strong>Use this when you have a specific return target in your head</strong> and want to model that directly.
                         </div>
                         <div class="howto-callout" style="border-color:#c084fc; background:rgba(192,132,252,0.05);">
                             <strong style="color:#c084fc">VARIABLE — "My trades have different return targets"</strong><br><br>
@@ -1100,7 +1143,7 @@ select.calc-input { cursor: pointer; }
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">📅 Step 3 — Cycles/Year vs Swings/Year (they're different!)</div>
+                        <div class="howto-section-title">Step 3 — Cycles/Year vs Swings/Year (they're different!)</div>
                         <div class="howto-formula">Cycles/Year  →  physical reality  (how many cycles FIT in a year historically)
 Swings/Year  →  your intention   (how many you ACTUALLY plan to trade)</div>
                         <p class="howto-p"><strong>Cycles/Year</strong> comes from data: if a cycle + gap averages 146 days, then 365 ÷ 146 = <strong>2.5 cycles/year</strong>. This is the physical ceiling.</p>
@@ -1109,7 +1152,7 @@ Swings/Year  →  your intention   (how many you ACTUALLY plan to trade)</div>
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">💼 Step 4 — Capital Risked / Trade</div>
+                        <div class="howto-section-title">Step 4 — Capital Risked / Trade</div>
                         <p class="howto-p"><strong>Do you put your entire corpus into each trade?</strong> Default is 100%. Set to 80% → "I deploy 80% per trade, 20% stays in cash."</p>
                         <div class="howto-formula">Gain = corpus × risked% × net_return × swings/yr
 Example: ₹20L × 80% × 45% net × 2 swings = ₹14.4L gain in Year 1</div>
@@ -1117,7 +1160,7 @@ Example: ₹20L × 80% × 45% net × 2 swings = ₹14.4L gain in Year 1</div>
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">🧾 Step 5 — Tax, TCS &amp; Vault (India-specific)</div>
+                        <div class="howto-section-title">Step 5 — Tax, TCS &amp; Vault (India-specific)</div>
                         <p class="howto-p"><strong>Holding Period — STCG vs LTCG:</strong></p>
                         <div class="howto-formula">STCG (&lt;24 months):  30% base + surcharge (10–25%) + 4% cess  →  up to 39% effective
 LTCG (&gt;24 months):  12.5% base + surcharge capped at 15% + 4% cess  →  up to ~15% effective</div>
@@ -1127,7 +1170,7 @@ LTCG (&gt;24 months):  12.5% base + surcharge capped at 15% + 4% cess  →  up t
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">📊 Reading the Output Cards</div>
+                        <div class="howto-section-title">Reading the Output Cards</div>
                         <table class="howto-table">
                             <tr><th>Card</th><th>Plain English</th></tr>
                             <tr><td>Terminal Wealth</td><td>Real take-home net worth at end of horizon — after all fees, taxes, TCS. The number that matters.</td></tr>
@@ -1141,14 +1184,14 @@ LTCG (&gt;24 months):  12.5% base + surcharge capped at 15% + 4% cess  →  up t
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">⚡ The Swing Schedule Table</div>
+                        <div class="howto-section-title">The Swing Schedule Table</div>
                         <p class="howto-p">Below the chart is a year-by-year breakdown of your exact trade plan. Especially useful with fractional swings or Variable returns.</p>
                         <p class="howto-p">Example: 2.5 swings/year over 8 years → <strong>20 total swings</strong>. Year 1 gets 2, year 2 gets 3, year 3 gets 2... With Variable returns [60%, 70%], you see exactly which swing gets which return, globally numbered.</p>
                         <div class="howto-callout">Colour-coded return tags (cyan / gold / purple) map to each swing's position in your Variable pattern. Hover any tag for a tooltip with the exact global swing number.</div>
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">🔗 Saving &amp; Sharing Your Scenario</div>
+                        <div class="howto-section-title">Saving &amp; Sharing Your Scenario</div>
                         <p class="howto-p"><strong>Share:</strong> Copies a URL encoding your entire setup — ticker, capital, return mode, variable values, swings/year, horizon, tax settings. Anyone who opens it gets your exact scenario. Great for saving your work or comparing strategies.</p>
                         <p class="howto-p"><strong>Download CSV:</strong> Exports the full year-by-year projection — corpus, gain, tax, effective rate, broker cost per year. Open in Excel or Google Sheets for further analysis.</p>
                         <p class="howto-p"><strong>Reset ↺:</strong> Every field has a small reset icon. Click it to restore just that field to its auto value without touching anything else.</p>
@@ -1316,7 +1359,7 @@ LTCG (&gt;24 months):  12.5% base + surcharge capped at 15% + 4% cess  →  up t
                         </div>
                         <div class="calc-canvas-wrap" style="position: relative;">
                             <canvas id="calc-canvas"></canvas>
-                            <div id="calc-chart-tooltip" style="position: absolute; display: none; z-index: 100; background: rgba(13, 17, 28, 0.97); border: 1px solid var(--border-primary); border-radius: 6px; padding: 10px 12px; pointer-events: none; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; box-shadow: 0 8px 24px rgba(0,0,0,0.6); width: 180px;"></div>
+                            <div id="calc-chart-tooltip" style="position: absolute; display: none; z-index: 100; background: rgba(22,27,34, 0.97); border:1px solid rgba(88,166,255,0.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px); border-radius:12px; padding: 10px 12px; pointer-events: none; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; box-shadow: 0 8px 24px rgba(0,0,0,0.6); width: 180px;"></div>
                         </div>
                         <div class="calc-chart-opts">
                             <label data-tooltip="Toggle logarithmic scale (helpful for exponential compound growth visualization)."><input type="checkbox" id="calc-log"> Log scale</label>
@@ -1344,12 +1387,12 @@ LTCG (&gt;24 months):  12.5% base + surcharge capped at 15% + 4% cess  →  up t
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const TICKERS = [
-    { symbol: 'BOIL',   label: 'BOIL',  color: '#c07828', tip: 'ProShares Ultra Bloomberg Natural Gas — 2× leveraged long. Gains when gas prices rise.' },
-    { symbol: 'HNU.TO', label: 'HNU',   color: '#3db87a', tip: 'BetaPro Natural Gas 2× Daily Bull ETF — Canadian-listed 2× long exposure.' },
-    { symbol: '3NGL.L', label: '3NGL',  color: '#8855bb', tip: 'WisdomTree Natural Gas 3× Daily Leveraged ETP — London-listed 3× long.' },
-    { symbol: 'KOLD',   label: 'KOLD',  color: '#5090a0', tip: 'ProShares UltraShort Bloomberg Natural Gas — 2× inverse. Gains when gas prices fall.' },
-    { symbol: 'HND.TO', label: 'HND',   color: '#d4a830', tip: 'BetaPro Natural Gas 2× Daily Bear ETF — Canadian-listed 2× inverse/short.' },
-    { symbol: '3NGS.L', label: '3NGS',  color: '#e06060', tip: 'WisdomTree Natural Gas 3× Daily Short ETP — London-listed 3× inverse.' },
+    { symbol: 'BOIL',   label: 'BOIL',  color: '#fb8f44', tip: 'ProShares Ultra Bloomberg Natural Gas — 2× leveraged long. Gains when gas prices rise.' },
+    { symbol: 'HNU.TO', label: 'HNU',   color: '#3fb950', tip: 'BetaPro Natural Gas 2× Daily Bull ETF — Canadian-listed 2× long exposure.' },
+    { symbol: '3NGL.L', label: '3NGL',  color: '#a371f7', tip: 'WisdomTree Natural Gas 3× Daily Leveraged ETP — London-listed 3× long.' },
+    { symbol: 'KOLD',   label: 'KOLD',  color: '#388bfd', tip: 'ProShares UltraShort Bloomberg Natural Gas — 2× inverse. Gains when gas prices fall.' },
+    { symbol: 'HND.TO', label: 'HND',   color: '#d29922', tip: 'BetaPro Natural Gas 2× Daily Bear ETF — Canadian-listed 2× inverse/short.' },
+    { symbol: '3NGS.L', label: '3NGS',  color: '#f85149', tip: 'WisdomTree Natural Gas 3× Daily Short ETP — London-listed 3× inverse.' },
 ];
 const START_TS = 0; // epoch 0 → Yahoo Finance returns full available history
 const END_TS   = () => Math.floor(Date.now() / 1000);
@@ -1528,10 +1571,10 @@ function gainClass(g) {
     return 'gain-low';
 }
 function gainBandColor(g, a) {
-    if (g >= 200) return `rgba(61,184,122,${a})`;
-    if (g >= 100) return `rgba(80,144,160,${a})`;
-    if (g >= 50)  return `rgba(212,168,48,${a})`;
-    return `rgba(192,120,40,${a})`;
+    if (g >= 200) return `rgba(63,185,80,${a})`;
+    if (g >= 100) return `rgba(56,139,253,${a})`;
+    if (g >= 50)  return `rgba(210,153,34,${a})`;
+    return `rgba(251,143,68,${a})`;
 }
 function fmt(n, d=2) { return n != null ? n.toFixed(d) : '—'; }
 function fmtPct(n) { return n != null ? `+${n.toFixed(1)}%` : '—'; }
@@ -1610,9 +1653,9 @@ function renderCards() {
                 cycPosStr = Math.round(pos * 100) + '%';
                 cycLabel = pos <= 0.3 ? 'Early' : pos <= 0.7 ? 'Mid' : pos <= 1.0 ? 'Late' : 'Extreme';
                 if (pos >= 1.0) { cycColor = 'var(--cyan)'; isBreakout = true; }
-                else if (pos > 0.7) cycColor = '#ef4444';
-                else if (pos > 0.3) cycColor = '#d4a830';
-                else cycColor = '#3db87a';
+                else if (pos > 0.7) cycColor = '#f85149';
+                else if (pos > 0.3) cycColor = '#d29922';
+                else cycColor = '#3fb950';
             }
         }
 
@@ -1630,8 +1673,8 @@ function renderCards() {
             const std = Math.sqrt(returns3d.reduce((a,b)=>a+Math.pow(b-mean,2),0) / returns3d.length);
             const z = std > 0 ? (current3d - mean) / std : 0;
             strStr = (z >= 0 ? '+' : '') + z.toFixed(1) + 'σ';
-            if (z > 2) strColor = '#ef4444';
-            else if (z < -2) strColor = '#3db87a';
+            if (z > 2) strColor = '#f85149';
+            else if (z < -2) strColor = '#3fb950';
         }
 
         // 3. Multi-Horizon (1M, 3M, 6M)
@@ -2257,25 +2300,25 @@ function renderTable() {
             const ratio  = maxG === minG ? 0 : (c.gain - minG) / (maxG - minG);
             const lightness = 85 - (ratio * 15);
             const gainColor = `hsl(145, 60%, ${lightness}%)`;
-            const [br, bg, bb] = c.gain >= 200 ? [61,184,122] : c.gain >= 100 ? [80,144,160] : c.gain >= 50 ? [212,168,48] : [192,120,40];
+            const [br, bg, bb] = c.gain >= 200 ? [63,185,80] : c.gain >= 100 ? [56,139,253] : c.gain >= 50 ? [210,153,34] : [251,143,68];
             const gainBg = `linear-gradient(90deg,rgba(${br},${bg},${bb},0.18) ${Math.round(ratio*100)}%,transparent ${Math.round(ratio*100)}%)`;
 
             // Row left-border accent by gain tier
-            const borderColor = c.gain >= 200 ? 'rgba(61,184,122,0.7)' : c.gain >= 100 ? 'rgba(80,144,160,0.7)' : c.gain >= 50 ? 'rgba(212,168,48,0.7)' : 'rgba(192,120,40,0.55)';
+            const borderColor = c.gain >= 200 ? 'rgba(63,185,80,0.7)' : c.gain >= 100 ? 'rgba(56,139,253,0.7)' : c.gain >= 50 ? 'rgba(210,153,34,0.7)' : 'rgba(251,143,68,0.55)';
 
             // DAYS bar background
             const dayRatio = maxD > 0 ? c.days / maxD : 0;
-            const dayBg = `linear-gradient(90deg,rgba(148,163,184,0.13) ${Math.round(dayRatio*100)}%,transparent ${Math.round(dayRatio*100)}%)`;
+            const dayBg = `linear-gradient(90deg,rgba(139,148,158,0.13) ${Math.round(dayRatio*100)}%,transparent ${Math.round(dayRatio*100)}%)`;
 
             // GAP color
-            const gapColor = gapDays === null ? 'rgba(255,255,255,0.85)' : gapDays < 30 ? '#3db87a' : gapDays < 90 ? '#d4a830' : 'rgba(255,255,255,0.85)';
+            const gapColor = gapDays === null ? 'rgba(255,255,255,0.85)' : gapDays < 30 ? '#3fb950' : gapDays < 90 ? '#d29922' : 'rgba(255,255,255,0.85)';
 
             return `<tr>
                 <td style="color:rgba(255,255,255,0.85);border-left:3px solid ${borderColor};">${c.num}</td>
                 <td style="color:var(--cyan);">${c.troughDate}</td>
                 <td style="color:rgba(239,100,100,0.75);">$${fmt(c.troughPrice)}</td>
-                <td style="color:#3db87a;">${c.peakDate}</td>
-                <td style="color:rgba(61,184,122,0.8);">$${fmt(c.peakPrice)}</td>
+                <td style="color:#3fb950;">${c.peakDate}</td>
+                <td style="color:rgba(63,185,80,0.8);">$${fmt(c.peakPrice)}</td>
                 <td style="color:${gainColor};font-weight:800;background:${gainBg};">${fmtPct(c.gain)}</td>
                 <td style="color:rgba(255,255,255,0.85);background:${dayBg};">${c.days}D</td>
                 <td style="color:${gapColor};font-weight:700;">${gapStr}</td>
@@ -2297,7 +2340,7 @@ function renderTable() {
             const avgGap = allGaps.length ? Math.round(allGaps.reduce((a,b) => a+b,0) / allGaps.length) : null;
             return `<tr style="border-top:2px solid rgba(255,255,255,0.12);">
                 <td style="color:rgba(255,255,255,0.85);font-weight:800;letter-spacing:1px;" colspan="5">${n} CYCLES</td>
-                <td style="color:#3db87a;font-weight:800;" data-tooltip="Avg: ${Math.round(avgG)}% | Median: ${Math.round(medG)}%">~${Math.round(avgG)}%</td>
+                <td style="color:#3fb950;font-weight:800;" data-tooltip="Avg: ${Math.round(avgG)}% | Median: ${Math.round(medG)}%">~${Math.round(avgG)}%</td>
                 <td style="color:rgba(255,255,255,0.85);font-weight:700;" data-tooltip="Average cycle duration">${Math.round(avgD)}D</td>
                 <td style="color:rgba(255,255,255,0.55);font-weight:700;" data-tooltip="Average gap between cycles">${avgGap ? avgGap + 'D' : '--'}</td>
             </tr>`;
@@ -2356,7 +2399,7 @@ function renderYearlyMatrix() {
 
     sortedYears.forEach(year => {
         const isCur = year === curYear;
-        const yearStyle = isCur ? 'border-left:3px solid rgba(0,255,255,0.55);padding-left:5px;' : '';
+        const yearStyle = isCur ? 'border-left:3px solid rgba(56,139,253,0.55);padding-left:5px;' : '';
         html += `<tr class="matrix-row"><td class="matrix-year" style="${yearStyle}">${year}</td>`;
 
         TICKERS.forEach(t => {
@@ -2583,7 +2626,7 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(padding.left + chartW, y); ctx.stroke();
         // Label — skip i=5 (bottom grid line) to avoid bleeding into X-axis area
         if (i < 5) {
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = '#8b949e';
             ctx.font = '10px sans-serif';
             const price = maxPrice - (i / 5) * (maxPrice - minPrice);
             const label = (() => {
@@ -2614,7 +2657,7 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         const pIdx = dateIdx.get(c.peakDate) ?? -1;
         if (tIdx !== -1) {
             const x = getX(tIdx), y = getVolY(visibleVolumes[tIdx]);
-            ctx.fillStyle = 'rgba(239,68,68,0.25)';
+            ctx.fillStyle = 'rgba(248,81,73,0.25)';
             ctx.fillRect(x - barW/2, y, barW, (padding.top + chartH) - y);
         }
         if (pIdx !== -1) {
@@ -2662,8 +2705,8 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
         if (tIdx !== -1) {
             const x = getX(tIdx);
             const y = getY(visibleCloses[tIdx]);
-            ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 9;
-            ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = '#ef4444'; ctx.fill();
+            ctx.shadowColor = '#f85149'; ctx.shadowBlur = 9;
+            ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = '#f85149'; ctx.fill();
             ctx.shadowBlur = 0;
             ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1; ctx.stroke();
         }
@@ -2687,7 +2730,7 @@ function drawTroughPeakChart(canvas, data, cycles, tickerColor) {
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
 
     // -- X-Axis Labels (Proactive Grid-Aligned Engine) --
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = '#8b949e';
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'center';
 
@@ -2906,7 +2949,7 @@ function drawChartOverlay(canvas, data, cycles, tickerColor) {
         const p1 = visibleCloses[i1], p2 = visibleCloses[i2];
         const diff = p2 - p1, pct = (diff / p1) * 100;
         const isPos = diff >= 0;
-        const accentColor = isPos ? '#3db87a' : '#e06060';
+        const accentColor = isPos ? '#3fb950' : '#f85149';
 
         let bandVolMin = Infinity, bandVolMax = -Infinity;
         for (let i = i1; i <= i2; i++) { if (visibleVolumes[i] < bandVolMin) bandVolMin = visibleVolumes[i]; if (visibleVolumes[i] > bandVolMax) bandVolMax = visibleVolumes[i]; }
@@ -2939,12 +2982,12 @@ function drawChartOverlay(canvas, data, cycles, tickerColor) {
         ctx.lineTo(cardX, cardY + cardR);
         ctx.quadraticCurveTo(cardX, cardY, cardX + cardR, cardY);
         ctx.closePath();
-        ctx.fillStyle = 'rgba(13, 17, 28, 0.97)'; ctx.fill();
+        ctx.fillStyle = 'rgba(22,27,34, 0.97)'; ctx.fill();
         ctx.strokeStyle = 'rgba(255,255,255,0.13)'; ctx.lineWidth = 1; ctx.stroke();
 
         ctx.font = 'bold 13px sans-serif'; ctx.fillStyle = accentColor; ctx.textAlign = 'left';
         ctx.fillText(line1, cardX + 10, cardY + 18);
-        ctx.font = '10px sans-serif'; ctx.fillStyle = 'rgba(148,163,184,0.9)';
+        ctx.font = '10px sans-serif'; ctx.fillStyle = 'rgba(139,148,158,0.9)';
         ctx.fillText(line2, cardX + 10, cardY + 34);
         ctx.fillText(line3, cardX + 10, cardY + 49);
     }
@@ -3504,7 +3547,7 @@ function renderCalc() {
     }
 
     if (state.fetchErr[activeSym]) {
-        statsEl.innerHTML = `<div class="calc-empty" style="grid-column:1/-1">⚠️ Failed to load data for ${state.activeTab}. Check internet connection or Yahoo Finance access.</div>`;
+        statsEl.innerHTML = `<div class="calc-empty" style="grid-column:1/-1">Failed to load data for ${state.activeTab}. Check internet connection or Yahoo Finance access.</div>`;
         const canvas = document.getElementById('calc-canvas');
         if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }
         calcRenderCompliance(null);
@@ -3577,13 +3620,13 @@ function calcRenderCompliance(inp) {
         ? ` Your ₹${(inp.otherIncomeINR/1e5).toFixed(1)}L other income pushes the 39% bracket to a lower gain.` : '';
 
     const caveats = [
-        { cls: 'cv-red', icon: '🔴', html: `<strong>LRS ELIGIBILITY — GRAY AREA, POSSIBLY A CONTRAVENTION.</strong> RBI LRS bars margin/leveraged instruments abroad; leveraged/inverse ETFs use internal swaps. It is unsettled whether daily-reset leveraged ETFs are prohibited — a bank may reject, or an AO may later reclassify as a technical FEMA contravention. Plain ETFs (VOO/QQQ) are clearly permitted; these are not. Worst realistic case is a compounding settlement (RBI 2025 capped technical LRS contraventions at ₹2 lakh), not prosecution — confirm with a CA.` },
-        { cls: 'cv-amber', icon: '🟠', html: `<strong>TCS IS ANNUAL.</strong> ${tcsRate}% above ${tcsEx}/PAN/FY. Vault-ON (TCS once) holds only with zero fresh remittances. Split funding across two FYs to keep each ≤ ${tcsEx}.` },
-        { cls: 'cv-amber', icon: '🟠', html: `<strong>CAPTURE FRACTION IS THE WHOLE BALLGAME.</strong> Page gains are full trough→peak, hindsight-perfect. Default is MEDIAN × 40%; headline CAGR turns amber above 60% capture.` },
-        { cls: 'cv-amber', icon: '🟠', html: `<strong>SURCHARGE KEYS ON TOTAL INCOME.</strong> Other income > 0 → the 39% bracket arrives at a lower gain.${otherFlag}` },
-        { cls: 'cv-amber', icon: '🟠', html: `<strong>HOLDING-PERIOD CONTRADICTION.</strong> ${p(rg2)} STCG only if held <24mo (the swing thesis); ${p(rltcg)} LTCG contradicts swinging. Both shown.` },
-        { cls: 'cv-green', icon: '🟢', html: `<strong>TAX RATES WEB-VERIFIED (Jun 2026):</strong> STCG-at-slab, no 15% cap for unlisted-foreign → ${p(r50)} ≤50L · ${p(r50_1)} 50L–1Cr · ${p(r1_2)} 1Cr–2Cr · ${p(rg2)} >2Cr; LTCG >2Cr ${p(rltcg)}. 20% TCS above ₹10L unchanged by Budget-2026. (ITD, Winvesta, Zerodha, Bajaj Finserv.)` },
-        { cls: 'cv-green', icon: '🟢', html: `<strong>NOT TAX/LEGAL ADVICE.</strong> Confirm with a CA; rates change every Budget.` },
+        { cls: 'cv-red', icon: (window.Icons || {}).alert || '●', html: `<strong>LRS ELIGIBILITY — GRAY AREA, POSSIBLY A CONTRAVENTION.</strong> RBI LRS bars margin/leveraged instruments abroad; leveraged/inverse ETFs use internal swaps. It is unsettled whether daily-reset leveraged ETFs are prohibited — a bank may reject, or an AO may later reclassify as a technical FEMA contravention. Plain ETFs (VOO/QQQ) are clearly permitted; these are not. Worst realistic case is a compounding settlement (RBI 2025 capped technical LRS contraventions at ₹2 lakh), not prosecution — confirm with a CA.` },
+        { cls: 'cv-amber', icon: (window.Icons || {}).warn || '●', html: `<strong>TCS IS ANNUAL.</strong> ${tcsRate}% above ${tcsEx}/PAN/FY. Vault-ON (TCS once) holds only with zero fresh remittances. Split funding across two FYs to keep each ≤ ${tcsEx}.` },
+        { cls: 'cv-amber', icon: (window.Icons || {}).warn || '●', html: `<strong>CAPTURE FRACTION IS THE WHOLE BALLGAME.</strong> Page gains are full trough→peak, hindsight-perfect. Default is MEDIAN × 40%; headline CAGR turns amber above 60% capture.` },
+        { cls: 'cv-amber', icon: (window.Icons || {}).warn || '●', html: `<strong>SURCHARGE KEYS ON TOTAL INCOME.</strong> Other income > 0 → the 39% bracket arrives at a lower gain.${otherFlag}` },
+        { cls: 'cv-amber', icon: (window.Icons || {}).warn || '●', html: `<strong>HOLDING-PERIOD CONTRADICTION.</strong> ${p(rg2)} STCG only if held <24mo (the swing thesis); ${p(rltcg)} LTCG contradicts swinging. Both shown.` },
+        { cls: 'cv-green', icon: (window.Icons || {}).check || '●', html: `<strong>TAX RATES WEB-VERIFIED (Jun 2026):</strong> STCG-at-slab, no 15% cap for unlisted-foreign → ${p(r50)} ≤50L · ${p(r50_1)} 50L–1Cr · ${p(r1_2)} 1Cr–2Cr · ${p(rg2)} >2Cr; LTCG >2Cr ${p(rltcg)}. 20% TCS above ₹10L unchanged by Budget-2026. (ITD, Winvesta, Zerodha, Bajaj Finserv.)` },
+        { cls: 'cv-green', icon: (window.Icons || {}).check || '●', html: `<strong>NOT TAX/LEGAL ADVICE.</strong> Confirm with a CA; rates change every Budget.` },
     ];
     el.innerHTML = caveats.map(c => `<div class="calc-caveat ${c.cls}"><span class="cv-icon">${c.icon}</span><span>${c.html}</span></div>`).join('');
 }
@@ -3661,7 +3704,7 @@ function renderSwingSchedule(inp, sim) {
     let html = `
     <div class="swing-schedule" data-tooltip="Swing Schedule: Shows exactly how many trade cycles (swings) are targeted each year, the cumulative running total, and the gross return assigned to each swing. Useful when using decimal swings/year (e.g. 2.5/yr = 25 swings over 10 years) or variable per-swing returns (e.g. '60, 70' alternating).">
         <div class="swing-schedule-header">
-            <span class="swing-schedule-title">⚡ Swing Schedule &amp; Year-wise Goals</span>
+            <span class="swing-schedule-title">Swing Schedule &amp; Year-wise Goals</span>
             <div class="swing-schedule-pills">
                 <span class="swing-pill pill-cyan" data-tooltip="Total compounding events (swings) over the entire horizon = Swings/Year × Horizon Years">${totalStr} total swings</span>
                 <span class="swing-pill pill-green" data-tooltip="Number of swings targeted per year (can be fractional). Compounding math applies this as an exponent.">${spyStr} swings / yr</span>
@@ -3709,7 +3752,7 @@ function renderSwingSchedule(inp, sim) {
                     <td>${cumStr}</td>
                     <td><div class="swing-ret-tags">${tags}</div></td>
                     <td>${corpusStr}</td>
-                    <td style="color:rgba(239,68,68,0.85)">${taxStr}</td>
+                    <td style="color:rgba(248,81,73,0.85)">${taxStr}</td>
                 </tr>
         `;
     });
@@ -3724,7 +3767,7 @@ function renderSwingSchedule(inp, sim) {
                     <td style="color:var(--cyan)" data-tooltip="Cumulative swings = swings/yr × horizon">${totalStr}</td>
                     <td>—</td>
                     <td style="color:var(--green)" data-tooltip="Terminal net wealth">${totalCorpus}</td>
-                    <td style="color:rgba(239,68,68,0.85)" data-tooltip="Total tax paid over full horizon">${totalTax}</td>
+                    <td style="color:rgba(248,81,73,0.85)" data-tooltip="Total tax paid over full horizon">${totalTax}</td>
                 </tr>
     `;
 
@@ -3757,7 +3800,7 @@ function calcDrawChart(sim, inp) {
     const years = sim.years;
     if (!years.length) return;
     const n = years.length;
-    const cyan = '#5090a0', green = '#3db87a', red = '#c04040', gold = '#d4a830';
+    const cyan = '#23b2b2', green = '#3fb950', red = '#f85149', gold = '#d29922';
     const tab = calcUI.chartTab;
 
     ctx.font = "10px 'JetBrains Mono', monospace";
@@ -3886,11 +3929,11 @@ function calcDrawChart(sim, inp) {
                     ctx.lineTo(x, y);
                 }
                 ctx.closePath();
-                ctx.fillStyle = 'rgba(80, 144, 160, 0.08)';
+                ctx.fillStyle = 'rgba(56,139,253, 0.08)';
                 ctx.fill();
 
-                plotDashedLine(l25, lmax, 'rgba(80, 144, 160, 0.45)');
-                plotDashedLine(l75, lmax, 'rgba(80, 144, 160, 0.45)');
+                plotDashedLine(l25, lmax, 'rgba(56,139,253, 0.45)');
+                plotDashedLine(l75, lmax, 'rgba(56,139,253, 0.45)');
             }
 
             plotLine(plotVals, lmax, rgbOf(cyan), true);
@@ -3910,11 +3953,11 @@ function calcDrawChart(sim, inp) {
                     ctx.lineTo(x, y);
                 }
                 ctx.closePath();
-                ctx.fillStyle = 'rgba(80, 144, 160, 0.08)';
+                ctx.fillStyle = 'rgba(56,139,253, 0.08)';
                 ctx.fill();
 
-                plotDashedLine(p25Vals, allMax, 'rgba(80, 144, 160, 0.45)');
-                plotDashedLine(p75Vals, allMax, 'rgba(80, 144, 160, 0.45)');
+                plotDashedLine(p25Vals, allMax, 'rgba(56,139,253, 0.45)');
+                plotDashedLine(p75Vals, allMax, 'rgba(56,139,253, 0.45)');
             }
 
             plotLine(plotVals, allMax, rgbOf(cyan), true);
@@ -3929,7 +3972,7 @@ function calcDrawChart(sim, inp) {
             
             // Draw a subtle outer halo/glow around the pivot dot
             ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI*2);
-            ctx.fillStyle = 'rgba(61, 184, 122, 0.25)'; ctx.fill();
+            ctx.fillStyle = 'rgba(63,185,80, 0.25)'; ctx.fill();
             
             ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2);
             ctx.fillStyle = green; ctx.fill();
@@ -3950,7 +3993,7 @@ function calcDrawChart(sim, inp) {
         const bw = Math.max(3, cw / n * 0.6);
         for (let i = 0; i < n; i++) {
             const x = getX(i), bh = maxV>0 ? (vals[i]/maxV)*ch : 0;
-            ctx.fillStyle = 'rgba(192,64,64,0.75)';
+            ctx.fillStyle = 'rgba(248,81,73,0.75)';
             ctx.fillRect(x - bw/2, pad.top+ch-bh, bw, bh);
         }
     } else if (tab === 'wedge') {
@@ -3974,17 +4017,17 @@ function calcDrawChart(sim, inp) {
         };
 
         // 1. Cost Drag (Top layer) -> fill grossV to bottom
-        fillArea(grossV, 'rgba(212, 168, 48, 0.18)');
+        fillArea(grossV, 'rgba(210,153,34, 0.18)');
         
         // 2. Tax Paid (Middle layer) -> fill taxStack to bottom
-        fillArea(taxStack, 'rgba(192, 64, 64, 0.22)');
+        fillArea(taxStack, 'rgba(248,81,73, 0.22)');
         
         // 3. Net Wealth (Bottom layer) -> fill netV to bottom
-        fillArea(netV, 'rgba(61, 184, 122, 0.28)');
+        fillArea(netV, 'rgba(63,185,80, 0.28)');
 
         // Draw line strokes on top
         plotLine(grossV, maxV, rgbOf(gold), false);
-        plotLine(taxStack, maxV, 'rgba(192, 64, 64, 0.65)', false);
+        plotLine(taxStack, maxV, 'rgba(248,81,73, 0.65)', false);
         plotLine(netV, maxV, rgbOf(green), false);
     } else if (tab === 'effrate') {
         const vals = years.map(y => y.effRate*100);
@@ -4055,7 +4098,7 @@ function calcDrawChart(sim, inp) {
 
                 const yVal = pad.top + ch - (lmax > 0 ? (lg(corpus[hIdx]) / lmax) * ch : 0);
                 ctx.beginPath(); ctx.arc(hX, yVal, 6, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(80, 144, 160, 0.22)'; ctx.fill();
+                ctx.fillStyle = 'rgba(56,139,253, 0.22)'; ctx.fill();
                 ctx.beginPath(); ctx.arc(hX, yVal, 4, 0, Math.PI * 2);
                 ctx.fillStyle = cyan; ctx.fill();
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
@@ -4063,7 +4106,7 @@ function calcDrawChart(sim, inp) {
                 if (cmpVals) {
                     const yValCmp = pad.top + ch - (lmax > 0 ? (lg(cmpVals[hIdx]) / lmax) * ch : 0);
                     ctx.beginPath(); ctx.arc(hX, yValCmp, 6, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(212, 168, 48, 0.22)'; ctx.fill();
+                    ctx.fillStyle = 'rgba(210,153,34, 0.22)'; ctx.fill();
                     ctx.beginPath(); ctx.arc(hX, yValCmp, 4, 0, Math.PI * 2);
                     ctx.fillStyle = gold; ctx.fill();
                     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
@@ -4072,22 +4115,22 @@ function calcDrawChart(sim, inp) {
                 if (calcUI.showCones && p25Vals && p75Vals) {
                     const yVal25 = pad.top + ch - (lmax > 0 ? (lg(p25Vals[hIdx]) / lmax) * ch : 0);
                     ctx.beginPath(); ctx.arc(hX, yVal25, 5, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(80, 144, 160, 0.15)'; ctx.fill();
+                    ctx.fillStyle = 'rgba(56,139,253, 0.15)'; ctx.fill();
                     ctx.beginPath(); ctx.arc(hX, yVal25, 3, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(80, 144, 160, 0.8)'; ctx.fill();
+                    ctx.fillStyle = 'rgba(56,139,253, 0.8)'; ctx.fill();
                     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
 
                     const yVal75 = pad.top + ch - (lmax > 0 ? (lg(p75Vals[hIdx]) / lmax) * ch : 0);
                     ctx.beginPath(); ctx.arc(hX, yVal75, 5, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(80, 144, 160, 0.15)'; ctx.fill();
+                    ctx.fillStyle = 'rgba(56,139,253, 0.15)'; ctx.fill();
                     ctx.beginPath(); ctx.arc(hX, yVal75, 3, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(80, 144, 160, 0.8)'; ctx.fill();
+                    ctx.fillStyle = 'rgba(56,139,253, 0.8)'; ctx.fill();
                     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
                 }
             } else {
                 const yVal = pad.top + ch - (allMax > 0 ? (corpus[hIdx] / allMax) * ch : 0);
                 ctx.beginPath(); ctx.arc(hX, yVal, 6, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(80, 144, 160, 0.22)'; ctx.fill();
+                ctx.fillStyle = 'rgba(56,139,253, 0.22)'; ctx.fill();
                 ctx.beginPath(); ctx.arc(hX, yVal, 4, 0, Math.PI * 2);
                 ctx.fillStyle = cyan; ctx.fill();
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
@@ -4095,7 +4138,7 @@ function calcDrawChart(sim, inp) {
                 if (cmpVals) {
                     const yValCmp = pad.top + ch - (allMax > 0 ? (cmpVals[hIdx] / allMax) * ch : 0);
                     ctx.beginPath(); ctx.arc(hX, yValCmp, 6, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(212, 168, 48, 0.22)'; ctx.fill();
+                    ctx.fillStyle = 'rgba(210,153,34, 0.22)'; ctx.fill();
                     ctx.beginPath(); ctx.arc(hX, yValCmp, 4, 0, Math.PI * 2);
                     ctx.fillStyle = gold; ctx.fill();
                     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
@@ -4104,16 +4147,16 @@ function calcDrawChart(sim, inp) {
                 if (calcUI.showCones && p25Vals && p75Vals) {
                     const yVal25 = pad.top + ch - (allMax > 0 ? (p25Vals[hIdx] / allMax) * ch : 0);
                     ctx.beginPath(); ctx.arc(hX, yVal25, 5, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(80, 144, 160, 0.15)'; ctx.fill();
+                    ctx.fillStyle = 'rgba(56,139,253, 0.15)'; ctx.fill();
                     ctx.beginPath(); ctx.arc(hX, yVal25, 3, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(80, 144, 160, 0.8)'; ctx.fill();
+                    ctx.fillStyle = 'rgba(56,139,253, 0.8)'; ctx.fill();
                     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
 
                     const yVal75 = pad.top + ch - (allMax > 0 ? (p75Vals[hIdx] / allMax) * ch : 0);
                     ctx.beginPath(); ctx.arc(hX, yVal75, 5, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(80, 144, 160, 0.15)'; ctx.fill();
+                    ctx.fillStyle = 'rgba(56,139,253, 0.15)'; ctx.fill();
                     ctx.beginPath(); ctx.arc(hX, yVal75, 3, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(80, 144, 160, 0.8)'; ctx.fill();
+                    ctx.fillStyle = 'rgba(56,139,253, 0.8)'; ctx.fill();
                     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
                 }
             }
@@ -4139,7 +4182,7 @@ function calcDrawChart(sim, inp) {
 
             const yTax = pad.top + ch - (maxV > 0 ? (taxStack[hIdx] / maxV) * ch : 0);
             ctx.beginPath(); ctx.arc(hX, yTax, 4, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(192, 64, 64, 1)'; ctx.fill();
+            ctx.fillStyle = 'rgba(248,81,73, 1)'; ctx.fill();
             ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
 
             const yNet = pad.top + ch - (maxV > 0 ? (netV[hIdx] / maxV) * ch : 0);
@@ -4632,7 +4675,7 @@ function calcInit() {
                         if (tab === 'corpus') {
                             html += `
                             <div class="tooltip-row">
-                                <span class="tooltip-lbl" style="color:#5090a0">Expected (P50)</span>
+                                <span class="tooltip-lbl" style="color:#23b2b2">Expected (P50)</span>
                                 <span class="tooltip-val" style="color:var(--text-bright)">${fmtINR(yearData.corpus)}</span>
                             </div>`;
                             if (calcUI.compare) {
@@ -4645,8 +4688,8 @@ function calcInit() {
                                 const cmpVal = cmpSim.years[i].corpus;
                                 html += `
                                 <div class="tooltip-row">
-                                    <span class="tooltip-lbl" style="color:#d4a830">Unlevered</span>
-                                    <span class="tooltip-val" style="color:#d4a830">${fmtINR(cmpVal)}</span>
+                                    <span class="tooltip-lbl" style="color:#d29922">Unlevered</span>
+                                    <span class="tooltip-val" style="color:#d29922">${fmtINR(cmpVal)}</span>
                                 </div>`;
                             }
                             if (calcUI.showCones) {
@@ -4664,11 +4707,11 @@ function calcInit() {
                                 const p75Val = simulate(p75Inp, calcUI.cfg).years[i].corpus;
                                 html += `
                                 <div class="tooltip-row">
-                                    <span class="tooltip-lbl" style="color:rgba(80, 144, 160, 0.75)">Conservative (P25)</span>
+                                    <span class="tooltip-lbl" style="color:rgba(56,139,253, 0.75)">Conservative (P25)</span>
                                     <span class="tooltip-val" style="color:rgba(255,255,255,0.7)">${fmtINR(p25Val)}</span>
                                 </div>
                                 <div class="tooltip-row">
-                                    <span class="tooltip-lbl" style="color:rgba(80, 144, 160, 0.75)">Optimistic (P75)</span>
+                                    <span class="tooltip-lbl" style="color:rgba(56,139,253, 0.75)">Optimistic (P75)</span>
                                     <span class="tooltip-val" style="color:rgba(255,255,255,0.7)">${fmtINR(p75Val)}</span>
                                 </div>`;
                             }
@@ -4680,7 +4723,7 @@ function calcInit() {
                         } else if (tab === 'tax') {
                             html += `
                             <div class="tooltip-row">
-                                <span class="tooltip-lbl" style="color:#e06060">Tax Paid</span>
+                                <span class="tooltip-lbl" style="color:#f85149">Tax Paid</span>
                                 <span class="tooltip-val" style="color:var(--text-bright)">${fmtINR(yearData.tax)}</span>
                             </div>
                             <div class="tooltip-row">
@@ -4690,25 +4733,25 @@ function calcInit() {
                         } else if (tab === 'wedge') {
                             html += `
                             <div class="tooltip-row">
-                                <span class="tooltip-lbl" style="color:#d4a830">Gross Wealth</span>
+                                <span class="tooltip-lbl" style="color:#d29922">Gross Wealth</span>
                                 <span class="tooltip-val" style="color:var(--text-bright)">${fmtINR(yearData.grossWealth)}</span>
                             </div>
                             <div class="tooltip-row">
-                                <span class="tooltip-lbl" style="color:#e06060">Cum. Tax Paid</span>
+                                <span class="tooltip-lbl" style="color:#f85149">Cum. Tax Paid</span>
                                 <span class="tooltip-val" style="color:var(--text-bright)">${fmtINR(yearData.taxCum)}</span>
                             </div>
                             <div class="tooltip-row">
-                                <span class="tooltip-lbl" style="color:#d4a830">Cum. Cost Drag</span>
+                                <span class="tooltip-lbl" style="color:#d29922">Cum. Cost Drag</span>
                                 <span class="tooltip-val" style="color:var(--text-bright)">${fmtINR(yearData.costCum)}</span>
                             </div>
                             <div class="tooltip-row" style="margin-top:4px; border-top:1px dashed rgba(255,255,255,0.1); padding-top:4px;">
-                                <span class="tooltip-lbl" style="color:#3db87a">Net Wealth</span>
-                                <span class="tooltip-val" style="color:#3db87a; font-weight:bold;">${fmtINR(yearData.netWealth)}</span>
+                                <span class="tooltip-lbl" style="color:#3fb950">Net Wealth</span>
+                                <span class="tooltip-val" style="color:#3fb950; font-weight:bold;">${fmtINR(yearData.netWealth)}</span>
                             </div>`;
                         } else if (tab === 'effrate') {
                             html += `
                             <div class="tooltip-row">
-                                <span class="tooltip-lbl" style="color:#5090a0">Eff. Tax Rate</span>
+                                <span class="tooltip-lbl" style="color:#23b2b2">Eff. Tax Rate</span>
                                 <span class="tooltip-val" style="color:var(--text-bright)">${(yearData.effRate*100).toFixed(2)}%</span>
                             </div>
                             <div class="tooltip-row">

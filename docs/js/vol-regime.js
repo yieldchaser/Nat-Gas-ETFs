@@ -43,10 +43,10 @@ const VolRegime = {
     // Regime buckets: percentile of current HV vs all available history
     _regime(pct) {
         if (pct == null) return { label: '--',       cls: 'vrm-reg-unknown',  color: 'rgba(255, 255, 255, 0.85)' };
-        if (pct >= 90)   return { label: 'SPIKE',    cls: 'vrm-reg-spike',    color: '#c04040' };
-        if (pct >= 75)   return { label: 'ELEVATED', cls: 'vrm-reg-elevated', color: '#c07828' };
-        if (pct >= 25)   return { label: 'NORMAL',   cls: 'vrm-reg-normal',   color: '#3db87a' };
-        return                   { label: 'LOW',      cls: 'vrm-reg-low',      color: '#4a80b8' };
+        if (pct >= 90)   return { label: 'SPIKE',    cls: 'vrm-reg-spike',    color: '#f85149' };
+        if (pct >= 75)   return { label: 'ELEVATED', cls: 'vrm-reg-elevated', color: '#fb8f44' };
+        if (pct >= 25)   return { label: 'NORMAL',   cls: 'vrm-reg-normal',   color: '#3fb950' };
+        return                   { label: 'LOW',      cls: 'vrm-reg-low',      color: '#388bfd' };
     },
 
     // ── Public API ─────────────────────────────────────────
@@ -281,7 +281,7 @@ const VolRegime = {
         // elevated vs this instrument's own history (≥90th = unreliable, ≥75th = noisy).
         // Pure absolute thresholds fire permanently on nat gas ETFs and carry no information.
         const signalQuality = vovPct != null && vovPct >= 90
-            ? { label: '⚠ SIGNALS UNRELIABLE', cls: 'sqw-unstable',
+            ? { label: ((window.Icons || {}).warn || '') + ' SIGNALS UNRELIABLE', cls: 'sqw-unstable',
                 tip: `VoV-21 is at its ${vovPct.toFixed(0)}th percentile (${vov.toFixed(1)}%) — volatility of volatility is higher than ${vovPct.toFixed(0)}% of all recorded sessions for ${ticker}. Regime signals and TR readings are unreliable. Avoid structural positions based solely on current classification.` }
             : vovPct != null && vovPct >= 75
             ? { label: '~ SIGNALS NOISY', cls: 'sqw-shifting',
@@ -328,7 +328,7 @@ const VolRegime = {
                     </span>
                     ${regSignal ? `<span class="vrm-regime-signal ${regSignal.cls}" data-tooltip="${regSignal.tip}">${regSignal.label}</span>` : ''}
                     ${spikeEvt ? `<span class="vrm-spike-badge"
-                        data-tooltip="SPIKE EVENT in ${ticker} — 5D HV (${hv['5d'].toFixed(1)}%) exceeds 2× the 252D baseline (${hv['252d'].toFixed(1)}%). Near-term vol has completely broken from the annual norm.">⚡ SPIKE EVENT</span>` : ''}
+                        data-tooltip="SPIKE EVENT in ${ticker} — 5D HV (${hv['5d'].toFixed(1)}%) exceeds 2× the 252D baseline (${hv['252d'].toFixed(1)}%). Near-term vol has completely broken from the annual norm.">${(window.Icons || {}).zap || ''} SPIKE EVENT</span>` : ''}
                     ${signalQuality ? `<span class="vrm-sqw ${signalQuality.cls}" data-tooltip="${signalQuality.tip}">${signalQuality.label}</span>` : ''}
                 </div>
 
@@ -348,7 +348,7 @@ const VolRegime = {
                                 data-tooltip="Show historical Vol-of-Vol (VoV-21) as an amber line overlay. High VoV = regime instability — signals are less reliable.">VoV</button>
                         <button class="vrm-overlay-btn ov-signals${ao.includes('signals')?' active':''}"
                                 onclick="VolRegime._toggleOverlay('${ticker}','signals')"
-                                data-tooltip="Show composite regime signal timeline at chart bottom. ⚡ Surge=red · → Trending=green · ↔ Choppy=amber · ↗ Quiet Trend=cyan · ◎ Coiling=gray">SIGNALS</button>
+                                data-tooltip="Show composite regime signal timeline at chart bottom. SURGE=red · → Trending=green · ↔ Choppy=amber · ↗ Quiet Trend=cyan · ◎ Coiling=gray">SIGNALS</button>
                         <button class="vrm-overlay-btn ov-price${ao.includes('price')?' active':''}"
                                 onclick="VolRegime._toggleOverlay('${ticker}','price')"
                                 data-tooltip="Show ${ticker} historical price as a white line overlay. Secondary right Y-axis. Helps see how price action correlates with vol regime changes.">PRICE</button>
@@ -822,7 +822,7 @@ const VolRegime = {
             ctx.setLineDash([]);
             // Left-side Y labels — dimmed when no HV series selected (scale is a ghost ref)
             ctx.textAlign = 'right';
-            ctx.fillStyle = noHV ? 'rgba(148,163,184,0.25)' : '#94a3b8';
+            ctx.fillStyle = noHV ? 'rgba(139,148,158,0.25)' : '#8b949e';
             ctx.fillText(v.toFixed(1) + '%', pad.left - 4, y + 3.5);
         }
 
@@ -833,7 +833,7 @@ const VolRegime = {
         for (const tick of yTicks) {
             const y = toY(tick);
             ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y);
-            ctx.strokeStyle = tick >= p90 ? 'rgba(192,64,64,0.4)' : tick >= p75 ? 'rgba(192,120,40,0.4)' : 'rgba(74,128,184,0.4)';
+            ctx.strokeStyle = tick >= p90 ? 'rgba(248,81,73,0.4)' : tick >= p75 ? 'rgba(251,143,68,0.4)' : 'rgba(56,139,253,0.4)';
             ctx.stroke();
         }
         ctx.setLineDash([]);
@@ -846,10 +846,10 @@ const VolRegime = {
 
         // ── Background regime zones (using primary series thresholds) ──
         const zones = [
-            { lo: p90,  hi: vMax, color: 'rgba(192,64,64,0.14)'  },
-            { lo: p75,  hi: p90,  color: 'rgba(192,120,40,0.12)' },
-            { lo: p25,  hi: p75,  color: 'rgba(61,184,122,0.09)' },
-            { lo: vMin, hi: p25,  color: 'rgba(74,128,184,0.12)' },
+            { lo: p90,  hi: vMax, color: 'rgba(248,81,73,0.14)'  },
+            { lo: p75,  hi: p90,  color: 'rgba(251,143,68,0.12)' },
+            { lo: p25,  hi: p75,  color: 'rgba(63,185,80,0.09)' },
+            { lo: vMin, hi: p25,  color: 'rgba(56,139,253,0.12)' },
         ];
         for (const z of zones) {
             const y1 = toY(Math.min(z.hi, vMax)), y2 = toY(Math.max(z.lo, vMin));
@@ -867,7 +867,7 @@ const VolRegime = {
             let startFillIdx = 0;
             while(startFillIdx < primarySeries.length && primarySeries[startFillIdx] == null) startFillIdx++;
             if (startFillIdx < primarySeries.length) {
-                const regColor = lastVPrimary >= p90 ? '#c04040' : lastVPrimary >= p75 ? '#c07828' : lastVPrimary >= p25 ? '#3db87a' : '#4a80b8';
+                const regColor = lastVPrimary >= p90 ? '#f85149' : lastVPrimary >= p75 ? '#fb8f44' : lastVPrimary >= p25 ? '#3fb950' : '#388bfd';
                 const aGrad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
                 aGrad.addColorStop(0, toRgba(regColor, 0.22));
                 aGrad.addColorStop(1, toRgba(regColor, 0.01));
@@ -885,7 +885,7 @@ const VolRegime = {
 
         // ── Threshold dashes ─────────────────────────────────
         ctx.lineWidth = 0.6; ctx.setLineDash([3, 4]);
-        for (const [val, col] of [[p25,'rgba(74,128,184,0.45)'],[p75,'rgba(61,184,122,0.45)'],[p90,'rgba(192,64,64,0.45)']]) {
+        for (const [val, col] of [[p25,'rgba(56,139,253,0.45)'],[p75,'rgba(63,185,80,0.45)'],[p90,'rgba(248,81,73,0.45)']]) {
             const y = toY(val);
             if (y >= pad.top && y <= pad.top + cH) {
                 ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y);
@@ -917,7 +917,7 @@ const VolRegime = {
                 if (!started) { ctx.beginPath(); ctx.moveTo(toX(i - 1), toY(prev)); started = true; }
                 
                 // Regime coloring logic applied to ALL series with diff shading
-                const colorHex = curr >= s90 ? '#c04040' : curr >= s75 ? '#c07828' : curr >= s25 ? '#3db87a' : '#4a80b8';
+                const colorHex = curr >= s90 ? '#f85149' : curr >= s75 ? '#fb8f44' : curr >= s25 ? '#3fb950' : '#388bfd';
                 ctx.strokeStyle = toRgba(colorHex, opacity);
                 
                 ctx.beginPath();
@@ -953,7 +953,7 @@ const VolRegime = {
             if (showTR) {
                 // TR=1.2 (trending) and TR=0.8 (choppy) threshold guides
                 ctx.setLineDash([2, 4]); ctx.lineWidth = 0.7;
-                for (const [v, col] of [[1.2,'rgba(61,184,122,0.30)'],[0.8,'rgba(192,120,40,0.30)']]) {
+                for (const [v, col] of [[1.2,'rgba(63,185,80,0.30)'],[0.8,'rgba(251,143,68,0.30)']]) {
                     const ty = toYov(v);
                     if (ty >= pad.top && ty <= pad.top + cH) {
                         ctx.strokeStyle = col;
@@ -961,12 +961,12 @@ const VolRegime = {
                     }
                 }
                 ctx.setLineDash([]);
-                drawOverlayLine(trSlice,  'rgba(0,212,255,0.72)', 1.5);
+                drawOverlayLine(trSlice,  'rgba(56,139,253,0.72)', 1.5);
             }
-            if (showVoV) drawOverlayLine(vovSlice, 'rgba(192,120,40,0.68)', 1.2);
+            if (showVoV) drawOverlayLine(vovSlice, 'rgba(251,143,68,0.68)', 1.2);
 
             // Right Y-axis: TR wins over VoV for label space
-            const axColor = showTR ? 'rgba(0,212,255,0.55)' : 'rgba(192,120,40,0.55)';
+            const axColor = showTR ? 'rgba(56,139,253,0.55)' : 'rgba(251,143,68,0.55)';
             ctx.font = '9px monospace'; ctx.textAlign = 'left'; ctx.fillStyle = axColor;
             const axTicks = showTR ? [0.6,0.8,1.0,1.2,1.4] : [5,10,15,20,25];
             for (const v of axTicks) {
@@ -1045,7 +1045,7 @@ const VolRegime = {
                 const toYng = v => pad.top + cH - ((v - ngMin) / ngRange) * cH;
 
                 // Price line — bright green, slightly translucent
-                ctx.strokeStyle = 'rgba(61,220,130,0.75)'; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+                ctx.strokeStyle = 'rgba(63,185,80,0.75)'; ctx.lineWidth = 1.5; ctx.setLineDash([]);
                 let px = null, py = null;
                 for (let i = 0; i < ngSlice.length; i++) {
                     if (ngSlice[i] == null) { px = null; continue; }
@@ -1055,7 +1055,7 @@ const VolRegime = {
                 }
 
                 // Right Y-axis ticks
-                const ngColor = 'rgba(61,220,130,0.60)';
+                const ngColor = 'rgba(63,185,80,0.60)';
                 ctx.font = '9px monospace'; ctx.textAlign = 'left'; ctx.fillStyle = ngColor;
                 const ngStep = (ngMax - ngMin) / 4;
                 for (let i = 0; i <= 4; i++) {
@@ -1079,10 +1079,10 @@ const VolRegime = {
                     if (lastNg != null) {
                         const dx = toX(ngSlice.length - 1), dy = toYng(lastNg);
                         ctx.beginPath(); ctx.arc(dx, dy, 3.5, 0, Math.PI * 2);
-                        ctx.fillStyle = 'rgba(61,220,130,0.85)'; ctx.fill();
+                        ctx.fillStyle = 'rgba(63,185,80,0.85)'; ctx.fill();
                         ctx.beginPath(); ctx.arc(dx, dy, 1.5, 0, Math.PI * 2);
                         ctx.fillStyle = '#fff'; ctx.fill();
-                        ctx.font = 'bold 9px monospace'; ctx.fillStyle = 'rgba(61,220,130,0.85)';
+                        ctx.font = 'bold 9px monospace'; ctx.fillStyle = 'rgba(63,185,80,0.85)';
                         ctx.textAlign = 'right';
                         ctx.fillText('$' + lastNg.toFixed(2), dx - 10, dy - 4);
                     }
@@ -1107,7 +1107,7 @@ const VolRegime = {
                 const s25 = pFn(0.25), s75 = pFn(0.75), s90 = pFn(0.90);
                 
                 const lX = toX(s.length - 1), lY = toY(lastValid);
-                const dcHex = lastValid >= s90 ? '#c04040' : lastValid >= s75 ? '#c07828' : lastValid >= s25 ? '#3db87a' : '#4a80b8';
+                const dcHex = lastValid >= s90 ? '#f85149' : lastValid >= s75 ? '#fb8f44' : lastValid >= s25 ? '#3fb950' : '#388bfd';
                 
                 if (k === primaryKey) {
                     ctx.beginPath(); ctx.arc(lX, lY, 6.5, 0, Math.PI * 2);
@@ -1136,10 +1136,10 @@ const VolRegime = {
             const pFn21  = f => s21all.length ? s21all[Math.max(0, Math.floor(s21all.length * f) - 1)] : 0;
             const [sr25, sr75, sr90] = [pFn21(0.25), pFn21(0.75), pFn21(0.90)];
             const SIG_COL = {
-                'rs-surge':    'rgba(192,64,64,0.90)',
-                'rs-trending': 'rgba(61,184,122,0.90)',
-                'rs-choppy':   'rgba(192,120,40,0.90)',
-                'rs-qtrend':   'rgba(0,212,255,0.90)',
+                'rs-surge':    'rgba(248,81,73,0.90)',
+                'rs-trending': 'rgba(63,185,80,0.90)',
+                'rs-choppy':   'rgba(251,143,68,0.90)',
+                'rs-qtrend':   'rgba(56,139,253,0.90)',
                 'rs-coiling':  'rgba(255,255,255,0.28)',
             };
             const stripH = 7;
@@ -1169,10 +1169,10 @@ const VolRegime = {
 
             // Inline mini-legend in top padding (right-aligned)
             const LEGEND = [
-                ['⚡', 'rgba(192,64,64,0.85)',  'SURGE'],
-                ['→', 'rgba(61,184,122,0.85)', 'TREND'],
-                ['↔', 'rgba(192,120,40,0.85)', 'CHOP'],
-                ['↗', 'rgba(0,212,255,0.85)',  'QUIET'],
+                ['▲', 'rgba(248,81,73,0.85)',  'SURGE'],
+                ['→', 'rgba(63,185,80,0.85)', 'TREND'],
+                ['↔', 'rgba(251,143,68,0.85)', 'CHOP'],
+                ['↗', 'rgba(56,139,253,0.85)',  'QUIET'],
                 ['◎', 'rgba(255,255,255,0.4)', 'COIL'],
             ];
             ctx.font = '7.5px monospace';
@@ -1307,14 +1307,14 @@ const VolRegime = {
             const v1 = series[i1], v2 = series[i2];
             const diff   = v2 - v1;
             const isPos  = diff >= 0;
-            const accent = isPos ? '#3db87a' : '#e06060';
+            const accent = isPos ? '#3fb950' : '#f85149';
             const d1 = viewDates[i1] || '', d2 = viewDates[i2] || '';
             const MONTHS_M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
             const fmtD = d => { if (!d) return ''; const [y,mo,dd] = d.split('-').map(Number); return MONTHS_M[mo-1]+' '+dd+', '+y; };
 
             // Band fill
             ctx.save();
-            ctx.fillStyle = isPos ? 'rgba(61,184,122,0.10)' : 'rgba(224,96,96,0.10)';
+            ctx.fillStyle = isPos ? 'rgba(63,185,80,0.10)' : 'rgba(248,81,73,0.10)';
             ctx.fillRect(x1, pad.top, x2 - x1, cH);
 
             // Dashed boundary lines
@@ -1339,13 +1339,13 @@ const VolRegime = {
             cardX = Math.max(pad.left + 2, Math.min(pad.left + cW - cardW - 2, cardX));
             const cardY = pad.top + 8;
 
-            ctx.fillStyle = 'rgba(13,17,28,0.96)';
+            ctx.fillStyle = 'rgba(22,27,34,0.96)';
             ctx.strokeStyle = 'rgba(255,255,255,0.12)';
             ctx.lineWidth = 1;
             ctx.beginPath(); ctx.roundRect(cardX, cardY, cardW, cardH, 4); ctx.fill(); ctx.stroke();
             ctx.font = 'bold 11px monospace'; ctx.fillStyle = accent; ctx.textAlign = 'left';
             ctx.fillText(line1, cardX + 8, cardY + 17);
-            ctx.font = '9px monospace'; ctx.fillStyle = 'rgba(148,163,184,0.9)';
+            ctx.font = '9px monospace'; ctx.fillStyle = 'rgba(139,148,158,0.9)';
             ctx.fillText(line2, cardX + 8, cardY + 33);
             ctx.restore();
         }
@@ -1370,7 +1370,7 @@ const VolRegime = {
             const MONTHS_TT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
             if (hDate) {
                 const [ty, tm, td] = hDate.split('-').map(Number);
-                lines.push({ text: MONTHS_TT[tm-1] + ' ' + td + ', ' + ty, color: 'rgba(0,255,255,0.85)', isDate: true });
+                lines.push({ text: MONTHS_TT[tm-1] + ' ' + td + ', ' + ty, color: 'rgba(56,139,253,0.85)', isDate: true });
             }
 
             for (const k of activeKeys) {
@@ -1387,7 +1387,7 @@ const VolRegime = {
                     const sortedS = [...fullS].filter(v => v != null).sort((a, b) => a - b);
                     const pFn = f => sortedS[Math.max(0, Math.floor(sortedS.length * f) - 1)] || 0;
                     const s25 = pFn(0.25), s75 = pFn(0.75), s90 = pFn(0.90);
-                    const hColorHex = hv >= s90 ? '#c04040' : hv >= s75 ? '#c07828' : hv >= s25 ? '#3db87a' : '#4a80b8';
+                    const hColorHex = hv >= s90 ? '#f85149' : hv >= s75 ? '#fb8f44' : hv >= s25 ? '#3fb950' : '#388bfd';
                     const isPri = k === primaryKey;
 
                     // Highlight dot on line
@@ -1407,18 +1407,18 @@ const VolRegime = {
             if (showTR && trSlice[hIdx] != null) {
                 const tv = trSlice[hIdx];
                 const tl = tv >= 1.2 ? 'TRENDING' : tv >= 1.0 ? 'MIXED' : tv >= 0.8 ? 'CHOPPY' : 'EXTREME CHOP';
-                lines.push({ text: `TR: ${tv.toFixed(3)} · ${tl}`, color: 'rgba(0,212,255,0.85)', isDate: false });
+                lines.push({ text: `TR: ${tv.toFixed(3)} · ${tl}`, color: 'rgba(56,139,253,0.85)', isDate: false });
             }
             if (showVoV && vovSlice[hIdx] != null) {
                 const vv = vovSlice[hIdx];
                 const vl = vv >= 20 ? 'UNSTABLE' : vv >= 12 ? 'SHIFTING' : vv >= 6 ? 'MODERATE' : 'STABLE';
-                lines.push({ text: `VoV: ${vv.toFixed(1)}% · ${vl}`, color: 'rgba(192,120,40,0.85)', isDate: false });
+                lines.push({ text: `VoV: ${vv.toFixed(1)}% · ${vl}`, color: 'rgba(251,143,68,0.85)', isDate: false });
             }
             if (showPrice && priceSlice[hIdx] != null) {
                 lines.push({ text: `${ticker}: $${priceSlice[hIdx].toFixed(2)}`, color: 'rgba(255,255,255,0.80)', isDate: false });
             }
             if (showNgPrice && ngSlice[hIdx] != null) {
-                lines.push({ text: `NG=F: $${ngSlice[hIdx].toFixed(3)}/MMBtu`, color: 'rgba(61,220,130,0.85)', isDate: false });
+                lines.push({ text: `NG=F: $${ngSlice[hIdx].toFixed(3)}/MMBtu`, color: 'rgba(63,185,80,0.85)', isDate: false });
             }
             if (showSignals) {
                 // Reuse already-computed p25/p75/p90 (primary series = 21D by default)
@@ -1453,7 +1453,7 @@ const VolRegime = {
                 let ttY = Math.max(pad.top + 4, primaryHy - ttH / 2);
                 if (ttY + ttH > pad.top + cH) ttY = pad.top + cH - ttH - 4; // prevent going below
 
-                ctx.fillStyle = 'rgba(13,17,28,0.95)';
+                ctx.fillStyle = 'rgba(22,27,34,0.95)';
                 ctx.strokeStyle = 'rgba(255,255,255,0.12)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -1512,7 +1512,7 @@ const VolRegime = {
         const surge    = ts != null && ts >= 1.35;
 
         if (surge && highHV)
-            return { label: '⚡ VOL SURGE',    cls: 'rs-surge',
+            return { label: 'VOL SURGE',       cls: 'rs-surge',
                      tip: 'Near-term vol (5D HV) is accelerating at >1.35× the 63D seasonal baseline. Sustained high-vol move underway — sizing risk is elevated.' };
         if (highHV && trending)
             return { label: '→ TRENDING VOL',  cls: 'rs-trending',
