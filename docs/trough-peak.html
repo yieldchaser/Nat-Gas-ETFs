@@ -1025,6 +1025,33 @@ select.calc-input { cursor: pointer; }
         <div id="table-container"></div>
     </div>
 
+    <!-- ETF DRAWDOWN CHART -->
+    <div class="chart-container">
+        <div class="chart-header">
+            <div class="tp-title-row">
+                <h2 class="tp-title" style="font-size: 1rem;">ETF Drawdown Analysis</h2>
+                <span class="tp-badge">MULTI-TIMEFRAME</span>
+            </div>
+            <div class="chart-controls">
+                <div class="horizon-group">
+                    <button class="horizon-btn dd-horizon-btn" data-horizon="1y">1Y</button>
+                    <button class="horizon-btn dd-horizon-btn" data-horizon="3y">3Y</button>
+                    <button class="horizon-btn dd-horizon-btn" data-horizon="5y">5Y</button>
+                    <button class="horizon-btn dd-horizon-btn" data-horizon="10y">10Y</button>
+                    <button class="horizon-btn dd-horizon-btn active" data-horizon="all">ALL</button>
+                </div>
+            </div>
+        </div>
+        <div class="chart-canvas-wrap">
+            <canvas id="drawdown-canvas"></canvas>
+        </div>
+        <div class="chart-footer">
+            <div style="font-size: 0.7rem; color: #fff; opacity: 0.85;">
+                Tracks maximum decline from running peak for each ETF. Shows how deep and sustained drawdowns can become.
+            </div>
+        </div>
+    </div>
+
     <!-- YEARLY FREQUENCY MATRIX -->
     <div class="matrix-panel">
         <div class="matrix-header">
@@ -1339,6 +1366,7 @@ LTCG (&gt;24 months):  12.5% base + surcharge capped at 15% + 4% cess  →  up t
 
 
 <!-- Custom scripts only - No external charting libraries -->
+<script src="js/drawdown.js"></script>
 <script>
 'use strict';
 
@@ -4857,6 +4885,12 @@ function calcExportCSV() {
                                 if (ngM) VolRegime.render(vrmMetrics, ngM);
                             }
                         }).catch(() => {});
+                        
+                        // Initialize Drawdown Chart
+                        if (typeof DrawdownChart !== 'undefined') {
+                            DrawdownChart.init();
+                            DrawdownChart.loadData(dd);
+                        }
                     }
                 }).catch(() => {});
             }
