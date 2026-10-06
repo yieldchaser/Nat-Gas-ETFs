@@ -87,7 +87,7 @@ function renderMainChart() {
 
     // Y-axis left
     if (leftSeries.length) {
-        ctx.fillStyle = '#94a3b8'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+        ctx.fillStyle = '#8b949e'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
         for (var i = 0; i <= 5; i++) {
             var v = leftR.min + (1 - i / 5) * (leftR.max - leftR.min);
             ctx.fillText(v.toFixed(1) + '%', pad.left - 6, pad.top + (i / 5) * chartH + 3);
@@ -95,7 +95,7 @@ function renderMainChart() {
     }
     // Y-axis right
     if (rightR) {
-        ctx.fillStyle = '#94a3b8'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillStyle = '#8b949e'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
         for (var i = 0; i <= 5; i++) {
             var v = rightR.min + (1 - i / 5) * (rightR.max - rightR.min);
             ctx.fillText('$' + v.toFixed(2), pad.left + chartW + 6, pad.top + (i / 5) * chartH + 3);
@@ -132,7 +132,7 @@ function renderMainChart() {
             ctx.lineTo(x1, ry1); ctx.lineTo(x0, ry0);
             ctx.closePath();
             // Green when implied > realized (market overpricing fear), red when reversed
-            ctx.fillStyle = (nv + nv0) / 2 > (rv + rv0) / 2 ? 'rgba(61,184,122,0.08)' : 'rgba(239,68,68,0.08)';
+            ctx.fillStyle = (nv + nv0) / 2 > (rv + rv0) / 2 ? 'rgba(63,185,80,0.08)' : 'rgba(248,81,73,0.08)';
             ctx.fill();
         }
     }
@@ -155,7 +155,7 @@ function renderMainChart() {
     // Surface / raw research markers on NGVL line
     if (CvolState.activeSeries.indexOf('ngvl') >= 0) {
         var markerMode = CvolState.markerMode || 'surface';
-        var sigMarkerColors = {'SAD':'#f59e0b','CI':'#60a8f8','CVC\u2193':'#ef4444','CVC\u2191':'#3db87a','RDS':'#ec4899'};
+        var sigMarkerColors = {'SAD':'#d29922','CI':'#388bfd','CVC\u2193':'#f85149','CVC\u2191':'#3fb950','RDS':'#a371f7'};
         var markerSets = [];
         if (markerMode === 'surface' || markerMode === 'both') markerSets.push({ raw: false, events: comp.surfaceEvents || [] });
         if (markerMode === 'raw' || markerMode === 'both') markerSets.push({ raw: true, events: comp.events || [] });
@@ -166,7 +166,7 @@ function renderMainChart() {
                 var ngvlVal = visData[li] ? visData[li].ngvl : null;
                 if (ngvlVal == null) return;
                 var mx = getX(li), my = getY(ngvlVal, leftR);
-                var mc = set.raw ? (sigMarkerColors[ev.signal] || '#00e5ff') : surfaceStateColor(ev.state);
+                var mc = set.raw ? (sigMarkerColors[ev.signal] || '#388bfd') : surfaceStateColor(ev.state);
                 ctx.save();
                 ctx.translate(mx, my);
                 if (set.raw) {
@@ -220,7 +220,7 @@ function renderMainChart() {
                 // VRP context
                 var vrpH = comp.vrp ? comp.vrp[r.s + hi] : null;
                 var rvH = comp.realVol ? comp.realVol[r.s + hi] : null;
-                if (vrpH != null) html += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#a78bfa">VRP</span><span class="tooltip-val">'+(vrpH>0?'+':'')+vrpH.toFixed(1)+'</span></div>';
+                if (vrpH != null) html += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#58a6ff">VRP</span><span class="tooltip-val">'+(vrpH>0?'+':'')+vrpH.toFixed(1)+'</span></div>';
                 // Signal event nearby (±2 sessions)
                 var absIdx = r.s + hi;
                 var markerMode = CvolState.markerMode || 'surface';
@@ -232,7 +232,7 @@ function renderMainChart() {
                 var nearbyEvt = nearbySource.filter(function(ev) { return Math.abs(ev.idx - absIdx) <= 2; });
                 if (nearbyEvt.length > 0) {
                     nearbyEvt.forEach(function(ev) {
-                        var sigC = {'SAD':'#f59e0b','CI':'#60a8f8','CVC\u2193':'#ef4444','CVC\u2191':'#3db87a','RDS':'#ec4899'};
+                        var sigC = {'SAD':'#d29922','CI':'#388bfd','CVC\u2193':'#f85149','CVC\u2191':'#3fb950','RDS':'#a371f7'};
                         var eventColor = ev.state ? surfaceStateColor(ev.state) : (sigC[ev.signal] || 'var(--cyan)');
                         html += '<div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.6rem;font-weight:800;color:'+eventColor+'">* '+ev.signal+' - '+ev.direction+'</div>';
                         if (ev.state && ev.evidence && ev.evidence.length) html += '<div style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);">'+ev.evidence.slice(0,2).join(' | ')+'</div>';
@@ -240,7 +240,7 @@ function renderMainChart() {
                         var fwdLabel = '21D'; var fwdVal = ev.fwd21;
                         if (ev.fwd5 != null && ev.fwd21 == null) { fwdLabel = '5D'; fwdVal = ev.fwd5; }
                         if (fwdVal != null) {
-                            html += '<div style="font-size:0.55rem;color:'+(fwdVal>0?'#3db87a':'#ef4444')+'">' + fwdLabel + ': '+(fwdVal>0?'+':'')+fwdVal.toFixed(1)+'%</div>';
+                            html += '<div style="font-size:0.55rem;color:'+(fwdVal>0?'#3fb950':'#f85149')+'">' + fwdLabel + ': '+(fwdVal>0?'+':'')+fwdVal.toFixed(1)+'%</div>';
                         } else {
                             html += '<div style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);">PENDING</div>';
                         }
@@ -278,7 +278,7 @@ function renderSparkline(canvasId, values, color, thresholdY) {
     var getY = function(v) { return padT + (1 - (v - min) / (max - min)) * cH; };
 
     // Y-axis labels (3 ticks)
-    ctx.fillStyle = '#555565'; ctx.font = '8px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillStyle = '#8b949e'; ctx.font = '8px sans-serif'; ctx.textAlign = 'right';
     for (var t = 0; t <= 2; t++) {
         var v = min + (1 - t / 2) * (max - min);
         var y = padT + (t / 2) * cH;
@@ -292,7 +292,7 @@ function renderSparkline(canvasId, values, color, thresholdY) {
         var startIdx = CvolState.data.length - 90;
         var endIdx = CvolState.data.length - 1;
         if (startIdx >= 0) {
-            ctx.fillStyle = '#555565'; ctx.font = '7px sans-serif'; ctx.textAlign = 'left';
+            ctx.fillStyle = '#8b949e'; ctx.font = '7px sans-serif'; ctx.textAlign = 'left';
             var d0 = CvolState.data[startIdx].date.split('-');
             ctx.fillText(MONTHS[parseInt(d0[1]) - 1] + ' ' + d0[2].slice(2), padL, H - 2);
             ctx.textAlign = 'right';
@@ -426,19 +426,19 @@ function renderVarDecomp() {
     }
 
     // Y-axis labels left (var %)
-    ctx.fillStyle = '#94a3b8'; ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillStyle = '#8b949e'; ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
     for (var i = 0; i <= 4; i++) {
         var v = varMin + (1 - i / 4) * (varMax - varMin);
         ctx.fillText(v.toFixed(0) + '%', pad.left - 5, pad.top + (i / 4) * chartH + 3);
     }
     // Y-axis labels right (skew ratio)
-    ctx.textAlign = 'left'; ctx.fillStyle = '#f59e0b';
+    ctx.textAlign = 'left'; ctx.fillStyle = '#d29922';
     for (var i = 0; i <= 4; i++) {
         var v = skMin + (1 - i / 4) * (skMax - skMin);
         ctx.fillText(v.toFixed(2), pad.left + chartW + 5, pad.top + (i / 4) * chartH + 3);
     }
     // Y-axis labels right 2 (price)
-    ctx.textAlign = 'left'; ctx.fillStyle = '#94a3b8';
+    ctx.textAlign = 'left'; ctx.fillStyle = '#8b949e';
     for (var i = 0; i <= 4; i++) {
         var v = prMin + (1 - i / 4) * (prMax - prMin);
         ctx.fillText('$' + v.toFixed(2), pad.left + chartW + 36, pad.top + (i / 4) * chartH + 3);
@@ -452,7 +452,7 @@ function renderVarDecomp() {
             ctx.lineTo(getX(i), getVY(v));
         }
         ctx.lineTo(getX(n - 1), pad.top + chartH); ctx.closePath();
-        ctx.fillStyle = 'rgba(61,184,122,0.08)'; ctx.fill();
+        ctx.fillStyle = 'rgba(63,185,80,0.08)'; ctx.fill();
     }
 
     // DN VAR area fill
@@ -463,7 +463,7 @@ function renderVarDecomp() {
             ctx.lineTo(getX(i), getVY(v));
         }
         ctx.lineTo(getX(n - 1), pad.top + chartH); ctx.closePath();
-        ctx.fillStyle = 'rgba(239,68,68,0.08)'; ctx.fill();
+        ctx.fillStyle = 'rgba(248,81,73,0.08)'; ctx.fill();
     }
 
     // UP VAR line
@@ -473,7 +473,7 @@ function renderVarDecomp() {
             var v = visData[i].upVar; if (v == null) continue;
             if (!started) { ctx.moveTo(getX(i), getVY(v)); started = true; } else ctx.lineTo(getX(i), getVY(v));
         }
-        ctx.strokeStyle = '#3db87a'; ctx.lineWidth = 1.3; ctx.stroke();
+        ctx.strokeStyle = '#3fb950'; ctx.lineWidth = 1.3; ctx.stroke();
     }
 
     // DN VAR line
@@ -483,7 +483,7 @@ function renderVarDecomp() {
             var v = visData[i].dnVar; if (v == null) continue;
             if (!started) { ctx.moveTo(getX(i), getVY(v)); started = true; } else ctx.lineTo(getX(i), getVY(v));
         }
-        ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.3; ctx.stroke();
+        ctx.strokeStyle = '#f85149'; ctx.lineWidth = 1.3; ctx.stroke();
     }
 
     // Skew Ratio overlay
@@ -493,7 +493,7 @@ function renderVarDecomp() {
             var v = visData[i].skewRatio; if (v == null) continue;
             if (!started) { ctx.moveTo(getX(i), getSY(v)); started = true; } else ctx.lineTo(getX(i), getSY(v));
         }
-        ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 1.8; ctx.stroke();
+        ctx.strokeStyle = '#d29922'; ctx.lineWidth = 1.8; ctx.stroke();
     }
 
     // NG Price overlay
@@ -503,7 +503,7 @@ function renderVarDecomp() {
             var v = visData[i].underlying; if (v == null) continue;
             if (!started) { ctx.moveTo(getX(i), getPY(v)); started = true; } else ctx.lineTo(getX(i), getPY(v));
         }
-        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.strokeStyle = '#fb8f44'; ctx.lineWidth = 1.5; ctx.stroke();
     }
 
     // Skew Momentum (5D ROC) overlay
@@ -517,12 +517,12 @@ function renderVarDecomp() {
             if (0 >= smMin && 0 <= smMax) {
                 var zy = getSMY(0);
                 ctx.beginPath(); ctx.moveTo(pad.left, zy); ctx.lineTo(pad.left + chartW, zy);
-                ctx.strokeStyle = 'rgba(129,140,248,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+                ctx.strokeStyle = 'rgba(88,166,255,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
             }
             // Line
             ctx.beginPath(); var started = false;
             for (var i = 0; i < n; i++) { var v = visData[i].skewRoc5; if (v == null) continue; if (!started) { ctx.moveTo(getX(i), getSMY(v)); started = true; } else ctx.lineTo(getX(i), getSMY(v)); }
-            ctx.strokeStyle = '#818cf8'; ctx.lineWidth = 1.3; ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]);
+            ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 1.3; ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]);
         }
     }
 
@@ -537,11 +537,11 @@ function renderVarDecomp() {
             if (0 >= vsMin && 0 <= vsMax) {
                 var zy = getVSY(0);
                 ctx.beginPath(); ctx.moveTo(pad.left, zy); ctx.lineTo(pad.left + chartW, zy);
-                ctx.strokeStyle = 'rgba(45,212,191,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+                ctx.strokeStyle = 'rgba(35,178,178,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
             }
             ctx.beginPath(); var started = false;
             for (var i = 0; i < n; i++) { var v = vsArr[range.s + i]; if (v == null) continue; if (!started) { ctx.moveTo(getX(i), getVSY(v)); started = true; } else ctx.lineTo(getX(i), getVSY(v)); }
-            ctx.strokeStyle = '#2dd4bf'; ctx.lineWidth = 1.3; ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]);
+            ctx.strokeStyle = '#23b2b2'; ctx.lineWidth = 1.3; ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]);
         }
     }
 
@@ -555,7 +555,7 @@ function renderVarDecomp() {
             var getWDY = function(v) { return pad.top + chartH - ((v - wdMin) / (wdMax - wdMin)) * chartH; };
             ctx.beginPath(); var started = false;
             for (var i = 0; i < n; i++) { var v = wdArr[range.s + i]; if (v == null) continue; if (!started) { ctx.moveTo(getX(i), getWDY(v)); started = true; } else ctx.lineTo(getX(i), getWDY(v)); }
-            ctx.strokeStyle = '#fb923c'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
+            ctx.strokeStyle = '#388bfd'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
         }
     }
 
@@ -567,7 +567,7 @@ function renderVarDecomp() {
             var pv = rtPct[range.s + i];
             if (pv == null) continue;
             var x0 = getX(i), x1 = i < n - 1 ? getX(i + 1) : x0 + chartW / n;
-            var hue = pv < 50 ? 210 : pv < 75 ? 45 - (pv - 50) * 0.6 : 0;
+            var hue = pv < 50 ? 142 - pv * 1.88 : pv < 85 ? 48 - (pv - 50) * 0.66 : 25 - (pv - 85) * 1.67;
             var sat = Math.min(100, 40 + pv * 0.6);
             var lum = pv >= 90 ? 55 : pv >= 75 ? 50 : 40;
             var alpha = 0.15 + (pv / 100) * 0.55;
@@ -580,7 +580,7 @@ function renderVarDecomp() {
     if (1.0 >= skMin && 1.0 <= skMax) {
         var refY = getSY(1.0);
         ctx.beginPath(); ctx.moveTo(pad.left, refY); ctx.lineTo(pad.left + chartW, refY);
-        ctx.strokeStyle = 'rgba(245,158,11,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+        ctx.strokeStyle = 'rgba(210,153,34,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
     }
 
     // X-axis
@@ -590,28 +590,28 @@ function renderVarDecomp() {
     ctx.font = '9px sans-serif'; ctx.textAlign = 'left';
     var lx = pad.left + 8;
     if (CvolState.varActiveSeries.indexOf('upVar') >= 0) {
-        ctx.fillStyle = '#3db87a'; ctx.fillText('▬ UP VAR', lx, pad.top + 12); lx += 65;
+        ctx.fillStyle = '#3fb950'; ctx.fillText('▬ UP VAR', lx, pad.top + 12); lx += 65;
     }
     if (CvolState.varActiveSeries.indexOf('dnVar') >= 0) {
-        ctx.fillStyle = '#ef4444'; ctx.fillText('▬ DN VAR', lx, pad.top + 12); lx += 65;
+        ctx.fillStyle = '#f85149'; ctx.fillText('▬ DN VAR', lx, pad.top + 12); lx += 65;
     }
     if (CvolState.varActiveSeries.indexOf('skewRatio') >= 0) {
-        ctx.fillStyle = '#f59e0b'; ctx.fillText('▬ SKEW', lx, pad.top + 12); lx += 55;
+        ctx.fillStyle = '#d29922'; ctx.fillText('▬ SKEW', lx, pad.top + 12); lx += 55;
     }
     if (CvolState.varActiveSeries.indexOf('underlying') >= 0) {
-        ctx.fillStyle = '#94a3b8'; ctx.fillText('▬ PRICE', lx, pad.top + 12); lx += 55;
+        ctx.fillStyle = '#fb8f44'; ctx.fillText('▬ PRICE', lx, pad.top + 12); lx += 55;
     }
     if (CvolState.varActiveSeries.indexOf('skewRoc5') >= 0) {
-        ctx.fillStyle = '#818cf8'; ctx.fillText('╌ SKEW MOM', lx, pad.top + 12); lx += 80;
+        ctx.fillStyle = '#58a6ff'; ctx.fillText('╌ SKEW MOM', lx, pad.top + 12); lx += 80;
     }
     if (CvolState.varActiveSeries.indexOf('varSpread') >= 0) {
-        ctx.fillStyle = '#2dd4bf'; ctx.fillText('╌ VAR SPREAD', lx, pad.top + 12); lx += 85;
+        ctx.fillStyle = '#23b2b2'; ctx.fillText('╌ VAR SPREAD', lx, pad.top + 12); lx += 85;
     }
     if (CvolState.varActiveSeries.indexOf('wingDiv') >= 0) {
-        ctx.fillStyle = '#fb923c'; ctx.fillText('╌ WING DIV', lx, pad.top + 12); lx += 75;
+        ctx.fillStyle = '#388bfd'; ctx.fillText('╌ WING DIV', lx, pad.top + 12); lx += 75;
     }
     if (CvolState.varActiveSeries.indexOf('regimeTension') >= 0) {
-        ctx.fillStyle = '#ef4444'; ctx.fillText('■ TENSION', lx, pad.top + 12); lx += 70;
+        ctx.fillStyle = '#a371f7'; ctx.fillText('■ TENSION', lx, pad.top + 12); lx += 70;
     }
 
     // Hover
@@ -629,25 +629,25 @@ function renderVarDecomp() {
                 var skZ21 = comp.skewRatioZ21 ? comp.skewRatioZ21[gi] : null;
                 var sentiment, sentimentColor;
                 if (skZ21 != null) {
-                    if (skZ21 > 1.5)       { sentiment = 'STRONG UPSIDE PRESSURE';   sentimentColor = '#3db87a'; }
-                    else if (skZ21 > 0.75) { sentiment = 'UPSIDE SKEW BUILDING';     sentimentColor = '#6ddc8b'; }
-                    else if (skZ21 < -1.5) { sentiment = 'STRONG DOWNSIDE PRESSURE'; sentimentColor = '#ef4444'; }
-                    else if (skZ21 < -0.75){ sentiment = 'DOWNSIDE SKEW BUILDING';   sentimentColor = '#f87171'; }
-                    else                   { sentiment = 'NEUTRAL';                   sentimentColor = '#f59e0b'; }
-                } else { sentiment = 'NEUTRAL'; sentimentColor = '#f59e0b'; }
+                    if (skZ21 > 1.5)       { sentiment = 'STRONG UPSIDE PRESSURE';   sentimentColor = '#3fb950'; }
+                    else if (skZ21 > 0.75) { sentiment = 'UPSIDE SKEW BUILDING';     sentimentColor = '#3fb950'; }
+                    else if (skZ21 < -1.5) { sentiment = 'STRONG DOWNSIDE PRESSURE'; sentimentColor = '#f85149'; }
+                    else if (skZ21 < -0.75){ sentiment = 'DOWNSIDE SKEW BUILDING';   sentimentColor = '#f85149'; }
+                    else                   { sentiment = 'NEUTRAL';                   sentimentColor = '#d29922'; }
+                } else { sentiment = 'NEUTRAL'; sentimentColor = '#d29922'; }
 
                 var ttHtml = '<div style="color:var(--cyan);font-weight:800;font-size:0.6rem;letter-spacing:1.5px;margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:3px;">' + fmtDate(row.date) + '</div>';
                 ttHtml += '<div style="color:' + sentimentColor + ';font-weight:800;font-size:0.55rem;margin-bottom:3px;">' + sentiment + '</div>';
                 if (skZ21 != null) ttHtml += '<div style="color:rgba(255,255,255,0.6);font-size:0.5rem;margin-bottom:5px;font-family:\'JetBrains Mono\',monospace;">Z21: ' + (skZ21 >= 0 ? '+' : '') + skZ21.toFixed(2) + '\u03c3 vs 21D rolling avg</div>';
 
                 if (CvolState.varActiveSeries.indexOf('upVar') >= 0)
-                    ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#3db87a">UP VAR</span><span class="tooltip-val">' + fmt(row.upVar) + '%</span></div>';
+                    ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#3fb950">UP VAR</span><span class="tooltip-val">' + fmt(row.upVar) + '%</span></div>';
                 if (CvolState.varActiveSeries.indexOf('dnVar') >= 0)
-                    ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#ef4444">DN VAR</span><span class="tooltip-val">' + fmt(row.dnVar) + '%</span></div>';
+                    ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#f85149">DN VAR</span><span class="tooltip-val">' + fmt(row.dnVar) + '%</span></div>';
                 if (CvolState.varActiveSeries.indexOf('skewRatio') >= 0)
-                    ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#f59e0b">SKEW RATIO</span><span class="tooltip-val">' + fmt(row.skewRatio, 3) + '</span></div>';
+                    ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#d29922">SKEW RATIO</span><span class="tooltip-val">' + fmt(row.skewRatio, 3) + '</span></div>';
                 if (CvolState.varActiveSeries.indexOf('underlying') >= 0)
-                    ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#94a3b8">NG PRICE</span><span class="tooltip-val">$' + fmt(row.underlying, 2) + '</span></div>';
+                    ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#fb8f44">NG PRICE</span><span class="tooltip-val">$' + fmt(row.underlying, 2) + '</span></div>';
 
                 // ── Advanced Diagnostics Section ──
                 var vsVal = comp.varSpread ? comp.varSpread[gi] : null;
@@ -671,33 +671,33 @@ function renderVarDecomp() {
                     ttHtml += '<div style="margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.45rem;letter-spacing:1.5px;color:rgba(255,255,255,0.4);font-weight:700;margin-bottom:3px;">ADVANCED DIAGNOSTICS</div>';
 
                     if (showVs) {
-                        var vsColor = vsVal > 0 ? '#3db87a' : vsVal < 0 ? '#ef4444' : '#94a3b8';
+                        var vsColor = vsVal > 0 ? '#3fb950' : vsVal < 0 ? '#f85149' : '#8b949e';
                         var vsLabel = vsVal > 0 ? 'CALLS RICHER' : vsVal < 0 ? 'PUTS RICHER' : 'BALANCED';
                         var zBadge = vsZ != null ? ' <span style="color:rgba(255,255,255,0.5);font-size:0.45rem;">Z:' + (vsZ >= 0 ? '+' : '') + vsZ.toFixed(1) + '</span>' : '';
-                        ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#2dd4bf">VAR SPREAD</span><span class="tooltip-val" style="color:' + vsColor + '">' + (vsVal >= 0 ? '+' : '') + fmt(vsVal) + '%' + zBadge + '</span></div>';
+                        ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#23b2b2">VAR SPREAD</span><span class="tooltip-val" style="color:' + vsColor + '">' + (vsVal >= 0 ? '+' : '') + fmt(vsVal) + '%' + zBadge + '</span></div>';
                     }
                     if (showSa) {
                         var saArrow = saVal > 0.005 ? ' \u2191' : saVal < -0.005 ? ' \u2193' : ' \u2194';
-                        var saColor = saVal > 0.005 ? '#3db87a' : saVal < -0.005 ? '#ef4444' : '#94a3b8';
-                        ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#a78bfa">SKEW ACCEL</span><span class="tooltip-val" style="color:' + saColor + '">' + (saVal >= 0 ? '+' : '') + (saVal * 1000).toFixed(1) + 'bp' + saArrow + '</span></div>';
+                        var saColor = saVal > 0.005 ? '#3fb950' : saVal < -0.005 ? '#f85149' : '#8b949e';
+                        ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#58a6ff">SKEW ACCEL</span><span class="tooltip-val" style="color:' + saColor + '">' + (saVal >= 0 ? '+' : '') + (saVal * 1000).toFixed(1) + 'bp' + saArrow + '</span></div>';
                     }
                     if (showWd) {
-                        var wdColor = wdVal >= 2.0 ? '#fb923c' : wdVal >= 1.0 ? '#fbbf24' : '#94a3b8';
+                        var wdColor = wdVal >= 2.0 ? '#fb8f44' : wdVal >= 1.0 ? '#d29922' : '#8b949e';
                         var wdLabel = wdVal >= 2.0 ? 'HIGH' : wdVal >= 1.0 ? 'MODERATE' : 'LOW';
-                        ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#fb923c">WING DIV</span><span class="tooltip-val" style="color:' + wdColor + '">' + fmt(wdVal, 2) + '\u03c3 \u00b7 ' + wdLabel + '</span></div>';
+                        ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#388bfd">WING DIV</span><span class="tooltip-val" style="color:' + wdColor + '">' + fmt(wdVal, 2) + '\u03c3 \u00b7 ' + wdLabel + '</span></div>';
                     }
                     if (showRt) {
-                        var rtColor = rtPct >= 90 ? '#ef4444' : rtPct >= 75 ? '#f59e0b' : rtPct >= 50 ? '#fbbf24' : '#60a8f8';
+                        var rtColor = rtPct >= 90 ? '#f85149' : rtPct >= 75 ? '#d29922' : rtPct >= 50 ? '#d29922' : '#388bfd';
                         var rtLabel = rtPct >= 90 ? 'CRITICAL' : rtPct >= 75 ? 'ELEVATED' : rtPct >= 50 ? 'MODERATE' : 'LOW';
-                        ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#fbbf24">TENSION</span><span class="tooltip-val" style="color:' + rtColor + '">' + fmt(rtPct, 0) + 'th \u00b7 ' + rtLabel + '</span></div>';
+                        ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:#a371f7">TENSION</span><span class="tooltip-val" style="color:' + rtColor + '">' + fmt(rtPct, 0) + 'th \u00b7 ' + rtLabel + '</span></div>';
                     }
                     if (showPs) {
-                        var syncColor = Math.abs(psCorr) < 0.3 ? '#f59e0b' : '#3db87a';
+                        var syncColor = Math.abs(psCorr) < 0.3 ? '#d29922' : '#3fb950';
                         var syncLabel = Math.abs(psCorr) < 0.3 ? 'DISLOCATED \u26a0' : 'IN SYNC \u2713';
                         ttHtml += '<div class="tooltip-row"><span class="tooltip-lbl" style="color:rgba(255,255,255,0.5)">PRICE-SKEW</span><span class="tooltip-val" style="color:' + syncColor + '">' + syncLabel + ' (r=' + psCorr.toFixed(2) + ')</span></div>';
                     }
                     if (showVrp) {
-                        ttHtml += '<div style="margin-top:3px;padding:2px 4px;border-radius:2px;background:rgba(236,72,153,0.1);border:1px solid rgba(236,72,153,0.2);font-size:0.48rem;font-weight:800;color:#ec4899;letter-spacing:1px;text-align:center;">VRP-SKEW CROSS \u2605</div>';
+                        ttHtml += '<div style="margin-top:3px;padding:2px 4px;border-radius:2px;background:rgba(163,113,247,0.15);border:1px solid rgba(163,113,247,0.2);font-size:0.48rem;font-weight:800;color:#a371f7;letter-spacing:1px;text-align:center;">VRP-SKEW CROSS \u2605</div>';
                     }
                 }
 
@@ -770,7 +770,7 @@ function renderModalChart(compKey) {
         ctx.fillText(v.toFixed(v >= 10 ? 0 : 2), pad.left - 5, pad.top + (i / 5) * cH + 3);
     }
     // Y labels right (NG price)
-    ctx.fillStyle = '#94a3b8'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillStyle = '#8b949e'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
     for (var i = 0; i <= 5; i++) {
         var v = pMin + (1 - i / 5) * (pMax - pMin);
         ctx.fillText('$' + v.toFixed(2), pad.left + cW + 5, pad.top + (i / 5) * cH + 3);
@@ -791,7 +791,7 @@ function renderModalChart(compKey) {
         if (underlying[i] == null) continue;
         if (!started) { ctx.moveTo(getX(i), getPY(underlying[i])); started = true; } else ctx.lineTo(getX(i), getPY(underlying[i]));
     }
-    ctx.strokeStyle = 'rgba(148,163,184,0.3)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = 'rgba(139,148,158,0.3)'; ctx.lineWidth = 1; ctx.stroke();
 
     // Signal value line
     ctx.beginPath(); started = false;
@@ -814,7 +814,7 @@ function renderModalChart(compKey) {
         var isDown = ev.direction.indexOf('TOP')>=0||ev.direction.indexOf('DOWNSIDE')>=0;
         var color = meta.color;
         if (r != null) {
-            color = ((isDown && r < 0) || (!isDown && r > 0)) ? '#3db87a' : '#ef4444';
+            color = ((isDown && r < 0) || (!isDown && r > 0)) ? '#3fb950' : '#f85149';
         } else {
             color = 'rgba(255, 255, 255, 0.85)';
         }
@@ -841,10 +841,10 @@ function renderModalChart(compKey) {
         
         var v = values[localIdx], p = underlying[localIdx];
         if (v != null) { ctx.beginPath(); ctx.arc(hx, getVY(v), 5, 0, Math.PI*2); ctx.fillStyle=meta.color; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); }
-        if (p != null) { ctx.beginPath(); ctx.arc(hx, getPY(p), 4, 0, Math.PI*2); ctx.fillStyle='#94a3b8'; ctx.fill(); ctx.lineWidth=1; ctx.strokeStyle='#fff'; ctx.stroke(); }
+        if (p != null) { ctx.beginPath(); ctx.arc(hx, getPY(p), 4, 0, Math.PI*2); ctx.fillStyle='#fb8f44'; ctx.fill(); ctx.lineWidth=1; ctx.strokeStyle='#fff'; ctx.stroke(); }
 
         var html = '<div style="font-weight:800;margin-bottom:6px;border-bottom:1px solid var(--border-primary);padding-bottom:4px;color:rgba(255, 255, 255, 0.85);">'+fmtDate(dates[localIdx])+'</div>';
-        if (p != null) html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;"><span style="color:#94a3b8;">NG Price</span><span style="font-weight:700;">$'+p.toFixed(2)+'</span></div>';
+        if (p != null) html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;"><span style="color:#fb8f44;">NG Price</span><span style="font-weight:700;">$'+p.toFixed(2)+'</span></div>';
         if (v != null) html += '<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:6px;"><span style="color:'+meta.color+';">'+meta.label.split('—')[0].trim()+'</span><span style="font-weight:700;color:'+meta.color+';">'+v.toFixed(3)+'</span></div>';
         if (event) {
             html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border-primary);">';
@@ -886,54 +886,54 @@ function renderInflectionRadar(range) {
     var cells = '';
 
     // 1) Skew Regime
-    var skLabel = '--', skColor = '#94a3b8';
+    var skLabel = '--', skColor = '#8b949e';
     if (skZ != null) {
-        if (skZ > 1.5)       { skLabel = 'STRONG \u2191'; skColor = '#3db87a'; }
-        else if (skZ > 0.75) { skLabel = 'BUILDING \u2191'; skColor = '#6ddc8b'; }
-        else if (skZ < -1.5) { skLabel = 'STRONG \u2193'; skColor = '#ef4444'; }
-        else if (skZ < -0.75){ skLabel = 'BUILDING \u2193'; skColor = '#f87171'; }
-        else                 { skLabel = 'NEUTRAL'; skColor = '#f59e0b'; }
+        if (skZ > 1.5)       { skLabel = 'STRONG \u2191'; skColor = '#3fb950'; }
+        else if (skZ > 0.75) { skLabel = 'BUILDING \u2191'; skColor = '#3fb950'; }
+        else if (skZ < -1.5) { skLabel = 'STRONG \u2193'; skColor = '#f85149'; }
+        else if (skZ < -0.75){ skLabel = 'BUILDING \u2193'; skColor = '#f85149'; }
+        else                 { skLabel = 'NEUTRAL'; skColor = '#d29922'; }
     }
     cells += cell('SKEW REGIME', skLabel, skColor, 'rgba(255,255,255,0.03)', 'Directional intensity of the ATM Skew ratio vs its 21D average');
 
     // 2) Wing Bias
-    var wbLabel = '--', wbColor = '#94a3b8';
+    var wbLabel = '--', wbColor = '#8b949e';
     if (vs != null && vsZ != null) {
-        if (vsZ > 1.0)       { wbLabel = 'CALLS RICH'; wbColor = '#3db87a'; }
-        else if (vsZ > 0.5) { wbLabel = 'CALL LEAN'; wbColor = '#6ddc8b'; }
-        else if (vsZ < -1.0){ wbLabel = 'PUTS RICH'; wbColor = '#ef4444'; }
-        else if (vsZ < -0.5){ wbLabel = 'PUT LEAN'; wbColor = '#f87171'; }
-        else                { wbLabel = 'BALANCED'; wbColor = '#f59e0b'; }
+        if (vsZ > 1.0)       { wbLabel = 'CALLS RICH'; wbColor = '#3fb950'; }
+        else if (vsZ > 0.5) { wbLabel = 'CALL LEAN'; wbColor = '#3fb950'; }
+        else if (vsZ < -1.0){ wbLabel = 'PUTS RICH'; wbColor = '#f85149'; }
+        else if (vsZ < -0.5){ wbLabel = 'PUT LEAN'; wbColor = '#f85149'; }
+        else                { wbLabel = 'BALANCED'; wbColor = '#d29922'; }
     }
     cells += cell('WING BIAS', wbLabel, wbColor, 'rgba(255,255,255,0.02)', 'Net variance spread indicating whether Calls or Puts command a premium in the tails');
 
     // 3) Momentum (Skew Acceleration)
-    var moLabel = '--', moColor = '#94a3b8';
+    var moLabel = '--', moColor = '#8b949e';
     if (sa != null) {
-        if (sa > 0.01)       { moLabel = 'ACCEL \u2191'; moColor = '#3db87a'; }
-        else if (sa > 0.003) { moLabel = 'BUILDING \u2191'; moColor = '#6ddc8b'; }
-        else if (sa < -0.01) { moLabel = 'ACCEL \u2193'; moColor = '#ef4444'; }
-        else if (sa < -0.003){ moLabel = 'BUILDING \u2193'; moColor = '#f87171'; }
-        else                 { moLabel = 'FLAT'; moColor = '#94a3b8'; }
+        if (sa > 0.01)       { moLabel = 'ACCEL \u2191'; moColor = '#3fb950'; }
+        else if (sa > 0.003) { moLabel = 'BUILDING \u2191'; moColor = '#3fb950'; }
+        else if (sa < -0.01) { moLabel = 'ACCEL \u2193'; moColor = '#f85149'; }
+        else if (sa < -0.003){ moLabel = 'BUILDING \u2193'; moColor = '#f85149'; }
+        else                 { moLabel = 'FLAT'; moColor = '#8b949e'; }
     }
     cells += cell('MOMENTUM', moLabel, moColor, 'rgba(255,255,255,0.03)', 'Acceleration (2nd derivative) of the Skew trend to catch early inflections');
 
     // 4) Tension
-    var tnLabel = '--', tnColor = '#94a3b8', tnBg = 'rgba(255,255,255,0.02)';
+    var tnLabel = '--', tnColor = '#8b949e', tnBg = 'rgba(255,255,255,0.02)';
     if (rtP != null) {
-        if (rtP >= 90)      { tnLabel = 'CRITICAL'; tnColor = '#ef4444'; tnBg = 'rgba(239,68,68,0.08)'; }
-        else if (rtP >= 75) { tnLabel = 'ELEVATED'; tnColor = '#f59e0b'; tnBg = 'rgba(245,158,11,0.06)'; }
-        else if (rtP >= 50) { tnLabel = 'MODERATE'; tnColor = '#fbbf24'; tnBg = 'rgba(255,255,255,0.02)'; }
-        else                { tnLabel = 'LOW'; tnColor = '#60a8f8'; }
+        if (rtP >= 90)      { tnLabel = 'CRITICAL'; tnColor = '#f85149'; tnBg = 'rgba(248,81,73,0.08)'; }
+        else if (rtP >= 75) { tnLabel = 'ELEVATED'; tnColor = '#d29922'; tnBg = 'rgba(210,153,34,0.06)'; }
+        else if (rtP >= 50) { tnLabel = 'MODERATE'; tnColor = '#d29922'; tnBg = 'rgba(255,255,255,0.02)'; }
+        else                { tnLabel = 'LOW'; tnColor = '#388bfd'; }
     }
     cells += cell('TENSION', tnLabel, tnColor, tnBg, 'Composite measure of volatility structure stress (Spread \u00d7 Convexity \u00d7 Skew Accel)');
 
     // 5) Price-Skew Sync
-    var psLabel = '--', psColor = '#94a3b8';
+    var psLabel = '--', psColor = '#8b949e';
     if (psc != null) {
-        if (Math.abs(psc) < 0.2)     { psLabel = 'DISLOCATED'; psColor = '#f59e0b'; }
-        else if (Math.abs(psc) < 0.4){ psLabel = 'DECOUPLING'; psColor = '#fbbf24'; }
-        else                         { psLabel = 'IN SYNC'; psColor = '#3db87a'; }
+        if (Math.abs(psc) < 0.2)     { psLabel = 'DISLOCATED'; psColor = '#d29922'; }
+        else if (Math.abs(psc) < 0.4){ psLabel = 'DECOUPLING'; psColor = '#d29922'; }
+        else                         { psLabel = 'IN SYNC'; psColor = '#3fb950'; }
     }
     cells += cell('PRICE-SKEW', psLabel, psColor, 'rgba(255,255,255,0.02)', '10D rolling correlation between price and skew. Decoupling signals structural shifts');
 

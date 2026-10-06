@@ -134,14 +134,14 @@ function fullPercentile(arr, value) {
 // ── Composite Signal Computations ─────────────────────────────
 // Surface-state model: options-market read first, directional calls only if history supports them.
 const SURFACE_STATES = {
-    CALM_COMPRESSION: { label: 'CALM COMPRESSION', color: '#60a8f8', bias: 'NONE', volBias: 'EXPANSION RISK', action: 'Watch for expansion', horizon: '5-21D' },
-    UPSIDE_TAIL_BID: { label: 'UPSIDE TAIL BID', color: '#3db87a', bias: 'UPSIDE', volBias: 'EXPANSION RISK', action: 'Upside risk bid', horizon: '2-10D' },
-    DOWNSIDE_TAIL_BID: { label: 'DOWNSIDE TAIL BID', color: '#ef4444', bias: 'DOWNSIDE', volBias: 'EXPANSION RISK', action: 'Downside risk bid', horizon: '2-10D' },
-    TWO_SIDED_STRESS: { label: 'TWO-SIDED STRESS', color: '#f59e0b', bias: 'TWO_WAY', volBias: 'RANGE EXPANSION', action: 'Respect two-way risk', horizon: '2-21D' },
-    PANIC_PREMIUM: { label: 'PANIC PREMIUM', color: '#c04040', bias: 'NONE', volBias: 'RICH IMPLIED', action: 'Risk already expensive', horizon: '5-21D' },
-    VOL_UNDERPRICED: { label: 'VOL UNDERPRICED', color: '#a78bfa', bias: 'NONE', volBias: 'CHEAP IMPLIED', action: 'Realized outruns implied', horizon: '5-21D' },
-    NORMALIZATION: { label: 'NORMALIZATION', color: '#94a3b8', bias: 'NONE', volBias: 'COOLING', action: 'Stress cooling', horizon: '5-21D' },
-    NO_EDGE: { label: 'NO EDGE', color: '#6b7280', bias: 'NONE', volBias: 'NEUTRAL', action: 'Stand down', horizon: 'WAIT' },
+    CALM_COMPRESSION: { label: 'CALM COMPRESSION', color: '#388bfd', bias: 'NONE', volBias: 'EXPANSION RISK', action: 'Watch for expansion', horizon: '5-21D' },
+    UPSIDE_TAIL_BID: { label: 'UPSIDE TAIL BID', color: '#3fb950', bias: 'UPSIDE', volBias: 'EXPANSION RISK', action: 'Upside risk bid', horizon: '2-10D' },
+    DOWNSIDE_TAIL_BID: { label: 'DOWNSIDE TAIL BID', color: '#f85149', bias: 'DOWNSIDE', volBias: 'EXPANSION RISK', action: 'Downside risk bid', horizon: '2-10D' },
+    TWO_SIDED_STRESS: { label: 'TWO-SIDED STRESS', color: '#d29922', bias: 'TWO_WAY', volBias: 'RANGE EXPANSION', action: 'Respect two-way risk', horizon: '2-21D' },
+    PANIC_PREMIUM: { label: 'PANIC PREMIUM', color: '#f85149', bias: 'NONE', volBias: 'RICH IMPLIED', action: 'Risk already expensive', horizon: '5-21D' },
+    VOL_UNDERPRICED: { label: 'VOL UNDERPRICED', color: '#58a6ff', bias: 'NONE', volBias: 'CHEAP IMPLIED', action: 'Realized outruns implied', horizon: '5-21D' },
+    NORMALIZATION: { label: 'NORMALIZATION', color: '#8b949e', bias: 'NONE', volBias: 'COOLING', action: 'Stress cooling', horizon: '5-21D' },
+    NO_EDGE: { label: 'NO EDGE', color: '#8b949e', bias: 'NONE', volBias: 'NEUTRAL', action: 'Stand down', horizon: 'WAIT' },
 };
 
 function surfaceMeta(state) {
@@ -731,11 +731,11 @@ function getSeason(dateStr) {
 
 // ── Regime Classification ─────────────────────────────────────
 function ngvlRegime(pct) {
-    if (pct == null) return { label: '--', cls: 'cvol-reg-unknown', color: '#666' };
-    if (pct >= 90) return { label: 'EXTREME', cls: 'cvol-reg-extreme', color: '#c04040' };
-    if (pct >= 75) return { label: 'ELEVATED', cls: 'cvol-reg-elevated', color: '#c07828' };
-    if (pct >= 25) return { label: 'NORMAL', cls: 'cvol-reg-normal', color: '#3db87a' };
-    return { label: 'LOW', cls: 'cvol-reg-low', color: '#4a80b8' };
+    if (pct == null) return { label: '--', cls: 'cvol-reg-unknown', color: '#8b949e' };
+    if (pct >= 90) return { label: 'EXTREME', cls: 'cvol-reg-extreme', color: '#f85149' };
+    if (pct >= 75) return { label: 'ELEVATED', cls: 'cvol-reg-elevated', color: '#fb8f44' };
+    if (pct >= 25) return { label: 'NORMAL', cls: 'cvol-reg-normal', color: '#3fb950' };
+    return { label: 'LOW', cls: 'cvol-reg-low', color: '#388bfd' };
 }
 
 // ── Format Helpers ────────────────────────────────────────────
@@ -744,10 +744,10 @@ function fmtPct(n) { return n != null && isFinite(n) ? n.toFixed(0) + 'th' : '�
 function fmtSign(n, d = 1) { return n != null && isFinite(n) ? (n >= 0 ? '+' : '') + n.toFixed(d) + '%' : '—'; }
 
 const SEASON_CFG = {
-    winter: { emoji: '❄', color: '#60a8f8' },
-    spring: { emoji: '✿', color: '#6ddc8b' },
-    summer: { emoji: '☀', color: '#f5c542' },
-    fall:   { emoji: '◈', color: '#f5a742' },
+    winter: { emoji: (window.Icons || {}).snow   || '', color: '#388bfd' },
+    spring: { emoji: (window.Icons || {}).sprout || '', color: '#3fb950' },
+    summer: { emoji: (window.Icons || {}).sun    || '', color: '#d29922' },
+    fall:   { emoji: (window.Icons || {}).leaf   || '', color: '#fb8f44' },
 };
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -758,26 +758,26 @@ function fmtDate(d) {
 
 // ── Series Config ─────────────────────────────────────────────
 const SERIES_CFG = {
-    ngvl:       { label: 'NGVL',       color: '#00e5ff', axis: 'left',  unit: '%',   key: 'ngvl' },
-    atm:        { label: 'ATM',        color: '#8b5cf6', axis: 'left',  unit: '%',   key: 'atm' },
-    upVar:      { label: 'UP VAR',     color: '#3db87a', axis: 'left',  unit: '%',   key: 'upVar' },
-    dnVar:      { label: 'DOWN VAR',   color: '#ef4444', axis: 'left',  unit: '%',   key: 'dnVar' },
-    realVol:    { label: 'REALIZED',   color: '#a78bfa', axis: 'left',  unit: '%',   key: 'realVol', dashed: true },
-    skewRatio:  { label: 'SKEW RATIO', color: '#f59e0b', axis: 'right2',unit: 'x',   key: 'skewRatio' },
-    convexity:  { label: 'CONVEXITY',  color: '#ec4899', axis: 'right2',unit: 'x',   key: 'convexity' },
-    underlying: { label: 'NG PRICE',   color: '#94a3b8', axis: 'right', unit: '$',   key: 'underlying' },
-    skew:       { label: 'SKEW (pts)', color: '#a78bfa', axis: 'left',  unit: 'pts', key: 'skew' },
+    ngvl:       { label: 'NGVL',       color: '#388bfd', axis: 'left',  unit: '%',   key: 'ngvl' },
+    atm:        { label: 'ATM',        color: '#a371f7', axis: 'left',  unit: '%',   key: 'atm' },
+    upVar:      { label: 'UP VAR',     color: '#3fb950', axis: 'left',  unit: '%',   key: 'upVar' },
+    dnVar:      { label: 'DOWN VAR',   color: '#f85149', axis: 'left',  unit: '%',   key: 'dnVar' },
+    realVol:    { label: 'REALIZED',   color: '#58a6ff', axis: 'left',  unit: '%',   key: 'realVol', dashed: true },
+    skewRatio:  { label: 'SKEW RATIO', color: '#d29922', axis: 'right2',unit: 'x',   key: 'skewRatio' },
+    convexity:  { label: 'CONVEXITY',  color: '#23b2b2', axis: 'right2',unit: 'x',   key: 'convexity' },
+    underlying: { label: 'NG PRICE',   color: '#fb8f44', axis: 'right', unit: '$',   key: 'underlying' },
+    skew:       { label: 'SKEW (pts)', color: '#58a6ff', axis: 'left',  unit: 'pts', key: 'skew' },
 };
 
 const VAR_SERIES_CFG = {
-    upVar:     { label: 'UP VAR',     color: '#3db87a', key: 'upVar',  desc: 'Bullish Demand Check: Measures the premium paid for upside protection (OTM calls). Rising green area signals aggressive institutional buying often seen before explosive short-gamma breakouts.' },
-    dnVar:     { label: 'DN VAR',     color: '#ef4444', key: 'dnVar',  desc: 'Bearish Fear Check: Tracks the cost of downside tail-risk insurance. When the red area expands, the market is bracing for a violent gap-down or capitulation event.' },
-    skewRatio: { label: 'SKEW RATIO', color: '#f59e0b', key: 'skewRatio', desc: 'Directional Pressure Gauge: Up variance divided by down variance. >1.0 means upside variance is richer; <1.0 means downside variance is richer.' },
-    underlying:{ label: 'NG PRICE',   color: '#94a3b8', key: 'underlying', desc: 'Price Correlation Context: Overlays the absolute front-month Natural Gas settlement price. Vital for identifying if directional volatility spikes are leading or lagging absolute price pivots.' },
-    skewRoc5:  { label: 'SKEW MOM',   color: '#818cf8', key: 'skewRoc5', desc: 'Skew Momentum (5D ROC): Rate of change in skew ratio over 5 sessions. Positive = skew accelerating bullish. Negative = skew accelerating bearish. Sharp moves precede directional breakouts.' },
-    varSpread: { label: 'VAR SPREAD', color: '#2dd4bf', key: 'varSpread', desc: 'Net Directional Imbalance: UpVar minus DnVar. Positive = call-side richer (bullish demand), negative = put-side richer (downside hedging). The Z-score filters seasonal noise to isolate genuine conviction shifts.' },
-    wingDiv:   { label: 'WING DIV',   color: '#fb923c', key: 'wingDiv', desc: 'Wing Divergence Index: |UpVarZ - DnVarZ|. When variance wings diverge, the market is picking a side. High values signal directional conviction; low values signal two-way uncertainty or complacency.' },
-    regimeTension: { label: 'TENSION', color: '#fbbf24', key: 'regimeTension', desc: 'Regime Tension Score: ConvexityZ × |VarSpreadZ| × SkewAccel. Composite pressure gauge — elevated tension precedes explosive directional moves or vol expansions. Think of it as the spring being compressed.' },
+    upVar:     { label: 'UP VAR',     color: '#3fb950', key: 'upVar',  desc: 'Bullish Demand Check: Measures the premium paid for upside protection (OTM calls). Rising green area signals aggressive institutional buying often seen before explosive short-gamma breakouts.' },
+    dnVar:     { label: 'DN VAR',     color: '#f85149', key: 'dnVar',  desc: 'Bearish Fear Check: Tracks the cost of downside tail-risk insurance. When the red area expands, the market is bracing for a violent gap-down or capitulation event.' },
+    skewRatio: { label: 'SKEW RATIO', color: '#d29922', key: 'skewRatio', desc: 'Directional Pressure Gauge: Up variance divided by down variance. >1.0 means upside variance is richer; <1.0 means downside variance is richer.' },
+    underlying:{ label: 'NG PRICE',   color: '#fb8f44', key: 'underlying', desc: 'Price Correlation Context: Overlays the absolute front-month Natural Gas settlement price. Vital for identifying if directional volatility spikes are leading or lagging absolute price pivots.' },
+    skewRoc5:  { label: 'SKEW MOM',   color: '#58a6ff', key: 'skewRoc5', desc: 'Skew Momentum (5D ROC): Rate of change in skew ratio over 5 sessions. Positive = skew accelerating bullish. Negative = skew accelerating bearish. Sharp moves precede directional breakouts.' },
+    varSpread: { label: 'VAR SPREAD', color: '#23b2b2', key: 'varSpread', desc: 'Net Directional Imbalance: UpVar minus DnVar. Positive = call-side richer (bullish demand), negative = put-side richer (downside hedging). The Z-score filters seasonal noise to isolate genuine conviction shifts.' },
+    wingDiv:   { label: 'WING DIV',   color: '#388bfd', key: 'wingDiv', desc: 'Wing Divergence Index: |UpVarZ - DnVarZ|. When variance wings diverge, the market is picking a side. High values signal directional conviction; low values signal two-way uncertainty or complacency.' },
+    regimeTension: { label: 'TENSION', color: '#a371f7', key: 'regimeTension', desc: 'Regime Tension Score: ConvexityZ × |VarSpreadZ| × SkewAccel. Composite pressure gauge — elevated tension precedes explosive directional moves or vol expansions. Think of it as the spring being compressed.' },
 };
 
 // ── X-Axis engine (reused from flows.html pattern) ────────────
@@ -821,7 +821,7 @@ function drawXAxis(ctx, dates, getX, chartW, yBase, pad) {
         }
     }
     ticks = [...new Set(ticks)].sort((a, b) => a - b);
-    ctx.fillStyle = '#94a3b8'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#8b949e'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
     let lastLX = -1;
     ticks.forEach(idx => {
         if (!dates[idx]) return;
@@ -849,11 +849,11 @@ function toRgba(hex, a) {
 
 // ── Composite Meta (for expanded cards) ───────────────────────
 var COMP_META = {
-    sad:     { label: 'SAD - Skew-ATM Divergence', color: '#f59e0b', desc: 'Research input: skew ratio diverging from the ATM volatility baseline. It describes surface pressure; it is not a standalone directional signal.',     threshold: null, thresholdType: 'z', thresholdVal: 1.5 },
-    ci:      { label: 'CI - Complacency Index',     color: '#60a8f8', desc: 'Research input: inverse of the 1-year ATM volatility percentile. High values mean fragile calm and possible expansion risk, not automatic direction.',       threshold: 82, thresholdType: 'raw', thresholdVal: 82 },
-    cvcDown: { label: 'CVC Down - Convexity/Down Var', color: '#ef4444', desc: 'Research input: convexity aligned with downside variance. It says downside tail protection is bid; historical edge must be checked before treating it as directional.',       threshold: 1.2, thresholdType: 'raw', thresholdVal: 1.2 },
-    cvcUp:   { label: 'CVC Up - Convexity/Up Var',   color: '#3db87a', desc: 'Research input: convexity aligned with upside variance. It says upside tail exposure is bid; historical edge must be checked before treating it as directional.',     threshold: 1.2, thresholdType: 'raw', thresholdVal: 1.2 },
-    rds:     { label: 'RDS - Regime Divergence Score', color: '#ec4899', desc: 'Research input: fast skew movement, convexity, and low ATM percentile. It flags surface instability and expansion risk, not guaranteed directional edge.',   threshold: null, thresholdType: 'z', thresholdVal: 1.8 },
+    sad:     { label: 'SAD - Skew-ATM Divergence', color: '#d29922', desc: 'Research input: skew ratio diverging from the ATM volatility baseline. It describes surface pressure; it is not a standalone directional signal.',     threshold: null, thresholdType: 'z', thresholdVal: 1.5 },
+    ci:      { label: 'CI - Complacency Index',     color: '#388bfd', desc: 'Research input: inverse of the 1-year ATM volatility percentile. High values mean fragile calm and possible expansion risk, not automatic direction.',       threshold: 82, thresholdType: 'raw', thresholdVal: 82 },
+    cvcDown: { label: 'CVC Down - Convexity/Down Var', color: '#f85149', desc: 'Research input: convexity aligned with downside variance. It says downside tail protection is bid; historical edge must be checked before treating it as directional.',       threshold: 1.2, thresholdType: 'raw', thresholdVal: 1.2 },
+    cvcUp:   { label: 'CVC Up - Convexity/Up Var',   color: '#3fb950', desc: 'Research input: convexity aligned with upside variance. It says upside tail exposure is bid; historical edge must be checked before treating it as directional.',     threshold: 1.2, thresholdType: 'raw', thresholdVal: 1.2 },
+    rds:     { label: 'RDS - Regime Divergence Score', color: '#a371f7', desc: 'Research input: fast skew movement, convexity, and low ATM percentile. It flags surface instability and expansion risk, not guaranteed directional edge.',   threshold: null, thresholdType: 'z', thresholdVal: 1.8 },
 };
 
 // ── Correlation Matrix ────────────────────────────────────────

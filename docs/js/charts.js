@@ -6,7 +6,7 @@
 const Charts = {
 
     // ---- SPARKLINE (Price) ----
-    drawSparkline(canvas, data, color = '#4a80b8', fillAlpha = 0.1) {
+    drawSparkline(canvas, data, color = '#388bfd', fillAlpha = 0.1) {
         if (!data || data.length < 2) return;
         const ctx = canvas.getContext('2d');
         const w = canvas.width = canvas.parentElement.clientWidth;
@@ -80,14 +80,14 @@ const Charts = {
             const x = i * (w / volumes.length);
             const barH = (volumes[i] / max) * h;
 
-            // Color by relative magnitude
+            // Intensity ramp (design-system §1.6): calm -> crisis
             const ratio = volumes[i] / max;
             let color;
-            if (ratio > 0.9) color = '#8855bb';
-            else if (ratio > 0.75) color = '#c04040';
-            else if (ratio > 0.5) color = '#c07828';
-            else if (ratio > 0.3) color = '#385e88';
-            else color = '#181828';
+            if (ratio > 0.9) color = '#f85149';
+            else if (ratio > 0.75) color = '#fb8f44';
+            else if (ratio > 0.5) color = '#d29922';
+            else if (ratio > 0.3) color = '#23b2b2';
+            else color = '#21262d';
 
             ctx.fillStyle = color;
             ctx.fillRect(x, h - barH, barW, barH);
@@ -100,10 +100,14 @@ const Charts = {
         container.classList.toggle('peaks-mode', peaksMode);
         if (!dailyScores || !dailyScores.length) return 0;
 
+        // Intensity ramp: calm -> elevated -> stressed -> crisis (design-system §1.4 / §1.6)
         const colors = [
-            '#14141e', '#1a1a28', '#202838', '#283848',
-            '#385060', '#4a6878', '#d4a830',
-            '#c07828', '#c04040', '#a03838', '#8855bb'
+            'rgba(13,74,26,0.50)',   'rgba(63,185,80,0.16)',
+            'rgba(63,185,80,0.24)',  'rgba(63,185,80,0.32)',
+            'rgba(210,153,34,0.22)', 'rgba(210,153,34,0.30)',
+            'rgba(210,153,34,0.36)', 'rgba(251,143,68,0.30)',
+            'rgba(251,143,68,0.40)', 'rgba(248,81,73,0.38)',
+            'rgba(248,81,73,0.55)'
         ];
 
         const label = mode === 'dollar' ? 'DVCVI' : 'CVI';
@@ -155,15 +159,15 @@ const Charts = {
         const dashOffset = circumference * (1 - progress);
 
         let strokeColor;
-        if (count === total) strokeColor = 'var(--purple)';
-        else if (count >= total - 1) strokeColor = 'var(--red)';
-        else if (count >= total - 2) strokeColor = 'var(--orange)';
-        else strokeColor = 'var(--blue-dim)';
+        if (count === total) strokeColor = '#a371f7';
+        else if (count >= total - 1) strokeColor = '#f85149';
+        else if (count >= total - 2) strokeColor = '#fb8f44';
+        else strokeColor = '#388bfd';
 
         let countColor;
-        if (count === total) countColor = 'var(--purple)';
-        else if (count >= total - 1) countColor = 'var(--red)';
-        else countColor = 'rgba(255, 255, 255, 0.85)';
+        if (count === total) countColor = 'var(--accent-purple)';
+        else if (count >= total - 1) countColor = 'var(--accent-red)';
+        else countColor = 'var(--text)';
 
         const ttAttr = tooltip ? `data-tooltip="${tooltip}"` : '';
 
@@ -254,13 +258,13 @@ const Charts = {
 
             // Bar fill — edge window is fully opaque, others dimmer
             ctx.fillStyle = isLong
-                ? (isEdge ? 'rgba(61,184,122,0.9)' : 'rgba(61,184,122,0.4)')
-                : (isEdge ? 'rgba(192,64,64,0.9)'  : 'rgba(192,64,64,0.4)');
+                ? (isEdge ? 'rgba(63,185,80,0.9)' : 'rgba(63,185,80,0.4)')
+                : (isEdge ? 'rgba(248,81,73,0.9)'  : 'rgba(248,81,73,0.4)');
             ctx.fillRect(x, y, barW, bh);
 
             // Edge window outline glow
             if (isEdge) {
-                ctx.strokeStyle = isLong ? '#3db87a' : '#c04040';
+                ctx.strokeStyle = isLong ? '#3fb950' : '#f85149';
                 ctx.lineWidth = 1.5;
                 ctx.strokeRect(x - 0.5, y - 0.5, barW + 1, bh + 1);
             }
@@ -272,14 +276,14 @@ const Charts = {
                 const dotX  = x + barW / 2;
                 ctx.beginPath();
                 ctx.arc(dotX, dotY, 2, 0, Math.PI * 2);
-                ctx.fillStyle = wrDev > 0 ? 'rgba(61,184,122,0.9)' : 'rgba(192,64,64,0.9)';
+                ctx.fillStyle = wrDev > 0 ? 'rgba(63,185,80,0.9)' : 'rgba(248,81,73,0.9)';
                 ctx.fill();
             }
 
             // Value annotation on taller bars (≥5%)
             if (Math.abs(d.median) >= 5) {
                 ctx.font = 'bold 7px monospace';
-                ctx.fillStyle = isLong ? '#3db87a' : '#c04040';
+                ctx.fillStyle = isLong ? '#3fb950' : '#f85149';
                 ctx.textAlign = 'center';
                 const txt   = `${d.median >= 0 ? '+' : ''}${d.median.toFixed(0)}%`;
                 const lblY  = d.median >= 0 ? y - 2 : y + bh + 7;
@@ -316,13 +320,13 @@ const Charts = {
                 ctx.beginPath();
                 ctx.moveTo(ltX, padT);
                 ctx.lineTo(ltX, padT + chartH);
-                ctx.strokeStyle = 'rgba(255,220,80,0.7)';
+                ctx.strokeStyle = 'rgba(210,153,34,0.7)';
                 ctx.lineWidth = 1;
                 ctx.stroke();
                 ctx.setLineDash([]);
                 // Label
                 ctx.font = '6px monospace';
-                ctx.fillStyle = 'rgba(255,220,80,0.9)';
+                ctx.fillStyle = 'rgba(210,153,34,0.9)';
                 ctx.textAlign = 'center';
                 ctx.fillText(`~${medDay}d`, ltX, padT + 6);
             }
@@ -342,8 +346,8 @@ const Charts = {
         const widthPct = Math.min(absVal * 100, 50); // max 50% of bar width each side
         const isNeg = value < 0;
         const colorClass = isNeg ? 'negative' : 'positive';
-        const valueColor = isNeg ? 'var(--red)' : 'var(--green)';
-        const tickerColor = side === 'long' ? 'var(--green)' : 'var(--red)';
+        const valueColor = isNeg ? 'var(--accent-red)' : 'var(--accent-green)';
+        const tickerColor = side === 'long' ? 'var(--accent-green)' : 'var(--accent-red)';
 
         let barStyle;
         if (isNeg) {

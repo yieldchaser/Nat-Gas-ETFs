@@ -148,12 +148,12 @@ const CONFIG = {
         '3NGL.L': 0.55, '3NGS.L': 0.55
     },
 
-    // Season display config
+    // Season display config (inline SVG glyphs — design system, no emoji)
     seasonDisplay: {
-        winter: { emoji: '❄', label: 'WINTER', color: '#60a8f8' },
-        spring: { emoji: '✿', label: 'SPRING', color: '#6ddc8b' },
-        summer: { emoji: '☀', label: 'SUMMER', color: '#f5c542' },
-        fall:   { emoji: '◈', label: 'FALL',   color: '#f5a742' }
+        winter: { emoji: (window.Icons || {}).snow   || '', label: 'WINTER', color: '#388bfd' },
+        spring: { emoji: (window.Icons || {}).sprout || '', label: 'SPRING', color: '#3fb950' },
+        summer: { emoji: (window.Icons || {}).sun    || '', label: 'SUMMER', color: '#d29922' },
+        fall:   { emoji: (window.Icons || {}).leaf   || '', label: 'FALL',   color: '#fb8f44' }
     },
 
     // Data source

@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BLUE MERIDIAN</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='60%' r='50%' fx='50%' fy='65%'><stop offset='0%' style='stop-color:%230033ff;stop-opacity:0.5' /><stop offset='100%' style='stop-color:%23001a4d;stop-opacity:0' /></radialGradient></defs><circle cx='50' cy='60' r='40' fill='url(%23g)' /><path d='M50 92 C30 92 18 75 18 52 C18 30 50 5 50 5 C50 5 82 30 82 52 C82 75 70 92 50 92 Z' fill='%230066ff' /><path d='M50 80 C40 80 32 68 32 50 C32 35 50 18 50 18 C50 18 68 35 68 50 C68 68 60 80 50 80 Z' fill='white' /></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="js/icons.js"></script>
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/signals.css">
 <style>
@@ -33,38 +37,45 @@
     font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; padding: 4px 10px;
     border-radius: 4px; animation: flashPulse 2s ease-in-out infinite; cursor: help;
 }
-.flash-ci { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
-.flash-rds { background: rgba(236,72,153,0.15); color: #ec4899; border: 1px solid rgba(236,72,153,0.3); }
-.flash-sad { background: rgba(139,92,246,0.15); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.3); }
+.flash-ci { background: rgba(56,139,253,0.15); color: #388bfd; border: 1px solid rgba(56,139,253,0.3); }
+.flash-rds { background: rgba(163,113,247,0.15); color: #a371f7; border: 1px solid rgba(163,113,247,0.3); }
+.flash-sad { background: rgba(210,153,34,0.15); color: #d29922; border: 1px solid rgba(210,153,34,0.3); }
 @keyframes flashPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
 
 /* ---- KPI CARDS ---- */
 .cvol-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
 .cvol-kpi-card {
-    background: var(--bg-panel); border: 1px solid var(--border-primary);
-    border-left: 3px solid var(--card-accent, var(--border-primary));
-    border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 10px;
-    transition: border-color 0.25s, box-shadow 0.25s;
+    position: relative; overflow: hidden; isolation: isolate;
+    background: linear-gradient(145deg, rgba(33, 38, 45, 0.8) 0%, rgba(22, 27, 34, 0.8) 100%);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: transform 0.2s var(--ease-structural), border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.cvol-kpi-card:hover { border-color: var(--card-accent, var(--border-accent)); box-shadow: 0 4px 20px rgba(0,0,0,0.25), inset 0 0 0 1px var(--card-accent, transparent); }
+.cvol-kpi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--bar, linear-gradient(90deg, var(--card-accent, rgba(56, 139, 253, 0.6)), transparent));
+    opacity: 0.85; pointer-events: none;
+}
+.cvol-kpi-card:hover { transform: translateY(-2px); border-color: rgba(56, 139, 253, 0.4); box-shadow: var(--shadow-lift); }
 .cvol-kpi-head { display: flex; justify-content: space-between; align-items: center; }
-.cvol-kpi-ticker { font-size: 0.9rem; font-weight: 800; letter-spacing: 1px; }
-.cvol-kpi-regime { font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; }
+.cvol-kpi-ticker { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.cvol-kpi-regime { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
 .cvol-kpi-main { margin: 2px 0; }
-.cvol-kpi-lbl { font-size: 0.55rem; letter-spacing: 1.5px; color: rgba(255, 255, 255, 0.85); font-weight: 700; text-transform: uppercase; }
-.cvol-kpi-val { font-size: 1.3rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; display: block; line-height: 1.2; }
+.cvol-kpi-lbl { font-size: 10px; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+.cvol-kpi-val { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; font-family: var(--font-mono); display: block; line-height: 1.2; text-shadow: 0 0 20px rgba(255, 255, 255, 0.1); }
 .cvol-kpi-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
 .cvol-kpi-stat { display: flex; flex-direction: column; gap: 2px; }
-.cvol-kpi-slbl { font-size: 0.5rem; letter-spacing: 1px; color: rgba(255, 255, 255, 0.85); font-weight: 700; text-transform: uppercase; }
-.cvol-kpi-sval { font-size: 0.75rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-bright); }
+.cvol-kpi-slbl { font-size: 9px; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+.cvol-kpi-sval { font-size: 13px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; font-family: var(--font-mono); color: var(--text); }
 /* Micro-analytics secondary section */
 .cvol-kpi-micro { margin-top: 2px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 5px; }
 .cvol-micro-line { display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; font-weight: 700; color: var(--text-bright); letter-spacing: 0.1px; white-space: nowrap; }
-.cvol-micro-lbl { color: #fff; text-transform: uppercase; font-size: 0.65rem; opacity: 0.85; letter-spacing: 0.5px; }
-.cvol-micro-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+.cvol-micro-lbl { color: var(--text-muted); text-transform: uppercase; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; }
+.cvol-micro-val { font-family: var(--font-mono); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 .kpi-progress { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.06); margin-top: 6px; overflow: hidden; }
 .kpi-progress-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
-.soft-green { color: #3db87a; } .soft-red { color: #ef4444; }
+.soft-green { color: #3fb950; } .soft-red { color: #f85149; }
 
 /* ---- CHART PANEL ---- */
 .chart-container {
@@ -79,7 +90,7 @@
     color: rgba(255, 255, 255, 0.85); cursor: pointer; transition: all 0.2s;
 }
 .horizon-btn:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
-.horizon-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,255,255,0.05); }
+.horizon-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(56,139,253,0.05); }
 .marker-mode { display: flex; gap: 4px; align-items: center; margin-right: 10px; padding-right: 10px; border-right: 1px solid rgba(255,255,255,0.08); }
 .marker-mode-btn {
     font-size: 0.55rem; font-weight: 800; letter-spacing: 0.8px; padding: 4px 8px; border-radius: 4px;
@@ -87,7 +98,7 @@
     cursor: pointer; transition: all 0.18s;
 }
 .marker-mode-btn:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.25); }
-.marker-mode-btn.active { color: var(--cyan); border-color: var(--cyan); background: rgba(0,255,255,0.06); }
+.marker-mode-btn.active { color: var(--cyan); border-color: var(--cyan); background: rgba(56,139,253,0.06); }
 .chart-canvas-wrap { position: relative; height: 400px; width: 100%; margin-bottom: 12px; }
 #cvol-canvas { width: 100%; height: 100%; cursor: crosshair; }
 
@@ -95,20 +106,20 @@
 .range-slider-container { margin: 10px 0 16px; }
 .range-slider-wrap { position: relative; height: 48px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary); border-radius: 8px; padding: 0 12px; }
 .range-slider-track { position: absolute; top: 21px; left: 0; right: 0; height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; z-index: 1; }
-.range-slider-highlight { position: absolute; top: 21px; height: 6px; background: var(--cyan); border-radius: 3px; z-index: 2; box-shadow: 0 0 10px rgba(0,255,255,0.3); }
+.range-slider-highlight { position: absolute; top: 21px; height: 6px; background: var(--cyan); border-radius: 3px; z-index: 2; box-shadow: 0 0 10px rgba(56,139,253,0.3); }
 .range-inputs { position: relative; width: 100%; }
 .range-inputs input[type=range] { position: absolute; width: 100%; top: 8px; left: 0; pointer-events: none; -webkit-appearance: none; appearance: none; background: none; height: 32px; margin: 0; z-index: 3; }
-.range-inputs input[type=range]::-webkit-slider-thumb { pointer-events: auto; -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 5px; background: #fff; border: 2px solid var(--cyan); box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer; margin-top: -7px; }
-.range-inputs input[type=range]::-moz-range-thumb { pointer-events: auto; width: 20px; height: 20px; border-radius: 5px; background: #fff; border: 2px solid var(--cyan); box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer; }
+.range-inputs input[type=range]::-webkit-slider-thumb { pointer-events: auto; -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.5); cursor: pointer; margin-top: -6px; transition: transform 0.1s ease; }
+.range-inputs input[type=range]::-moz-range-thumb { pointer-events: auto; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.5); cursor: pointer; transition: transform 0.1s ease; }
 .range-inputs input[type=range]::-webkit-slider-runnable-track { background: none !important; border: none !important; }
 .range-inputs input[type=range]::-moz-range-track { background: none !important; border: none !important; }
-input[type=range]:hover::-webkit-slider-thumb { background: var(--cyan); border-color: #fff; }
-input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-color: #fff; }
+input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.15); }
+input[type=range]:hover::-moz-range-thumb { transform: scale(1.15); }
 .range-labels { display: flex; justify-content: center; font-size: 0.65rem; color: rgba(255, 255, 255, 0.85); font-weight: 700; margin-top: 8px; letter-spacing: 1px; }
 
 /* ---- CHART HOVER TOOLTIP ---- */
-#cvol-tooltip { position: absolute; display: none; background: rgba(22,22,36,0.95); border: 1px solid var(--border-primary); border-radius: 6px; padding: 10px 14px; font-size: 0.75rem; color: var(--text-bright); pointer-events: none; z-index: 1000; box-shadow: 0 8px 24px rgba(0,0,0,0.5); min-width: 160px; }
-.tooltip-date { color: var(--cyan); font-weight: 800; margin-bottom: 4px; font-size: 0.65rem; letter-spacing: 1px; }
+#cvol-tooltip { position: absolute; display: none; background: rgba(22,27,34,0.95); border:1px solid rgba(88,166,255,0.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px); border-radius:12px; padding: 10px 14px; font-size: 0.75rem; color: var(--text-bright); pointer-events: none; z-index: 1000; box-shadow: 0 8px 24px rgba(0,0,0,0.5); min-width: 160px; }
+.tooltip-date { color: var(--accent); font-weight: 700; margin-bottom: 6px; font-size: 0.68rem; letter-spacing: 0.07em; text-transform: uppercase; border-bottom: 1px solid rgba(56,139,253,0.2); padding-bottom: 5px; }
 .tooltip-row { display: flex; justify-content: space-between; gap: 16px; margin-top: 2px; }
 .tooltip-lbl { font-weight: 700; text-transform: uppercase; font-size: 0.55rem; }
 .tooltip-val { font-weight: 700; font-family: 'JetBrains Mono', monospace; }
@@ -121,7 +132,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 /* ---- VARIANCE DECOMP CHART ---- */
 .var-decomp-wrap { position: relative; height: 220px; width: 100%; margin-bottom: 12px; }
 #var-decomp-canvas { width: 100%; height: 100%; cursor: crosshair; }
-#var-decomp-tooltip { position: absolute; display: none; background: rgba(22,22,36,0.95); border: 1px solid var(--border-primary); border-radius: 6px; padding: 8px 12px; font-size: 0.7rem; color: var(--text-bright); pointer-events: none; z-index: 1000; box-shadow: 0 6px 18px rgba(0,0,0,0.5); min-width: 140px; }
+#var-decomp-tooltip { position: absolute; display: none; background: rgba(22,27,34,0.95); border:1px solid rgba(88,166,255,0.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px); border-radius:12px; padding: 8px 12px; font-size: 0.7rem; color: var(--text-bright); pointer-events: none; z-index: 1000; box-shadow: 0 6px 18px rgba(0,0,0,0.5); min-width: 140px; }
 
 /* ---- COMPOSITE SIGNAL CARDS (expanded) ---- */
 .composite-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
@@ -132,7 +143,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 .comp-val { font-size: 0.9rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
 .comp-spark-wrap { position: relative; width: 100%; height: 110px; }
 .comp-spark { width: 100%; height: 100%; }
-.comp-spark-tt { position: absolute; display: none; background: rgba(22,22,36,0.95); border: 1px solid var(--border-primary); border-radius: 4px; padding: 5px 8px; font-size: 0.6rem; color: var(--text-bright); pointer-events: none; z-index: 10; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+.comp-spark-tt { position: absolute; display: none; background: rgba(22,27,34,0.95); border:1px solid rgba(88,166,255,0.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px); border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.6); padding: 5px 8px; font-size: 0.6rem; color: var(--text-bright); pointer-events: none; z-index: 10; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
 .comp-footer { display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.55rem; color: rgba(255, 255, 255, 0.85); font-weight: 700; letter-spacing: 0.5px; }
 .comp-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; }
 .comp-stat { font-size: 0.5rem; color: rgba(255, 255, 255, 0.85); font-weight: 700; letter-spacing: 0.5px; }
@@ -159,14 +170,14 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 
 /* ---- CVOL HM PEAKS / SPOTLIGHT MODE ---- */
 #cvol-heatmap.peaks-mode {
-    background: rgba(5, 5, 14, 0.72);
+    background: rgba(13,17,23, 0.72);
     border-radius: 6px;
     padding: 4px;
     transition: background 0.35s ease;
 }
 .heatmap-cell.heat-dim {
     opacity: 0.15 !important;
-    background: #0b0b14 !important;
+    background: #0d1117 !important;
     transition: background 0.28s ease, opacity 0.28s ease;
     box-shadow: none !important;
 }
@@ -176,35 +187,35 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 }
 .heatmap-cell.heat-peak-notable {
     opacity: 1 !important;
-    background: #c8922a !important;
-    box-shadow: 0 0 5px 1px rgba(200, 146, 42, 0.60) !important;
+    background: #d29922 !important;
+    box-shadow: 0 0 5px 1px rgba(210,153,34, 0.60) !important;
     animation: hpeak-in 0.42s cubic-bezier(.22,.68,0,1.22) both;
 }
 .heatmap-cell.heat-peak-notable:hover {
     transform: scale(1.45);
-    box-shadow: 0 0 10px 3px rgba(200, 146, 42, 0.80) !important;
+    box-shadow: 0 0 10px 3px rgba(210,153,34, 0.80) !important;
 }
 .heatmap-cell.heat-peak-significant {
     opacity: 1 !important;
-    background: #d96030 !important;
-    box-shadow: 0 0 8px 2px rgba(217, 96, 48, 0.70) !important;
+    background: #fb8f44 !important;
+    box-shadow: 0 0 8px 2px rgba(251,143,68, 0.70) !important;
     animation: hpeak-in 0.44s cubic-bezier(.22,.68,0,1.22) both;
 }
 .heatmap-cell.heat-peak-significant:hover {
     transform: scale(1.45);
-    box-shadow: 0 0 14px 4px rgba(217, 96, 48, 0.85) !important;
+    box-shadow: 0 0 14px 4px rgba(251,143,68, 0.85) !important;
 }
 .heatmap-cell.heat-peak-extreme {
     opacity: 1 !important;
-    background: #ff4d4d !important;
-    box-shadow: 0 0 12px 4px rgba(255, 77, 77, 0.80),
-                0 0 28px 7px rgba(255, 120, 60, 0.35) !important;
+    background: #f85149 !important;
+    box-shadow: 0 0 12px 4px rgba(248,81,73, 0.80),
+                0 0 28px 7px rgba(251,143,68, 0.35) !important;
     animation: hpeak-in-strong 0.52s cubic-bezier(.22,.68,0,1.22) both;
 }
 .heatmap-cell.heat-peak-extreme:hover {
     transform: scale(1.55);
-    box-shadow: 0 0 18px 6px rgba(255, 77, 77, 0.90),
-                0 0 36px 10px rgba(255, 120, 60, 0.45) !important;
+    box-shadow: 0 0 18px 6px rgba(248,81,73, 0.90),
+                0 0 36px 10px rgba(251,143,68, 0.45) !important;
 }
 
 .hm-val { font-size: 0.68rem; font-weight: 800; line-height: 1; }
@@ -223,14 +234,14 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 
 /* ---- CVOL SIG PEAKS / SPOTLIGHT MODE ---- */
 #cvol-signal-heat.peaks-mode {
-    background: rgba(5, 5, 14, 0.72);
+    background: rgba(13,17,23, 0.72);
     border-radius: 6px;
     padding: 4px;
     transition: background 0.35s ease;
 }
 .sig-heat-cell.heat-dim {
     opacity: 0.15 !important;
-    background: #0b0b14 !important;
+    background: #0d1117 !important;
     transition: background 0.28s ease, opacity 0.28s ease;
     box-shadow: none !important;
 }
@@ -240,35 +251,35 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 }
 .sig-heat-cell.heat-peak-notable {
     opacity: 1 !important;
-    background: #c8922a !important;
-    box-shadow: 0 0 5px 1px rgba(200, 146, 42, 0.60) !important;
+    background: #d29922 !important;
+    box-shadow: 0 0 5px 1px rgba(210,153,34, 0.60) !important;
     animation: hpeak-in 0.42s cubic-bezier(.22,.68,0,1.22) both;
 }
 .sig-heat-cell.heat-peak-notable:hover {
     transform: scale(1.45);
-    box-shadow: 0 0 10px 3px rgba(200, 146, 42, 0.80) !important;
+    box-shadow: 0 0 10px 3px rgba(210,153,34, 0.80) !important;
 }
 .sig-heat-cell.heat-peak-significant {
     opacity: 1 !important;
-    background: #d96030 !important;
-    box-shadow: 0 0 8px 2px rgba(217, 96, 48, 0.70) !important;
+    background: #fb8f44 !important;
+    box-shadow: 0 0 8px 2px rgba(251,143,68, 0.70) !important;
     animation: hpeak-in 0.44s cubic-bezier(.22,.68,0,1.22) both;
 }
 .sig-heat-cell.heat-peak-significant:hover {
     transform: scale(1.45);
-    box-shadow: 0 0 14px 4px rgba(217, 96, 48, 0.85) !important;
+    box-shadow: 0 0 14px 4px rgba(251,143,68, 0.85) !important;
 }
 .sig-heat-cell.heat-peak-extreme {
     opacity: 1 !important;
-    background: #ff4d4d !important;
-    box-shadow: 0 0 12px 4px rgba(255, 77, 77, 0.80),
-                0 0 28px 7px rgba(255, 120, 60, 0.35) !important;
+    background: #f85149 !important;
+    box-shadow: 0 0 12px 4px rgba(248,81,73, 0.80),
+                0 0 28px 7px rgba(251,143,68, 0.35) !important;
     animation: hpeak-in-strong 0.52s cubic-bezier(.22,.68,0,1.22) both;
 }
 .sig-heat-cell.heat-peak-extreme:hover {
     transform: scale(1.55);
-    box-shadow: 0 0 18px 6px rgba(255, 77, 77, 0.90),
-                0 0 36px 10px rgba(255, 120, 60, 0.45) !important;
+    box-shadow: 0 0 18px 6px rgba(248,81,73, 0.90),
+                0 0 36px 10px rgba(251,143,68, 0.45) !important;
 }
 
 .sig-heat-badge { position: absolute; top: 2px; right: 2px; width: 4px; height: 4px; border-radius: 50%; pointer-events: none; }
@@ -298,10 +309,12 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 /* ---- BACKTEST SCORECARD ---- */
 .scorecard-panel { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
 table.scorecard-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.75rem; }
-.scorecard-table th { text-align: center; padding: 10px 12px; font-size: 0.55rem; letter-spacing: 2px; color: rgba(255, 255, 255, 0.85); font-weight: 700; border-bottom: 2px solid var(--bg-secondary); text-transform: uppercase; }
-.scorecard-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; }
-.scorecard-table tr:hover td { background: rgba(255,255,255,0.04) !important; }
-.scorecard-table tr.scorecard-summary td { border-top: 2px solid var(--border-accent); font-weight: 800; color: var(--text-bright); background: rgba(0,255,255,0.03); }
+.scorecard-table th { text-align: center; padding: 9px 12px; font-size: 10px; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; background: var(--surface2); position: sticky; top: 0; z-index: 10; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 -1px 0 var(--border); text-transform: uppercase; }
+.scorecard-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: center; transition: background 0.15s ease; }
+.scorecard-table tr:nth-child(even) td { background: rgba(33, 38, 45, 0.5); }
+.scorecard-table tr:hover td { background: rgba(56, 139, 253, 0.04) !important; }
+.scorecard-table tr:hover td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
+.scorecard-table tr.scorecard-summary td { border-top: 2px solid var(--border-accent); font-weight: 800; color: var(--text-bright); background: rgba(56,139,253,0.03); }
 .score-bar { display: inline-block; height: 4px; border-radius: 2px; vertical-align: middle; margin-left: 6px; }
 /* Signal type filter chips */
 .signal-type-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -309,7 +322,9 @@ table.scorecard-table { width: 100%; border-collapse: separate; border-spacing: 
 .signal-chip:hover { filter: brightness(1.3); }
 .signal-chip.active { filter: brightness(1); }
 .signal-chip:not(.active) { opacity: 0.4; }
-.confluence-badge { display: inline-block; font-size: 0.55rem; font-weight: 800; padding: 1px 6px; border-radius: 3px; letter-spacing: 0.5px; }
+.confluence-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.06em; }
+.conf-tier { display: inline-flex; align-items: center; gap: 1px; vertical-align: middle; }
+.conf-tier .ico { width: 11px; height: 11px; }
 .pending-label { color: rgba(255, 255, 255, 0.85); font-style: italic; font-weight: 600; opacity: 0.6; }
 
 /* ---- EVENT TIMELINE ---- */
@@ -317,19 +332,21 @@ table.scorecard-table { width: 100%; border-collapse: separate; border-spacing: 
 .event-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .event-title { font-size: 0.85rem; font-weight: 800; letter-spacing: 1.5px; color: var(--text-bright); text-transform: uppercase; }
 .event-count { font-size: 0.6rem; color: var(--cyan); font-weight: 700; letter-spacing: 1px; }
-.tab-group { display: flex; background: #1a1a28; padding: 3px; border-radius: 6px; }
-.tab-btn { font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; padding: 6px 14px; border-radius: 4px; border: none; background: transparent; color: rgba(255, 255, 255, 0.85); cursor: pointer; transition: all 0.2s; }
-.tab-btn:hover { color: var(--text-primary); }
-.tab-btn.active { background: var(--bg-secondary); color: var(--cyan); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.tab-group { display: flex; background: var(--surface2); border: 1px solid var(--border); padding: 2px; border-radius: 6px; gap: 2px; }
+.tab-btn { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; padding: 5px 10px; min-height: 28px; border-radius: 4px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; text-transform: uppercase; transition: background 0.2s var(--ease-structural), color 0.2s ease, box-shadow 0.2s ease; }
+.tab-btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.05); }
+.tab-btn.active { background: rgba(56, 139, 253, 0.18); color: var(--accent); box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.18); }
 table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.78rem; }
-.event-table th { text-align: center; padding: 10px 12px; font-size: 0.6rem; letter-spacing: 2px; color: rgba(255, 255, 255, 0.85); font-weight: 700; border-bottom: 2px solid var(--bg-secondary); text-transform: uppercase; }
-.event-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-primary); font-family: 'JetBrains Mono', monospace; text-align: center; }
-.event-table tr:hover td { background: rgba(255,255,255,0.04) !important; }
+.event-table th { text-align: center; padding: 9px 12px; font-size: 10px; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; background: var(--surface2); position: sticky; top: 0; z-index: 10; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 -1px 0 var(--border); text-transform: uppercase; }
+.event-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: center; transition: background 0.15s ease; }
+.event-table tr:nth-child(even) td { background: rgba(33, 38, 45, 0.5); }
+.event-table tr:hover td { background: rgba(56, 139, 253, 0.04) !important; }
+.event-table tr:hover td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
 .sig-badge { display: inline-block; font-size: 0.6rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; border: 1px solid; letter-spacing: 0.8px; }
 
 /* ---- SECTION TITLE ---- */
 .section-title-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-.section-title-text { font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-bright); border-left: 3px solid rgba(0,255,255,0.45); padding-left: 8px; }
+.section-title-text { font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-bright); border-left: 3px solid rgba(56,139,253,0.45); padding-left: 8px; }
 
 /* ---- CHART LEGEND ---- */
 .chart-legend { display: flex; gap: 24px; flex-wrap: wrap; }
@@ -423,7 +440,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     
     <div class="comp-modal-chart">
         <canvas id="comp-modal-canvas"></canvas>
-        <div id="comp-modal-tooltip" style="position:absolute;display:none;background:rgba(22,22,36,0.95);border:1px solid var(--border-primary);border-radius:6px;padding:8px 12px;font-size:0.7rem;color:var(--text-bright);pointer-events:none;z-index:1000;box-shadow:0 6px 18px rgba(0,0,0,0.5);min-width:140px;"></div>
+        <div id="comp-modal-tooltip" style="position:absolute;display:none;background:rgba(22,27,34,0.95);border:1px solid rgba(88,166,255,0.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:12px;padding:8px 12px;font-size:0.7rem;color:var(--text-bright);pointer-events:none;z-index:1000;box-shadow:0 6px 18px rgba(0,0,0,0.5);min-width:140px;"></div>
     </div>
 
     <!-- Modal Timeline Double-Thumb Slider -->
@@ -501,10 +518,10 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
         <div style="display:flex;justify-content:center;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05);">
             <div class="chart-legend">
-                <div class="legend-item" data-tooltip="NGVL ≤ 25th percentile: Volatility is historically 'cheap'. This is often a precursor to violent, explosive price moves after a period of consolidation."><span class="legend-line" style="background:rgba(74,128,184,0.3)"></span> LOW (≤25th)</div>
-                <div class="legend-item" data-tooltip="Typical volatility environment for the trailing 252-day period."><span class="legend-line" style="background:rgba(61,184,122,0.3)"></span> NORMAL</div>
-                <div class="legend-item" data-tooltip="NGVL ≥ 75th percentile: Above-average options activity. Market is pricing high uncertainty or significant upcoming event risk."><span class="legend-line" style="background:rgba(192,120,40,0.3)"></span> ELEVATED (≥75th)</div>
-                <div class="legend-item" data-tooltip="NGVL ≥ 90th percentile: historically rare implied-volatility pricing. Treat as expensive uncertainty until realized movement or surface transitions confirm otherwise."><span class="legend-line" style="background:rgba(192,64,64,0.3)"></span> EXTREME (≥90th)</div>
+                <div class="legend-item" data-tooltip="NGVL ≤ 25th percentile: Volatility is historically 'cheap'. This is often a precursor to violent, explosive price moves after a period of consolidation."><span class="legend-line" style="background:rgba(56,139,253,0.3)"></span> LOW (≤25th)</div>
+                <div class="legend-item" data-tooltip="Typical volatility environment for the trailing 252-day period."><span class="legend-line" style="background:rgba(63,185,80,0.3)"></span> NORMAL</div>
+                <div class="legend-item" data-tooltip="NGVL ≥ 75th percentile: Above-average options activity. Market is pricing high uncertainty or significant upcoming event risk."><span class="legend-line" style="background:rgba(251,143,68,0.3)"></span> ELEVATED (≥75th)</div>
+                <div class="legend-item" data-tooltip="NGVL ≥ 90th percentile: historically rare implied-volatility pricing. Treat as expensive uncertainty until realized movement or surface transitions confirm otherwise."><span class="legend-line" style="background:rgba(248,81,73,0.3)"></span> EXTREME (≥90th)</div>
             </div>
         </div>
     </div>
@@ -550,7 +567,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <div class="chart-container" id="vol-regime-panel" style="margin-bottom:24px;">
         <div class="chart-header">
             <div style="flex:1">
-                <span style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;">Vol Regime Monitor</span>
+                <span style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);border-left:3px solid rgba(56,139,253,0.45);padding-left:8px;">Vol Regime Monitor</span>
                 <span style="font-size:0.65rem;color:rgba(255, 255, 255, 0.85);margin-left:10px;">— 5D · 21D · 63D · 252D historical volatility</span>
             </div>
         </div>
@@ -576,10 +593,10 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     </div>
     <div class="composite-grid">
         <div class="composite-card" data-comp="sad">
-            <span class="comp-expand-icon">⤢ EXPAND</span>
+            <span class="comp-expand-icon">EXPAND</span>
             <div class="comp-head">
                 <span class="comp-name" data-tooltip="Skew-ATM Divergence: skew ratio diverges from the ATM volatility baseline. Positive = directional wing pressure rising faster than broad vol. Z > 1.5 = research fire.">SAD</span>
-                <span class="comp-val" style="color:#f59e0b" id="sad-current">—</span>
+                <span class="comp-val" style="color:#d29922" id="sad-current">—</span>
             </div>
             <div class="comp-spark-wrap">
                 <canvas class="comp-spark" id="spark-sad"></canvas>
@@ -589,10 +606,10 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <div class="comp-stats" id="sad-stats"></div>
         </div>
         <div class="composite-card" data-comp="ci">
-            <span class="comp-expand-icon">⤢ EXPAND</span>
+            <span class="comp-expand-icon">EXPAND</span>
             <div class="comp-head">
                 <span class="comp-name" data-tooltip="Complacency Index: 100 − ATM_252d_percentile. Higher = market more complacent about vol. > 82 = historically fragile calm — vol is cheap relative to its own history, but NG can snap violently from these levels.">CI</span>
-                <span class="comp-val" style="color:#60a8f8" id="ci-current">—</span>
+                <span class="comp-val" style="color:#388bfd" id="ci-current">—</span>
             </div>
             <div class="comp-spark-wrap">
                 <canvas class="comp-spark" id="spark-ci"></canvas>
@@ -602,10 +619,10 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <div class="comp-stats" id="ci-stats"></div>
         </div>
         <div class="composite-card" data-comp="cvcDown">
-            <span class="comp-expand-icon">⤢ EXPAND</span>
+            <span class="comp-expand-icon">EXPAND</span>
             <div class="comp-head">
                 <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Downside): ConvPct63 × max(0, DnVarZ21). High convexity plus downside variance means the surface is paying up for downside tail risk. > 1.20 = research fire.">CVC ↓</span>
-                <span class="comp-val" style="color:#ef4444" id="cvc-down-current">—</span>
+                <span class="comp-val" style="color:#f85149" id="cvc-down-current">—</span>
             </div>
             <div class="comp-spark-wrap">
                 <canvas class="comp-spark" id="spark-cvc-down"></canvas>
@@ -615,10 +632,10 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <div class="comp-stats" id="cvcDown-stats"></div>
         </div>
         <div class="composite-card" data-comp="cvcUp">
-            <span class="comp-expand-icon">⤢ EXPAND</span>
+            <span class="comp-expand-icon">EXPAND</span>
             <div class="comp-head">
                 <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Upside): ConvPct63 × max(0, UpVarZ21). High convexity plus upside variance means the surface is paying up for upside tail risk. > 1.20 = research fire.">CVC ↑</span>
-                <span class="comp-val" style="color:#3db87a" id="cvc-up-current">—</span>
+                <span class="comp-val" style="color:#3fb950" id="cvc-up-current">—</span>
             </div>
             <div class="comp-spark-wrap">
                 <canvas class="comp-spark" id="spark-cvc-up"></canvas>
@@ -628,10 +645,10 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <div class="comp-stats" id="cvcUp-stats"></div>
         </div>
         <div class="composite-card" data-comp="rds">
-            <span class="comp-expand-icon">⤢ EXPAND</span>
+            <span class="comp-expand-icon">EXPAND</span>
             <div class="comp-head">
                 <span class="comp-name" data-tooltip="Regime Divergence Score: |ΔSkewRatio_5d| × Convexity × (1 − ATM_pctile/100). Rapid skew shift plus fat tails plus low ATM vol = surface instability and expansion risk. Z > 1.8 = research fire.">RDS</span>
-                <span class="comp-val" style="color:#ec4899" id="rds-current">—</span>
+                <span class="comp-val" style="color:#a371f7" id="rds-current">—</span>
             </div>
             <div class="comp-spark-wrap">
                 <canvas class="comp-spark" id="spark-rds"></canvas>
@@ -692,11 +709,11 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- SIGNAL TYPE FILTER (shared between scorecard + timeline) -->
     <div class="signal-type-chips" id="cvol-signal-type-filter">
         <button class="signal-chip active" data-signal="all" style="border-color:var(--cyan);color:var(--cyan);" data-tooltip="Show all signal types">ALL SIGNALS</button>
-        <button class="signal-chip" data-signal="SAD" style="border-color:#f59e0b;color:#f59e0b;" data-tooltip="Skew-ATM Divergence — skew pressure versus baseline vol">SAD</button>
-        <button class="signal-chip" data-signal="CI" style="border-color:#60a8f8;color:#60a8f8;" data-tooltip="Complacency Index — fragile calm warning">CI</button>
-        <button class="signal-chip" data-signal="CVC↓" style="border-color:#ef4444;color:#ef4444;" data-tooltip="Convexity-Variance down — downside tail demand input">CVC ↓</button>
-        <button class="signal-chip" data-signal="CVC↑" style="border-color:#3db87a;color:#3db87a;" data-tooltip="Convexity-Variance up — upside tail demand input">CVC ↑</button>
-        <button class="signal-chip" data-signal="RDS" style="border-color:#ec4899;color:#ec4899;" data-tooltip="Regime Divergence Score — explosive setup signal">RDS</button>
+        <button class="signal-chip" data-signal="SAD" style="border-color:#d29922;color:#d29922;" data-tooltip="Skew-ATM Divergence — skew pressure versus baseline vol">SAD</button>
+        <button class="signal-chip" data-signal="CI" style="border-color:#388bfd;color:#388bfd;" data-tooltip="Complacency Index — fragile calm warning">CI</button>
+        <button class="signal-chip" data-signal="CVC↓" style="border-color:#f85149;color:#f85149;" data-tooltip="Convexity-Variance down — downside tail demand input">CVC ↓</button>
+        <button class="signal-chip" data-signal="CVC↑" style="border-color:#3fb950;color:#3fb950;" data-tooltip="Convexity-Variance up — upside tail demand input">CVC ↑</button>
+        <button class="signal-chip" data-signal="RDS" style="border-color:#a371f7;color:#a371f7;" data-tooltip="Regime Divergence Score — explosive setup signal">RDS</button>
     </div>
 
     <!-- PANEL 7.5: SURFACE STATE ANALOGS -->
@@ -716,9 +733,9 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
         <div class="signal-type-chips" id="cvol-regime-filter" style="margin-bottom:12px;">
             <button class="signal-chip active" data-regime="all" style="border-color:var(--cyan);color:var(--cyan);" data-tooltip="Show signal performance across ALL vol regimes">ALL REGIMES</button>
-            <button class="signal-chip" data-regime="low" style="border-color:#4a80b8;color:#4a80b8;" data-tooltip="NGVL &lt;25th percentile: Low-vol, complacent regime. Signals firing here often precede explosive breakouts from compressed ranges.">LOW (&lt;25th)</button>
-            <button class="signal-chip" data-regime="normal" style="border-color:#3db87a;color:#3db87a;" data-tooltip="NGVL 25th-75th percentile: Normal vol regime. Standard signal behavior — baseline hit rates.">NORMAL</button>
-            <button class="signal-chip" data-regime="high" style="border-color:#c07828;color:#c07828;" data-tooltip="NGVL &ge;75th percentile: Elevated/Extreme vol. Signal behavior may invert — historical patterns less reliable in panic regimes.">HIGH (&ge;75th)</button>
+            <button class="signal-chip" data-regime="low" style="border-color:#388bfd;color:#388bfd;" data-tooltip="NGVL &lt;25th percentile: Low-vol, complacent regime. Signals firing here often precede explosive breakouts from compressed ranges.">LOW (&lt;25th)</button>
+            <button class="signal-chip" data-regime="normal" style="border-color:#3fb950;color:#3fb950;" data-tooltip="NGVL 25th-75th percentile: Normal vol regime. Standard signal behavior — baseline hit rates.">NORMAL</button>
+            <button class="signal-chip" data-regime="high" style="border-color:#fb8f44;color:#fb8f44;" data-tooltip="NGVL &ge;75th percentile: Elevated/Extreme vol. Signal behavior may invert — historical patterns less reliable in panic regimes.">HIGH (&ge;75th)</button>
         </div>
         <div id="cvol-scorecard" style="overflow-x:auto; -webkit-overflow-scrolling:touch;"></div>
         <!-- Threshold Sensitivity panel (collapsible) -->
@@ -740,7 +757,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <div class="event-panel">
         <div class="event-header">
             <div style="display:flex;align-items:center;gap:12px;">
-                <span class="event-title" style="border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;" data-tooltip="Default view shows decision-grade options-surface state transitions. Switch markers to RAW to inspect SAD/CI/CVC/RDS research fires.">Surface Event Timeline</span>
+                <span class="event-title" style="border-left:3px solid rgba(56,139,253,0.45);padding-left:8px;" data-tooltip="Default view shows decision-grade options-surface state transitions. Switch markers to RAW to inspect SAD/CI/CVC/RDS research fires.">Surface Event Timeline</span>
                 <span class="event-count" id="cvol-event-count">--</span>
             </div>
             <div class="tab-group" id="cvol-event-filter">
