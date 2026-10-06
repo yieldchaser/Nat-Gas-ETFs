@@ -76,7 +76,7 @@ const Cards = {
             : '';
 
         const spikeHtml = metrics.sharpSpike
-            ? `<span class="spike-badge" data-tooltip="SHARP SPIKE: 5d VCVI + move > 2×ATR. ${metrics.fastSignal === 'weather_top_candidate' ? 'Weather Top Candidate — GAS may have peaked.' : 'Weather Bottom Candidate — GAS may have bottomed.'}">' + ((window.Icons || {}).zap || '') + ' SPIKE</span>`
+            ? `<span class="spike-badge" data-tooltip="SHARP SPIKE: 5d VCVI + move > 2×ATR. ${metrics.fastSignal === 'weather_top_candidate' ? 'Weather Top Candidate — GAS may have peaked.' : 'Weather Bottom Candidate — GAS may have bottomed.'}">⚡ SPIKE</span>`
             : '';
 
         const vcviEntries = ['5d', '21d', '63d'].map(w => {
@@ -370,7 +370,7 @@ const Cards = {
                 const volContainer = document.getElementById(`volbar-${safeTicker}`);
                 if (sparkContainer) {
                     const canvas = sparkContainer.querySelector('canvas');
-                    const color = CONFIG.etfs[t].side === 'long' ? '#3fb950' : '#f85149';
+                    const color = CONFIG.etfs[t].side === 'long' ? '#3db87a' : '#c04040';
                     Charts.drawSparkline(canvas, allMetrics[t].sparkData, color);
                 }
                 if (volContainer) {

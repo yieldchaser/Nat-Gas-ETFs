@@ -99,7 +99,7 @@ function updateCompZReading() {
     if (!container) return;
     const z = last.z;
     const isUp = z > 0.15, isDown = z < -0.15;
-    const color = isUp ? '#3fb950' : isDown ? '#f85149' : '#8b949e';
+    const color = isUp ? '#3db87a' : isDown ? '#ef4444' : '#94a3b8';
     const label = isUp ? 'UPWARD PRESSURE' : isDown ? 'DOWNWARD PRESSURE' : 'EQUILIBRIUM';
     const intensity = Math.abs(z) > 1.5 ? 'EXTREME' : Math.abs(z) > 1 ? 'STRONG' : Math.abs(z) > 0.5 ? 'MODERATE' : 'MILD';
     container.innerHTML = `
@@ -204,8 +204,8 @@ function drawChartCompZ(data) {
 
     // Multi-level threshold zones — subtle background only for extremes
     const zones = [
-        { z: 2.0, rn: 248, gn: 81,  bn: 73,  rp: 63,  gp: 185, bp: 80,  a: 0.06 },
-        { z: 1.5, rn: 248, gn: 81,  bn: 73,  rp: 63,  gp: 185, bp: 80,  a: 0.03 },
+        { z: 2.0, rn: 192, gn: 64,  bn: 64,  rp: 34,  gp: 197, bp: 94,  a: 0.06 },
+        { z: 1.5, rn: 239, gn: 68,  bn: 68,  rp: 61,  gp: 184, bp: 122, a: 0.03 },
     ];
     zones.forEach((z, i) => {
         const yP = getY(z.z), yN = getY(-z.z);
@@ -229,15 +229,15 @@ function drawChartCompZ(data) {
     ctx.closePath();
     ctx.save(); ctx.clip();
     const gUp = ctx.createLinearGradient(0, pad.top, 0, y0);
-    gUp.addColorStop(0, 'rgba(63,185,80,0.28)');
-    gUp.addColorStop(0.5, 'rgba(63,185,80,0.16)');
-    gUp.addColorStop(1, 'rgba(63,185,80,0.03)');
+    gUp.addColorStop(0, 'rgba(34,197,94,0.28)');
+    gUp.addColorStop(0.5, 'rgba(61,184,122,0.16)');
+    gUp.addColorStop(1, 'rgba(61,184,122,0.03)');
     ctx.fillStyle = gUp;
     ctx.fillRect(pad.left, pad.top, cw, y0 - pad.top);
     const gDn = ctx.createLinearGradient(0, y0, 0, pad.top + ch);
-    gDn.addColorStop(0, 'rgba(248,81,73,0.03)');
-    gDn.addColorStop(0.5, 'rgba(248,81,73,0.16)');
-    gDn.addColorStop(1, 'rgba(248,81,73,0.28)');
+    gDn.addColorStop(0, 'rgba(239,68,68,0.03)');
+    gDn.addColorStop(0.5, 'rgba(239,68,68,0.16)');
+    gDn.addColorStop(1, 'rgba(192,64,64,0.28)');
     ctx.fillStyle = gDn;
     ctx.fillRect(pad.left, y0, cw, pad.top + ch - y0);
     ctx.restore();
@@ -245,8 +245,8 @@ function drawChartCompZ(data) {
     // Threshold lines — only critical levels (±1.5, ±2.0)
     const criticalThresholds = [2.0, 1.5];
     criticalThresholds.forEach(z => {
-        const colors = { 2.0: { rp: 63, gp: 185, bp: 80, rn: 248, gn: 81, bn: 73 },
-                         1.5: { rp: 63, gp: 185, bp: 80, rn: 248, gn: 81, bn: 73 } };
+        const colors = { 2.0: { rp: 34, gp: 197, bp: 94, rn: 192, gn: 64, bn: 64 },
+                         1.5: { rp: 61, gp: 184, bp: 122, rn: 239, gn: 68, bn: 68 } };
         const col = colors[z];
         ctx.setLineDash([4, 3]); ctx.lineWidth = 0.8;
         if (z <= maxZ) {
@@ -270,11 +270,11 @@ function drawChartCompZ(data) {
         const absZ = Math.abs(z);
         let color;
         if (z > 0) {
-            color = absZ >= 2.0 ? 'rgba(63,185,80,1)' : absZ >= 1.5 ? 'rgba(63,185,80,0.95)' :
-                    absZ >= 1.0 ? 'rgba(63,185,80,0.85)' : 'rgba(139,148,158,0.7)';
+            color = absZ >= 2.0 ? 'rgba(34,197,94,1)' : absZ >= 1.5 ? 'rgba(61,184,122,0.95)' :
+                    absZ >= 1.0 ? 'rgba(96,200,166,0.85)' : 'rgba(180,200,190,0.7)';
         } else {
-            color = absZ >= 2.0 ? 'rgba(248,81,73,1)' : absZ >= 1.5 ? 'rgba(248,81,73,0.95)' :
-                    absZ >= 1.0 ? 'rgba(248,81,73,0.85)' : 'rgba(248,81,73,0.7)';
+            color = absZ >= 2.0 ? 'rgba(192,64,64,1)' : absZ >= 1.5 ? 'rgba(239,68,68,0.95)' :
+                    absZ >= 1.0 ? 'rgba(200,100,100,0.85)' : 'rgba(200,170,170,0.7)';
         }
         ctx.beginPath();
         ctx.moveTo(getX(i - 1), getY(vals[i - 1]));
@@ -289,9 +289,9 @@ function drawChartCompZ(data) {
         const y = getY(v);
         if (y < pad.top - 5 || y > pad.top + ch + 5) return;
         const absV = Math.abs(v);
-        const fC = absV >= 1.9 ? (v > 0 ? 'rgba(63,185,80,0.85)' : 'rgba(248,81,73,0.85)')
-                 : absV >= 1.4 ? (v > 0 ? 'rgba(63,185,80,0.8)' : 'rgba(248,81,73,0.8)')
-                 : 'rgba(139,148,158,0.6)';
+        const fC = absV >= 1.9 ? (v > 0 ? 'rgba(34,197,94,0.85)' : 'rgba(192,64,64,0.85)')
+                 : absV >= 1.4 ? (v > 0 ? 'rgba(61,184,122,0.8)' : 'rgba(239,68,68,0.8)')
+                 : 'rgba(148,163,184,0.6)';
         ctx.fillStyle = fC;
         ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1), pad.left - 6, y);
     });
@@ -305,11 +305,11 @@ function drawChartCompZ(data) {
         const x = getX(i), y = getY(vals[i]);
         const absZ = Math.abs(vals[i]);
         ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + ch);
-        ctx.strokeStyle = 'rgba(56,139,253,0.2)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.strokeStyle = 'rgba(0,255,255,0.2)'; ctx.lineWidth = 1; ctx.stroke();
 
         const dotColor = vals[i] >= 0
-            ? (absZ >= 2.0 ? 'rgba(63,185,80,1)' : absZ >= 1.5 ? '#3fb950' : 'rgba(63,185,80,0.9)')
-            : (absZ >= 2.0 ? 'rgba(248,81,73,1)' : absZ >= 1.5 ? '#f85149' : 'rgba(248,81,73,0.9)');
+            ? (absZ >= 2.0 ? 'rgba(34,197,94,1)' : absZ >= 1.5 ? '#3db87a' : 'rgba(96,200,166,0.9)')
+            : (absZ >= 2.0 ? 'rgba(192,64,64,1)' : absZ >= 1.5 ? '#ef4444' : 'rgba(200,100,100,0.9)');
         const dotR = 4 + Math.min(absZ * 1.0, 3.5);
 
         if (absZ >= 1.5) {
@@ -371,16 +371,16 @@ function drawChartFlowNG(flow, ng) {
 
     // ── 1. Background shading for ±1.5σ zones ─────────────────────────────
     const y15p = getYDiv(1.5), y15n = getYDiv(-1.5);
-    ctx.fillStyle = 'rgba(63,185,80,0.04)';
+    ctx.fillStyle = 'rgba(61,184,122,0.04)';
     ctx.fillRect(pad.left, pad.top, cw, y15p - pad.top);
-    ctx.fillStyle = 'rgba(248,81,73,0.04)';
+    ctx.fillStyle = 'rgba(239,68,68,0.04)';
     ctx.fillRect(pad.left, y15n, cw, pad.top + ch - y15n);
 
     // ── 2. Reference lines (±1.5σ dashed, zero solid) ─────────────────────
     ctx.setLineDash([4, 3]); ctx.lineWidth = 0.8;
-    ctx.strokeStyle = 'rgba(63,185,80,0.28)';
+    ctx.strokeStyle = 'rgba(61,184,122,0.28)';
     ctx.beginPath(); ctx.moveTo(pad.left, y15p); ctx.lineTo(pad.left + cw, y15p); ctx.stroke();
-    ctx.strokeStyle = 'rgba(248,81,73,0.28)';
+    ctx.strokeStyle = 'rgba(239,68,68,0.28)';
     ctx.beginPath(); ctx.moveTo(pad.left, y15n); ctx.lineTo(pad.left + cw, y15n); ctx.stroke();
     ctx.setLineDash([]);
 
@@ -389,11 +389,11 @@ function drawChartFlowNG(flow, ng) {
 
     // ── 3. Zone labels ─────────────────────────────────────────────────────
     ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(63,185,80,0.6)';
+    ctx.fillStyle = 'rgba(61,184,122,0.6)';
     ctx.fillText('▲ BULLISH DIVERGENCE', pad.left + 6, (pad.top + y15p) / 2);
-    ctx.fillStyle = 'rgba(248,81,73,0.6)';
+    ctx.fillStyle = 'rgba(239,68,68,0.6)';
     ctx.fillText('▼ BEARISH DIVERGENCE', pad.left + 6, (y15n + pad.top + ch) / 2);
-    ctx.fillStyle = 'rgba(139,148,158,0.35)';
+    ctx.fillStyle = 'rgba(148,163,184,0.35)';
     ctx.fillText('REACTIVE (no signal)', pad.left + 6, y0);
 
     // ── 4. Divergence bars ─────────────────────────────────────────────────
@@ -404,8 +404,8 @@ function drawChartFlowNG(flow, ng) {
         const x = getX(i);
         const absV = Math.abs(v);
         ctx.fillStyle = v > 0
-            ? (absV >= 2.0 ? 'rgba(63,185,80,0.9)' : absV >= 1.5 ? 'rgba(63,185,80,0.82)' : 'rgba(63,185,80,0.65)')
-            : (absV >= 2.0 ? 'rgba(248,81,73,0.9)'  : absV >= 1.5 ? 'rgba(248,81,73,0.82)'  : 'rgba(248,81,73,0.65)');
+            ? (absV >= 2.0 ? 'rgba(34,197,94,0.9)' : absV >= 1.5 ? 'rgba(61,184,122,0.82)' : 'rgba(61,184,122,0.65)')
+            : (absV >= 2.0 ? 'rgba(192,64,64,0.9)'  : absV >= 1.5 ? 'rgba(239,68,68,0.82)'  : 'rgba(239,68,68,0.65)');
         const yTop = getYDiv(v);
         ctx.fillRect(x - bw / 2, Math.min(yTop, y0), bw, Math.abs(yTop - y0));
     }
@@ -418,14 +418,14 @@ function drawChartFlowNG(flow, ng) {
         const x = getX(i), y = getYNG(ngVals[i]);
         started ? ctx.lineTo(x, y) : (ctx.moveTo(x, y), started = true);
     }
-    ctx.strokeStyle = '#fb8f44'; ctx.lineWidth = 1.8; ctx.stroke();
+    ctx.strokeStyle = '#4ab8d8'; ctx.lineWidth = 1.8; ctx.stroke();
 
     const lastNgIdx = ng.length - 1;
     if (ngVals[lastNgIdx] !== null) {
         const lx = getX(lastNgIdx), ly = getYNG(ngVals[lastNgIdx]);
         ctx.beginPath(); ctx.arc(lx, ly, 3, 0, Math.PI * 2);
         ctx.fillStyle = '#fff'; ctx.fill();
-        ctx.strokeStyle = '#fb8f44'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.strokeStyle = '#4ab8d8'; ctx.lineWidth = 1.5; ctx.stroke();
     }
 
     // ── 6. Left Y-axis (divergence intensity scale) ────────────────────────
@@ -435,15 +435,15 @@ function drawChartFlowNG(flow, ng) {
         const y = getYDiv(v);
         if (y < pad.top - 5 || y > pad.top + ch + 5) return;
         const absV = Math.abs(v);
-        ctx.fillStyle = absV >= 1.9 ? (v >= 0 ? 'rgba(63,185,80,0.85)'  : 'rgba(248,81,73,0.85)')
-                      : absV >= 1.4 ? (v >= 0 ? 'rgba(63,185,80,0.8)'  : 'rgba(248,81,73,0.8)')
-                      : 'rgba(139,148,158,0.6)';
+        ctx.fillStyle = absV >= 1.9 ? (v >= 0 ? 'rgba(34,197,94,0.85)'  : 'rgba(192,64,64,0.85)')
+                      : absV >= 1.4 ? (v >= 0 ? 'rgba(61,184,122,0.8)'  : 'rgba(239,68,68,0.8)')
+                      : 'rgba(148,163,184,0.6)';
         ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1), pad.left - 6, y);
     });
 
     // ── 7. Right Y-axis (NG price) ─────────────────────────────────────────
     const ngTicks = niceAxisTicks(minNG, maxNG, 5);
-    ctx.fillStyle = 'rgba(251,143,68,0.8)'; ctx.textAlign = 'left'; ctx.font = '9px sans-serif';
+    ctx.fillStyle = 'rgba(74,184,216,0.8)'; ctx.textAlign = 'left'; ctx.font = '9px sans-serif';
     ngTicks.forEach(v => {
         const y = getYNG(v);
         if (y < pad.top - 5 || y > pad.top + ch + 5) return;
@@ -458,14 +458,14 @@ function drawChartFlowNG(flow, ng) {
         const i = state.hoverFlowNGIdx;
         const x = getX(i);
         ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + ch);
-        ctx.strokeStyle = 'rgba(56,139,253,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([]); ctx.stroke();
+        ctx.strokeStyle = 'rgba(0,255,255,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([]); ctx.stroke();
 
         const dv = divSigned[i];
         if (dv !== 0) {
             const absV = Math.abs(dv);
             const dotColor = dv > 0
-                ? (absV >= 1.5 ? '#3fb950' : 'rgba(63,185,80,0.9)')
-                : (absV >= 1.5 ? '#f85149' : 'rgba(248,81,73,0.9)');
+                ? (absV >= 1.5 ? '#3db87a' : 'rgba(61,184,122,0.9)')
+                : (absV >= 1.5 ? '#ef4444' : 'rgba(239,68,68,0.9)');
             ctx.beginPath(); ctx.arc(x, getYDiv(dv), 4, 0, Math.PI * 2);
             ctx.fillStyle = dotColor; ctx.fill();
             ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
@@ -473,7 +473,7 @@ function drawChartFlowNG(flow, ng) {
 
         if (ngVals[i] !== null) {
             ctx.beginPath(); ctx.arc(x, getYNG(ngVals[i]), 4, 0, Math.PI * 2);
-            ctx.fillStyle = '#fb8f44'; ctx.fill();
+            ctx.fillStyle = '#4ab8d8'; ctx.fill();
             ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
         }
     }
@@ -494,11 +494,11 @@ function handleCompZHover(e) {
     drawChartCompZ(data);
     const d = data[idx];
     const tip = document.getElementById('compz-tooltip');
-    const color = d.z >= 0 ? '#3fb950' : '#f85149';
+    const color = d.z >= 0 ? '#3db87a' : '#ef4444';
     tip.innerHTML = `<div style="color:var(--cyan); font-size:0.7rem; font-weight:800; margin-bottom:6px;">${fmtDateLong(d.date)}</div>
         <div style="display:flex; justify-content:space-between; gap:16px;"><span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">COMPOSITE Z</span><span style="color:${color}; font-weight:800; font-family:'JetBrains Mono',monospace;">${d.z >= 0 ? '+' : ''}${d.z.toFixed(3)}σ</span></div>
-        <div style="display:flex; justify-content:space-between; gap:16px; margin-top:3px;"><span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">LONG SIDE</span><span style="color:#d29922; font-size:0.68rem; font-weight:700;">${d.longZ >= 0 ? '+' : ''}${d.longZ.toFixed(3)}</span></div>
-        <div style="display:flex; justify-content:space-between; gap:16px; margin-top:2px;"><span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">SHORT SIDE</span><span style="color:#388bfd; font-size:0.68rem; font-weight:700;">${d.shortZ >= 0 ? '+' : ''}${d.shortZ.toFixed(3)}</span></div>`;
+        <div style="display:flex; justify-content:space-between; gap:16px; margin-top:3px;"><span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">LONG SIDE</span><span style="color:#F5C542; font-size:0.68rem; font-weight:700;">${d.longZ >= 0 ? '+' : ''}${d.longZ.toFixed(3)}</span></div>
+        <div style="display:flex; justify-content:space-between; gap:16px; margin-top:2px;"><span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">SHORT SIDE</span><span style="color:#4A9CF5; font-size:0.68rem; font-weight:700;">${d.shortZ >= 0 ? '+' : ''}${d.shortZ.toFixed(3)}</span></div>`;
     tip.style.display = 'block';
     const tx = Math.min(rect.width - 200, Math.max(10, x - 90));
     tip.style.left = tx + 'px'; tip.style.top = '10px';
@@ -533,20 +533,20 @@ function handleFlowNGHover(e) {
     const absDiv = Math.abs(divV);
     let divColor, divLabel, divDesc;
     if (absDiv === 0) {
-        divColor = '#8b949e'; divLabel = '○ REACTIVE';
+        divColor = '#94a3b8'; divLabel = '○ REACTIVE';
         divDesc = 'Flow aligns with recent NG direction — likely momentum chasing';
     } else if (absDiv >= 2.0) {
-        divColor = divV > 0 ? 'rgba(63,185,80,1)' : 'rgba(248,81,73,1)';
+        divColor = divV > 0 ? 'rgba(34,197,94,1)' : 'rgba(192,64,64,1)';
         divLabel = '◆ EXTREME'; divDesc = divV > 0 ? 'Strong bullish flow vs. NG weakness' : 'Strong bearish flow vs. NG strength';
     } else if (absDiv >= 1.5) {
-        divColor = divV > 0 ? '#3fb950' : '#f85149';
+        divColor = divV > 0 ? '#3db87a' : '#ef4444';
         divLabel = '◆ STRONG';  divDesc = divV > 0 ? 'Bullish accumulation against falling gas' : 'Bearish distribution into rising gas';
     } else {
-        divColor = divV > 0 ? 'rgba(63,185,80,1)' : 'rgba(248,81,73,1)';
+        divColor = divV > 0 ? 'rgba(96,200,166,1)' : 'rgba(200,100,100,1)';
         divLabel = '◆ MILD';    divDesc = divV > 0 ? 'Mild bullish-contrarian flow' : 'Mild bearish-contrarian flow';
     }
     const ng5dStr   = ng5d !== null ? ((ng5d >= 0 ? '+' : '') + (ng5d * 100).toFixed(1) + '%') : '—';
-    const ng5dColor = ng5d === null ? '#8b949e' : ng5d >= 0 ? '#3fb950' : '#f85149';
+    const ng5dColor = ng5d === null ? '#94a3b8' : ng5d >= 0 ? '#3db87a' : '#ef4444';
 
     tip.innerHTML = `
         <div style="color:var(--cyan); font-size:0.7rem; font-weight:800; margin-bottom:6px;">${fmtDateLong(d.date)}</div>
@@ -557,7 +557,7 @@ function handleFlowNGHover(e) {
         <div style="color:${divColor}; font-size:0.62rem; font-weight:700; margin-top:2px;">${divLabel} — ${divDesc}</div>
         <div style="display:flex; justify-content:space-between; gap:16px; margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
             <span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">COMP Z (underlying)</span>
-            <span style="color:rgba(139,148,158,0.8); font-weight:700; font-family:'JetBrains Mono',monospace;">${d.z >= 0 ? '+' : ''}${d.z.toFixed(2)}σ</span>
+            <span style="color:rgba(148,163,184,0.8); font-weight:700; font-family:'JetBrains Mono',monospace;">${d.z >= 0 ? '+' : ''}${d.z.toFixed(2)}σ</span>
         </div>
         <div style="display:flex; justify-content:space-between; gap:16px; margin-top:2px;">
             <span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">NG 5D RETURN</span>
@@ -565,7 +565,7 @@ function handleFlowNGHover(e) {
         </div>
         <div style="display:flex; justify-content:space-between; gap:16px; margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
             <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">NG=F PRICE</span>
-            <span style="color:#fb8f44; font-weight:800; font-family:'JetBrains Mono',monospace;">${ngClose !== null ? '$' + ngClose.toFixed(3) : 'N/A'}</span>
+            <span style="color:#4ab8d8; font-weight:800; font-family:'JetBrains Mono',monospace;">${ngClose !== null ? '$' + ngClose.toFixed(3) : 'N/A'}</span>
         </div>`;
     tip.style.display = 'block';
     const tx = Math.min(rect.width - 240, Math.max(10, x - 110));
@@ -706,13 +706,13 @@ function drawChartReactivity(flow, ng) {
 
     // ── 1. Background shading for ±1.5σ zones ──────────────────────────────────
     const y15p = getYReact(1.5), y15n = getYReact(-1.5);
-    ctx.fillStyle = 'rgba(139,148,158,0.04)';
+    ctx.fillStyle = 'rgba(148,163,184,0.04)';
     ctx.fillRect(pad.left, pad.top, cw, y15p - pad.top);
     ctx.fillRect(pad.left, y15n, cw, pad.top + ch - y15n);
 
     // ── 2. Reference lines ──────────────────────────────────────────────────────
     ctx.setLineDash([4, 3]); ctx.lineWidth = 0.8;
-    ctx.strokeStyle = 'rgba(139,148,158,0.25)';
+    ctx.strokeStyle = 'rgba(148,163,184,0.25)';
     ctx.beginPath(); ctx.moveTo(pad.left, y15p); ctx.lineTo(pad.left + cw, y15p); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(pad.left, y15n); ctx.lineTo(pad.left + cw, y15n); ctx.stroke();
     ctx.setLineDash([]);
@@ -722,7 +722,7 @@ function drawChartReactivity(flow, ng) {
 
     // ── 3. Zone label ───────────────────────────────────────────────────────────
     ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(139,148,158,0.5)';
+    ctx.fillStyle = 'rgba(148,163,184,0.5)';
     ctx.fillText('REACTIVITY INTENSITY (Momentum Chasing)', pad.left + 6, (pad.top + y15p) / 2);
 
     // ── 4. Reactivity bars (neutral gray) ────────────────────────────────────────
@@ -731,7 +731,7 @@ function drawChartReactivity(flow, ng) {
         const v = reactIntensities[i];
         if (v === 0) continue;
         const x = getX(i);
-        ctx.fillStyle = v >= 1.5 ? 'rgba(139,148,158,0.72)' : 'rgba(139,148,158,0.55)';
+        ctx.fillStyle = v >= 1.5 ? 'rgba(148,163,184,0.72)' : 'rgba(148,163,184,0.55)';
         const yTop = getYReact(v);
         ctx.fillRect(x - bw / 2, Math.min(yTop, y0), bw, Math.abs(yTop - y0));
     }
@@ -742,7 +742,7 @@ function drawChartReactivity(flow, ng) {
     reactTicks.forEach(v => {
         const y = getYReact(v);
         if (y < pad.top - 5 || y > pad.top + ch + 5) return;
-        ctx.fillStyle = 'rgba(139,148,158,0.6)';
+        ctx.fillStyle = 'rgba(148,163,184,0.6)';
         ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1), pad.left - 6, y);
     });
 
@@ -754,12 +754,12 @@ function drawChartReactivity(flow, ng) {
         const i = state.hoverReactivityIdx;
         const x = getX(i);
         ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + ch);
-        ctx.strokeStyle = 'rgba(56,139,253,0.2)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.strokeStyle = 'rgba(0,255,255,0.2)'; ctx.lineWidth = 1; ctx.stroke();
 
         const v = reactIntensities[i];
         if (v !== 0) {
             ctx.beginPath(); ctx.arc(x, getYReact(v), 4, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(139,148,158,0.9)'; ctx.fill();
+            ctx.fillStyle = 'rgba(148,163,184,0.9)'; ctx.fill();
             ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
         }
     }
@@ -795,18 +795,18 @@ function handleReactivityHover(e) {
         reactDesc = 'Moderate crowd momentum chasing — potential reversal setup';
     }
     const ng5dStr = ng5d !== null ? ((ng5d >= 0 ? '+' : '') + (ng5d * 100).toFixed(1) + '%') : '—';
-    const ng5dColor = ng5d === null ? '#8b949e' : ng5d >= 0 ? '#3fb950' : '#f85149';
+    const ng5dColor = ng5d === null ? '#94a3b8' : ng5d >= 0 ? '#3db87a' : '#ef4444';
 
     tip.innerHTML = `
         <div style="color:var(--cyan); font-size:0.7rem; font-weight:800; margin-bottom:6px;">${fmtDateLong(d.date)}</div>
         <div style="display:flex; justify-content:space-between; gap:16px;">
             <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">REACTIVITY</span>
-            <span style="color:rgba(139,148,158,0.9); font-weight:800; font-family:'JetBrains Mono',monospace;">${reactV >= 0 ? '+' : ''}${reactV.toFixed(2)}σ</span>
+            <span style="color:rgba(148,163,184,0.9); font-weight:800; font-family:'JetBrains Mono',monospace;">${reactV >= 0 ? '+' : ''}${reactV.toFixed(2)}σ</span>
         </div>
-        <div style="color:rgba(139,148,158,0.9); font-size:0.62rem; font-weight:700; margin-top:2px;">${reactLabel} — ${reactDesc}</div>
+        <div style="color:rgba(148,163,184,0.9); font-size:0.62rem; font-weight:700; margin-top:2px;">${reactLabel} — ${reactDesc}</div>
         <div style="display:flex; justify-content:space-between; gap:16px; margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
             <span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">COMP Z (underlying)</span>
-            <span style="color:rgba(139,148,158,0.8); font-weight:700; font-family:'JetBrains Mono',monospace;">${d.z >= 0 ? '+' : ''}${d.z.toFixed(2)}σ</span>
+            <span style="color:rgba(148,163,184,0.8); font-weight:700; font-family:'JetBrains Mono',monospace;">${d.z >= 0 ? '+' : ''}${d.z.toFixed(2)}σ</span>
         </div>
         <div style="display:flex; justify-content:space-between; gap:16px; margin-top:2px;">
             <span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">NG 5D RETURN</span>
@@ -952,7 +952,7 @@ function renderFlowHeatCalendar(offset = 0) {
             if (absV < cutoff) {
                 isDimmed = true;
                 cellPeaksClass = ' heat-dim';
-                bg = '#0d1117';
+                bg = '#0b0b14';
                 borderStyle = '1px solid transparent';
                 fgColor = 'rgba(255, 255, 255, 0.08)';
             } else {
@@ -975,17 +975,17 @@ function renderFlowHeatCalendar(offset = 0) {
                 fgColor = 'rgba(255, 255, 255, 0.15)';
             } else if (absV >= 0.3) {
                 alpha = Math.min(0.85, 0.22 + (absV / 2.0) * 0.63);
-                const rColor = val >= 0 ? '63, 185, 80' : '248, 81, 73';
+                const rColor = val >= 0 ? '61, 184, 122' : '239, 68, 68';
                 bg = `rgba(${rColor}, ${alpha})`;
                 borderStyle = `1px solid rgba(${rColor}, ${Math.min(1, alpha + 0.15)})`;
-                fgColor = (alpha > 0.45) ? '#fff' : (val >= 0 ? '#3fb950' : '#f85149');
+                fgColor = (alpha > 0.45) ? '#fff' : (val >= 0 ? '#3db87a' : '#ef4444');
             }
         }
         
         // Divergence Badge (in Unified Mode) — hide if cell is dimmed
         let badge = '';
         if (mode === 'unified' && d.divVal !== 0 && !isDimmed) {
-            const badgeColor = d.divVal > 0 ? '#3fb950' : '#f85149';
+            const badgeColor = d.divVal > 0 ? '#3db87a' : '#ef4444';
             badge = `<div class="flow-heat-badge" style="background:${badgeColor};"></div>`;
             if (!peaksMode) {
                 borderStyle = `2px solid ${badgeColor}`;
@@ -995,7 +995,7 @@ function renderFlowHeatCalendar(offset = 0) {
         // Highlight current day if it's the very last day of data
         let shadowStyle = '';
         if (i === dataLength - 1) {
-            shadowStyle = 'box-shadow: 0 0 0 2px rgba(56,139,253, 0.85), 0 0 8px rgba(56,139,253, 0.25);';
+            shadowStyle = 'box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.85), 0 0 8px rgba(0, 229, 255, 0.25);';
         }
         
         html += `
@@ -1009,7 +1009,7 @@ function renderFlowHeatCalendar(offset = 0) {
     }
     
     html += '</div>';
-    html += `<div id="flow-heat-tooltip" style="position:absolute; display:none; background:rgba(22,27,34,0.95); border:1px solid rgba(88,166,255,0.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px); border-radius:12px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:220px;"></div>`;
+    html += `<div id="flow-heat-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:220px;"></div>`;
     elContainer.innerHTML = html;
     
     // Update peak count badge
@@ -1040,18 +1040,18 @@ function setupFlowHeatTooltip() {
             const d = state.compositeZ[idx];
             if (!d) return;
             
-            const zColor = d.z >= 0 ? '#3fb950' : '#f85149';
+            const zColor = d.z >= 0 ? '#3db87a' : '#ef4444';
             const zLabel = d.z >= 0 ? 'UPWARD PRESSURE' : 'DOWNWARD PRESSURE';
             const zIntensity = Math.abs(d.z) > 1.5 ? 'EXTREME' : Math.abs(d.z) > 1 ? 'STRONG' : Math.abs(d.z) > 0.5 ? 'MODERATE' : 'MILD';
             
             let divHtml = '';
             if (d.divVal !== 0) {
-                const divColor = d.divVal > 0 ? '#3fb950' : '#f85149';
+                const divColor = d.divVal > 0 ? '#3db87a' : '#ef4444';
                 const divType = d.divVal > 0 ? 'BULLISH DIVERGENCE (Leading)' : 'BEARISH DIVERGENCE (Leading)';
                 const divDesc = d.divVal > 0 ? 'Capital inflows despite falling gas prices' : 'Capital outflows despite rising gas prices';
                 divHtml = `
                     <div style="margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
-                        <div style="color:${divColor}; font-size:0.62rem; font-weight:800;">${(window.Icons || {}).zap || ''} ${divType}</div>
+                        <div style="color:${divColor}; font-size:0.62rem; font-weight:800;">⚡ ${divType}</div>
                         <div style="color:rgba(255,255,255,0.6); font-size:0.56rem; font-style:italic;">${divDesc}</div>
                     </div>`;
             } else if (d.ng5d !== null && Math.abs(d.z) >= 0.3) {
@@ -1060,7 +1060,7 @@ function setupFlowHeatTooltip() {
                 if (flowUp === ngUp) {
                     divHtml = `
                         <div style="margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
-                            <div style="color:#8b949e; font-size:0.6rem; font-weight:700;">○ REACTIVE FLOW</div>
+                            <div style="color:#94a3b8; font-size:0.6rem; font-weight:700;">○ REACTIVE FLOW</div>
                             <div style="color:rgba(255,255,255,0.5); font-size:0.56rem; font-style:italic;">Capital following price momentum</div>
                         </div>`;
                 }
@@ -1068,18 +1068,18 @@ function setupFlowHeatTooltip() {
             
             const ngClose = state.ngHistory[d.date];
             const ng5dStr = d.ng5d !== null ? `${d.ng5d >= 0 ? '+' : ''}${(d.ng5d * 100).toFixed(1)}%` : '—';
-            const ng5dColor = d.ng5d === null ? '#8b949e' : d.ng5d >= 0 ? '#3fb950' : '#f85149';
+            const ng5dColor = d.ng5d === null ? '#94a3b8' : d.ng5d >= 0 ? '#3db87a' : '#ef4444';
             
             let etfHtml = '';
             if (d.etfs) {
                 etfHtml = `
                     <div style="margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06); display:grid; grid-template-columns:1fr 1fr; gap:3px 12px;">
-                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">BOIL: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.BOIL >= 0 ? '#3fb950' : '#f85149'}">${d.etfs.BOIL >= 0 ? '+' : ''}${d.etfs.BOIL.toFixed(1)}</span></div>
-                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">KOLD: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.KOLD >= 0 ? '#3fb950' : '#f85149'}">${d.etfs.KOLD >= 0 ? '+' : ''}${d.etfs.KOLD.toFixed(1)}</span></div>
-                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">HNU: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.HNU >= 0 ? '#3fb950' : '#f85149'}">${d.etfs.HNU >= 0 ? '+' : ''}${d.etfs.HNU.toFixed(1)}</span></div>
-                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">HND: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.HND >= 0 ? '#3fb950' : '#f85149'}">${d.etfs.HND >= 0 ? '+' : ''}${d.etfs.HND.toFixed(1)}</span></div>
-                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">3NGL: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs['3NGL'] >= 0 ? '#3fb950' : '#f85149'}">${d.etfs['3NGL'] >= 0 ? '+' : ''}${d.etfs['3NGL'].toFixed(1)}</span></div>
-                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">3NGS: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs['3NGS'] >= 0 ? '#3fb950' : '#f85149'}">${d.etfs['3NGS'] >= 0 ? '+' : ''}${d.etfs['3NGS'].toFixed(1)}</span></div>
+                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">BOIL: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.BOIL >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.BOIL >= 0 ? '+' : ''}${d.etfs.BOIL.toFixed(1)}</span></div>
+                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">KOLD: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.KOLD >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.KOLD >= 0 ? '+' : ''}${d.etfs.KOLD.toFixed(1)}</span></div>
+                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">HNU: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.HNU >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.HNU >= 0 ? '+' : ''}${d.etfs.HNU.toFixed(1)}</span></div>
+                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">HND: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs.HND >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs.HND >= 0 ? '+' : ''}${d.etfs.HND.toFixed(1)}</span></div>
+                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">3NGL: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs['3NGL'] >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs['3NGL'] >= 0 ? '+' : ''}${d.etfs['3NGL'].toFixed(1)}</span></div>
+                        <div style="font-size:0.55rem; color:rgba(255,255,255,0.5);">3NGS: <span style="font-family:'JetBrains Mono'; font-weight:700; color:${d.etfs['3NGS'] >= 0 ? '#3db87a' : '#ef4444'}">${d.etfs['3NGS'] >= 0 ? '+' : ''}${d.etfs['3NGS'].toFixed(1)}</span></div>
                     </div>`;
             }
 
@@ -1093,16 +1093,16 @@ function setupFlowHeatTooltip() {
                 
                 <div style="display:flex; justify-content:space-between; gap:16px; margin-top:3px;">
                     <span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">LONG AVERAGE</span>
-                    <span style="color:#d29922; font-size:0.6rem; font-weight:700; font-family:'JetBrains Mono';">${d.longZ >= 0 ? '+' : ''}${d.longZ.toFixed(2)}</span>
+                    <span style="color:#F5C542; font-size:0.6rem; font-weight:700; font-family:'JetBrains Mono';">${d.longZ >= 0 ? '+' : ''}${d.longZ.toFixed(2)}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; gap:16px; margin-top:2px;">
                     <span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">SHORT AVERAGE</span>
-                    <span style="color:#388bfd; font-size:0.6rem; font-weight:700; font-family:'JetBrains Mono';">${d.shortZ >= 0 ? '+' : ''}${d.shortZ.toFixed(2)}</span>
+                    <span style="color:#4A9CF5; font-size:0.6rem; font-weight:700; font-family:'JetBrains Mono';">${d.shortZ >= 0 ? '+' : ''}${d.shortZ.toFixed(2)}</span>
                 </div>
 
                 <div style="display:flex; justify-content:space-between; gap:16px; margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
                     <span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">NG=F PRICE</span>
-                    <span style="color:#fb8f44; font-weight:700; font-family:'JetBrains Mono';">${ngClose !== undefined ? '$' + ngClose.toFixed(3) : '—'}</span>
+                    <span style="color:#4ab8d8; font-weight:700; font-family:'JetBrains Mono';">${ngClose !== undefined ? '$' + ngClose.toFixed(3) : '—'}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; gap:16px; margin-top:2px;">
                     <span style="color:rgba(255,255,255,0.5); font-size:0.58rem;">NG 5D RETURN</span>
@@ -1265,7 +1265,7 @@ function drawChartFlowVelocity(flow, ng) {
         if (state.velValsCache[i] && state.velValsCache[i].cycleState === 'FLOW EXHAUSTION WARNING') {
             const x = getX(i);
             const bw = Math.max(1, cw / flow.length);
-            ctx.fillStyle = 'rgba(210,153,34,0.12)';
+            ctx.fillStyle = 'rgba(245,158,11,0.12)';
             ctx.fillRect(x - bw / 2, pad.top, bw, ch);
         }
     }
@@ -1273,9 +1273,9 @@ function drawChartFlowVelocity(flow, ng) {
     // 2. Reference Lines
     const y2p = getYVel(2.0), y2n = getYVel(-2.0);
     ctx.setLineDash([4, 3]); ctx.lineWidth = 0.8;
-    ctx.strokeStyle = 'rgba(63,185,80,0.35)';
+    ctx.strokeStyle = 'rgba(61,184,122,0.35)';
     ctx.beginPath(); ctx.moveTo(pad.left, y2p); ctx.lineTo(pad.left + cw, y2p); ctx.stroke();
-    ctx.strokeStyle = 'rgba(248,81,73,0.35)';
+    ctx.strokeStyle = 'rgba(239,68,68,0.35)';
     ctx.beginPath(); ctx.moveTo(pad.left, y2n); ctx.lineTo(pad.left + cw, y2n); ctx.stroke();
     ctx.setLineDash([]);
 
@@ -1288,7 +1288,7 @@ function drawChartFlowVelocity(flow, ng) {
         const v = velZ1d[i];
         if (!isFinite(v) || Math.abs(v) < 0.1) continue;
         const x = getX(i);
-        ctx.fillStyle = v > 0 ? 'rgba(63,185,80,0.75)' : 'rgba(248,81,73,0.75)';
+        ctx.fillStyle = v > 0 ? 'rgba(61,184,122,0.75)' : 'rgba(239,68,68,0.75)';
         const yTop = getYVel(v);
         ctx.fillRect(x - bw / 2, Math.min(yTop, y0), bw, Math.abs(yTop - y0));
     }
@@ -1302,7 +1302,7 @@ function drawChartFlowVelocity(flow, ng) {
         const x = getX(i), y = getYVel(v);
         started ? ctx.lineTo(x, y) : (ctx.moveTo(x, y), started = true);
     }
-    ctx.strokeStyle = '#fb8f44'; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.strokeStyle = '#4ab8d8'; ctx.lineWidth = 1.6; ctx.stroke();
 
     // 5. NG=F Price Line
     ctx.beginPath();
@@ -1322,7 +1322,7 @@ function drawChartFlowVelocity(flow, ng) {
     velTicks.forEach(v => {
         const y = getYVel(v);
         if (y >= pad.top - 2 && y <= pad.top + ch + 2) {
-            ctx.fillStyle = Math.abs(v) >= 1.5 ? (v >= 0 ? '#3fb950' : '#f85149') : 'rgba(139,148,158,0.6)';
+            ctx.fillStyle = Math.abs(v) >= 1.5 ? (v >= 0 ? '#3db87a' : '#ef4444') : 'rgba(148,163,184,0.6)';
             ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1) + 'σ', pad.left - 6, y);
         }
     });
@@ -1336,7 +1336,7 @@ function drawChartFlowVelocity(flow, ng) {
 
         // Bright vertical crosshair line
         ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + ch);
-        ctx.strokeStyle = 'rgba(56,139,253,0.45)'; ctx.lineWidth = 1.2; ctx.setLineDash([]); ctx.stroke();
+        ctx.strokeStyle = 'rgba(0,255,255,0.45)'; ctx.lineWidth = 1.2; ctx.setLineDash([]); ctx.stroke();
 
         const v3 = velZ3d[i];
         const v1 = velZ1d[i];
@@ -1345,18 +1345,18 @@ function drawChartFlowVelocity(flow, ng) {
         if (isFinite(v3)) {
             const y3 = getYVel(v3);
             ctx.beginPath(); ctx.arc(x, y3, 8, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(56,139,253,0.25)'; ctx.fill();
+            ctx.fillStyle = 'rgba(0,255,255,0.25)'; ctx.fill();
             ctx.beginPath(); ctx.arc(x, y3, 5, 0, Math.PI * 2);
-            ctx.fillStyle = '#fb8f44'; ctx.fill();
+            ctx.fillStyle = '#4ab8d8'; ctx.fill();
             ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
         }
 
         // Pointer 2: 1D Velocity Bar (Green/Red Glow Pointer)
         if (isFinite(v1) && Math.abs(v1) >= 0.1) {
             const y1 = getYVel(v1);
-            const pCol = v1 >= 0 ? '#3fb950' : '#f85149';
+            const pCol = v1 >= 0 ? '#3db87a' : '#ef4444';
             ctx.beginPath(); ctx.arc(x, y1, 7, 0, Math.PI * 2);
-            ctx.fillStyle = v1 >= 0 ? 'rgba(63,185,80,0.3)' : 'rgba(248,81,73,0.3)'; ctx.fill();
+            ctx.fillStyle = v1 >= 0 ? 'rgba(61,184,122,0.3)' : 'rgba(239,68,68,0.3)'; ctx.fill();
             ctx.beginPath(); ctx.arc(x, y1, 4.5, 0, Math.PI * 2);
             ctx.fillStyle = pCol; ctx.fill();
             ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.stroke();
@@ -1369,7 +1369,7 @@ function drawChartFlowVelocity(flow, ng) {
             ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fill();
             ctx.beginPath(); ctx.arc(x, yNg, 4.5, 0, Math.PI * 2);
             ctx.fillStyle = '#ffffff'; ctx.fill();
-            ctx.strokeStyle = '#fb8f44'; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.strokeStyle = '#4ab8d8'; ctx.lineWidth = 1.5; ctx.stroke();
         }
     }
 }
@@ -1397,23 +1397,23 @@ function handleFlowVelocityHover(e) {
 
     const v1Str = (cache.vel1d >= 0 ? '+' : '') + cache.vel1d.toFixed(2) + 'σ';
     const v3Str = (cache.vel3d >= 0 ? '+' : '') + cache.vel3d.toFixed(2) + 'σ';
-    const v3Color = cache.vel3d >= 0 ? '#3fb950' : '#f85149';
+    const v3Color = cache.vel3d >= 0 ? '#3db87a' : '#ef4444';
     
     const isExhaustion = cache.cycleState === 'FLOW EXHAUSTION WARNING';
     const isLaunch = cache.cycleState === 'BULL LAUNCH IMPULSE';
     const isSurge = cache.cycleState === 'SHORT SURGE IMPULSE';
     const isSqueeze = cache.cycleState === 'SHORT EXHAUSTION BOTTOM';
 
-    let stateColor = '#8b949e';
-    if (isExhaustion) stateColor = '#d29922';
-    else if (isLaunch) stateColor = '#3fb950';
-    else if (isSurge || isSqueeze) stateColor = '#f85149';
+    let stateColor = '#94a3b8';
+    if (isExhaustion) stateColor = '#f59e0b';
+    else if (isLaunch) stateColor = '#3db87a';
+    else if (isSurge || isSqueeze) stateColor = '#ef4444';
 
     tip.innerHTML = `
         <div style="color:var(--cyan); font-size:0.72rem; font-weight:800; margin-bottom:6px;">${fmtDateLong(d.date)}</div>
         <div style="display:flex; justify-content:space-between; gap:16px;">
             <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">1D VELOCITY Z</span>
-            <span style="color:${cache.vel1d >= 0 ? '#3fb950' : '#f85149'}; font-weight:800; font-family:'JetBrains Mono',monospace;">${v1Str}</span>
+            <span style="color:${cache.vel1d >= 0 ? '#3db87a' : '#ef4444'}; font-weight:800; font-family:'JetBrains Mono',monospace;">${v1Str}</span>
         </div>
         <div style="display:flex; justify-content:space-between; gap:16px; margin-top:2px;">
             <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">3D VELOCITY Z</span>
@@ -1427,7 +1427,7 @@ function handleFlowVelocityHover(e) {
         </div>
         <div style="display:flex; justify-content:space-between; gap:16px; margin-top:6px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
             <span style="color:rgba(255,255,255,0.6); font-size:0.62rem;">NG=F PRICE</span>
-            <span style="color:#fb8f44; font-weight:800; font-family:'JetBrains Mono',monospace;">${ngClose !== null ? '$' + ngClose.toFixed(3) : 'N/A'}</span>
+            <span style="color:#4ab8d8; font-weight:800; font-family:'JetBrains Mono',monospace;">${ngClose !== null ? '$' + ngClose.toFixed(3) : 'N/A'}</span>
         </div>`;
     tip.style.display = 'block';
     const tx = Math.min(rect.width - 240, Math.max(10, x - 110));
