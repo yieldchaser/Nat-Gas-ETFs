@@ -3,6 +3,10 @@
 fetch_cvol.py  —  Daily NGVL CVOL history scraper
 Reads CME auth from environment variables (GitHub Actions secrets).
 
+IMPORTANT: The QuikStrike API only returns ~7 days of rolling intraday data.
+This script must run daily to prevent data gaps. Historical backfills require
+manual download from the CME web interface (click "ALL" on the chart).
+
 Usage:
     CME_TOKEN=<value> CME_USERINFO=<value> python fetch_cvol.py
 """
@@ -25,12 +29,11 @@ POPUP_BASE      = f"{QUIKSTRIKE_BASE}/User/ControlPopup.aspx"
 POPUP_PARAMS = {
     "ControlPath": "~/UserControls/VolIndex/HistoryChart/ViewControl.ascx",
     "insid":       "249523328",
-    "dsrc":        "Daily",
+    "dsrc":        "Intraday",
     "pcode":       "LN",
     "top":         "10",
-    "caption":     "Historical CVOL",
+    "caption":     "Real-time CVOL",
     "gcode":       "Red",
-    "period":      "Max",  # Try to request maximum historical data
 }
 
 # Parameters for the QuikStrike dashboard page (used to activate a qsid via SSO)
