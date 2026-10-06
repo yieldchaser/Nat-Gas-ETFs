@@ -23,13 +23,19 @@ const Drawdown = {
     init() {
         this.canvas = document.getElementById('drawdown-canvas');
         this.tooltip = document.getElementById('chart-tooltip');
-        if (!this.canvas) return;
+        if (!this.canvas) {
+            console.error('Drawdown canvas not found');
+            return;
+        }
         
         this.ctx = this.canvas.getContext('2d');
         this.setupEventListeners();
+        console.log('Drawdown chart initialized');
     },
 
     setupEventListeners() {
+        if (!this.canvas) return;
+        
         // Horizon buttons
         document.querySelectorAll('.dd-horizon-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -43,7 +49,7 @@ const Drawdown = {
         // Canvas mouse events for tooltip
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.canvas.addEventListener('mouseleave', () => {
-            this.tooltip.style.display = 'none';
+            if (this.tooltip) this.tooltip.style.display = 'none';
         });
 
         // Resize handling
@@ -51,15 +57,23 @@ const Drawdown = {
     },
 
     async loadData(dashboardData) {
-        if (!dashboardData || !dashboardData.etfs) return;
+        if (!dashboardData || !dashboardData.etfs) {
+            console.error('Drawdown: No dashboard data provided');
+            return;
+        }
 
+        console.log('Drawdown: Loading data for ETFs...');
+        
         // Calculate drawdowns for all ETFs
         const drawdowns = {};
         const etfList = ['BOIL', 'KOLD', 'HNU', 'HND', '3NGL', '3NGS'];
         
         etfList.forEach(ticker => {
             const etf = dashboardData.etfs[ticker];
-            if (!etf || !etf.history) return;
+            if (!etf || !etf.history) {
+                console.warn(`Drawdown: No history for ${ticker}`);
+                return;
+            }
 
             const history = etf.history;
             const drawdownData = [];
@@ -87,9 +101,11 @@ const Drawdown = {
             });
 
             drawdowns[ticker] = drawdownData;
+            console.log(`Drawdown: Loaded ${drawdownData.length} points for ${ticker}`);
         });
 
         this.chartData = drawdowns;
+        console.log('Drawdown: Data loaded, rendering chart...');
         this.render();
     },
 
@@ -124,7 +140,15 @@ const Drawdown = {
     },
 
     render() {
-        if (!this.canvas || !this.chartData) return;
+        if (!this.canvas || !this.chartData) {
+            console.log('Drawdown render skipped:', { 
+                hasCanvas: !!this.canvas, 
+                hasData: !!this.chartData 
+            });
+            return;
+        }
+
+        console.log('Drawdown: Starting render...');
 
         const dpr = window.devicePixelRatio || 1;
         const rect = this.canvas.getBoundingClientRect();
@@ -159,7 +183,12 @@ const Drawdown = {
         });
 
         const sortedDates = Array.from(allDates).sort();
-        if (sortedDates.length === 0) return;
+        if (sortedDates.length === 0) {
+            console.warn('Drawdown: No data to render');
+            return;
+        }
+
+        console.log(`Drawdown: Rendering ${sortedDates.length} dates, drawdown range: ${minDrawdown.toFixed(2)}% to ${maxDrawdown.toFixed(2)}%`);
 
         // Round min drawdown to nearest -10%
         minDrawdown = Math.floor(minDrawdown / 10) * 10;
@@ -187,6 +216,8 @@ const Drawdown = {
         this.chartW = chartW;
         this.chartH = chartH;
         this.drawdownRange = drawdownRange;
+        
+        console.log('Drawdown: Render complete');
     },
 
     drawGrid(padding, chartW, chartH, minDrawdown, dates) {
