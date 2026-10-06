@@ -25,7 +25,7 @@ POPUP_BASE      = f"{QUIKSTRIKE_BASE}/User/ControlPopup.aspx"
 POPUP_PARAMS = {
     "ControlPath": "~/UserControls/VolIndex/HistoryChart/ViewControl.ascx",
     "insid":       "249523328",
-    "dsrc":        "Intraday",
+    "dsrc":        "Daily",
     "pcode":       "LN",
     "top":         "10",
     "caption":     "Real-time CVOL",
