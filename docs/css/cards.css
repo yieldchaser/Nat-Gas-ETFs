@@ -3,35 +3,32 @@
    ============================================ */
 
 .etf-card {
-    background: linear-gradient(145deg, rgba(33, 38, 45, 0.8) 0%, rgba(22, 27, 34, 0.8) 100%);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--card-radius);
     padding: 14px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    transition: transform 0.2s var(--ease-structural), border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 .etf-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(56, 139, 253, 0.4);
-    box-shadow: var(--shadow-lift);
+    border-color: var(--border-accent);
 }
 
 .etf-card.alert-elevated {
-    border-left: 3px solid var(--elevated);
+    border-left: 3px solid var(--yellow);
 }
 
 .etf-card.alert-high {
-    border-left: 3px solid var(--stressed);
+    border-left: 3px solid var(--orange);
 }
 
 .etf-card.alert-critical {
-    border-left: 3px solid var(--crisis);
+    border-left: 3px solid var(--red);
     animation: alert-pulse 2s infinite;
 }
 
 .etf-card.alert-extreme {
-    border-left: 3px solid var(--accent-purple);
+    border-left: 3px solid var(--purple);
     animation: extreme-pulse 1.5s infinite;
 }
 
@@ -50,21 +47,17 @@
 }
 
 .card-ticker {
-    font-size: 15px;
+    font-size: 1.1rem;
     font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .section-long .card-ticker { color: var(--long-accent); }
 .section-short .card-ticker { color: var(--short-accent); }
 
 .card-name {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-muted);
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.85);
     max-width: 100px;
     white-space: nowrap;
     overflow: hidden;
@@ -76,20 +69,14 @@
 }
 
 .card-price {
-    font-size: 20px;
+    font-size: 1.2rem;
     font-weight: 700;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum";
-    color: var(--text);
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+    color: var(--text-bright);
 }
 
 .card-change {
-    font-size: 11px;
+    font-size: 0.75rem;
     font-weight: 600;
-    letter-spacing: 0.02em;
-    font-variant-numeric: tabular-nums;
 }
 
 .card-change.positive { color: var(--green); }
@@ -114,24 +101,22 @@
 }
 
 .mode-pill {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 2px 6px;
-    min-height: 20px;
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 1px 5px;
     border-radius: 4px;
     cursor: pointer;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
     user-select: none;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background 0.15s, color 0.15s;
 }
 
-.mode-pill:hover { color: var(--text); }
+.mode-pill:hover { color: rgba(255, 255, 255, 0.85); }
 
 .mode-pill.active-pill {
-    background: rgba(56, 139, 253, 0.18);
-    color: var(--accent);
+    background: var(--border-accent);
+    color: var(--text-bright);
 }
 
 /* Sparkline */
@@ -165,8 +150,8 @@
     gap: 6px 12px;
     margin: 8px 0;
     padding: 8px 0;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
+    border-top: 1px solid var(--border-primary);
+    border-bottom: 1px solid var(--border-primary);
 }
 
 .metric-item {
@@ -176,20 +161,14 @@
 }
 
 .metric-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-muted);
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.5px;
 }
 
 .metric-value {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum";
-    color: var(--text);
+    font-size: 0.8rem;
+    font-weight: 600;
 }
 
 /* Percentile Bands */
@@ -205,11 +184,8 @@
 }
 
 .percentile-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-muted);
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.85);
     width: 32px;
     text-align: right;
     flex-shrink: 0;
@@ -218,7 +194,7 @@
 .percentile-bar-bg {
     flex: 1;
     height: 10px;
-    background: var(--surface2);
+    background: var(--bg-primary);
     border-radius: 2px;
     overflow: hidden;
     position: relative;
@@ -231,22 +207,21 @@
 }
 
 .percentile-value {
-    font-size: 11px;
+    font-size: 0.65rem;
     font-weight: 600;
-    font-variant-numeric: tabular-nums;
     width: 36px;
     text-align: right;
     flex-shrink: 0;
 }
 
 /* Percentile color classes */
-.pct-quiet .percentile-bar-fill { background: rgba(63, 185, 80, 0.85); }
+.pct-quiet .percentile-bar-fill { background: var(--blue-dim); }
 .pct-elevated .percentile-bar-fill { background: var(--yellow); }
 .pct-high .percentile-bar-fill { background: var(--orange); }
 .pct-critical .percentile-bar-fill { background: var(--red); }
 .pct-extreme .percentile-bar-fill { background: var(--purple); }
 
-.pct-quiet .percentile-value { color: var(--calm); }
+.pct-quiet .percentile-value { color: var(--blue); }
 .pct-elevated .percentile-value { color: var(--yellow); }
 .pct-high .percentile-value { color: var(--orange); }
 .pct-critical .percentile-value { color: var(--red); }
@@ -267,44 +242,38 @@
 }
 
 .indicator-label {
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-muted);
+    font-size: 0.55rem;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.5px;
     display: block;
 }
 
 .indicator-value {
-    font-size: 18px;
+    font-size: 0.9rem;
     font-weight: 700;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
     display: block;
     margin-top: 2px;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
 }
 
 /* MWCA Badge */
 .mwca-badge {
     display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
 }
 
 .mwca-badge.active {
-    background: var(--accent-purple);
-    color: #fff;
+    background: var(--purple);
+    color: white;
     animation: extreme-pulse 1.5s infinite;
 }
 
 .mwca-badge.inactive {
-    background: rgba(139, 148, 158, 0.15);
-    color: var(--text-muted);
+    background: var(--bg-primary);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 /* ============================================
@@ -313,9 +282,9 @@
 .card-volatility {
     margin: 8px 0;
     padding: 8px;
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(0, 0, 0, 0.2);
     border-radius: 4px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-primary);
 }
 
 .vol-panel-header {
@@ -326,29 +295,27 @@
 }
 
 .vol-panel-title {
-    font-size: 10px;
+    font-size: 0.55rem;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 1px;
     font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-muted);
 }
 
 /* Vol Regime Badge */
 .vol-regime-badge {
     display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
 }
-.vr-low     { background: rgba(63, 185, 80, 0.15);  color: var(--accent-green); }
-.vr-quiet   { background: rgba(56, 139, 253, 0.15); color: var(--accent); }
-.vr-normal  { background: rgba(139, 148, 158, 0.15); color: var(--text); }
-.vr-high    { background: rgba(251, 143, 68, 0.15); color: var(--accent-orange); }
-.vr-extreme { background: rgba(248, 81, 73, 0.15);  color: var(--accent-red); }
-.vr-unknown { background: transparent; color: var(--text-muted); }
+.vr-low     { background: rgba(61,184,122,0.12); color: var(--green); }
+.vr-quiet   { background: rgba(74,128,184,0.12); color: var(--blue); }
+.vr-normal  { background: rgba(255,255,255,0.06); color: rgba(255, 255, 255, 0.85); }
+.vr-high    { background: rgba(192,120,40,0.12); color: var(--orange); }
+.vr-extreme { background: rgba(192,64,64,0.12); color: var(--red); }
+.vr-unknown { background: transparent; color: rgba(255, 255, 255, 0.85); }
 
 /* HV Bars */
 .hv-bars {
@@ -363,11 +330,8 @@
 }
 
 .hv-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-muted);
+    font-size: 0.58rem;
+    color: rgba(255, 255, 255, 0.85);
     width: 36px;
     text-align: right;
     flex-shrink: 0;
@@ -376,7 +340,7 @@
 .hv-bar-bg {
     flex: 1;
     height: 6px;
-    background: var(--surface2);
+    background: var(--bg-primary);
     border-radius: 2px;
     overflow: hidden;
 }
@@ -388,15 +352,14 @@
 }
 .hv-bar-low     { background: var(--green); }
 .hv-bar-quiet   { background: var(--blue); }
-.hv-bar-normal  { background: rgba(139, 148, 158, 0.55); }
+.hv-bar-normal  { background: #4a5a68; }
 .hv-bar-high    { background: var(--orange); }
 .hv-bar-extreme { background: var(--red); }
 
 .hv-value {
-    font-size: 11px;
+    font-size: 0.62rem;
     font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    color: var(--text);
+    color: rgba(255, 255, 255, 0.85);
     width: 36px;
     text-align: right;
     flex-shrink: 0;
@@ -418,22 +381,18 @@
 }
 
 .vol-stat-label {
-    font-size: 9px;
-    font-weight: 600;
-    color: var(--text-muted);
+    font-size: 0.52rem;
+    color: rgba(255, 255, 255, 0.85);
     display: block;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .vol-stat-value {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
+    font-size: 0.72rem;
+    font-weight: 600;
     display: block;
     margin-top: 1px;
-    color: var(--text);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 /* HV Term Structure arrow colours */
@@ -452,16 +411,11 @@
 }
 
 .card-dollar-volume .dv-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .card-dollar-volume .dv-value {
     font-weight: 600;
-    font-variant-numeric: tabular-nums;
 }
 
 /* ---- MOBILE ---- */

@@ -4,19 +4,12 @@
 
 const Signals = {
 
-    // Icon/prefix for each alert type — inline SVG, semantic accent (design system)
+    // Icon/prefix for each alert type
     _alertIcon(type) {
-        const I = window.Icons || {};
-        const g = (svg, color) => svg
-            ? '<span style="color:' + color + ';display:inline-flex;align-items:center;">' + svg + '</span>'
-            : '●';
         const icons = {
-            vcvi: g(I.zap, '#f85149'), cvi: g(I.fire, '#f85149'),
-            mwca: g(I.burst, '#a371f7'), rvol: g(I.chart, '#fb8f44'),
-            vps: g(I.bars, '#d29922'), atr_breakout: g(I.ruler, '#d29922'),
-            vov: g(I.spiral, '#a371f7'), vol_regime: g(I.thermo, '#fb8f44'),
-            ipsi_stress: g(I.warn, '#d29922'), fast_spike: g(I.zap, '#f85149'),
-            weather: g(I.storm, '#388bfd'), flow_accel: '▲'
+            vcvi: '⚡', cvi: '🔥', mwca: '💥', rvol: '📈', vps: '📊',
+            atr_breakout: '📐', vov: '🌀', vol_regime: '🌡', ipsi_stress: '⚠',
+            fast_spike: '⚡', weather: '⛈', flow_accel: '▲'
         };
         return icons[type] || '●';
     },
@@ -210,7 +203,7 @@ const Signals = {
                     <td style="color:${lCapColor}" data-tooltip="Long-side VCVI-63d (${pair.long}) — GAS BOTTOM signal. Threshold: 55 watch, 72 critical.">${longVcvi != null ? longVcvi.toFixed(0) : '--'}</td>
                     <td style="color:${sCapColor}" data-tooltip="Short-side VCVI-63d (${pair.short}) — GAS TOP signal. Threshold: 55 watch, 72 critical.">${shortVcvi != null ? shortVcvi.toFixed(0) : '--'}</td>
                     <td style="color:${fastColor(longVcvi5||shortVcvi5)}" data-tooltip="5d fast-window VCVI — L:${longVcvi5!=null?longVcvi5.toFixed(0):'—'} S:${shortVcvi5!=null?shortVcvi5.toFixed(0):'—'}. Threshold 45. Fires on weather spikes before 21d window catches up.">${longVcvi5!=null?longVcvi5.toFixed(0):'—'}/${shortVcvi5!=null?shortVcvi5.toFixed(0):'—'}</td>
-                    <td data-tooltip="${anySpike?`SHARP SPIKE detected on ${spikeTicker} — move >2×ATR with VCVI-5d>45`:'No sharp spike'}">${anySpike ? '<span class="spike-badge-sm">' + ((window.Icons || {}).icon ? window.Icons.icon('zap', 12) : '') + '</span>' : '—'}</td>
+                    <td data-tooltip="${anySpike?`SHARP SPIKE detected on ${spikeTicker} — move >2×ATR with VCVI-5d>45`:'No sharp spike'}">${anySpike ? '<span class="spike-badge-sm">⚡</span>' : '—'}</td>
                     <td style="color:${ipsiColor}" data-tooltip="${ipsiTip}">${ipsi != null ? ipsi.toFixed(1) + 'x' : '--'}</td>
                     <td data-tooltip="Volatility regime"><span class="vol-regime-badge ${regInfo.cls}" style="font-size:0.6rem">${regInfo.label}</span></td>
                     <td><span class="stress-status ${status}">${status.toUpperCase()}</span></td>
@@ -488,7 +481,7 @@ const Signals = {
         // Lead-time annotation (Feature 4)
         const lt = echoes.lead_time;
         const leadTimeHtml = lt && lt.median_days != null
-            ? `<div class="echo-lead-time" data-tooltip="Days from VCVI signal to peak forward return (n=${lt.count}). IQR: ${lt.p25_days}–${lt.p75_days}d">PEAK ~${lt.median_days}d  <span style="color:rgba(255,255,255,0.85)">(IQR ${lt.p25_days}–${lt.p75_days}d)</span></div>`
+            ? `<div class="echo-lead-time" data-tooltip="Days from VCVI signal to peak forward return (n=${lt.count}). IQR: ${lt.p25_days}–${lt.p75_days}d">⏱ Peak ~${lt.median_days}d  <span style="color:rgba(255,255,255,0.85)">(IQR ${lt.p25_days}–${lt.p75_days}d)</span></div>`
             : '';
 
         // Recent occurrences — last 5 with edge-window return, season tag, and lead-time
@@ -558,8 +551,7 @@ const Signals = {
             if (!s) return '';
             const cfg = regimeCfg[r] || {};
             const color = cfg.color || 'rgba(255,255,255,0.85)';
-            const Ic = window.Icons || {};
-            const icon  = r === 'extreme' ? (Ic.alert || '') : r === 'elevated' ? (Ic.warn || '') : '●';
+            const icon  = r === 'extreme' ? '🚨' : r === 'elevated' ? '⚠' : '●';
             const med   = s.median;
             const medColor = med > 2 ? 'var(--green)' : med < -2 ? 'var(--red)' : 'rgba(255, 255, 255, 0.85)';
             const wrColor  = s.win_rate > 55 ? 'var(--green)' : s.win_rate < 45 ? 'var(--red)' : 'rgba(255, 255, 255, 0.85)';
@@ -635,10 +627,10 @@ const Signals = {
                 ? `<span style="color:${seasonCfg.color}" data-tooltip="${e.season} ×${(e.seasonality_weight||1).toFixed(2)}">${seasonCfg.emoji}</span>`
                 : '';
             const overrideBadge = e.extreme_override
-                ? `<span class="ce-override-badge" data-tooltip="Extreme override: VCVI≥90 + Move>2×ATR bypassed Gate 1 minimum">${(window.Icons || {}).zap || ''}</span>`
+                ? `<span class="ce-override-badge" data-tooltip="Extreme override: VCVI≥90 + Move>2×ATR bypassed Gate 1 minimum">⚡</span>`
                 : '';
             const guardBadge = e.momentum_guard_active
-                ? `<span class="ce-guard-badge" data-tooltip="Momentum guard active: short-side VCVI bar raised (gas in seasonal uptrend)">${(window.Icons || {}).shield || ''}</span>`
+                ? `<span class="ce-guard-badge" data-tooltip="Momentum guard active: short-side VCVI bar raised (gas in seasonal uptrend)">🛡</span>`
                 : '';
             const ngZStr = e.ng_seasonal_z != null ? e.ng_seasonal_z.toFixed(2) : '—';
             const ngZColor = e.ng_seasonal_z != null
@@ -649,7 +641,7 @@ const Signals = {
             const evRegimeColor = evRegimeCfg.color || 'rgba(255,255,255,0.85)';
             const evRegimeTip = evRegimeCfg.note || evRegime;
             const evRegimeBadge = evRegime !== 'unknown'
-                ? `<span class="ce-regime-badge ce-regime-${evRegime}" style="color:${evRegimeColor}" data-tooltip="NG regime on signal date: ${evRegimeTip}">${evRegime === 'extreme' ? ((window.Icons || {}).alert || '') : evRegime === 'elevated' ? ((window.Icons || {}).warn || '') : '●'}</span>`
+                ? `<span class="ce-regime-badge ce-regime-${evRegime}" style="color:${evRegimeColor}" data-tooltip="NG regime on signal date: ${evRegimeTip}">${evRegime === 'extreme' ? '🚨' : evRegime === 'elevated' ? '⚠' : '●'}</span>`
                 : '';
             return `
                 <tr>
@@ -878,11 +870,11 @@ const Signals = {
         const shortGateNote = `Seasonal z=${sz!=null?sz.toFixed(1):'—'}. Gate fires when z ≥ +1.5σ (gas anomalously HIGH for this month). ${note}`;
         const longGateNote  = `Seasonal z=${sz!=null?sz.toFixed(1):'—'}. Gate fires when z ≤ −1.5σ (gas anomalously LOW for this month). ${note}`;
 
-        const shortGateHtml = gateShort === true  ? `<span class="ng-gate active"   data-tooltip="${shortGateNote}">SHORT ${(window.Icons || {}).icon ? window.Icons.icon('check', 11) : ''}</span>`
-                            : gateShort === false ? `<span class="ng-gate inactive" data-tooltip="${shortGateNote}">SHORT ${(window.Icons || {}).icon ? window.Icons.icon('close', 11) : ''}</span>`
+        const shortGateHtml = gateShort === true  ? `<span class="ng-gate active"   data-tooltip="${shortGateNote}">SHORT ✓</span>`
+                            : gateShort === false ? `<span class="ng-gate inactive" data-tooltip="${shortGateNote}">SHORT ✗</span>`
                             : '<span class="ng-gate unknown">SHORT ?</span>';
-        const longGateHtml  = gateLong  === true  ? `<span class="ng-gate active"   data-tooltip="${longGateNote}">LONG ${(window.Icons || {}).icon ? window.Icons.icon('check', 11) : ''}</span>`
-                            : gateLong  === false ? `<span class="ng-gate inactive" data-tooltip="${longGateNote}">LONG ${(window.Icons || {}).icon ? window.Icons.icon('close', 11) : ''}</span>`
+        const longGateHtml  = gateLong  === true  ? `<span class="ng-gate active"   data-tooltip="${longGateNote}">LONG ✓</span>`
+                            : gateLong  === false ? `<span class="ng-gate inactive" data-tooltip="${longGateNote}">LONG ✗</span>`
                             : '<span class="ng-gate unknown">LONG ?</span>';
 
         // Regime badge
@@ -894,12 +886,12 @@ const Signals = {
         const hvPct = ngPriceContext.ng_hv_pct;
         const hvStr = hvPct != null ? `NG vol at ${hvPct.toFixed(0)}th pct of own 2yr history` : '';
         const regimeTip = `Regime: ${regimeLabel}. ${regimeNote}. ${hvStr ? hvStr + '. ' : ''}Anchored to known outlier periods: 2022 bull run ($9/MMBtu, z~+3σ) and Jan 2026 cold snap (>$7/MMBtu).`;
-        const regimeBadge = `<span class="ng-regime-badge ng-regime-${regime}" style="color:${regimeColor};border-color:${regimeColor}" data-tooltip="${regimeTip}">${regime === 'extreme' ? ((window.Icons || {}).alert || '') + ' ' : regime === 'elevated' ? ((window.Icons || {}).warn || '') + ' ' : ''}${regimeLabel}</span>`;
+        const regimeBadge = `<span class="ng-regime-badge ng-regime-${regime}" style="color:${regimeColor};border-color:${regimeColor}" data-tooltip="${regimeTip}">${regime === 'extreme' ? '🚨 ' : regime === 'elevated' ? '⚠ ' : ''}${regimeLabel}</span>`;
         // Extreme regime warning strip
         const regimeWarning = regime === 'extreme'
-            ? `<div class="ng-regime-warning" style="color:${regimeColor}">${(window.Icons || {}).alert || ''} EXTREME REGIME — ${regimeNote}. Historical signal outcomes may not reflect behavior in this environment.</div>`
+            ? `<div class="ng-regime-warning" style="color:${regimeColor}">⚠ EXTREME REGIME — ${regimeNote}. Historical signal outcomes may not reflect behavior in this environment.</div>`
             : regime === 'elevated'
-            ? `<div class="ng-regime-warning ng-regime-warning-dim" style="color:${regimeColor}">${(window.Icons || {}).warn || ''} ${regimeNote}</div>`
+            ? `<div class="ng-regime-warning ng-regime-warning-dim" style="color:${regimeColor}">⚠ ${regimeNote}</div>`
             : '';
 
         const fullTip = `NG=F Henry Hub futures — $${p.toFixed(3)}, seasonal z-score ${zLabel} (${tierLabel}). ${note}. 2yr pct: ${pct!=null?pct.toFixed(0):'—'}th (for reference only — seasonal z-score drives the gates).`;
@@ -1032,7 +1024,7 @@ const Signals = {
                     .map(([t, v]) => `${t} (${v.days_ago}d ago, ${v.peak_rvol?.toFixed(1)}×)`)
                     .join(' · ');
                 return `<div class="convergence-flash-inner ${s.cls}">
-                    <span class="flash-icon">${(window.Icons || {}).zap || ''}</span>
+                    <span class="flash-icon">⚡</span>
                     <span class="flash-body">
                         <strong>${s.label} CONVERGED</strong> — All 3 ETFs spiked within ${spread} calendar days
                         <span class="flash-etfs">${etfList}</span>
