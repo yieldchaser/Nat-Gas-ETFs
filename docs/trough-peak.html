@@ -2529,13 +2529,13 @@ function renderDrawdownChart() {
     const colors = {
         'BOIL': '#c07828',
         'KOLD': '#5090a0',
-        'HNU': '#3db87a',
-        'HND': '#d4a830',
-        '3NGL': '#8855bb',
-        '3NGS': '#e06060'
+        'HNU.TO': '#3db87a',
+        'HND.TO': '#d4a830',
+        '3NGL.L': '#8855bb',
+        '3NGS.L': '#e06060'
     };
     
-    const etfs = ['BOIL', 'KOLD', 'HNU', 'HND', '3NGL', '3NGS'];
+    const etfs = ['BOIL', 'KOLD', 'HNU.TO', 'HND.TO', '3NGL.L', '3NGS.L'];
     let minDD = 0, allDates = [];
     const drawdowns = {};
     
@@ -2635,6 +2635,15 @@ function renderDrawdownChart() {
     ctx.font = '10px monospace';
     ctx.textAlign = 'left';
     
+    const labels = {
+        'BOIL': 'BOIL',
+        'KOLD': 'KOLD',
+        'HNU.TO': 'HNU',
+        'HND.TO': 'HND',
+        '3NGL.L': '3NGL',
+        '3NGS.L': '3NGS'
+    };
+    
     etfs.forEach(ticker => {
         if (!drawdowns[ticker]) return;
         
@@ -2642,7 +2651,7 @@ function renderDrawdownChart() {
         ctx.fillRect(legX, legY - 4, 12, 8);
         
         ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.fillText(ticker, legX + 18, legY);
+        ctx.fillText(labels[ticker], legX + 18, legY);
         
         legY += 18;
     });
