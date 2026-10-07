@@ -1048,6 +1048,10 @@ select.calc-input { cursor: pointer; }
             <canvas id="drawdown-canvas"></canvas>
             <div id="dd-tooltip"></div>
         </div>
+
+        <!-- ETF Chip Toggles -->
+        <div id="dd-etf-chips" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin:10px 0 8px;"></div>
+
         <div class="chart-footer">
             <div style="font-size: 0.7rem; color: #fff; opacity: 0.85;">
                 Tracks maximum decline from the rolling 52-week high for each ETF. Shows how deep and sustained drawdowns can become.
@@ -2453,7 +2457,11 @@ function renderAll() {
     renderChart();
     renderTable();
     if (typeof renderCalc === 'function') renderCalc();
-    renderDrawdownChart();
+    const ddSig = ddDataSig();
+    if (ddSig !== ddLastSig) {
+        ddLastSig = ddSig;
+        renderDrawdownChart();
+    }
 }
 
 // ── Slider ────────────────────────────────────────────────────────────────────
@@ -2527,8 +2535,15 @@ const DD_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'
 const DD_WIN_YEARS = { '1y': 1, '3y': 3, '5y': 5, '10y': 10 };
 const DD_TIP_GAP = 10 * 24 * 3600 * 1000;
 const ddHover = { t: null };
-const ddMap = { ready: false, tMin: 0, tMax: 1, padL: 56, chartW: 1 };
+const ddMap = { ready: false, tMin: 0, tMax: 1, padL: 56, chartW: 1, top: 20, chartH: 1, minDD: -10, xOf: null, yOf: null, legendHits: [] };
 const ddViewCache = { key: null, view: null };
+const ddVisible = { 'BOIL': true, 'KOLD': true, 'HNU.TO': true, 'HND.TO': true, '3NGL.L': true, '3NGS.L': true };
+const ddBaseCanvas = document.createElement('canvas');
+let ddBaseKey = null;
+let ddLastSig = -1;
+let ddTipT = null;
+let ddRafId = 0;
+let ddLastXY = null;
 
 function computeRollingDD(dates, closes) {
     const n = closes.length;
@@ -2570,24 +2585,23 @@ function buildDDView() {
         cutoff = d.getTime();
     }
     const series = [];
-    let tMin = Infinity, tMax = -Infinity, worst = 0;
+    let tMin = Infinity, tMax = -Infinity;
     for (const s of full) {
         const pts = [];
+        let sWorst = 0;
         for (let i = 0; i < s.ts.length; i++) {
             if (s.ts[i] < cutoff) continue;
             const p = { t: s.ts[i], dd: s.dd[i] };
             if (p.t < tMin) tMin = p.t;
             if (p.t > tMax) tMax = p.t;
-            if (p.dd < worst) worst = p.dd;
+            if (p.dd < sWorst) sWorst = p.dd;
             pts.push(p);
         }
-        if (pts.length) series.push({ ticker: s.ticker, pts });
+        if (pts.length) series.push({ ticker: s.ticker, pts, worst: sWorst });
     }
     if (!series.length) return null;
     if (tMax <= tMin) tMax = tMin + 24 * 3600 * 1000;
-    let minDD = Math.floor(worst / 10) * 10;
-    if (minDD > -10) minDD = -10;
-    return { series, tMin, tMax, minDD };
+    return { series, tMin, tMax };
 }
 
 function ddDataSig() {
@@ -2620,21 +2634,34 @@ function nearestDDPoint(pts, t) {
     return best;
 }
 
-function renderDrawdownChart() {
-    const canvas = document.getElementById('drawdown-canvas');
-    if (!canvas) return;
-    const view = getDDView();
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    if (rect.width < 20 || rect.height < 20) return;
-    canvas.width = Math.round(rect.width * dpr);
-    canvas.height = Math.round(rect.height * dpr);
+function decimateDDPts(pts, xOf, chartW) {
+    if (pts.length <= chartW * 2) return pts;
+    const cols = new Map();
+    for (let i = 0; i < pts.length; i++) {
+        const c = xOf(pts[i].t) | 0;
+        let b = cols.get(c);
+        if (!b) { b = { lo: i, hi: i }; cols.set(c, b); }
+        if (pts[i].dd < pts[b.lo].dd) b.lo = i;
+        if (pts[i].dd > pts[b.hi].dd) b.hi = i;
+    }
+    const out = [];
+    for (const b of cols.values()) {
+        if (b.lo === b.hi) out.push(pts[b.lo]);
+        else if (b.lo < b.hi) out.push(pts[b.lo], pts[b.hi]);
+        else out.push(pts[b.hi], pts[b.lo]);
+    }
+    return out;
+}
+
+function buildDDBase(view, w, h, dpr) {
+    const base = ddBaseCanvas;
+    base.width = Math.round(w * dpr);
+    base.height = Math.round(h * dpr);
+    const ctx = base.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const w = rect.width;
-    const h = rect.height;
     ctx.clearRect(0, 0, w, h);
     ddMap.ready = false;
+    ddMap.legendHits = [];
     if (!view) return;
 
     ctx.font = '11px monospace';
@@ -2648,14 +2675,25 @@ function renderDrawdownChart() {
     const chartH = h - padding.top - padding.bottom;
     if (chartW < 20 || chartH < 20) return;
 
-    const { tMin, tMax, minDD, series } = view;
+    const { tMin, tMax, series } = view;
     const xOf = t => padding.left + ((t - tMin) / (tMax - tMin)) * chartW;
+    let worst = 0;
+    for (const s of series) {
+        if (ddVisible[s.ticker] && s.worst < worst) worst = s.worst;
+    }
+    let minDD = Math.floor(worst / 10) * 10;
+    if (minDD > -10) minDD = -10;
     const yOf = val => padding.top + (val / minDD) * chartH;
     ddMap.ready = true;
     ddMap.tMin = tMin;
     ddMap.tMax = tMax;
     ddMap.padL = padding.left;
     ddMap.chartW = chartW;
+    ddMap.top = padding.top;
+    ddMap.chartH = chartH;
+    ddMap.minDD = minDD;
+    ddMap.xOf = xOf;
+    ddMap.yOf = yOf;
 
     ctx.strokeStyle = 'rgba(255,255,255,0.06)';
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
@@ -2713,27 +2751,31 @@ function renderDrawdownChart() {
     }
 
     for (const s of series) {
+        if (!ddVisible[s.ticker]) continue;
+        const pts = decimateDDPts(s.pts, xOf, chartW);
         ctx.save();
         ctx.globalAlpha = 0.12;
         ctx.fillStyle = DD_COLORS[s.ticker];
         ctx.beginPath();
-        s.pts.forEach((p, i) => {
+        pts.forEach((p, i) => {
             const x = xOf(p.t), y = yOf(p.dd);
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         });
-        ctx.lineTo(xOf(s.pts[s.pts.length - 1].t), yOf(0));
-        ctx.lineTo(xOf(s.pts[0].t), yOf(0));
+        ctx.lineTo(xOf(pts[pts.length - 1].t), yOf(0));
+        ctx.lineTo(xOf(pts[0].t), yOf(0));
         ctx.closePath();
         ctx.fill();
         ctx.restore();
     }
     for (const s of series) {
+        if (!ddVisible[s.ticker]) continue;
+        const pts = decimateDDPts(s.pts, xOf, chartW);
         ctx.strokeStyle = DD_COLORS[s.ticker];
         ctx.lineWidth = 1.8;
         ctx.setLineDash(DD_DASH[s.ticker] || []);
         ctx.beginPath();
-        s.pts.forEach((p, i) => {
+        pts.forEach((p, i) => {
             const x = xOf(p.t), y = yOf(p.dd);
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
@@ -2748,61 +2790,101 @@ function renderDrawdownChart() {
     const legX = padding.left + chartW + 16;
     let legY = padding.top + 8;
     for (const s of series) {
+        if (!ddVisible[s.ticker]) continue;
         ctx.fillStyle = DD_COLORS[s.ticker];
         ctx.fillRect(legX, legY - 4, 12, 8);
         ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.fillText(DD_LABELS[s.ticker], legX + 18, legY);
+        const label = DD_LABELS[s.ticker];
+        ctx.fillText(label, legX + 18, legY);
+        const lw = ctx.measureText(label).width;
+        ddMap.legendHits.push({ ticker: s.ticker, x: legX, y: legY - 9, w: 18 + lw, h: 18 });
         legY += 18;
-    }
-
-    if (ddHover.t != null) {
-        const hx = xOf(ddHover.t);
-        ctx.save();
-        ctx.strokeStyle = 'rgba(248,81,73,0.4)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(hx, padding.top);
-        ctx.lineTo(hx, padding.top + chartH);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        for (const s of series) {
-            const p = nearestDDPoint(s.pts, ddHover.t);
-            if (Math.abs(p.t - ddHover.t) > DD_TIP_GAP) continue;
-            ctx.fillStyle = DD_COLORS[s.ticker];
-            ctx.beginPath();
-            ctx.arc(xOf(p.t), yOf(p.dd), 3, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.restore();
     }
 }
 
-function initDrawdownHover() {
+function renderDrawdownChart() {
+    const canvas = document.getElementById('drawdown-canvas');
+    if (!canvas) return;
+    const view = getDDView();
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width < 20 || rect.height < 20) {
+        ddMap.ready = false;
+        ddBaseKey = null;
+        return;
+    }
+    const w = rect.width;
+    const h = rect.height;
+    const needW = Math.round(w * dpr);
+    const needH = Math.round(h * dpr);
+    if (canvas.width !== needW || canvas.height !== needH) {
+        canvas.width = needW;
+        canvas.height = needH;
+    }
+    const key = `${w}|${h}|${dpr}|${ddHorizon}|${ddDataSig()}|${DD_ETFS.filter(t => ddVisible[t]).join(',')}`;
+    if (key !== ddBaseKey) {
+        buildDDBase(view, w, h, dpr);
+        ddBaseKey = ddMap.ready ? key : null;
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(ddBaseCanvas, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (!view || !ddMap.ready || ddHover.t == null) return;
+    const xOf = ddMap.xOf;
+    const yOf = ddMap.yOf;
+    const hx = xOf(ddHover.t);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(248,81,73,0.4)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(hx, ddMap.top);
+    ctx.lineTo(hx, ddMap.top + ddMap.chartH);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    for (const s of view.series) {
+        if (!ddVisible[s.ticker]) continue;
+        const p = nearestDDPoint(s.pts, ddHover.t);
+        if (Math.abs(p.t - ddHover.t) > DD_TIP_GAP) continue;
+        ctx.fillStyle = DD_COLORS[s.ticker];
+        ctx.beginPath();
+        ctx.arc(xOf(p.t), yOf(p.dd), 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
+}
+
+function updateDDHover() {
     const canvas = document.getElementById('drawdown-canvas');
     const tooltip = document.getElementById('dd-tooltip');
-    if (!canvas || !tooltip) return;
-
-    canvas.addEventListener('mousemove', e => {
-        const view = getDDView();
+    if (!canvas || !tooltip || !ddLastXY) return;
+    const view = getDDView();
+    if (!view || !ddMap.ready) {
+        renderDrawdownChart();
         if (!view || !ddMap.ready) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const t = ddMap.tMin + ((x - ddMap.padL) / ddMap.chartW) * (ddMap.tMax - ddMap.tMin);
-        let snap = null;
-        let bestDt = Infinity;
-        for (const s of view.series) {
-            const p = nearestDDPoint(s.pts, t);
-            const dt = Math.abs(p.t - t);
-            if (dt < bestDt) {
-                bestDt = dt;
-                snap = p;
-            }
+    }
+    const rect = canvas.getBoundingClientRect();
+    const x = ddLastXY.x;
+    const y = ddLastXY.y;
+    const t = ddMap.tMin + ((x - ddMap.padL) / ddMap.chartW) * (ddMap.tMax - ddMap.tMin);
+    let snap = null;
+    let bestDt = Infinity;
+    for (const s of view.series) {
+        if (!ddVisible[s.ticker]) continue;
+        const p = nearestDDPoint(s.pts, t);
+        const dt = Math.abs(p.t - t);
+        if (dt < bestDt) {
+            bestDt = dt;
+            snap = p;
         }
-        if (!snap) return;
-        ddHover.t = snap.t;
-        const rows = view.series.map(s => {
+    }
+    if (!snap) return;
+    ddHover.t = snap.t;
+    if (ddTipT !== ddHover.t) {
+        ddTipT = ddHover.t;
+        const rows = view.series.filter(s => ddVisible[s.ticker]).map(s => {
             const p = nearestDDPoint(s.pts, ddHover.t);
             const near = Math.abs(p.t - ddHover.t) <= DD_TIP_GAP;
             const val = near ? `${p.dd.toFixed(2)}%` : '&ndash;';
@@ -2816,19 +2898,82 @@ function initDrawdownHover() {
                 <div class="tooltip-date">${new Date(ddHover.t).toISOString().slice(0, 10)}</div>
                 ${rows}
                 `;
-        tooltip.style.display = 'block';
-        const tipW = tooltip.offsetWidth || 170;
-        const leftPos = (x + 15 + tipW > rect.width) ? x - tipW - 10 : x + 15;
-        tooltip.style.left = `${leftPos}px`;
-        tooltip.style.top = `${Math.max(5, y - 15)}px`;
-        renderDrawdownChart();
+    }
+    tooltip.style.display = 'block';
+    const tipW = tooltip.offsetWidth || 170;
+    const leftPos = (x + 15 + tipW > rect.width) ? x - tipW - 10 : x + 15;
+    tooltip.style.left = `${leftPos}px`;
+    tooltip.style.top = `${Math.max(5, y - 15)}px`;
+    renderDrawdownChart();
+}
+
+function initDrawdownHover() {
+    const canvas = document.getElementById('drawdown-canvas');
+    const tooltip = document.getElementById('dd-tooltip');
+    if (!canvas || !tooltip) return;
+
+    canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        ddLastXY = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        if (!ddRafId) {
+            ddRafId = requestAnimationFrame(() => {
+                ddRafId = 0;
+                updateDDHover();
+            });
+        }
     });
 
     canvas.addEventListener('mouseleave', () => {
+        if (ddRafId) {
+            cancelAnimationFrame(ddRafId);
+            ddRafId = 0;
+        }
         ddHover.t = null;
+        ddTipT = null;
         tooltip.style.display = 'none';
         renderDrawdownChart();
     });
+
+    canvas.addEventListener('click', e => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        for (const hit of ddMap.legendHits) {
+            if (x >= hit.x && x <= hit.x + hit.w && y >= hit.y && y <= hit.y + hit.h) {
+                toggleDDSeries(hit.ticker);
+                return;
+            }
+        }
+    });
+}
+
+function renderDDChips() {
+    const container = document.getElementById('dd-etf-chips');
+    if (!container) return;
+    container.innerHTML = '';
+    DD_ETFS.forEach(sym => {
+        const t = TICKERS.find(x => x.symbol === sym);
+        const chip = document.createElement('button');
+        chip.className = 'etf-chip';
+        chip.textContent = DD_LABELS[sym];
+        chip.setAttribute('data-tooltip', t ? t.tip : '');
+        chip.style.color = DD_COLORS[sym];
+        chip.style.borderColor = DD_COLORS[sym];
+        chip.style.background = ddVisible[sym] ? DD_COLORS[sym] + '22' : 'transparent';
+        chip.style.opacity = ddVisible[sym] ? '1' : '0.45';
+        chip.addEventListener('click', () => toggleDDSeries(sym));
+        container.appendChild(chip);
+    });
+}
+
+function toggleDDSeries(ticker) {
+    const visibleCount = DD_ETFS.reduce((n, t) => n + (ddVisible[t] ? 1 : 0), 0);
+    if (ddVisible[ticker] && visibleCount <= 1) return;
+    ddVisible[ticker] = !ddVisible[ticker];
+    renderDDChips();
+    ddTipT = null;
+    if (ddHover.t != null) updateDDHover();
+    renderDrawdownChart();
 }
 
 function initDrawdownControls() {
@@ -2845,6 +2990,8 @@ function initDrawdownControls() {
         });
     });
 }
+
+renderDDChips();
 
 // Initialize drawdown chart
 window.addEventListener('resize', () => { renderDrawdownChart(); });
