@@ -437,18 +437,40 @@ const VolumeStudies = {
             const colW = chartW / n;
             const barW = Math.max(1, colW * 0.7);
             const zeroY = (yMin < 0 && yMax > 0) ? mapY(0) : pad.top + chartH;
-            for (let i = 0; i < n; i++) {
-                const v = bars[i];
-                if (v == null || !isFinite(v)) continue;
-                const sign = payload.colorSigns ? payload.colorSigns[i] : (v > 0 ? 1 : v < 0 ? -1 : 0);
+            const fillBar = (v, sign, x, w) => {
                 const color = sign > 0 ? this.COLORS.up : sign < 0 ? this.COLORS.down : this.COLORS.flat;
-                const x = pad.left + i * colW + (colW - barW) / 2;
                 const yv = clampY(mapY(v));
-                const y0 = (yMin < 0 && yMax > 0) ? zeroY : pad.top + chartH;
                 ctx.fillStyle = color;
                 ctx.globalAlpha = 0.75;
-                ctx.fillRect(x, Math.min(yv, y0), barW, Math.max(1, Math.abs(y0 - yv)));
+                ctx.fillRect(x, Math.min(yv, zeroY), w, Math.max(1, Math.abs(zeroY - yv)));
                 ctx.globalAlpha = 1;
+            };
+            if (colW < 1) {
+                // Dense ranges: one column per pixel — averaged daily value, net up/down colour
+                const per = Math.ceil(n / Math.max(1, Math.floor(chartW)));
+                const nCols = Math.ceil(n / per);
+                const colStep = chartW / nCols;
+                const w = Math.max(1, colStep * 0.7);
+                for (let c = 0; c < nCols; c++) {
+                    let sum = 0, cnt = 0, dir = 0;
+                    const i0 = c * per, i1 = Math.min(n, i0 + per);
+                    for (let i = i0; i < i1; i++) {
+                        const v = bars[i];
+                        if (v == null || !isFinite(v)) continue;
+                        sum += v;
+                        cnt++;
+                        dir += payload.colorSigns ? payload.colorSigns[i] : (v > 0 ? 1 : v < 0 ? -1 : 0);
+                    }
+                    if (!cnt) continue;
+                    fillBar(sum / cnt, dir > 0 ? 1 : dir < 0 ? -1 : 0, pad.left + c * colStep + (colStep - w) / 2, w);
+                }
+            } else {
+                for (let i = 0; i < n; i++) {
+                    const v = bars[i];
+                    if (v == null || !isFinite(v)) continue;
+                    const sign = payload.colorSigns ? payload.colorSigns[i] : (v > 0 ? 1 : v < 0 ? -1 : 0);
+                    fillBar(v, sign, pad.left + i * colW + (colW - barW) / 2, barW);
+                }
             }
         }
 
@@ -564,23 +586,39 @@ const VolumeStudies = {
         const volume = payload.volumes[i];
         const studyNames = { vol: 'VOLUME', osc: 'VOL OSC', net: 'NET VOL', obv: 'OBV', pvt: 'PVT' };
         let value = null, valueLabel = studyNames[payload.study] || payload.study;
-        if (payload.bars && payload.study === 'vol') value = payload.bars[i];
-        else if (payload.bars && payload.study === 'net') value = payload.bars[i];
+        if (payload.bars) value = payload.bars[i];
         else if (payload.line) value = payload.line[i];
-        let valueStr = payload.study === 'osc'
-            ? (value == null ? '--' : (value >= 0 ? '+' : '') + value.toFixed(1) + '%')
-            : this.fmtSigned(value);
+        const dirSign = payload.colorSigns ? (payload.colorSigns[i] || 0) : (value > 0 ? 1 : value < 0 ? -1 : 0);
+        const dirColor = (payload.study === 'vol' || payload.study === 'net') && value != null
+            ? ' style="color:' + (dirSign > 0 ? this.COLORS.up : dirSign < 0 ? this.COLORS.down : this.COLORS.label) + '"'
+            : '';
+        let valueStr;
+        if (payload.study === 'osc') {
+            valueStr = value == null ? 'n/a' : (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
+        } else if (payload.study === 'vol') {
+            valueStr = value == null ? 'n/a' : this.fmtVol(value);
+        } else {
+            valueStr = value == null ? 'n/a' : this.fmtSigned(value);
+        }
         let netRow = '';
         if (payload.study === 'net' && payload.line) {
             const r = payload.line[i];
-            netRow = `<div class="vs-tt-row"><span class="vs-tt-lbl">NET 21D</span><span class="vs-tt-val">${this.fmtSigned(r)}</span></div>`;
+            netRow = `<div class="vs-tt-row"><span class="vs-tt-lbl">NET 21D</span><span class="vs-tt-val">${r == null ? 'n/a' : this.fmtSigned(r)}</span></div>`;
         }
+        const studyRow = payload.study === 'vol'
+            ? ''
+            : `<div class="vs-tt-row"><span class="vs-tt-lbl">${valueLabel}</span><span class="vs-tt-val"${dirColor}>${valueStr}</span></div>`;
+        const volRow = payload.study === 'vol'
+            ? `<div class="vs-tt-row"><span class="vs-tt-lbl">VOLUME</span><span class="vs-tt-val"${dirColor}>${valueStr}</span></div>`
+            : payload.study === 'net'
+                ? ''
+                : `<div class="vs-tt-row"><span class="vs-tt-lbl">VOLUME</span><span class="vs-tt-val">${volume == null ? 'n/a' : this.fmtVol(volume)}</span></div>`;
         tooltip.innerHTML = `
-            <div class="vs-tt-date">${date || '--'}</div>
-            <div class="vs-tt-row"><span class="vs-tt-lbl">${valueLabel}</span><span class="vs-tt-val">${valueStr}</span></div>
+            <div class="vs-tt-date">${date || 'n/a'}</div>
+            ${studyRow}
             ${netRow}
             <div class="vs-tt-row"><span class="vs-tt-lbl">CLOSE</span><span class="vs-tt-val">$${this.fmtPrice(close)}</span></div>
-            <div class="vs-tt-row"><span class="vs-tt-lbl">VOLUME</span><span class="vs-tt-val">${this.fmtVol(volume)}</span></div>
+            ${volRow}
         `;
         const w = wrap.clientWidth, h = wrap.clientHeight;
         tooltip.style.display = 'block';
@@ -609,28 +647,28 @@ const VolumeStudies = {
         if (study === 'vol') {
             const rvol = (metrics.rvol || {})['21d'];
             const z = (metrics.zScore || {})['21d'];
-            parts.push(`<span class="vs-lbl">RVOL-21</span> ${rvol != null ? rvol.toFixed(2) + '×' : '--'}`);
-            parts.push(`<span class="vs-lbl">Z-SCORE</span> ${z != null ? (z >= 0 ? '+' : '') + z.toFixed(2) : '--'}`);
-            parts.push(`<span class="vs-lbl">LAST BAR</span> ${this.fmtVol(payload.volumes[last])}`);
+            parts.push(`<span class="vs-lbl">RVOL-21</span> ${rvol != null ? rvol.toFixed(2) + '×' : 'n/a'}`);
+            parts.push(`<span class="vs-lbl">Z-SCORE</span> ${z != null ? (z >= 0 ? '+' : '') + z.toFixed(2) : 'n/a'}`);
+            parts.push(`<span class="vs-lbl">LAST BAR</span> ${payload.volumes[last] != null ? this.fmtVol(payload.volumes[last]) : 'n/a'}`);
         } else if (study === 'osc') {
             const v = payload.line ? payload.line[last] : null;
-            parts.push(`<span class="vs-lbl">CURRENT</span> ${v != null ? (v >= 0 ? '+' : '') + v.toFixed(1) + '%' : '--'}`);
-            parts.push(`<span class="vs-lbl">STATE</span> ${v == null ? '--' : v > 0 ? 'EXPANSION' : v < 0 ? 'CONTRACTION' : 'NEUTRAL'}`);
+            parts.push(`<span class="vs-lbl">CURRENT</span> ${v != null ? (v >= 0 ? '+' : '') + v.toFixed(1) + '%' : 'n/a'}`);
+            parts.push(`<span class="vs-lbl">STATE</span> ${v == null ? 'n/a' : v > 0 ? 'EXPANSION' : v < 0 ? 'CONTRACTION' : 'NEUTRAL'}`);
         } else if (study === 'net') {
             const r = payload.line ? payload.line[last] : null;
-            parts.push(`<span class="vs-lbl">NET 21D</span> ${this.fmtSigned(r)}`);
+            parts.push(`<span class="vs-lbl">NET 21D</span> ${r != null ? this.fmtSigned(r) : 'n/a'}`);
             const day = payload.bars ? payload.bars[last] : null;
-            parts.push(`<span class="vs-lbl">TODAY</span> ${this.fmtSigned(day)}`);
+            parts.push(`<span class="vs-lbl">TODAY</span> ${day != null ? this.fmtSigned(day) : 'n/a'}`);
         } else if (study === 'obv' || study === 'pvt') {
             const line = payload.line || [];
             const ma = payload.ma || [];
             const lv = line[last], mv = ma[last];
             const lab = study === 'obv' ? 'OBV' : 'PVT';
-            parts.push(`<span class="vs-lbl">${lab} VS 21D MA</span> ${lv != null && mv != null ? (lv >= mv ? 'ABOVE' : 'BELOW') : '--'}`);
+            parts.push(`<span class="vs-lbl">${lab} VS 21D MA</span> ${lv != null && mv != null ? (lv >= mv ? 'ABOVE' : 'BELOW') : 'n/a'}`);
             const back = Math.max(0, last - 21);
             const delta = (lv != null && line[back] != null) ? lv - line[back] : null;
-            parts.push(`<span class="vs-lbl">21D Δ</span> ${this.fmtSigned(delta)}`);
-            parts.push(`<span class="vs-lbl">BIAS</span> ${delta == null ? '--' : delta > 0 ? 'ACCUMULATION' : delta < 0 ? 'DISTRIBUTION' : 'FLAT'}`);
+            parts.push(`<span class="vs-lbl">21D Δ</span> ${delta != null ? this.fmtSigned(delta) : 'n/a'}`);
+            parts.push(`<span class="vs-lbl">BIAS</span> ${delta == null ? 'n/a' : delta > 0 ? 'ACCUMULATION' : delta < 0 ? 'DISTRIBUTION' : 'FLAT'}`);
         }
         el.innerHTML = parts.join('');
     }

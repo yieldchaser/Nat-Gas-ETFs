@@ -87,6 +87,8 @@ const CONFIG = {
             { key: '6m', label: '6M', days: 180 },
             { key: '1y', label: '1Y', days: 365 },
             { key: '2y', label: '2Y', days: 730 },
+            { key: '5y', label: '5Y', days: 1826 },
+            { key: '10y', label: '10Y', days: 3653 },
             { key: 'all', label: 'ALL', days: null }
         ]
     },
