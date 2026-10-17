@@ -149,14 +149,36 @@ with sync_playwright() as p:
     assert disp2 == "none", "trough-peak: custom controls should hide on preset ranges"
 
     hash_before_switch = page.evaluate(HASH, "vp-canvas")
+
+    vp_chips = page.locator("#vp-etf-chips .etf-chip").count()
+    assert vp_chips == 6, f"trough-peak: expected 6 vp etf chips, got {vp_chips}"
+
+    def vp_active_chip():
+        return page.evaluate(
+            "() => { const c = Array.from(document.querySelectorAll('#vp-etf-chips .etf-chip')).find(x => x.style.opacity === '1'); return c ? c.textContent : null; }")
+
+    assert vp_active_chip() == "KOLD", f"trough-peak: vp default chip not KOLD ({vp_active_chip()})"
+
     page.click('#chart-etf-chips button:has-text("HND")')
-    page.wait_for_timeout(800)
-    label_hnd = page.inner_text("#vp-range-label")
-    sessions_hnd = re.search(r"(\d+) sessions", label_hnd)
-    assert sessions_hnd, f"trough-peak: no session count after ETF switch: {label_hnd!r}"
-    hash_hnd = page.evaluate(HASH, "vp-canvas")
-    assert hash_before_switch != hash_hnd, "trough-peak: profile did not follow ETF switch (canvas identical)"
-    assert page.evaluate(PIXEL_CHECK, "vp-canvas"), "trough-peak: vp-canvas blank after ETF switch"
+    page.wait_for_timeout(600)
+    assert vp_active_chip() == "KOLD", "trough-peak: vp chip changed on main chart ETF switch"
+    assert page.evaluate(HASH, "vp-canvas") == hash_before_switch, \
+        "trough-peak: vp profile changed on main chart ETF switch (should be independent)"
+
+    vp_hashes = {}
+    for etf in ["BOIL", "HNU", "3NGL", "KOLD", "HND", "3NGS"]:
+        page.click(f'#vp-etf-chips button:has-text("{etf}")')
+        page.wait_for_timeout(450)
+        assert vp_active_chip() == etf, f"trough-peak: vp chip {etf} not active after click"
+        assert page.evaluate(PIXEL_CHECK, "vp-canvas"), f"trough-peak: vp-canvas blank for {etf}"
+        etf_label = page.inner_text("#vp-range-label")
+        assert re.search(r"\d+ sessions", etf_label), f"trough-peak: no sessions label for {etf}: {etf_label!r}"
+        vp_hashes[etf] = page.evaluate(HASH, "vp-canvas")
+    assert len(set(vp_hashes.values())) >= 5, f"trough-peak: vp profiles too similar across ETFs: {vp_hashes}"
+    assert vp_hashes["BOIL"] != vp_hashes["KOLD"], "trough-peak: vp BOIL vs KOLD identical"
+
+    page.click('#vp-etf-chips button:has-text("BOIL")')
+    page.wait_for_timeout(450)
     page.click('#chart-etf-chips button:has-text("BOIL")')
     page.wait_for_timeout(800)
 
@@ -177,6 +199,8 @@ with sync_playwright() as p:
     assert mob.evaluate(PIXEL_CHECK, "vp-canvas"), "mobile: vp-canvas blank"
     mstats = mob.inner_text("#vp-stats")
     assert "POC" in mstats, f"mobile: vp stats missing: {mstats!r}"
+    mchips = mob.locator("#vp-etf-chips .etf-chip").count()
+    assert mchips == 6, f"mobile: expected 6 vp chips, got {mchips}"
     print("mobile 390px: both panels OK")
 
     browser.close()
