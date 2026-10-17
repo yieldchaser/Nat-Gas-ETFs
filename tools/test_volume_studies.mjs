@@ -174,6 +174,12 @@ eq(allP.startIdx, 0, 'range all -> startIdx 0');
 isNull(VS.compute([], 'vol', 'all'), 'empty history -> null');
 isNull(VS.compute([history[0]], 'vol', 'all'), 'single bar -> null');
 
+for (const r of ctxObj.__CFG.volumeStudies.ranges) {
+    const p = VS.compute(history, 'vol', r.key);
+    ok(p !== null && p.dates.length >= 2, `compute(vol, ${r.key}) non-null`);
+    eq(p.study, 'vol', `compute(vol, ${r.key}) study tag`);
+}
+
 // ---- profile: handcrafted 3-point case ----
 const prof = computeVolumeProfile(
     ['2024-01-01', '2024-01-02', '2024-01-03'], [10, 20, 30], [100, 200, 300], 0, 2, 10);

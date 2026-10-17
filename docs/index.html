@@ -176,25 +176,33 @@
 
             <!-- PRICE-VOLUME STUDIES (classic volume indicators) -->
             <div class="signal-panel" id="vs-panel">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
-                    <h3 style="margin-bottom:0;" data-tooltip="Classic price-volume studies on full daily OHLCV history. VOLUME: bars colored by up/down day + 21d volume SMA. VOL OSC: 100 × (SMA5 − SMA21) ÷ SMA21 of volume. NET VOL: signed daily volume (up/down close) + 21d rolling net. OBV: cumulative signed volume + 21d MA. PVT: cumulative volume × %close-change + 21d MA. OBV/PVT are rebased to zero at the visible-range start.">PRICE-VOLUME STUDIES <span class="panel-subtitle">— classic volume indicators</span></h3>
+                <div class="vs-head">
+                    <h3 data-tooltip="Price and volume indicators computed from the ETF's full daily history.">PRICE-VOLUME STUDIES <span class="panel-subtitle">— five indicators</span></h3>
                     <div class="tab-group" id="vs-range-tabs" style="margin:0; padding:2px;">
-                        <button class="tab-btn" data-range="3m" data-tooltip="Show last 90 calendar days">3M</button>
-                        <button class="tab-btn" data-range="6m" data-tooltip="Show last 180 calendar days">6M</button>
-                        <button class="tab-btn active" data-range="1y" data-tooltip="Show last 365 calendar days">1Y</button>
-                        <button class="tab-btn" data-range="2y" data-tooltip="Show last 730 calendar days">2Y</button>
-                        <button class="tab-btn" data-range="all" data-tooltip="Show full available history (5–18 years)">ALL</button>
+                        <button class="tab-btn" data-range="3m" data-tooltip="Last 3 months">3M</button>
+                        <button class="tab-btn" data-range="6m" data-tooltip="Last 6 months">6M</button>
+                        <button class="tab-btn active" data-range="1y" data-tooltip="Last year">1Y</button>
+                        <button class="tab-btn" data-range="2y" data-tooltip="Last 2 years">2Y</button>
+                        <button class="tab-btn" data-range="5y" data-tooltip="Last 5 years">5Y</button>
+                        <button class="tab-btn" data-range="10y" data-tooltip="Last 10 years">10Y</button>
+                        <button class="tab-btn" data-range="all" data-tooltip="All available history">ALL</button>
                     </div>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
-                    <div class="tab-group" id="vs-study-tabs" style="margin:0; padding:2px;">
-                        <button class="tab-btn active" data-study="vol" data-tooltip="Raw share volume bars, colored by day direction (close vs previous close), with a 21-day volume SMA overlay.">VOLUME</button>
-                        <button class="tab-btn" data-study="osc" data-tooltip="Volume Oscillator: 100 × (SMA5(volume) − SMA21(volume)) ÷ SMA21(volume). Above zero = volume expanding vs its monthly baseline; below zero = contracting.">VOL OSC</button>
-                        <button class="tab-btn" data-study="net" data-tooltip="Net Volume: daily volume signed by close direction (+ on up days, − on down days) with a 21-day rolling net-volume line. Sustained positive net = accumulation pressure.">NET VOL</button>
-                        <button class="tab-btn" data-study="obv" data-tooltip="On Balance Volume: running total of volume added on up days and subtracted on down days, with 21-day MA. OBV above its MA = accumulation regime.">OBV</button>
-                        <button class="tab-btn" data-study="pvt" data-tooltip="Price Volume Trend: running total of volume × %close change, with 21-day MA. Weighs heavy-volume days by their price move — a flow-quality measure OBV misses.">PVT</button>
+                <div class="vs-controls">
+                    <div class="vs-control-group">
+                        <span class="vs-control-label">Study</span>
+                        <div class="tab-group" id="vs-study-tabs" style="margin:0; padding:2px;">
+                            <button class="tab-btn active" data-study="vol" data-tooltip="Daily share volume. Green bars are up days, red bars down days, with a 21-day average line.">VOLUME</button>
+                            <button class="tab-btn" data-study="osc" data-tooltip="Volume oscillator: how far the 5-day average volume sits from the 21-day average, in percent. Above zero means volume is expanding.">VOL OSC</button>
+                            <button class="tab-btn" data-study="net" data-tooltip="Daily volume signed by direction: added on up days, subtracted on down days. The line is the 21-day running total.">NET VOL</button>
+                            <button class="tab-btn" data-study="obv" data-tooltip="On-balance volume: a running total that adds volume on up days and subtracts it on down days. Above its 21-day average signals accumulation.">OBV</button>
+                            <button class="tab-btn" data-study="pvt" data-tooltip="Price-volume trend: like OBV, but each day's volume is weighted by the size of its price move.">PVT</button>
+                        </div>
                     </div>
-                    <div id="vs-chips" class="vs-chips"></div>
+                    <div class="vs-control-group">
+                        <span class="vs-control-label">ETF</span>
+                        <div id="vs-chips" class="vs-chips"></div>
+                    </div>
                 </div>
                 <div class="vs-canvas-wrap" id="vs-canvas-wrap">
                     <canvas id="vs-canvas"></canvas>

@@ -57,7 +57,7 @@ with sync_playwright() as p:
         hashes[study] = page.evaluate(HASH, "vs-canvas")
     assert len(set(hashes.values())) >= 3, f"index: studies render identical canvases: {hashes}"
 
-    for rng in ["3m", "2y", "1y"]:
+    for rng in ["3m", "10y", "2y", "1y"]:
         page.click(f'#vs-range-tabs button[data-range="{rng}"]')
         page.wait_for_timeout(250)
         assert page.evaluate(PIXEL_CHECK, "vs-canvas"), f"index: vs-canvas blank after range {rng}"
