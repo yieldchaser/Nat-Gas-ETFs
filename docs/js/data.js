@@ -18,8 +18,15 @@ const DataService = {
         return `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
     },
 
-    async fetchETF(ticker) {
-        const url = this.buildUrl(ticker);
+    // Lightweight quote URL — only 5 daily bars are needed for the live price
+    // overlay (live price, volume, market state, change% baseline).
+    buildQuoteUrl(ticker) {
+        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=5d&interval=1d&includePrePost=false`;
+        return `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
+    },
+
+    async fetchETF(ticker, light) {
+        const url = light ? this.buildQuoteUrl(ticker) : this.buildUrl(ticker);
         try {
             const resp = await fetch(url);
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -27,14 +34,18 @@ const DataService = {
             return this.parseYahooResponse(ticker, json);
         } catch (err) {
             console.error(`Failed to fetch ${ticker} via allorigins:`, err);
-            return this.fetchWithFallback(ticker);
+            return this.fetchWithFallback(ticker, light);
         }
     },
 
-    async fetchWithFallback(ticker) {
-        const period2 = Math.floor(Date.now() / 1000);
-        const period1 = period2 - (2 * 365 * 86400);
-        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${period1}&period2=${period2}&interval=1d`;
+    async fetchWithFallback(ticker, light) {
+        const yahooUrl = light
+            ? `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=5d&interval=1d`
+            : (() => {
+                const period2 = Math.floor(Date.now() / 1000);
+                const period1 = period2 - (2 * 365 * 86400);
+                return `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${period1}&period2=${period2}&interval=1d`;
+            })();
 
         // Fallback proxy chain: try each in order
         const fallbackProxies = [
@@ -120,9 +131,9 @@ const DataService = {
         return 'closed';
     },
 
-    async fetchAll() {
+    async fetchAll(light) {
         const tickers = Object.keys(CONFIG.etfs);
-        const promises = tickers.map(t => this.fetchETF(CONFIG.etfs[t].yahoo, t));
+        const promises = tickers.map(t => this.fetchETF(CONFIG.etfs[t].yahoo, !!light));
         const results = await Promise.allSettled(promises);
 
         const output = {};
@@ -147,21 +158,15 @@ const DataService = {
         return { etfs: output, marketState: marketState };
     },
 
-    // Fetch NG=F front-month futures for Vol Regime Monitor
-    async fetchNG() {
-        try {
-            const raw = await this.fetchETF('NG=F');
-            return raw;
-        } catch (err) {
-            console.warn('[DataService] NG=F fetch failed:', err);
-            return null;
-        }
+    // Light overlay fetch: 5-day bars per ETF instead of 2 years (same response shape)
+    async fetchQuotesLight() {
+        return this.fetchAll(true);
     },
 
     // Try to load pre-computed data from GitHub Actions pipeline
     async fetchPrecomputed() {
         try {
-            const resp = await fetch(CONFIG.dataUrl);
+            const resp = await fetch(CONFIG.dataUrl, { cache: 'no-cache' });
             if (!resp.ok) return null;
             return await resp.json();
         } catch {

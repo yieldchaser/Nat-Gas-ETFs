@@ -40,7 +40,12 @@ function extractFunction(src, name) {
 
 const ctxObj = { console, Date, Math, isFinite, parseInt, requestAnimationFrame: () => 0 };
 vm.createContext(ctxObj);
-vm.runInContext('CONFIG = { etfs: {}, volumeStudies: { oscillator: { fast: 5, slow: 21 }, ma: 21, ranges: [ { key: "3m", days: 90 }, { key: "6m", days: 180 }, { key: "1y", days: 365 }, { key: "2y", days: 730 }, { key: "all", days: null } ] } };', ctxObj);
+// Load the real shipped config so the test tracks its live schema (ranges, oscillator windows).
+vm.runInContext(fs.readFileSync('docs/js/config.js', 'utf8') + '\n;globalThis.__CFG = CONFIG;', ctxObj);
+ok(ctxObj.__CFG && ctxObj.__CFG.volumeStudies && Array.isArray(ctxObj.__CFG.volumeStudies.ranges)
+    && ctxObj.__CFG.volumeStudies.ranges.length >= 5, 'real config.js loaded (volumeStudies.ranges present)');
+isNum(ctxObj.__CFG.volumeStudies.oscillator.fast, 'config oscillator.fast is a number');
+isNum(ctxObj.__CFG.volumeStudies.oscillator.slow, 'config oscillator.slow is a number');
 
 const vsSrc = fs.readFileSync('docs/js/volume-studies.js', 'utf8');
 vm.runInContext(vsSrc + '\n;globalThis.__VS = VolumeStudies;', ctxObj);
