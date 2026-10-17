@@ -233,8 +233,8 @@ const Cards = {
                             <span class="mode-pill dollar-pill" onclick="Cards.setMode(this,'dollar')">$</span>
                         </div>
                         <div class="card-price-group">
-                            <span class="card-price">${this.formatPrice(c.price)}</span>
-                            <span class="card-change ${changeClass}">${changeSign}${c.changePct.toFixed(2)}%</span>
+                            <span class="card-price" data-live="price">${this.formatPrice(c.price)}</span>
+                            <span class="card-change ${changeClass}" data-live="change">${changeSign}${c.changePct.toFixed(2)}%</span>
                         </div>
                     </div>
                 </div>
@@ -251,7 +251,7 @@ const Cards = {
                 <div class="card-metrics share-section">
                     <div class="metric-item">
                         <span class="metric-label" data-tooltip="Today's raw share volume traded">VOL</span>
-                        <span class="metric-value">${this.formatNumber(c.volume, 0)}</span>
+                        <span class="metric-value" data-live="vol">${this.formatNumber(c.volume, 0)}</span>
                     </div>
                     <div class="metric-item">
                         <span class="metric-label" data-tooltip="Relative Volume — today's share volume ÷ 21-day average. 2x = twice normal." data-tt-pos="right">RVOL-21d</span>
@@ -283,7 +283,7 @@ const Cards = {
                 <div class="card-metrics dollar-section" style="display:none">
                     <div class="metric-item">
                         <span class="metric-label" data-tooltip="Today's dollar volume traded (price × shares). Split-agnostic capital flow metric.">$ VOL</span>
-                        <span class="metric-value">${this.formatNumber(c.dollarVolume, 0)}</span>
+                        <span class="metric-value" data-live="dvol">${this.formatNumber(c.dollarVolume, 0)}</span>
                     </div>
                     <div class="metric-item">
                         <span class="metric-label" data-tooltip="Dollar Volume RVOL — today's dollar volume ÷ 21-day average. Measures capital flow intensity." data-tt-pos="right">DV-RVOL</span>
@@ -315,7 +315,7 @@ const Cards = {
 
                 <div class="card-dollar-volume">
                     <span class="dv-label">$ VOL TRADED</span>
-                    <span class="dv-value">${this.formatNumber(c.dollarVolume, 0)}</span>
+                    <span class="dv-value" data-live="dvol">${this.formatNumber(c.dollarVolume, 0)}</span>
                 </div>
             </div>`;
     },
@@ -333,6 +333,36 @@ const Cards = {
         const hide = mode === 'share' ? 'dollar-section' : 'share-section';
         card.querySelectorAll('.' + show).forEach(el => el.style.display = '');
         card.querySelectorAll('.' + hide).forEach(el => el.style.display = 'none');
+    },
+
+    // Live overhead for the quote overlay: refreshes only the fields that the
+    // Yahoo quote can change (price, change%, volume, dollar volume).
+    // Signal-derived values are recomputed from the pre-computed JSON instead.
+    updateLive(allMetrics, containers) {
+        for (const container of containers) {
+            if (!container) continue;
+            for (const card of container.querySelectorAll('.etf-card[data-ticker]')) {
+                const m = allMetrics[card.dataset.ticker];
+                if (!m || !m.current) continue;
+                const c = m.current;
+
+                const priceEl = card.querySelector('[data-live="price"]');
+                if (priceEl) priceEl.textContent = this.formatPrice(c.price);
+
+                const chgEl = card.querySelector('[data-live="change"]');
+                if (chgEl && c.changePct != null) {
+                    chgEl.className = 'card-change ' + (c.changePct >= 0 ? 'positive' : 'negative');
+                    chgEl.textContent = (c.changePct >= 0 ? '+' : '') + c.changePct.toFixed(2) + '%';
+                }
+
+                const volEl = card.querySelector('[data-live="vol"]');
+                if (volEl) volEl.textContent = this.formatNumber(c.volume, 0);
+
+                for (const dvEl of card.querySelectorAll('[data-live="dvol"]')) {
+                    dvEl.textContent = this.formatNumber(c.dollarVolume, 0);
+                }
+            }
+        }
     },
 
     renderAllCards(allMetrics, container, side) {

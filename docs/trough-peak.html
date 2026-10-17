@@ -2397,12 +2397,12 @@ function initChartHover() {
     });
 }
 
-function hideTooltip() {
+function hideTooltip(skipRender) {
     const tooltip = document.getElementById('chart-tooltip');
     state.hover.x = null;
     state.hover.index = null;
     if (tooltip) tooltip.style.display = 'none';
-    renderChart();
+    if (!skipRender) renderChart();
 }
 
 // ── Chart UI Interaction ────────────────────────────────────────────────────
@@ -2485,8 +2485,18 @@ function initRangeSlider() {
     const sEnd = document.getElementById('range-end');
     if (!sStart || !sEnd) return;
 
+    let renderRafId = null;
+    const scheduleSliderRender = () => {
+        if (renderRafId !== null) return;
+        renderRafId = requestAnimationFrame(() => {
+            renderRafId = null;
+            renderChart();
+            renderTable();
+        });
+    };
+
     const onChange = (e) => {
-        hideTooltip(); // Clear tooltip when dragging slider
+        hideTooltip(true); // Clear tooltip when dragging slider (redraw handled by scheduler)
         let v1 = parseInt(sStart.value);
         let v2 = parseInt(sEnd.value);
         
@@ -2506,8 +2516,9 @@ function initRangeSlider() {
         document.querySelectorAll('#horizon-controls .horizon-btn').forEach(b => b.classList.remove('active'));
         
         updateRangeUI();
-        renderChart();
-        renderTable();
+        // Coalesce chart/table redraws to one per animation frame — the drag can
+        // fire dozens of input events per frame; settled state is identical.
+        scheduleSliderRender();
     };
 
     sStart.addEventListener('input', onChange);
@@ -2944,11 +2955,18 @@ function updateSliderFill() {
     const pct = ((+slider.value - +slider.min) / (+slider.max - +slider.min)) * 100;
     slider.style.setProperty('--fill-pct', pct + '%');
 }
+let thrRafId = null;
 slider.addEventListener('input', () => {
     state.threshold = +slider.value;
     sliderDisplay.textContent = `${state.threshold}%`;
     updateSliderFill();
-    renderAll();
+    // Coalesce full re-renders to one per animation frame during rapid drags
+    if (thrRafId === null) {
+        thrRafId = requestAnimationFrame(() => {
+            thrRafId = null;
+            renderAll();
+        });
+    }
 });
 updateSliderFill(); // set fill on page load
 
@@ -2991,7 +3009,11 @@ initDrawdownControls();
 initDrawdownHover();
 renderChartTabs();
 renderCards(); // show loading skeletons
-window.addEventListener('resize', () => { renderChart(); });
+let resizeRafId = null;
+window.addEventListener('resize', () => {
+    if (resizeRafId !== null) return;
+    resizeRafId = requestAnimationFrame(() => { resizeRafId = null; renderChart(); });
+});
 
 // ── Drawdown Chart Renderer ──────────────────────────────────────────────────
 let ddHorizon = 'all';

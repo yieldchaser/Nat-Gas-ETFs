@@ -132,6 +132,35 @@ const Metrics = {
         return this.std(logRets) * Math.sqrt(252) * 100;
     },
 
+    // Precomputed log-return series (null = invalid pair, matching computeHV's skip).
+    // Enables O(n) rolling HV instead of re-slicing closes per day.
+    _logRets(closes) {
+        const out = new Array(Math.max(0, closes.length - 1));
+        for (let i = 1; i < closes.length; i++) {
+            const a = closes[i - 1], b = closes[i];
+            out[i - 1] = (a > 0 && b > 0) ? Math.log(b / a) : null;
+        }
+        return out;
+    },
+
+    // Sample stddev over rets[start, end), skipping nulls — identical arithmetic
+    // to std() of the equivalent filtered log-return list.
+    _stdSegment(rets, start, end) {
+        let cnt = 0, sum = 0;
+        for (let i = start; i < end; i++) { const v = rets[i]; if (v != null) { cnt++; sum += v; } }
+        if (cnt < 2) return null;
+        const mean = sum / cnt;
+        let sq = 0;
+        for (let i = start; i < end; i++) { const v = rets[i]; if (v != null) sq += (v - mean) ** 2; }
+        return Math.sqrt(sq / (cnt - 1));
+    },
+
+    _hvFromRets(rets, start, end) {
+        const s = this._stdSegment(rets, start, end);
+        if (s == null) return null;
+        return s * Math.sqrt(252) * 100;
+    },
+
     // ATR-14 as % of current price (uses OHLC)
     computeATR14pct(highs, lows, closes) {
         const n = Math.min(highs.length, lows.length, closes.length);
@@ -155,9 +184,10 @@ const Metrics = {
         if (closes.length < needed) return null;
         const slice = closes.slice(-needed);
         // Build a series of HV21 values (one per day over the 252-day window)
+        const rets = this._logRets(slice);
         const hvSeries = [];
         for (let i = 21; i < slice.length; i++) {
-            const hv = this.computeHV(slice.slice(0, i + 1), 21);
+            const hv = this._hvFromRets(rets, i - 21, i);
             if (hv != null) hvSeries.push(hv);
         }
         if (hvSeries.length < 2) return null;
@@ -171,9 +201,10 @@ const Metrics = {
         const minNeeded = hvWindow + 1;
         if (closes.length < minNeeded) return [];
         const startIdx = Math.max(hvWindow, closes.length - seriesLength - hvWindow);
+        const rets = this._logRets(closes);
         const series = [];
         for (let i = startIdx; i < closes.length; i++) {
-            const hv = this.computeHV(closes.slice(0, i + 1), hvWindow);
+            const hv = this._hvFromRets(rets, i - hvWindow, i);
             if (hv != null) series.push(hv);
         }
         return series.slice(-seriesLength);
@@ -185,9 +216,10 @@ const Metrics = {
         const minNeeded = hvWindow + 5;
         if (closes.length < minNeeded) return null;
         // Build a series of HV values across all available history
+        const rets = this._logRets(closes);
         const series = [];
         for (let i = hvWindow; i < closes.length; i++) {
-            const hv = this.computeHV(closes.slice(0, i + 1), hvWindow);
+            const hv = this._hvFromRets(rets, i - hvWindow, i);
             if (hv != null) series.push(hv);
         }
         if (series.length < 5) return null;
@@ -210,9 +242,10 @@ const Metrics = {
         const needed = 21 + 10 + 1; // 32 closes for 21 HV10 values
         if (closes.length < needed) return null;
         const slice = closes.slice(-needed);
+        const rets = this._logRets(slice);
         const hv10Series = [];
         for (let i = 10; i < slice.length; i++) {
-            const hv = this.computeHV(slice.slice(0, i + 1), 10);
+            const hv = this._hvFromRets(rets, i - 10, i);
             if (hv != null) hv10Series.push(hv);
         }
         if (hv10Series.length < 10) return null;
@@ -260,6 +293,24 @@ const Metrics = {
         return rvWeekly / rvDaily;
     },
 
+    // TR from a shared log-return series at window start s — identical arithmetic
+    // to computeTR(closes.slice(s, s + 21)).
+    _trFromRets(closes, rets, s, window = 20) {
+        let cnt = 0, sqSum = 0;
+        for (let k = s; k < s + window; k++) { const v = rets[k]; if (v != null) { cnt++; sqSum += v * v; } }
+        if (cnt < 5) return null;
+        const rvDaily = Math.sqrt(sqSum / cnt) * Math.sqrt(252) * 100;
+        if (rvDaily === 0) return null;
+        const weeklyRets = [];
+        for (let j = 1; j <= 4; j++) {
+            const p0 = closes[s + (j - 1) * 5], p1 = closes[s + j * 5];
+            if (p0 > 0 && p1 > 0) weeklyRets.push(Math.log(p1 / p0));
+        }
+        if (weeklyRets.length < 3) return null;
+        const rvWeekly = this.std(weeklyRets) * Math.sqrt(252 / 5) * 100;
+        return rvWeekly / rvDaily;
+    },
+
     // Rolling TR series — uses window slicing to avoid O(n) allocs per iteration
     computeTRSeries(closes, seriesLength) {
         if (closes.length < 21) return [];
@@ -289,9 +340,10 @@ const Metrics = {
     // Returns 0–100. Needed because leveraged ETFs are always structurally below TR=1.0.
     computeTRPercentile(closes) {
         if (closes.length < 25) return null;
+        const rets = this._logRets(closes);
         const series = [];
         for (let i = 20; i < closes.length; i++) {
-            const tr = this.computeTR(closes.slice(0, i + 1));
+            const tr = this._trFromRets(closes, rets, i - 20);
             if (tr != null) series.push(tr);
         }
         if (series.length < 5) return null;

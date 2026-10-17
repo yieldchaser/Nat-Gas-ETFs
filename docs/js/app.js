@@ -5,8 +5,8 @@
 const App = {
     allMetrics: {},
     ngPriceContext: null,
-    ngVolMetrics: null,   // NG=F vol data for the Vol Regime Monitor
     refreshTimer: null,
+    refreshIntervalMs: null, // Interval currently applied to refreshTimer
     isLoading: false,
     heatOffset: 0,        // Offset for 90-day volume heat map pagination
     heatMode: 'share',    // Mode for 90-day heat map: 'share' or 'dollar'
@@ -21,7 +21,6 @@ const App = {
         console.log('[MONITOR] Initializing...');
         this.bindEvents();
         await this.refresh();
-        this.startAutoRefresh();
         console.log('[MONITOR] Dashboard ready.');
     },
 
@@ -115,28 +114,24 @@ const App = {
 
         try {
             // Try pre-computed data first (from GitHub Actions pipeline)
-            let precomputed = await DataService.fetchPrecomputed();
+            const precomputed = await DataService.fetchPrecomputed();
 
             if (precomputed && precomputed.etfs) {
-                console.log('[MONITOR] Using pre-computed data');
-                this.processPrecomputed(precomputed);
+                const stamp = precomputed.last_updated || null;
+                if (stamp !== this._dataStamp) {
+                    console.log('[MONITOR] Using pre-computed data');
+                    this.processPrecomputed(precomputed);
+                    this._dataStamp = stamp;
+                } else {
+                    console.log('[MONITOR] Pipeline data unchanged — live overlay only');
+                }
                 // Overlay real-time prices on top of pre-computed signals/metrics.
                 // The JSON updates ~hourly; regularMarketPrice updates continuously.
                 this._overlayLivePrices();
-                // Fetch NG=F live (vol regime monitor now on trough-peak page)
-                DataService.fetchNG().then(ngData => {
-                    if (ngData) {
-                        this.ngVolMetrics = Metrics.computeAllMetrics(ngData);
-                    }
-                });
             } else {
                 // Fall back to live Yahoo Finance fetch
                 console.log('[MONITOR] Fetching live data from Yahoo Finance...');
-                const [raw, ngData] = await Promise.all([
-                    DataService.fetchAll(),
-                    DataService.fetchNG()
-                ]);
-                raw.ngData = ngData;
+                const raw = await DataService.fetchAll();
                 this.processLiveData(raw);
             }
         } catch (err) {
@@ -145,6 +140,7 @@ const App = {
         } finally {
             this.isLoading = false;
             this.setLoading(false);
+            this.startAutoRefresh();
         }
     },
 
@@ -153,7 +149,7 @@ const App = {
     // Retries once after 10 s if all proxies fail.
     _overlayLivePrices(retryCount = 0) {
         const today = new Date().toISOString().split('T')[0];
-        DataService.fetchAll().then(liveData => {
+        DataService.fetchQuotesLight().then(liveData => {
             let updated = false;
             for (const [ticker, liveETF] of Object.entries(liveData.etfs)) {
                 if (!liveETF || !this.allMetrics[ticker]) continue;
@@ -222,7 +218,7 @@ const App = {
                 updated = true;
             }
             if (updated) {
-                this.render();
+                this.updateLiveCards();
                 // Show live price timestamp separate from JSON pipeline timestamp
                 const el = document.getElementById('last-updated');
                 if (el) {
@@ -249,11 +245,6 @@ const App = {
             if (etfData) {
                 this.allMetrics[ticker] = Metrics.computeAllMetrics(etfData);
             }
-        }
-
-        // NG=F vol metrics (fetched separately, used only by Vol Regime Monitor)
-        if (raw.ngData) {
-            this.ngVolMetrics = Metrics.computeAllMetrics(raw.ngData);
         }
 
         this.updateMarketStatus(raw.marketState);
@@ -397,9 +388,6 @@ const App = {
                 cvi:  etfData.cvi  || {},
                 vcvi: etfData.vcvi || etfData.cvi || {},
                 volatility,
-                historical_echoes: etfData.historical_echoes || null,
-                conviction_events: etfData.conviction_events || null,
-                elevated_watch:    etfData.elevated_watch    || null,   // Feature 5
                 decay:             etfData.decay             || null,   // Feature 6
                 seasonality:       etfData.seasonality       || null,   // Feature 3
                 sharpSpike:        etfData.sharp_spike       || false,  // Feature 1
@@ -449,9 +437,18 @@ const App = {
 
         // Price-Volume Studies panel (classic volume indicators)
         if (typeof VolumeStudies !== 'undefined') VolumeStudies.render();
+    },
 
-        // Vol Regime Monitor moved to trough-peak page
-        if (typeof VolRegime !== 'undefined') VolRegime.render(this.allMetrics, this.ngVolMetrics);
+    // Surgical live-quote update: refreshes only price/change/volume fields in the
+    // cards (called on every overlay tick) instead of re-rendering every panel.
+    updateLiveCards() {
+        const longEl = document.getElementById('long-cards');
+        const shortEl = document.getElementById('short-cards');
+        if (longEl && shortEl && typeof Cards !== 'undefined' && Cards.updateLive) {
+            Cards.updateLive(this.allMetrics, [longEl, shortEl]);
+        } else {
+            this.render();
+        }
     },
 
     renderHeatCalendarOnly() {
@@ -563,11 +560,15 @@ const App = {
     },
 
     startAutoRefresh() {
-        if (this.refreshTimer) clearInterval(this.refreshTimer);
         const state    = this.getMarketStatusNow();
         const interval = state === 'open'
             ? CONFIG.refreshInterval        // 60 s during regular session
             : CONFIG.refreshIntervalClosed; // 300 s outside market hours
+        // Re-evaluate on every refresh so the cadence tracks session transitions
+        // (open → closed → next open) without a page reload.
+        if (this.refreshTimer && this.refreshIntervalMs === interval) return;
+        if (this.refreshTimer) clearInterval(this.refreshTimer);
+        this.refreshIntervalMs = interval;
         this.refreshTimer = setInterval(() => this.refresh(), interval);
         console.log(`[MONITOR] Auto-refresh every ${interval / 1000}s (market: ${state})`);
     },

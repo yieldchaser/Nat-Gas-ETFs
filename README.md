@@ -10,7 +10,7 @@ A real-time dashboard for tracking volume flow and price-volume dynamics across 
 
 This project implements five interconnected analytical engines:
 
-1. **Volume Monitor** (`index.html`) — Multi-timeframe volume anomaly detection, volatility modeling, and conviction event filtering across 6 leveraged ETFs.
+1. **Volume Monitor** (`index.html`) — Multi-timeframe volume anomaly detection and volatility modeling across 6 leveraged ETFs.
 2. **Flow Monitor** (`flows.html`) — Daily capital flow tracking (AUM in/out), Z-Score history, pressure scoring, divergence detection, and cross-ETF comparison.
 3. **Trough-to-Peak Analyzer** (`trough-peak.html`) — Institutional-grade ZigZag recovery cycle identification with robust median metrics and 60-day statistical stability.
 4. **Volatility Intelligence** (`cvol.html`) — Regime-first CME NGVL options-surface intelligence. Reads aggregate implied vol (NGVL/ATM), variance wings (UpVar/DnVar), skew ratio, convexity, realized vs implied (VRP), and classifies an options-surface state machine. Raw inputs (SAD/CI/CVC/RDS) are retained as research layers, not direct buy/sell calls.
@@ -85,7 +85,10 @@ PEAKS Mode is supported on:
 The CVOL tab includes a small read-only audit script so you don’t have to trust visuals:
 
 - Run surface audit: `node tools/cvol_surface_audit.mjs`
-- Run CVOL tests: `node test_cvol.js`
+- Run CVOL tests: `node tools/test_cvol.js`
+- Run volume-studies tests: `node tools/test_volume_studies.mjs`
+- Run browser smoke test (requires Playwright): start a local server with
+  `python -m http.server 8765 --directory docs`, then `python tools/smoke.py`
 
 ### 1. Flow Monitor (`flows.html`)
 
@@ -285,7 +288,6 @@ Multi-timeframe volume anomaly detection engine covering both **share volume** a
 - **Detects volume anomalies** across 6 windows (5d/10d/21d/63d/126d/252d) using percentile ranking and Z-scores
 - **Models volatility** with HV, vol regime percentiles, ATR, and VoV
 - **Synthesizes signals** via the **VPS (Volume Pressure Score)** — a 5-component composite
-- **Tracks historical echoes** — patterns showing price action following capitulation signals, with lead-time calibration and regime-stratified forward returns
 - **Monitors capitulation** with **VCVI** (Vol-Adjusted Capitulation Volume Index)
 - **Monitors dollar-flow capitulation** with **DVCVI** — same formula as VCVI but using dollar volume percentile; doubly penalised in capitulation because low price already suppresses dollar volume
 - **Scores capital flow intensity** with **DV-VPS** — parallel to VPS but computed on dollar volume metrics
@@ -346,9 +348,6 @@ Panels are ordered by **signal recency and actionability** — real-time / curre
 6. **Price-Volume Studies** — classic volume indicators (VOLUME / VOL OSC / NET VOL / OBV / PVT) over 3M–ALL ranges
 7. **Side-Wide Convergence (SWVC)** — cross-market tri-ETF spike tracker
 8. **Multi-Window Convergence** — gauges across all 6 timeframes
-9. **Conviction Events** — strictest historical filter
-10. **Elevated Watch** — softer pre-conviction historical filter
-11. **Historical Echoes** — base-rate forward returns for past VCVI signals
 
 #### Active Alerts
 
@@ -382,22 +381,9 @@ The seasonal Z-score uses **log-prices** and a **rolling 10-year same-month look
 | **⚠ ELEVATED** | Price > $4.5 OR \|z\| ≥ 1.5σ OR HV ≥ 70th pct | Interpret with caution |
 | **🚨 EXTREME** | Price > $7.0 OR \|z\| ≥ 2.5σ OR HV ≥ 90th pct | Outlier environment — historical patterns may invert |
 
-**Conviction Events (5-gate filter + advisory annotation, ~1–2/ETF/year):**
-
-| Gate | Condition |
-|------|-----------|
-| 1 — Volume Capitulation | VCVI-21d ≥ 72 (or Extreme Override) |
-| 2 — Multi-Window Breadth | ≥ 3 of 5 windows ≥ 85th pct |
-| 3 — Price Dislocation | \|Daily move\| > 1.5× ATR-14 |
-| 4 — Regime Context | Vol regime ≤ 70th percentile |
-| 5 — NG Directional | Long: z ≤ −0.5σ · Short: z ≥ +0.2σ |
-| Gate 6 — VDDS Advisory | Non-blocking: VDDS at event date annotated on each conviction event for context (can be tightened to a hard gate after validation) |
-
-**Elevated Watch (3-gate, ~4–8/ETF/year):** softer thresholds (VCVI ≥ 60, 2/75 breadth, 1.2× ATR), no vol-regime constraint.
-
 **Side-Wide Volume Convergence (SWVC):** scans the last 15 trading days for each of the 3 ETFs on a side. If all 3 hit RVOL ≥ 2× within any rolling 10-calendar-day window — even on different days — the side is marked `CONVERGED`. Spikes staggered 2–5 days apart across US/CA/UK exchanges fully qualify. Status ladder: `CONVERGED` → `PARTIAL` (2–3 ETFs, or all 3 outside window) → `SINGLE` → `QUIET`. When converged, the top-of-page flash banner fires automatically.
 
-**Historical Echoes:** forward return study (5/10/21/42/63/126/252d windows) for all past VCVI ≥ 55 signals, with median lead-time to peak, season tags, regime-stratified return tables.
+> **Archived studies (2026-10-17):** *Conviction Events* (5-gate filter), *Elevated Watch* (3-gate), and *Historical Echoes* (VCVI base-rate forward returns) were removed from the dashboard — they were retrospective research tables, not live signals. Methodology and gate definitions are preserved in [docs/signal_studies.md](docs/signal_studies.md); the pipeline still computes and stores the data in `dashboard_data.json` (`conviction_events`, `elevated_watch`, `historical_echoes`).
 
 **Price-Volume Studies:** five classic technical volume indicators on full daily OHLCV history, rendered in one interactive canvas with per-ETF chips and 3M/6M/1Y/2Y/ALL range tabs:
 
@@ -713,7 +699,7 @@ A dynamic 180-day visual calendar that maps the intersection of volatility regim
 
 A strategic reference panel that explains how to use CVOL conviction as a multiplier for other dashboards:
 - **CVOL + T2P** — How vol surface extremes align with Trough-to-Peak cycle maturity.
-- **CVOL + Volume** — Using Volume Monitor conviction events as a trade trigger once CVOL reaches a high-conviction regime.
+- **CVOL + Volume** — Using Volume Monitor live anomalies (VCVI / MWCA alerts) as a trade trigger once CVOL reaches a high-conviction regime.
 - **Action Hierarchies** — Categorizes setups from `MAXIMUM CONVICTION` to `CONFLICTED`.
 
 #### Threshold Sensitivity Analysis
@@ -809,8 +795,8 @@ docs/
     ├── cvol-render.js   # Volatility Intelligence canvas rendering engine
     ├── cvol.js          # Volatility Surface & Composite Signal computation
     ├── cards.js         # Card rendering (decay-adj VCVI, season badge, spike)
-    ├── charts.js        # Canvas charts (sparklines, forward return, trough-to-peak)
-    ├── signals.js       # Volume Signal logic (MWCA, SWVC, echoes)
+    ├── charts.js        # Canvas charts (sparklines, trough-to-peak)
+    ├── signals.js       # Volume Signal logic (MWCA, SWVC)
     ├── volume-studies.js # Price-Volume Studies (VOLUME/OSC/NET/OBV/PVT)
     ├── metrics.js       # Volatility & percentile calcs (HV, VoV, term structure)
     ├── vol-regime.js    # Vol Regime Monitor (HV/Trough-Peak chart logic)
@@ -855,9 +841,9 @@ The dashboard uses a two-layer data architecture: a pre-computed pipeline layer 
 2. Compute NG=F context: seasonal Z-score, HV percentile, regime series
 3. Compute per-ETF: volume metrics (6 windows), volatility, CVI/VCVI, VPS, decay-adj
 4. Compute per-ETF dollar-volume metrics: DV-RVOL, DV-ZScore, DV-Percentile, DV-VROC, DVCVI, DV-VPS, and VDDS series (DV-RVOL-21d ÷ S-RVOL-21d per bar)
-5. Detect conviction events (5-gate + extreme override + momentum guard); annotate each event with VDDS value at that date (Gate 6 advisory)
-6. Detect elevated watch events (3-gate)
-7. Generate historical echoes with regime-stratified forward return tables
+5. Detect conviction events (5-gate + extreme override + momentum guard); annotate each event with VDDS value at that date (Gate 6 advisory) — archival data only, see docs/signal_studies.md
+6. Detect elevated watch events (3-gate) — archival data only
+7. Generate historical echoes with regime-stratified forward return tables — archival data only
 8. Deduplicate bars by calendar date (Yahoo v8 occasionally returns two rows for the same date with different volumes — keep the last/most-updated row only)
 9. Write `dashboard_data.json` + `latest_signals.json` → sync to `docs/data/`
 
