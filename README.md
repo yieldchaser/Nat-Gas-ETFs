@@ -292,6 +292,7 @@ Multi-timeframe volume anomaly detection engine covering both **share volume** a
 - **Tracks flow divergence** with **VDDS** (Volume-Dollar Divergence Score) — DV-RVOL ÷ S-RVOL per ETF. The VDDS panel includes a **VOL / $ flip toggle** mirroring the heatmap's mode toggle:
   - **VOL mode** (default) — shows S-RVOL-21d (pure share volume relative to 21-day average) as a left-anchored bar per ETF. Color: dim=sub-normal, white=normal, blue=mild surge, yellow=notable, orange=high, red=extreme, purple=absolute extreme.
   - **$ mode** — shows the original VDDS ratio (DV-RVOL-21d ÷ S-RVOL-21d) as a centered divergence bar (green=capitulation, red=momentum).
+- **Plots classic price-volume studies** — Volume, Volume Oscillator, Net Volume, OBV, and PVT on full daily OHLCV history (3M–ALL ranges, per-ETF)
 - **Detects weather spikes** via 5d fast-window VCVI + ATR sharp-spike flag
 - **Gates signals** with a **log-transformed rolling 10-year seasonal Z-score** on NG=F (corrects for right-skewed gas price distribution; raw Z-scores were non-triggerable at low prices due to 2022 spike inflating σ)
 - **Corrects for leveraged ETF decay** to prevent structural price drift contaminating percentile signals
@@ -342,11 +343,12 @@ Panels are ordered by **signal recency and actionability** — real-time / curre
 3. **Volume Heat Map (Days 1–90)** — 90-day rolling heatmap, immediately actionable at a glance
 4. **Inverse Pair Stress Matrix** — per-pair IPSI, vol regime, real-time stress status
 5. **VDDS Panel** — per-ETF volume bar with VOL / $ flip toggle
-6. **Side-Wide Convergence (SWVC)** — cross-market tri-ETF spike tracker
-7. **Multi-Window Convergence** — gauges across all 6 timeframes
-8. **Conviction Events** — strictest historical filter
-9. **Elevated Watch** — softer pre-conviction historical filter
-10. **Historical Echoes** — base-rate forward returns for past VCVI signals
+6. **Price-Volume Studies** — classic volume indicators (VOLUME / VOL OSC / NET VOL / OBV / PVT) over 3M–ALL ranges
+7. **Side-Wide Convergence (SWVC)** — cross-market tri-ETF spike tracker
+8. **Multi-Window Convergence** — gauges across all 6 timeframes
+9. **Conviction Events** — strictest historical filter
+10. **Elevated Watch** — softer pre-conviction historical filter
+11. **Historical Echoes** — base-rate forward returns for past VCVI signals
 
 #### Active Alerts
 
@@ -397,6 +399,18 @@ The seasonal Z-score uses **log-prices** and a **rolling 10-year same-month look
 
 **Historical Echoes:** forward return study (5/10/21/42/63/126/252d windows) for all past VCVI ≥ 55 signals, with median lead-time to peak, season tags, regime-stratified return tables.
 
+**Price-Volume Studies:** five classic technical volume indicators on full daily OHLCV history, rendered in one interactive canvas with per-ETF chips and 3M/6M/1Y/2Y/ALL range tabs:
+
+| Study | Formula | Read |
+|-------|---------|------|
+| **VOLUME** | Daily share volume, bar colored by close direction (close vs prior close); 21d SMA overlay | Raw participation; spikes vs the monthly baseline |
+| **VOL OSC** | 100 × (SMA5 − SMA21) ÷ SMA21 | > 0 volume expanding vs its own monthly baseline; < 0 contracting |
+| **NET VOL** | Daily volume signed by close direction (+ up / − down), 21d rolling net line | Sustained positive net = accumulation pressure |
+| **OBV** | Cumulative signed volume; 21d MA | Above MA = accumulation regime |
+| **PVT** | Cumulative Σ volume × %close-change; 21d MA | Flow quality — weights heavy-volume days by the size of the move |
+
+OBV and PVT are rebased to **0 at the visible-range start** (the 21d MA is computed on the full series and rebased by the same constant). Hover gives a full crosshair tooltip; the footer reading line shows RVOL-21d / Z-score context for VOLUME and state verdicts (EXPANSION / ACCUMULATION / ABOVE-MA etc.) for the remaining studies.
+
 ---
 
 ### 3. Trough-to-Peak Analyzer + Vol Regime Monitor (`trough-peak.html`)
@@ -409,6 +423,7 @@ Professional-grade recovery cycle identification:
 - **Enhanced KPI Summary Grid** — Mean and **Median** Gain (robust vs outliers), Avg Days, and Avg Gap across all 6 ETFs
 - **Price & Cycle Map** — High-performance interactive canvas with **ImageData caching** for 0-latency hover, crosshair, click-drag measurement, quick-range buttons, and dual-brush slider
 - **Visual Turn Identification:** Volume bars are color-accented (Red = Trough, Green = Peak) to highlight high-conviction turning points
+- **Volume Profile** — volume-at-price histogram for price levels, with **VISIBLE RANGE** mode (always synced to the map's slider/zoom brush) and **FIXED RANGE** mode (custom FROM/TO date pickers). 42 price buckets (auto log-spacing when the range spans >4×, flagged with a gold LOG tag — keeps split-adjusted histories readable), POC highlighted, shaded 70% value area, green/red split between up-day and down-day volume, dashed range-end close with ABOVE/INSIDE/BELOW value-area read, and hover tooltip with per-bucket share of range volume
 - **Cycle Detail Table:** Filterable history with **Summary Footer row** (aggregate count, avg/med gain, avg duration) and CSV export
 - **Yearly Opportunity Matrix:** Heatmap of cycle count and avg gain per year per ETF with side-aware color coding (3NGS corrected to Red)
 - **Leveraged ETF Cycle Tax & Compounding Calculator** — Advanced Indian LRS compounding model with interactive modal UI, dynamic tooltips, and deep-link serialization (detailed below).
@@ -796,6 +811,7 @@ docs/
     ├── cards.js         # Card rendering (decay-adj VCVI, season badge, spike)
     ├── charts.js        # Canvas charts (sparklines, forward return, trough-to-peak)
     ├── signals.js       # Volume Signal logic (MWCA, SWVC, echoes)
+    ├── volume-studies.js # Price-Volume Studies (VOLUME/OSC/NET/OBV/PVT)
     ├── metrics.js       # Volatility & percentile calcs (HV, VoV, term structure)
     ├── vol-regime.js    # Vol Regime Monitor (HV/Trough-Peak chart logic)
     └── config.js        # Thresholds, windows, ETF metadata, decay rates

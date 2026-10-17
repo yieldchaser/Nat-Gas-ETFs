@@ -517,6 +517,7 @@ const Metrics = {
             rollingCorr,
             alerts, alertLevel,
             sparkData,
+            history: d,
             historyLength: d.length
         };
     },
