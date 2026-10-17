@@ -1851,3 +1851,37 @@
     .vrm-footer-stats { flex-direction: column; }
     .vrm-chip-pair .vrm-chip-sub { display: none; }
 }
+
+/* ---- PRICE-VOLUME STUDIES (Volume Monitor) ---- */
+.vs-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.vs-chip {
+    font-size: 0.6rem; font-weight: 800; letter-spacing: 0.5px;
+    padding: 4px 10px; border-radius: 4px; border: 1px solid;
+    cursor: pointer; transition: all 0.2s; user-select: none;
+    font-family: 'JetBrains Mono', monospace; background: transparent;
+}
+.vs-chip.active { opacity: 1; background: rgba(255,255,255,0.08); }
+.vs-chip.inactive { opacity: 0.3; background: transparent; }
+.vs-canvas-wrap { position: relative; height: 240px; width: 100%; }
+#vs-canvas { width: 100%; height: 100%; cursor: crosshair; display: block; }
+.vs-reading {
+    margin-top: 10px; font-size: 0.65rem; font-weight: 700;
+    letter-spacing: 0.5px; color: rgba(255, 255, 255, 0.8);
+    display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+}
+.vs-reading .vs-lbl { color: rgba(255, 255, 255, 0.45); font-weight: 800; }
+.vs-reading-na { color: rgba(255, 255, 255, 0.45); }
+.vs-tooltip {
+    position: absolute; display: none; background: rgba(22, 22, 36, 0.95);
+    border: 1px solid var(--border-primary); border-radius: 6px;
+    padding: 8px 12px; font-size: 0.7rem; color: #fff;
+    pointer-events: none; z-index: 50; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    min-width: 150px;
+}
+.vs-tt-date { color: var(--cyan); font-weight: 800; margin-bottom: 4px; font-size: 0.62rem; letter-spacing: 1px; }
+.vs-tt-row { display: flex; justify-content: space-between; gap: 14px; margin-top: 2px; }
+.vs-tt-lbl { color: #fff; opacity: 0.75; font-weight: 700; text-transform: uppercase; font-size: 0.6rem; }
+.vs-tt-val { font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+@media (max-width: 600px) {
+    .vs-canvas-wrap { height: 190px; }
+}

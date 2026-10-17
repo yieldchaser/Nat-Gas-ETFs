@@ -422,6 +422,7 @@ const App = {
                 alertLevel: alertLevel,
                 sparkData: sparkData,
                 heatmapData: heatmapData,
+                history: hist,
                 historyLength: (etfData.history || []).length
             };
         }
@@ -445,6 +446,9 @@ const App = {
 
         // Section C: Signal Command Center
         Signals.renderAll(this.allMetrics, this.sideConvergence || null, this.ngPriceContext || null);
+
+        // Price-Volume Studies panel (classic volume indicators)
+        if (typeof VolumeStudies !== 'undefined') VolumeStudies.render();
 
         // Vol Regime Monitor moved to trough-peak page
         if (typeof VolRegime !== 'undefined') VolRegime.render(this.allMetrics, this.ngVolMetrics);

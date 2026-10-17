@@ -78,6 +78,19 @@ const CONFIG = {
         correlation: 30
     },
 
+    // Price-Volume Studies panel (classic volume indicators)
+    volumeStudies: {
+        oscillator: { fast: 5, slow: 21 },
+        ma: 21,
+        ranges: [
+            { key: '3m', label: '3M', days: 90 },
+            { key: '6m', label: '6M', days: 180 },
+            { key: '1y', label: '1Y', days: 365 },
+            { key: '2y', label: '2Y', days: 730 },
+            { key: 'all', label: 'ALL', days: null }
+        ]
+    },
+
     // Alert thresholds
     thresholds: {
         cvi:  { elevated: 60, high: 75, critical: 90, extreme: 95 },
