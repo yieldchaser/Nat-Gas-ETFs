@@ -94,39 +94,68 @@ with sync_playwright() as p:
     page.wait_for_timeout(250)
     vtt = page.eval_on_selector("#vp-tooltip", "el => el.style.display")
     assert vtt == "block", f"trough-peak: vp tooltip not shown ({vtt})"
+    vtt_text = page.inner_text("#vp-tooltip")
+    assert "SESSIONS" in vtt_text and "VOL SHARE" in vtt_text, \
+        f"trough-peak: vp tooltip missing rows: {vtt_text!r}"
 
-    page.click('#vp-mode-tabs button[data-vp-mode="fixed"]')
+    page.mouse.move(vbox["x"] + vbox["width"] * 0.4, vbox["y"] + vbox["height"] * 0.2)
+    page.wait_for_timeout(250)
+    top_text = page.inner_text("#vp-tooltip")
+    page.mouse.move(vbox["x"] + vbox["width"] * 0.4, vbox["y"] + vbox["height"] * 0.8)
+    page.wait_for_timeout(250)
+    bottom_text = page.inner_text("#vp-tooltip")
+
+    def first_price(t):
+        m = re.search(r"\$([\d,]+\.?\d*)", t)
+        return float(m.group(1).replace(",", "")) if m else None
+
+    top_p, bottom_p = first_price(top_text), first_price(bottom_text)
+    assert top_p is not None and bottom_p is not None and top_p > bottom_p, \
+        f"trough-peak: profile flipped vs axis (top {top_text[:40]!r} vs bottom {bottom_text[:40]!r})"
+
+    hash_1y = page.evaluate(HASH, "vp-canvas")
+    sessions_1y = re.search(r"(\d+) sessions", label)
+    assert sessions_1y, f"trough-peak: no session count in default window: {label!r}"
+
+    page.click('#vp-range-tabs button[data-vp-range="all"]')
+    page.wait_for_timeout(400)
+    label_all = page.inner_text("#vp-range-label")
+    sessions_all = re.search(r"(\d+) sessions", label_all)
+    assert sessions_all, f"trough-peak: no session count in ALL window: {label_all!r}"
+    assert int(sessions_all.group(1)) > int(sessions_1y.group(1)), \
+        f"trough-peak: ALL window not larger than 1Y ({label_all!r} vs {label!r})"
+    all_hash = page.evaluate(HASH, "vp-canvas")
+    assert all_hash != hash_1y, "trough-peak: ALL vs 1Y profile identical"
+
+    page.click('#vp-range-tabs button[data-vp-range="custom"]')
     page.wait_for_timeout(400)
     disp = page.eval_on_selector("#vp-fixed-controls", "el => getComputedStyle(el).display")
-    assert disp == "flex", f"trough-peak: fixed controls not shown ({disp})"
+    assert disp == "flex", f"trough-peak: custom controls not shown ({disp})"
     from_val = page.input_value("#vp-from")
-    assert from_val, "trough-peak: vp-from empty after switching to fixed"
-    assert page.evaluate(PIXEL_CHECK, "vp-canvas"), "trough-peak: vp-canvas blank in fixed mode"
+    assert from_val, "trough-peak: vp-from empty after switching to custom"
+    assert page.evaluate(PIXEL_CHECK, "vp-canvas"), "trough-peak: vp-canvas blank in custom mode"
 
     page.fill("#vp-from", "2018-01-01")
     page.dispatch_event("#vp-from", "change")
     page.wait_for_timeout(400)
     label2 = page.inner_text("#vp-range-label")
-    assert label2.startswith("2018"), f"trough-peak: fixed range label not updated: {label2!r}"
-    fixed_hash = page.evaluate(HASH, "vp-canvas")
-    page.click('#vp-mode-tabs button[data-vp-mode="visible"]')
+    assert label2.startswith("2018"), f"trough-peak: custom range label not updated: {label2!r}"
+    custom_hash = page.evaluate(HASH, "vp-canvas")
+    assert custom_hash != all_hash, "trough-peak: custom vs ALL profile identical"
+
+    page.click('#vp-range-tabs button[data-vp-range="1y"]')
     page.wait_for_timeout(400)
-    visible_hash = page.evaluate(HASH, "vp-canvas")
-    assert fixed_hash != visible_hash, "trough-peak: fixed vs visible profile identical"
     disp2 = page.eval_on_selector("#vp-fixed-controls", "el => getComputedStyle(el).display")
-    assert disp2 == "none", "trough-peak: fixed controls should hide in visible mode"
+    assert disp2 == "none", "trough-peak: custom controls should hide on preset ranges"
 
-    label_boil = page.inner_text("#vp-range-label")
-    sessions_boil = re.search(r"(\d+) sessions", label_boil)
-    assert sessions_boil, f"trough-peak: no session count in {label_boil!r}"
-
+    hash_before_switch = page.evaluate(HASH, "vp-canvas")
     page.click('#chart-etf-chips button:has-text("HND")')
     page.wait_for_timeout(800)
     label_hnd = page.inner_text("#vp-range-label")
     sessions_hnd = re.search(r"(\d+) sessions", label_hnd)
     assert sessions_hnd, f"trough-peak: no session count after ETF switch: {label_hnd!r}"
-    assert sessions_boil.group(1) != sessions_hnd.group(1), \
-        f"trough-peak: profile did not follow ETF switch ({label_boil!r} vs {label_hnd!r})"
+    hash_hnd = page.evaluate(HASH, "vp-canvas")
+    assert hash_before_switch != hash_hnd, "trough-peak: profile did not follow ETF switch (canvas identical)"
     assert page.evaluate(PIXEL_CHECK, "vp-canvas"), "trough-peak: vp-canvas blank after ETF switch"
     page.click('#chart-etf-chips button:has-text("BOIL")')
     page.wait_for_timeout(800)
@@ -152,7 +181,7 @@ with sync_playwright() as p:
 
     browser.close()
 
-expected = [e for e in errors if "net::ERR" not in e and "Failed to load resource" not in e and "allorigins" not in e]
+expected = [e for e in errors if "net::ERR" not in e and "Failed to load resource" not in e and "allorigins" not in e and "All proxies failed" not in e]
 print(f"console errors (filtered): {len(expected)}")
 for e in expected[:20]:
     print("  " + e)
