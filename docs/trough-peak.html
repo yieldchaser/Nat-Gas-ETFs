@@ -226,6 +226,8 @@ input[type=range]:hover::-moz-range-thumb {
 .vp-tt-va { color: #7fb4c4; background: rgba(80,144,160,0.12); border: 1px solid rgba(80,144,160,0.55); }
 .vp-tt-out { color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18); }
 .tp-title .panel-subtitle { text-transform: none; }
+#vp-panel .chart-footer { flex-direction: column; align-items: stretch; gap: 10px; }
+#vp-panel .chart-footer > div:last-child { text-align: left; }
 
 .chart-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05); }
 .chart-legend { display: flex; gap: 24px; }
@@ -1031,7 +1033,7 @@ select.calc-input { cursor: pointer; }
     <div class="chart-container" id="vp-panel">
         <div class="chart-header">
             <div class="tp-title-row">
-                <h2 class="tp-title" style="font-size: 1rem;" data-tooltip="Shares traded at each price level over the selected window. Green/red splits volume by up versus down sessions. Use the range tabs to change the window; CUSTOM sets exact start and end dates.">Volume Profile <span class="panel-subtitle">&mdash; volume at price</span></h2>
+                <h2 class="tp-title" style="font-size: 1rem;" data-tooltip="Shares traded at each price level over the selected window. Green/red splits volume by up versus down sessions. Pick the ETF from the chips under the header, the window from the range tabs; CUSTOM sets exact start and end dates.">Volume Profile <span class="panel-subtitle">&mdash; volume at price</span></h2>
                 <span class="vp-range-label" id="vp-range-label"></span>
             </div>
             <div class="chart-controls">
@@ -1051,6 +1053,7 @@ select.calc-input { cursor: pointer; }
                 </div>
             </div>
         </div>
+        <div id="vp-etf-chips" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin:10px 0 8px;"></div>
         <div class="chart-canvas-wrap vp-canvas-wrap">
             <canvas id="vp-canvas"></canvas>
             <div id="vp-tooltip"></div>
@@ -1873,7 +1876,7 @@ function renderChart(overlayOnly) {
 
 // ── VOLUME PROFILE ───────────────────────────────────────────────────────────
 const VP_PRESETS = { '3m': 90, '6m': 180, '1y': 365, '2y': 730, '5y': 1826, 'all': null };
-const vpState = { range: '1y', fixedFrom: null, fixedTo: null, hoverBucket: null, last: null, cacheKey: null };
+const vpState = { etf: state.activeTab, range: '1y', fixedFrom: null, fixedTo: null, hoverBucket: null, last: null, cacheKey: null };
 
 function vpRangeIndices(d, rangeKey) {
     if (rangeKey === 'custom') {
@@ -2123,7 +2126,7 @@ function vpSyncDateInputs(d) {
 function vpSetRange(rangeKey) {
     const prev = vpState.range;
     vpState.range = rangeKey;
-    const t = TICKERS.find(x => x.label === state.activeTab) || TICKERS[0];
+    const t = TICKERS.find(x => x.label === vpState.etf) || TICKERS[0];
     const d = state.rawData[t.symbol];
     if (rangeKey === 'custom' && d && (!vpState.fixedFrom || !vpState.fixedTo)) {
         const [s, e] = vpRangeIndices(d, prev === 'custom' ? '1y' : prev);
@@ -2146,7 +2149,7 @@ function vpSetRange(rangeKey) {
 function renderVolumeProfile() {
     const canvas = document.getElementById('vp-canvas');
     if (!canvas) return;
-    const t = TICKERS.find(x => x.label === state.activeTab) || TICKERS[0];
+    const t = TICKERS.find(x => x.label === vpState.etf) || TICKERS[0];
     const d = state.rawData[t.symbol];
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
@@ -2233,6 +2236,29 @@ function vpUpdateMeta(d, prof, startIdx, endIdx) {
         `<span><b>TOTAL VOL</b> ${vpFmtVolV(prof.totalVol)}</span>` +
         `<span style="color:rgba(61,184,122,0.95)"><b style="color:rgba(61,184,122,0.95)">UP-DAY VOL</b> ${upPct.toFixed(0)}%</span>` +
         `<span style="color:rgba(192,64,64,0.95)"><b style="color:rgba(192,64,64,0.95)">DOWN-DAY VOL</b> ${(100 - upPct).toFixed(0)}%</span>`;
+}
+
+function renderVpEtfChips() {
+    const container = document.getElementById('vp-etf-chips');
+    if (!container) return;
+    container.innerHTML = '';
+    TICKERS.forEach(t => {
+        const active = t.label === vpState.etf;
+        const chip = document.createElement('button');
+        chip.className = 'etf-chip';
+        chip.textContent = t.label;
+        chip.setAttribute('data-tooltip', t.tip);
+        chip.style.color = t.color;
+        chip.style.borderColor = t.color;
+        chip.style.background = active ? t.color + '22' : 'transparent';
+        chip.style.opacity = active ? '1' : '0.45';
+        chip.addEventListener('click', () => {
+            vpState.etf = t.label;
+            renderVpEtfChips();
+            renderVolumeProfile();
+        });
+        container.appendChild(chip);
+    });
 }
 
 function initVolumeProfileControls() {
@@ -3043,6 +3069,7 @@ initRangeSlider();
 initChartHover();
 initVolumeProfileControls();
 initVolumeProfileHover();
+renderVpEtfChips();
 initDrawdownControls();
 initDrawdownHover();
 renderChartTabs();
