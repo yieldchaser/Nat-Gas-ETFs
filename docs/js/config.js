@@ -109,26 +109,6 @@ const CONFIG = {
         vov: { elevated: 40, high: 60, critical: 80, extreme: 100 },   // vol-of-vol (%)
         atrBreakout: { elevated: 1.2, high: 1.5, critical: 2.0, extreme: 3.0 },  // × ATR
 
-        // Conviction Event gates — strict multi-gate filter (~1-2 events/ETF/year)
-        conviction: {
-            vcviMin: 72,          // Gate 1: VCVI-21 ≥ critical
-            breadthMin: 3,        // Gate 2: ≥ N of 5 vol-pct windows above threshold
-            breadthPct: 85,       // Gate 2: percentile threshold per window
-            atrMult: 1.5,         // Gate 3: |daily move| > N × ATR-14
-            volRegimeMax: 70,     // Gate 4: vol regime ≤ this (non-turbulent)
-            extremeOverrideVcvi: 90,   // Extreme override: bypasses Gate 1 min if VCVI ≥ 90
-            extremeOverrideAtr: 2.0,   // … AND move > 2× ATR-14
-            ngZLong: -1.0,             // Gate 5: long-side fires when gas seasonal z ≤ -1.0
-            ngZShort: 1.0,             // Gate 5: short-side fires when gas seasonal z ≥ +1.0
-            momentumGuardBoost: 13     // Momentum guard: raises VCVI bar for short when gas in uptrend
-        },
-        // Elevated Watch gates — 3-gate softer filter (~4-8 events/ETF/year)
-        elevatedWatch: {
-            vcviMin: 60,          // Gate 1: VCVI-21 warning level
-            breadthMin: 2,        // Gate 2: 2 of N windows
-            breadthPct: 75,       // Gate 2: 75th pct (softer)
-            atrMult: 1.2,         // Gate 3: 1.2× ATR (softer)
-        },
         // Fast spike detection (5d VCVI window)
         fastVcvi: { threshold: 45, atrMult: 2.0 },
         // Gas price level gate — uses seasonal z-score (not raw percentile)

@@ -444,7 +444,7 @@
 }
 
 /* ============================================
-   Historical Echoes Panel
+   Shared: Panel Subtitle
    ============================================ */
 .panel-subtitle {
     font-size: 0.6rem;
@@ -452,314 +452,6 @@
     font-weight: 400;
     letter-spacing: 0.3px;
 }
-
-.echoes-loading {
-    font-size: 0.65rem;
-    color: rgba(255, 255, 255, 0.85);
-    text-align: center;
-    padding: 12px 0;
-}
-
-.echoes-pair-group {
-    margin-bottom: 12px;
-}
-
-.echoes-pair-label {
-    font-size: 0.55rem;
-    letter-spacing: 1px;
-    color: rgba(255, 255, 255, 0.85);
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    padding-bottom: 3px;
-    border-bottom: 1px solid var(--border-primary);
-}
-
-.echoes-pair-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-}
-
-/* Individual echo card */
-.echo-card {
-    background: rgba(0,0,0,0.2);
-    border-radius: 4px;
-    padding: 8px;
-    border-left: 2px solid transparent;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-.echo-card.echo-long  { border-left-color: var(--long-accent); }
-.echo-card.echo-short { border-left-color: var(--short-accent); }
-
-.echo-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 6px;
-}
-
-.echo-ticker {
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-}
-
-.echo-count {
-    font-size: 0.55rem;
-    color: rgba(255, 255, 255, 0.85);
-    cursor: help;
-}
-
-/* Forward return table */
-.echo-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 6px;
-    font-size: 0.62rem;
-}
-
-.echo-table th {
-    color: rgba(255, 255, 255, 0.85);
-    font-weight: 500;
-    text-align: right;
-    padding: 1px 3px;
-    letter-spacing: 0.3px;
-    font-size: 0.55rem;
-}
-
-.echo-table th:first-child,
-.echo-table td:first-child { text-align: left; }
-
-.echo-table td {
-    text-align: right;
-    padding: 2px 3px;
-    font-weight: 600;
-}
-
-.echo-window { color: rgba(255, 255, 255, 0.85); font-weight: 500 !important; }
-.echo-range  { color: rgba(255, 255, 255, 0.85); font-size: 0.58rem !important; font-weight: 400 !important; }
-
-/* Directional bias line */
-.echo-bias {
-    font-size: 0.6rem;
-    font-weight: 600;
-    padding: 3px 6px;
-    border-radius: 3px;
-    margin: 4px 0;
-    text-align: center;
-}
-
-.bias-bull    { background: rgba(61,184,122,0.10); color: var(--green); }
-.bias-bear    { background: rgba(192,64,64,0.10);  color: var(--red); }
-.bias-neutral { background: rgba(255,255,255,0.05); color: rgba(255, 255, 255, 0.85); }
-
-/* Recent past occurrences */
-.echo-recent {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    align-items: center;
-    margin-top: 4px;
-}
-
-.echo-recent-label {
-    font-size: 0.52rem;
-    color: rgba(255, 255, 255, 0.85);
-    flex-shrink: 0;
-}
-
-.echo-past-date {
-    font-size: 0.58rem;
-    font-weight: 600;
-    cursor: help;
-    padding: 1px 4px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 2px;
-    transition: background 0.15s;
-}
-
-.echo-past-date:hover {
-    background: rgba(255,255,255,0.1);
-}
-
-.echo-empty {
-    font-size: 0.6rem;
-    color: rgba(255, 255, 255, 0.85);
-    padding: 8px 0;
-    text-align: center;
-}
-
-/* Forward return curve canvas */
-.echo-curve-container {
-    width: 100%;
-    height: 80px;
-    margin-bottom: 6px;
-    background: rgba(0,0,0,0.18);
-    border-radius: 3px;
-    overflow: hidden;
-}
-
-.echo-curve-container canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-}
-
-/* Edge-window highlighted table row */
-.echo-edge-row td {
-    background: rgba(255,255,255,0.03);
-}
-
-.echo-edge-row .echo-window {
-    color: var(--text-primary) !important;
-    font-weight: 700 !important;
-}
-
-/* ============================================
-   Conviction Events Panel
-   ============================================ */
-.conviction-loading,
-.conviction-empty {
-    font-size: 0.65rem;
-    color: rgba(255, 255, 255, 0.85);
-    text-align: center;
-    padding: 12px 0;
-}
-
-.conviction-pair-group {
-    margin-bottom: 12px;
-}
-
-.conviction-pair-label {
-    font-size: 0.55rem;
-    letter-spacing: 1px;
-    color: rgba(255, 255, 255, 0.85);
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    padding-bottom: 3px;
-    border-bottom: 1px solid var(--border-primary);
-}
-
-.conviction-pair-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-}
-
-.conviction-card {
-    background: rgba(0,0,0,0.2);
-    border-radius: 4px;
-    padding: 8px;
-    border-left: 2px solid transparent;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-.conviction-card.conviction-long  { border-left-color: var(--long-accent); }
-.conviction-card.conviction-short { border-left-color: var(--short-accent); }
-
-.conviction-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 4px;
-    gap: 8px;
-}
-
-.conviction-ticker {
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-}
-
-.conviction-count {
-    font-size: 0.55rem;
-    color: rgba(255, 255, 255, 0.85);
-}
-
-.conviction-rate {
-    font-size: 0.55rem;
-    color: rgba(255, 255, 255, 0.85);
-    cursor: help;
-    margin-left: auto;
-}
-
-.conviction-gates {
-    font-size: 0.5rem;
-    color: rgba(255, 255, 255, 0.85);
-    padding: 3px 5px;
-    background: rgba(255,255,255,0.03);
-    border-radius: 3px;
-    margin-bottom: 6px;
-    line-height: 1.5;
-    cursor: help;
-}
-
-.conviction-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.6rem;
-}
-
-.conviction-table th {
-    color: rgba(255, 255, 255, 0.85);
-    font-weight: 500;
-    text-align: right;
-    padding: 1px 2px;
-    letter-spacing: 0.1px;
-    font-size: 0.5rem;
-}
-
-.conviction-table th:first-child,
-.conviction-table td:first-child { text-align: left; }
-
-.conviction-table td {
-    text-align: right;
-    padding: 2px 2px;
-    font-weight: 600;
-}
-
-.ce-date { color: rgba(255, 255, 255, 0.85); font-weight: 500 !important; text-align: left !important; }
-.ce-breadth { color: rgba(255, 255, 255, 0.85); }
-
-/* Forward returns summary below conviction table */
-.ce-fwd-returns {
-    margin-top: 6px;
-    padding-top: 5px;
-    border-top: 1px solid var(--border-primary);
-}
-.ce-fwd-label {
-    font-size: 0.5rem;
-    color: rgba(255, 255, 255, 0.85);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 3px;
-}
-.ce-fwd-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.6rem;
-}
-.ce-fwd-table th {
-    color: rgba(255, 255, 255, 0.85);
-    font-weight: 500;
-    text-align: center;
-    padding: 1px 3px;
-    font-size: 0.55rem;
-}
-.ce-fwd-table td {
-    text-align: center;
-    padding: 2px 3px;
-    font-weight: 700;
-}
-.ce-fwd-wr td {
-    font-weight: 500;
-    font-size: 0.5rem;
-    opacity: 0.8;
-}
-
 /* ============================================
    Side-Wide Volume Convergence (SWVC)
    ============================================ */
@@ -963,7 +655,7 @@
 }
 
 /* ---- SETUP DIRECTION BADGES ---- */
-/* Used in alert feed, echo cards, and conviction cards to make trade direction explicit */
+/* Used in the alert feed to make trade direction explicit */
 .setup-badge {
     display: inline-block;
     font-size: 0.5rem;
@@ -986,7 +678,7 @@
 }
 
 /* ============================================================
-   FEATURE ADDITIONS: NG Price Bar, Fast-Spike, Season, Elevated Watch
+   FEATURE ADDITIONS: NG Price Bar, Fast-Spike, Season
    ============================================================ */
 
 /* ---- NG=F Gas Price Context Bar (Feature 2) ---- */
@@ -1096,51 +788,6 @@
     opacity: 0.8;
 }
 
-/* ---- Elevated Watch Panel ---- */
-.watch-pair-group {
-    margin-bottom: 10px;
-}
-.watch-pair-label {
-    font-size: 0.55rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    color: rgba(255, 255, 255, 0.85);
-    text-transform: uppercase;
-    margin-bottom: 4px;
-    padding: 2px 4px;
-    border-left: 2px solid var(--yellow);
-}
-.watch-pair-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-.watch-card {
-    border-left-color: var(--yellow) !important;
-    opacity: 0.92;
-}
-.watch-gates {
-    color: var(--yellow) !important;
-    opacity: 0.75;
-}
-.watch-empty {
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 0.6rem;
-    padding: 8px 4px;
-}
-
-/* ---- Echo Lead-Time Indicator ---- */
-.echo-lead-time {
-    font-size: 0.58rem;
-    color: rgba(255,220,80,0.9);
-    padding: 2px 4px;
-    margin: 3px 0 2px;
-    border-left: 2px solid rgba(255,220,80,0.4);
-    background: rgba(255,220,80,0.04);
-    border-radius: 0 3px 3px 0;
-    cursor: default;
-}
-
 /* Z-score bar variant for NG price bar */
 .ng-bar-zscore {
     overflow: visible;
@@ -1173,34 +820,18 @@
     .stress-matrix th { font-size: 0.55rem; padding: 5px 6px; letter-spacing: 0.5px; }
     .stress-matrix td { padding: 6px 6px; font-size: 0.65rem; }
 
-    /* Conviction table (8 cols, JS-injected) — scroll within card */
-    .conviction-table { min-width: 440px; font-size: 0.6rem; }
-    .conviction-table th,
-    .conviction-table td { padding: 4px 6px; }
-
-    /* Forward return table inside conviction card */
-    .ce-fwd-table { min-width: 260px; font-size: 0.6rem; }
-
-    /* Echo table — 4 cols, compact enough but let it breathe */
-    .echo-table { width: 100%; font-size: 0.62rem; }
-
     /* Alert feed */
     .alert-item { font-size: 0.65rem; gap: 8px; }
 
     /* General signal panel tightening */
     .signal-panel { padding: 10px; }
     .signal-panel h3 { font-size: 0.65rem; }
-
-    /* Conviction gates text wraps instead of overflowing */
-    .conviction-gates { font-size: 0.55rem; word-break: break-word; white-space: normal; }
 }
 
 @media (max-width: 480px) {
     .stress-matrix { min-width: 580px; font-size: 0.6rem; }
     .stress-matrix th { font-size: 0.5rem; padding: 4px 4px; }
     .stress-matrix td { padding: 5px 4px; font-size: 0.6rem; }
-    .conviction-table { min-width: 400px; font-size: 0.58rem; }
-    .conviction-table th, .conviction-table td { padding: 3px 4px; }
     .alert-item { font-size: 0.6rem; gap: 6px; }
     .signal-panel { padding: 8px; }
 }
