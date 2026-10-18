@@ -161,7 +161,12 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    margin-top: 6px;
+    margin-top: 10px;
+    margin-bottom: 6px;
+}
+
+#heat-calendar-panel {
+    margin-bottom: 16px;
 }
 
 .heat-label {
@@ -363,12 +368,63 @@
     box-shadow: 0 0 8px 1px rgba(6, 182, 212, 0.35) !important;
 }
 
-/* Compact style for PEAKS threshold tab groups to prevent horizontal clipping */
+/* ---- VOLUME HEAT MAP HEADER & COMPACT CONTROLS ---- */
+.heat-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: nowrap;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+}
+.heat-panel-header-left {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    flex-shrink: 1;
+}
+.heat-panel-header-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+#heat-spotlight-group {
+    margin: 0;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+}
+#heat-spotlight-group .tab-btn {
+    padding: 3px 6px;
+    font-size: 0.60rem;
+    letter-spacing: 0.4px;
+}
+
+#heat-peaks-threshold-group {
+    margin: 0;
+    padding: 2px;
+    align-items: center;
+}
+#heat-peaks-threshold-group .tab-btn {
+    padding: 3px 5px;
+    font-size: 0.60rem;
+    min-width: 22px;
+    text-align: center;
+    letter-spacing: 0.2px;
+}
+
+/* Compact style for other PEAKS threshold tab groups */
 .heat-peaks-sub .tab-btn,
 #flow-heat-peaks-threshold-group .tab-btn,
 #cvol-sig-peaks-threshold-group .tab-btn {
-    padding: 4px 6px;
-    font-size: 0.65rem;
+    padding: 3px 5px;
+    font-size: 0.62rem;
 }
 
 
