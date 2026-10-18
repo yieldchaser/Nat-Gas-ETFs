@@ -95,7 +95,7 @@ const Charts = {
     },
 
     // ---- HEAT CALENDAR ----
-    drawHeatCalendar(container, dailyScores, mode = 'share', spotlightMode = false, peaksThreshold = 95, globalPercentiles = null) {
+    drawHeatCalendar(container, dailyScores, mode = 'share', spotlightMode = false, peaksThreshold = 95, globalPercentiles = null, side = 'all') {
         container.innerHTML = '';
         const isPeaks = (spotlightMode === 'peaks' || spotlightMode === true);
         const isValleys = (spotlightMode === 'valleys');
@@ -110,6 +110,7 @@ const Charts = {
         ];
 
         const label = mode === 'dollar' ? 'DVCVI' : 'CVI';
+        const subject = (side && side !== 'all') ? `${side} ` : '';
         let count = 0;
 
         // Choose appropriate threshold set based on mode
@@ -135,9 +136,9 @@ const Charts = {
             cell.style.background = colors[idx];
 
             if (isValleys) {
-                cell.setAttribute('data-tooltip', `${day.date}: VOL DROUGHT ${day.score.toFixed(0)} (Vol Rank ${(100 - day.score).toFixed(0)}%)`);
+                cell.setAttribute('data-tooltip', `${day.date}: ${subject}VOL DROUGHT ${day.score.toFixed(0)} (Vol Rank ${(100 - day.score).toFixed(0)}%)`);
             } else {
-                cell.setAttribute('data-tooltip', `${day.date}: ${label} ${day.score.toFixed(0)}`);
+                cell.setAttribute('data-tooltip', `${day.date}: ${subject}${label} ${day.score.toFixed(0)}`);
             }
 
             if (isPeaks) {
