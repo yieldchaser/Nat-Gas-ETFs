@@ -474,8 +474,10 @@ const Cards = {
                 volTag = '<span style="color:#f59e0b;font-weight:700">● NOTABLE VOLUME</span>';
             } else if (ratio > 0.30) {
                 volTag = '<span style="color:#60a5fa;font-weight:600">● MODERATE</span>';
-            } else {
+            } else if (ratio > 0.15) {
                 volTag = '<span style="color:rgba(255,255,255,0.45)">● QUIET</span>';
+            } else {
+                volTag = '<span style="color:#38bdf8;font-weight:700">● DEAD CALM</span>';
             }
 
             const changeHtml = diff != null
