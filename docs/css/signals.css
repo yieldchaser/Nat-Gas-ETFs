@@ -1673,4 +1673,58 @@
     .vs-canvas-wrap { height: 190px; }
     .vs-control-group { flex-wrap: wrap; gap: 6px; }
     .vs-control-label { flex-basis: 100%; margin-bottom: -2px; }
+
+    /* Volume Heat Map mobile wrapping & smooth horizontal side swipe */
+    .heat-panel-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .heat-panel-header-left {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .heat-panel-header-right {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .heat-filter-toolbar {
+        padding: 6px 8px !important;
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+    #heat-side-group {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        max-width: 100%;
+        width: 100%;
+    }
+    #heat-side-group::-webkit-scrollbar { display: none; }
+    #heat-side-group .tab-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .heat-calendar {
+        grid-template-columns: repeat(18, 1fr);
+        gap: 1.5px;
+        margin: 6px 0;
+    }
+    .heat-legend {
+        flex-wrap: wrap;
+        gap: 3px;
+        font-size: 0.55rem;
+    }
+    .heat-swatch {
+        width: 10px;
+        height: 10px;
+    }
+    .swvc-pills {
+        flex-wrap: wrap;
+    }
 }

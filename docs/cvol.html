@@ -363,11 +363,32 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     .event-header { flex-direction: column; align-items: flex-start; gap: 10px; }
     #event-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table.event-table { min-width: 700px; }
+    #regime-dashboard-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 600px) {
+    .comp-modal {
+        width: 95vw !important;
+        max-height: 90vh !important;
+        padding: 14px !important;
+    }
+    .comp-modal-head {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+    .comp-modal-chart {
+        height: 200px !important;
+    }
+}
+@media (max-width: 480px) {
+    #regime-dashboard-grid { grid-template-columns: 1fr !important; }
+    .composite-grid { grid-template-columns: 1fr; }
+    .horizon-group { flex-wrap: wrap; gap: 3px; }
+    .horizon-btn { font-size: 0.55rem; padding: 3px 6px; }
 }
 @media (max-width: 420px) {
     .cvol-main { padding: 10px 8px 32px; }
     .chart-canvas-wrap { height: 220px; }
-    .composite-grid { grid-template-columns: 1fr; }
     .sb-val { font-size: 1rem; }
 }
 </style>
