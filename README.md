@@ -39,15 +39,19 @@ This project implements five interconnected analytical engines:
 
 ---
 
-## Outlier Spotlight (PEAKS Mode)
+## Outlier Spotlight (PEAKS & VALLEYS Mode)
 
-To cut through visual noise during periods of extreme volatility or congestion, all heatmaps and activity matrices across the dashboards support **PEAKS Mode** (Outlier Spotlight). When toggled:
-- **Lights Off (Dimming):** Non-outlying days, months, or years are dimmed to near-black (`opacity: 0.15` or `#0b0b14`), making normal conditions recede into the background.
-- **Spotlight Glow:** Key statistical outliers are highlighted with harmonized glowing borders, vibrant backdrops, and interactive entry animations:
-  - **Notable Peaks (P90):** Amber/gold glow.
-  - **Significant Peaks (P95):** Orange/copper glow.
-  - **Extreme Peaks (P99):** Red/crimson intense glow.
-- **Outlier Counter Badge:** Displays the exact count of outliers currently spotlighted in the view window.
+To cut through visual noise during periods of extreme volatility or liquidity shifts, heatmaps across the dashboards support **Spotlight Modes**:
+- **Lights Off (Dimming):** Non-outlying days, months, or years are dimmed to near-black (`opacity: 0.18` or `#0b0b14`), making normal baseline conditions recede into the background.
+- **PEAKS Spotlight Glow (Volume Climaxes / Capitulation):**
+  - **Notable Peaks (P90):** Amber/gold glow (`#c8922a`).
+  - **Significant Peaks (P95):** Orange/copper glow (`#d96030`).
+  - **Extreme Peaks (P99):** Red/crimson intense double glow (`#ff4d4d`).
+- **VALLEYS Spotlight Glow (Volume Droughts / Dry-Ups):**
+  - **Notable Valleys (P90):** Ice Blue glow (`#0ea5e9`).
+  - **Significant Valleys (P95):** Neon Cyan frost glow (`#06b6d4`).
+  - **Extreme Valleys (P99):** Glacial White-Cyan double halo (`#e0f2fe`).
+- **Outlier Counter Badge:** Displays the exact count of active outliers (`X PEAKS` in amber or `X VALLEYS` in cyan) currently spotlighted in the view window.
 
 ### Lookback Window & Percentile Methodologies
 
@@ -70,8 +74,8 @@ To ensure mathematical consistency and maximum usefulness for market analysis, e
    - **Regime Shifts:** Natural Gas Implied Volatility (NGVL) is highly non-stationary. If evaluated globally, the extreme peaks of the 2022 energy crisis (NGVL > 120%) would set the baseline so high that no volatility expansion in 2024, 2025, or 2026 would ever trigger a highlight.
    - **Option Trading Standard:** Options traders evaluate volatility rank (IV Rank or IV Percentile) relative to a trailing 1-year (252 trading days) window. This tells the trader: *"Is volatility high or low relative to options priced over the last year?"* This is the exact context needed to judge if option premiums are cheap or expensive today.
 
-PEAKS Mode is supported on:
-1. **Volume Heat Map (Days 1–90)** (`index.html`): Filterable by P90, P95, or P99 thresholds. Uses global historical percentiles computed over all active daily maximum ETF CVIs.
+Spotlight Modes are supported on:
+1. **Volume Heat Map (Days 1–90)** (`index.html`): Supports dual spotlight modes (**PEAKS** for capitulation volume spikes and **VALLEYS** for liquidity droughts / dry-ups). Filterable by P90, P95, or P99 global historical percentiles.
 2. **CVOL Signal Activity Heatmap** (`cvol.html`): Filterable by P90, P95, or P99 thresholds. Uses trailing 252-day rolling percentiles to identify volatility outliers.
 3. **Regime Heatmap (Monthly NGVL)** (`cvol.html`): Spotlight threshold fixed at P90 (top 10% of monthly average NGVL values in global history).
 4. **Yearly Flow Activity Matrix** (`flows.html`): Filterable by P90, P95, or P99 thresholds. Uses global historical percentiles of absolute composite flow Z-scores.

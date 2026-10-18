@@ -12,7 +12,8 @@ const App = {
     heatMode: 'share',    // Mode for 90-day heat map: 'share' or 'dollar'
     heatSide: 'all',      // Side for 90-day heat map: 'all', 'long', or 'short'
     vddsMode: 'vol',      // Mode for VDDS panel: 'vol' (S-RVOL-21d) or 'dv' (VDDS ratio)
-    heatPeaksMode: false, // PEAKS spotlight mode active/inactive
+    heatSpotlightMode: 'off', // Spotlight mode: 'off', 'peaks', or 'valleys'
+    heatPeaksMode: false, // Backwards compatibility mirror
     heatPeaksThreshold: 95, // Spotlight threshold percentile (90, 95, or 99)
     heatGlobalPercentiles: {}, // Keyed by {mode, side}
 
@@ -59,21 +60,40 @@ const App = {
             });
         }
 
-        // PEAKS Toggle
+        // Spotlight (PEAKS / VALLEYS) Toggles
         const peaksToggle = document.getElementById('heat-peaks-toggle');
+        const valleysToggle = document.getElementById('heat-valleys-toggle');
         const peaksThresholdGroup = document.getElementById('heat-peaks-threshold-group');
+
+        const updateSpotlightUI = () => {
+            const isPeaks = (this.heatSpotlightMode === 'peaks');
+            const isValleys = (this.heatSpotlightMode === 'valleys');
+            this.heatPeaksMode = isPeaks;
+
+            if (peaksToggle) peaksToggle.classList.toggle('active', isPeaks);
+            if (valleysToggle) valleysToggle.classList.toggle('active', isValleys);
+
+            if (peaksThresholdGroup) {
+                peaksThresholdGroup.style.display = (isPeaks || isValleys) ? 'flex' : 'none';
+            }
+            this.renderHeatCalendarOnly();
+        };
+
         if (peaksToggle) {
             peaksToggle.addEventListener('click', () => {
-                this.heatPeaksMode = !this.heatPeaksMode;
-                peaksToggle.classList.toggle('active', this.heatPeaksMode);
-                if (peaksThresholdGroup) {
-                    peaksThresholdGroup.style.display = this.heatPeaksMode ? 'flex' : 'none';
-                }
-                this.renderHeatCalendarOnly();
+                this.heatSpotlightMode = (this.heatSpotlightMode === 'peaks') ? 'off' : 'peaks';
+                updateSpotlightUI();
             });
         }
 
-        // PEAKS Threshold sub-picker
+        if (valleysToggle) {
+            valleysToggle.addEventListener('click', () => {
+                this.heatSpotlightMode = (this.heatSpotlightMode === 'valleys') ? 'off' : 'valleys';
+                updateSpotlightUI();
+            });
+        }
+
+        // Spotlight Threshold sub-picker
         if (peaksThresholdGroup) {
             peaksThresholdGroup.addEventListener('click', (e) => {
                 const btn = e.target.closest('button');
@@ -454,7 +474,7 @@ const App = {
     renderHeatCalendarOnly() {
         const globalObj = this.heatGlobalPercentiles[this.heatMode];
         const percentiles = globalObj ? globalObj[this.heatSide] : null;
-        Signals.renderHeatCalendar(this.allMetrics, this.heatOffset, this.heatMode, this.heatSide, this.heatPeaksMode, this.heatPeaksThreshold, percentiles);
+        Signals.renderHeatCalendar(this.allMetrics, this.heatOffset, this.heatMode, this.heatSide, this.heatSpotlightMode, this.heatPeaksThreshold, percentiles);
     },
 
     computeAllGlobalPercentiles() {

@@ -49,8 +49,11 @@ const Signals = {
         }
 
         const scores = [];
+        const valleyScores = [];
         for (let i = 0; i < longestData.length; i++) {
             let maxScore = 0;
+            let sumDrought = 0;
+            let droughtCount = 0;
             const date = longestData[i]?.date || '';
             if (!date) continue;
             let hasData = false;
@@ -78,25 +81,51 @@ const Signals = {
                 const pricePct = Metrics.percentileRank(closes[closes.length - 1], closes);
                 const cvi = valPct * (1 - pricePct / 100);
                 maxScore = Math.max(maxScore, cvi);
+
+                sumDrought += (100 - valPct);
+                droughtCount++;
                 hasData = true;
             }
             if (hasData) {
                 scores.push(maxScore);
+                if (droughtCount > 0) {
+                    valleyScores.push(sumDrought / droughtCount);
+                }
             }
         }
 
-        if (scores.length === 0) return { p90: 90, p95: 95, p99: 99 };
+        if (scores.length === 0) {
+            return {
+                p90: 90, p95: 95, p99: 99,
+                peaks: { p90: 90, p95: 95, p99: 99 },
+                valleys: { p90: 90, p95: 95, p99: 99 }
+            };
+        }
         scores.sort((a, b) => a - b);
+        valleyScores.sort((a, b) => a - b);
 
-        const getPercentile = (p) => {
-            const idx = Math.floor((p / 100) * scores.length);
-            return scores[Math.min(idx, scores.length - 1)];
+        const getPercentile = (p, arr) => {
+            const idx = Math.floor((p / 100) * arr.length);
+            return arr[Math.min(idx, arr.length - 1)];
+        };
+
+        const peaks = {
+            p90: getPercentile(90, scores),
+            p95: getPercentile(95, scores),
+            p99: getPercentile(99, scores)
+        };
+        const valleys = {
+            p90: getPercentile(90, valleyScores),
+            p95: getPercentile(95, valleyScores),
+            p99: getPercentile(99, valleyScores)
         };
 
         return {
-            p90: getPercentile(90),
-            p95: getPercentile(95),
-            p99: getPercentile(99)
+            p90: peaks.p90,
+            p95: peaks.p95,
+            p99: peaks.p99,
+            peaks,
+            valleys
         };
     },
 
@@ -211,7 +240,7 @@ const Signals = {
         }).join('');
     },
 
-    renderHeatCalendar(allMetrics, offset = 0, mode = 'share', side = 'all', peaksMode = false, peaksThreshold = 95, globalPercentiles = null) {
+    renderHeatCalendar(allMetrics, offset = 0, mode = 'share', side = 'all', spotlightMode = 'off', peaksThreshold = 95, globalPercentiles = null) {
         const container = document.getElementById('heat-calendar');
         if (!container) return;
 
@@ -219,13 +248,15 @@ const Signals = {
         if (window.App) {
             if (arguments.length < 3) mode = window.App.heatMode || 'share';
             if (arguments.length < 4) side = window.App.heatSide || 'all';
-            if (arguments.length < 5) peaksMode = window.App.heatPeaksMode || false;
+            if (arguments.length < 5) spotlightMode = window.App.heatSpotlightMode || (window.App.heatPeaksMode ? 'peaks' : 'off');
             if (arguments.length < 6) peaksThreshold = window.App.heatPeaksThreshold || 95;
             if (arguments.length < 7) {
                 const globalObj = window.App.heatGlobalPercentiles;
                 globalPercentiles = (globalObj && globalObj[mode]) ? globalObj[mode][side] : null;
             }
         }
+        if (spotlightMode === true) spotlightMode = 'peaks';
+        else if (!spotlightMode) spotlightMode = 'off';
 
         // Build daily max CVI scores across all ETFs
         const allTickers = Object.keys(allMetrics).filter(t => allMetrics[t] != null);
@@ -290,9 +321,12 @@ const Signals = {
         const dataLength = longestData.length;
         const startIndex = dataLength - (offset + 1) * days;
         const endIndex = dataLength - offset * days;
+        const isValleys = (spotlightMode === 'valleys');
 
         for (let i = Math.max(0, startIndex); i < endIndex; i++) {
             let maxScore = 0;
+            let sumDrought = 0;
+            let droughtCount = 0;
             const date = longestData[i]?.date || '';
             if (!date) continue;
 
@@ -304,7 +338,6 @@ const Signals = {
                 const idx = map.get(date);
                 if (idx === undefined) continue;
 
-                // Quick CVI proxy: how extreme is volume relative to recent mean on this specific aligned date
                 const subData = sd.slice(Math.max(0, idx - 21), idx + 1);
                 if (subData.length < 5) continue;
 
@@ -317,22 +350,33 @@ const Signals = {
                 const closes = subData.map(d => d.close || 0);
 
                 const valPct = Metrics.percentileRank(values[values.length - 1], values);
-                const pricePct = Metrics.percentileRank(closes[closes.length - 1], closes);
-                const cvi = valPct * (1 - pricePct / 100);
-                maxScore = Math.max(maxScore, cvi);
+                if (isValleys) {
+                    sumDrought += (100 - valPct);
+                    droughtCount++;
+                } else {
+                    const pricePct = Metrics.percentileRank(closes[closes.length - 1], closes);
+                    const cvi = valPct * (1 - pricePct / 100);
+                    maxScore = Math.max(maxScore, cvi);
+                }
             }
 
-            dailyScores.push({ date, score: maxScore });
+            const dayScore = isValleys
+                ? (droughtCount > 0 ? (sumDrought / droughtCount) : 0)
+                : maxScore;
+            dailyScores.push({ date, score: dayScore });
         }
 
-        const peaksCount = Charts.drawHeatCalendar(container, dailyScores, mode, peaksMode, peaksThreshold, globalPercentiles);
+        const spotlightCount = Charts.drawHeatCalendar(container, dailyScores, mode, spotlightMode, peaksThreshold, globalPercentiles);
         const peakBadge = document.getElementById('heat-peak-count');
         if (peakBadge) {
-            if (peaksMode) {
-                peakBadge.textContent = `${peaksCount} ${peaksCount === 1 ? 'PEAK' : 'PEAKS'}`;
-                peakBadge.classList.add('visible');
+            if (spotlightMode === 'peaks') {
+                peakBadge.textContent = `${spotlightCount} ${spotlightCount === 1 ? 'PEAK' : 'PEAKS'}`;
+                peakBadge.className = 'heat-peak-count visible peak-style';
+            } else if (spotlightMode === 'valleys') {
+                peakBadge.textContent = `${spotlightCount} ${spotlightCount === 1 ? 'VALLEY' : 'VALLEYS'}`;
+                peakBadge.className = 'heat-peak-count visible valley-style';
             } else {
-                peakBadge.classList.remove('visible');
+                peakBadge.className = 'heat-peak-count';
             }
         }
     },

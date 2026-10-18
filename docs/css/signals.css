@@ -178,7 +178,8 @@
 
 /* ---- PEAKS / SPOTLIGHT MODE ---- */
 /* Panel background dims slightly for cinematic effect */
-.heat-calendar.peaks-mode {
+.heat-calendar.peaks-mode,
+.heat-calendar.valleys-mode {
     background: rgba(5, 5, 14, 0.72);
     border-radius: 4px;
     padding: 3px;
@@ -238,6 +239,48 @@
                 0 0 36px 10px rgba(255, 120, 60, 0.45);
 }
 
+/* ---- VALLEYS / GLACIAL VOLUME DROUGHT TIERS ---- */
+/* Tier 1 — Notable Drought (p90–p95): cool ice blue */
+.heat-cell.heat-valley-notable {
+    background: #0ea5e9 !important;
+    opacity: 1;
+    box-shadow: 0 0 6px 1px rgba(14, 165, 233, 0.65);
+    animation: hpeak-in 0.42s cubic-bezier(.22,.68,0,1.22) both;
+    transition: transform 0.1s;
+}
+.heat-cell.heat-valley-notable:hover {
+    transform: scale(1.45);
+    box-shadow: 0 0 11px 3px rgba(14, 165, 233, 0.85);
+}
+
+/* Tier 2 — Significant Drought (p95–p99): neon cyan frost */
+.heat-cell.heat-valley-significant {
+    background: #06b6d4 !important;
+    opacity: 1;
+    box-shadow: 0 0 8px 2px rgba(6, 182, 212, 0.75);
+    animation: hpeak-in 0.44s cubic-bezier(.22,.68,0,1.22) both;
+    transition: transform 0.1s;
+}
+.heat-cell.heat-valley-significant:hover {
+    transform: scale(1.45);
+    box-shadow: 0 0 14px 4px rgba(6, 182, 212, 0.90);
+}
+
+/* Tier 3 — Extreme Drought (p99+): glacial white-cyan double glow */
+.heat-cell.heat-valley-extreme {
+    background: #e0f2fe !important;
+    opacity: 1;
+    box-shadow: 0 0 12px 4px rgba(224, 242, 254, 0.85),
+                0 0 28px 7px rgba(6, 182, 212, 0.50);
+    animation: hpeak-in-strong 0.52s cubic-bezier(.22,.68,0,1.22) both;
+    transition: transform 0.1s;
+}
+.heat-cell.heat-valley-extreme:hover {
+    transform: scale(1.55);
+    box-shadow: 0 0 18px 6px rgba(224, 242, 254, 0.95),
+                0 0 36px 10px rgba(6, 182, 212, 0.65);
+}
+
 /* Entry animations — run once on toggle */
 @keyframes hpeak-in {
     0%   { transform: scale(0.75); opacity: 0; }
@@ -250,7 +293,7 @@
     100% { transform: scale(1.0);  opacity: 1; }
 }
 
-/* Sub-threshold picker — hidden by default, shown when PEAKS is active */
+/* Sub-threshold picker — hidden by default, shown when PEAKS or VALLEYS is active */
 .heat-peaks-sub {
     display: none;
     gap: 4px;
@@ -260,7 +303,7 @@
     display: flex;
 }
 
-/* Peak counter badge in panel header */
+/* Peak / Valley counter badge in panel header */
 .heat-peak-count {
     font-size: 0.6rem;
     font-weight: 700;
@@ -271,12 +314,23 @@
     border: 1px solid rgba(201, 146, 42, 0.4);
     color: #c8922a;
     display: none;
+    transition: all 0.25s ease;
 }
 .heat-peak-count.visible {
     display: inline-block;
 }
+.heat-peak-count.peak-style {
+    background: rgba(201, 146, 42, 0.15);
+    border-color: rgba(201, 146, 42, 0.4);
+    color: #c8922a;
+}
+.heat-peak-count.valley-style {
+    background: rgba(6, 182, 212, 0.15);
+    border-color: rgba(6, 182, 212, 0.45);
+    color: #22d3ee;
+}
 
-/* PEAKS Toggle Button styling */
+/* PEAKS and VALLEYS Spotlight Toggle Buttons */
 .peaks-toggle-btn {
     font-family: inherit;
     font-size: 0.68rem;
@@ -295,11 +349,18 @@
     color: var(--text-bright);
     background: rgba(255, 255, 255, 0.05);
 }
-.peaks-toggle-btn.active {
-    background: rgba(136, 85, 187, 0.2);
-    color: #bf80ff;
-    border-color: rgba(136, 85, 187, 0.45);
-    box-shadow: 0 0 8px 1px rgba(136, 85, 187, 0.35);
+.peaks-toggle-btn.active,
+#heat-peaks-toggle.active {
+    background: rgba(136, 85, 187, 0.2) !important;
+    color: #bf80ff !important;
+    border-color: rgba(136, 85, 187, 0.45) !important;
+    box-shadow: 0 0 8px 1px rgba(136, 85, 187, 0.35) !important;
+}
+#heat-valleys-toggle.active {
+    background: rgba(6, 182, 212, 0.2) !important;
+    color: #22d3ee !important;
+    border-color: rgba(6, 182, 212, 0.45) !important;
+    box-shadow: 0 0 8px 1px rgba(6, 182, 212, 0.35) !important;
 }
 
 /* Compact style for PEAKS threshold tab groups to prevent horizontal clipping */

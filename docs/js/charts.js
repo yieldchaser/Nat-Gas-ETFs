@@ -95,9 +95,12 @@ const Charts = {
     },
 
     // ---- HEAT CALENDAR ----
-    drawHeatCalendar(container, dailyScores, mode = 'share', peaksMode = false, peaksThreshold = 95, globalPercentiles = null) {
+    drawHeatCalendar(container, dailyScores, mode = 'share', spotlightMode = false, peaksThreshold = 95, globalPercentiles = null) {
         container.innerHTML = '';
-        container.classList.toggle('peaks-mode', peaksMode);
+        const isPeaks = (spotlightMode === 'peaks' || spotlightMode === true);
+        const isValleys = (spotlightMode === 'valleys');
+        container.classList.toggle('peaks-mode', isPeaks);
+        container.classList.toggle('valleys-mode', isValleys);
         if (!dailyScores || !dailyScores.length) return 0;
 
         const colors = [
@@ -107,12 +110,16 @@ const Charts = {
         ];
 
         const label = mode === 'dollar' ? 'DVCVI' : 'CVI';
-        let peakCount = 0;
+        let count = 0;
+
+        // Choose appropriate threshold set based on mode
+        const pObj = isValleys ? (globalPercentiles?.valleys || globalPercentiles)
+                               : (globalPercentiles?.peaks || globalPercentiles);
 
         // Fallback thresholds if not provided
-        const p90 = globalPercentiles?.p90 ?? 90;
-        const p95 = globalPercentiles?.p95 ?? 95;
-        const p99 = globalPercentiles?.p99 ?? 99;
+        const p90 = pObj?.p90 ?? 90;
+        const p95 = pObj?.p95 ?? 95;
+        const p99 = pObj?.p99 ?? 99;
 
         // The threshold cutoff score below which cells are dimmed
         const thresholdCutoff = peaksThreshold === 99 ? p99
@@ -126,13 +133,18 @@ const Charts = {
             // Map score (0-100) to color index
             const idx = Math.min(colors.length - 1, Math.floor((day.score / 100) * colors.length));
             cell.style.background = colors[idx];
-            cell.setAttribute('data-tooltip', `${day.date}: ${label} ${day.score.toFixed(0)}`);
 
-            if (peaksMode) {
+            if (isValleys) {
+                cell.setAttribute('data-tooltip', `${day.date}: VOL DROUGHT ${day.score.toFixed(0)} (Vol Rank ${(100 - day.score).toFixed(0)}%)`);
+            } else {
+                cell.setAttribute('data-tooltip', `${day.date}: ${label} ${day.score.toFixed(0)}`);
+            }
+
+            if (isPeaks) {
                 if (day.score < thresholdCutoff) {
                     cell.classList.add('heat-dim');
                 } else {
-                    peakCount++;
+                    count++;
                     if (day.score >= p99) {
                         cell.classList.add('heat-peak-extreme');
                     } else if (day.score >= p95) {
@@ -141,11 +153,24 @@ const Charts = {
                         cell.classList.add('heat-peak-notable');
                     }
                 }
+            } else if (isValleys) {
+                if (day.score < thresholdCutoff) {
+                    cell.classList.add('heat-dim');
+                } else {
+                    count++;
+                    if (day.score >= p99) {
+                        cell.classList.add('heat-valley-extreme');
+                    } else if (day.score >= p95) {
+                        cell.classList.add('heat-valley-significant');
+                    } else {
+                        cell.classList.add('heat-valley-notable');
+                    }
+                }
             }
 
             container.appendChild(cell);
         }
-        return peakCount;
+        return count;
     },
 
     // ---- CONVERGENCE GAUGE (SVG Ring) ----
