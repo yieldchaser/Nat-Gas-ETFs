@@ -6,7 +6,7 @@
 const Charts = {
 
     // ---- SPARKLINE (Price) ----
-    drawSparkline(canvas, data, color = '#4a80b8', fillAlpha = 0.1) {
+    drawSparkline(canvas, data, color = '#4a80b8', fillAlpha = 0.1, hoverIndex = null) {
         if (!data || data.length < 2) return;
         const ctx = canvas.getContext('2d');
         const w = canvas.width = canvas.parentElement.clientWidth;
@@ -17,7 +17,7 @@ const Charts = {
         const min = Math.min(...closes);
         const max = Math.max(...closes);
         const range = max - min || 1;
-        const padding = 2;
+        const padding = 3;
 
         const xStep = (w - padding * 2) / (closes.length - 1);
         const yScale = (h - padding * 2) / range;
@@ -55,17 +55,43 @@ const Charts = {
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // Current price dot
-        const lastX = padding + (closes.length - 1) * xStep;
-        const lastY = h - padding - (closes[closes.length - 1] - min) * yScale;
-        ctx.beginPath();
-        ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
+        // Crosshair & Highlight dot when hovering
+        if (hoverIndex != null && hoverIndex >= 0 && hoverIndex < closes.length) {
+            const hx = padding + hoverIndex * xStep;
+            const hy = h - padding - (closes[hoverIndex] - min) * yScale;
+
+            // Dashed vertical crosshair
+            ctx.save();
+            ctx.setLineDash([3, 3]);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(hx, 0);
+            ctx.lineTo(hx, h);
+            ctx.stroke();
+            ctx.restore();
+
+            // Highlight dot
+            ctx.beginPath();
+            ctx.arc(hx, hy, 4.5, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        } else {
+            // Default current price dot on last point
+            const lastX = padding + (closes.length - 1) * xStep;
+            const lastY = h - padding - (closes[closes.length - 1] - min) * yScale;
+            ctx.beginPath();
+            ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
     },
 
     // ---- VOLUME BARS ----
-    drawVolumeBars(canvas, data, percentiles) {
+    drawVolumeBars(canvas, data, percentiles = null, hoverIndex = null) {
         if (!data || data.length < 2) return;
         const ctx = canvas.getContext('2d');
         const w = canvas.width = canvas.parentElement.clientWidth;
@@ -78,7 +104,7 @@ const Charts = {
 
         for (let i = 0; i < volumes.length; i++) {
             const x = i * (w / volumes.length);
-            const barH = (volumes[i] / max) * h;
+            const barH = Math.max(2, (volumes[i] / max) * h);
 
             // Color by relative magnitude
             const ratio = volumes[i] / max;
@@ -89,8 +115,32 @@ const Charts = {
             else if (ratio > 0.3) color = '#385e88';
             else color = '#181828';
 
+            const isHovered = (hoverIndex != null && i === hoverIndex);
+
+            ctx.save();
+            if (hoverIndex != null) {
+                // Dim non-hovered bars slightly to spotlight the hovered day
+                ctx.globalAlpha = isHovered ? 1.0 : 0.40;
+            }
+
             ctx.fillStyle = color;
             ctx.fillRect(x, h - barH, barW, barH);
+
+            if (isHovered) {
+                // White accent stroke on hovered bar
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x, h - barH, barW, barH);
+
+                // Dashed vertical crosshair continuation
+                ctx.setLineDash([2, 2]);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+                ctx.beginPath();
+                ctx.moveTo(x + barW / 2, 0);
+                ctx.lineTo(x + barW / 2, h);
+                ctx.stroke();
+            }
+            ctx.restore();
         }
     },
 
