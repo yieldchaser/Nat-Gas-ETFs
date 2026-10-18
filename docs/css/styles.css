@@ -394,8 +394,47 @@ footer {
     }
 
     .top-bar-left h1 {
-        font-size: 0.75rem;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
         white-space: nowrap;
+    }
+
+    .top-bar-right {
+        gap: 8px;
+        min-width: 0;
+        flex-shrink: 1;
+    }
+
+    .page-nav {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        max-width: 100%;
+        flex-shrink: 1;
+        gap: 2px;
+    }
+
+    .page-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .page-nav .nav-link {
+        flex-shrink: 0;
+        white-space: nowrap;
+        padding: 4px 7px;
+        font-size: 0.65rem;
+        letter-spacing: 0.3px;
+    }
+
+    .last-updated {
+        display: none;
+    }
+
+    .market-status {
+        padding: 3px 8px;
+        font-size: 0.68rem;
+        gap: 5px;
+        flex-shrink: 0;
     }
 
     .validation-grid {
@@ -539,11 +578,17 @@ footer {
 
 /* ---- MOBILE 480px ---- */
 @media (max-width: 480px) {
-    #top-bar { padding: 0 10px; }
-    .top-bar-right { gap: 8px; }
-    .nav-link { padding: 3px 6px; font-size: 0.6rem; letter-spacing: 0; }
-    /* Shrink "Updated: ..." text */
-    #last-updated { font-size: 0.55rem; letter-spacing: 0; }
+    #top-bar { padding: 0 8px; }
+    .top-bar-left h1 { font-size: 0.72rem; letter-spacing: 0.5px; }
+    .top-bar-right { gap: 6px; }
+    .nav-link { padding: 3px 5px; font-size: 0.58rem; letter-spacing: 0; }
+    .market-status {
+        padding: 4px 6px;
+    }
+    .market-status .status-text {
+        display: none; /* Show only the glowing dot on small mobile to maximize room for navigation */
+    }
+    .refresh-btn { padding: 2px 6px; font-size: 1rem; }
     /* Tooltip narrower so it never clips on small screens */
     #tt { max-width: calc(100vw - 20px); font-size: 0.62rem; }
     /* Validation grid: 2 cols max */
@@ -552,10 +597,8 @@ footer {
 
 /* ---- MOBILE 375px ---- */
 @media (max-width: 375px) {
-    .top-bar-left h1 { font-size: 0.65rem; }
-    /* Hide trough-to-peak nav link on tiny screens to prevent overflow */
-    .page-nav .nav-link:nth-child(2) { display: none; }
-    .nav-link { padding: 3px 5px; font-size: 0.58rem; }
+    .top-bar-left h1 { font-size: 0.68rem; letter-spacing: 0.2px; }
+    .nav-link { padding: 3px 4px; font-size: 0.55rem; }
 }
 /* ---- CVOL Nav Arrow Buttons ---- */
 .nav-arrow-btn {
