@@ -239,12 +239,14 @@ const Cards = {
                     </div>
                 </div>
 
-                <div class="card-sparkline" id="spark-${safeTicker}">
-                    <canvas></canvas>
-                </div>
+                <div class="card-chart-interactive" id="chart-wrap-${safeTicker}" data-ticker="${ticker}">
+                    <div class="card-sparkline" id="spark-${safeTicker}">
+                        <canvas></canvas>
+                    </div>
 
-                <div class="card-volume-bar" id="volbar-${safeTicker}">
-                    <canvas></canvas>
+                    <div class="card-volume-bar" id="volbar-${safeTicker}">
+                        <canvas></canvas>
+                    </div>
                 </div>
 
                 <!-- SHARE MODE sections -->
@@ -391,23 +393,143 @@ const Cards = {
             }
         }
 
-        // Draw charts after DOM update
+        // Draw charts after DOM update & bind interactive hovers
         requestAnimationFrame(() => {
             for (const t of tickers) {
                 if (!allMetrics[t]) continue;
                 const safeTicker = t.replace(/\./g, '-');
+                const wrap = document.getElementById(`chart-wrap-${safeTicker}`);
                 const sparkContainer = document.getElementById(`spark-${safeTicker}`);
                 const volContainer = document.getElementById(`volbar-${safeTicker}`);
-                if (sparkContainer) {
-                    const canvas = sparkContainer.querySelector('canvas');
-                    const color = CONFIG.etfs[t].side === 'long' ? '#3db87a' : '#c04040';
-                    Charts.drawSparkline(canvas, allMetrics[t].sparkData, color);
+                const sparkCanvas = sparkContainer ? sparkContainer.querySelector('canvas') : null;
+                const volCanvas = volContainer ? volContainer.querySelector('canvas') : null;
+                const color = CONFIG.etfs[t].side === 'long' ? '#3db87a' : '#c04040';
+                const data = allMetrics[t].sparkData;
+
+                if (sparkCanvas) {
+                    Charts.drawSparkline(sparkCanvas, data, color);
                 }
-                if (volContainer) {
-                    const canvas = volContainer.querySelector('canvas');
-                    Charts.drawVolumeBars(canvas, allMetrics[t].sparkData);
+                if (volCanvas) {
+                    Charts.drawVolumeBars(volCanvas, data);
+                }
+
+                if (wrap && sparkCanvas && volCanvas && data && data.length >= 2) {
+                    Cards.bindCardHover(wrap, sparkCanvas, volCanvas, data, color, t);
                 }
             }
         });
+    },
+
+    bindCardHover(wrap, sparkCanvas, volCanvas, data, color, ticker) {
+        let tooltipEl = document.getElementById('card-chart-tooltip');
+        if (!tooltipEl) {
+            tooltipEl = document.createElement('div');
+            tooltipEl.id = 'card-chart-tooltip';
+            document.body.appendChild(tooltipEl);
+        }
+
+        const maxVol = Math.max(...data.map(x => x.volume || 0)) || 1;
+
+        const onMove = (clientX, clientY) => {
+            const rect = wrap.getBoundingClientRect();
+            const mouseX = clientX - rect.left;
+            const w = rect.width;
+            if (w <= 0 || !data.length) return;
+
+            const step = w / data.length;
+            const idx = Math.min(data.length - 1, Math.max(0, Math.floor(mouseX / step)));
+            const d = data[idx];
+            if (!d) return;
+
+            // Redraw sparkline and volume bars with crosshairs & dot at idx
+            Charts.drawSparkline(sparkCanvas, data, color, 0.1, idx);
+            Charts.drawVolumeBars(volCanvas, data, null, idx);
+
+            const prev = idx > 0 ? data[idx - 1].close : null;
+            const diff = prev != null ? (d.close - prev) : null;
+            const pct = prev != null && prev > 0 ? (diff / prev) * 100 : null;
+            const dollarVol = (d.close != null && d.volume != null) ? (d.close * d.volume) : null;
+            const ratio = (d.volume || 0) / maxVol;
+
+            let volTag = '';
+            if (ratio > 0.90) {
+                volTag = '<span style="color:#bf80ff;font-weight:800">● EXTREME SPIKE</span>';
+            } else if (ratio > 0.75) {
+                volTag = '<span style="color:#ff6b6b;font-weight:700">● HEAVY SURGE</span>';
+            } else if (ratio > 0.50) {
+                volTag = '<span style="color:#f59e0b;font-weight:700">● NOTABLE VOLUME</span>';
+            } else if (ratio > 0.30) {
+                volTag = '<span style="color:#60a5fa;font-weight:600">● MODERATE</span>';
+            } else {
+                volTag = '<span style="color:rgba(255,255,255,0.45)">● QUIET</span>';
+            }
+
+            const changeHtml = diff != null
+                ? `<div class="tt-row">
+                       <span class="tt-lbl">Change</span>
+                       <span class="tt-val" style="color:${diff >= 0 ? 'var(--green)' : 'var(--red)'}">${diff >= 0 ? '+' : ''}${diff.toFixed(2)} (${diff >= 0 ? '+' : ''}${pct.toFixed(2)}%)</span>
+                   </div>`
+                : '';
+
+            tooltipEl.innerHTML = `
+                <div class="tt-header">
+                    <span class="tt-ticker" style="color:${color}">${ticker}</span>
+                    <span class="tt-date">${d.date}</span>
+                </div>
+                <div class="tt-row">
+                    <span class="tt-lbl">Price</span>
+                    <span class="tt-val" style="color:var(--text-bright)">$${Cards.formatPrice(d.close)}</span>
+                </div>
+                ${changeHtml}
+                <div class="tt-row">
+                    <span class="tt-lbl">Volume</span>
+                    <span class="tt-val">${Cards.formatNumber(d.volume, 0)} (${d.volume.toLocaleString()})</span>
+                </div>
+                <div class="tt-row">
+                    <span class="tt-lbl">Dollar Vol</span>
+                    <span class="tt-val">$${Cards.formatNumber(dollarVol, 1)}</span>
+                </div>
+                <div class="tt-row" style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);">
+                    <span class="tt-lbl">Activity</span>
+                    <span class="tt-val">${volTag}</span>
+                </div>
+            `;
+
+            tooltipEl.style.display = 'block';
+            const tw = tooltipEl.offsetWidth || 170;
+            const th = tooltipEl.offsetHeight || 135;
+
+            let left = clientX + 16;
+            if (left + tw > window.innerWidth - 10) {
+                left = clientX - tw - 16;
+            }
+            left = Math.max(10, left);
+
+            let top = clientY - th / 2;
+            if (top + th > window.innerHeight - 10) {
+                top = window.innerHeight - th - 10;
+            }
+            top = Math.max(10, top);
+
+            tooltipEl.style.left = `${left}px`;
+            tooltipEl.style.top = `${top}px`;
+        };
+
+        const onLeave = () => {
+            Charts.drawSparkline(sparkCanvas, data, color, 0.1, null);
+            Charts.drawVolumeBars(volCanvas, data, null, null);
+            if (tooltipEl) tooltipEl.style.display = 'none';
+        };
+
+        wrap.onmousemove = (e) => onMove(e.clientX, e.clientY);
+        wrap.onmouseleave = onLeave;
+
+        wrap.ontouchmove = (e) => {
+            if (e.touches && e.touches[0]) {
+                onMove(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        };
+        wrap.ontouchend = onLeave;
+        wrap.ontouchcancel = onLeave;
     }
 };
