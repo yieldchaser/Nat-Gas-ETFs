@@ -100,18 +100,30 @@
                 </div>
 
                 <!-- Filter Toolbar -->
-                <div class="heat-filter-toolbar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:6px 10px; background:rgba(26,26,40,0.45); border:1px solid rgba(255,255,255,0.05); border-radius:6px; flex-wrap:nowrap; gap:12px; width: 100%;">
-                    <!-- Left: SIDE -->
-                    <div style="display:flex; align-items:center; gap:6px;">
+                <div class="heat-filter-toolbar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:6px 10px; background:rgba(26,26,40,0.45); border:1px solid rgba(255,255,255,0.05); border-radius:6px; flex-wrap:wrap; gap:8px; width: 100%;">
+                    <!-- Left: SIDE & ETF Selection -->
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0;">
                         <span style="font-size:0.55rem; font-weight:800; color:rgba(255,255,255,0.45); letter-spacing:0.8px;">SIDE</span>
-                        <div class="tab-group" id="heat-side-group" style="margin: 0; padding: 2px; flex-shrink: 0;">
+                        <div class="tab-group" id="heat-side-group" style="margin: 0; padding: 2px; flex-shrink: 0; display:flex; align-items:center; gap:2px;">
                             <button class="tab-btn active" data-side="all" data-tooltip="Analyze all 6 ETFs (BOIL, HNU, 3NGL, KOLD, HND, 3NGS) simultaneously.">ALL</button>
                             <button class="tab-btn" data-side="long" data-tooltip="Analyze only long-side leveraged ETFs (BOIL, HNU, 3NGL).">LONG</button>
                             <button class="tab-btn" data-side="short" data-tooltip="Analyze only short-side/inverse ETFs (KOLD, HND, 3NGS).">SHORT</button>
+
+                            <span class="heat-filter-divider"></span>
+
+                            <button class="tab-btn heat-etf-long" data-side="BOIL" data-tooltip="BOIL (ProShares Ultra Bloomberg NG 2x Long — NYSE)">BOIL</button>
+                            <button class="tab-btn heat-etf-long" data-side="HNU.TO" data-tooltip="HNU.TO (BetaPro Natural Gas 2x Bull — TSX Canada)">HNU</button>
+                            <button class="tab-btn heat-etf-long" data-side="3NGL.L" data-tooltip="3NGL.L (WisdomTree NG 3x Daily Long — LSE London)">3NGL</button>
+
+                            <span class="heat-filter-divider"></span>
+
+                            <button class="tab-btn heat-etf-short" data-side="KOLD" data-tooltip="KOLD (ProShares UltraShort Bloomberg NG -2x — NYSE)">KOLD</button>
+                            <button class="tab-btn heat-etf-short" data-side="HND.TO" data-tooltip="HND.TO (BetaPro Natural Gas 2x Bear — TSX Canada)">HND</button>
+                            <button class="tab-btn heat-etf-short" data-side="3NGS.L" data-tooltip="3NGS.L (WisdomTree NG 3x Daily Short — LSE London)">3NGS</button>
                         </div>
                     </div>
                     <!-- Right: MODE -->
-                    <div style="display:flex; align-items:center; gap:6px; margin-left:auto;">
+                    <div style="display:flex; align-items:center; gap:6px; margin-left:auto; flex-shrink:0;">
                         <span style="font-size:0.55rem; font-weight:800; color:rgba(255,255,255,0.45); letter-spacing:0.8px;">MODE</span>
                         <div class="tab-group" id="heat-mode-group" style="margin: 0; padding: 2px; flex-shrink: 0;">
                             <button class="tab-btn active" data-mode="share" data-tooltip="CVI (Capitulation Volume Index): Bounded score (0-10,000) representing (Volume Rank 21d) &times; (1 - Price Rank 21d). Highlights share volume spikes at local bottoms/tops.">S</button>

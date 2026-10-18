@@ -478,18 +478,15 @@ const App = {
     },
 
     computeAllGlobalPercentiles() {
+        const filters = ['all', 'long', 'short', ...Object.keys(CONFIG.etfs)];
         this.heatGlobalPercentiles = {
-            share: {
-                all: Signals.computeHeatGlobalPercentiles(this.allMetrics, 'share', 'all'),
-                long: Signals.computeHeatGlobalPercentiles(this.allMetrics, 'share', 'long'),
-                short: Signals.computeHeatGlobalPercentiles(this.allMetrics, 'share', 'short')
-            },
-            dollar: {
-                all: Signals.computeHeatGlobalPercentiles(this.allMetrics, 'dollar', 'all'),
-                long: Signals.computeHeatGlobalPercentiles(this.allMetrics, 'dollar', 'long'),
-                short: Signals.computeHeatGlobalPercentiles(this.allMetrics, 'dollar', 'short')
-            }
+            share: {},
+            dollar: {}
         };
+        for (const f of filters) {
+            this.heatGlobalPercentiles.share[f]  = Signals.computeHeatGlobalPercentiles(this.allMetrics, 'share', f);
+            this.heatGlobalPercentiles.dollar[f] = Signals.computeHeatGlobalPercentiles(this.allMetrics, 'dollar', f);
+        }
     },
 
     // Returns NYSE session state based on the current wall-clock time.

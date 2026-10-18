@@ -23,6 +23,8 @@ const Signals = {
             activeTickers = allTickers.filter(t => CONFIG.etfs[t] && CONFIG.etfs[t].side === 'long');
         } else if (side === 'short') {
             activeTickers = allTickers.filter(t => CONFIG.etfs[t] && CONFIG.etfs[t].side === 'short');
+        } else if (allTickers.includes(side)) {
+            activeTickers = [side];
         }
 
         if (activeTickers.length === 0) return { p90: 90, p95: 95, p99: 99 };
@@ -268,10 +270,12 @@ const Signals = {
             activeTickers = allTickers.filter(t => CONFIG.etfs[t] && CONFIG.etfs[t].side === 'long');
         } else if (side === 'short') {
             activeTickers = allTickers.filter(t => CONFIG.etfs[t] && CONFIG.etfs[t].side === 'short');
+        } else if (allTickers.includes(side)) {
+            activeTickers = [side];
         }
 
         if (activeTickers.length === 0) {
-            container.innerHTML = `<div style="grid-column: 1 / -1; padding: 24px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No active ETFs for the selected side filter.</div>`;
+            container.innerHTML = `<div style="grid-column: 1 / -1; padding: 24px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No active ETFs for the selected filter.</div>`;
             return;
         }
 
@@ -298,7 +302,8 @@ const Signals = {
             const startDay = offset * 90 + 1;
             const endDay = Math.min((offset + 1) * 90, longestData.length);
             const modeLabel = mode === 'dollar' ? 'DOLLAR VOL' : 'VOLUME';
-            titleEl.innerHTML = `${modeLabel} HEAT MAP <span style="font-size:0.58rem; font-weight:normal; color:rgba(255,255,255,0.45); text-transform:none; margin-left:3px;">(${startDay}-${endDay}d)</span>`;
+            const subjectLabel = (side === 'all') ? '' : ` [${side.replace('.TO', '').replace('.L', '')}]`;
+            titleEl.innerHTML = `${modeLabel} HEAT MAP${subjectLabel} <span style="font-size:0.58rem; font-weight:normal; color:rgba(255,255,255,0.45); text-transform:none; margin-left:3px;">(${startDay}-${endDay}d)</span>`;
         }
 
         // Build a date-to-index map for each active ETF to ensure date alignment across holidays
@@ -366,7 +371,7 @@ const Signals = {
             dailyScores.push({ date, score: dayScore });
         }
 
-        const spotlightCount = Charts.drawHeatCalendar(container, dailyScores, mode, spotlightMode, peaksThreshold, globalPercentiles);
+        const spotlightCount = Charts.drawHeatCalendar(container, dailyScores, mode, spotlightMode, peaksThreshold, globalPercentiles, side);
         const peakBadge = document.getElementById('heat-peak-count');
         if (peakBadge) {
             if (spotlightMode === 'peaks') {

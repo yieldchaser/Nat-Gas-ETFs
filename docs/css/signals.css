@@ -419,14 +419,41 @@
     letter-spacing: 0.2px;
 }
 
-/* Compact style for other PEAKS threshold tab groups */
+/* Compact style for other PEAKS threshold tab groups & side tabs */
 .heat-peaks-sub .tab-btn,
 #flow-heat-peaks-threshold-group .tab-btn,
-#cvol-sig-peaks-threshold-group .tab-btn {
+#cvol-sig-peaks-threshold-group .tab-btn,
+#heat-side-group .tab-btn {
     padding: 3px 5px;
-    font-size: 0.62rem;
+    font-size: 0.60rem;
+    letter-spacing: 0.2px;
 }
 
+.heat-filter-divider {
+    width: 1px;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.14);
+    margin: 0 2px;
+    flex-shrink: 0;
+}
+
+.tab-btn.heat-etf-long:hover {
+    color: var(--long-accent);
+}
+.tab-btn.heat-etf-long.active {
+    background: rgba(74, 222, 128, 0.16) !important;
+    color: var(--long-accent) !important;
+    border-color: rgba(74, 222, 128, 0.45) !important;
+}
+
+.tab-btn.heat-etf-short:hover {
+    color: var(--short-accent);
+}
+.tab-btn.heat-etf-short.active {
+    background: rgba(248, 113, 113, 0.16) !important;
+    color: var(--short-accent) !important;
+    border-color: rgba(248, 113, 113, 0.45) !important;
+}
 
 /* ---- CONVERGENCE GAUGES ---- */
 .convergence-gauges {
