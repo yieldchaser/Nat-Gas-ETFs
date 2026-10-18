@@ -113,7 +113,8 @@ const Charts = {
             else if (ratio > 0.75) color = '#c04040';
             else if (ratio > 0.5) color = '#c07828';
             else if (ratio > 0.3) color = '#385e88';
-            else color = '#181828';
+            else if (ratio > 0.15) color = '#1e2438';
+            else color = '#121422';
 
             const isHovered = (hoverIndex != null && i === hoverIndex);
 
