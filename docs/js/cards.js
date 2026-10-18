@@ -428,13 +428,26 @@ const Cards = {
             document.body.appendChild(tooltipEl);
         }
 
+        // Inline defensive styling to guarantee visibility even if external CSS is cached
+        tooltipEl.style.position = 'fixed';
+        tooltipEl.style.pointerEvents = 'none';
+        tooltipEl.style.zIndex = '99999';
+        tooltipEl.style.background = 'rgba(15, 17, 26, 0.96)';
+        tooltipEl.style.border = '1px solid rgba(255, 255, 255, 0.18)';
+        tooltipEl.style.borderRadius = '6px';
+        tooltipEl.style.padding = '8px 12px';
+        tooltipEl.style.fontSize = '0.72rem';
+        tooltipEl.style.color = '#f0f4fc';
+        tooltipEl.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.65)';
+        tooltipEl.style.minWidth = '160px';
+
         const maxVol = Math.max(...data.map(x => x.volume || 0)) || 1;
 
         const onMove = (clientX, clientY) => {
             const rect = wrap.getBoundingClientRect();
             const mouseX = clientX - rect.left;
             const w = rect.width;
-            if (w <= 0 || !data.length) return;
+            if (w <= 0 || !data || !data.length) return;
 
             const step = w / data.length;
             const idx = Math.min(data.length - 1, Math.max(0, Math.floor(mouseX / step)));
@@ -446,10 +459,11 @@ const Cards = {
             Charts.drawVolumeBars(volCanvas, data, null, idx);
 
             const prev = idx > 0 ? data[idx - 1].close : null;
-            const diff = prev != null ? (d.close - prev) : null;
-            const pct = prev != null && prev > 0 ? (diff / prev) * 100 : null;
+            const diff = prev != null && d.close != null ? (d.close - prev) : null;
+            const pct = prev != null && prev > 0 && diff != null ? (diff / prev) * 100 : null;
             const dollarVol = (d.close != null && d.volume != null) ? (d.close * d.volume) : null;
-            const ratio = (d.volume || 0) / maxVol;
+            const vol = d.volume != null ? d.volume : 0;
+            const ratio = vol / maxVol;
 
             let volTag = '';
             if (ratio > 0.90) {
@@ -467,14 +481,14 @@ const Cards = {
             const changeHtml = diff != null
                 ? `<div class="tt-row">
                        <span class="tt-lbl">Change</span>
-                       <span class="tt-val" style="color:${diff >= 0 ? 'var(--green)' : 'var(--red)'}">${diff >= 0 ? '+' : ''}${diff.toFixed(2)} (${diff >= 0 ? '+' : ''}${pct.toFixed(2)}%)</span>
+                       <span class="tt-val" style="color:${diff >= 0 ? 'var(--green)' : 'var(--red)'}">${diff >= 0 ? '+' : ''}${diff.toFixed(2)} (${diff >= 0 ? '+' : ''}${pct != null ? pct.toFixed(2) : '0.00'}%)</span>
                    </div>`
                 : '';
 
             tooltipEl.innerHTML = `
                 <div class="tt-header">
                     <span class="tt-ticker" style="color:${color}">${ticker}</span>
-                    <span class="tt-date">${d.date}</span>
+                    <span class="tt-date">${d.date || '--'}</span>
                 </div>
                 <div class="tt-row">
                     <span class="tt-lbl">Price</span>
@@ -483,7 +497,7 @@ const Cards = {
                 ${changeHtml}
                 <div class="tt-row">
                     <span class="tt-lbl">Volume</span>
-                    <span class="tt-val">${Cards.formatNumber(d.volume, 0)} (${d.volume.toLocaleString()})</span>
+                    <span class="tt-val">${Cards.formatNumber(vol, 0)} (${Number(vol).toLocaleString()})</span>
                 </div>
                 <div class="tt-row">
                     <span class="tt-lbl">Dollar Vol</span>
