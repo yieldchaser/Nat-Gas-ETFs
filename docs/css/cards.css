@@ -7,7 +7,7 @@
     border: 1px solid var(--border-primary);
     border-radius: var(--card-radius);
     padding: 14px;
-    transition: border-color 0.3s, box-shadow 0.3s;
+    transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
 }
 
 .etf-card:hover {
@@ -15,21 +15,49 @@
 }
 
 .etf-card.alert-elevated {
-    border-left: 3px solid var(--yellow);
+    border: 1px solid rgba(212, 168, 48, 0.45);
+    background: linear-gradient(180deg, rgba(212, 168, 48, 0.04) 0%, var(--bg-card) 85px);
+    box-shadow: 0 0 16px -2px rgba(212, 168, 48, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .etf-card.alert-high {
-    border-left: 3px solid var(--orange);
+    border: 1px solid rgba(192, 120, 40, 0.5);
+    background: linear-gradient(180deg, rgba(192, 120, 40, 0.05) 0%, var(--bg-card) 85px);
+    box-shadow: 0 0 18px -2px rgba(192, 120, 40, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .etf-card.alert-critical {
-    border-left: 3px solid var(--red);
-    animation: alert-pulse 2s infinite;
+    border: 1px solid rgba(192, 64, 64, 0.55);
+    background: linear-gradient(180deg, rgba(192, 64, 64, 0.055) 0%, var(--bg-card) 85px);
+    box-shadow: 0 0 20px -2px rgba(192, 64, 64, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    animation: alert-pulse 2.5s infinite;
 }
 
 .etf-card.alert-extreme {
-    border-left: 3px solid var(--purple);
-    animation: extreme-pulse 1.5s infinite;
+    border: 1px solid rgba(136, 85, 187, 0.6);
+    background: linear-gradient(180deg, rgba(136, 85, 187, 0.065) 0%, var(--bg-card) 85px);
+    box-shadow: 0 0 24px -2px rgba(136, 85, 187, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    animation: extreme-pulse 2s infinite;
+}
+
+.etf-card.alert-elevated:hover {
+    border-color: rgba(212, 168, 48, 0.7);
+    box-shadow: 0 0 22px 0px rgba(212, 168, 48, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.etf-card.alert-high:hover {
+    border-color: rgba(192, 120, 40, 0.75);
+    box-shadow: 0 0 24px 0px rgba(192, 120, 40, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.etf-card.alert-critical:hover {
+    border-color: rgba(192, 64, 64, 0.8);
+    box-shadow: 0 0 26px 0px rgba(192, 64, 64, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.etf-card.alert-extreme:hover {
+    border-color: rgba(136, 85, 187, 0.85);
+    box-shadow: 0 0 28px 0px rgba(136, 85, 187, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 /* Card Header */

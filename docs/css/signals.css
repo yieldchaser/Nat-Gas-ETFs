@@ -16,20 +16,21 @@
     margin-bottom: 4px;
     border-radius: 4px;
     background: var(--bg-panel);
-    border-left: 3px solid var(--border-primary);
+    border: 1px solid var(--border-primary);
     font-size: 0.72rem;
-    transition: background 0.2s;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
 .alert-item:hover {
     background: var(--bg-hover);
+    border-color: var(--border-accent);
 }
 
-.alert-item.alert-cvi { border-left-color: var(--red); }
-.alert-item.alert-mwca { border-left-color: var(--purple); }
-.alert-item.alert-rvol { border-left-color: var(--orange); }
-.alert-item.alert-ipsi { border-left-color: var(--yellow); }
-.alert-item.alert-rbc { border-left-color: var(--cyan); }
+.alert-item.alert-cvi  { border-color: rgba(192, 64, 64, 0.45);   background: linear-gradient(90deg, rgba(192, 64, 64, 0.08), var(--bg-panel)); }
+.alert-item.alert-mwca { border-color: rgba(136, 85, 187, 0.45);  background: linear-gradient(90deg, rgba(136, 85, 187, 0.08), var(--bg-panel)); }
+.alert-item.alert-rvol { border-color: rgba(192, 120, 40, 0.45);  background: linear-gradient(90deg, rgba(192, 120, 40, 0.08), var(--bg-panel)); }
+.alert-item.alert-ipsi { border-color: rgba(212, 168, 48, 0.45);  background: linear-gradient(90deg, rgba(212, 168, 48, 0.08), var(--bg-panel)); }
+.alert-item.alert-rbc  { border-color: rgba(80, 144, 160, 0.45);  background: linear-gradient(90deg, rgba(80, 144, 160, 0.08), var(--bg-panel)); }
 
 .alert-time {
     color: rgba(255, 255, 255, 0.85);
@@ -1145,9 +1146,9 @@
     gap: 10px;
 }
 
-.vrm-card-long  { border-left: 2px solid rgba(61,184,122,0.4);  }
-.vrm-card-short { border-left: 2px solid rgba(192,64,64,0.4);   }
-.vrm-card-ng    { border-left: 2px solid rgba(74,128,184,0.4);  }
+.vrm-card-long  { border-color: rgba(61,184,122,0.35);  background: linear-gradient(180deg, rgba(61,184,122,0.035) 0%, var(--bg-panel) 60px); }
+.vrm-card-short { border-color: rgba(192,64,64,0.35);   background: linear-gradient(180deg, rgba(192,64,64,0.035) 0%, var(--bg-panel) 60px); }
+.vrm-card-ng    { border-color: rgba(74,128,184,0.35);  background: linear-gradient(180deg, rgba(74,128,184,0.035) 0%, var(--bg-panel) 60px); }
 .vrm-card-empty { opacity: 0.5; }
 
 .vrm-no-data { color: rgba(255, 255, 255, 0.85); font-size: 0.72rem; text-align: center; padding: 12px 0; }
