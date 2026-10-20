@@ -131,6 +131,7 @@ const App = {
         if (this.isLoading) return;
         this.isLoading = true;
         this.setLoading(true);
+        const startTime = Date.now();
 
         try {
             // Try pre-computed data first (from GitHub Actions pipeline)
@@ -159,6 +160,8 @@ const App = {
             this.showError('Failed to fetch data. Will retry...');
         } finally {
             this.isLoading = false;
+            const elapsed = Date.now() - startTime;
+            if (elapsed < 750) await new Promise(r => setTimeout(r, 750 - elapsed));
             this.setLoading(false);
             this.startAutoRefresh();
         }
