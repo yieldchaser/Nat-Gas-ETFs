@@ -294,10 +294,10 @@ function renderSparkline(canvasId, values, color, thresholdY) {
         if (startIdx >= 0) {
             ctx.fillStyle = '#555565'; ctx.font = '7px sans-serif'; ctx.textAlign = 'left';
             var d0 = CvolState.data[startIdx].date.split('-');
-            ctx.fillText(MONTHS[parseInt(d0[1]) - 1] + ' ' + d0[2].slice(2), padL, H - 2);
+            ctx.fillText(MONTHS[parseInt(d0[1]) - 1] + ' ' + d0[0].slice(2), padL, H - 2);
             ctx.textAlign = 'right';
             var d1 = CvolState.data[endIdx].date.split('-');
-            ctx.fillText(MONTHS[parseInt(d1[1]) - 1] + ' ' + d1[2].slice(2), W - padR, H - 2);
+            ctx.fillText(MONTHS[parseInt(d1[1]) - 1] + ' ' + d1[0].slice(2), W - padR, H - 2);
         }
     }
 
