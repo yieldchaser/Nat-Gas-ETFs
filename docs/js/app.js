@@ -563,7 +563,11 @@ const App = {
         if (!el) return;
         const t = iso ? new Date(iso) : new Date();
         const ageMs = Date.now() - t.getTime();
-        const stale = iso && ageMs > 2 * 60 * 60 * 1000; // > 2 hours old
+        const marketStatus = this.getMarketStatusNow();
+        const isMarketActive = marketStatus === 'open';
+        // Only trigger STALE warning during active trading hours if data is > 60m old,
+        // or during closed/weekend hours if no update for > 36 hours.
+        const stale = iso && (isMarketActive ? ageMs > 60 * 60 * 1000 : ageMs > 36 * 60 * 60 * 1000);
         const timeStr = t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         if (stale) {
             const ageH = Math.floor(ageMs / 3600000);
@@ -571,7 +575,7 @@ const App = {
             el.textContent = `Data: ${timeStr} — STALE (${ageH}h ${ageM}m ago)`;
             el.classList.add('stale');
         } else {
-            el.textContent = `Updated: ${timeStr}`;
+            el.textContent = isMarketActive ? `Updated: ${timeStr}` : `Data: ${timeStr} (Settled Close)`;
             el.classList.remove('stale');
         }
     },
