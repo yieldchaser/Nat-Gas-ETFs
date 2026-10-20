@@ -2,12 +2,15 @@ name: Update Dashboard Data
 
 on:
   schedule:
-    # Run every 15 minutes during NYSE market hours (Mon-Fri, 9:30 AM - 4:15 PM ET)
-    # UTC is ET + 5 (EST) or ET + 4 (EDT)
-    # Using conservative window: 13:30 - 20:15 UTC (covers both EST and EDT)
-    - cron: '*/15 13-20 * * 1-5'
-    # Run once at 21:00 UTC for end-of-day volume/price snapshot
-    - cron: '0 21 * * *'
+    # Run every 15 minutes during market hours across LSE, TSX, and NYSE (covers both EDT and EST):
+    - cron: '*/15 13-21 * * 1-5'
+    # Layer 2 Settled Statistical Engine snapshots (after official closes across all 3 exchanges):
+    # 20:25 UTC: Settled snapshot during Daylight Saving Time (EDT: NYSE/TSX closed 20:00 UTC, MOC & Tape B final)
+    - cron: '25 20 * * 1-5'
+    # 21:25 UTC: Settled snapshot during Standard Time (EST: NYSE/TSX closed 21:00 UTC, MOC & Tape B final)
+    - cron: '25 21 * * 1-5'
+    # 22:00 UTC: Final EOD settlement & clearinghouse reconciliation
+    - cron: '0 22 * * 1-5'
   workflow_dispatch: # Allow manual triggers
 
 permissions:

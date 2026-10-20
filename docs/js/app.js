@@ -316,11 +316,22 @@ const App = {
                 close: h.close != null ? h.close : h[1],
                 volume: h.volume != null ? h.volume : h[2]
             });
+            // Slicing heatmapData:
+            // When market is open or in pre-market, today's bar in hist is incomplete/partial.
+            // Using a partial session in the Heat Map causes an artificial 0th-percentile volume drop (black box).
+            // Therefore, if the market is open and the last bar represents today, slice up to yesterday's confirmed close.
+            const isMarketOpen = (this.getMarketStatusNow() === 'open' || this.getMarketStatusNow() === 'pre_market' || data.market_status === 'open');
+            const todayET = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+            const lastBarDate = (hist && hist.length > 0) ? (hist[hist.length - 1].date || hist[hist.length - 1][0]) : null;
+            const isTodayIncomplete = isMarketOpen && (lastBarDate === todayET || lastBarDate === new Date().toISOString().slice(0, 10));
+
+            const confirmedHist = isTodayIncomplete ? hist.slice(0, -1) : hist;
+
             const sparkData = (hist && hist.length > 0)
                 ? hist.slice(-CONFIG.sparklineDays).map(mapBar)
                 : [];
-            const heatmapData = (hist && hist.length > 0)
-                ? hist.slice(-CONFIG.heatmapDays).map(mapBar)
+            const heatmapData = (confirmedHist && confirmedHist.length > 0)
+                ? confirmedHist.slice(-CONFIG.heatmapDays).map(mapBar)
                 : [];
 
             // Build metrics object from pre-computed data
