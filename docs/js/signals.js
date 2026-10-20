@@ -769,8 +769,8 @@ const Signals = {
                 const clamped = Math.max(0.5, Math.min(3.0, sRvol ?? 1.0));
                 const pct = ((clamped - 0.5) / 2.5) * 100;
                 const basePct = ((1.0 - 0.5) / 2.5) * 100; // 20% = 1x normal
-                fillStart = basePct;
-                fillWidth = Math.max(0, pct - basePct);
+                fillStart = Math.min(pct, basePct);
+                fillWidth = Math.abs(pct - basePct);
                 barColor = sRvol == null ? 'rgba(255,255,255,0.3)'
                     : sRvol < 0.8  ? 'rgba(255,255,255,0.3)'  // sub-normal (dim)
                     : sRvol < 1.2  ? 'rgba(255,255,255,0.55)' // normal
