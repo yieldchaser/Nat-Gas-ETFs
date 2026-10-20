@@ -721,7 +721,8 @@ def _yahoo_fetch_one(
     which is always the current real-time price, independent of the daily bar cadence.
     """
     period1 = int(datetime(2007, 1, 1).timestamp())
-    period2 = int(datetime.now().timestamp())
+    # Add buffer of 1 day to period2 so Yahoo doesn't omit today's active bar due to timezone skew
+    period2 = int(datetime.now(timezone.utc).timestamp()) + 86400
     url = (
         f"{YAHOO_BASE_URL}{urllib.request.quote(ticker)}"
         f"?period1={period1}&period2={period2}&interval=1d&includePrePost=false"
@@ -777,12 +778,32 @@ def _yahoo_fetch_one(
                 live_price = float(df["close"].iloc[-1])
             if live_vol is None and not df.empty:
                 live_vol = int(df["volume"].iloc[-1])
-            prev_close = meta.get("previousClose") or meta.get("chartPreviousClose")
+            # In Yahoo Finance v8 chart API:
+            # - regularMarketChangePercent is the clean live % change from the official quote
+            # - previousClose in meta is often None
+            # - chartPreviousClose is the price prior to period1 (2007), which is pre-reverse-split
+            #   (e.g. $7,708,000 for BOIL) and MUST NEVER be used as the session previous close!
+            reg_chg_pct = meta.get("regularMarketChangePercent")
+
+            prev_close = meta.get("previousClose")
+            if (prev_close is None or prev_close <= 0 or
+                (live_price is not None and (prev_close > live_price * 5 or prev_close < live_price * 0.2))):
+                if not df.empty:
+                    today_utc = datetime.now(timezone.utc).date()
+                    if df.index[-1].date() == today_utc and len(df) >= 2:
+                        prev_close = float(df["close"].iloc[-2])
+                    else:
+                        prev_close = float(df["close"].iloc[-1])
+                else:
+                    prev_close = None
+
             live_snapshot: Optional[dict] = None
             if live_price is not None:
                 change_pct = None
-                if prev_close and prev_close > 0:
-                    change_pct = round((live_price - prev_close) / prev_close * 100, 6)
+                if reg_chg_pct is not None and not np.isnan(reg_chg_pct):
+                    change_pct = round(float(reg_chg_pct), 4)
+                elif prev_close and prev_close > 0:
+                    change_pct = round((live_price - prev_close) / prev_close * 100, 4)
                 live_snapshot = {
                     "price":      round(float(live_price), 4),
                     "volume":     int(live_vol) if live_vol is not None else None,
