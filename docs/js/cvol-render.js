@@ -208,7 +208,7 @@ function renderMainChart() {
                 var surfDay = comp.surfaceDaily ? comp.surfaceDaily[r.s + hi] : null;
                 if (surfDay && surfDay.state !== 'NO_EDGE') {
                     var sc = surfaceStateColor(surfDay.state);
-                    html += '<div style="margin-bottom:6px;padding:3px 6px;border-radius:3px;background:'+toRgba(sc,0.12)+';border-left:2px solid '+sc+';">' +
+                    html += '<div style="margin-bottom:6px;padding:4px 8px;border-radius:4px;background:'+toRgba(sc,0.08)+';border:1px solid '+toRgba(sc,0.25)+';">' +
                         '<div style="font-size:0.58rem;font-weight:800;color:'+sc+';letter-spacing:0.8px;">'+surfDay.label+'</div>' +
                         '<div style="font-size:0.52rem;color:rgba(255,255,255,0.65);">'+surfDay.confidence+' · '+surfDay.directionalRead+'</div>' +
                         '</div>';
