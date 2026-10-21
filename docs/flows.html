@@ -20,8 +20,8 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 .sentiment-side { display: flex; flex-direction: column; text-align: center; width: 22%; }
-.sentiment-side.left { text-align: left; border-left: 3px solid rgba(34,197,94,0.35); padding-left: 10px; }
-.sentiment-side.right { text-align: right; border-right: 3px solid rgba(239,68,68,0.35); padding-right: 10px; }
+.sentiment-side.left { text-align: left; padding-left: 10px; }
+.sentiment-side.right { text-align: right; padding-right: 10px; }
 .s-label { font-size: 0.68rem; letter-spacing: 1px; font-weight: 800; margin-bottom: 4px; }
 .s-label-long { color: rgba(34,197,94,0.8); }
 .s-label-short { color: rgba(239,68,68,0.75); }
@@ -59,7 +59,6 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 /* Card: horizontal compact layout */
 .flow-card {
     background: var(--bg-panel); border: 1px solid var(--border-primary);
-    border-left: 3px solid transparent;
     border-radius: 8px; padding: 12px 14px; display: grid;
     grid-template-columns: 90px 1fr auto;
     gap: 12px; align-items: center;
@@ -176,7 +175,6 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 
 .div-table tbody tr:nth-child(even) td { background: rgba(255,255,255,0.012); }
 .div-table tbody tr:hover td { background: rgba(255,255,255,0.04) !important; }
-.div-table tbody tr td:first-child { border-left: 3px solid transparent; }
 .div-badge {
     display: inline-block; font-size: 0.6rem; font-weight: 800;
     padding: 3px 8px; border-radius: 4px; letter-spacing: 0.8px;
@@ -743,7 +741,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 3 -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Deep Dive: Select an ETF then adjust time range. Range slider zooms all charts simultaneously. Drag on chart to measure price/flow." style="font-size:1.05rem; border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">DEEP DIVE</div>
+                <div class="panel-title" data-tooltip="Deep Dive: Select an ETF then adjust time range. Range slider zooms all charts simultaneously. Drag on chart to measure price/flow." style="font-size:1.05rem; ">DEEP DIVE</div>
                 <div class="tab-group time-tabs" id="time-tabs">
                     <button class="tab-btn" data-range="1w">1W</button>
                     <button class="tab-btn" data-range="1m">1M</button>
@@ -815,7 +813,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <div class="legend-item" data-tooltip="Red bars: net outflow on this trading day"><span class="legend-swatch" style="background:rgba(239,68,68,0.8)"></span> DAILY OUTFLOW</div>
                 </div>
                 <div>
-                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE DEEP DIVE</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding-left:6px; border-left:3px solid #00e5ff;"><strong style="color:#00e5ff; font-weight:800;">1. PRICE VS CUMULATIVE FLOW DIVERGENCE</strong><br><span style="color:rgba(255,255,255,0.85);">Compare white price line against cumulative flow area.<br>&bull; Price rising while cumulative flow falls = <em>Distribution (Smart money selling into strength)</em><br>&bull; Price falling while cumulative flow rises = <em>Accumulation (Smart money buying weakness)</em></span></div><div style="padding-left:6px; border-left:3px solid #3db87a;"><strong style="color:#3db87a; font-weight:800;">2. DAILY FLOW BARS</strong><br><span style="color:rgba(255,255,255,0.85);">Green bars = Daily net inflows. Red bars = Daily net outflows.<br>&bull; Taller bars indicate high-conviction institutional block orders.</span></div><div style="padding-left:6px; border-left:3px solid #f59e0b;"><strong style="color:#f59e0b; font-weight:800;">3. MEASURE RANGE TOOL</strong><br><span style="color:rgba(255,255,255,0.85);">Click &amp; drag mouse across canvas to calculate exact price % return vs net $ flow accumulation between any two dates.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">❓ HOW TO USE</span>
+                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE DEEP DIVE</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #00e5ff; background:rgba(255,255,255,0.02);"><strong style="color:#00e5ff; font-weight:800;">1. PRICE VS CUMULATIVE FLOW DIVERGENCE</strong><br><span style="color:rgba(255,255,255,0.85);">Compare white price line against cumulative flow area.<br>&bull; Price rising while cumulative flow falls = <em>Distribution (Smart money selling into strength)</em><br>&bull; Price falling while cumulative flow rises = <em>Accumulation (Smart money buying weakness)</em></span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #3db87a; background:rgba(255,255,255,0.02);"><strong style="color:#3db87a; font-weight:800;">2. DAILY FLOW BARS</strong><br><span style="color:rgba(255,255,255,0.85);">Green bars = Daily net inflows. Red bars = Daily net outflows.<br>&bull; Taller bars indicate high-conviction institutional block orders.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #f59e0b; background:rgba(255,255,255,0.02);"><strong style="color:#f59e0b; font-weight:800;">3. MEASURE RANGE TOOL</strong><br><span style="color:rgba(255,255,255,0.85);">Click &amp; drag mouse across canvas to calculate exact price % return vs net $ flow accumulation between any two dates.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">❓ HOW TO USE</span>
                 </div>
             </div>
 
@@ -824,7 +822,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 4 -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Scans for instances where price and capital flow moved in opposite directions. Divergences can signal stealth accumulation or distribution." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Flow vs Price Divergence</div>
+                <div class="panel-title" data-tooltip="Scans for instances where price and capital flow moved in opposite directions. Divergences can signal stealth accumulation or distribution." style="">Flow vs Price Divergence</div>
                 <div style="display:flex; align-items:center; gap:12px;">
                     <label style="color:var(--text-bright); font-size:0.65rem; font-weight:700; display:flex; align-items:center; gap:6px; cursor:pointer;" data-tooltip="ON: Shows all matched windows per date. OFF: Shows only the first matched window per date (Legacy).">
                         <input type="checkbox" id="multi-window-toggle-1" checked style="accent-color:var(--cyan); cursor:pointer;">
@@ -875,7 +873,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 5 -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Z-Score of daily flow over time. Spikes signal unusual accumulation or distribution." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Flow Z-Score History</div>
+                <div class="panel-title" data-tooltip="Z-Score of daily flow over time. Spikes signal unusual accumulation or distribution." style="">Flow Z-Score History</div>
                 <div class="tab-group time-tabs" id="z-time-tabs">
                     <button class="tab-btn" data-range="1w">1W</button>
                     <button class="tab-btn" data-range="1m">1M</button>
@@ -915,7 +913,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <div class="legend-item" data-tooltip="Standard deviation threshold lines at +1.5&sigma; (bullish anomaly) and -1.5&sigma; (bearish anomaly)"><span class="legend-line" style="background:rgba(255,255,255,0.4); height:1px; border-top:1px dashed rgba(255,255,255,0.4);"></span> &plusmn;1.5&sigma; THRESHOLD</div>
                 </div>
                 <div>
-                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE FLOW Z-SCORES</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding-left:6px; border-left:3px solid #3db87a;"><strong style="color:#3db87a; font-weight:800;">1. EXTREME Z-SCORE ANOMALIES (&ge;&plusmn;2.0&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Spikes beyond +2.0&sigma; or -2.0&sigma; flag statistically rare institutional capital accumulation or distribution events.</span></div><div style="padding-left:6px; border-left:3px solid #ef4444;"><strong style="color:#ef4444; font-weight:800;">2. SHORT ETF SIGN CONVENTION</strong><br><span style="color:rgba(255,255,255,0.85);">On KOLD, HND, 3NGS: Positive Z = short accumulation (bearish gas signal); Negative Z = short unwinding (bullish gas signal).</span></div><div style="padding-left:6px; border-left:3px solid #00e5ff;"><strong style="color:#00e5ff; font-weight:800;">3. MULTI-ETF SELECTOR</strong><br><span style="color:rgba(255,255,255,0.85);">Click ETF chips (BOIL, KOLD, etc.) to isolate individual fund flow volatility over time.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">❓ HOW TO USE</span>
+                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE FLOW Z-SCORES</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #3db87a; background:rgba(255,255,255,0.02);"><strong style="color:#3db87a; font-weight:800;">1. EXTREME Z-SCORE ANOMALIES (&ge;&plusmn;2.0&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Spikes beyond +2.0&sigma; or -2.0&sigma; flag statistically rare institutional capital accumulation or distribution events.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #ef4444; background:rgba(255,255,255,0.02);"><strong style="color:#ef4444; font-weight:800;">2. SHORT ETF SIGN CONVENTION</strong><br><span style="color:rgba(255,255,255,0.85);">On KOLD, HND, 3NGS: Positive Z = short accumulation (bearish gas signal); Negative Z = short unwinding (bullish gas signal).</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #00e5ff; background:rgba(255,255,255,0.02);"><strong style="color:#00e5ff; font-weight:800;">3. MULTI-ETF SELECTOR</strong><br><span style="color:rgba(255,255,255,0.85);">Click ETF chips (BOIL, KOLD, etc.) to isolate individual fund flow volatility over time.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">❓ HOW TO USE</span>
                 </div>
             </div>
         </div>
@@ -923,7 +921,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 6 -->
         <div class="panel" id="cross-etf-panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Tracks cumulative capital flows. Toggle between absolute USD and % AUM scale. Use overlays to view Net positioning (Long vs Short Spread), identify Regime Shifts (Inflections), or toggle the Rolling Flow Correlation sidebar. Click the chart to pin a snapshot; click correlation cells to isolate ticker flows." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Cross-ETF Cumulative Flow Comparison</div>
+                <div class="panel-title" data-tooltip="Tracks cumulative capital flows. Toggle between absolute USD and % AUM scale. Use overlays to view Net positioning (Long vs Short Spread), identify Regime Shifts (Inflections), or toggle the Rolling Flow Correlation sidebar. Click the chart to pin a snapshot; click correlation cells to isolate ticker flows." style="">Cross-ETF Cumulative Flow Comparison</div>
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                     <!-- Mode toggle: USD / %AUM -->
                     <div class="cross-mode-group">
@@ -1006,7 +1004,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <div class="legend-item" data-tooltip="Net Long minus Short cumulative flow spread"><span class="legend-line" style="background:#00e5ff; border-top:1px dashed #00e5ff;"></span> NET SPREAD</div>
                 </div>
                 <div>
-                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE CROSS-ETF FLOWS</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding-left:6px; border-left:3px solid #00e5ff;"><strong style="color:#00e5ff; font-weight:800;">1. NET SPREAD OVERLAY</strong><br><span style="color:rgba(255,255,255,0.85);">Click NET SPREAD to view Aggregate Long minus Short cumulative flow. Positive = complex is net-long gas; Negative = complex is net-short gas.</span></div><div style="padding-left:6px; border-left:3px solid #f59e0b;"><strong style="color:#f59e0b; font-weight:800;">2. INFLECTION MARKERS</strong><br><span style="color:rgba(255,255,255,0.85);">Click INFLECTIONS to mark sudden &ge;2&sigma; rate-of-change accelerations (institutional regime shifts).</span></div><div style="padding-left:6px; border-left:3px solid #a78bfa;"><strong style="color:#a78bfa; font-weight:800;">3. CORRELATION HEATMAP</strong><br><span style="color:rgba(255,255,255,0.85);">Click CORRELATION to inspect rolling pairwise flow correlations. Positive correlation between BOIL and KOLD signals unusual institutional hedging.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">❓ HOW TO USE</span>
+                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE CROSS-ETF FLOWS</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #00e5ff; background:rgba(255,255,255,0.02);"><strong style="color:#00e5ff; font-weight:800;">1. NET SPREAD OVERLAY</strong><br><span style="color:rgba(255,255,255,0.85);">Click NET SPREAD to view Aggregate Long minus Short cumulative flow. Positive = complex is net-long gas; Negative = complex is net-short gas.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #f59e0b; background:rgba(255,255,255,0.02);"><strong style="color:#f59e0b; font-weight:800;">2. INFLECTION MARKERS</strong><br><span style="color:rgba(255,255,255,0.85);">Click INFLECTIONS to mark sudden &ge;2&sigma; rate-of-change accelerations (institutional regime shifts).</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #a78bfa; background:rgba(255,255,255,0.02);"><strong style="color:#a78bfa; font-weight:800;">3. CORRELATION HEATMAP</strong><br><span style="color:rgba(255,255,255,0.85);">Click CORRELATION to inspect rolling pairwise flow correlations. Positive correlation between BOIL and KOLD signals unusual institutional hedging.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">❓ HOW TO USE</span>
                 </div>
             </div>
         </div>
@@ -1014,7 +1012,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 6.1: Cross-ETF Composite Z-Score History -->
         <div class="panel" id="composite-z-panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Unified directional pressure oscillator: averages flow Z-scores across all 6 ETFs (with short-side sign inversion). Positive = upward pressure on gas. Negative = downward pressure." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Cross-ETF Composite Z-Score</div>
+                <div class="panel-title" data-tooltip="Unified directional pressure oscillator: averages flow Z-scores across all 6 ETFs (with short-side sign inversion). Positive = upward pressure on gas. Negative = downward pressure." style="">Cross-ETF Composite Z-Score</div>
                 <div class="tab-group time-tabs" id="compz-time-tabs">
                     <button class="tab-btn" data-range="1w">1W</button>
                     <button class="tab-btn" data-range="1m">1M</button>
@@ -1064,7 +1062,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <div class="legend-item"><span class="legend-line" style="background:rgba(0,255,255,0.4); height:1px; border-top:1px dashed rgba(0,255,255,0.4);"></span> &plusmn;1.5&sigma; THRESHOLDS</div>
                 </div>
                 <div>
-                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE COMPOSITE Z-SCORE</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding-left:6px; border-left:3px solid #3db87a;"><strong style="color:#3db87a; font-weight:800;">1. BULLISH COMPLEX PRESSURE (&ge;+1.5&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Green glow zone. Signals aggregate complex-wide long accumulation and short unwinding across all 6 ETFs.</span></div><div style="padding-left:6px; border-left:3px solid #ef4444;"><strong style="color:#ef4444; font-weight:800;">2. BEARISH COMPLEX PRESSURE (&le;-1.5&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Red glow zone. Signals aggregate short accumulation and long distribution across the complex.</span></div><div style="padding-left:6px; border-left:3px solid #00e5ff;"><strong style="color:#00e5ff; font-weight:800;">3. ZERO LINE CROSSINGS</strong><br><span style="color:rgba(255,255,255,0.85);">Crossings above 0 confirm bullish momentum recovery; crossings below 0 confirm bearish momentum breakdown.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px; margin-right:12px;">❓ HOW TO USE</span>
+                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE COMPOSITE Z-SCORE</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #3db87a; background:rgba(255,255,255,0.02);"><strong style="color:#3db87a; font-weight:800;">1. BULLISH COMPLEX PRESSURE (&ge;+1.5&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Green glow zone. Signals aggregate complex-wide long accumulation and short unwinding across all 6 ETFs.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #ef4444; background:rgba(255,255,255,0.02);"><strong style="color:#ef4444; font-weight:800;">2. BEARISH COMPLEX PRESSURE (&le;-1.5&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Red glow zone. Signals aggregate short accumulation and long distribution across the complex.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #00e5ff; background:rgba(255,255,255,0.02);"><strong style="color:#00e5ff; font-weight:800;">3. ZERO LINE CROSSINGS</strong><br><span style="color:rgba(255,255,255,0.85);">Crossings above 0 confirm bullish momentum recovery; crossings below 0 confirm bearish momentum breakdown.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px; margin-right:12px;">❓ HOW TO USE</span>
                     <span data-tooltip="Methodology: Equal-weighted average of 6 ETF flow Z-scores with short-side sign inversion (KOLD, HND, 3NGS scores flipped). 30-day rolling window inherited from per-ETF computation. Positive = net upward pressure (longs accumulating / shorts exiting). Negative = net downward pressure." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ METHODOLOGY</span>
                 </div>
             </div>
@@ -1073,7 +1071,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 6.1b-2: Flow Velocity & Cycle Exhaustion Engine -->
         <div class="panel" id="flow-velocity-panel">
             <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:nowrap; gap:12px;">
-                <div class="panel-title" data-tooltip="FLOW ACCELERATION & EXHAUSTION ENGINE: Measures 1-Day & 3-Day capital velocity (d/dt Flow). Flags sudden Long/Short acceleration impulses and Flow Exhaustion warnings (when price makes new highs but flow velocity momentum drains 30-60 days before price tops)." style="border-left:3px solid rgba(245,158,11,0.7); padding-left:8px; margin-bottom:0;">FLOW ACCELERATION & EXHAUSTION ENGINE</div>
+                <div class="panel-title" data-tooltip="FLOW ACCELERATION & EXHAUSTION ENGINE: Measures 1-Day & 3-Day capital velocity (d/dt Flow). Flags sudden Long/Short acceleration impulses and Flow Exhaustion warnings (when price makes new highs but flow velocity momentum drains 30-60 days before price tops)." style="margin-bottom:0;">FLOW ACCELERATION & EXHAUSTION ENGINE</div>
                 <div class="tab-group time-tabs" id="flowvel-time-tabs">
                     <button class="tab-btn" data-range="1m">1M</button>
                     <button class="tab-btn" data-range="3m">3M</button>
@@ -1112,7 +1110,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <div class="legend-item" data-tooltip="3D VELOCITY Z: 3-day smoothed rate of change of composite ETF flow Z-score, tracking directional capital momentum."><span class="legend-line" style="background:#4ab8d8; height:2px;"></span> 3D VELOCITY Z</div>
                 </div>
                 <div>
-                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE THIS ENGINE</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding-left:6px; border-left:3px solid #f59e0b;"><strong style="color:#f59e0b; font-weight:800;">1. AMBER EXHAUSTION ZONES</strong><br><span style="color:rgba(255,255,255,0.85);">Smart money buyer depletion near 30d price highs.<br>&bull; <em>Action: Exit BOIL / Prepare KOLD (30&ndash;60d ahead of tops)</em></span></div><div style="padding-left:6px; border-left:3px solid #3db87a;"><strong style="color:#3db87a; font-weight:800;">2. GREEN ACCELERATION BARS (&ge;+2.0&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Institutional accumulation impulse near price lows.<br>&bull; <em>Action: Buy BOIL (1&ndash;5d early trough entry)</em></span></div><div style="padding-left:6px; border-left:3px solid #ef4444;"><strong style="color:#ef4444; font-weight:800;">3. RED ACCELERATION BARS (&le;-2.0&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Short ETF accumulation spike into breakdown.<br>&bull; <em>Action: Downside breakdown momentum active</em></span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px; margin-right:12px;">❓ HOW TO USE</span>
+                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE THIS ENGINE</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #f59e0b; background:rgba(255,255,255,0.02);"><strong style="color:#f59e0b; font-weight:800;">1. AMBER EXHAUSTION ZONES</strong><br><span style="color:rgba(255,255,255,0.85);">Smart money buyer depletion near 30d price highs.<br>&bull; <em>Action: Exit BOIL / Prepare KOLD (30&ndash;60d ahead of tops)</em></span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #3db87a; background:rgba(255,255,255,0.02);"><strong style="color:#3db87a; font-weight:800;">2. GREEN ACCELERATION BARS (&ge;+2.0&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Institutional accumulation impulse near price lows.<br>&bull; <em>Action: Buy BOIL (1&ndash;5d early trough entry)</em></span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #ef4444; background:rgba(255,255,255,0.02);"><strong style="color:#ef4444; font-weight:800;">3. RED ACCELERATION BARS (&le;-2.0&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Short ETF accumulation spike into breakdown.<br>&bull; <em>Action: Downside breakdown momentum active</em></span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px; margin-right:12px;">❓ HOW TO USE</span>
                     <span data-tooltip="Methodology: Computes daily velocity Z-scores of ETF flows. Flow Exhaustion occurs when NG price is near 30-day highs while 3-day velocity Z is negative, signalling institutional momentum draining 30-60 days ahead of price tops." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ METHODOLOGY</span>
                 </div>
             </div>
@@ -1122,7 +1120,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <div class="panel" id="flow-heat-panel">
             <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:nowrap; gap:12px;">
                 <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-                    <div class="panel-title" data-tooltip="FLOW ACTIVITY HEAT MAP: Daily Composite Z-score (flow pressure), color-coded by strength (Green = Bullish Inflow, Red = Bearish Outflow). Outliers are highlighted using Global Historical Percentiles of absolute flow Z-scores. Flow Z-scores are already normalized locally over a 30-day window, making the global threshold stable, stationary, and comparable across years." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px; margin-bottom:0;">FLOW ACTIVITY HEAT MAP <span id="flow-heat-range-label" style="font-size:0.75rem; font-weight:normal; color:rgba(255,255,255,0.5); text-transform:none; margin-left:6px; letter-spacing:0.3px;">— LOADING</span></div>
+                    <div class="panel-title" data-tooltip="FLOW ACTIVITY HEAT MAP: Daily Composite Z-score (flow pressure), color-coded by strength (Green = Bullish Inflow, Red = Bearish Outflow). Outliers are highlighted using Global Historical Percentiles of absolute flow Z-scores. Flow Z-scores are already normalized locally over a 30-day window, making the global threshold stable, stationary, and comparable across years." style="margin-bottom:0;">FLOW ACTIVITY HEAT MAP <span id="flow-heat-range-label" style="font-size:0.75rem; font-weight:normal; color:rgba(255,255,255,0.5); text-transform:none; margin-left:6px; letter-spacing:0.3px;">— LOADING</span></div>
                     <!-- Pagination Navigation -->
                     <div style="display:flex; gap:4px; margin-left:4px; margin-right:2px;">
                         <button class="nav-arrow-btn" id="flow-heat-prev" data-tooltip="View previous 90 days">&#8592;</button>
@@ -1195,7 +1193,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 6.2: Flow Pressure vs Natural Gas Price -->
         <div class="panel" id="flow-ng-panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Flow-Price Divergence Signal: LEFT AXIS shows contrarian flow intensity — bars only appear when cross-ETF composite flow direction OPPOSES NG's recent 5-session price move. GREEN = flows bullish while NG recently fell (smart money buying against weakness). RED = flows bearish while NG recently rose (smart money selling into strength). Flat = flows reactive (following price, not leading it). RIGHT AXIS (CYAN line): NG=F Henry Hub futures price for context. Audit finding: contrarian flows show marginally better 21-day forward accuracy than reactive flows — this chart surfaces only the potentially predictive portion of the flow signal." style="border-left:3px solid rgba(80,144,160,0.6); padding-left:8px;">Flow-Price Divergence Signal</div>
+                <div class="panel-title" data-tooltip="Flow-Price Divergence Signal: LEFT AXIS shows contrarian flow intensity — bars only appear when cross-ETF composite flow direction OPPOSES NG's recent 5-session price move. GREEN = flows bullish while NG recently fell (smart money buying against weakness). RED = flows bearish while NG recently rose (smart money selling into strength). Flat = flows reactive (following price, not leading it). RIGHT AXIS (CYAN line): NG=F Henry Hub futures price for context. Audit finding: contrarian flows show marginally better 21-day forward accuracy than reactive flows — this chart surfaces only the potentially predictive portion of the flow signal." style="">Flow-Price Divergence Signal</div>
                 <div class="tab-group time-tabs" id="flowng-time-tabs">
                     <button class="tab-btn" data-range="1m">1M</button>
                     <button class="tab-btn" data-range="3m">3M</button>
@@ -1240,7 +1238,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 6.3: Flow Reactivity Intensity -->
         <div class="panel" id="flow-reactivity-panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Flow Reactivity Intensity: Shows when composite flows are most reactive (aligned with NG's recent 5-session price move). Gray bars indicate the strength of the reactivity momentum. Higher intensity = flows chasing price more aggressively. This is a MEAN-REVERSION setup: crowds buying/selling on momentum. Useful for longer-term reversals (21d+). Zero bars = flows opposing price (divergence — see previous chart)." style="border-left:3px solid rgba(80,144,160,0.6); padding-left:8px;">Flow Reactivity Intensity (Mean-Reversion Signal)</div>
+                <div class="panel-title" data-tooltip="Flow Reactivity Intensity: Shows when composite flows are most reactive (aligned with NG's recent 5-session price move). Gray bars indicate the strength of the reactivity momentum. Higher intensity = flows chasing price more aggressively. This is a MEAN-REVERSION setup: crowds buying/selling on momentum. Useful for longer-term reversals (21d+). Zero bars = flows opposing price (divergence — see previous chart)." style="">Flow Reactivity Intensity (Mean-Reversion Signal)</div>
                 <div class="tab-group time-tabs" id="reactivity-time-tabs">
                     <button class="tab-btn" data-range="1m">1M</button>
                     <button class="tab-btn" data-range="3m">3M</button>
@@ -1283,7 +1281,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 6.5: Cross-Side Flow Divergence Scanner -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Scans for windows where aggregate long-side capital (BOIL+HNU+3NGL) and short-side capital (KOLD+HND+3NGS) diverge — one side accumulating while the other distributes. Reveals institutional rotation between bull and bear positioning." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Cross-Side Flow Divergence Scanner</div>
+                <div class="panel-title" data-tooltip="Scans for windows where aggregate long-side capital (BOIL+HNU+3NGL) and short-side capital (KOLD+HND+3NGS) diverge — one side accumulating while the other distributes. Reveals institutional rotation between bull and bear positioning." style="">Cross-Side Flow Divergence Scanner</div>
                 <div style="display:flex; align-items:center; gap:12px;">
                     <label style="color:var(--text-bright); font-size:0.65rem; font-weight:700; display:flex; align-items:center; gap:6px; cursor:pointer;" data-tooltip="ON: Shows all matched windows per date. OFF: Shows only the first matched window per date (Legacy).">
                         <input type="checkbox" id="multi-window-toggle-2" checked style="accent-color:var(--cyan); cursor:pointer;">
@@ -1333,7 +1331,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 7: Yearly Flow Frequency Matrix -->
         <div class="panel" id="yearly-matrix-panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Shows the number of significant flow events (|Z-Score| ≥ 1.5) per year per ETF, with average Z-Score magnitude. Helps identify which years had the most active flow signals." style="border-left:3px solid rgba(0,255,255,0.45); padding-left:8px;">Yearly Flow Activity Matrix</div>
+                <div class="panel-title" data-tooltip="Shows the number of significant flow events (|Z-Score| ≥ 1.5) per year per ETF, with average Z-Score magnitude. Helps identify which years had the most active flow signals." style="">Yearly Flow Activity Matrix</div>
             </div>
             <div id="yearly-matrix-container" style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
                 <div style="color:rgba(255, 255, 255, 0.85); padding:20px; text-align:center; font-size:0.7rem; letter-spacing:1px;">Loading matrix…</div>
@@ -1938,8 +1936,8 @@ function renderSection2() {
 
         const accentCol = colors[tk] || 'rgba(255, 255, 255, 0.85)';
         const bc = tk === state.activeTicker
-            ? `border-left-color:${accentCol}; border-color:${accentCol}; box-shadow: 0 0 14px ${accentCol}40;`
-            : `border-left-color:${accentCol};`;
+            ? `border-color:${accentCol}; box-shadow: 0 0 14px ${accentCol}40;`
+            : `border-color:rgba(255,255,255,0.08);`;
 
         // Bidirectional pressure bar: fills left of center for negative, right for positive
         const presAbs = Math.min(Math.abs(d.pressure), 100);
@@ -3277,7 +3275,7 @@ function renderDivergence() {
         const sigHtml  = `<span style="color:${r.isBear?'var(--red)':'var(--green)'};font-size:0.72rem;white-space:nowrap;">${sigDot} ${sigLabel}</span>`;
 
         html += `<tr>
-            <td style="color:rgba(255,255,255,0.85);font-size:0.7rem;border-left:3px solid ${rowAccent};">${fmtDateLong(r.date)}</td>
+            <td style="color:rgba(255,255,255,0.85);font-size:0.7rem;">${fmtDateLong(r.date)}</td>
             <td style="color:rgba(255,255,255,0.85);" data-tooltip="Duration of divergence window">${r.window}d</td>
             <td><span class="div-badge ${badgeClass}" data-tooltip="Signal Type: ${r.type}">${r.type}</span></td>
             <td class="${r.priceMove>=0?'val-green':'val-red'}" data-tooltip="Price change over the ${r.window}d window">${fmtPct(r.priceMove)}</td>
@@ -3689,7 +3687,7 @@ function renderCrossDivergence() {
                 : `<span style="opacity:0.3;">\u2014</span>`;
 
         html += `<tr>
-            <td style="color:rgba(255,255,255,0.7);font-size:0.65rem;border-left:3px solid ${rowAccent};">${fmtDateLong(r.date)}</td>
+            <td style="color:rgba(255,255,255,0.7);font-size:0.65rem;">${fmtDateLong(r.date)}</td>
             <td style="color:rgba(255,255,255,0.65);font-size:0.65rem;" data-tooltip="Duration of cross-divergence window">${r.window}d</td>
             <td><span class="div-badge ${badgeClass}" style="padding:1px 5px;font-size:0.58rem;min-width:40px;display:inline-block;text-align:center;" data-tooltip="Signal Type: ${r.type}">${typeLabel}</span></td>
             <td class="${r.longDelta >= 0 ? 'val-green' : 'val-red'}" data-tooltip="Cumulative long-side ETF flow over ${r.window}d">${fmtUsd(r.longDelta)}</td>

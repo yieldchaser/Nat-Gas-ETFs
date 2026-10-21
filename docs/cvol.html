@@ -41,12 +41,16 @@
 /* ---- KPI CARDS ---- */
 .cvol-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
 .cvol-kpi-card {
-    background: var(--bg-panel); border: 1px solid var(--border-primary);
-    border-left: 3px solid var(--card-accent, var(--border-primary));
-    border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 10px;
-    transition: border-color 0.25s, box-shadow 0.25s;
+    background: var(--bg-panel); border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
-.cvol-kpi-card:hover { border-color: var(--card-accent, var(--border-accent)); box-shadow: 0 4px 20px rgba(0,0,0,0.25), inset 0 0 0 1px var(--card-accent, transparent); }
+.cvol-kpi-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+    transform: translateY(-1px);
+}
 .cvol-kpi-head { display: flex; justify-content: space-between; align-items: center; }
 .cvol-kpi-ticker { font-size: 0.9rem; font-weight: 800; letter-spacing: 1px; }
 .cvol-kpi-regime { font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; }
@@ -329,7 +333,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 
 /* ---- SECTION TITLE ---- */
 .section-title-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-.section-title-text { font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-bright); border-left: 3px solid rgba(0,255,255,0.45); padding-left: 8px; }
+.section-title-text { font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-bright); }
 
 /* ---- CHART LEGEND ---- */
 .chart-legend { display: flex; gap: 24px; flex-wrap: wrap; }
@@ -343,7 +347,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 .two-col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; align-items: stretch; }
 
 /* ---- REGIME DASHBOARD ---- */
-.reg-cell { background: rgba(255,255,255,0.02); border: 1px solid var(--border-primary); border-radius: 6px; padding: 12px 14px; border-left: 3px solid var(--border-primary); transition: border-color 0.2s; }
+.reg-cell { background: rgba(255,255,255,0.02); border: 1px solid var(--border-primary); border-radius: 6px; padding: 12px 14px; transition: border-color 0.2s; }
 .reg-cell:hover { border-color: var(--border-accent); }
 .reg-cell-lbl { font-size: 0.5rem; letter-spacing: 1.5px; font-weight: 700; color: rgba(255, 255, 255, 0.85); text-transform: uppercase; margin-bottom: 6px; cursor: help; }
 .reg-cell-val { font-size: 1.05rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1.2; }
@@ -571,7 +575,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <div class="chart-container" id="vol-regime-panel" style="margin-bottom:24px;">
         <div class="chart-header">
             <div style="flex:1">
-                <span style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;">Vol Regime Monitor</span>
+                <span style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);">Vol Regime Monitor</span>
                 <span style="font-size:0.65rem;color:rgba(255, 255, 255, 0.85);margin-left:10px;">— 5D · 21D · 63D · 252D historical volatility</span>
             </div>
         </div>
@@ -761,7 +765,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <div class="event-panel">
         <div class="event-header">
             <div style="display:flex;align-items:center;gap:12px;">
-                <span class="event-title" style="border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;" data-tooltip="Default view shows decision-grade options-surface state transitions. Switch markers to RAW to inspect SAD/CI/CVC/RDS research fires.">Surface Event Timeline</span>
+                <span class="event-title" style="" data-tooltip="Default view shows decision-grade options-surface state transitions. Switch markers to RAW to inspect SAD/CI/CVC/RDS research fires.">Surface Event Timeline</span>
                 <span class="event-count" id="cvol-event-count">--</span>
             </div>
             <div class="tab-group" id="cvol-event-filter">

@@ -125,15 +125,20 @@ input[type=range]:hover::-moz-range-thumb {
 }
 .kpi-card {
     background: var(--bg-panel);
-    border: 1px solid var(--border-primary);
-    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
     padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    transition: border-color 0.2s;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
-.kpi-card:hover { border-color: var(--card-color, var(--border-accent)); }
+.kpi-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+    transform: translateY(-1px);
+}
 .kpi-header { display: flex; justify-content: space-between; align-items: center; }
 .kpi-ticker { font-size: 1rem; font-weight: 800; letter-spacing: 1px; }
 .kpi-cycles { font-size: 0.65rem; color: #fff; opacity: 0.85; font-weight: 700; }
@@ -481,7 +486,6 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 .calc-panel {
     background: var(--bg-panel);
     border: 1px solid var(--border-primary);
-    border-left: 3px solid var(--cyan);
     border-radius: 8px;
     padding: 24px;
     margin-bottom: 24px;
@@ -599,14 +603,14 @@ select.calc-input { cursor: pointer; }
 .calc-compliance { display: flex; flex-direction: column; gap: 8px; }
 .calc-caveat {
     display: flex; gap: 10px; font-size: 0.7rem; line-height: 1.5; color: var(--text-primary);
-    padding: 10px 12px; border-radius: 6px; border-left: 3px solid;
+    padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(255,255,255,0.02);
 }
 .calc-caveat .cv-icon { font-size: 0.85rem; flex-shrink: 0; }
-.calc-caveat.cv-red { border-left-color: var(--red); background: rgba(192,64,64,0.08); }
+.calc-caveat.cv-red { border-color: rgba(192,64,64,0.3); background: rgba(192,64,64,0.06); }
 .calc-caveat.cv-red strong { color: #e89090; }
-.calc-caveat.cv-amber { border-left-color: #d4a830; background: rgba(212,168,48,0.06); }
-.calc-caveat.cv-green { border-left-color: var(--green); background: rgba(61,184,122,0.05); }
+.calc-caveat.cv-amber { border-color: rgba(212,168,48,0.3); background: rgba(212,168,48,0.06); }
+.calc-caveat.cv-green { border-color: rgba(61,184,122,0.3); background: rgba(61,184,122,0.05); }
 .calc-empty { padding: 40px; text-align: center; color: #fff; opacity: 0.6; font-size: 0.85rem; font-weight: 600; }
 .calc-spinner {
     display: inline-block;
@@ -759,9 +763,9 @@ select.calc-input { cursor: pointer; }
 }
 .howto-table td:first-child { color: var(--text-bright); font-weight: 700; white-space: nowrap; }
 .howto-callout {
-    background: rgba(0,255,255,0.05);
-    border-left: 3px solid var(--cyan);
-    border-radius: 0 6px 6px 0;
+    background: rgba(0,255,255,0.04);
+    border: 1px solid rgba(0,255,255,0.2);
+    border-radius: 6px;
     padding: 10px 14px;
     font-size: 0.67rem;
     color: rgba(255,255,255,0.75);
@@ -829,7 +833,6 @@ select.calc-input { cursor: pointer; }
 .swing-schedule {
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
-    border-left: 3px solid var(--cyan);
     border-radius: 6px;
     padding: 14px 16px;
     font-family: 'JetBrains Mono', monospace;
@@ -977,7 +980,7 @@ select.calc-input { cursor: pointer; }
     <div class="chart-container">
         <div class="chart-header">
             <div style="flex:1">
-                <span id="chart-title" style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;">Price &amp; Cycle Map</span>
+                <span id="chart-title" style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);">Price &amp; Cycle Map</span>
             </div>
             <div class="chart-controls">
                 <div class="horizon-group" id="horizon-controls">
@@ -1117,7 +1120,7 @@ select.calc-input { cursor: pointer; }
     <!-- YEARLY FREQUENCY MATRIX -->
     <div class="matrix-panel">
         <div class="matrix-header">
-            <span class="matrix-title" style="border-left:3px solid rgba(0,255,255,0.45);padding-left:8px;color:var(--text-bright);">Yearly Opportunity Frequency</span>
+            <span class="matrix-title" style="color:var(--text-bright);">Yearly Opportunity Frequency</span>
         </div>
         <div class="matrix-table-wrap" id="matrix-container">
             <!-- populated by JS -->
@@ -1651,7 +1654,7 @@ function renderCards() {
         }
 
         const n = cycles.length;
-        if (!n) return `<div class="kpi-card" style="--card-color:${t.color}; border-left:3px solid ${t.color};">
+        if (!n) return `<div class="kpi-card" style="--card-color:${t.color};">
             <div class="kpi-header">
                 <span class="kpi-ticker" style="color:${t.color}">${t.label}</span>
                 <span class="kpi-cycles">0 CYCLES</span>
@@ -1757,7 +1760,7 @@ function renderCards() {
             rngStr = `<span data-tooltip="30-day Range Compression: (30D Max - 30D Min) / 30D Min. Context for recent price expansion or contraction.">Rng: ${Math.round(((rMax - rMin) / rMin) * 100)}%</span>`;
         }
 
-        return `<div class="kpi-card" style="--card-color:${t.color}; border-left:3px solid ${t.color};">
+        return `<div class="kpi-card" style="--card-color:${t.color};">
             <div class="kpi-header">
                 <span class="kpi-ticker" style="color:${t.color}">${t.label}</span>
                 <span class="kpi-cycles">${n} CYCLES</span>
@@ -2902,7 +2905,7 @@ function renderTable() {
             const gapColor = gapDays === null ? 'rgba(255,255,255,0.85)' : gapDays < 30 ? '#3db87a' : gapDays < 90 ? '#d4a830' : 'rgba(255,255,255,0.85)';
 
             return `<tr>
-                <td style="color:rgba(255,255,255,0.85);border-left:3px solid ${borderColor};">${c.num}</td>
+                <td style="color:rgba(255,255,255,0.85);">${c.num}</td>
                 <td style="color:var(--cyan);">${c.troughDate}</td>
                 <td style="color:rgba(239,100,100,0.75);">$${fmt(c.troughPrice)}</td>
                 <td style="color:#3db87a;">${c.peakDate}</td>
@@ -2987,7 +2990,7 @@ function renderYearlyMatrix() {
 
     sortedYears.forEach(year => {
         const isCur = year === curYear;
-        const yearStyle = isCur ? 'border-left:3px solid rgba(0,255,255,0.55);padding-left:5px;' : '';
+        const yearStyle = isCur ? 'color:var(--cyan);font-weight:800;' : '';
         html += `<tr class="matrix-row"><td class="matrix-year" style="${yearStyle}">${year}</td>`;
 
         TICKERS.forEach(t => {

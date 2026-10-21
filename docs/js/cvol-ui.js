@@ -902,7 +902,7 @@ function renderLegacyTimeline(composites, filter) {
         var fwd5TT = e.fwd5 != null ? `5-day return from $${fmt(e.underlying, 2)} was ${fmt(e.fwd5)}%.` : '5-day return is pending.';
         var fwd21TT = e.fwd21 != null ? `21-day return from $${fmt(e.underlying, 2)} was ${fmt(e.fwd21)}%.` : '21-day return is pending.';
 
-        html += '<tr data-evt-idx="' + e.idx + '"' + (conf >= 2 ? ' style="border-left:2px solid rgba(245,158,11,0.3);"' : '') + '>' +
+        html += '<tr data-evt-idx="' + e.idx + '"' + (conf >= 2 ? ' style="background:rgba(245,158,11,0.04);"' : '') + '>' +
             '<td style="color:rgba(255, 255, 255, 0.85);">'+fmtDate(e.date)+'</td>' +
             '<td><span class="sig-badge" style="'+(sigColors[e.signal]||'')+'" data-tooltip="'+(sigTooltips[e.signal]||'')+'">'+e.signal+'</span></td>' +
             '<td style="color:'+dirColor+';font-weight:700;" data-tooltip="Implied direction based on this signal.">'+e.direction+'</td>' +
@@ -1313,7 +1313,7 @@ function renderLegacyRegimePanel(data, comp) {
     var convColor = avgConv >= 2.5 ? '#f59e0b' : avgConv >= 1.5 ? 'var(--cyan)' : 'rgba(255, 255, 255, 0.85)';
 
     function cell(lbl, val, color, sub, accentColor, tooltip) {
-        return '<div class="reg-cell" style="border-left-color:'+accentColor+'" data-tooltip="'+tooltip+'">' +
+        return '<div class="reg-cell" style="border-color:'+accentColor+'40" data-tooltip="'+tooltip+'">' +
             '<div class="reg-cell-lbl">'+lbl+'</div>' +
             '<div class="reg-cell-val" style="color:'+color+'">'+val+'</div>' +
             (sub ? '<div class="reg-cell-sub" style="color:rgba(255, 255, 255, 0.85)">'+sub+'</div>' : '') +
@@ -1369,7 +1369,7 @@ function renderRegimePanel(data, comp) {
         ? '21D analogs: n=' + analog.n + ', abs move ' + fmt(analog.avgAbsMove,1) + '%, implied beat ' + fmt(analog.impliedBeatRate,0) + '%'
         : 'Insufficient analog history';
     function cell(lbl, val, color, sub, accentColor, tooltip) {
-        return '<div class="reg-cell" style="border-left-color:'+accentColor+'" data-tooltip="'+tooltip+'">' +
+        return '<div class="reg-cell" style="border-color:'+accentColor+'40" data-tooltip="'+tooltip+'">' +
             '<div class="reg-cell-lbl">'+lbl+'</div>' +
             '<div class="reg-cell-val" style="color:'+color+'">'+val+'</div>' +
             (sub ? '<div class="reg-cell-sub" style="color:rgba(255, 255, 255, 0.85)">'+sub+'</div>' : '') +
