@@ -185,6 +185,23 @@ with sync_playwright() as p:
     tp_ok = page.evaluate(PIXEL_CHECK, "tp-canvas")
     assert tp_ok, "trough-peak: price chart blank (regression)"
 
+    # Regression test for 3NGS slider max collision and cross-ETF custom zoom
+    page.click('#chart-etf-chips button:has-text("3NGS")')
+    page.wait_for_timeout(500)
+    assert page.evaluate(PIXEL_CHECK, "tp-canvas"), "trough-peak: 3NGS canvas blank after switch"
+
+    # Drag sliders to max
+    page.evaluate("""() => {
+        const sStart = document.getElementById('range-start');
+        const sEnd = document.getElementById('range-end');
+        sStart.value = sStart.max;
+        sEnd.value = sEnd.max;
+        sStart.dispatchEvent(new Event('input'));
+        sEnd.dispatchEvent(new Event('input'));
+    }""")
+    page.wait_for_timeout(500)
+    assert page.evaluate(PIXEL_CHECK, "tp-canvas"), "trough-peak: canvas blank after dragging sliders to max"
+
     print("trough-peak.html: VOLUME PROFILE OK")
 
     mob = browser.new_page(viewport={"width": 390, "height": 844})
