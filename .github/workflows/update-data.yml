@@ -2,6 +2,9 @@ name: Update Dashboard Data
 
 on:
   schedule:
+    # Pre-market warm-up runs (EDT: 09:12, 09:27 AM ET / 13:12, 13:27 UTC):
+    # Warms cache & refreshes pre-market quotes right before NYSE opening bell (13:30 UTC):
+    - cron: '12,27 13 * * 1-5'
     # Run every 15 minutes during market hours across LSE, TSX, and NYSE (covers both EDT and EST):
     - cron: '7,22,37,52 13-21 * * 1-5'
     # Layer 2 Settled Statistical Engine snapshots (after official closes across all 3 exchanges):

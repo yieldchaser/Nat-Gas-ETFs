@@ -506,10 +506,14 @@ const App = {
     // Returns NYSE session state based on the current wall-clock time.
     // Uses the NYSE schedule (ET) and correctly handles US DST transitions.
     // This is always called at render-time so the label is never stale.
-    getMarketStatusNow() {
+    // Returns comprehensive NYSE session metadata based on wall-clock time.
+    // Correctly handles US DST transitions (EDT=UTC-4, EST=UTC-5).
+    getMarketSessionInfo() {
         const now = new Date();
         const day = now.getUTCDay(); // 0=Sun … 6=Sat
-        if (day === 0 || day === 6) return 'closed';
+        if (day === 0 || day === 6) {
+            return { status: 'closed', isMarketActive: false, minutesSinceOpen: -1, marketOpenTimeMs: null };
+        }
 
         // US DST: starts 2nd Sunday in March at 2 AM ET, ends 1st Sunday in Nov at 2 AM ET
         const yr  = now.getUTCFullYear();
@@ -521,10 +525,21 @@ const App = {
         const utcMin = now.getUTCHours() * 60 + now.getUTCMinutes();
         const etMin  = (utcMin - offsetMin + 1440) % 1440;
 
-        if (etMin >= 570  && etMin < 960)  return 'open';        // 09:30–16:00
-        if (etMin >= 240  && etMin < 570)  return 'pre_market';  // 04:00–09:30
-        if (etMin >= 960  && etMin < 1200) return 'after_hours'; // 16:00–20:00
-        return 'closed';
+        let status = 'closed';
+        if (etMin >= 570  && etMin < 960)  status = 'open';        // 09:30–16:00
+        else if (etMin >= 240  && etMin < 570)  status = 'pre_market';  // 04:00–09:30
+        else if (etMin >= 960  && etMin < 1200) status = 'after_hours'; // 16:00–20:00
+
+        const isMarketActive = status === 'open';
+        const minutesSinceOpen = isMarketActive ? (etMin - 570) : -1;
+        const marketOpenTimeMs = isMarketActive ? (now.getTime() - minutesSinceOpen * 60 * 1000) : null;
+
+        return { status, isMarketActive, minutesSinceOpen, marketOpenTimeMs };
+    },
+
+    // Returns NYSE session state based on current wall-clock time.
+    getMarketStatusNow() {
+        return this.getMarketSessionInfo().status;
     },
 
     _nthSundayUTC(year, month, n, hour) {
@@ -566,19 +581,37 @@ const App = {
         if (!el) return;
         const t = iso ? new Date(iso) : new Date();
         const ageMs = Date.now() - t.getTime();
-        const marketStatus = this.getMarketStatusNow();
-        const isMarketActive = marketStatus === 'open';
-        // Only trigger STALE warning during active trading hours if data is > 60m old,
-        // or during closed/weekend hours if no update for > 36 hours.
-        const stale = iso && (isMarketActive ? ageMs > 60 * 60 * 1000 : ageMs > 36 * 60 * 60 * 1000);
+        const session = this.getMarketSessionInfo();
+        const isMarketActive = session.isMarketActive;
         const timeStr = t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        // If market is active, check whether data is from prior to today's open:
+        if (isMarketActive && session.marketOpenTimeMs && t.getTime() < session.marketOpenTimeMs) {
+            // Market opened recently (< 45 min) and today's first intraday batch has not yet printed:
+            if (session.minutesSinceOpen < 45) {
+                el.textContent = "Data: " + timeStr + " (Prior Close — Awaiting 1st Intraday Batch)";
+                el.classList.remove('stale');
+                return;
+            }
+            // Over 45 min into active trading and data is still from prior close -> genuinely stale:
+            const ageH = Math.floor(ageMs / 3600000);
+            const ageM = Math.floor((ageMs % 3600000) / 60000);
+            el.textContent = "Data: " + timeStr + " — STALE (" + ageH + "h " + ageM + "m ago)";
+            el.classList.add('stale');
+            return;
+        }
+
+        // Standard freshness checks:
+        // Intraday active trading: stale if > 60 minutes old
+        // Closed / weekend: stale if > 36 hours old
+        const stale = iso && (isMarketActive ? ageMs > 60 * 60 * 1000 : ageMs > 36 * 60 * 60 * 1000);
         if (stale) {
             const ageH = Math.floor(ageMs / 3600000);
             const ageM = Math.floor((ageMs % 3600000) / 60000);
-            el.textContent = `Data: ${timeStr} — STALE (${ageH}h ${ageM}m ago)`;
+            el.textContent = "Data: " + timeStr + " — STALE (" + ageH + "h " + ageM + "m ago)";
             el.classList.add('stale');
         } else {
-            el.textContent = isMarketActive ? `Updated: ${timeStr}` : `Data: ${timeStr} (Settled Close)`;
+            el.textContent = isMarketActive ? ("Updated: " + timeStr) : ("Data: " + timeStr + " (Settled Close)");
             el.classList.remove('stale');
         }
     },
