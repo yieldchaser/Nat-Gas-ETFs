@@ -182,7 +182,7 @@ const Signals = {
             const longM  = allMetrics[pair.long];
             const shortM = allMetrics[pair.short];
             const ipsi   = Metrics.computeIPSI(longM, shortM);
-            const status = Metrics.computePairStatus(ipsi);
+            const statusInfo = Metrics.computePairStatus(ipsi, longM, shortM);
 
             const longRvol  = longM?.rvol?.['21d'];
             const shortRvol = shortM?.rvol?.['21d'];
@@ -209,35 +209,41 @@ const Signals = {
             const spikeTicker = longM?.sharpSpike ? pair.long : shortM?.sharpSpike ? pair.short : null;
 
             const fastColor = v => {
-                if (v == null) return 'rgba(255, 255, 255, 0.85)';
+                if (v == null) return 'rgba(255, 255, 255, 0.4)';
                 if (v >= 65) return 'var(--purple)';
                 if (v >= 45) return 'var(--orange)';
                 if (v >= 30) return 'var(--yellow)';
-                return 'rgba(255,255,255,0.85)';
+                return 'rgba(255, 255, 255, 0.7)';
             };
 
-            const ipsiTip = ipsi != null ? `IPSI ${ipsi.toFixed(2)}x — short RVOL ÷ long RVOL for this pair` : 'IPSI unavailable';
+            const ipsiTip = ipsi != null ? `IPSI ${ipsi.toFixed(2)}x — short RVOL ÷ long RVOL for this pair. >1.5x indicates short-side volume dominance.` : 'IPSI unavailable';
 
             // Season badge for this pair (use long side)
             const season = longM?.seasonality?.season;
             const sw = longM?.seasonality?.weight;
             const seasonCfg = season ? (CONFIG.seasonDisplay[season] || {}) : null;
             const seasonTag = seasonCfg
-                ? `<span class="matrix-season" style="color:${seasonCfg.color}" data-tooltip="Season: ${season} ×${sw?.toFixed(2)||'1.00'}">${seasonCfg.emoji}</span>`
+                ? ` <span class="matrix-season" style="color:${seasonCfg.color}" data-tooltip="Season: ${season} ×${sw?.toFixed(2)||'1.00'}">${seasonCfg.emoji}</span>`
                 : '';
+
+            const fastBadge = `<span style="color:${fastColor(longVcvi5)}">${longVcvi5 != null ? longVcvi5.toFixed(0) : '—'}</span><span style="opacity:0.35">/</span><span style="color:${fastColor(shortVcvi5)}">${shortVcvi5 != null ? shortVcvi5.toFixed(0) : '—'}</span>`;
+
+            const spikeBadge = anySpike
+                ? `<span class="spike-badge" data-tooltip="Sharp Spike on ${spikeTicker}: Move >2×ATR with VCVI-5d > 45">SPIKE</span>`
+                : '—';
 
             return `
                 <tr>
                     <td class="pair-name">${pair.label}${seasonTag}</td>
                     <td style="color:${rvolColor(longRvol)}" data-tooltip="Long ETF 21d RVOL">${longRvol != null ? longRvol.toFixed(1) + 'x' : '--'}</td>
                     <td style="color:${rvolColor(shortRvol)}" data-tooltip="Short/Inverse ETF 21d RVOL">${shortRvol != null ? shortRvol.toFixed(1) + 'x' : '--'}</td>
-                    <td style="color:${lCapColor}" data-tooltip="Long-side VCVI-63d (${pair.long}) — GAS BOTTOM signal. Threshold: 55 watch, 72 critical.">${longVcvi != null ? longVcvi.toFixed(0) : '--'}</td>
+                    <td style="color:${lCapColor}" data-tooltip="Long-side VCVI-63d (${pair.long}) — GAS BOTTOM signal. Threshold: 55 watch, 72 critical. Values >100 reflect extreme capitulation in quiet vol regimes.">${longVcvi != null ? longVcvi.toFixed(0) : '--'}</td>
                     <td style="color:${sCapColor}" data-tooltip="Short-side VCVI-63d (${pair.short}) — GAS TOP signal. Threshold: 55 watch, 72 critical.">${shortVcvi != null ? shortVcvi.toFixed(0) : '--'}</td>
-                    <td style="color:${fastColor(longVcvi5||shortVcvi5)}" data-tooltip="5d fast-window VCVI — L:${longVcvi5!=null?longVcvi5.toFixed(0):'—'} S:${shortVcvi5!=null?shortVcvi5.toFixed(0):'—'}. Threshold 45. Fires on weather spikes before 21d window catches up.">${longVcvi5!=null?longVcvi5.toFixed(0):'—'}/${shortVcvi5!=null?shortVcvi5.toFixed(0):'—'}</td>
-                    <td data-tooltip="${anySpike?`SHARP SPIKE detected on ${spikeTicker} — move >2×ATR with VCVI-5d>45`:'No sharp spike'}">${anySpike ? '<span class="spike-badge-sm">⚡</span>' : '—'}</td>
+                    <td data-tooltip="5d fast-window VCVI — Long: ${longVcvi5!=null?longVcvi5.toFixed(0):'—'} | Short: ${shortVcvi5!=null?shortVcvi5.toFixed(0):'—'}. Threshold: 45.">${fastBadge}</td>
+                    <td>${spikeBadge}</td>
                     <td style="color:${ipsiColor}" data-tooltip="${ipsiTip}">${ipsi != null ? ipsi.toFixed(1) + 'x' : '--'}</td>
-                    <td data-tooltip="Volatility regime"><span class="vol-regime-badge ${regInfo.cls}" style="font-size:0.6rem">${regInfo.label}</span></td>
-                    <td><span class="stress-status ${status}">${status.toUpperCase()}</span></td>
+                    <td data-tooltip="Volatility regime: ${regInfo.label}"><span class="vol-regime-badge ${regInfo.cls}" style="font-size:0.6rem">${regInfo.label}</span></td>
+                    <td data-tooltip="${statusInfo.tooltip}"><span class="stress-status ${statusInfo.cls}">${statusInfo.label}</span></td>
                 </tr>`;
         }).join('');
     },
@@ -754,6 +760,30 @@ const Signals = {
 
         const isVolMode = (mode !== 'dv');
 
+        // Update scale legend header above the rows
+        const legendEl = document.getElementById('vdds-scale-legend');
+        if (legendEl) {
+            if (isVolMode) {
+                legendEl.innerHTML = `
+                    <span>ETF</span>
+                    <div class="vdds-scale-track">
+                        <span>0x</span>
+                        <span class="vdds-scale-mark" style="left:33.33%;">1.0x NORMAL</span>
+                        <span>3.0x+</span>
+                    </div>
+                    <span style="text-align:right;">RVOL</span>`;
+            } else {
+                legendEl.innerHTML = `
+                    <span>ETF</span>
+                    <div class="vdds-scale-track">
+                        <span>◀ 0.5x CAPITULATION</span>
+                        <span class="vdds-scale-mark" style="left:50%;">1.0x BALANCED</span>
+                        <span>MOMENTUM 1.5x ▶</span>
+                    </div>
+                    <span style="text-align:right;">VDDS</span>`;
+            }
+        }
+
         const rows = tickers.map(ticker => {
             const m = allMetrics[ticker];
             if (!m) return '';
@@ -764,23 +794,22 @@ const Signals = {
 
             if (isVolMode) {
                 // --- VOL MODE: S-RVOL-21d pure volume bars ---
-                // Scale: 0.5x → 0% | 1.0x → 20% (baseline) | 3.0x → 100%
+                // Scale: 0.0x → 0% | 1.0x → 33.33% (baseline tick) | 3.0x+ → 100%
                 const sRvol = (m.rvol || {})['21d'];
-                const clamped = Math.max(0.5, Math.min(3.0, sRvol ?? 1.0));
-                const pct = ((clamped - 0.5) / 2.5) * 100;
-                const basePct = ((1.0 - 0.5) / 2.5) * 100; // 20% = 1x normal
-                fillStart = Math.min(pct, basePct);
-                fillWidth = Math.abs(pct - basePct);
+                const val = sRvol ?? 0;
+                const clamped = Math.max(0, Math.min(3.0, val));
+                fillStart = 0;
+                fillWidth = (clamped / 3.0) * 100;
                 barColor = sRvol == null ? 'rgba(255,255,255,0.3)'
-                    : sRvol < 0.8  ? 'rgba(255,255,255,0.3)'  // sub-normal (dim)
-                    : sRvol < 1.2  ? 'rgba(255,255,255,0.55)' // normal
+                    : sRvol < 0.8  ? 'rgba(255,255,255,0.35)' // sub-normal (dim)
+                    : sRvol < 1.2  ? 'rgba(255,255,255,0.7)'  // normal (neutral)
                     : sRvol < 1.5  ? 'var(--blue)'             // mild surge
                     : sRvol < 2.0  ? 'var(--yellow)'           // notable
                     : sRvol < 2.5  ? 'var(--orange)'           // high
                     : sRvol < 3.0  ? 'var(--red)'              // extreme
-                    : 'var(--purple)';                          // absolute extreme
+                    : 'var(--purple)';                         // absolute extreme
                 displayVal = sRvol != null ? sRvol.toFixed(2) + 'x' : '--';
-                tip = `S-RVOL-21d for ${ticker}: current share volume is ${displayVal} of the 21-day average. >1.5x = notable surge; >2x = extreme volume event.`;
+                tip = `S-RVOL-21d for ${ticker}: current share volume is ${displayVal} of the 21-day average. 1.0x is normal baseline. >1.5x = notable surge; >2x = extreme volume event.`;
             } else {
                 // --- DV MODE: VDDS ratio (DV-RVOL / S-RVOL) ---
                 const vdds = m.vdds;
@@ -795,19 +824,19 @@ const Signals = {
                     : vdds <= 1.05 ? 'rgba(255, 255, 255, 0.85)'
                     : vdds <= 1.15 ? 'var(--orange)'
                     : 'var(--red)';
-                const dvRvol = (m.dvRvol || {})['21d'];
+                const dvRvol = ((m.dv_rvol || m.dvRvol) || {})['21d'];
                 const sRvol  = (m.rvol   || {})['21d'];
                 displayVal = vdds != null ? vdds.toFixed(2) + 'x' : '--';
                 tip = `VDDS for ${ticker}: DV-RVOL=${dvRvol!=null?dvRvol.toFixed(2):'--'} ÷ S-RVOL=${sRvol!=null?sRvol.toFixed(2):'--'} = ${displayVal}. ${vdds!=null&&vdds<0.90?'Capitulation pattern — share vol outpacing dollar vol.':vdds!=null&&vdds>1.10?'Momentum pattern — dollar vol outpacing share vol.':'Neutral — balanced flows.'}`;
             }
 
-            // Baseline marker: sits at 1x in VOL mode (20%), or at ratio centre in DV mode (50%)
-            const markPct = isVolMode ? ((1.0 - 0.5) / 2.5) * 100 : 50;
+            // Baseline marker: sits at 1.0x in VOL mode (33.33%), or at ratio centre in DV mode (50%)
+            const markPct = isVolMode ? 33.333 : 50;
 
             return `
                 <div class="vdds-row">
                     <span class="vdds-ticker" style="color:${sideColor}" data-tooltip="${tip}">${ticker}</span>
-                    <div class="vdds-track">
+                    <div class="vdds-track" data-tooltip="${isVolMode ? '1.0x baseline tick line' : '1.0x balanced center line'}">
                         <div class="vdds-center-mark" style="left:${markPct}%"></div>
                         <div class="vdds-fill" style="left:${fillStart}%;width:${fillWidth}%;background:${barColor}"></div>
                     </div>

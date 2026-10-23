@@ -623,20 +623,84 @@ const Metrics = {
 
     computeIPSI(longMetrics, shortMetrics) {
         if (!longMetrics || !shortMetrics) return null;
-        const longRvol = longMetrics.rvol['21d'];
-        const shortRvol = shortMetrics.rvol['21d'];
+        const longRvol = longMetrics?.rvol?.['21d'];
+        const shortRvol = shortMetrics?.rvol?.['21d'];
         if (longRvol == null || shortRvol == null || longRvol === 0) return null;
         return shortRvol / longRvol;
     },
 
-    computePairStatus(ipsi) {
-        if (ipsi == null) return 'unknown';
-        const t = CONFIG.thresholds.ipsi;
-        if (ipsi >= t.critical) return 'critical';
-        if (ipsi >= t.stress) return 'stress';
-        if (ipsi >= t.high) return 'elevated';
-        if (ipsi >= t.elevated) return 'elevated';
-        return 'quiet';
+    computePairStatus(ipsi, longMetrics, shortMetrics) {
+        // Evaluate directional stress and capitulation across BOTH sides of the pair
+        const tIpsi = CONFIG.thresholds.ipsi;
+        const tVcvi = CONFIG.thresholds.vcvi;
+
+        const longVcvi  = longMetrics?.vcvi?.['63d'] ?? longMetrics?.cvi?.['63d'];
+        const shortVcvi = shortMetrics?.vcvi?.['63d'] ?? shortMetrics?.cvi?.['63d'];
+        const longVcvi5 = longMetrics?.vcvi?.['5d']  ?? longMetrics?.cvi?.['5d'];
+        const shortVcvi5 = shortMetrics?.vcvi?.['5d'] ?? shortMetrics?.cvi?.['5d'];
+        const longRvol  = longMetrics?.rvol?.['21d'];
+        const shortRvol = shortMetrics?.rvol?.['21d'];
+
+        const hasLongCap = (longVcvi != null && longVcvi >= tVcvi.elevated) || (longVcvi5 != null && longVcvi5 >= 45) || (longRvol != null && longRvol >= 1.5) || (longMetrics?.sharpSpike === true);
+        const hasShortCap = (shortVcvi != null && shortVcvi >= tVcvi.elevated) || (shortVcvi5 != null && shortVcvi5 >= 45) || (shortRvol != null && shortRvol >= 1.5) || (ipsi != null && ipsi >= tIpsi.elevated) || (shortMetrics?.sharpSpike === true);
+
+        if (hasLongCap && hasShortCap) {
+            return {
+                label: 'DUAL',
+                cls: 'stress',
+                tooltip: 'Dual Stress: Both long and short ETFs are under elevated volume pressure or capitulation spikes simultaneously.'
+            };
+        }
+
+        if (hasLongCap) {
+            if ((longVcvi != null && longVcvi >= tVcvi.critical) || (longVcvi5 != null && longVcvi5 >= 65) || (longRvol != null && longRvol >= 3.0)) {
+                return {
+                    label: 'L-CRITICAL',
+                    cls: 'critical',
+                    tooltip: `Long-Side Critical: Exceptional capitulation spike on long ETF (VCVI ${longVcvi != null ? longVcvi.toFixed(0) : '--'}). Historically signals natural gas bottom / price exhaustion.`
+                };
+            }
+            if ((longVcvi != null && longVcvi >= tVcvi.high) || (longVcvi5 != null && longVcvi5 >= 45) || (longRvol != null && longRvol >= 2.0) || longMetrics?.sharpSpike) {
+                return {
+                    label: 'L-STRESS',
+                    cls: 'stress',
+                    tooltip: `Long-Side Stress: Strong capitulation pressure on long ETF. Bullish turnaround watch.`
+                };
+            }
+            return {
+                label: 'L-ELEVATED',
+                cls: 'elevated',
+                tooltip: `Long-Side Elevated: Above-average buying/volume pressure on long ETF relative to peer.`
+            };
+        }
+
+        if (hasShortCap) {
+            if ((shortVcvi != null && shortVcvi >= tVcvi.critical) || (shortVcvi5 != null && shortVcvi5 >= 65) || (shortRvol != null && shortRvol >= 3.0) || (ipsi != null && ipsi >= tIpsi.critical)) {
+                return {
+                    label: 'S-CRITICAL',
+                    cls: 'critical',
+                    tooltip: `Short-Side Critical: Severe panic buying into inverse ETF (IPSI ${ipsi != null ? ipsi.toFixed(1) + 'x' : '--'}, VCVI ${shortVcvi != null ? shortVcvi.toFixed(0) : '--'}). Signals natural gas top exhaustion.`
+                };
+            }
+            if ((shortVcvi != null && shortVcvi >= tVcvi.high) || (shortVcvi5 != null && shortVcvi5 >= 45) || (shortRvol != null && shortRvol >= 2.0) || (ipsi != null && ipsi >= tIpsi.stress) || shortMetrics?.sharpSpike) {
+                return {
+                    label: 'S-STRESS',
+                    cls: 'stress',
+                    tooltip: `Short-Side Stress: Inverse ETF volume surging relative to long peer.`
+                };
+            }
+            return {
+                label: 'S-ELEVATED',
+                cls: 'elevated',
+                tooltip: `Short-Side Elevated: Modest directional stress favoring inverse ETF.`
+            };
+        }
+
+        return {
+            label: 'QUIET',
+            cls: 'quiet',
+            tooltip: 'Balanced: Neither ETF in this pair exhibits abnormal volume pressure or capitulation spikes.'
+        };
     },
 
     getPercentileClass(value) {
