@@ -67,6 +67,7 @@ const VolumeStudies = {
         const a = Math.abs(p);
         if (a >= 1e9) return (p / 1e9).toFixed(2) + 'B';
         if (a >= 1e6) return (p / 1e6).toFixed(1) + 'M';
+        if (a >= 1000) return p.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
         if (a >= 100) return p.toFixed(1);
         if (a >= 1) return p.toFixed(2);
         return p.toFixed(3);
@@ -949,32 +950,28 @@ const VolumeStudies = {
         if (study === 'vol') {
             const ma = payload.ma ? payload.ma[last] : null;
             const rvol = (ma && ma > 0) ? (payload.bars[last] / ma) : ((metrics && metrics.rvol) ? metrics.rvol['21d'] : null);
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">RVOL-21</span> ${rvol != null ? rvol.toFixed(2) + '×' : 'n/a'}</span>`);
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">SHARES</span> ${this.fmtVol(rawVol)}</span>`);
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">DOLLAR VOL</span> $${this.fmtVol(dollarVol)}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">RVOL</span> ${rvol != null ? rvol.toFixed(2) + '×' : 'n/a'}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">VOL</span> ${this.fmtVol(rawVol)}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">VALUE</span> $${this.fmtVol(dollarVol)}</span>`);
         } else if (study === 'osc') {
             const v = payload.line ? payload.line[last] : null;
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">VOL OSC</span> ${v != null ? (v >= 0 ? '+' : '') + v.toFixed(1) + '%' : 'n/a'}</span>`);
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">REGIME</span> <span style="color:${v > 0 ? this.COLORS.up : v < 0 ? this.COLORS.down : 'inherit'}">${v == null ? 'n/a' : v > 0 ? 'EXPANSION' : v < 0 ? 'CONTRACTION' : 'NEUTRAL'}</span></span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">OSC</span> ${v != null ? (v >= 0 ? '+' : '') + v.toFixed(1) + '%' : 'n/a'}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">STATE</span> <span style="color:${v > 0 ? this.COLORS.up : v < 0 ? this.COLORS.down : 'inherit'}">${v == null ? 'n/a' : v > 0 ? 'EXPANSION' : v < 0 ? 'CONTRACTION' : 'NEUTRAL'}</span></span>`);
         } else if (study === 'net') {
             const r = payload.line ? payload.line[last] : null;
             const day = payload.bars ? payload.bars[last] : null;
-            const netDayFmt = payload.unit === 'dollar' ? (day > 0 ? '+$' : (day < 0 ? '-$' : '')) + this.fmtVol(Math.abs(day)) : this.fmtSigned(day);
-            const net21Fmt = payload.unit === 'dollar' ? (r > 0 ? '+$' : (r < 0 ? '-$' : '')) + this.fmtVol(Math.abs(r)) : this.fmtSigned(r);
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">DAY NET</span> ${day != null ? netDayFmt : 'n/a'}</span>`);
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">NET 21D</span> ${r != null ? net21Fmt : 'n/a'}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">DAY</span> ${day != null ? this.fmtSigned(day) : 'n/a'}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">21D</span> ${r != null ? this.fmtSigned(r) : 'n/a'}</span>`);
         } else if (study === 'obv' || study === 'pvt') {
             const line = payload.line || [];
             const ma = payload.ma || [];
             const lv = line[last], mv = ma[last];
-            const lab = study === 'obv' ? 'OBV' : 'PVT';
             const state = (lv != null && mv != null) ? (lv >= mv ? 'ABOVE' : 'BELOW') : 'n/a';
             const stateColor = state === 'ABOVE' ? this.COLORS.up : state === 'BELOW' ? this.COLORS.down : 'inherit';
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">${lab} VS 21D MA</span> <span style="color:${stateColor}">${state}</span></span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">MA</span> <span style="color:${stateColor}">${state}</span></span>`);
             const back = Math.max(0, last - 21);
             const delta = (lv != null && line[back] != null) ? lv - line[back] : null;
-            const deltaFmt = payload.unit === 'dollar' ? (delta > 0 ? '+$' : (delta < 0 ? '-$' : '')) + this.fmtVol(Math.abs(delta)) : this.fmtSigned(delta);
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">21D Δ</span> ${delta != null ? deltaFmt : 'n/a'}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">21D Δ</span> ${delta != null ? this.fmtSigned(delta) : 'n/a'}</span>`);
             const bias = delta == null ? 'n/a' : delta > 0 ? 'ACCUMULATION' : delta < 0 ? 'DISTRIBUTION' : 'FLAT';
             const biasColor = bias === 'ACCUMULATION' ? this.COLORS.up : bias === 'DISTRIBUTION' ? this.COLORS.down : 'inherit';
             parts.push(`<span class="vs-reading-item"><span class="vs-lbl">BIAS</span> <span style="color:${biasColor}">${bias}</span></span>`);
