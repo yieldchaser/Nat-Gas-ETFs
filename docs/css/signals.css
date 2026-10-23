@@ -1670,36 +1670,36 @@
 .vs-chip.inactive { opacity: 0.35; background: transparent; }
 .vs-canvas-wrap { position: relative; height: 240px; width: 100%; }
 #vs-canvas { width: 100%; height: 100%; cursor: crosshair; display: block; }
-/* ---- PRICE-VOLUME STUDIES RANGE SLIDER ---- */
+/* ---- PRICE-VOLUME STUDIES RANGE SLIDER (Trough-Peak Parity) ---- */
 .vs-slider-container {
-    margin: 8px 0 6px;
+    margin: 12px 0 16px;
 }
 .vs-slider-container .range-slider-wrap {
     position: relative;
-    height: 32px;
+    height: 48px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-primary);
-    border-radius: 6px;
-    padding: 0 10px;
+    border-radius: 8px;
+    padding: 0 12px;
 }
 .vs-slider-container .range-slider-track {
     position: absolute;
-    top: 13px;
+    top: 21px;
     left: 0;
     right: 0;
     height: 6px;
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 3px;
     z-index: 1;
 }
 .vs-slider-container .range-slider-highlight {
     position: absolute;
-    top: 13px;
+    top: 21px;
     height: 6px;
     background: var(--cyan);
     border-radius: 3px;
     z-index: 2;
-    box-shadow: 0 0 8px rgba(0, 255, 255, 0.35);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.35);
 }
 .vs-slider-container .range-inputs {
     position: relative;
@@ -1708,74 +1708,85 @@
 .vs-slider-container .range-inputs input[type=range] {
     position: absolute;
     width: 100%;
-    top: 0px;
+    top: 8px;
     left: 0;
     pointer-events: none;
     -webkit-appearance: none;
+    -moz-appearance: none;
     appearance: none;
-    background: none;
+    background: transparent !important;
+    border: none !important;
     height: 32px;
     margin: 0;
+    padding: 0;
+    outline: none;
+    cursor: pointer;
     z-index: 3;
+}
+.vs-slider-container .range-inputs input[type=range]::-webkit-slider-runnable-track {
+    background: transparent !important;
+    border: none !important;
+    height: 6px;
+    -webkit-appearance: none;
+}
+.vs-slider-container .range-inputs input[type=range]::-moz-range-track {
+    background: transparent !important;
+    border: none !important;
+    height: 6px;
+}
+.vs-slider-container .range-inputs input[type=range]::-moz-range-progress {
+    background: transparent !important;
 }
 .vs-slider-container .range-inputs input[type=range]::-webkit-slider-thumb {
     pointer-events: auto;
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #fff;
-    border: 2px solid var(--cyan);
-    cursor: grab;
-    box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
-    transition: transform 0.15s, background 0.15s;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    background: #ffffff !important;
+    border: 2px solid var(--cyan) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    margin-top: -7px;
+    transition: all 0.2s;
 }
 .vs-slider-container .range-inputs input[type=range]::-moz-range-thumb {
     pointer-events: auto;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #fff;
-    border: 2px solid var(--cyan);
-    cursor: grab;
-    box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    background: #ffffff !important;
+    border: 2px solid var(--cyan) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    transition: all 0.2s;
 }
 .vs-slider-container .range-inputs input[type=range]:hover::-webkit-slider-thumb {
-    background: var(--cyan);
-    transform: scale(1.15);
+    background: var(--cyan) !important;
+    border-color: #ffffff !important;
 }
-.vs-slider-container .range-inputs input[type=range]:active::-webkit-slider-thumb {
-    cursor: grabbing;
-    background: var(--cyan);
-}
-.vs-slider-container .range-inputs input[type=range]::-webkit-slider-runnable-track {
-    background: none !important;
-    border: none !important;
-}
-.vs-slider-container .range-inputs input[type=range]::-moz-range-track {
-    background: none !important;
-    border: none !important;
+.vs-slider-container .range-inputs input[type=range]:hover::-moz-range-thumb {
+    background: var(--cyan) !important;
+    border-color: #ffffff !important;
 }
 .vs-slider-container .range-labels {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    font-size: 0.62rem;
-    color: rgba(255, 255, 255, 0.7);
+    margin-top: 8px;
+    font-size: 0.65rem;
     font-weight: 700;
-    margin-top: 5px;
-    letter-spacing: 0.5px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
     font-family: 'JetBrains Mono', monospace;
-}
-.vs-range-lbl {
-    color: rgba(255, 255, 255, 0.55);
 }
 .vs-range-active-lbl {
     color: var(--cyan);
     font-weight: 800;
-    letter-spacing: 1.2px;
+    letter-spacing: 2px;
     text-transform: uppercase;
+    font-size: 0.68rem;
 }
 
 /* ---- READING BAR & TOOLTIP ---- */
