@@ -1670,24 +1670,205 @@
 .vs-chip.inactive { opacity: 0.35; background: transparent; }
 .vs-canvas-wrap { position: relative; height: 240px; width: 100%; }
 #vs-canvas { width: 100%; height: 100%; cursor: crosshair; display: block; }
+/* ---- PRICE-VOLUME STUDIES RANGE SLIDER ---- */
+.vs-slider-container {
+    margin: 8px 0 6px;
+}
+.vs-slider-container .range-slider-wrap {
+    position: relative;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    padding: 0 10px;
+}
+.vs-slider-container .range-slider-track {
+    position: absolute;
+    top: 13px;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+    z-index: 1;
+}
+.vs-slider-container .range-slider-highlight {
+    position: absolute;
+    top: 13px;
+    height: 6px;
+    background: var(--cyan);
+    border-radius: 3px;
+    z-index: 2;
+    box-shadow: 0 0 8px rgba(0, 255, 255, 0.35);
+}
+.vs-slider-container .range-inputs {
+    position: relative;
+    width: 100%;
+}
+.vs-slider-container .range-inputs input[type=range] {
+    position: absolute;
+    width: 100%;
+    top: 0px;
+    left: 0;
+    pointer-events: none;
+    -webkit-appearance: none;
+    appearance: none;
+    background: none;
+    height: 32px;
+    margin: 0;
+    z-index: 3;
+}
+.vs-slider-container .range-inputs input[type=range]::-webkit-slider-thumb {
+    pointer-events: auto;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--cyan);
+    cursor: grab;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+    transition: transform 0.15s, background 0.15s;
+}
+.vs-slider-container .range-inputs input[type=range]::-moz-range-thumb {
+    pointer-events: auto;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--cyan);
+    cursor: grab;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+}
+.vs-slider-container .range-inputs input[type=range]:hover::-webkit-slider-thumb {
+    background: var(--cyan);
+    transform: scale(1.15);
+}
+.vs-slider-container .range-inputs input[type=range]:active::-webkit-slider-thumb {
+    cursor: grabbing;
+    background: var(--cyan);
+}
+.vs-slider-container .range-inputs input[type=range]::-webkit-slider-runnable-track {
+    background: none !important;
+    border: none !important;
+}
+.vs-slider-container .range-inputs input[type=range]::-moz-range-track {
+    background: none !important;
+    border: none !important;
+}
+.vs-slider-container .range-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.62rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 700;
+    margin-top: 5px;
+    letter-spacing: 0.5px;
+    font-family: 'JetBrains Mono', monospace;
+}
+.vs-range-lbl {
+    color: rgba(255, 255, 255, 0.55);
+}
+.vs-range-active-lbl {
+    color: var(--cyan);
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+/* ---- READING BAR & TOOLTIP ---- */
 .vs-reading {
-    margin-top: 10px; font-size: 0.65rem; font-weight: 700;
-    letter-spacing: 0.5px; color: rgba(255, 255, 255, 0.8);
-    display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+    margin-top: 10px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    gap: 12px 18px;
+    flex-wrap: wrap;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 6px 12px;
 }
-.vs-reading .vs-lbl { color: rgba(255, 255, 255, 0.45); font-weight: 800; }
+.vs-reading-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.vs-reading .vs-lbl {
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.58rem;
+    letter-spacing: 0.8px;
+}
 .vs-reading-na { color: rgba(255, 255, 255, 0.45); }
+
 .vs-tooltip {
-    position: absolute; display: none; background: rgba(22, 22, 36, 0.95);
-    border: 1px solid var(--border-primary); border-radius: 6px;
-    padding: 8px 12px; font-size: 0.7rem; color: #fff;
-    pointer-events: none; z-index: 50; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-    min-width: 150px;
+    position: absolute;
+    display: none;
+    background: rgba(16, 18, 28, 0.96);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.7rem;
+    color: #fff;
+    pointer-events: none;
+    z-index: 50;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    min-width: 180px;
+    backdrop-filter: blur(8px);
 }
-.vs-tt-date { color: var(--cyan); font-weight: 800; margin-bottom: 4px; font-size: 0.62rem; letter-spacing: 1px; }
-.vs-tt-row { display: flex; justify-content: space-between; gap: 14px; margin-top: 2px; }
-.vs-tt-lbl { color: #fff; opacity: 0.75; font-weight: 700; text-transform: uppercase; font-size: 0.6rem; }
-.vs-tt-val { font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.vs-tt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+}
+.vs-tt-date {
+    color: var(--cyan);
+    font-weight: 800;
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+}
+.vs-tt-badge {
+    font-size: 0.55rem;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.vs-tt-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 3px;
+    line-height: 1.35;
+}
+.vs-tt-lbl {
+    color: rgba(255, 255, 255, 0.65);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.6rem;
+}
+.vs-tt-val {
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+}
+.vs-tt-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 5px 0 3px;
+}
 @media (max-width: 600px) {
     .vs-canvas-wrap { height: 190px; }
     .vs-control-group { flex-wrap: wrap; gap: 6px; }

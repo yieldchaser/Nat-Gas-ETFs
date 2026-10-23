@@ -180,6 +180,23 @@ for (const r of ctxObj.__CFG.volumeStudies.ranges) {
     eq(p.study, 'vol', `compute(vol, ${r.key}) study tag`);
 }
 
+// ---- dollar-volume unit mode & custom range slider slicing ----
+const pDollar = VS.compute(history, 'vol', '1y', { unit: 'dollar' });
+ok(pDollar !== null, 'compute dollar mode non-null');
+eq(pDollar.unit, 'dollar', 'dollar mode flag in payload');
+eq(pDollar.bars.length, 366, 'dollar mode sliced length matches');
+close(pDollar.bars[0], history[pDollar.startIdx].close * history[pDollar.startIdx].volume, 1e-6, 'dollar bar equals close * vol');
+
+const pCustom = VS.compute(history, 'obv', 'custom', { customStart: 50, customEnd: 150 });
+ok(pCustom !== null, 'compute custom range non-null');
+eq(pCustom.startIdx, 50, 'custom startIdx = 50');
+eq(pCustom.endIdx, 150, 'custom endIdx = 150');
+eq(pCustom.dates.length, 101, 'custom range length = 101');
+eq(pCustom.line[0], 0, 'custom range obv starts rebased to 0');
+
+const oscZero = VS.volumeOscillator([0, 0, 0, 0, 0, 0], 2, 4);
+eq(oscZero[4], 0, 'osc with all zero volume evaluates to 0% rather than null');
+
 // ---- profile: handcrafted 3-point case ----
 const prof = computeVolumeProfile(
     ['2024-01-01', '2024-01-02', '2024-01-03'], [10, 20, 30], [100, 200, 300], 0, 2, 10);
