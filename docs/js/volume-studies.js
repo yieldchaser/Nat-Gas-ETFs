@@ -490,11 +490,13 @@ const VolumeStudies = {
         const etfs = (typeof CONFIG !== 'undefined' && CONFIG.etfs) ? CONFIG.etfs : {};
         for (const t of Object.keys(etfs)) {
             const side = (etfs[t] || {}).side || 'long';
+            const name = (etfs[t] || {}).name || t;
             const color = side === 'long' ? this.COLORS.up : this.COLORS.down;
             const chip = document.createElement('button');
             chip.className = 'vs-chip';
             chip.textContent = t;
             chip.setAttribute('data-ticker', t);
+            chip.setAttribute('data-tooltip', `${t} (${name})`);
             chip.style.color = color;
             chip.style.borderColor = color;
             chip.addEventListener('click', () => {
@@ -938,7 +940,7 @@ const VolumeStudies = {
         const pctChg = prev > 0 ? ((close - prev) / prev) * 100 : 0;
         const chgColor = pctChg > 0 ? this.COLORS.up : pctChg < 0 ? this.COLORS.down : this.COLORS.flat;
         const chgSign = pctChg > 0 ? '+' : '';
-        const closeTag = `<span class="vs-reading-item"><span class="vs-lbl">CLOSE</span> $${this.fmtPrice(close)} <span style="color:${chgColor};font-size:0.58rem;">(${chgSign}${pctChg.toFixed(1)}%)</span></span>`;
+        const closeTag = `<span class="vs-reading-item"><span class="vs-lbl">CLOSE</span> $${this.fmtPrice(close)} <span style="color:${chgColor};font-size:0.68rem;font-weight:700;">(${chgSign}${pctChg.toFixed(1)}%)</span></span>`;
 
         const rawVol = payload.rawVolumes ? payload.rawVolumes[last] : payload.volumes[last];
         const dollarVol = payload.dollarVolumes ? payload.dollarVolumes[last] : (close * rawVol);
