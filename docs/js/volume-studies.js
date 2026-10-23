@@ -7,7 +7,6 @@ const VolumeStudies = {
     state: {
         ticker: 'BOIL',
         study: 'vol',
-        unit: 'shares',       // 'shares' | 'dollar'
         range: '1y',
         customRange: null,    // { startIdx, endIdx }
         hoverIdx: null,
@@ -326,6 +325,12 @@ const VolumeStudies = {
         }
         this._payload = payload;
         this._syncSliderToRange(payload.fullLength, payload.startIdx, payload.endIdx);
+        const rangeTabs = document.getElementById('vs-range-tabs');
+        if (rangeTabs && this.state.range !== 'custom') {
+            rangeTabs.querySelectorAll('button').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-range') === this.state.range);
+            });
+        }
         this._draw();
         this._updateReading(metrics, payload, null);
     },
@@ -350,18 +355,7 @@ const VolumeStudies = {
             this.render();
         });
 
-        if (unitTabs) {
-            unitTabs.addEventListener('click', e => {
-                const btn = e.target.closest('button');
-                if (!btn) return;
-                unitTabs.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.state.unit = btn.getAttribute('data-unit') || 'shares';
-                this.state.hoverIdx = null;
-                this._cache = null;
-                this.render();
-            });
-        }
+
 
         rangeTabs.addEventListener('click', e => {
             const btn = e.target.closest('button');
@@ -470,30 +464,21 @@ const VolumeStudies = {
 
     _updateSliderHighlight(v1, v2, maxVal) {
         const highlight = document.getElementById('vs-range-highlight');
-        const lblStart = document.getElementById('vs-range-label-start');
-        const lblEnd = document.getElementById('vs-range-label-end');
         const lblActive = document.getElementById('vs-range-active-label');
 
         if (maxVal <= 0) return;
-        const p1 = v1 / maxVal;
-        const p2 = v2 / maxVal;
+        const p1 = (v1 / maxVal);
+        const p2 = (v2 / maxVal);
 
         if (highlight) {
-            highlight.style.left = `calc(${p1 * 100}% + ${(8 - p1 * 16)}px)`;
-            highlight.style.width = `calc(${(p2 - p1) * 100}% + ${((p1 - p2) * 16)}px)`;
-        }
-
-        const payload = this._payload;
-        if (payload && payload.dates) {
-            if (lblStart) lblStart.textContent = payload.dates[0] || '--';
-            if (lblEnd) lblEnd.textContent = payload.dates[payload.dates.length - 1] || '--';
+            highlight.style.left = `calc(${p1 * 100}% + ${(10 - p1 * 20)}px)`;
+            highlight.style.width = `calc(${(p2 - p1) * 100}% + ${((p1 - p2) * 20)}px)`;
         }
 
         if (lblActive) {
-            const sessions = v2 - v1 + 1;
             lblActive.textContent = (this.state.range === 'custom')
-                ? `CUSTOM (${sessions} SESSIONS)`
-                : `${this.state.range.toUpperCase()} (${sessions} SESSIONS)`;
+                ? 'CUSTOM SELECTION'
+                : `PRESET: ${this.state.range.toUpperCase()}`;
         }
     },
 

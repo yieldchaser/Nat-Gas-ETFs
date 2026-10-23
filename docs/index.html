@@ -6,8 +6,8 @@
     <title>BLUE MERIDIAN</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='60%' r='50%' fx='50%' fy='65%'><stop offset='0%' style='stop-color:%230033ff;stop-opacity:0.5' /><stop offset='100%' style='stop-color:%23001a4d;stop-opacity:0' /></radialGradient></defs><circle cx='50' cy='60' r='40' fill='url(%23g)' /><path d='M50 92 C30 92 18 75 18 52 C18 30 50 5 50 5 C50 5 82 30 82 52 C82 75 70 92 50 92 Z' fill='%230066ff' /><path d='M50 80 C40 80 32 68 32 50 C32 35 50 18 50 18 C50 18 68 35 68 50 C68 68 60 80 50 80 Z' fill='white' /></svg>">
     <link rel="stylesheet" href="css/styles.css?v=20261021a">
-    <link rel="stylesheet" href="css/cards.css?v=20261018e">
-    <link rel="stylesheet" href="css/signals.css?v=20261018e">
+    <link rel="stylesheet" href="css/cards.css?v=20261024a">
+    <link rel="stylesheet" href="css/signals.css?v=20261024a">
     <link rel="preload" href="data/dashboard_data.json" as="fetch">
 </head>
 <body>
@@ -213,13 +213,6 @@
                         </div>
                     </div>
                     <div class="vs-control-group">
-                        <span class="vs-control-label">Unit</span>
-                        <div class="tab-group" id="vs-unit-tabs" style="margin:0; padding:2px;">
-                            <button class="tab-btn active" data-unit="shares" data-tooltip="Split-adjusted share volume (standard technical analysis)">SHARES</button>
-                            <button class="tab-btn" data-unit="dollar" data-tooltip="Dollar Volume (Price × Volume) — split-invariant capital flow, prevents historical reverse-split compression">$ VALUE</button>
-                        </div>
-                    </div>
-                    <div class="vs-control-group">
                         <span class="vs-control-label">ETF</span>
                         <div id="vs-chips" class="vs-chips"></div>
                     </div>
@@ -238,10 +231,8 @@
                             <input type="range" id="vs-range-end" min="0" max="100" value="100" data-tooltip="Drag to set the end of the visible date range">
                         </div>
                     </div>
-                    <div class="range-labels">
-                        <span id="vs-range-label-start" class="vs-range-lbl">--</span>
+                    <div class="range-labels" style="justify-content: center;">
                         <span id="vs-range-active-label" class="vs-range-active-lbl">1Y</span>
-                        <span id="vs-range-label-end" class="vs-range-lbl">--</span>
                     </div>
                 </div>
                 <div class="vs-reading" id="vs-reading"><span class="vs-reading-na">Loading…</span></div>
@@ -294,7 +285,7 @@
     <script src="js/charts.js?v=20261018e"></script>
     <script src="js/cards.js?v=20261018e"></script>
     <script src="js/signals.js?v=20261020a"></script>
-    <script src="js/volume-studies.js?v=20261023a"></script>
+    <script src="js/volume-studies.js?v=20261024a"></script>
     <script src="js/app.js?v=20261021a"></script>
 </body>
 </html>
