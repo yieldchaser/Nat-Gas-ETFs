@@ -952,7 +952,7 @@ const VolumeStudies = {
         if (study === 'vol') {
             const ma = payload.ma ? payload.ma[last] : null;
             const rvol = (ma && ma > 0) ? (payload.bars[last] / ma) : ((metrics && metrics.rvol) ? metrics.rvol['21d'] : null);
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">RVOL</span> ${rvol != null ? rvol.toFixed(2) + '×' : 'n/a'}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">RVOL-21</span> ${rvol != null ? rvol.toFixed(2) + '×' : 'n/a'}</span>`);
             parts.push(`<span class="vs-reading-item"><span class="vs-lbl">VOL</span> ${this.fmtVol(rawVol)}</span>`);
             parts.push(`<span class="vs-reading-item"><span class="vs-lbl">VALUE</span> $${this.fmtVol(dollarVol)}</span>`);
         } else if (study === 'osc') {
