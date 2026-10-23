@@ -7,7 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='60%' r='50%' fx='50%' fy='65%'><stop offset='0%' style='stop-color:%230033ff;stop-opacity:0.5' /><stop offset='100%' style='stop-color:%23001a4d;stop-opacity:0' /></radialGradient></defs><circle cx='50' cy='60' r='40' fill='url(%23g)' /><path d='M50 92 C30 92 18 75 18 52 C18 30 50 5 50 5 C50 5 82 30 82 52 C82 75 70 92 50 92 Z' fill='%230066ff' /><path d='M50 80 C40 80 32 68 32 50 C32 35 50 18 50 18 C50 18 68 35 68 50 C68 68 60 80 50 80 Z' fill='white' /></svg>">
     <link rel="stylesheet" href="css/styles.css?v=20261021a">
     <link rel="stylesheet" href="css/cards.css?v=20261024a">
-    <link rel="stylesheet" href="css/signals.css?v=20261024d">
+    <link rel="stylesheet" href="css/signals.css?v=20261024e">
     <link rel="preload" href="data/dashboard_data.json" as="fetch">
 </head>
 <body>
@@ -241,7 +241,7 @@
 
             <!-- SIDE-WIDE VOLUME CONVERGENCE -->
             <div class="signal-panel" id="swvc-panel">
-                <h3 data-tooltip="Tracks whether all 3 ETFs on the same side (e.g., KOLD + HND.TO + 3NGS.L) each had a volume spike ≥2× average within a rolling 10-day window — even if the spikes occurred on different days. Independent spiking across US/CA/UK markets is a stronger signal than a single-market event.">SIDE-WIDE CONVERGENCE <span class="panel-subtitle">— tri-ETF rolling window</span></h3>
+                <h3 data-tooltip="Tracks whether all 3 ETFs on the same side (e.g., KOLD + HND.TO + 3NGS.L) each had an RVOL-21d spike ≥2.0× within a 10-day window across the 15-day lookback. Independent cross-market spiking across US, Canadian, and UK markets confirms structural institutional capitulation or accumulation.">SIDE-WIDE CONVERGENCE <span class="panel-subtitle">— tri-ETF rolling window</span></h3>
                 <div id="swvc-container">
                     <div class="swvc-loading">Scanning cross-market activity…</div>
                 </div>
@@ -249,7 +249,7 @@
 
             <!-- MULTI-WINDOW CONVERGENCE -->
             <div class="signal-panel" id="convergence-panel">
-                <h3 data-tooltip="Displays how many volume lookback windows (10d to 252d) are simultaneously above the 90th percentile.">MULTI-WINDOW CONVERGENCE</h3>
+                <h3 data-tooltip="Tracks how many of the 6 lookback windows (5d, 10d, 21d, 63d, 126d, 252d) are simultaneously in the 90th+ volume percentile. All 6 converging triggers the full Multi-Window Convergence Alarm (MWCA).">MULTI-WINDOW CONVERGENCE <span class="panel-subtitle">— 6-window percentile alarm</span></h3>
                 <div class="convergence-gauges" id="convergence-gauges">
                     <!-- Filled dynamically -->
                 </div>
@@ -283,9 +283,9 @@
     <script src="js/config.js?v=20261018e"></script>
     <script src="js/data.js?v=20261021a"></script>
     <script src="js/metrics.js?v=20261024a"></script>
-    <script src="js/charts.js?v=20261018e"></script>
+    <script src="js/charts.js?v=20261024b"></script>
     <script src="js/cards.js?v=20261018e"></script>
-    <script src="js/signals.js?v=20261024a"></script>
+    <script src="js/signals.js?v=20261024b"></script>
     <script src="js/volume-studies.js?v=20261024c"></script>
     <script src="js/app.js?v=20261021a"></script>
 </body>

@@ -1239,7 +1239,7 @@ def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
 
     # --- MWCA (Multi-Window Convergence Alarm) ---
     mwca = all(
-        vol_pct.get(f"{w}d") is not None and vol_pct[f"{w}d"] > 90
+        vol_pct.get(f"{w}d") is not None and vol_pct[f"{w}d"] >= 90
         for w in VOL_PCT_WINDOWS
     )
 
