@@ -396,14 +396,43 @@ const Signals = {
         const container = document.getElementById('convergence-gauges');
         if (!container) return;
 
-        const total = CONFIG.windows.percentile.length;
+        const windows = CONFIG.windows ? CONFIG.windows.percentile : [5, 10, 21, 63, 126, 252];
+        const total = windows.length;
+        const threshold = CONFIG.thresholds ? CONFIG.thresholds.mwca_threshold : 90;
         const tickers = Object.keys(CONFIG.etfs);
 
         container.innerHTML = tickers.map(t => {
             const m = allMetrics[t];
-            const count = m ? m.mwcaCount : 0;
-            const tip = `MWCA: ${count}/${total} windows above 90th vol pct. ${count === total ? 'ALARM — all windows converging!' : count >= total - 1 ? 'Near-alarm — one window short.' : 'No alarm.'}`;
-            return Charts.createGaugeRing(count, total, t, tip);
+            const cfg = CONFIG.etfs[t] || {};
+            const side = cfg.side || 'long';
+            const count = m ? (m.mwcaCount || 0) : 0;
+            const volPct = m ? (m.volPercentile || {}) : {};
+
+            const winDetails = windows.map(w => {
+                const val = volPct[`${w}d`];
+                const isAlert = val != null && val >= threshold;
+                return `${w}d: ${val != null ? val.toFixed(1) + '%' : '—'}${isAlert ? ' [ALERT ≥90%]' : ''}`;
+            });
+
+            const statusSummary = count === total
+                ? 'ALARM — all 6 windows converging! Structural capitulation/accumulation.'
+                : count >= total - 1
+                    ? 'Near-alarm — 1 window short of full MWCA convergence.'
+                    : count >= 3
+                        ? 'Elevated multi-window volume elevation.'
+                        : count > 0
+                            ? 'Partial window elevation.'
+                            : 'Quiet — all windows below 90th percentile.';
+
+            const tip = `${t} (${side.toUpperCase()} ${cfg.leverage || ''} · ${cfg.exchange || ''}): ${count}/${total} windows in alert (≥${threshold}th vol pct). ${statusSummary} [${winDetails.join(' | ')}]`;
+
+            return Charts.createGaugeRing(count, total, t, tip, {
+                side,
+                cfg,
+                volPercentile: volPct,
+                windows,
+                threshold
+            });
         }).join('');
     },
 
@@ -492,23 +521,47 @@ const Signals = {
             const statusColor = statusColors[status] || 'rgba(255,255,255,0.85)';
             const statusLabel = statusLabels[status] || 'QUIET';
 
-            // Score pills: one circle per ETF
+            // Score pills: one card per ETF
             const pills = tickers.map(t => {
                 const etf = (sc.etfs || {})[t] || {};
                 const spiked = etf.spiked;
                 const daysAgo = etf.days_ago != null ? etf.days_ago : null;
                 const rvol = etf.peak_rvol;
                 const date = etf.date || '—';
-                const pillColor = spiked ? (key === 'long' ? 'var(--green)' : 'var(--red)') : 'var(--bg-panel)';
-                const pillBorder = spiked ? (key === 'long' ? 'var(--long-accent)' : 'var(--short-accent)') : 'var(--border-primary)';
+                const cfg = (typeof CONFIG !== 'undefined' ? CONFIG.etfs[t] : (window.CONFIG?.etfs?.[t] || {})) || {};
+                const region = cfg.exchange === 'NYSE' ? 'US' : cfg.exchange === 'TSX' ? 'CA' : cfg.exchange === 'LSE' ? 'UK' : (cfg.exchange || '');
+                const lev = cfg.leverage || '';
+                const regBadge = region && lev ? `${region} · ${lev}` : (region || lev || '');
+
+                const pillBg = spiked
+                    ? (key === 'long' ? 'rgba(34, 197, 94, 0.16)' : 'rgba(239, 68, 68, 0.16)')
+                    : 'var(--bg-panel)';
+                const pillBorder = spiked
+                    ? (key === 'long' ? 'rgba(34, 197, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)')
+                    : 'var(--border-primary)';
+                const pillTickerColor = spiked
+                    ? (key === 'long' ? 'var(--green)' : 'var(--red)')
+                    : 'rgba(255, 255, 255, 0.85)';
+                const pillDaysColor = spiked
+                    ? (key === 'long' ? 'var(--green)' : 'var(--red)')
+                    : 'rgba(255, 255, 255, 0.45)';
+
                 const tip = spiked
-                    ? `${t}: RVOL ${rvol?.toFixed(1)}× on ${date} (${daysAgo}d ago)`
-                    : `${t}: no spike ≥${threshold}× in last ${lookback} trading days`;
+                    ? `${t} (${region} · ${lev}): Spiked to ${rvol?.toFixed(2)}× RVOL-21d on ${date} (${daysAgo === 0 ? 'today' : `${daysAgo}d ago`}). Active within ${lookback}-day scan lookback.`
+                    : `${t} (${region} · ${lev}): Quiet. No volume spike ≥${threshold}× in last ${lookback} trading days.`;
+
+                const daysTxt = spiked
+                    ? `${daysAgo === 0 ? 'Today' : `${daysAgo}d ago`} · ${rvol != null ? rvol.toFixed(1) + '×' : '≥2×'}`
+                    : 'quiet (<2×)';
+
                 return `<div class="swvc-pill ${spiked ? 'spiked' : ''}"
-                             style="background:${pillColor};border-color:${pillBorder}"
+                             style="background:${pillBg};border-color:${pillBorder}"
                              data-tooltip="${tip}">
-                    <span class="swvc-pill-ticker">${t}</span>
-                    ${spiked ? `<span class="swvc-pill-days">${daysAgo}d</span>` : '<span class="swvc-pill-days">—</span>'}
+                    <div class="swvc-pill-top">
+                        <span class="swvc-pill-ticker" style="color:${pillTickerColor}">${t}</span>
+                        <span class="swvc-pill-region">${regBadge}</span>
+                    </div>
+                    <span class="swvc-pill-days" style="color:${pillDaysColor}">${daysTxt}</span>
                 </div>`;
             }).join('');
 
@@ -524,34 +577,56 @@ const Signals = {
                 const cellColor = hasSpike
                     ? (key === 'short' ? 'var(--red)' : 'var(--green)')
                     : isToday ? 'rgba(255,255,255,0.06)' : 'transparent';
+
+                const spikeDetails = spikeTickers.map(t => {
+                    const e = (sc.etfs || {})[t] || {};
+                    return `${t} (${e.peak_rvol ? e.peak_rvol.toFixed(2) + '×' : '≥2×'} RVOL on ${e.date || '—'})`;
+                }).join(', ');
+
                 const tip = hasSpike
-                    ? `Day −${dayOffset}: ${spikeTickers.join(', ')} spiked`
-                    : isToday ? 'Today' : `−${dayOffset}d`;
+                    ? `${dayOffset === 0 ? 'Today' : `Trading day −${dayOffset}d`}: ${spikeDetails}`
+                    : isToday ? 'Today (session in progress — no spike ≥2.0× RVOL)' : `Trading day −${dayOffset}d (quiet — no spike ≥2.0× RVOL)`;
+
                 return `<div class="swvc-cell ${hasSpike ? 'spike' : ''} ${isToday ? 'today' : ''}"
                              style="background:${cellColor}"
                              data-tooltip="${tip}"></div>`;
             }).join('');
 
-            const spreadTxt = spread != null
-                ? `${score}/3 ETFs within ${spread}d spread`
-                : score === 0
-                    ? `No spikes in last ${lookback} trading days`
-                    : `${score}/3 ETFs active`;
+            let spreadTxt = '';
+            let spreadTip = '';
+            if (status === 'converged') {
+                spreadTxt = `3/3 CONVERGED within ${spread}d (window: ${windowDays}d)`;
+                spreadTip = `All 3 ETFs on this side spiked within ${spread} calendar days (window limit: ${windowDays}d). Independent US, Canadian, and UK volume capitulation confirmed.`;
+            } else if (score === 2) {
+                spreadTxt = `2/3 spiked · ${spread}d spread (window: ${windowDays}d)`;
+                spreadTip = `2 of 3 ETFs spiked within ${spread} calendar days of each other. Awaiting the 3rd ETF to confirm within a ${windowDays}-day window for full convergence.`;
+            } else if (score === 1) {
+                spreadTxt = `1/3 spiked (awaiting 2 within ${windowDays}d)`;
+                spreadTip = `Only 1 ETF has spiked in the last ${lookback} trading days. Full convergence requires all 3 ETFs (US/CA/UK) within ${windowDays} days.`;
+            } else if (score === 3) {
+                spreadTxt = `3/3 spiked · ${spread}d spread (exceeds ${windowDays}d window)`;
+                spreadTip = `All 3 ETFs spiked in the last ${lookback} trading days, but the spread of ${spread} calendar days exceeds the ${windowDays}-day convergence window.`;
+            } else {
+                spreadTxt = `Quiet · no spikes in ${lookback}d lookback`;
+                spreadTip = `No ETF on this side has exceeded the ${threshold}× RVOL-21d threshold in the last ${lookback} trading days.`;
+            }
+
+            const midOffset = Math.round((lookback - 1) / 2);
 
             return `
                 <div class="swvc-side swvc-${key}">
                     <div class="swvc-side-header">
                         <span class="swvc-side-label">${label}</span>
                         <span class="swvc-status-badge" style="color:${statusColor}">${statusLabel}</span>
-                        <span class="swvc-spread-txt">${spreadTxt}</span>
+                        <span class="swvc-spread-txt" data-tooltip="${spreadTip}">${spreadTxt}</span>
                     </div>
                     <div class="swvc-pills">${pills}</div>
                     <div class="swvc-timeline-wrap">
                         <div class="swvc-timeline">${timelineCells}</div>
                         <div class="swvc-timeline-labels">
-                            <span>−${lookback - 1}d</span>
-                            <span>−7d</span>
-                            <span>today</span>
+                            <span class="swvc-lbl-oldest">−${lookback - 1}d</span>
+                            <span class="swvc-lbl-mid">−${midOffset}d</span>
+                            <span class="swvc-lbl-today">TODAY</span>
                         </div>
                     </div>
                     ${status === 'converged' ? `
@@ -688,32 +763,32 @@ const Signals = {
             if (isHigh) {
                 el.innerHTML = `
                     <div class="convergence-flash-inner flash-dual-top">
-                        <span class="flash-icon">⚡</span>
+                        <span class="flash-icon">[CLIMAX]</span>
                         <span class="flash-body">
                             <strong>DUAL LEVERAGED CLIMAX: PARABOLIC BLOW-OFF TOP WATCH</strong> — Both Long & Short ETFs Spiked Across All Exchanges (Spread: ${maxSpread}d)
                             <span class="flash-etfs">Empirical 15-yr edge: Long ETFs drop −19.7% over 63d (win rate 27.4%), Short ETFs (KOLD) gain +13.9% (t=+2.36, p=0.02). Natural Gas blow-off climax in progress.</span>
                         </span>
-                        <span class="flash-setup">↓ EXTREME GAS TOP PROBABILITY</span>
+                        <span class="flash-setup">EXTREME GAS TOP PROBABILITY</span>
                     </div>`;
             } else if (isLow) {
                 el.innerHTML = `
                     <div class="convergence-flash-inner flash-dual-waterfall">
-                        <span class="flash-icon">⚠</span>
+                        <span class="flash-icon">[CRITICAL]</span>
                         <span class="flash-body">
                             <strong>DUAL VOLUME TURNOVER: LIQUIDATION WATERFALL (FALSE BOTTOM WARNING)</strong> — High Churn at Cycle Lows Across All Exchanges (Spread: ${maxSpread}d)
                             <span class="flash-etfs">Empirical 15-yr edge: Dual climaxes at lows have an 85.7% failure rate for Longs (−31.7% avg 63d drop). Downside cascade ongoing; do NOT buy bottom dip.</span>
                         </span>
-                        <span class="flash-setup">⚠ CASCADE WARNING — AVOID LONGS</span>
+                        <span class="flash-setup">CASCADE WARNING — AVOID LONGS</span>
                     </div>`;
             } else {
                 el.innerHTML = `
                     <div class="convergence-flash-inner flash-neutral">
-                        <span class="flash-icon">⚡</span>
+                        <span class="flash-icon">[WATCH]</span>
                         <span class="flash-body">
                             <strong>BILATERAL LIQUIDITY EXPANSION: TWO-SIDED CHURN</strong> — Long and Short ETFs active simultaneously (Spread: ${maxSpread}d)
                             <span class="flash-etfs">Institutional position rebalancing / calendar roll turnover. Two-sided volume without directional consensus. Await confirmed directional break.</span>
                         </span>
-                        <span class="flash-setup">↔ BALANCED TURNOVER — NO BIAS</span>
+                        <span class="flash-setup">BALANCED TURNOVER — NO BIAS</span>
                     </div>`;
             }
             el.style.display = 'block';
@@ -722,8 +797,8 @@ const Signals = {
 
         // Case 2: SINGLE SIDE CONVERGED
         const sides = [
-            { key: 'short', label: 'SHORT SIDE', direction: 'GAS TOP', setupLabel: '↓ SHORT / INVERSE SETUP', cls: 'flash-short' },
-            { key: 'long',  label: 'LONG SIDE',  direction: 'GAS BOTTOM', setupLabel: '↑ LONG / LEVERAGED SETUP', cls: 'flash-long' },
+            { key: 'short', label: 'SHORT SIDE', direction: 'GAS TOP', setupLabel: 'SHORT / INVERSE SETUP', cls: 'flash-short' },
+            { key: 'long',  label: 'LONG SIDE',  direction: 'GAS BOTTOM', setupLabel: 'LONG / LEVERAGED SETUP', cls: 'flash-long' },
         ];
 
         const banners = sides
@@ -736,7 +811,7 @@ const Signals = {
                     .map(([t, v]) => `${t} (${v.days_ago}d ago, ${v.peak_rvol?.toFixed(1)}×)`)
                     .join(' · ');
                 return `<div class="convergence-flash-inner ${s.cls}">
-                    <span class="flash-icon">⚡</span>
+                    <span class="flash-icon">[CONVERGED]</span>
                     <span class="flash-body">
                         <strong>${s.label} CONVERGED</strong> — All 3 ETFs spiked within ${spread} calendar days
                         <span class="flash-etfs">${etfList}</span>
