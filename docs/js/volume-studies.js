@@ -7,11 +7,14 @@ const VolumeStudies = {
     state: {
         ticker: 'BOIL',
         study: 'vol',
+        unit: 'shares',       // 'shares' | 'dollar'
         range: '1y',
+        customRange: null,    // { startIdx, endIdx }
         hoverIdx: null,
         lastMouse: { x: 0, y: 0 }
     },
     _bound: false,
+    _sliderBound: false,
     _chipsBuilt: false,
     _cache: null,
     _payload: null,
@@ -36,19 +39,28 @@ const VolumeStudies = {
         return CONFIG.volumeStudies || fallback;
     },
 
-    fmtVol(v) {
+    fmtVol(v, unit) {
         if (v == null || !isFinite(v)) return '--';
+        const prefix = unit === 'dollar' ? '$' : '';
         const a = Math.abs(v);
-        if (a >= 1e12) return (v / 1e12).toFixed(2) + 'T';
-        if (a >= 1e9) return (v / 1e9).toFixed(2) + 'B';
-        if (a >= 1e6) return (v / 1e6).toFixed(2) + 'M';
-        if (a >= 1e3) return (v / 1e3).toFixed(0) + 'K';
-        return v.toFixed(0);
+        const sign = v < 0 ? '-' : '';
+        if (a >= 1e12) return `${sign}${prefix}${(a / 1e12).toFixed(2)}T`;
+        if (a >= 1e9) return `${sign}${prefix}${(a / 1e9).toFixed(2)}B`;
+        if (a >= 1e6) return `${sign}${prefix}${(a / 1e6).toFixed(2)}M`;
+        if (a >= 1e3) return `${sign}${prefix}${(a / 1e3).toFixed(0)}K`;
+        return `${sign}${prefix}${a.toFixed(0)}`;
     },
 
-    fmtSigned(v) {
+    fmtSigned(v, unit) {
         if (v == null || !isFinite(v)) return '--';
-        return (v > 0 ? '+' : '') + this.fmtVol(v);
+        const sign = v > 0 ? '+' : (v < 0 ? '-' : '');
+        const prefix = unit === 'dollar' ? '$' : '';
+        const a = Math.abs(v);
+        if (a >= 1e12) return `${sign}${prefix}${(a / 1e12).toFixed(2)}T`;
+        if (a >= 1e9) return `${sign}${prefix}${(a / 1e9).toFixed(2)}B`;
+        if (a >= 1e6) return `${sign}${prefix}${(a / 1e6).toFixed(2)}M`;
+        if (a >= 1e3) return `${sign}${prefix}${(a / 1e3).toFixed(0)}K`;
+        return `${sign}${prefix}${a.toFixed(0)}`;
     },
 
     fmtPrice(p) {
@@ -66,6 +78,14 @@ const VolumeStudies = {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const m = parseInt(d.slice(5, 7), 10);
         return `${months[m - 1] || '?'} '${d.slice(2, 4)}`;
+    },
+
+    fmtFullDate(d) {
+        if (!d) return '--';
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const dt = new Date(d + 'T00:00:00');
+        const dayName = isNaN(dt.getDay()) ? '' : days[dt.getDay()];
+        return `${d} (${dayName})`;
     },
 
     sma(values, n) {
@@ -130,7 +150,11 @@ const VolumeStudies = {
     volumeOscillator(volumes, fast, slow) {
         const f = this.sma(volumes, fast);
         const s = this.sma(volumes, slow);
-        return volumes.map((_, i) => (f[i] != null && s[i] != null && s[i] > 0) ? ((f[i] - s[i]) / s[i]) * 100 : null);
+        return volumes.map((_, i) => {
+            if (f[i] == null || s[i] == null) return null;
+            if (s[i] === 0) return f[i] === 0 ? 0 : 100;
+            return ((f[i] - s[i]) / s[i]) * 100;
+        });
     },
 
     sliceStartForDays(dates, days, nowMs) {
@@ -153,56 +177,94 @@ const VolumeStudies = {
         return this.sliceStartForDays(dates, days);
     },
 
-    _buildPayload(dates, closes, volumes, startIdx, extra) {
-        const slice = arr => arr ? arr.slice(startIdx) : null;
+    _buildPayload(dates, closes, volumes, startIdx, endIdx, extra) {
+        let actualEnd = endIdx;
+        let actualExtra = extra;
+        if (typeof endIdx === 'object' && endIdx !== null && extra === undefined) {
+            actualExtra = endIdx;
+            actualEnd = dates.length - 1;
+        }
+        const end = (actualEnd != null) ? actualEnd : dates.length - 1;
+        const slice = arr => arr ? arr.slice(startIdx, end + 1) : null;
         return {
-            dates: dates.slice(startIdx),
-            closes: closes.slice(startIdx),
-            volumes: volumes.slice(startIdx),
-            bars: slice(extra.bars),
-            line: slice(extra.line),
-            ma: slice(extra.ma),
-            colorSigns: slice(extra.colorSigns),
-            zeroCentered: !!extra.zeroCentered,
-            study: extra.study,
-            startIdx
+            dates: dates.slice(startIdx, end + 1),
+            closes: closes.slice(startIdx, end + 1),
+            volumes: volumes.slice(startIdx, end + 1),
+            rawVolumes: ((actualExtra && actualExtra.rawVolumes) || volumes).slice(startIdx, end + 1),
+            dollarVolumes: ((actualExtra && actualExtra.dollarVolumes) || []).slice(startIdx, end + 1),
+            bars: slice(actualExtra && actualExtra.bars),
+            line: slice(actualExtra && actualExtra.line),
+            ma: slice(actualExtra && actualExtra.ma),
+            colorSigns: slice(actualExtra && actualExtra.colorSigns),
+            zeroCentered: !!(actualExtra && actualExtra.zeroCentered),
+            study: actualExtra ? actualExtra.study : null,
+            unit: (actualExtra && actualExtra.unit) || 'shares',
+            startIdx,
+            endIdx: end,
+            fullLength: dates.length
         };
     },
 
-    compute(history, study, rangeKey) {
+    compute(history, study, rangeKey, opts) {
         if (!history || !history.length) return null;
-        const dates = [], closes = [], volumes = [];
+        const options = opts || {};
+        const unit = options.unit || this.state.unit || 'shares';
+        const dates = [], closes = [], rawVolumes = [], dollarVolumes = [];
         for (const b of history) {
             if (!b || b.close == null) continue;
+            const c = b.close;
+            const v = b.volume || 0;
             dates.push(b.date);
-            closes.push(b.close);
-            volumes.push(b.volume || 0);
+            closes.push(c);
+            rawVolumes.push(v);
+            dollarVolumes.push(c * v);
         }
         if (dates.length < 2) return null;
+
+        const volumes = (unit === 'dollar') ? dollarVolumes : rawVolumes;
+
+        let startIdx = 0;
+        let endIdx = dates.length - 1;
+        if (options.customStart != null && options.customEnd != null) {
+            startIdx = Math.max(0, Math.min(dates.length - 2, options.customStart));
+            endIdx = Math.max(startIdx + 1, Math.min(dates.length - 1, options.customEnd));
+        } else if (rangeKey === 'custom' && this.state.customRange) {
+            startIdx = Math.max(0, Math.min(dates.length - 2, this.state.customRange.startIdx));
+            endIdx = Math.max(startIdx + 1, Math.min(dates.length - 1, this.state.customRange.endIdx));
+        } else {
+            startIdx = this._sliceStart(dates, rangeKey);
+            endIdx = dates.length - 1;
+        }
+
         const cfg = this._cfg();
-        const startIdx = this._sliceStart(dates, rangeKey);
         const fast = (cfg.oscillator || {}).fast || 5;
         const slow = (cfg.oscillator || {}).slow || 21;
         const maLen = cfg.ma || 21;
 
+        const extraBase = {
+            unit,
+            rawVolumes,
+            dollarVolumes
+        };
+
         if (study === 'vol') {
             const ma = this.sma(volumes, maLen);
             const signs = this.signSeries(closes);
-            return this._buildPayload(dates, closes, volumes, startIdx, {
-                bars: volumes, line: null, ma, colorSigns: signs, zeroCentered: false, study
+            return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
+                ...extraBase, bars: volumes, line: null, ma, colorSigns: signs, zeroCentered: false, study
             });
         }
         if (study === 'osc') {
             const line = this.volumeOscillator(volumes, fast, slow);
-            return this._buildPayload(dates, closes, volumes, startIdx, {
-                bars: null, line, ma: null, zeroCentered: true, study
+            return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
+                ...extraBase, bars: null, line, ma: null, zeroCentered: true, study
             });
         }
         if (study === 'net') {
             const signed = this.signedVolume(closes, volumes);
             const line = this.rollingSum(signed, maLen);
-            return this._buildPayload(dates, closes, volumes, startIdx, {
-                bars: signed, line, ma: null, zeroCentered: true, study
+            return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
+                ...extraBase, bars: signed, line, ma: null, zeroCentered: true, study
             });
         }
         if (study === 'obv' || study === 'pvt') {
@@ -211,8 +273,8 @@ const VolumeStudies = {
             const line = full.map(v => v - base);
             const maFull = this.sma(full, maLen);
             const ma = maFull.map(v => v == null ? null : v - base);
-            return this._buildPayload(dates, closes, volumes, startIdx, {
-                bars: null, line, ma, zeroCentered: false, study
+            return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
+                ...extraBase, bars: null, line, ma, zeroCentered: false, study
             });
         }
         return null;
@@ -220,9 +282,14 @@ const VolumeStudies = {
 
     _getPayload(ticker, history) {
         const last = history.length ? (history[history.length - 1].date || '') : '';
-        const key = `${ticker}|${this.state.study}|${this.state.range}|${history.length}|${last}`;
+        const customPart = this.state.customRange ? `${this.state.customRange.startIdx}-${this.state.customRange.endIdx}` : '';
+        const key = `${ticker}|${this.state.study}|${this.state.unit}|${this.state.range}|${customPart}|${history.length}|${last}`;
         if (this._cache && this._cache.key === key) return this._cache.payload;
-        const payload = this.compute(history, this.state.study, this.state.range);
+        const payload = this.compute(history, this.state.study, this.state.range, {
+            unit: this.state.unit,
+            customStart: this.state.customRange ? this.state.customRange.startIdx : null,
+            customEnd: this.state.customRange ? this.state.customRange.endIdx : null
+        });
         this._cache = { key, payload };
         return payload;
     },
@@ -233,7 +300,7 @@ const VolumeStudies = {
         this._bind();
 
         const all = (typeof App !== 'undefined' && App.allMetrics) ? App.allMetrics : {};
-        const tickers = Object.keys(CONFIG.etfs);
+        const tickers = (typeof CONFIG !== 'undefined' && CONFIG.etfs) ? Object.keys(CONFIG.etfs) : [];
 
         if (!all[this.state.ticker] || !(all[this.state.ticker] || {}).history) {
             const first = tickers.find(t => all[t] && all[t].history && all[t].history.length > 30);
@@ -258,13 +325,15 @@ const VolumeStudies = {
             return;
         }
         this._payload = payload;
+        this._syncSliderToRange(payload.fullLength, payload.startIdx, payload.endIdx);
         this._draw();
-        this._updateReading(metrics, payload);
+        this._updateReading(metrics, payload, null);
     },
 
     _bind() {
         if (this._bound) return;
         const studyTabs = document.getElementById('vs-study-tabs');
+        const unitTabs = document.getElementById('vs-unit-tabs');
         const rangeTabs = document.getElementById('vs-range-tabs');
         const chips = document.getElementById('vs-chips');
         const canvas = document.getElementById('vs-canvas');
@@ -277,8 +346,22 @@ const VolumeStudies = {
             btn.classList.add('active');
             this.state.study = btn.getAttribute('data-study');
             this.state.hoverIdx = null;
+            this._cache = null;
             this.render();
         });
+
+        if (unitTabs) {
+            unitTabs.addEventListener('click', e => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                unitTabs.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.state.unit = btn.getAttribute('data-unit') || 'shares';
+                this.state.hoverIdx = null;
+                this._cache = null;
+                this.render();
+            });
+        }
 
         rangeTabs.addEventListener('click', e => {
             const btn = e.target.closest('button');
@@ -286,22 +369,141 @@ const VolumeStudies = {
             rangeTabs.querySelectorAll('button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             this.state.range = btn.getAttribute('data-range');
+            this.state.customRange = null;
             this.state.hoverIdx = null;
+            this._cache = null;
             this.render();
         });
 
         canvas.addEventListener('mousemove', e => this._onMove(e));
         canvas.addEventListener('mouseleave', () => this._onLeave());
 
+        this._initSlider();
         this._bound = true;
+    },
+
+    _initSlider() {
+        const sStart = document.getElementById('vs-range-start');
+        const sEnd = document.getElementById('vs-range-end');
+        if (!sStart || !sEnd || this._sliderBound) return;
+
+        const MIN_GAP = 5;
+
+        const onChange = (e) => {
+            const payload = this._payload;
+            if (!payload || !payload.fullLength) return;
+            const maxVal = payload.fullLength - 1;
+            let v1 = parseInt(sStart.value, 10);
+            let v2 = parseInt(sEnd.value, 10);
+
+            if (e.target.id === 'vs-range-start') {
+                if (v1 > v2 - MIN_GAP) {
+                    v1 = Math.max(0, v2 - MIN_GAP);
+                    sStart.value = v1;
+                }
+            } else {
+                if (v2 < v1 + MIN_GAP) {
+                    v2 = Math.min(maxVal, v1 + MIN_GAP);
+                    sEnd.value = v2;
+                }
+            }
+
+            if (v2 - v1 < 2) {
+                if (v2 >= maxVal) {
+                    v1 = Math.max(0, maxVal - MIN_GAP);
+                    v2 = maxVal;
+                } else {
+                    v2 = Math.min(maxVal, v1 + MIN_GAP);
+                }
+                sStart.value = v1;
+                sEnd.value = v2;
+            }
+
+            // Dynamic z-index
+            if (v1 > maxVal - 60) {
+                sStart.style.zIndex = '5';
+                sEnd.style.zIndex = '4';
+            } else {
+                sStart.style.zIndex = '4';
+                sEnd.style.zIndex = '3';
+            }
+
+            this.state.range = 'custom';
+            this.state.customRange = { startIdx: v1, endIdx: v2 };
+            this.state.hoverIdx = null;
+
+            const rangeTabs = document.getElementById('vs-range-tabs');
+            if (rangeTabs) {
+                rangeTabs.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            }
+
+            this._updateSliderHighlight(v1, v2, maxVal);
+            this.render();
+        };
+
+        const elevateThumb = (e) => {
+            if (e.target) e.target.style.zIndex = '6';
+        };
+        sStart.addEventListener('mousedown', elevateThumb);
+        sStart.addEventListener('touchstart', elevateThumb);
+        sEnd.addEventListener('mousedown', elevateThumb);
+        sEnd.addEventListener('touchstart', elevateThumb);
+
+        sStart.addEventListener('input', onChange);
+        sEnd.addEventListener('input', onChange);
+        this._sliderBound = true;
+    },
+
+    _syncSliderToRange(totalBars, startIdx, endIdx) {
+        const sStart = document.getElementById('vs-range-start');
+        const sEnd = document.getElementById('vs-range-end');
+        if (!sStart || !sEnd || totalBars < 2) return;
+
+        const maxVal = totalBars - 1;
+        sStart.max = maxVal;
+        sEnd.max = maxVal;
+        sStart.value = startIdx;
+        sEnd.value = endIdx;
+
+        this._updateSliderHighlight(startIdx, endIdx, maxVal);
+    },
+
+    _updateSliderHighlight(v1, v2, maxVal) {
+        const highlight = document.getElementById('vs-range-highlight');
+        const lblStart = document.getElementById('vs-range-label-start');
+        const lblEnd = document.getElementById('vs-range-label-end');
+        const lblActive = document.getElementById('vs-range-active-label');
+
+        if (maxVal <= 0) return;
+        const p1 = v1 / maxVal;
+        const p2 = v2 / maxVal;
+
+        if (highlight) {
+            highlight.style.left = `calc(${p1 * 100}% + ${(8 - p1 * 16)}px)`;
+            highlight.style.width = `calc(${(p2 - p1) * 100}% + ${((p1 - p2) * 16)}px)`;
+        }
+
+        const payload = this._payload;
+        if (payload && payload.dates) {
+            if (lblStart) lblStart.textContent = payload.dates[0] || '--';
+            if (lblEnd) lblEnd.textContent = payload.dates[payload.dates.length - 1] || '--';
+        }
+
+        if (lblActive) {
+            const sessions = v2 - v1 + 1;
+            lblActive.textContent = (this.state.range === 'custom')
+                ? `CUSTOM (${sessions} SESSIONS)`
+                : `${this.state.range.toUpperCase()} (${sessions} SESSIONS)`;
+        }
     },
 
     _buildChips() {
         const container = document.getElementById('vs-chips');
         if (!container || this._chipsBuilt) return;
         container.innerHTML = '';
-        for (const t of Object.keys(CONFIG.etfs)) {
-            const side = (CONFIG.etfs[t] || {}).side || 'long';
+        const etfs = (typeof CONFIG !== 'undefined' && CONFIG.etfs) ? CONFIG.etfs : {};
+        for (const t of Object.keys(etfs)) {
+            const side = (etfs[t] || {}).side || 'long';
             const color = side === 'long' ? this.COLORS.up : this.COLORS.down;
             const chip = document.createElement('button');
             chip.className = 'vs-chip';
@@ -350,8 +552,9 @@ const VolumeStudies = {
         if (tooltip) tooltip.style.display = 'none';
     },
 
-    _yFormat(study) {
+    _yFormat(study, unit) {
         if (study === 'osc') return v => (v >= 0 ? '+' : '') + v.toFixed(0) + '%';
+        if (unit === 'dollar') return v => (v < 0 ? '-' : '') + '$' + this.fmtVol(Math.abs(v));
         return v => this.fmtVol(v);
     },
 
@@ -404,7 +607,7 @@ const VolumeStudies = {
 
         ctx.font = '9px monospace';
 
-        const yFmt = this._yFormat(payload.study);
+        const yFmt = this._yFormat(payload.study, payload.unit);
         for (let i = 0; i <= 4; i++) {
             const v = yMax - (i / 4) * (yMax - yMin);
             const y = pad.top + (i / 4) * chartH;
@@ -442,7 +645,8 @@ const VolumeStudies = {
                 const yv = clampY(mapY(v));
                 ctx.fillStyle = color;
                 ctx.globalAlpha = 0.75;
-                ctx.fillRect(x, Math.min(yv, zeroY), w, Math.max(1, Math.abs(zeroY - yv)));
+                const hBar = Math.max(1.5, Math.abs(zeroY - yv));
+                ctx.fillRect(x, Math.min(yv, zeroY), w, hBar);
                 ctx.globalAlpha = 1;
             };
             if (colW < 1) {
@@ -527,7 +731,7 @@ const VolumeStudies = {
                     const y0 = (yMin < 0 && yMax > 0) ? mapY(0) : pad.top + chartH;
                     ctx.strokeStyle = 'rgba(255,255,255,0.6)';
                     ctx.lineWidth = 1;
-                    ctx.strokeRect(bx - 0.5, Math.min(yv, y0) - 0.5, barW + 1, Math.max(1, Math.abs(y0 - yv)) + 1);
+                    ctx.strokeRect(bx - 0.5, Math.min(yv, y0) - 0.5, barW + 1, Math.max(1.5, Math.abs(y0 - yv)) + 1);
                 }
             } else if (line) {
                 const v = line[i];
@@ -552,12 +756,21 @@ const VolumeStudies = {
         const chartW = rect.width - pad.left - pad.right;
         const n = this._payload.dates.length;
         if (chartW <= 0 || n < 2) return;
+
+        if (x < pad.left - 4 || x > rect.width - pad.right + 4) {
+            this._onLeave();
+            return;
+        }
+
         let idx = Math.round(((x - pad.left) / chartW) * (n - 1));
         idx = Math.max(0, Math.min(n - 1, idx));
         this.state.hoverIdx = idx;
         this.state.lastMouse = { x, y };
         this._scheduleDraw();
         this._showTooltip(idx);
+
+        const all = (typeof App !== 'undefined' && App.allMetrics) ? App.allMetrics : {};
+        this._updateReading(all[this.state.ticker], this._payload, idx);
     },
 
     _onLeave() {
@@ -565,6 +778,9 @@ const VolumeStudies = {
         const tooltip = document.getElementById('vs-tooltip');
         if (tooltip) tooltip.style.display = 'none';
         this._scheduleDraw();
+
+        const all = (typeof App !== 'undefined' && App.allMetrics) ? App.allMetrics : {};
+        this._updateReading(all[this.state.ticker], this._payload, null);
     },
 
     _scheduleDraw() {
@@ -583,43 +799,124 @@ const VolumeStudies = {
         const i = idx;
         const date = payload.dates[i];
         const close = payload.closes[i];
-        const volume = payload.volumes[i];
+        const prevClose = (i > 0) ? payload.closes[i - 1] : close;
+        const priceChg = close - prevClose;
+        const pricePct = prevClose > 0 ? (priceChg / prevClose) * 100 : 0;
+        const priceChgColor = priceChg > 0 ? this.COLORS.up : priceChg < 0 ? this.COLORS.down : this.COLORS.flat;
+        const priceChgSign = priceChg > 0 ? '+' : '';
+
+        const rawVol = payload.rawVolumes ? payload.rawVolumes[i] : payload.volumes[i];
+        const dollarVol = payload.dollarVolumes ? payload.dollarVolumes[i] : (close * rawVol);
+
         const studyNames = { vol: 'VOLUME', osc: 'VOL OSC', net: 'NET VOL', obv: 'OBV', pvt: 'PVT' };
         let value = null, valueLabel = studyNames[payload.study] || payload.study;
         if (payload.bars) value = payload.bars[i];
         else if (payload.line) value = payload.line[i];
+
         const dirSign = payload.colorSigns ? (payload.colorSigns[i] || 0) : (value > 0 ? 1 : value < 0 ? -1 : 0);
-        const dirColor = (payload.study === 'vol' || payload.study === 'net') && value != null
-            ? ' style="color:' + (dirSign > 0 ? this.COLORS.up : dirSign < 0 ? this.COLORS.down : this.COLORS.label) + '"'
-            : '';
-        let valueStr;
+        const dirColor = ' style="color:' + (dirSign > 0 ? this.COLORS.up : dirSign < 0 ? this.COLORS.down : this.COLORS.flat) + '"';
+
+        let studyValStr = 'n/a';
+        let badgeText = '';
+        let badgeColor = '';
+
         if (payload.study === 'osc') {
-            valueStr = value == null ? 'n/a' : (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
+            studyValStr = value == null ? 'n/a' : (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
+            if (value != null) {
+                badgeText = value > 0 ? 'EXPANSION' : value < 0 ? 'CONTRACTION' : 'NEUTRAL';
+                badgeColor = value > 0 ? this.COLORS.up : value < 0 ? this.COLORS.down : this.COLORS.label;
+            }
         } else if (payload.study === 'vol') {
-            valueStr = value == null ? 'n/a' : this.fmtVol(value);
+            studyValStr = value == null ? 'n/a' : (payload.unit === 'dollar' ? '$' + this.fmtVol(value) : this.fmtVol(value));
+            badgeText = dirSign > 0 ? 'UP DAY' : dirSign < 0 ? 'DOWN DAY' : 'FLAT';
+            badgeColor = dirSign > 0 ? this.COLORS.up : dirSign < 0 ? this.COLORS.down : this.COLORS.label;
+        } else if (payload.study === 'net') {
+            studyValStr = value == null ? 'n/a' : (payload.unit === 'dollar' ? (value > 0 ? '+$' : (value < 0 ? '-$' : '')) + this.fmtVol(Math.abs(value)) : this.fmtSigned(value));
+            badgeText = value > 0 ? 'NET INFLOW' : value < 0 ? 'NET OUTFLOW' : 'FLAT';
+            badgeColor = value > 0 ? this.COLORS.up : value < 0 ? this.COLORS.down : this.COLORS.label;
         } else {
-            valueStr = value == null ? 'n/a' : this.fmtSigned(value);
+            studyValStr = value == null ? 'n/a' : (payload.unit === 'dollar' ? (value > 0 ? '+$' : (value < 0 ? '-$' : '')) + this.fmtVol(Math.abs(value)) : this.fmtSigned(value));
+            const maVal = payload.ma ? payload.ma[i] : null;
+            if (value != null && maVal != null) {
+                badgeText = value >= maVal ? 'ACCUMULATION' : 'DISTRIBUTION';
+                badgeColor = value >= maVal ? this.COLORS.up : this.COLORS.down;
+            }
         }
-        let netRow = '';
-        if (payload.study === 'net' && payload.line) {
-            const r = payload.line[i];
-            netRow = `<div class="vs-tt-row"><span class="vs-tt-lbl">NET 21D</span><span class="vs-tt-val">${r == null ? 'n/a' : this.fmtSigned(r)}</span></div>`;
-        }
-        const studyRow = payload.study === 'vol'
-            ? ''
-            : `<div class="vs-tt-row"><span class="vs-tt-lbl">${valueLabel}</span><span class="vs-tt-val"${dirColor}>${valueStr}</span></div>`;
-        const volRow = payload.study === 'vol'
-            ? `<div class="vs-tt-row"><span class="vs-tt-lbl">VOLUME</span><span class="vs-tt-val"${dirColor}>${valueStr}</span></div>`
-            : payload.study === 'net'
-                ? ''
-                : `<div class="vs-tt-row"><span class="vs-tt-lbl">VOLUME</span><span class="vs-tt-val">${volume == null ? 'n/a' : this.fmtVol(volume)}</span></div>`;
-        tooltip.innerHTML = `
-            <div class="vs-tt-date">${date || 'n/a'}</div>
-            ${studyRow}
-            ${netRow}
-            <div class="vs-tt-row"><span class="vs-tt-lbl">CLOSE</span><span class="vs-tt-val">$${this.fmtPrice(close)}</span></div>
-            ${volRow}
+
+        let rowsHtml = '';
+
+        rowsHtml += `
+            <div class="vs-tt-row">
+                <span class="vs-tt-lbl">CLOSE</span>
+                <span class="vs-tt-val">$${this.fmtPrice(close)} <span style="color:${priceChgColor};font-size:0.58rem;">(${priceChgSign}${pricePct.toFixed(1)}%)</span></span>
+            </div>
         `;
+
+        rowsHtml += `
+            <div class="vs-tt-row">
+                <span class="vs-tt-lbl">${valueLabel}</span>
+                <span class="vs-tt-val"${dirColor}>${studyValStr}</span>
+            </div>
+        `;
+
+        if (payload.ma && payload.ma[i] != null) {
+            const maVal = payload.ma[i];
+            const maFmt = payload.study === 'vol'
+                ? (payload.unit === 'dollar' ? '$' + this.fmtVol(maVal) : this.fmtVol(maVal))
+                : (payload.unit === 'dollar' ? (maVal > 0 ? '+$' : (maVal < 0 ? '-$' : '')) + this.fmtVol(Math.abs(maVal)) : this.fmtSigned(maVal));
+            rowsHtml += `
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">21D MA</span>
+                    <span class="vs-tt-val" style="color:${this.COLORS.ma};">${maFmt}</span>
+                </div>
+            `;
+            if (payload.study === 'vol' && maVal > 0 && value != null) {
+                const rvol = value / maVal;
+                const rColor = rvol >= 2.0 ? this.COLORS.up : rvol >= 1.2 ? 'var(--cyan)' : 'inherit';
+                rowsHtml += `
+                    <div class="vs-tt-row">
+                        <span class="vs-tt-lbl">RVOL-21</span>
+                        <span class="vs-tt-val" style="color:${rColor};">${rvol.toFixed(2)}×</span>
+                    </div>
+                `;
+            }
+        }
+
+        if (payload.study === 'net' && payload.line && payload.line[i] != null) {
+            const r = payload.line[i];
+            const rFmt = payload.unit === 'dollar'
+                ? (r > 0 ? '+$' : (r < 0 ? '-$' : '')) + this.fmtVol(Math.abs(r))
+                : this.fmtSigned(r);
+            rowsHtml += `
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">NET 21D</span>
+                    <span class="vs-tt-val">${rFmt}</span>
+                </div>
+            `;
+        }
+
+        rowsHtml += `<div class="vs-tt-divider"></div>`;
+        rowsHtml += `
+            <div class="vs-tt-row">
+                <span class="vs-tt-lbl">SHARES</span>
+                <span class="vs-tt-val">${this.fmtVol(rawVol)}</span>
+            </div>
+            <div class="vs-tt-row">
+                <span class="vs-tt-lbl">DOLLAR VOL</span>
+                <span class="vs-tt-val">$${this.fmtVol(dollarVol)}</span>
+            </div>
+        `;
+
+        const badgeHtml = badgeText ? `<span class="vs-tt-badge" style="background:${badgeColor}22;color:${badgeColor};border:1px solid ${badgeColor}44;">${badgeText}</span>` : '';
+
+        tooltip.innerHTML = `
+            <div class="vs-tt-header">
+                <span class="vs-tt-date">${this.fmtFullDate(date)}</span>
+                ${badgeHtml}
+            </div>
+            ${rowsHtml}
+        `;
+
         const w = wrap.clientWidth, h = wrap.clientHeight;
         tooltip.style.display = 'block';
         const m = this.state.lastMouse;
@@ -634,41 +931,68 @@ const VolumeStudies = {
         tooltip.style.top = top + 'px';
     },
 
-    _updateReading(metrics, payload) {
+    _updateReading(metrics, payload, hoverIdx) {
         const el = document.getElementById('vs-reading');
         if (!el) return;
-        if (!metrics || !payload) {
+        if (!payload || !payload.dates.length) {
             el.innerHTML = '<span class="vs-reading-na">No data</span>';
             return;
         }
-        const study = this.state.study;
-        const last = payload.dates.length - 1;
+
+        const study = payload.study;
+        const last = (hoverIdx != null && hoverIdx >= 0 && hoverIdx < payload.dates.length)
+            ? hoverIdx
+            : payload.dates.length - 1;
+
+        const isHover = (hoverIdx != null && hoverIdx !== payload.dates.length - 1);
+        const dateTag = isHover ? `<span class="vs-reading-item"><span class="vs-lbl">DATE</span> ${payload.dates[last]}</span>` : '';
+
+        const close = payload.closes[last];
+        const prev = last > 0 ? payload.closes[last - 1] : close;
+        const pctChg = prev > 0 ? ((close - prev) / prev) * 100 : 0;
+        const chgColor = pctChg > 0 ? this.COLORS.up : pctChg < 0 ? this.COLORS.down : this.COLORS.flat;
+        const chgSign = pctChg > 0 ? '+' : '';
+        const closeTag = `<span class="vs-reading-item"><span class="vs-lbl">CLOSE</span> $${this.fmtPrice(close)} <span style="color:${chgColor};font-size:0.58rem;">(${chgSign}${pctChg.toFixed(1)}%)</span></span>`;
+
+        const rawVol = payload.rawVolumes ? payload.rawVolumes[last] : payload.volumes[last];
+        const dollarVol = payload.dollarVolumes ? payload.dollarVolumes[last] : (close * rawVol);
+
         const parts = [];
+        if (dateTag) parts.push(dateTag);
+        parts.push(closeTag);
+
         if (study === 'vol') {
-            const rvol = (metrics.rvol || {})['21d'];
-            const z = (metrics.zScore || {})['21d'];
-            parts.push(`<span class="vs-lbl">RVOL-21</span> ${rvol != null ? rvol.toFixed(2) + '×' : 'n/a'}`);
-            parts.push(`<span class="vs-lbl">Z-SCORE</span> ${z != null ? (z >= 0 ? '+' : '') + z.toFixed(2) : 'n/a'}`);
-            parts.push(`<span class="vs-lbl">LAST BAR</span> ${payload.volumes[last] != null ? this.fmtVol(payload.volumes[last]) : 'n/a'}`);
+            const ma = payload.ma ? payload.ma[last] : null;
+            const rvol = (ma && ma > 0) ? (payload.bars[last] / ma) : ((metrics && metrics.rvol) ? metrics.rvol['21d'] : null);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">RVOL-21</span> ${rvol != null ? rvol.toFixed(2) + '×' : 'n/a'}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">SHARES</span> ${this.fmtVol(rawVol)}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">DOLLAR VOL</span> $${this.fmtVol(dollarVol)}</span>`);
         } else if (study === 'osc') {
             const v = payload.line ? payload.line[last] : null;
-            parts.push(`<span class="vs-lbl">CURRENT</span> ${v != null ? (v >= 0 ? '+' : '') + v.toFixed(1) + '%' : 'n/a'}`);
-            parts.push(`<span class="vs-lbl">STATE</span> ${v == null ? 'n/a' : v > 0 ? 'EXPANSION' : v < 0 ? 'CONTRACTION' : 'NEUTRAL'}`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">VOL OSC</span> ${v != null ? (v >= 0 ? '+' : '') + v.toFixed(1) + '%' : 'n/a'}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">REGIME</span> <span style="color:${v > 0 ? this.COLORS.up : v < 0 ? this.COLORS.down : 'inherit'}">${v == null ? 'n/a' : v > 0 ? 'EXPANSION' : v < 0 ? 'CONTRACTION' : 'NEUTRAL'}</span></span>`);
         } else if (study === 'net') {
             const r = payload.line ? payload.line[last] : null;
-            parts.push(`<span class="vs-lbl">NET 21D</span> ${r != null ? this.fmtSigned(r) : 'n/a'}`);
             const day = payload.bars ? payload.bars[last] : null;
-            parts.push(`<span class="vs-lbl">TODAY</span> ${day != null ? this.fmtSigned(day) : 'n/a'}`);
+            const netDayFmt = payload.unit === 'dollar' ? (day > 0 ? '+$' : (day < 0 ? '-$' : '')) + this.fmtVol(Math.abs(day)) : this.fmtSigned(day);
+            const net21Fmt = payload.unit === 'dollar' ? (r > 0 ? '+$' : (r < 0 ? '-$' : '')) + this.fmtVol(Math.abs(r)) : this.fmtSigned(r);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">DAY NET</span> ${day != null ? netDayFmt : 'n/a'}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">NET 21D</span> ${r != null ? net21Fmt : 'n/a'}</span>`);
         } else if (study === 'obv' || study === 'pvt') {
             const line = payload.line || [];
             const ma = payload.ma || [];
             const lv = line[last], mv = ma[last];
             const lab = study === 'obv' ? 'OBV' : 'PVT';
-            parts.push(`<span class="vs-lbl">${lab} VS 21D MA</span> ${lv != null && mv != null ? (lv >= mv ? 'ABOVE' : 'BELOW') : 'n/a'}`);
+            const state = (lv != null && mv != null) ? (lv >= mv ? 'ABOVE' : 'BELOW') : 'n/a';
+            const stateColor = state === 'ABOVE' ? this.COLORS.up : state === 'BELOW' ? this.COLORS.down : 'inherit';
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">${lab} VS 21D MA</span> <span style="color:${stateColor}">${state}</span></span>`);
             const back = Math.max(0, last - 21);
             const delta = (lv != null && line[back] != null) ? lv - line[back] : null;
-            parts.push(`<span class="vs-lbl">21D Δ</span> ${delta != null ? this.fmtSigned(delta) : 'n/a'}`);
-            parts.push(`<span class="vs-lbl">BIAS</span> ${delta == null ? 'n/a' : delta > 0 ? 'ACCUMULATION' : delta < 0 ? 'DISTRIBUTION' : 'FLAT'}`);
+            const deltaFmt = payload.unit === 'dollar' ? (delta > 0 ? '+$' : (delta < 0 ? '-$' : '')) + this.fmtVol(Math.abs(delta)) : this.fmtSigned(delta);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">21D Δ</span> ${delta != null ? deltaFmt : 'n/a'}</span>`);
+            const bias = delta == null ? 'n/a' : delta > 0 ? 'ACCUMULATION' : delta < 0 ? 'DISTRIBUTION' : 'FLAT';
+            const biasColor = bias === 'ACCUMULATION' ? this.COLORS.up : bias === 'DISTRIBUTION' ? this.COLORS.down : 'inherit';
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">BIAS</span> <span style="color:${biasColor}">${bias}</span></span>`);
         }
         el.innerHTML = parts.join('');
     }

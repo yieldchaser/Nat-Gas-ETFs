@@ -213,6 +213,13 @@
                         </div>
                     </div>
                     <div class="vs-control-group">
+                        <span class="vs-control-label">Unit</span>
+                        <div class="tab-group" id="vs-unit-tabs" style="margin:0; padding:2px;">
+                            <button class="tab-btn active" data-unit="shares" data-tooltip="Split-adjusted share volume (standard technical analysis)">SHARES</button>
+                            <button class="tab-btn" data-unit="dollar" data-tooltip="Dollar Volume (Price × Volume) — split-invariant capital flow, prevents historical reverse-split compression">$ VALUE</button>
+                        </div>
+                    </div>
+                    <div class="vs-control-group">
                         <span class="vs-control-label">ETF</span>
                         <div id="vs-chips" class="vs-chips"></div>
                     </div>
@@ -220,6 +227,22 @@
                 <div class="vs-canvas-wrap" id="vs-canvas-wrap">
                     <canvas id="vs-canvas"></canvas>
                     <div id="vs-tooltip" class="vs-tooltip"></div>
+                </div>
+                <!-- Dual Range Slider (Scrub & Zoom) -->
+                <div class="range-slider-container vs-slider-container" id="vs-slider-container">
+                    <div class="range-slider-wrap">
+                        <div class="range-inputs">
+                            <div class="range-slider-track"></div>
+                            <div id="vs-range-highlight" class="range-slider-highlight"></div>
+                            <input type="range" id="vs-range-start" min="0" max="100" value="0" data-tooltip="Drag to set the start of the visible date range">
+                            <input type="range" id="vs-range-end" min="0" max="100" value="100" data-tooltip="Drag to set the end of the visible date range">
+                        </div>
+                    </div>
+                    <div class="range-labels">
+                        <span id="vs-range-label-start" class="vs-range-lbl">--</span>
+                        <span id="vs-range-active-label" class="vs-range-active-lbl">1Y</span>
+                        <span id="vs-range-label-end" class="vs-range-lbl">--</span>
+                    </div>
                 </div>
                 <div class="vs-reading" id="vs-reading"><span class="vs-reading-na">Loading…</span></div>
             </div>
@@ -271,7 +294,7 @@
     <script src="js/charts.js?v=20261018e"></script>
     <script src="js/cards.js?v=20261018e"></script>
     <script src="js/signals.js?v=20261020a"></script>
-    <script src="js/volume-studies.js?v=20261018e"></script>
+    <script src="js/volume-studies.js?v=20261023a"></script>
     <script src="js/app.js?v=20261021a"></script>
 </body>
 </html>
