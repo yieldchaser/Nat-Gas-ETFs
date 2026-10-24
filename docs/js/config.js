@@ -157,7 +157,8 @@ const CONFIG = {
 
     // Refresh interval (milliseconds)
     refreshInterval: 60000, // 1 minute when market open
-    refreshIntervalClosed: 300000, // 5 minutes when closed
+    refreshIntervalPrePost: 300000, // 5 minutes during pre-market and after-hours
+    refreshIntervalClosed: 1800000, // 30 minutes when closed, weekend, or holiday
 
     // History length for charts
     sparklineDays: 30,
