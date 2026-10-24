@@ -403,28 +403,36 @@ const Signals = {
 
         container.innerHTML = tickers.map(t => {
             const m = allMetrics[t];
+            const cfg = typeof CONFIG !== 'undefined' ? (CONFIG.etfs[t] || {}) : {};
+            const side = cfg.side || 'long';
             const count = m ? (m.mwcaCount || 0) : 0;
             const volPct = m ? (m.volPercentile || {}) : {};
 
             const winDetails = windows.map(w => {
                 const val = volPct[`${w}d`];
                 const isAlert = val != null && val >= threshold;
-                return `${w}d: ${val != null ? val.toFixed(1) + '%' : '—'}${isAlert ? ' [ALERT]' : ''}`;
+                return `${w}d: ${val != null ? val.toFixed(1) + '%' : '—'}${isAlert ? ' [ALERT ≥90%]' : ''}`;
             });
 
             const statusSummary = count === total
-                ? 'ALARM — all windows converging!'
+                ? 'ALARM — all 6 windows converging! Structural capitulation/accumulation.'
                 : count >= total - 1
-                    ? 'Near-alarm — 1 window short.'
+                    ? 'Near-alarm — 1 window short of full MWCA convergence.'
                     : count >= 3
-                        ? 'Elevated multi-window volume.'
+                        ? 'Elevated multi-window volume elevation.'
                         : count > 0
                             ? 'Partial window elevation.'
-                            : 'No alarm.';
+                            : 'Quiet — all windows below 90th percentile.';
 
-            const tip = `MWCA: ${count}/${total} windows above 90th vol pct. ${statusSummary} [${winDetails.join(' | ')}]`;
+            const tip = `${t} (${side.toUpperCase()} ${cfg.leverage || ''} · ${cfg.exchange || ''}): ${count}/${total} windows in alert (≥${threshold}th vol pct). ${statusSummary} [${winDetails.join(' | ')}]`;
 
-            return Charts.createGaugeRing(count, total, t, tip);
+            return Charts.createGaugeRing(count, total, t, tip, {
+                side,
+                cfg,
+                volPercentile: volPct,
+                windows,
+                threshold
+            });
         }).join('');
     },
 
