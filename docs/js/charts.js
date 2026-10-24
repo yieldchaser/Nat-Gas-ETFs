@@ -5,12 +5,21 @@
 
 const Charts = {
 
-    // ---- SPARKLINE (Price) ----
+    /* SPARKLINE (Price) */
     drawSparkline(canvas, data, color = '#4a80b8', fillAlpha = 0.1, hoverIndex = null) {
         if (!data || data.length < 2) return;
+        const dpr = window.devicePixelRatio || 1;
+        const w = canvas.parentElement ? canvas.parentElement.clientWidth : (canvas.clientWidth || 200);
+        const h = canvas.parentElement ? (canvas.parentElement.clientHeight || 50) : (canvas.clientHeight || 50);
+        if (w <= 0 || h <= 0) return;
+
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+
         const ctx = canvas.getContext('2d');
-        const w = canvas.width = canvas.parentElement.clientWidth;
-        const h = canvas.height = canvas.parentElement.clientHeight || 50;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, w, h);
 
         const closes = data.map(d => d.close);
@@ -90,15 +99,29 @@ const Charts = {
         }
     },
 
-    // ---- VOLUME BARS ----
-    drawVolumeBars(canvas, data, percentiles = null, hoverIndex = null) {
+    /* VOLUME BARS */
+    drawVolumeBars(canvas, data, percentiles = null, hoverIndex = null, mode = 'share') {
         if (!data || data.length < 2) return;
+        const dpr = window.devicePixelRatio || 1;
+        const w = canvas.parentElement ? canvas.parentElement.clientWidth : (canvas.clientWidth || 200);
+        const h = canvas.parentElement ? (canvas.parentElement.clientHeight || 24) : (canvas.clientHeight || 24);
+        if (w <= 0 || h <= 0) return;
+
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+
         const ctx = canvas.getContext('2d');
-        const w = canvas.width = canvas.parentElement.clientWidth;
-        const h = canvas.height = canvas.parentElement.clientHeight || 24;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, w, h);
 
-        const volumes = data.map(d => d.volume);
+        const volumes = data.map(d => {
+            if (mode === 'dollar') {
+                return (d.dollarVolume != null) ? d.dollarVolume : ((d.close || 0) * (d.volume || 0));
+            }
+            return d.volume != null ? d.volume : 0;
+        });
         const max = Math.max(...volumes) || 1;
         const barW = Math.max(1, (w / volumes.length) - 1);
 
@@ -145,7 +168,7 @@ const Charts = {
         }
     },
 
-    // ---- HEAT CALENDAR ----
+    /* HEAT CALENDAR */
     drawHeatCalendar(container, dailyScores, mode = 'share', spotlightMode = false, peaksThreshold = 95, globalPercentiles = null, side = 'all') {
         container.innerHTML = '';
         const isPeaks = (spotlightMode === 'peaks' || spotlightMode === true);
@@ -225,7 +248,7 @@ const Charts = {
         return count;
     },
 
-    // ---- CONVERGENCE GAUGE (SVG Ring) ----
+    /* CONVERGENCE GAUGE (SVG Ring) */
     createGaugeRing(count, total, ticker, tooltip = '', meta = {}) {
         const circumference = 2 * Math.PI * 22; // radius = 22
         const progress = total > 0 ? count / total : 0;
@@ -289,7 +312,7 @@ const Charts = {
         `;
     },
 
-    // ---- CORRELATION BAR ----
+    /* CORRELATION BAR */
     createCorrelationBar(ticker, value, side) {
         if (value == null) value = 0;
         const absVal = Math.abs(value);
