@@ -334,6 +334,7 @@ const VolumeStudies = {
         }
         this._draw();
         this._updateReading(metrics, payload, null);
+        this.updateCardSelection();
     },
 
     _bind() {
@@ -500,10 +501,7 @@ const VolumeStudies = {
             chip.style.color = color;
             chip.style.borderColor = color;
             chip.addEventListener('click', () => {
-                this.state.ticker = t;
-                this.state.hoverIdx = null;
-                this._cache = null;
-                this.render();
+                this.selectTicker(t);
             });
             container.appendChild(chip);
         }
@@ -518,6 +516,24 @@ const VolumeStudies = {
             const active = chip.getAttribute('data-ticker') === this.state.ticker;
             chip.classList.toggle('active', active);
             chip.classList.toggle('inactive', !active);
+        });
+        this.updateCardSelection();
+    },
+
+    selectTicker(ticker) {
+        if (!ticker) return;
+        this.state.ticker = ticker;
+        this.state.hoverIdx = null;
+        this._cache = null;
+        this.render();
+        this.updateCardSelection();
+    },
+
+    updateCardSelection() {
+        if (typeof document === 'undefined') return;
+        const selected = this.state.ticker;
+        document.querySelectorAll('.etf-card[data-ticker]').forEach(card => {
+            card.classList.toggle('card-selected', card.getAttribute('data-ticker') === selected);
         });
     },
 

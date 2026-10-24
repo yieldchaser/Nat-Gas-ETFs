@@ -258,6 +258,43 @@ const App = {
                     this.allMetrics[ticker].current.dollarVolume =
                         livePrice * liveETF.regularMarketVolume;
                 }
+
+                // Client-side incremental live recalculations of RVOL, Z-score, and percentiles
+                const m = this.allMetrics[ticker];
+                const hist = m.history || [];
+                const liveVol = m.current.volume;
+                const liveDVol = m.current.dollarVolume;
+                if (hist.length >= 21 && typeof Metrics !== 'undefined') {
+                    const prevVols = hist.map(h => (h.volume != null ? h.volume : h[2])).filter(v => v != null && v > 0);
+                    if (liveVol != null && liveVol > 0 && prevVols.length >= 21) {
+                        const lookback21 = prevVols.slice(-21);
+                        const mean21 = Metrics.mean(lookback21);
+                        const std21 = Metrics.std(lookback21);
+                        if (m.rvol) m.rvol['21d'] = mean21 > 0 ? liveVol / mean21 : null;
+                        if (m.zScore) m.zScore['21d'] = std21 > 0 ? (liveVol - mean21) / std21 : 0;
+                        const windows = [5, 10, 21, 63, 126, 252];
+                        for (const w of windows) {
+                            if (m.volPercentile) m.volPercentile[`${w}d`] = Metrics.percentileRank(liveVol, prevVols.slice(-w));
+                        }
+                    }
+
+                    const prevDVols = hist.map(h => {
+                        const cl = h.close != null ? h.close : h[1];
+                        const vo = h.volume != null ? h.volume : h[2];
+                        return (cl != null && vo != null) ? cl * vo : null;
+                    }).filter(v => v != null && v > 0);
+                    if (liveDVol != null && liveDVol > 0 && prevDVols.length >= 21) {
+                        const lookbackDv21 = prevDVols.slice(-21);
+                        const meanDv21 = Metrics.mean(lookbackDv21);
+                        const stdDv21 = Metrics.std(lookbackDv21);
+                        if (m.dvRvol) m.dvRvol['21d'] = meanDv21 > 0 ? liveDVol / meanDv21 : null;
+                        if (m.dvZScore) m.dvZScore['21d'] = stdDv21 > 0 ? (liveDVol - meanDv21) / stdDv21 : 0;
+                        const windows = [5, 10, 21, 63, 126, 252];
+                        for (const w of windows) {
+                            if (m.dvPercentile) m.dvPercentile[`${w}d`] = Metrics.percentileRank(liveDVol, prevDVols.slice(-w));
+                        }
+                    }
+                }
                 
                 updated = true;
             }
@@ -356,7 +393,8 @@ const App = {
             const mapBar = h => ({
                 date: h.date || h[0],
                 close: h.close != null ? h.close : h[1],
-                volume: h.volume != null ? h.volume : h[2]
+                volume: h.volume != null ? h.volume : h[2],
+                dollarVolume: h.dollar_volume != null ? h.dollar_volume : ((h.close != null && h.volume != null) ? h.close * h.volume : 0)
             });
             // Slicing heatmapData:
             // When market is open or in pre-market, today's bar in hist is incomplete/partial.
