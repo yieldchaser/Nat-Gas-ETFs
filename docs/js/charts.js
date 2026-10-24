@@ -226,29 +226,53 @@ const Charts = {
     },
 
     // ---- CONVERGENCE GAUGE (SVG Ring) ----
-    createGaugeRing(count, total, ticker, tooltip = '') {
+    createGaugeRing(count, total, ticker, tooltip = '', meta = {}) {
         const circumference = 2 * Math.PI * 22; // radius = 22
         const progress = total > 0 ? count / total : 0;
         const dashOffset = circumference * (1 - progress);
+
+        const side = meta.side || (typeof CONFIG !== 'undefined' ? CONFIG.etfs[ticker]?.side : 'long');
+        const isLong = side === 'long';
+        const cfg = meta.cfg || (typeof CONFIG !== 'undefined' ? CONFIG.etfs[ticker] : {}) || {};
+        const region = cfg.exchange === 'NYSE' ? 'US' : cfg.exchange === 'TSX' ? 'CA' : cfg.exchange === 'LSE' ? 'UK' : (cfg.exchange || '');
+        const lev = cfg.leverage || '';
+        const regBadge = region && lev ? `${region} · ${lev}` : (region || lev || '');
 
         let strokeColor;
         if (count === total && total > 0) strokeColor = 'var(--purple)';
         else if (count >= total - 1 && count > 0) strokeColor = 'var(--red)';
         else if (count >= 3) strokeColor = 'var(--orange)';
-        else if (count > 0) strokeColor = 'var(--blue-dim)';
+        else if (count > 0) strokeColor = isLong ? 'var(--green)' : 'var(--red)';
         else strokeColor = 'rgba(255, 255, 255, 0.12)';
 
-        let countColor;
-        if (count === total && total > 0) countColor = 'var(--purple)';
-        else if (count >= total - 1 && count > 0) countColor = 'var(--red)';
-        else if (count >= 3) countColor = 'var(--orange)';
-        else countColor = 'rgba(255, 255, 255, 0.85)';
+        const sideColor = isLong ? 'var(--long-accent)' : 'var(--short-accent)';
+        const countColor = count === total && total > 0 ? 'var(--purple)'
+            : count >= total - 1 && count > 0 ? 'var(--red)'
+            : count >= 3 ? 'var(--orange)'
+            : count > 0 ? (isLong ? 'var(--green)' : 'var(--red)')
+            : 'rgba(255, 255, 255, 0.85)';
+
+        const windows = meta.windows || (typeof CONFIG !== 'undefined' ? CONFIG.windows.percentile : [5, 10, 21, 63, 126, 252]);
+        const volPct = meta.volPercentile || {};
+        const threshold = meta.threshold || (typeof CONFIG !== 'undefined' ? CONFIG.thresholds.mwca_threshold : 90);
+
+        const pipsHtml = windows.map(w => {
+            const val = volPct[`${w}d`];
+            const isAlert = val != null && val >= threshold;
+            const pipCls = isAlert ? (isLong ? 'gauge-pip alert-long' : 'gauge-pip alert-short') : 'gauge-pip';
+            const pipTip = `${ticker} ${w}d: ${val != null ? val.toFixed(1) + '%' : '—'} volume percentile${isAlert ? ` (ALERT ≥${threshold}%)` : ''}`;
+            return `<span class="${pipCls}" data-tooltip="${pipTip}">${w}d</span>`;
+        }).join('');
 
         const ttAttr = tooltip ? `data-tooltip="${tooltip}"` : '';
 
+        // Clean uniform card: no left-side colored border
         return `
-            <div class="convergence-gauge" ${ttAttr}>
-                <div class="gauge-ticker">${ticker}</div>
+            <div class="convergence-gauge ${count >= 3 ? 'gauge-in-alert' : ''}" ${ttAttr}>
+                <div class="gauge-header">
+                    <span class="gauge-ticker" style="color: ${sideColor}">${ticker}</span>
+                    <span class="gauge-sub">${regBadge}</span>
+                </div>
                 <div class="gauge-ring">
                     <svg viewBox="0 0 50 50">
                         <circle class="ring-bg" cx="25" cy="25" r="22"/>
@@ -260,6 +284,7 @@ const Charts = {
                     <span class="gauge-count" style="color: ${countColor}">${count}/${total}</span>
                 </div>
                 <div class="gauge-label">windows in alert</div>
+                <div class="gauge-pips">${pipsHtml}</div>
             </div>
         `;
     },
