@@ -1005,17 +1005,67 @@
     height: 12px;
     background: rgba(255,255,255,0.25);
 }
-.ng-gates { display: flex; gap: 5px; }
-.ng-gate {
+.ng-season-phase {
+    display: inline-flex;
+    align-items: center;
     font-size: 0.55rem;
     font-weight: 700;
-    padding: 1px 5px;
+    letter-spacing: 0.04em;
+    padding: 1px 6px;
     border-radius: 3px;
-    letter-spacing: 0.03em;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-primary);
+    cursor: default;
+    user-select: none;
+    white-space: nowrap;
 }
-.ng-gate.active   { color: #3db87a; background: rgba(61,184,122,0.12); border: 1px solid rgba(61,184,122,0.3); }
-.ng-gate.inactive { color: rgba(255, 255, 255, 0.85); background: rgba(255,255,255,0.03); border: 1px solid var(--border-primary); text-decoration: line-through; opacity: 0.7; }
-.ng-gate.unknown  { color: rgba(255, 255, 255, 0.85); opacity: 0.5; }
+.ng-gates {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.ng-gate {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.55rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.04em;
+    font-family: monospace;
+    white-space: nowrap;
+    cursor: default;
+    user-select: none;
+}
+.ng-gate.ng-gate-neutral {
+    color: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-primary);
+}
+.ng-gate.ng-gate-active-long,
+.ng-gate.active {
+    color: #3db87a;
+    background: rgba(61, 184, 122, 0.14);
+    border: 1px solid rgba(61, 184, 122, 0.35);
+}
+.ng-gate.ng-gate-active-short {
+    color: #e07040;
+    background: rgba(224, 112, 64, 0.14);
+    border: 1px solid rgba(224, 112, 64, 0.35);
+}
+.ng-gate.ng-gate-inactive,
+.ng-gate.inactive {
+    color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    opacity: 0.8;
+}
+.ng-gate.unknown {
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-primary);
+    opacity: 0.6;
+}
 
 /* ---- Sharp Spike Badge ---- */
 .spike-badge {
@@ -1039,14 +1089,7 @@
     50% { opacity: 0.55; }
 }
 
-/* ---- Season Badge (card header) ---- */
-.season-badge {
-    font-size: 0.55rem;
-    font-weight: 600;
-    cursor: default;
-    opacity: 0.85;
-    margin-left: 2px;
-}
+/* Seasonal phase badge is now unified inside .ng-season-phase in the NG=F strip */
 
 /* ---- Matrix Season Tag ---- */
 .matrix-season {
