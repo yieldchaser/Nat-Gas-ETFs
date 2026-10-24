@@ -396,43 +396,35 @@ const Signals = {
         const container = document.getElementById('convergence-gauges');
         if (!container) return;
 
-        const windows = CONFIG.windows ? CONFIG.windows.percentile : [5, 10, 21, 63, 126, 252];
+        const windows = typeof CONFIG !== 'undefined' ? CONFIG.windows.percentile : [5, 10, 21, 63, 126, 252];
         const total = windows.length;
-        const threshold = CONFIG.thresholds ? CONFIG.thresholds.mwca_threshold : 90;
-        const tickers = Object.keys(CONFIG.etfs);
+        const threshold = typeof CONFIG !== 'undefined' ? CONFIG.thresholds.mwca_threshold : 90;
+        const tickers = typeof CONFIG !== 'undefined' ? Object.keys(CONFIG.etfs) : Object.keys(allMetrics || {});
 
         container.innerHTML = tickers.map(t => {
             const m = allMetrics[t];
-            const cfg = CONFIG.etfs[t] || {};
-            const side = cfg.side || 'long';
             const count = m ? (m.mwcaCount || 0) : 0;
             const volPct = m ? (m.volPercentile || {}) : {};
 
             const winDetails = windows.map(w => {
                 const val = volPct[`${w}d`];
                 const isAlert = val != null && val >= threshold;
-                return `${w}d: ${val != null ? val.toFixed(1) + '%' : '—'}${isAlert ? ' [ALERT ≥90%]' : ''}`;
+                return `${w}d: ${val != null ? val.toFixed(1) + '%' : '—'}${isAlert ? ' [ALERT]' : ''}`;
             });
 
             const statusSummary = count === total
-                ? 'ALARM — all 6 windows converging! Structural capitulation/accumulation.'
+                ? 'ALARM — all windows converging!'
                 : count >= total - 1
-                    ? 'Near-alarm — 1 window short of full MWCA convergence.'
+                    ? 'Near-alarm — 1 window short.'
                     : count >= 3
-                        ? 'Elevated multi-window volume elevation.'
+                        ? 'Elevated multi-window volume.'
                         : count > 0
                             ? 'Partial window elevation.'
-                            : 'Quiet — all windows below 90th percentile.';
+                            : 'No alarm.';
 
-            const tip = `${t} (${side.toUpperCase()} ${cfg.leverage || ''} · ${cfg.exchange || ''}): ${count}/${total} windows in alert (≥${threshold}th vol pct). ${statusSummary} [${winDetails.join(' | ')}]`;
+            const tip = `MWCA: ${count}/${total} windows above 90th vol pct. ${statusSummary} [${winDetails.join(' | ')}]`;
 
-            return Charts.createGaugeRing(count, total, t, tip, {
-                side,
-                cfg,
-                volPercentile: volPct,
-                windows,
-                threshold
-            });
+            return Charts.createGaugeRing(count, total, t, tip);
         }).join('');
     },
 
