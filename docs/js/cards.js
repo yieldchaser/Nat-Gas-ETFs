@@ -131,11 +131,6 @@ const Cards = {
 
         // VCVI values (primary — vol-adjusted capitulation index)
         const decay = metrics.decay || {};
-        const seasonality = metrics.seasonality || {};
-        const seasonCfg = seasonality.season ? (CONFIG.seasonDisplay[seasonality.season] || {}) : {};
-        const seasonBadge = seasonality.season
-            ? `<span class="season-badge" style="color:${seasonCfg.color||'rgba(255, 255, 255, 0.85)'}" data-tooltip="Seasonal weight: ${seasonality.season} × ${(seasonality.weight||1).toFixed(2)} — amplifies vol signals in high-demand seasons. Seasonally-adj VCVI-21d: ${seasonality.adj_vcvi_21d != null ? seasonality.adj_vcvi_21d.toFixed(0) : '—'} (share-vol mode only)">${seasonCfg.label||seasonality.season.toUpperCase()} ×${(seasonality.weight||1).toFixed(2)}</span>`
-            : '';
 
         const spikeHtml = metrics.sharpSpike
             ? `<span class="spike-badge" data-tooltip="SHARP SPIKE: 5d VCVI + move > 2×ATR. ${metrics.fastSignal === 'weather_top_candidate' ? 'Weather Top Candidate — GAS may have peaked.' : 'Weather Bottom Candidate — GAS may have bottomed.'}">SPIKE</span>`
@@ -281,7 +276,10 @@ const Cards = {
 
         const safeTicker = ticker.replace(/\./g, '-');
         const sideLabel = (config.side === 'long') ? 'Long' : 'Short';
-        const metaBadge = `<span class="card-pill-meta">${config.exchange || 'NYSE'} · ${config.leverage || '2x'} ${sideLabel}</span>`;
+        const decayRate = (CONFIG.etfDecayRates && CONFIG.etfDecayRates[ticker] != null) ? CONFIG.etfDecayRates[ticker] : (decay.annual_rate || 0.35);
+        const decayPct = Math.round(decayRate * 100);
+        const metaTooltip = `${config.exchange || 'NYSE'} · ${config.leverage || '2x'} ${sideLabel} — Annual rebalancing decay rate: ~${decayPct}%/yr`;
+        const metaBadge = `<span class="card-pill-meta" data-tooltip="${metaTooltip}">${config.exchange || 'NYSE'} · ${config.leverage || '2x'} ${sideLabel}</span>`;
         const session = this.getExchangeSession(config.exchange, ticker);
         const benchmark = this.getBenchmark(ticker);
         const nameTooltip = `${config.name} — ${config.leverage || '2x'} ${sideLabel} · ${config.exchange || 'NYSE'} (Benchmark: ${benchmark})`;
@@ -294,7 +292,7 @@ const Cards = {
                             <span class="card-ticker">${ticker}</span>
                             ${metaBadge}
                             <span class="session-badge ${session.cls}" data-live="session" data-tooltip="${session.tooltip}">${session.text}</span>
-                            ${seasonBadge}${spikeHtml}
+                            ${spikeHtml}
                         </div>
                         <span class="card-name" data-tooltip="${nameTooltip}">${config.name}</span>
                     </div>

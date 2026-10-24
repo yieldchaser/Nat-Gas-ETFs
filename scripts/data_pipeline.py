@@ -600,7 +600,7 @@ def _fetch_ng_price_context() -> dict:
 
     # Seasonal z-score: compare current price in log-space to prior 10 years of same-month prices
     cutoff_year = close.index[-1].year - 10
-    same_month_prices = close[(close.index.month == current_month) & (close.index.year >= cutoff_year)]
+    same_month_prices = close[(close.index.month == current_month) & (close.index.year >= cutoff_year)].iloc[:-1]
     if len(same_month_prices) < 12:
         # Not enough monthly data — fall back to 2yr percentile gate
         seasonal_z = None
@@ -672,6 +672,8 @@ def _fetch_ng_price_context() -> dict:
         "gate_long":       gate_long,    # True = gas anomalously LOW for season → long credible
         "history_days":    len(window_close),
         "seasonal_note":   seasonal_note,
+        "season":          _season_label(current_month),
+        "month":           current_month,
         "ng_hv_21d":       ng_hv21_current,
         "ng_hv_pct":       ng_hv_pct,
         "regime":          regime,       # 'normal' | 'elevated' | 'extreme'
@@ -1675,8 +1677,8 @@ def _detect_conviction_events(
       Gate 3: |daily move| > 1.5 × ATR-14  (price dislocation)
       Gate 4: vol regime <= 70th percentile  (non-turbulent context)
       Gate 5: NG=F seasonal z-score directional confirmation (when available)
-              Long-side: z <= -1.0 (gas anomalously low for season)
-              Short-side: z >= +1.0 (gas anomalously high for season)
+              Long-side: z <= -0.5 (gas anomalously low for season)
+              Short-side: z >= +0.2 (gas anomalously high for season)
               Momentum guard: short-side raises VCVI bar by 13 when gas seasonal_z > 0
 
     Designed to flag only ~1-2 genuine anomalies per ETF per year.

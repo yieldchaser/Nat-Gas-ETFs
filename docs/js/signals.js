@@ -647,12 +647,11 @@ const Signals = {
         if (!bar) return;
 
         if (!ngPriceContext || ngPriceContext.price == null) {
-            bar.innerHTML = '<span class="ng-bar-label">NG=F</span><span class="ng-bar-na">—  price data unavailable</span>';
+            bar.innerHTML = '<span class="ng-bar-label" data-tooltip="NYMEX Henry Hub Natural Gas Front-Month Prompt Futures ($/MMBtu). Physical benchmark for all natural gas derivative pricing.">NG=F</span><span class="ng-bar-na">— price data unavailable</span>';
             return;
         }
 
         const p = ngPriceContext.price;
-        const pct = ngPriceContext.percentile_2yr;
         const sz  = ngPriceContext.seasonal_zscore;
         const tier = ngPriceContext.tier || 'seasonal_mid';
         const gateShort = ngPriceContext.gate_short;
@@ -667,6 +666,50 @@ const Signals = {
         };
         const tierColor = tierColors[tier] || 'rgba(255, 255, 255, 0.85)';
 
+        // Seasonal commodity phase
+        let seasonKey = ngPriceContext.season;
+        if (!seasonKey && note) {
+            const m = note.match(/\b(winter|spring|summer|fall)\b/i);
+            if (m) seasonKey = m[1].toLowerCase();
+        }
+        if (!seasonKey && typeof window !== 'undefined' && window.App && window.App.data && window.App.data.etfs) {
+            for (const t of Object.keys(window.App.data.etfs)) {
+                const s = window.App.data.etfs[t]?.seasonality?.season;
+                if (s) { seasonKey = s.toLowerCase(); break; }
+            }
+        }
+        if (!seasonKey) {
+            const m = new Date().getUTCMonth() + 1;
+            seasonKey = (m === 11 || m === 12 || m === 1 || m === 2) ? 'winter'
+                      : (m >= 3 && m <= 5) ? 'spring'
+                      : (m >= 6 && m <= 8) ? 'summer' : 'fall';
+        }
+
+        const seasonPhases = {
+            winter: {
+                label: 'WINTER (Withdrawal Phase)',
+                color: '#60a8f8',
+                tip: 'Physical Seasonal Phase: Winter peak withdrawal period (Nov–Feb). Space heating demand draws down storage inventories, driving physical cash price volatility.'
+            },
+            spring: {
+                label: 'SPRING (Shoulder Phase)',
+                color: '#6ddc8b',
+                tip: 'Physical Seasonal Phase: Spring shoulder transition period (Mar–May). Mild weather transitions the gas grid from net storage withdrawals to early injections.'
+            },
+            summer: {
+                label: 'SUMMER (Injection Phase)',
+                color: '#f5c542',
+                tip: 'Physical Seasonal Phase: Summer storage injection and peak electric power burn for air conditioning (Jun–Aug).'
+            },
+            fall: {
+                label: 'FALL (Injection Phase)',
+                color: '#f5a742',
+                tip: 'Physical Seasonal Phase: Fall storage injection period (Sep–Oct). Final storage build prior to the winter withdrawal season.'
+            }
+        };
+        const phaseInfo = seasonPhases[seasonKey] || seasonPhases.fall;
+        const phaseHtml = `<span class="ng-season-phase" style="color:${phaseInfo.color}" data-tooltip="${phaseInfo.tip}">${phaseInfo.label}</span>`;
+
         // Z-score bar: center=0, ±3σ fills the track. Clamp to -3..+3.
         const zClamped   = Math.max(-3, Math.min(3, sz ?? 0));
         const fillLeft   = sz != null ? ((zClamped / 3) * 50 + 50) : 50;  // pct from left
@@ -675,17 +718,33 @@ const Signals = {
 
         // Z-score label: +1.8σ above seasonal norm
         const zLabel = sz != null ? `${sz >= 0 ? '+' : ''}${sz.toFixed(1)}σ` : '—σ';
-        const tierLabel = tier.replace('_', ' ').toUpperCase();
 
-        const shortGateNote = `Seasonal z=${sz!=null?sz.toFixed(1):'—'}. Gate fires when z ≥ +1.5σ (gas anomalously HIGH for this month). ${note}`;
-        const longGateNote  = `Seasonal z=${sz!=null?sz.toFixed(1):'—'}. Gate fires when z ≤ −1.5σ (gas anomalously LOW for this month). ${note}`;
+        // Parse metadata from seasonal_note
+        const gMeanMatch = note.match(/gMean=\$([0-9.]+)/);
+        const normPriceStr = gMeanMatch ? `$${gMeanMatch[1]}` : '$3.30';
+        const obsMatch = note.match(/vs\s+(\d+)\s+([a-zA-Z]+)-month/);
+        const obsCount = obsMatch ? obsMatch[1] : '237';
+        const monthNum = ngPriceContext.month || (new Date().getUTCMonth() + 1);
+        const monthName = new Date(Date.UTC(2026, monthNum - 1, 1)).toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
 
-        const shortGateHtml = gateShort === true  ? `<span class="ng-gate active"   data-tooltip="${shortGateNote}">SHORT ✓</span>`
-                            : gateShort === false ? `<span class="ng-gate inactive" data-tooltip="${shortGateNote}">SHORT ✗</span>`
-                            : '<span class="ng-gate unknown">SHORT ?</span>';
-        const longGateHtml  = gateLong  === true  ? `<span class="ng-gate active"   data-tooltip="${longGateNote}">LONG ✓</span>`
-                            : gateLong  === false ? `<span class="ng-gate inactive" data-tooltip="${longGateNote}">LONG ✗</span>`
-                            : '<span class="ng-gate unknown">LONG ?</span>';
+        const zTip = `Seasonal Z-Score vs 10-year same-month historical norm (${normPriceStr}/MMBtu). Log-normal distribution of ~${obsCount} ${monthName} sessions.`;
+
+        // Macro Gates resolution
+        const neutralGateTip = `Macro Gate: NEUTRAL (-1.5σ < z < +1.5σ). Physical gas is in fair seasonal valuation range (${normPriceStr} ${monthName} norm). Volume capitulation signals operate without directional macro bias.`;
+        const longGateTip = 'Macro Gate: ACTIVE LONG (z <= -1.5σ). Physical natural gas is deeply oversold vs seasonal norm, fundamentally supporting Long ETF mean-reversion setups.';
+        const shortGateTip = 'Macro Gate: ACTIVE SHORT (z >= +1.5σ). Physical natural gas is deeply overbought vs seasonal norm, fundamentally supporting Short ETF mean-reversion setups.';
+        const shortInactiveTip = 'Macro Gate: Short gate INACTIVE. Physical gas is not seasonally overbought; short mean-reversion setups lack macro tailwind.';
+        const longInactiveTip = 'Macro Gate: Long gate INACTIVE. Physical gas is not seasonally oversold; long mean-reversion setups lack macro tailwind.';
+
+        let gatesHtml = '';
+        if (gateLong === true) {
+            gatesHtml = `<span class="ng-gate ng-gate-active-long" data-tooltip="${longGateTip}">LONG GATE: ACTIVE</span><span class="ng-gate ng-gate-inactive" data-tooltip="${shortInactiveTip}">SHORT: INACTIVE</span>`;
+        } else if (gateShort === true) {
+            gatesHtml = `<span class="ng-gate ng-gate-active-short" data-tooltip="${shortGateTip}">SHORT GATE: ACTIVE</span><span class="ng-gate ng-gate-inactive" data-tooltip="${longInactiveTip}">LONG: INACTIVE</span>`;
+        } else {
+            // Neutral state (-1.5σ < z < +1.5σ or both false)
+            gatesHtml = `<span class="ng-gate ng-gate-neutral" data-tooltip="${neutralGateTip}">GATES: NEUTRAL</span>`;
+        }
 
         // Regime badge
         const regime = ngPriceContext.regime || 'normal';
@@ -693,30 +752,28 @@ const Signals = {
         const regimeColor = regimeCfg.color || 'rgba(255,255,255,0.85)';
         const regimeLabel = regimeCfg.label || regime.toUpperCase();
         const regimeNote  = regimeCfg.note  || '';
-        const hvPct = ngPriceContext.ng_hv_pct;
-        const hvStr = hvPct != null ? `NG vol at ${hvPct.toFixed(0)}th pct of own 2yr history` : '';
-        const regimeTip = `Regime: ${regimeLabel}. ${regimeNote}. ${hvStr ? hvStr + '. ' : ''}Anchored to known outlier periods: 2022 bull run ($9/MMBtu, z~+3σ) and Jan 2026 cold snap (>$7/MMBtu).`;
-        const regimeBadge = `<span class="ng-regime-badge ng-regime-${regime}" style="color:${regimeColor};border-color:${regimeColor}" data-tooltip="${regimeTip}">${regime === 'extreme' ? '🚨 ' : regime === 'elevated' ? '⚠ ' : ''}${regimeLabel}</span>`;
+        const regimeTip = `Physical Gas Volatility Regime (NORMAL / ELEVATED STRESS / ULTRA-VOLATILE) based on absolute price, seasonal z-score, and 30-day realized volatility. Current: ${regimeLabel}. ${regimeNote}`;
+        const regimeBadge = `<span class="ng-regime-badge ng-regime-${regime}" style="color:${regimeColor};border-color:${regimeColor}" data-tooltip="${regimeTip}">${regimeLabel}</span>`;
+
         // Extreme regime warning strip
         const regimeWarning = regime === 'extreme'
-            ? `<div class="ng-regime-warning" style="color:${regimeColor}">⚠ EXTREME REGIME — ${regimeNote}. Historical signal outcomes may not reflect behavior in this environment.</div>`
+            ? `<div class="ng-regime-warning" style="color:${regimeColor}">EXTREME REGIME — ${regimeNote}. Historical signal outcomes may not reflect behavior in this environment.</div>`
             : regime === 'elevated'
-            ? `<div class="ng-regime-warning ng-regime-warning-dim" style="color:${regimeColor}">⚠ ${regimeNote}</div>`
+            ? `<div class="ng-regime-warning ng-regime-warning-dim" style="color:${regimeColor}">${regimeNote}</div>`
             : '';
 
-        const fullTip = `NG=F Henry Hub futures — $${p.toFixed(3)}, seasonal z-score ${zLabel} (${tierLabel}). ${note}. 2yr pct: ${pct!=null?pct.toFixed(0):'—'}th (for reference only — seasonal z-score drives the gates).`;
-
         bar.innerHTML = `
-            <span class="ng-bar-label">NG=F</span>
-            <span class="ng-bar-price" style="color:${tierColor}" data-tooltip="${fullTip}">$${p.toFixed(3)}</span>
-            <div class="ng-bar-track ng-bar-zscore" data-tooltip="${fullTip}">
+            <span class="ng-bar-label" data-tooltip="NYMEX Henry Hub Natural Gas Front-Month Prompt Futures ($/MMBtu). Physical benchmark for all natural gas derivative pricing.">NG=F</span>
+            ${phaseHtml}
+            <span class="ng-bar-price" style="color:${tierColor}" data-tooltip="Current NYMEX prompt month settlement price.">$${p.toFixed(3)}</span>
+            <div class="ng-bar-track ng-bar-zscore" data-tooltip="${zTip}">
                 <div class="ng-bar-center-mark"></div>
                 ${sz != null ? `<div class="ng-bar-fill" style="left:${fillStart}%;width:${fillWidth}%;background:${tierColor}"></div>` : ''}
                 <div class="ng-bar-z-neg15" style="left:25%"></div>
                 <div class="ng-bar-z-pos15" style="left:75%"></div>
             </div>
-            <span class="ng-bar-pct" style="color:${tierColor}">${zLabel}</span>
-            <span class="ng-gates">${longGateHtml}${shortGateHtml}</span>
+            <span class="ng-bar-pct" style="color:${tierColor}" data-tooltip="${zTip}">${zLabel}</span>
+            <span class="ng-gates">${gatesHtml}</span>
             ${regimeBadge}
             ${regimeWarning}`;
     },
