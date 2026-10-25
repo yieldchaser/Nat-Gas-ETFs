@@ -22,6 +22,9 @@ const App = {
     async init() {
         console.log('[MONITOR] Initializing...');
         this.bindEvents();
+        if (typeof VolumeProfile !== 'undefined' && typeof VolumeProfile.init === 'function') {
+            VolumeProfile.init();
+        }
         await this.refresh(false);
         console.log('[MONITOR] Dashboard ready.');
     },
@@ -563,6 +566,9 @@ const App = {
 
         // Price-Volume Studies panel (classic volume indicators)
         if (typeof VolumeStudies !== 'undefined') VolumeStudies.render();
+
+        // Volume Profile panel (volume at price)
+        if (typeof VolumeProfile !== 'undefined') VolumeProfile.render();
     },
 
     // Surgical live-quote update: refreshes only price/change/volume fields in the
@@ -894,6 +900,7 @@ const App = {
         if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
         this.resizeTimeout = setTimeout(() => {
             this.render();
+            if (typeof VolumeProfile !== 'undefined') VolumeProfile.render();
         }, 200);
     }
 };
