@@ -617,6 +617,18 @@ const VolumeStudies = {
         this._cache = null;
         this.render();
         this.updateCardSelection();
+        if (!VolumeStudies._syncing) {
+            VolumeStudies._syncing = true;
+            try {
+                if (typeof VolumeProfile !== 'undefined' && typeof VolumeProfile.selectTicker === 'function') {
+                    if (VolumeProfile.state && VolumeProfile.state.ticker !== ticker) {
+                        VolumeProfile.selectTicker(ticker);
+                    }
+                }
+            } finally {
+                VolumeStudies._syncing = false;
+            }
+        }
     },
 
     updateCardSelection() {

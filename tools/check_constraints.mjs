@@ -5,7 +5,8 @@ const files = [
   'docs/js/cards.js',
   'docs/js/charts.js',
   'docs/js/app.js',
-  'docs/js/volume-studies.js'
+  'docs/js/volume-studies.js',
+  'docs/js/volume-profile.js'
 ];
 
 const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u;

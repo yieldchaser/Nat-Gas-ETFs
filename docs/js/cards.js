@@ -440,6 +440,16 @@ const Cards = {
                 VolumeStudies.render();
             }
         }
+        if (typeof VolumeProfile !== 'undefined') {
+            if (typeof VolumeProfile.selectTicker === 'function') {
+                VolumeProfile.selectTicker(ticker);
+            } else {
+                VolumeProfile.state.ticker = ticker;
+                VolumeProfile.state.hoverBucket = null;
+                VolumeProfile.state._cache = null;
+                VolumeProfile.render();
+            }
+        }
         this.highlightSelectedCard(ticker);
         const panel = document.getElementById('vs-panel');
         if (panel) {
