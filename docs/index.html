@@ -78,11 +78,10 @@
                     <div class="heat-panel-header-left">
                         <h3 id="heat-calendar-title" style="margin-bottom:0; font-size:0.85rem; font-weight:800; white-space:nowrap;" data-tooltip="Aggregated heatmap representing the maximum volume pressure across selected ETFs. Outliers are highlighted using Global Historical Percentiles (full 5+ year history). The underlying CVI metric uses a 21-day rolling volume/price percentile, making the baseline stationary and comparable across all years.">VOLUME HEAT MAP</h3>
                         <!-- Pagination -->
-                        <div style="display:flex; gap:3px; margin-left:4px; margin-right:2px; flex-shrink: 0;">
+                        <div class="heat-nav-arrows" style="display:flex; gap:3px; margin-left:4px; margin-right:2px; flex-shrink: 0;">
                             <button class="nav-arrow-btn" id="heat-prev" data-tooltip="View previous 90 days (Days 91–180)">&#8592;</button>
                             <button class="nav-arrow-btn" id="heat-next" data-tooltip="Currently viewing most recent 90 days (Days 1–90)" disabled>&#8594;</button>
                         </div>
-                        <span class="heat-peak-count" id="heat-peak-count">0 PEAKS</span>
                     </div>
                     
                     <div class="heat-panel-header-right">
@@ -96,6 +95,7 @@
                             <button class="tab-btn active" data-threshold="95" data-tooltip="Significant Outliers (Top 5% - Default): Filter to days in top 5% of historical intensity.">p95</button>
                             <button class="tab-btn" data-threshold="99" data-tooltip="Extreme Outliers (Top 1%): Filter to days in top 1% of historical intensity.">p99</button>
                         </div>
+                        <span class="heat-peak-count" id="heat-peak-count" data-tooltip="Count of highlighted outlier days matching active spotlight filter.">0 PEAKS</span>
                     </div>
                 </div>
 

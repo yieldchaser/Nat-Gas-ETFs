@@ -315,19 +315,23 @@
 
 /* Peak / Valley counter badge in panel header */
 .heat-peak-count {
-    font-size: 0.6rem;
+    font-size: 0.60rem;
     font-weight: 700;
     letter-spacing: 0.5px;
-    padding: 2px 8px;
-    border-radius: 3px;
+    padding: 3px 8px;
+    border-radius: 4px;
     background: rgba(201, 146, 42, 0.15);
     border: 1px solid rgba(201, 146, 42, 0.4);
     color: #c8922a;
     display: none;
+    align-items: center;
+    white-space: nowrap;
+    line-height: 1.2;
     transition: all 0.25s ease;
+    flex-shrink: 0;
 }
 .heat-peak-count.visible {
-    display: inline-block;
+    display: inline-flex;
 }
 .heat-peak-count.peak-style {
     background: rgba(201, 146, 42, 0.15);
@@ -373,30 +377,32 @@
     box-shadow: 0 0 8px 1px rgba(6, 182, 212, 0.35) !important;
 }
 
-/* ---- VOLUME HEAT MAP HEADER & COMPACT CONTROLS ---- */
+/* VOLUME HEAT MAP HEADER & COMPACT CONTROLS */
 .heat-panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
-    flex-wrap: nowrap;
-    gap: 6px;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    column-gap: 8px;
     width: 100%;
     min-width: 0;
 }
 .heat-panel-header-left {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     min-width: 0;
-    flex-shrink: 1;
+    flex-shrink: 0;
 }
 .heat-panel-header-right {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     margin-left: auto;
     flex-shrink: 0;
+    flex-wrap: wrap;
 }
 
 #heat-spotlight-group {
@@ -2166,6 +2172,10 @@
     margin: 5px 0 3px;
 }
 @media (min-width: 1201px) and (max-width: 1359px) {
+    .heat-panel-header-right {
+        margin-left: auto;
+        justify-content: flex-end;
+    }
     .heat-filter-toolbar {
         flex-direction: column;
         align-items: stretch;
