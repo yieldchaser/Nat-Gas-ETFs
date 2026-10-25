@@ -331,7 +331,7 @@ const Signals = {
             const endDay = Math.min((offset + 1) * days, longestData.length);
             const modeLabel = mode === 'dollar' ? 'DOLLAR VOL' : 'VOLUME';
             const subjectLabel = (side === 'all') ? '' : ` [${side.replace('.TO', '').replace('.L', '')}]`;
-            titleEl.innerHTML = `${modeLabel} HEAT MAP${subjectLabel} <span style="font-size:0.58rem; font-weight:normal; color:rgba(255,255,255,0.45); text-transform:none; margin-left:3px;">(${startDay}–${endDay}d)</span>`;
+            titleEl.innerHTML = `${modeLabel} HEAT MAP${subjectLabel} <span style="font-size:0.54rem; font-weight:normal; color:rgba(255,255,255,0.45); text-transform:none; margin-left:2px;">(${startDay}–${endDay}d)</span>`;
         }
 
         // Build a date-to-index map for each active ETF to ensure date alignment across holidays
