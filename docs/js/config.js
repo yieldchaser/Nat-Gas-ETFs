@@ -170,8 +170,8 @@ const CONFIG = {
     fetchPeriod: '2y',
     fetchInterval: '1d',
 
-    // Format ISO date (YYYY-MM-DD) into readable ordinal string (e.g. 19th May, '26)
-    formatDateOrdinal(iso, includeApostrophe = true) {
+    // Format ISO date (YYYY-MM-DD) into readable ordinal string (e.g. 19th May, 2026)
+    formatDateOrdinal(iso) {
         if (!iso || typeof iso !== 'string') return iso || '—';
         const parts = iso.split('-');
         if (parts.length < 3) return iso;
@@ -182,14 +182,13 @@ const CONFIG = {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const m = months[mIdx];
         const ordSuffix = (dNum >= 11 && dNum <= 13) ? 'th' : ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'][dNum % 10] || 'th';
-        const yr = includeApostrophe ? "'" + y.slice(-2) : y.slice(-2);
-        return `${dNum}${ordSuffix} ${m}, ${yr}`;
+        return `${dNum}${ordSuffix} ${m}, ${y}`;
     }
 };
 
-function formatDisplayDate(iso, includeApostrophe = true) {
+function formatDisplayDate(iso) {
     if (typeof CONFIG !== 'undefined' && typeof CONFIG.formatDateOrdinal === 'function') {
-        return CONFIG.formatDateOrdinal(iso, includeApostrophe);
+        return CONFIG.formatDateOrdinal(iso);
     }
     if (!iso || typeof iso !== 'string') return iso || '—';
     const parts = iso.split('-');
@@ -201,6 +200,5 @@ function formatDisplayDate(iso, includeApostrophe = true) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const m = months[mIdx];
     const ordSuffix = (dNum >= 11 && dNum <= 13) ? 'th' : ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'][dNum % 10] || 'th';
-    const yr = includeApostrophe ? "'" + y.slice(-2) : y.slice(-2);
-    return `${dNum}${ordSuffix} ${m}, ${yr}`;
+    return `${dNum}${ordSuffix} ${m}, ${y}`;
 }
