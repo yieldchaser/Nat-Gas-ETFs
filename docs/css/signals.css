@@ -428,10 +428,20 @@
 .heat-peaks-sub .tab-btn,
 #flow-heat-peaks-threshold-group .tab-btn,
 #cvol-sig-peaks-threshold-group .tab-btn,
-#heat-side-group .tab-btn {
+#heat-side-group .tab-btn,
+#heat-days-group .tab-btn,
+#heat-mode-group .tab-btn {
     padding: 3px 5px;
     font-size: 0.60rem;
     letter-spacing: 0.2px;
+}
+
+.heat-filter-label {
+    font-size: 0.55rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0.8px;
+    user-select: none;
 }
 
 .heat-filter-divider {
@@ -2143,6 +2153,14 @@
         flex-direction: column;
         align-items: flex-start !important;
         gap: 8px !important;
+    }
+    .heat-filter-controls-right {
+        width: 100%;
+        margin-left: 0 !important;
+        justify-content: space-between;
+        gap: 8px;
+        display: flex;
+        align-items: center;
     }
     #heat-side-group {
         overflow-x: auto;

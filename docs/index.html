@@ -79,8 +79,8 @@
                         <h3 id="heat-calendar-title" style="margin-bottom:0; font-size:0.85rem; font-weight:800; white-space:nowrap;" data-tooltip="Aggregated heatmap representing the maximum volume pressure across selected ETFs. Outliers are highlighted using Global Historical Percentiles (full 5+ year history). The underlying CVI metric uses a 21-day rolling volume/price percentile, making the baseline stationary and comparable across all years.">VOLUME HEAT MAP</h3>
                         <!-- Pagination -->
                         <div style="display:flex; gap:3px; margin-left:4px; margin-right:2px; flex-shrink: 0;">
-                            <button class="nav-arrow-btn" id="heat-prev" data-tooltip="View previous 90 days (Days 91-180)">&#8592;</button>
-                            <button class="nav-arrow-btn" id="heat-next" data-tooltip="View recent 90 days (Days 1-90)" disabled>&#8594;</button>
+                            <button class="nav-arrow-btn" id="heat-prev" data-tooltip="View previous 90 days (Days 91–180)">&#8592;</button>
+                            <button class="nav-arrow-btn" id="heat-next" data-tooltip="Currently viewing most recent 90 days (Days 1–90)" disabled>&#8594;</button>
                         </div>
                         <span class="heat-peak-count" id="heat-peak-count">0 PEAKS</span>
                     </div>
@@ -103,7 +103,7 @@
                 <div class="heat-filter-toolbar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:6px 10px; background:rgba(26,26,40,0.45); border:1px solid rgba(255,255,255,0.05); border-radius:6px; flex-wrap:wrap; gap:8px; width: 100%;">
                     <!-- Left: SIDE & ETF Selection -->
                     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0;">
-                        <span style="font-size:0.55rem; font-weight:800; color:rgba(255,255,255,0.45); letter-spacing:0.8px;">SIDE</span>
+                        <span class="heat-filter-label">SIDE</span>
                         <div class="tab-group" id="heat-side-group" style="margin: 0; padding: 2px; flex-shrink: 0; display:flex; align-items:center; gap:2px;">
                             <button class="tab-btn active" data-side="all" data-tooltip="Analyze all 6 ETFs (BOIL, HNU, 3NGL, KOLD, HND, 3NGS) simultaneously.">ALL</button>
                             <button class="tab-btn" data-side="long" data-tooltip="Analyze only long-side leveraged ETFs (BOIL, HNU, 3NGL).">LONG</button>
@@ -122,12 +122,22 @@
                             <button class="tab-btn heat-etf-short" data-side="3NGS.L" data-tooltip="3NGS.L (WisdomTree NG 3x Daily Short — LSE London)">3NGS</button>
                         </div>
                     </div>
-                    <!-- Right: MODE -->
-                    <div style="display:flex; align-items:center; gap:6px; margin-left:auto; flex-shrink:0;">
-                        <span style="font-size:0.55rem; font-weight:800; color:rgba(255,255,255,0.45); letter-spacing:0.8px;">MODE</span>
-                        <div class="tab-group" id="heat-mode-group" style="margin: 0; padding: 2px; flex-shrink: 0;">
-                            <button class="tab-btn active" data-mode="share" data-tooltip="CVI (Capitulation Volume Index): Bounded score (0-10,000) representing (Volume Rank 21d) &times; (1 - Price Rank 21d). Highlights share volume spikes at local bottoms/tops.">S</button>
-                            <button class="tab-btn" data-mode="dollar" data-tooltip="DVCVI (Dollar-Volume CVI): Bounded score representing (Dollar Volume Rank 21d) &times; (1 - Price Rank 21d). Adjusts volume pressure for the trading value of assets.">$</button>
+                    <div class="heat-filter-controls-right" style="display:flex; align-items:center; gap:10px; margin-left:auto; flex-shrink:0;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span class="heat-filter-label">DAYS</span>
+                            <div class="tab-group" id="heat-days-group" style="margin: 0; padding: 2px; flex-shrink: 0;">
+                                <button class="tab-btn active" data-days="90" data-tooltip="90-Day View: 5 rows &times; 18 cols (~4.5 months). Standard quarterly lookback.">90D</button>
+                                <button class="tab-btn" data-days="126" data-tooltip="126-Day View: 7 rows &times; 18 cols (6 trading months / 2 financial quarters). Quantitative semi-annual benchmark.">126D</button>
+                                <button class="tab-btn" data-days="180" data-tooltip="180-Day View: 10 rows &times; 18 cols (~8.5 months). Multi-season cycle perspective.">180D</button>
+                                <button class="tab-btn" data-days="252" data-tooltip="252-Day View: 14 rows &times; 18 cols (1 full annual trading year). Comprehensive 12-month commodity cycle.">252D</button>
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span class="heat-filter-label">MODE</span>
+                            <div class="tab-group" id="heat-mode-group" style="margin: 0; padding: 2px; flex-shrink: 0;">
+                                <button class="tab-btn active" data-mode="share" data-tooltip="CVI (Capitulation Volume Index): Bounded score (0-10,000) representing (Volume Rank 21d) &times; (1 - Price Rank 21d). Highlights share volume spikes at local bottoms/tops.">S</button>
+                                <button class="tab-btn" data-mode="dollar" data-tooltip="DVCVI (Dollar-Volume CVI): Bounded score representing (Dollar Volume Rank 21d) &times; (1 - Price Rank 21d). Adjusts volume pressure for the trading value of assets.">$</button>
+                            </div>
                         </div>
                     </div>
                 </div>

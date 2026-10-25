@@ -248,20 +248,21 @@ const Signals = {
         }).join('');
     },
 
-    renderHeatCalendar(allMetrics, offset = 0, mode = 'share', side = 'all', spotlightMode = 'off', peaksThreshold = 95, globalPercentiles = null) {
+    renderHeatCalendar(allMetrics, offset = 0, mode = 'share', side = 'all', spotlightMode = 'off', peaksThreshold = 95, globalPercentiles = null, days = 90) {
         const container = document.getElementById('heat-calendar');
         if (!container) return;
 
-        // If mode/side not explicitly passed, fallback to window.App values
+        // If mode/side/days not explicitly passed, fallback to window.App values
         if (window.App) {
             if (arguments.length < 3) mode = window.App.heatMode || 'share';
             if (arguments.length < 4) side = window.App.heatSide || 'all';
             if (arguments.length < 5) spotlightMode = window.App.heatSpotlightMode || (window.App.heatPeaksMode ? 'peaks' : 'off');
             if (arguments.length < 6) peaksThreshold = window.App.heatPeaksThreshold || 95;
-            if (arguments.length < 7) {
+            if (arguments.length < 7 || !globalPercentiles) {
                 const globalObj = window.App.heatGlobalPercentiles;
                 globalPercentiles = (globalObj && globalObj[mode]) ? globalObj[mode][side] : null;
             }
+            if (arguments.length < 8 && window.App) days = window.App.heatDays || 90;
         }
         if (spotlightMode === true) spotlightMode = 'peaks';
         else if (!spotlightMode) spotlightMode = 'off';
@@ -295,21 +296,42 @@ const Signals = {
         if (longestData.length === 0) return;
 
         // Pagination controls
-        const maxOffset = Math.floor((longestData.length - 1) / 90);
+        const maxOffset = Math.max(0, Math.floor((longestData.length - 1) / days));
         offset = Math.max(0, Math.min(offset, maxOffset));
 
         const hp = document.getElementById('heat-prev');
         const hn = document.getElementById('heat-next');
         const titleEl = document.getElementById('heat-calendar-title');
-        if (hp) hp.disabled = (offset >= maxOffset);
-        if (hn) hn.disabled = (offset === 0);
+
+        if (hp) {
+            const isPrevDisabled = (offset >= maxOffset);
+            hp.disabled = isPrevDisabled;
+            if (isPrevDisabled) {
+                hp.setAttribute('data-tooltip', 'No older data available');
+            } else {
+                const prevStart = (offset + 1) * days + 1;
+                const prevEnd = Math.min((offset + 2) * days, longestData.length);
+                hp.setAttribute('data-tooltip', `View previous ${days} days (Days ${prevStart}–${prevEnd})`);
+            }
+        }
+        if (hn) {
+            const isNextDisabled = (offset === 0);
+            hn.disabled = isNextDisabled;
+            if (isNextDisabled) {
+                hn.setAttribute('data-tooltip', `Currently viewing most recent ${days} days (Days 1–${days})`);
+            } else {
+                const nextStart = (offset - 1) * days + 1;
+                const nextEnd = offset * days;
+                hn.setAttribute('data-tooltip', `View recent ${days} days (Days ${nextStart}–${nextEnd})`);
+            }
+        }
 
         if (titleEl) {
-            const startDay = offset * 90 + 1;
-            const endDay = Math.min((offset + 1) * 90, longestData.length);
+            const startDay = offset * days + 1;
+            const endDay = Math.min((offset + 1) * days, longestData.length);
             const modeLabel = mode === 'dollar' ? 'DOLLAR VOL' : 'VOLUME';
             const subjectLabel = (side === 'all') ? '' : ` [${side.replace('.TO', '').replace('.L', '')}]`;
-            titleEl.innerHTML = `${modeLabel} HEAT MAP${subjectLabel} <span style="font-size:0.58rem; font-weight:normal; color:rgba(255,255,255,0.45); text-transform:none; margin-left:3px;">(${startDay}-${endDay}d)</span>`;
+            titleEl.innerHTML = `${modeLabel} HEAT MAP${subjectLabel} <span style="font-size:0.58rem; font-weight:normal; color:rgba(255,255,255,0.45); text-transform:none; margin-left:3px;">(${startDay}–${endDay}d)</span>`;
         }
 
         // Build a date-to-index map for each active ETF to ensure date alignment across holidays
@@ -327,7 +349,6 @@ const Signals = {
             indexMaps[t] = map;
         }
 
-        const days = 90;
         const dailyScores = [];
         const dataLength = longestData.length;
         const startIndex = dataLength - (offset + 1) * days;
@@ -986,7 +1007,7 @@ const Signals = {
         this.renderAlertFeed(allMetrics);
         this.renderStressMatrix(allMetrics);
         this.renderSideConvergence(sideConvergence);
-        this.renderHeatCalendar(allMetrics, window.App ? window.App.heatOffset : 0, window.App ? window.App.heatMode : 'share', window.App ? window.App.heatSide : 'all');
+        this.renderHeatCalendar(allMetrics, window.App ? window.App.heatOffset : 0, window.App ? window.App.heatMode : 'share', window.App ? window.App.heatSide : 'all', window.App ? window.App.heatSpotlightMode : 'off', window.App ? window.App.heatPeaksThreshold : 95, null, window.App ? window.App.heatDays : 90);
         this.renderConvergenceGauges(allMetrics);
         this.renderCorrelationBars(allMetrics);
         this.renderValidationBanner(allMetrics);

@@ -163,7 +163,7 @@ const CONFIG = {
     // History length for charts
     sparklineDays: 30,
     volumeBarDays: 30,
-    heatmapDays: 180,
+    heatmapDays: 756,
 
     // Yahoo Finance chart API period
     fetchPeriod: '2y',
