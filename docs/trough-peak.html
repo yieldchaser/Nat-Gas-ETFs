@@ -216,7 +216,7 @@ input[type=range]:hover::-moz-range-thumb {
 .chart-canvas-wrap { position: relative; height: 400px; width: 100%; margin-bottom: 16px; }
 #tp-canvas { width: 100%; height: 100%; cursor: crosshair; }
 #drawdown-canvas { width: 100%; height: 100%; cursor: crosshair; }
-.dd-horizon-btn.active { border-color: #f85149; color: #f85149; background: rgba(248, 81, 73, 0.08); }
+.dd-horizon-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0, 255, 255, 0.05); }
 
 /* ETF DRAWDOWN ANALYSIS */
 .dd-mode-tabs {
@@ -235,8 +235,7 @@ input[type=range]:hover::-moz-range-thumb {
 .dd-kpi-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
-    border-top: 2px solid var(--cyan);
-    border-radius: 6px;
+        border-radius: 6px;
     padding: 10px 14px;
     display: flex;
     flex-direction: column;
@@ -280,21 +279,6 @@ input[type=range]:hover::-moz-range-thumb {
     }
 }
 
-/* ---- VOLUME PROFILE ---- */
-.vp-canvas-wrap { height: 340px; }
-#vp-canvas { width: 100%; height: 100%; cursor: crosshair; display: block; }
-.vp-range-label { font-size: 0.62rem; color: rgba(255,255,255,0.55); margin-left: 10px; letter-spacing: 0.5px; font-family: 'JetBrains Mono', monospace; }
-.vp-range-label .vp-log { color: #d4a830; font-weight: 800; }
-.vp-date { background: #14141e; border: 1px solid var(--border-primary); border-radius: 4px; color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; padding: 3px 6px; color-scheme: dark; }
-.vp-stats { font-size: 0.62rem; font-weight: 700; color: rgba(255,255,255,0.7); display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
-.vp-stats b { color: var(--cyan); }
-.vp-tt-badge { display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 3px; font-size: 0.55rem; font-weight: 800; letter-spacing: 0.5px; vertical-align: 1px; }
-.vp-tt-poc { color: #d4a830; background: rgba(212,168,48,0.12); border: 1px solid rgba(212,168,48,0.55); }
-.vp-tt-va { color: #7fb4c4; background: rgba(80,144,160,0.12); border: 1px solid rgba(80,144,160,0.55); }
-.vp-tt-out { color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18); }
-.tp-title .panel-subtitle { text-transform: none; }
-#vp-panel .chart-footer { flex-direction: column; align-items: stretch; gap: 10px; }
-#vp-panel .chart-footer > div:last-child { text-align: left; }
 
 .chart-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05); }
 .chart-legend { display: flex; gap: 24px; }
@@ -408,7 +392,7 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 .val-cyan { color: var(--cyan); }
 .val-muted { color: #fff; opacity: 0.85; }
 
-#chart-tooltip, #dd-tooltip, #vp-tooltip {
+#chart-tooltip, #dd-tooltip {
     position: absolute;
     display: none;
     background: rgba(22, 22, 36, 0.95);
@@ -454,8 +438,6 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     .horizon-group { flex-wrap: wrap; gap: 4px; }
     .horizon-btn { font-size: 0.55rem; padding: 4px 8px; }
     .tab-btn { font-size: 0.62rem; padding: 5px 10px; }
-    #vp-range-tabs { flex-wrap: wrap; }
-    #vp-range-tabs .tab-btn { padding: 5px 8px; }
 
     /* Chart canvas shorter on mobile */
     .chart-canvas-wrap { height: 260px; }
@@ -489,7 +471,6 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 @media (max-width: 420px) {
     .tp-main { padding: 10px 8px 32px; }
     .chart-canvas-wrap { height: 220px; }
-    .vp-canvas-wrap { height: 220px; }
     .tp-title { font-size: 1rem; letter-spacing: 0.5px; }
     .slider-label { display: none; } /* value display is enough on very small screens */
     table.cycle-table { min-width: 460px; font-size: 0.65rem; }
@@ -1157,44 +1138,6 @@ select.calc-input { cursor: pointer; }
             </div>
         </div>
     </div>
-
-    <!-- VOLUME PROFILE -->
-    <div class="chart-container" id="vp-panel">
-        <div class="chart-header">
-            <div class="tp-title-row">
-                <h2 class="tp-title" style="font-size: 1rem;" data-tooltip="Shares traded at each price level over the selected window. Green/red splits volume by up versus down sessions. Pick the ETF from the chips under the header, the window from the range tabs; CUSTOM sets exact start and end dates.">Volume Profile <span class="panel-subtitle">&mdash; volume at price</span></h2>
-                <span class="vp-range-label" id="vp-range-label"></span>
-            </div>
-            <div class="chart-controls">
-                <div class="tab-group" id="vp-range-tabs" style="margin:0; padding:3px;">
-                    <button class="tab-btn" data-vp-range="3m" data-tooltip="Last 3 months of sessions">3M</button>
-                    <button class="tab-btn" data-vp-range="6m" data-tooltip="Last 6 months of sessions">6M</button>
-                    <button class="tab-btn active" data-vp-range="1y" data-tooltip="Last 12 months of sessions (default window)">1Y</button>
-                    <button class="tab-btn" data-vp-range="2y" data-tooltip="Last 2 years of sessions">2Y</button>
-                    <button class="tab-btn" data-vp-range="5y" data-tooltip="Last 5 years of sessions">5Y</button>
-                    <button class="tab-btn" data-vp-range="all" data-tooltip="Full history since inception">ALL</button>
-                    <button class="tab-btn" data-vp-range="custom" data-tooltip="Pick an exact start and end date">CUSTOM</button>
-                </div>
-                <div id="vp-fixed-controls" style="display:none; align-items:center; gap:6px;">
-                    <input type="date" class="vp-date" id="vp-from" data-tooltip="Start of the custom window">
-                    <span style="color:rgba(255,255,255,0.4); font-size:0.62rem;">&rarr;</span>
-                    <input type="date" class="vp-date" id="vp-to" data-tooltip="End of the custom window">
-                </div>
-            </div>
-        </div>
-        <div id="vp-etf-chips" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin:10px 0 8px;"></div>
-        <div class="chart-canvas-wrap vp-canvas-wrap">
-            <canvas id="vp-canvas"></canvas>
-            <div id="vp-tooltip"></div>
-        </div>
-        <div class="chart-footer">
-            <div class="vp-stats" id="vp-stats"><span style="opacity:0.5;">Loading…</span></div>
-            <div style="font-size: 0.7rem; color: #fff; opacity: 0.85;">
-                Each bar is a price bucket scaled by shares traded while price closed in it, split green/red by up versus down sessions. Gold outline marks the POC, the shaded band is the 70% value area, and the dashed line is the range-end close. Log-price buckets switch on automatically when the window price span exceeds 4&times;.
-            </div>
-        </div>
-    </div>
-
     <!-- CYCLE DETAIL TABLE -->
     <div class="table-panel">
         <div class="table-header">
@@ -1973,7 +1916,6 @@ function renderChart(overlayOnly) {
     if (!d) {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0,0, canvas.width, canvas.height);
-        renderVolumeProfile();
         return;
     }
 
@@ -1998,488 +1940,8 @@ function renderChart(overlayOnly) {
 
     // Draw overlay on top
     drawChartOverlay(canvas, d, cycles, t.color);
-
-    if (!overlayOnly) renderVolumeProfile();
 }
 
-// ── VOLUME PROFILE ───────────────────────────────────────────────────────────
-const VP_PRESETS = { '3m': 90, '6m': 180, '1y': 365, '2y': 730, '5y': 1826, 'all': null };
-const vpState = { etf: state.activeTab, range: '1y', fixedFrom: null, fixedTo: null, hoverBucket: null, last: null, cacheKey: null };
-
-function vpRangeIndices(d, rangeKey) {
-    if (rangeKey === 'custom') {
-        return [
-            vpLowerBound(d.dates, vpState.fixedFrom || d.dates[0]),
-            vpUpperBound(d.dates, vpState.fixedTo || d.dates[d.dates.length - 1])
-        ];
-    }
-    const days = VP_PRESETS[rangeKey];
-    if (days == null) return [0, d.dates.length - 1];
-    const anchor = new Date(d.dates[d.dates.length - 1]).getTime();
-    const cutoff = new Date(anchor - days * 864e5).toISOString().slice(0, 10);
-    let start = d.dates.findIndex(x => x >= cutoff);
-    if (start === -1) start = 0;
-    return [start, d.dates.length - 1];
-}
-
-function vpFmtPrice(p) {
-    if (p == null || !isFinite(p)) return 'n/a';
-    const a = Math.abs(p);
-    if (a >= 1e9) return (p / 1e9).toFixed(2) + 'B';
-    if (a >= 1e6) return (p / 1e6).toFixed(1) + 'M';
-    if (a >= 1e3) return (p / 1e3).toFixed(1) + 'K';
-    if (a >= 100) return p.toFixed(1);
-    if (a >= 1) return p.toFixed(2);
-    return p.toFixed(3);
-}
-
-function vpFmtVolV(v) {
-    if (v == null || !isFinite(v)) return 'n/a';
-    const a = Math.abs(v);
-    if (a >= 1e12) return (v / 1e12).toFixed(2) + 'T';
-    if (a >= 1e9) return (v / 1e9).toFixed(2) + 'B';
-    if (a >= 1e6) return (v / 1e6).toFixed(2) + 'M';
-    if (a >= 1e3) return (v / 1e3).toFixed(1) + 'K';
-    return v.toFixed(0);
-}
-
-function vpDrawMessage(ctx, w, h, msg) {
-    ctx.fillStyle = 'rgba(255,255,255,0.45)';
-    ctx.font = '11px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(msg, w / 2, h / 2);
-    ctx.textAlign = 'left';
-}
-
-function vpLowerBound(arr, val) {
-    let lo = 0, hi = arr.length;
-    while (lo < hi) { const mid = (lo + hi) >> 1; if (arr[mid] < val) lo = mid + 1; else hi = mid; }
-    return Math.min(lo, arr.length - 1);
-}
-
-function vpUpperBound(arr, val) {
-    let lo = 0, hi = arr.length;
-    while (lo < hi) { const mid = (lo + hi) >> 1; if (arr[mid] <= val) lo = mid + 1; else hi = mid; }
-    return Math.max(0, lo - 1);
-}
-
-function vpPriceAtFrac(prof, f) {
-    if (prof.useLog) return Math.exp(Math.log(prof.maxP) - f * (Math.log(prof.maxP) - Math.log(prof.minP)));
-    return prof.maxP - f * prof.span;
-}
-
-function vpPriceFrac(prof, price) {
-    if (prof.useLog) return (Math.log(prof.maxP) - Math.log(price)) / (Math.log(prof.maxP) - Math.log(prof.minP));
-    return (prof.maxP - price) / prof.span;
-}
-
-function vpBucketLowPrice(prof, b) {
-    return vpPriceAtFrac(prof, 1 - b / prof.n);
-}
-
-function vpBucketHighPrice(prof, b) {
-    return vpPriceAtFrac(prof, 1 - (b + 1) / prof.n);
-}
-
-function vpBucketMidPrice(prof, b) {
-    return vpPriceAtFrac(prof, 1 - (b + 0.5) / prof.n);
-}
-
-function computeVolumeProfile(dates, closes, volumes, startIdx, endIdx, nBuckets, logScale) {
-    const n = nBuckets || 42;
-    const lo = Math.max(0, Math.min(startIdx, endIdx));
-    const hi = Math.min(dates.length - 1, Math.max(startIdx, endIdx));
-    if (hi - lo < 2 || !volumes || !closes) return null;
-
-    let minP = Infinity, maxP = -Infinity;
-    for (let i = lo; i <= hi; i++) {
-        const c = closes[i];
-        if (c == null || !isFinite(c) || c <= 0) continue;
-        if (c < minP) minP = c;
-        if (c > maxP) maxP = c;
-    }
-    if (!isFinite(minP) || !isFinite(maxP)) return null;
-    if (minP === maxP) { minP *= 0.999; maxP *= 1.001; }
-
-    const span = maxP - minP;
-    const useLog = logScale == null ? (maxP / minP > 4) : !!logScale;
-    const logMin = useLog ? Math.log(minP) : 0;
-    const logSpan = useLog ? Math.log(maxP) - logMin : 0;
-    const bucketOf = c => useLog
-        ? Math.min(n - 1, Math.max(0, Math.floor(((Math.log(c) - logMin) / logSpan) * n)))
-        : Math.min(n - 1, Math.max(0, Math.floor(((c - minP) / span) * n)));
-
-    const buckets = [];
-    for (let b = 0; b < n; b++) buckets.push({ up: 0, down: 0, total: 0, sessions: 0 });
-
-    let totalVol = 0;
-    for (let i = lo; i <= hi; i++) {
-        const c = closes[i];
-        if (c == null || !isFinite(c) || c <= 0) continue;
-        const b = bucketOf(c);
-        const v = volumes[i] || 0;
-        const prev = (i > 0 && closes[i - 1] != null && isFinite(closes[i - 1])) ? closes[i - 1] : c;
-        if (c >= prev) buckets[b].up += v;
-        else buckets[b].down += v;
-        buckets[b].total += v;
-        buckets[b].sessions += 1;
-        totalVol += v;
-    }
-
-    let pocIdx = 0;
-    for (let b = 1; b < n; b++) if (buckets[b].total > buckets[pocIdx].total) pocIdx = b;
-
-    let vaLo = pocIdx, vaHi = pocIdx;
-    let vaVol = buckets[pocIdx].total;
-    while (vaVol < totalVol * 0.7 && (vaLo > 0 || vaHi < n - 1)) {
-        const below = vaLo > 0 ? buckets[vaLo - 1].total : -1;
-        const above = vaHi < n - 1 ? buckets[vaHi + 1].total : -1;
-        if (above >= below) { vaHi++; vaVol += buckets[vaHi].total; }
-        else { vaLo--; vaVol += buckets[vaLo].total; }
-    }
-
-    return { buckets, n, minP, maxP, span, useLog, pocIdx, vaLo, vaHi, totalVol, startIdx: lo, endIdx: hi };
-}
-
-function drawVolumeProfile(canvas, prof, d, accent, hoverBucket) {
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    const w = rect.width, h = rect.height;
-    if (w < 40 || h < 40) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
-
-    const pad = { top: 14, right: 74, bottom: 26, left: 14 };
-    const chartW = w - pad.left - pad.right;
-    const chartH = h - pad.top - pad.bottom;
-    if (chartW < 10 || chartH < 10) return;
-
-    const n = prof.n;
-    const rowH = chartH / n;
-    const maxTotal = Math.max(prof.buckets[prof.pocIdx].total, 1);
-
-    if (prof.totalVol > 0 && prof.vaLo != null) {
-        ctx.fillStyle = 'rgba(80,144,160,0.10)';
-        ctx.fillRect(pad.left, pad.top + (n - 1 - prof.vaHi) * rowH, chartW, (prof.vaHi - prof.vaLo + 1) * rowH);
-    }
-
-    if (hoverBucket != null && hoverBucket >= 0 && hoverBucket < n) {
-        ctx.fillStyle = 'rgba(255,255,255,0.06)';
-        ctx.fillRect(pad.left, pad.top + (n - 1 - hoverBucket) * rowH, chartW, Math.max(rowH, 2));
-    }
-
-    ctx.font = '9px monospace';
-    for (let t = 0; t <= 5; t++) {
-        const price = vpPriceAtFrac(prof, t / 5);
-        const y = pad.top + (t / 5) * chartH;
-        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-        ctx.beginPath();
-        ctx.moveTo(pad.left, y);
-        ctx.lineTo(pad.left + chartW, y);
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(255,255,255,0.40)';
-        ctx.textAlign = 'left';
-        ctx.fillText(vpFmtPrice(price), pad.left + chartW + 6, y + 3);
-    }
-
-    for (let b = 0; b < n; b++) {
-        const bk = prof.buckets[b];
-        if (bk.total <= 0) continue;
-        const y = pad.top + (n - 1 - b) * rowH;
-        const barH = Math.max(1, rowH - 1);
-        const len = (bk.total / maxTotal) * chartW * 0.96;
-        const upLen = bk.total > 0 ? (bk.up / bk.total) * len : 0;
-        const downLen = len - upLen;
-        ctx.fillStyle = 'rgba(61,184,122,0.75)';
-        ctx.fillRect(pad.left, y, upLen, barH);
-        ctx.fillStyle = 'rgba(192,64,64,0.75)';
-        ctx.fillRect(pad.left + upLen, y, downLen, barH);
-        if (b === prof.pocIdx) {
-            ctx.strokeStyle = 'rgba(212,168,48,0.95)';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(pad.left - 0.5, y - 0.5, len + 1, barH + 1);
-        }
-    }
-
-    if (prof.totalVol > 0) {
-        const y = pad.top + (n - 1 - prof.pocIdx) * rowH + rowH / 2;
-        const len = (prof.buckets[prof.pocIdx].total / maxTotal) * chartW * 0.96;
-        const px = Math.min(len + 6, chartW - 26);
-        ctx.font = 'bold 9px monospace';
-        const pw = ctx.measureText('POC').width;
-        ctx.fillStyle = 'rgba(10,10,18,0.8)';
-        ctx.fillRect(pad.left + px - 2, y - 8, pw + 5, 11);
-        ctx.fillStyle = 'rgba(212,168,48,0.95)';
-        ctx.textAlign = 'left';
-        ctx.fillText('POC', pad.left + px, y + 3);
-    }
-
-    const lastClose = d.closes[prof.endIdx];
-    if (lastClose != null && isFinite(lastClose) && prof.span > 0) {
-        let y = pad.top + vpPriceFrac(prof, lastClose) * chartH;
-        y = Math.max(pad.top, Math.min(pad.top + chartH, y));
-        ctx.strokeStyle = 'rgba(80,144,160,0.9)';
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(pad.left, y);
-        ctx.lineTo(pad.left + chartW, y);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.textAlign = 'left';
-        ctx.font = 'bold 9px monospace';
-        const endLbl = (prof.endIdx === d.dates.length - 1 ? 'LAST ' : 'END ') + vpFmtPrice(lastClose);
-        const endY = y - 3 < pad.top + 9 ? y + 10 : y - 3;
-        const endW = ctx.measureText(endLbl).width;
-        ctx.fillStyle = 'rgba(10,10,18,0.8)';
-        ctx.fillRect(pad.left + 2, endY - 8, endW + 5, 11);
-        ctx.fillStyle = 'rgba(80,144,160,0.95)';
-        ctx.fillText(endLbl, pad.left + 4, endY);
-    }
-}
-
-function vpSyncDateInputs(d) {
-    const fromEl = document.getElementById('vp-from');
-    const toEl = document.getElementById('vp-to');
-    if (!fromEl || !toEl) return;
-    const first = d.dates[0], last = d.dates[d.dates.length - 1];
-    fromEl.min = first; fromEl.max = last;
-    toEl.min = first; toEl.max = last;
-    if (!vpState.fixedFrom || vpState.fixedFrom < first || vpState.fixedFrom > last) vpState.fixedFrom = first;
-    if (!vpState.fixedTo || vpState.fixedTo < first || vpState.fixedTo > last) vpState.fixedTo = last;
-    fromEl.value = vpState.fixedFrom;
-    toEl.value = vpState.fixedTo;
-}
-
-function vpSetRange(rangeKey) {
-    const prev = vpState.range;
-    vpState.range = rangeKey;
-    const t = TICKERS.find(x => x.label === vpState.etf) || TICKERS[0];
-    const d = state.rawData[t.symbol];
-    if (rangeKey === 'custom' && d && (!vpState.fixedFrom || !vpState.fixedTo)) {
-        const [s, e] = vpRangeIndices(d, prev === 'custom' ? '1y' : prev);
-        vpState.fixedFrom = d.dates[s];
-        vpState.fixedTo = d.dates[e];
-    }
-    if (rangeKey === 'custom' && vpState.fixedFrom > vpState.fixedTo) {
-        const tmp = vpState.fixedFrom;
-        vpState.fixedFrom = vpState.fixedTo;
-        vpState.fixedTo = tmp;
-    }
-    const fixed = document.getElementById('vp-fixed-controls');
-    if (fixed) fixed.style.display = rangeKey === 'custom' ? 'flex' : 'none';
-    document.querySelectorAll('#vp-range-tabs .tab-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.vpRange === rangeKey);
-    });
-    renderVolumeProfile();
-}
-
-function renderVolumeProfile() {
-    const canvas = document.getElementById('vp-canvas');
-    if (!canvas) return;
-    const t = TICKERS.find(x => x.label === vpState.etf) || TICKERS[0];
-    const d = state.rawData[t.symbol];
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    const ctx = canvas.getContext('2d');
-
-    if (rect.width < 40 || rect.height < 40) return;
-
-    if (d && d.dates && d.dates.length >= 3 && vpState.range === 'custom') vpSyncDateInputs(d);
-
-    const cacheKey = [
-        t.symbol, vpState.range, vpState.fixedFrom, vpState.fixedTo, dpr,
-        d ? d.dates.length : 0, d ? d.dates[d.dates.length - 1] : '',
-        Math.round(rect.width), Math.round(rect.height)
-    ].join('|');
-    if (cacheKey === vpState.cacheKey) return;
-    vpState.cacheKey = cacheKey;
-
-    vpState.hoverBucket = null;
-    vpState.last = null;
-    const tt = document.getElementById('vp-tooltip');
-    if (tt) tt.style.display = 'none';
-
-    canvas.width = Math.round(rect.width * dpr);
-    canvas.height = Math.round(rect.height * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, rect.width, rect.height);
-
-    if (!d || !d.dates || d.dates.length < 3) {
-        vpDrawMessage(ctx, rect.width, rect.height, 'Volume profile unavailable — no data');
-        vpUpdateMeta(d || null, null, null, null);
-        return;
-    }
-
-    const [startIdx, endIdx] = vpRangeIndices(d, vpState.range);
-
-    const prof = computeVolumeProfile(d.dates, d.closes, d.volumes, startIdx, endIdx, 42);
-    if (!prof) {
-        vpDrawMessage(ctx, rect.width, rect.height, 'No volume data in selected range');
-        vpUpdateMeta(d, null, startIdx, endIdx);
-        return;
-    }
-
-    vpState.last = { prof, d, color: t.color, symbol: t.symbol };
-    drawVolumeProfile(canvas, prof, d, t.color, null);
-    vpUpdateMeta(d, prof, startIdx, endIdx);
-}
-
-function vpUpdateMeta(d, prof, startIdx, endIdx) {
-    const rangeEl = document.getElementById('vp-range-label');
-    if (rangeEl) {
-        if (d && startIdx != null && endIdx != null && d.dates[startIdx] && d.dates[endIdx]) {
-            rangeEl.innerHTML = `${d.dates[startIdx]} → ${d.dates[endIdx]} · ${endIdx - startIdx + 1} sessions` +
-                (prof && prof.useLog ? ' · <span class="vp-log">LOG</span>' : '');
-            rangeEl.title = prof && prof.useLog ? 'Price range spans more than 4x. Buckets use log-price spacing to keep split-adjusted history readable.' : '';
-        } else {
-            rangeEl.innerHTML = '';
-            rangeEl.title = '';
-        }
-    }
-    const statsEl = document.getElementById('vp-stats');
-    if (!statsEl) return;
-    if (!prof || !prof.totalVol) {
-        statsEl.innerHTML = '<span style="opacity:0.5;">NO VOLUME DATA</span>';
-        return;
-    }
-    const pocP = vpBucketMidPrice(prof, prof.pocIdx);
-    const vaLoP = vpBucketLowPrice(prof, prof.vaLo);
-    const vaHiP = vpBucketHighPrice(prof, prof.vaHi);
-    let upTot = 0;
-    for (const b of prof.buckets) upTot += b.up;
-    const upPct = prof.totalVol > 0 ? (upTot / prof.totalVol) * 100 : 0;
-    const endClose = d ? d.closes[prof.endIdx] : null;
-    const hasEnd = endClose != null && isFinite(endClose);
-    let vaPos = '', vaPosColor = 'rgba(255,255,255,0.5)';
-    if (hasEnd) {
-        if (endClose > vaHiP) { vaPos = 'ABOVE VALUE AREA'; vaPosColor = '#3db87a'; }
-        else if (endClose < vaLoP) { vaPos = 'BELOW VALUE AREA'; vaPosColor = '#c04040'; }
-        else { vaPos = 'INSIDE VALUE AREA'; vaPosColor = 'rgba(255,255,255,0.85)'; }
-    }
-    statsEl.innerHTML =
-        `<span><b>POC</b> $${vpFmtPrice(pocP)}</span>` +
-        `<span><b>VALUE AREA</b> $${vpFmtPrice(vaLoP)} – $${vpFmtPrice(vaHiP)}</span>` +
-        (hasEnd ? `<span><b>RANGE CLOSE</b> $${vpFmtPrice(endClose)} <span style="color:${vaPosColor}; font-weight:800;">${vaPos}</span></span>` : '') +
-        `<span><b>TOTAL VOL</b> ${vpFmtVolV(prof.totalVol)}</span>` +
-        `<span style="color:rgba(61,184,122,0.95)"><b style="color:rgba(61,184,122,0.95)">UP-DAY VOL</b> ${upPct.toFixed(0)}%</span>` +
-        `<span style="color:rgba(192,64,64,0.95)"><b style="color:rgba(192,64,64,0.95)">DOWN-DAY VOL</b> ${(100 - upPct).toFixed(0)}%</span>`;
-}
-
-function renderVpEtfChips() {
-    const container = document.getElementById('vp-etf-chips');
-    if (!container) return;
-    container.innerHTML = '';
-    TICKERS.forEach(t => {
-        const active = t.label === vpState.etf;
-        const chip = document.createElement('button');
-        chip.className = 'etf-chip';
-        chip.textContent = t.label;
-        chip.setAttribute('data-tooltip', t.tip);
-        chip.style.color = t.color;
-        chip.style.borderColor = t.color;
-        chip.style.background = active ? t.color + '22' : 'transparent';
-        chip.style.opacity = active ? '1' : '0.45';
-        chip.addEventListener('click', () => {
-            vpState.etf = t.label;
-            renderVpEtfChips();
-            renderVolumeProfile();
-        });
-        container.appendChild(chip);
-    });
-}
-
-function initVolumeProfileControls() {
-    const tabs = document.getElementById('vp-range-tabs');
-    if (tabs) {
-        tabs.addEventListener('click', e => {
-            const btn = e.target.closest('button');
-            if (!btn || !btn.dataset.vpRange) return;
-            vpSetRange(btn.dataset.vpRange);
-        });
-    }
-    const fromEl = document.getElementById('vp-from');
-    const toEl = document.getElementById('vp-to');
-    const onDate = () => {
-        if (!fromEl || !toEl) return;
-        vpState.fixedFrom = fromEl.value || null;
-        vpState.fixedTo = toEl.value || null;
-        if (vpState.fixedFrom && vpState.fixedTo && vpState.fixedFrom > vpState.fixedTo) {
-            const tmp = vpState.fixedFrom;
-            vpState.fixedFrom = vpState.fixedTo;
-            vpState.fixedTo = tmp;
-            fromEl.value = vpState.fixedFrom;
-            toEl.value = vpState.fixedTo;
-        }
-        renderVolumeProfile();
-    };
-    if (fromEl) fromEl.addEventListener('change', onDate);
-    if (toEl) toEl.addEventListener('change', onDate);
-}
-
-function initVolumeProfileHover() {
-    const canvas = document.getElementById('vp-canvas');
-    const tooltip = document.getElementById('vp-tooltip');
-    if (!canvas || !tooltip) return;
-
-    canvas.addEventListener('mousemove', e => {
-        const last = vpState.last;
-        if (!last) return;
-        const rect = canvas.getBoundingClientRect();
-        const pad = { top: 14, right: 74, bottom: 26, left: 14 };
-        const chartH = rect.height - pad.top - pad.bottom;
-        if (chartH <= 0) return;
-        const y = e.clientY - rect.top;
-        const b = (last.prof.n - 1) - Math.floor(((y - pad.top) / chartH) * last.prof.n);
-        if (b < 0 || b >= last.prof.n) {
-            if (vpState.hoverBucket !== null) {
-                vpState.hoverBucket = null;
-                drawVolumeProfile(canvas, last.prof, last.d, last.color, null);
-                tooltip.style.display = 'none';
-            }
-            return;
-        }
-        if (vpState.hoverBucket !== b) {
-            vpState.hoverBucket = b;
-            drawVolumeProfile(canvas, last.prof, last.d, last.color, b);
-        }
-        const prof = last.prof;
-        const bk = prof.buckets[b];
-        const loP = vpBucketLowPrice(prof, b);
-        const hiP = vpBucketHighPrice(prof, b);
-        const pct = prof.totalVol > 0 ? (bk.total / prof.totalVol) * 100 : 0;
-        const upPct = bk.total > 0 ? (bk.up / bk.total) * 100 : 0;
-        let badge;
-        if (b === prof.pocIdx) badge = '<span class="vp-tt-badge vp-tt-poc">POC</span>';
-        else if (b >= prof.vaLo && b <= prof.vaHi) badge = '<span class="vp-tt-badge vp-tt-va">VALUE AREA</span>';
-        else badge = '<span class="vp-tt-badge vp-tt-out">OUTSIDE VA</span>';
-        tooltip.innerHTML =
-            `<div class="tooltip-date">$${vpFmtPrice(loP)} – $${vpFmtPrice(hiP)}${badge}</div>` +
-            `<div class="tooltip-row"><span class="tooltip-lbl">VOLUME</span><span class="tooltip-val">${vpFmtVolV(bk.total)}</span></div>` +
-            `<div class="tooltip-row"><span class="tooltip-lbl">VOL SHARE</span><span class="tooltip-val">${pct.toFixed(1)}%</span></div>` +
-            `<div class="tooltip-row"><span class="tooltip-lbl">SESSIONS</span><span class="tooltip-val">${bk.sessions}</span></div>` +
-            `<div class="tooltip-row"><span class="tooltip-lbl">UP-DAY VOL</span><span class="tooltip-val" style="color:#3db87a">${upPct.toFixed(0)}%</span></div>` +
-            `<div class="tooltip-row"><span class="tooltip-lbl">DOWN-DAY VOL</span><span class="tooltip-val" style="color:#e06060">${(100 - upPct).toFixed(0)}%</span></div>`;
-        tooltip.style.display = 'block';
-        const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
-        let left = e.clientX - rect.left + 16;
-        if (left + tw > rect.width - 4) left = e.clientX - rect.left - tw - 16;
-        left = Math.max(4, left);
-        let top = e.clientY - rect.top - th / 2;
-        top = Math.max(4, Math.min(top, rect.height - th - 4));
-        tooltip.style.left = left + 'px';
-        tooltip.style.top = top + 'px';
-    });
-
-    canvas.addEventListener('mouseleave', () => {
-        const last = vpState.last;
-        if (vpState.hoverBucket !== null && last) {
-            vpState.hoverBucket = null;
-            drawVolumeProfile(canvas, last.prof, last.d, last.color, null);
-        }
-        tooltip.style.display = 'none';
-    });
-}
 
 // ── Tooltip/Crosshair Logic ────────────────────────────────────────────────
 function initChartHover() {
@@ -3744,8 +3206,7 @@ function renderDrawdownKPIs() {
     const tickerColor = DD_COLORS[activeSym] || '#3db87a';
 
     // Card 1: Current Drawdown
-    curEl.style.borderTopColor = m.currentDD < -0.01 ? '#e06060' : '#3db87a';
-    curEl.querySelector('.dd-kpi-lbl').innerHTML = `<span style="color:${tickerColor}">${activeTicker.label}</span> &middot; CURRENT DRAWDOWN`;
+        curEl.querySelector('.dd-kpi-lbl').innerHTML = `<span style="color:${tickerColor}">${activeTicker.label}</span> &middot; CURRENT DRAWDOWN`;
     const curValEl = curEl.querySelector('.dd-kpi-val');
     curValEl.textContent = `${m.currentDD.toFixed(1)}%`;
     curValEl.style.color = m.currentDD < -0.01 ? '#e06060' : '#3db87a';
@@ -3754,8 +3215,7 @@ function renderDrawdownKPIs() {
         : (ddMode === 'ath' ? 'Trading at ATH' : 'Trading at 52W High');
 
     // Card 2: Max Drawdown
-    mddEl.style.borderTopColor = '#e06060';
-    mddEl.querySelector('.dd-kpi-lbl').textContent = `MAX DRAWDOWN (${ddHorizon.toUpperCase()})`;
+        mddEl.querySelector('.dd-kpi-lbl').textContent = `MAX DRAWDOWN (${ddHorizon.toUpperCase()})`;
     const mddValEl = mddEl.querySelector('.dd-kpi-val');
     mddValEl.textContent = `${m.maxDD.toFixed(1)}%`;
     mddValEl.style.color = '#e06060';
@@ -3763,8 +3223,7 @@ function renderDrawdownKPIs() {
     mddEl.querySelector('.dd-kpi-sub').textContent = `Trough: $${m.troughPrice.toFixed(2)} (${formatDisplayDate(trgIso)})`;
 
     // Card 3: Peak Reference
-    peakEl.style.borderTopColor = tickerColor;
-    peakEl.querySelector('.dd-kpi-lbl').textContent = ddMode === 'ath' ? 'ALL-TIME HIGH' : '52W PEAK REFERENCE';
+        peakEl.querySelector('.dd-kpi-lbl').textContent = ddMode === 'ath' ? 'ALL-TIME HIGH' : '52W PEAK REFERENCE';
     const peakValEl = peakEl.querySelector('.dd-kpi-val');
     peakValEl.textContent = `$${m.peakPrice.toFixed(2)}`;
     peakValEl.style.color = tickerColor;
@@ -3773,8 +3232,7 @@ function renderDrawdownKPIs() {
 
     // Card 4: Days Underwater
     const isDeepUnderwater = m.daysUnderwater > 180;
-    uwEl.style.borderTopColor = isDeepUnderwater ? '#d4a830' : 'var(--cyan)';
-    uwEl.querySelector('.dd-kpi-lbl').textContent = 'DAYS UNDERWATER';
+        uwEl.querySelector('.dd-kpi-lbl').textContent = 'DAYS UNDERWATER';
     const uwValEl = uwEl.querySelector('.dd-kpi-val');
     uwValEl.textContent = m.daysUnderwater === 0 ? '0d' : `${m.daysUnderwater}d`;
     uwValEl.style.color = isDeepUnderwater ? '#d4a830' : 'var(--text-bright)';
@@ -4168,9 +3626,6 @@ const priceDl = document.getElementById('download-price-csv');
 if (priceDl) priceDl.addEventListener('click', downloadActiveEtfPriceCSV);
 initRangeSlider();
 initChartHover();
-initVolumeProfileControls();
-initVolumeProfileHover();
-renderVpEtfChips();
 initDrawdownControls();
 initDrawdownHover();
 renderChartTabs();

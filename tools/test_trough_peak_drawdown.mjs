@@ -235,20 +235,21 @@ console.log('Testing HTML Section Order & DOM Invariants in docs/trough-peak.htm
 
     assert(chartSectionIdx !== -1, 'ENHANCED CHART SECTION found');
     assert(ddSectionIdx !== -1, 'ETF DRAWDOWN ANALYSIS found');
-    assert(vpSectionIdx !== -1, 'VOLUME PROFILE found');
+    assert.strictEqual(vpSectionIdx, -1, 'VOLUME PROFILE must be cleanly removed from trough-peak.html');
     assert(tableSectionIdx !== -1, 'CYCLE DETAIL TABLE found');
     assert(matrixSectionIdx !== -1, 'YEARLY FREQUENCY MATRIX found');
     assert(calcSectionIdx !== -1, 'CALCULATOR found');
 
     // Order assertions
     assert(chartSectionIdx < ddSectionIdx, 'Price & Cycle Map must precede ETF Drawdown Analysis');
-    assert(ddSectionIdx < vpSectionIdx, 'ETF Drawdown Analysis must directly precede Volume Profile');
-    assert(vpSectionIdx < tableSectionIdx, 'Volume Profile must precede Cycle Detail Table');
+    assert(ddSectionIdx < tableSectionIdx, 'ETF Drawdown Analysis must directly precede Cycle Detail Table');
     assert(tableSectionIdx < matrixSectionIdx, 'Cycle Detail Table must precede Yearly Frequency Matrix');
     assert(matrixSectionIdx < calcSectionIdx, 'Yearly Frequency Matrix must precede Calculator');
 
     // Old block must NOT exist
     assert(!html.includes('<!-- ETF DRAWDOWN CHART -->'), 'Old ETF Drawdown Chart comment must be removed');
+    assert(!html.includes('id="vp-panel"'), '#vp-panel must be removed');
+    assert(!html.includes('borderTopColor'), 'No borderTopColor manipulation allowed in DD KPI cards');
 
     // Required Elements
     const requiredIds = [
