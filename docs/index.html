@@ -192,14 +192,20 @@
             <div class="signal-panel" id="vs-panel">
                 <div class="vs-head">
                     <h3 data-tooltip="Price and volume indicators computed from the ETF's full daily history.">PRICE-VOLUME STUDIES <span class="panel-subtitle">— six indicators</span></h3>
-                    <div class="tab-group" id="vs-range-tabs" style="margin:0; padding:2px;">
-                        <button class="tab-btn" data-range="3m" data-tooltip="Last 3 months">3M</button>
-                        <button class="tab-btn" data-range="6m" data-tooltip="Last 6 months">6M</button>
-                        <button class="tab-btn active" data-range="1y" data-tooltip="Last year">1Y</button>
-                        <button class="tab-btn" data-range="2y" data-tooltip="Last 2 years">2Y</button>
-                        <button class="tab-btn" data-range="5y" data-tooltip="Last 5 years">5Y</button>
-                        <button class="tab-btn" data-range="10y" data-tooltip="Last 10 years">10Y</button>
-                        <button class="tab-btn" data-range="all" data-tooltip="All available history">ALL</button>
+                    <div class="vs-head-actions">
+                        <div class="tab-group" id="vs-range-tabs" style="margin:0; padding:2px;">
+                            <button class="tab-btn" data-range="3m" data-tooltip="Last 3 months">3M</button>
+                            <button class="tab-btn" data-range="6m" data-tooltip="Last 6 months">6M</button>
+                            <button class="tab-btn active" data-range="1y" data-tooltip="Last year">1Y</button>
+                            <button class="tab-btn" data-range="2y" data-tooltip="Last 2 years">2Y</button>
+                            <button class="tab-btn" data-range="5y" data-tooltip="Last 5 years">5Y</button>
+                            <button class="tab-btn" data-range="10y" data-tooltip="Last 10 years">10Y</button>
+                            <button class="tab-btn" data-range="all" data-tooltip="All available history">ALL</button>
+                        </div>
+                        <div class="tab-group" id="vs-unit-tabs" style="margin:0; padding:2px;">
+                            <button class="tab-btn active" data-unit="shares" data-tooltip="Measure in raw share volume">S</button>
+                            <button class="tab-btn" data-unit="dollar" data-tooltip="Measure in dollar volume (Price × Shares)">$</button>
+                        </div>
                     </div>
                 </div>
                 <div class="vs-controls">
@@ -215,15 +221,8 @@
                         </div>
                     </div>
                     <div class="vs-control-group">
-                        <span class="vs-control-label">Unit</span>
-                        <div class="tab-group" id="vs-unit-tabs" style="margin:0; padding:2px;">
-                            <button class="tab-btn active" data-unit="shares" data-tooltip="Measure in raw share volume">S</button>
-                            <button class="tab-btn" data-unit="dollar" data-tooltip="Measure in dollar volume (Price × Shares)">$</button>
-                        </div>
-                    </div>
-                    <div class="vs-control-group">
                         <span class="vs-control-label">ETF</span>
-                        <div id="vs-chips" class="vs-chips"></div>
+                        <div id="vs-chips" class="tab-group vs-chips" style="margin:0; padding:2px;"></div>
                     </div>
                 </div>
                 <div class="vs-canvas-wrap" id="vs-canvas-wrap">
