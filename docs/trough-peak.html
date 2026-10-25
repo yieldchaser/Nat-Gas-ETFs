@@ -619,12 +619,10 @@ select.calc-input { cursor: pointer; }
 @media (max-width: 480px) { .calc-stat-grid { grid-template-columns: 1fr; } }
 .calc-stat {
     background: var(--bg-secondary); border: 1px solid var(--border-primary);
-    border-top: 2px solid var(--cyan); border-radius: 6px; padding: 12px 14px;
+    border-radius: 6px; padding: 12px 14px;
     transition: transform 0.15s, border-color 0.2s;
 }
 .calc-stat:hover { transform: translateY(-2px); border-color: var(--border-accent); }
-.calc-stat.headline { border-top-color: var(--green); }
-.calc-stat.amber { border-top-color: #d4a830; }
 .calc-stat-lbl { font-size: 0.58rem; letter-spacing: 1px; color: #fff; opacity: 0.7; font-weight: 700; text-transform: uppercase; }
 .calc-stat-val { font-size: 1.25rem; font-weight: 800; color: var(--text-bright); font-family: 'JetBrains Mono', monospace; margin-top: 5px; line-height: 1.1; }
 .calc-stat-sub { font-size: 0.6rem; color: #fff; opacity: 0.65; font-weight: 600; margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
