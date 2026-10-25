@@ -209,10 +209,11 @@ const Charts = {
             const idx = Math.min(colors.length - 1, Math.floor((day.score / 100) * colors.length));
             cell.style.background = colors[idx];
 
+            const dateFormatted = typeof formatDisplayDate === 'function' ? formatDisplayDate(day.date) : day.date;
             if (isValleys) {
-                cell.setAttribute('data-tooltip', `${day.date}: ${subject}VOL DROUGHT ${day.score.toFixed(0)} (Vol Rank ${(100 - day.score).toFixed(0)}%)`);
+                cell.setAttribute('data-tooltip', `${dateFormatted}: ${subject}VOL DROUGHT ${day.score.toFixed(0)} (Vol Rank ${(100 - day.score).toFixed(0)}%)`);
             } else {
-                cell.setAttribute('data-tooltip', `${day.date}: ${subject}${label} ${day.score.toFixed(0)}`);
+                cell.setAttribute('data-tooltip', `${dateFormatted}: ${subject}${label} ${day.score.toFixed(0)}`);
             }
 
             if (isPeaks) {

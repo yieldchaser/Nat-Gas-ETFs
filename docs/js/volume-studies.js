@@ -91,7 +91,8 @@ const VolumeStudies = {
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const dt = new Date(d + 'T00:00:00');
         const dayName = isNaN(dt.getDay()) ? '' : days[dt.getDay()];
-        return `${d} (${dayName})`;
+        const formatted = typeof formatDisplayDate === 'function' ? formatDisplayDate(d) : d;
+        return dayName ? `${dayName}, ${formatted}` : formatted;
     },
 
     sma(values, n) {
@@ -1049,7 +1050,7 @@ const VolumeStudies = {
             : payload.dates.length - 1;
 
         const isHover = (hoverIdx != null && hoverIdx !== payload.dates.length - 1);
-        const dateTag = isHover ? `<span class="vs-reading-item"><span class="vs-lbl">DATE</span> ${payload.dates[last]}</span>` : '';
+        const dateTag = isHover ? `<span class="vs-reading-item"><span class="vs-lbl">DATE</span> ${typeof formatDisplayDate === 'function' ? formatDisplayDate(payload.dates[last]) : payload.dates[last]}</span>` : '';
 
         const close = payload.closes[last];
         const prev = last > 0 ? payload.closes[last - 1] : close;

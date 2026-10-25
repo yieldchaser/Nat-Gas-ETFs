@@ -724,7 +724,7 @@ const Cards = {
             tooltipEl.innerHTML = `
                 <div class="tt-header">
                     <span class="tt-ticker" style="color:${color}">${ticker}</span>
-                    <span class="tt-date">${d.date || '—'}</span>
+                    <span class="tt-date">${typeof formatDisplayDate === 'function' ? formatDisplayDate(d.date) : (d.date || '—')}</span>
                 </div>
                 <div class="tt-row">
                     <span class="tt-lbl">Price</span>

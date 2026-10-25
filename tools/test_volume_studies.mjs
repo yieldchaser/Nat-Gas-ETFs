@@ -401,6 +401,7 @@ eq(VS.fmtPct(-1.2), '-1.20%', 'fmtPct negative');
 eq(VS.fmtPrice(null), '—', 'fmtPrice null returns em-dash');
 eq(VS.fmtDate(null), '—', 'fmtDate null returns em-dash');
 eq(VS.fmtFullDate(null), '—', 'fmtFullDate null returns em-dash');
+eq(VS.fmtFullDate('2026-04-09'), "Thu, 9th Apr, '26", 'fmtFullDate readable ordinal date');
 eq(VS.fmtPrice(7874000), '7.9M', 'fmtPrice millions');
 eq(VS.fmtPrice(5389013280), '5.39B', 'fmtPrice billions');
 eq(VS.fmtDate('2024-03-15'), "Mar '24", 'fmtDate');

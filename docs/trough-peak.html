@@ -1432,6 +1432,21 @@ LTCG (&gt;24 months):  12.5% base + surcharge capped at 15% + 4% cess  →  up t
 
 <!-- Custom scripts only - No external charting libraries -->
 <script>
+function formatDisplayDate(iso, includeApostrophe = true) {
+    if (!iso || typeof iso !== 'string') return iso || '—';
+    const parts = iso.split('-');
+    if (parts.length < 3) return iso;
+    const y = parts[0];
+    const mIdx = parseInt(parts[1], 10) - 1;
+    const dNum = parseInt(parts[2].slice(0, 2), 10);
+    if (isNaN(dNum) || isNaN(mIdx) || mIdx < 0 || mIdx > 11) return iso;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const m = months[mIdx];
+    const ordSuffix = (dNum >= 11 && dNum <= 13) ? 'th' : ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'][dNum % 10] || 'th';
+    const yr = includeApostrophe ? "'" + y.slice(-2) : y.slice(-2);
+    return `${dNum}${ordSuffix} ${m}, ${yr}`;
+}
+
 'use strict';
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -2431,7 +2446,7 @@ function initChartHover() {
                     </div>` : '';
 
                     tooltip.innerHTML = `
-                    <div class="tooltip-date">${date}</div>
+                    <div class="tooltip-date">${formatDisplayDate(date)}</div>
                     <div class="tooltip-row">
                         <span class="tooltip-lbl">Price</span>
                         <span class="tooltip-val" style="color:var(--text-bright)">$${fmt(price)}</span>
@@ -2906,7 +2921,7 @@ function renderTable() {
 
             return `<tr>
                 <td style="color:rgba(255,255,255,0.85);">${c.num}</td>
-                <td style="color:var(--cyan);">${c.troughDate}</td>
+                <td style="color:var(--cyan);">${formatDisplayDate(c.troughDate)}</td>
                 <td style="color:rgba(239,100,100,0.75);">$${fmt(c.troughPrice)}</td>
                 <td style="color:#3db87a;">${c.peakDate}</td>
                 <td style="color:rgba(61,184,122,0.8);">$${fmt(c.peakPrice)}</td>
