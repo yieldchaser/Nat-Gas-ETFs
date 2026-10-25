@@ -1,12 +1,13 @@
 /* ============================================
    Price-Volume Studies — classic volume indicators
-   Volume, Volume Oscillator, Net Volume, OBV, PVT
+   Volume, Volume Oscillator, Net Volume, CMF, OBV, PVT
    ============================================ */
 
 const VolumeStudies = {
     state: {
         ticker: 'BOIL',
         study: 'vol',
+        unit: 'shares',
         range: '1y',
         customRange: null,    // { startIdx, endIdx }
         hoverIdx: null,
@@ -33,13 +34,13 @@ const VolumeStudies = {
     PAD: { top: 12, right: 14, bottom: 24, left: 58 },
 
     _cfg() {
-        const fallback = { oscillator: { fast: 5, slow: 21 }, ma: 21 };
+        const fallback = { oscillator: { fast: 5, slow: 21 }, ma: 21, cmf: 21 };
         if (typeof CONFIG === 'undefined') return fallback;
         return CONFIG.volumeStudies || fallback;
     },
 
     fmtVol(v, unit) {
-        if (v == null || !isFinite(v)) return '--';
+        if (v == null || !isFinite(v)) return '—';
         const prefix = unit === 'dollar' ? '$' : '';
         const a = Math.abs(v);
         const sign = v < 0 ? '-' : '';
@@ -51,7 +52,7 @@ const VolumeStudies = {
     },
 
     fmtSigned(v, unit) {
-        if (v == null || !isFinite(v)) return '--';
+        if (v == null || !isFinite(v)) return '—';
         const sign = v > 0 ? '+' : (v < 0 ? '-' : '');
         const prefix = unit === 'dollar' ? '$' : '';
         const a = Math.abs(v);
@@ -62,8 +63,13 @@ const VolumeStudies = {
         return `${sign}${prefix}${a.toFixed(0)}`;
     },
 
+    fmtPct(v) {
+        if (v == null || !isFinite(v)) return '—';
+        return (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+    },
+
     fmtPrice(p) {
-        if (p == null || !isFinite(p)) return '--';
+        if (p == null || !isFinite(p)) return '—';
         const a = Math.abs(p);
         if (a >= 1e9) return (p / 1e9).toFixed(2) + 'B';
         if (a >= 1e6) return (p / 1e6).toFixed(1) + 'M';
@@ -74,14 +80,14 @@ const VolumeStudies = {
     },
 
     fmtDate(d) {
-        if (!d) return '--';
+        if (!d) return '—';
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const m = parseInt(d.slice(5, 7), 10);
         return `${months[m - 1] || '?'} '${d.slice(2, 4)}`;
     },
 
     fmtFullDate(d) {
-        if (!d) return '--';
+        if (!d) return '—';
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const dt = new Date(d + 'T00:00:00');
         const dayName = isNaN(dt.getDay()) ? '' : days[dt.getDay()];
@@ -157,6 +163,32 @@ const VolumeStudies = {
         });
     },
 
+    cmf(highs, lows, closes, volumes, len = 21) {
+        const n = closes.length;
+        const out = new Array(n).fill(null);
+        if (n < len || len <= 0) return out;
+        const mfv = new Array(n);
+        for (let i = 0; i < n; i++) {
+            const h = highs[i], l = lows[i], c = closes[i], v = volumes[i];
+            const range = h - l;
+            const clv = (range > 0) ? ((c - l) - (h - c)) / range : 0;
+            mfv[i] = clv * v;
+        }
+        let sumMfv = 0;
+        let sumVol = 0;
+        for (let i = 0; i < len; i++) {
+            sumMfv += mfv[i];
+            sumVol += volumes[i];
+        }
+        out[len - 1] = sumVol > 0 ? Math.max(-1, Math.min(1, sumMfv / sumVol)) : 0;
+        for (let i = len; i < n; i++) {
+            sumMfv += mfv[i] - mfv[i - len];
+            sumVol += volumes[i] - volumes[i - len];
+            out[i] = sumVol > 0 ? Math.max(-1, Math.min(1, sumMfv / sumVol)) : 0;
+        }
+        return out;
+    },
+
     sliceStartForDays(dates, days, nowMs) {
         if (!dates || !dates.length) return 0;
         if (days == null) return 0;
@@ -209,13 +241,15 @@ const VolumeStudies = {
         if (!history || !history.length) return null;
         const options = opts || {};
         const unit = options.unit || this.state.unit || 'shares';
-        const dates = [], closes = [], rawVolumes = [], dollarVolumes = [];
+        const dates = [], closes = [], highs = [], lows = [], rawVolumes = [], dollarVolumes = [];
         for (const b of history) {
             if (!b || b.close == null) continue;
             const c = b.close;
             const v = b.volume || 0;
             dates.push(b.date);
             closes.push(c);
+            highs.push(b.high != null ? b.high : c);
+            lows.push(b.low != null ? b.low : c);
             rawVolumes.push(v);
             dollarVolumes.push(c * v);
         }
@@ -265,6 +299,13 @@ const VolumeStudies = {
             const line = this.rollingSum(signed, maLen);
             return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
                 ...extraBase, bars: signed, line, ma: null, zeroCentered: true, study
+            });
+        }
+        if (study === 'cmf') {
+            const cmfLen = (cfg && cfg.cmf) || maLen || 21;
+            const line = this.cmf(highs, lows, closes, volumes, cmfLen);
+            return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
+                ...extraBase, bars: null, line, ma: null, zeroCentered: true, study
             });
         }
         if (study === 'obv' || study === 'pvt') {
@@ -326,6 +367,18 @@ const VolumeStudies = {
         }
         this._payload = payload;
         this._syncSliderToRange(payload.fullLength, payload.startIdx, payload.endIdx);
+        const studyTabs = document.getElementById('vs-study-tabs');
+        if (studyTabs) {
+            studyTabs.querySelectorAll('button').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-study') === this.state.study);
+            });
+        }
+        const unitTabs = document.getElementById('vs-unit-tabs');
+        if (unitTabs) {
+            unitTabs.querySelectorAll('button').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-unit') === (this.state.unit || 'shares'));
+            });
+        }
         const rangeTabs = document.getElementById('vs-range-tabs');
         if (rangeTabs && this.state.range !== 'custom') {
             rangeTabs.querySelectorAll('button').forEach(b => {
@@ -359,6 +412,19 @@ const VolumeStudies = {
 
 
 
+        if (unitTabs) {
+            unitTabs.addEventListener('click', e => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                unitTabs.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.state.unit = btn.getAttribute('data-unit') || 'shares';
+                this.state.hoverIdx = null;
+                this._cache = null;
+                this.render();
+            });
+        }
+
         rangeTabs.addEventListener('click', e => {
             const btn = e.target.closest('button');
             if (!btn) return;
@@ -373,6 +439,29 @@ const VolumeStudies = {
 
         canvas.addEventListener('mousemove', e => this._onMove(e));
         canvas.addEventListener('mouseleave', () => this._onLeave());
+
+        const getTouchPos = e => {
+            if (!e.touches || !e.touches.length) return null;
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: e.touches[0].clientX - rect.left,
+                y: e.touches[0].clientY - rect.top
+            };
+        };
+        canvas.addEventListener('touchstart', e => {
+            const pos = getTouchPos(e);
+            if (pos) {
+                this._onMove({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY });
+            }
+        }, { passive: true });
+        canvas.addEventListener('touchmove', e => {
+            const pos = getTouchPos(e);
+            if (pos) {
+                this._onMove({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY });
+            }
+        }, { passive: true });
+        canvas.addEventListener('touchend', () => this._onLeave(), { passive: true });
+        canvas.addEventListener('touchcancel', () => this._onLeave(), { passive: true });
 
         this._initSlider();
         this._bound = true;
@@ -558,6 +647,7 @@ const VolumeStudies = {
 
     _yFormat(study, unit) {
         if (study === 'osc') return v => (v >= 0 ? '+' : '') + v.toFixed(0) + '%';
+        if (study === 'cmf') return v => (v >= 0 ? '+' : '') + v.toFixed(2);
         if (unit === 'dollar') return v => (v < 0 ? '-' : '') + '$' + this.fmtVol(Math.abs(v));
         return v => this.fmtVol(v);
     },
@@ -700,13 +790,13 @@ const VolumeStudies = {
             if (dash) ctx.setLineDash([]);
         };
 
-        if (line && payload.study === 'osc') {
+        if (line && (payload.study === 'osc' || payload.study === 'cmf')) {
             const colW = chartW / n;
             const zeroY = mapY(0);
             for (let i = 0; i < n; i++) {
                 const v = line[i];
                 if (v == null || !isFinite(v)) continue;
-                ctx.fillStyle = v >= 0 ? 'rgba(61,184,122,0.12)' : 'rgba(192,64,64,0.12)';
+                ctx.fillStyle = v >= 0 ? 'rgba(61,184,122,0.14)' : 'rgba(192,64,64,0.14)';
                 const x = pad.left + i * colW;
                 const yv = clampY(mapY(v));
                 ctx.fillRect(x, Math.min(yv, zeroY), colW, Math.abs(zeroY - yv));
@@ -812,7 +902,7 @@ const VolumeStudies = {
         const rawVol = payload.rawVolumes ? payload.rawVolumes[i] : payload.volumes[i];
         const dollarVol = payload.dollarVolumes ? payload.dollarVolumes[i] : (close * rawVol);
 
-        const studyNames = { vol: 'VOLUME', osc: 'VOL OSC', net: 'NET VOL', obv: 'OBV', pvt: 'PVT' };
+        const studyNames = { vol: 'VOLUME', osc: 'VOL OSC', net: 'NET VOL', cmf: 'CMF-21', obv: 'OBV', pvt: 'PVT' };
         let value = null, valueLabel = studyNames[payload.study] || payload.study;
         if (payload.bars) value = payload.bars[i];
         else if (payload.line) value = payload.line[i];
@@ -828,6 +918,16 @@ const VolumeStudies = {
             studyValStr = value == null ? 'n/a' : (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
             if (value != null) {
                 badgeText = value > 0 ? 'EXPANSION' : value < 0 ? 'CONTRACTION' : 'NEUTRAL';
+                badgeColor = value > 0 ? this.COLORS.up : value < 0 ? this.COLORS.down : this.COLORS.label;
+            }
+        } else if (payload.study === 'cmf') {
+            studyValStr = value == null ? 'n/a' : (value >= 0 ? '+' : '') + value.toFixed(3);
+            if (value != null) {
+                badgeText = value >= 0.10 ? 'INSTITUTIONAL ACCUMULATION'
+                    : value <= -0.10 ? 'INSTITUTIONAL DISTRIBUTION'
+                    : value > 0 ? 'ACCUMULATION'
+                    : value < 0 ? 'DISTRIBUTION'
+                    : 'NEUTRAL';
                 badgeColor = value > 0 ? this.COLORS.up : value < 0 ? this.COLORS.down : this.COLORS.label;
             }
         } else if (payload.study === 'vol') {
@@ -980,6 +1080,41 @@ const VolumeStudies = {
             const day = payload.bars ? payload.bars[last] : null;
             parts.push(`<span class="vs-reading-item"><span class="vs-lbl">DAY</span> ${day != null ? this.fmtSigned(day) : 'n/a'}</span>`);
             parts.push(`<span class="vs-reading-item"><span class="vs-lbl">21D</span> ${r != null ? this.fmtSigned(r) : 'n/a'}</span>`);
+        } else if (study === 'cmf') {
+            const v = payload.line ? payload.line[last] : null;
+            const cmfStr = v != null ? (v >= 0 ? '+' : '') + v.toFixed(3) : 'n/a';
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">CMF-21</span> ${cmfStr}</span>`);
+            const regime = v == null ? 'n/a' : (v >= 0.10 ? 'INST ACCUMULATION' : v <= -0.10 ? 'INST DISTRIBUTION' : v > 0 ? 'ACCUMULATION' : v < 0 ? 'DISTRIBUTION' : 'NEUTRAL');
+            const regimeColor = v == null ? 'inherit' : v > 0 ? this.COLORS.up : v < 0 ? this.COLORS.down : this.COLORS.label;
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">REGIME</span> <span style="color:${regimeColor}">${regime}</span></span>`);
+
+            const back = Math.max(0, last - 21);
+            const pLast = payload.closes[last];
+            const pBack = payload.closes[back];
+            const priceDelta = (pLast != null && pBack != null && pBack > 0) ? ((pLast - pBack) / pBack) : 0;
+            const indicatorSignal = v;
+
+            let divText = 'NEUTRAL';
+            let divColor = this.COLORS.label;
+            if (indicatorSignal != null) {
+                if (priceDelta < -0.01 && indicatorSignal > 0) {
+                    divText = 'BULLISH DIVERGENCE';
+                    divColor = this.COLORS.up;
+                } else if (priceDelta > 0.01 && indicatorSignal < 0) {
+                    divText = 'BEARISH DIVERGENCE';
+                    divColor = this.COLORS.down;
+                } else if (priceDelta > 0.01 && indicatorSignal > 0) {
+                    divText = 'VOLUME CONFIRMED';
+                    divColor = this.COLORS.up;
+                } else if (priceDelta < -0.01 && indicatorSignal < 0) {
+                    divText = 'DISTRIBUTION CONFIRMED';
+                    divColor = this.COLORS.down;
+                } else {
+                    divText = indicatorSignal > 0 ? 'ACCUMULATION' : indicatorSignal < 0 ? 'DISTRIBUTION' : 'NEUTRAL';
+                    divColor = indicatorSignal > 0 ? this.COLORS.up : indicatorSignal < 0 ? this.COLORS.down : this.COLORS.label;
+                }
+            }
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">SIGNAL</span> <span style="color:${divColor}">${divText}</span></span>`);
         } else if (study === 'obv' || study === 'pvt') {
             const line = payload.line || [];
             const ma = payload.ma || [];
@@ -993,6 +1128,34 @@ const VolumeStudies = {
             const bias = delta == null ? 'n/a' : delta > 0 ? 'ACCUMULATION' : delta < 0 ? 'DISTRIBUTION' : 'FLAT';
             const biasColor = bias === 'ACCUMULATION' ? this.COLORS.up : bias === 'DISTRIBUTION' ? this.COLORS.down : 'inherit';
             parts.push(`<span class="vs-reading-item"><span class="vs-lbl">BIAS</span> <span style="color:${biasColor}">${bias}</span></span>`);
+
+            // Divergence detection
+            const pLast = payload.closes[last];
+            const pBack = payload.closes[back];
+            const priceDelta = (pLast != null && pBack != null && pBack > 0) ? ((pLast - pBack) / pBack) : 0;
+            const indicatorSignal = delta;
+
+            let divText = 'NEUTRAL';
+            let divColor = this.COLORS.label;
+            if (indicatorSignal != null) {
+                if (priceDelta < -0.01 && indicatorSignal > 0) {
+                    divText = 'BULLISH DIVERGENCE';
+                    divColor = this.COLORS.up;
+                } else if (priceDelta > 0.01 && indicatorSignal < 0) {
+                    divText = 'BEARISH DIVERGENCE';
+                    divColor = this.COLORS.down;
+                } else if (priceDelta > 0.01 && indicatorSignal > 0) {
+                    divText = 'VOLUME CONFIRMED';
+                    divColor = this.COLORS.up;
+                } else if (priceDelta < -0.01 && indicatorSignal < 0) {
+                    divText = 'DISTRIBUTION CONFIRMED';
+                    divColor = this.COLORS.down;
+                } else {
+                    divText = indicatorSignal > 0 ? 'ACCUMULATION' : indicatorSignal < 0 ? 'DISTRIBUTION' : 'NEUTRAL';
+                    divColor = indicatorSignal > 0 ? this.COLORS.up : indicatorSignal < 0 ? this.COLORS.down : this.COLORS.label;
+                }
+            }
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">SIGNAL</span> <span style="color:${divColor}">${divText}</span></span>`);
         }
         el.innerHTML = parts.join('');
     }

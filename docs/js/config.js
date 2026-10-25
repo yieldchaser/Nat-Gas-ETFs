@@ -82,6 +82,7 @@ const CONFIG = {
     volumeStudies: {
         oscillator: { fast: 5, slow: 21 },
         ma: 21,
+        cmf: 21,
         ranges: [
             { key: '3m', label: '3M', days: 90 },
             { key: '6m', label: '6M', days: 180 },
