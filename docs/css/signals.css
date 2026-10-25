@@ -425,30 +425,67 @@
 }
 
 /* Compact style for other PEAKS threshold tab groups & side tabs */
+.heat-filter-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(26, 26, 40, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    margin-bottom: 12px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+#heat-side-group {
+    margin: 0;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.heat-filter-secondary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+#heat-days-group,
+#heat-mode-group {
+    margin: 0;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
 .heat-peaks-sub .tab-btn,
 #flow-heat-peaks-threshold-group .tab-btn,
-#cvol-sig-peaks-threshold-group .tab-btn,
-#heat-side-group .tab-btn,
-#heat-days-group .tab-btn,
-#heat-mode-group .tab-btn {
+#cvol-sig-peaks-threshold-group .tab-btn {
     padding: 3px 5px;
     font-size: 0.60rem;
     letter-spacing: 0.2px;
 }
 
-.heat-filter-label {
-    font-size: 0.55rem;
-    font-weight: 800;
-    color: rgba(255, 255, 255, 0.45);
-    letter-spacing: 0.8px;
-    user-select: none;
+#heat-side-group .tab-btn,
+#heat-days-group .tab-btn,
+#heat-mode-group .tab-btn {
+    padding: 2.5px 5px;
+    font-size: 0.58rem;
+    letter-spacing: 0.2px;
 }
 
 .heat-filter-divider {
     width: 1px;
     height: 12px;
     background: rgba(255, 255, 255, 0.14);
-    margin: 0 2px;
+    margin: 0 1px;
     flex-shrink: 0;
 }
 
@@ -2128,6 +2165,25 @@
     background: rgba(255, 255, 255, 0.08);
     margin: 5px 0 3px;
 }
+@media (min-width: 1201px) and (max-width: 1359px) {
+    .heat-filter-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+        padding: 6px 8px;
+    }
+
+    #heat-side-group {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .heat-filter-secondary {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
 @media (max-width: 600px) {
     .vs-canvas-wrap { height: 190px; }
     .vs-control-group { flex-wrap: wrap; gap: 6px; }
@@ -2151,28 +2207,32 @@
     .heat-filter-toolbar {
         padding: 6px 8px !important;
         flex-direction: column;
-        align-items: flex-start !important;
+        align-items: stretch !important;
         gap: 8px !important;
     }
-    .heat-filter-controls-right {
-        width: 100%;
-        margin-left: 0 !important;
-        justify-content: space-between;
-        gap: 8px;
-        display: flex;
-        align-items: center;
-    }
+
     #heat-side-group {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
         max-width: 100%;
         width: 100%;
+        justify-content: flex-start;
     }
-    #heat-side-group::-webkit-scrollbar { display: none; }
+    #heat-side-group::-webkit-scrollbar {
+        display: none;
+    }
     #heat-side-group .tab-btn {
         flex-shrink: 0;
         white-space: nowrap;
+    }
+
+    .heat-filter-secondary {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
     }
 }
 
