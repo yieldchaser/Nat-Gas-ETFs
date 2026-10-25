@@ -1432,7 +1432,7 @@ LTCG (&gt;24 months):  12.5% base + surcharge capped at 15% + 4% cess  →  up t
 
 <!-- Custom scripts only - No external charting libraries -->
 <script>
-function formatDisplayDate(iso, includeApostrophe = true) {
+function formatDisplayDate(iso) {
     if (!iso || typeof iso !== 'string') return iso || '—';
     const parts = iso.split('-');
     if (parts.length < 3) return iso;
@@ -1443,8 +1443,7 @@ function formatDisplayDate(iso, includeApostrophe = true) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const m = months[mIdx];
     const ordSuffix = (dNum >= 11 && dNum <= 13) ? 'th' : ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'][dNum % 10] || 'th';
-    const yr = includeApostrophe ? "'" + y.slice(-2) : y.slice(-2);
-    return `${dNum}${ordSuffix} ${m}, ${yr}`;
+    return `${dNum}${ordSuffix} ${m}, ${y}`;
 }
 
 'use strict';
@@ -2923,7 +2922,7 @@ function renderTable() {
                 <td style="color:rgba(255,255,255,0.85);">${c.num}</td>
                 <td style="color:var(--cyan);">${formatDisplayDate(c.troughDate)}</td>
                 <td style="color:rgba(239,100,100,0.75);">$${fmt(c.troughPrice)}</td>
-                <td style="color:#3db87a;">${c.peakDate}</td>
+                <td style="color:#3db87a;">${formatDisplayDate(c.peakDate)}</td>
                 <td style="color:rgba(61,184,122,0.8);">$${fmt(c.peakPrice)}</td>
                 <td style="color:${gainColor};font-weight:800;background:${gainBg};">${fmtPct(c.gain)}</td>
                 <td style="color:rgba(255,255,255,0.85);background:${dayBg};">${c.days}D</td>
