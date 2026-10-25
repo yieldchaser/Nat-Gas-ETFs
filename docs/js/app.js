@@ -8,9 +8,10 @@ const App = {
     refreshTimer: null,
     refreshIntervalMs: null, // Interval currently applied to refreshTimer
     isLoading: false,
-    heatOffset: 0,        // Offset for 90-day volume heat map pagination
-    heatMode: 'share',    // Mode for 90-day heat map: 'share' or 'dollar'
-    heatSide: 'all',      // Side for 90-day heat map: 'all', 'long', or 'short'
+    heatOffset: 0,        // Offset for volume heat map pagination
+    heatDays: 90,         // Lookback days for volume heat map (90, 126, 180, 252)
+    heatMode: 'share',    // Mode for heat map: 'share' or 'dollar'
+    heatSide: 'all',      // Side for heat map: 'all', 'long', or 'short'
     vddsMode: 'vol',      // Mode for VDDS panel: 'vol' (S-RVOL-21d) or 'dv' (VDDS ratio)
     heatSpotlightMode: 'off', // Spotlight mode: 'off', 'peaks', or 'valleys'
     heatPeaksMode: false, // Backwards compatibility mirror
@@ -43,6 +44,20 @@ const App = {
                 sideGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.heatSide = btn.getAttribute('data-side');
+                this.renderHeatCalendarOnly();
+            });
+        }
+
+        // Heat Map Days Selector
+        const daysGroup = document.getElementById('heat-days-group');
+        if (daysGroup) {
+            daysGroup.addEventListener('click', (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                daysGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.heatDays = parseInt(btn.getAttribute('data-days'), 10) || 90;
+                this.heatOffset = 0;
                 this.renderHeatCalendarOnly();
             });
         }
@@ -565,7 +580,7 @@ const App = {
     renderHeatCalendarOnly() {
         const globalObj = this.heatGlobalPercentiles[this.heatMode];
         const percentiles = globalObj ? globalObj[this.heatSide] : null;
-        Signals.renderHeatCalendar(this.allMetrics, this.heatOffset, this.heatMode, this.heatSide, this.heatSpotlightMode, this.heatPeaksThreshold, percentiles);
+        Signals.renderHeatCalendar(this.allMetrics, this.heatOffset, this.heatMode, this.heatSide, this.heatSpotlightMode, this.heatPeaksThreshold, percentiles, this.heatDays);
     },
 
     computeAllGlobalPercentiles() {
