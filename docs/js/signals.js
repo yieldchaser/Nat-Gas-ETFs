@@ -568,7 +568,7 @@ const Signals = {
                     : 'rgba(255, 255, 255, 0.45)';
 
                 const tip = spiked
-                    ? `${t} (${region} · ${lev}): Spiked to ${rvol?.toFixed(2)}× RVOL-21d on ${date} (${daysAgo === 0 ? 'today' : `${daysAgo}d ago`}). Active within ${lookback}-day scan lookback.`
+                    ? `${t} (${region} · ${lev}): Spiked to ${rvol?.toFixed(2)}× RVOL-21d on ${typeof formatDisplayDate === 'function' ? formatDisplayDate(date) : date} (${daysAgo === 0 ? 'today' : `${daysAgo}d ago`}). Active within ${lookback}-day scan lookback.`
                     : `${t} (${region} · ${lev}): Quiet. No volume spike ≥${threshold}× in last ${lookback} trading days.`;
 
                 const daysTxt = spiked
@@ -601,7 +601,7 @@ const Signals = {
 
                 const spikeDetails = spikeTickers.map(t => {
                     const e = (sc.etfs || {})[t] || {};
-                    return `${t} (${e.peak_rvol ? e.peak_rvol.toFixed(2) + '×' : '≥2×'} RVOL on ${e.date || '—'})`;
+                    return `${t} (${e.peak_rvol ? e.peak_rvol.toFixed(2) + '×' : '≥2×'} RVOL on ${typeof formatDisplayDate === 'function' ? formatDisplayDate(e.date) : (e.date || '—')})`;
                 }).join(', ');
 
                 const tip = hasSpike

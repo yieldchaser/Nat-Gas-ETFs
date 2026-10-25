@@ -168,5 +168,39 @@ const CONFIG = {
 
     // Yahoo Finance chart API period
     fetchPeriod: '2y',
-    fetchInterval: '1d'
+    fetchInterval: '1d',
+
+    // Format ISO date (YYYY-MM-DD) into readable ordinal string (e.g. 19th May, '26)
+    formatDateOrdinal(iso, includeApostrophe = true) {
+        if (!iso || typeof iso !== 'string') return iso || '—';
+        const parts = iso.split('-');
+        if (parts.length < 3) return iso;
+        const y = parts[0];
+        const mIdx = parseInt(parts[1], 10) - 1;
+        const dNum = parseInt(parts[2].slice(0, 2), 10);
+        if (isNaN(dNum) || isNaN(mIdx) || mIdx < 0 || mIdx > 11) return iso;
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const m = months[mIdx];
+        const ordSuffix = (dNum >= 11 && dNum <= 13) ? 'th' : ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'][dNum % 10] || 'th';
+        const yr = includeApostrophe ? "'" + y.slice(-2) : y.slice(-2);
+        return `${dNum}${ordSuffix} ${m}, ${yr}`;
+    }
 };
+
+function formatDisplayDate(iso, includeApostrophe = true) {
+    if (typeof CONFIG !== 'undefined' && typeof CONFIG.formatDateOrdinal === 'function') {
+        return CONFIG.formatDateOrdinal(iso, includeApostrophe);
+    }
+    if (!iso || typeof iso !== 'string') return iso || '—';
+    const parts = iso.split('-');
+    if (parts.length < 3) return iso;
+    const y = parts[0];
+    const mIdx = parseInt(parts[1], 10) - 1;
+    const dNum = parseInt(parts[2].slice(0, 2), 10);
+    if (isNaN(dNum) || isNaN(mIdx) || mIdx < 0 || mIdx > 11) return iso;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const m = months[mIdx];
+    const ordSuffix = (dNum >= 11 && dNum <= 13) ? 'th' : ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'][dNum % 10] || 'th';
+    const yr = includeApostrophe ? "'" + y.slice(-2) : y.slice(-2);
+    return `${dNum}${ordSuffix} ${m}, ${yr}`;
+}
