@@ -52,8 +52,8 @@ def run_tests():
 
         # Listen to console errors
         errors = []
-        page.on("console", lambda msg: errors.append(msg.text) if msg.type == "error" else None)
-        page.on("pageerror", lambda exc: errors.append(str(exc)))
+        page.on("console", lambda msg: print(f"PAGE LOG [{msg.type}]: {msg.text}"))
+        page.on("pageerror", lambda exc: print(f"PAGE ERROR: {exc}"))
 
         print(f"[NAVIGATE] Loading {url}...")
         page.goto(url, wait_until="domcontentloaded")
@@ -72,29 +72,31 @@ def run_tests():
         dom_order = page.evaluate("""() => {
             const tpCanvas = document.getElementById('tp-canvas');
             const ddPanel = document.getElementById('dd-panel');
+            const tablePanel = document.querySelector('.table-panel');
             const vpPanel = document.getElementById('vp-panel');
 
-            if (!tpCanvas || !ddPanel || !vpPanel) {
+            if (!tpCanvas || !ddPanel || !tablePanel) {
                 return { ok: false, error: 'One or more required elements not found' };
             }
 
             const tpChartContainer = tpCanvas.closest('.chart-container');
             const isDdAfterTp = (tpCanvas.compareDocumentPosition(ddPanel) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
-            const isVpAfterDd = (ddPanel.compareDocumentPosition(vpPanel) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+            const isTableAfterDd = (ddPanel.compareDocumentPosition(tablePanel) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
             const isDdImmediateNextToTp = ddPanel.previousElementSibling === tpChartContainer;
-            const isVpImmediateNextToDd = ddPanel.nextElementSibling === vpPanel;
+            const isTableImmediateNextToDd = ddPanel.nextElementSibling === tablePanel;
 
             return {
-                ok: isDdAfterTp && isVpAfterDd && isDdImmediateNextToTp && isVpImmediateNextToDd,
+                ok: isDdAfterTp && isTableAfterDd && isDdImmediateNextToTp && isTableImmediateNextToDd && !vpPanel,
                 isDdAfterTp,
-                isVpAfterDd,
+                isTableAfterDd,
                 isDdImmediateNextToTp,
-                isVpImmediateNextToDd
+                isTableImmediateNextToDd,
+                noVpPanel: !vpPanel
             };
         }""")
         print(f"DOM Layout Invariants: {dom_order}")
         assert dom_order["ok"], f"DOM layout invariant failure: {dom_order}"
-        print("PASS: DOM Layout Order Invariants verified (#tp-canvas -> #dd-panel -> #vp-panel).")
+        print("PASS: DOM Layout Order Invariants verified (#tp-canvas -> #dd-panel -> .table-panel; #vp-panel cleanly absent).")
 
         # TEST 2: KPI Card Initial Population & Non-NaN Checks
         print("\n[TEST 2] Verifying KPI Cards Data & Formats...")
@@ -249,9 +251,9 @@ def run_tests():
         dd_panel.screenshot(path=str(dd_desktop_path))
         print(f"Saved: {dd_desktop_path}")
 
-        # Full Page Desktop Screenshot
+        # Section Desktop Screenshot (Top hierarchy: Title, Sliders, Price Map, Drawdown, Table)
         full_desktop_path = OUTPUT_DIR / "tp_fullpage_desktop_1440x900.png"
-        page.screenshot(path=str(full_desktop_path), full_page=True)
+        page.screenshot(path=str(full_desktop_path))
         print(f"Saved: {full_desktop_path}")
 
         context.close()
@@ -292,7 +294,7 @@ def run_tests():
         print(f"Saved: {dd_mobile_path}")
 
         full_mobile_path = OUTPUT_DIR / "tp_fullpage_mobile_390x844.png"
-        m_page.screenshot(path=str(full_mobile_path), full_page=True)
+        m_page.screenshot(path=str(full_mobile_path))
         print(f"Saved: {full_mobile_path}")
 
         m_context.close()
