@@ -191,7 +191,7 @@
             <!-- PRICE-VOLUME STUDIES (classic volume indicators) -->
             <div class="signal-panel" id="vs-panel">
                 <div class="vs-head">
-                    <h3 data-tooltip="Price and volume indicators computed from the ETF's full daily history.">PRICE-VOLUME STUDIES <span class="panel-subtitle">— five indicators</span></h3>
+                    <h3 data-tooltip="Price and volume indicators computed from the ETF's full daily history.">PRICE-VOLUME STUDIES <span class="panel-subtitle">— six indicators</span></h3>
                     <div class="tab-group" id="vs-range-tabs" style="margin:0; padding:2px;">
                         <button class="tab-btn" data-range="3m" data-tooltip="Last 3 months">3M</button>
                         <button class="tab-btn" data-range="6m" data-tooltip="Last 6 months">6M</button>
@@ -209,8 +209,16 @@
                             <button class="tab-btn active" data-study="vol" data-tooltip="Daily share volume. Green bars are up days, red bars down days, with a 21-day average line.">VOLUME</button>
                             <button class="tab-btn" data-study="osc" data-tooltip="Volume oscillator: how far the 5-day average volume sits from the 21-day average, in percent. Above zero means volume is expanding.">VOL OSC</button>
                             <button class="tab-btn" data-study="net" data-tooltip="Daily volume signed by direction: added on up days, subtracted on down days. The line is the 21-day running total.">NET VOL</button>
+                            <button class="tab-btn" data-study="cmf" data-tooltip="Chaikin Money Flow (21-day): measures institutional accumulation/distribution using close location within daily high-low range. Bounded [-1, +1].">CMF</button>
                             <button class="tab-btn" data-study="obv" data-tooltip="On-balance volume: a running total that adds volume on up days and subtracts it on down days. Above its 21-day average signals accumulation.">OBV</button>
                             <button class="tab-btn" data-study="pvt" data-tooltip="Price-volume trend: like OBV, but each day's volume is weighted by the size of its price move.">PVT</button>
+                        </div>
+                    </div>
+                    <div class="vs-control-group">
+                        <span class="vs-control-label">Unit</span>
+                        <div class="tab-group" id="vs-unit-tabs" style="margin:0; padding:2px;">
+                            <button class="tab-btn active" data-unit="shares" data-tooltip="Measure in raw share volume">S</button>
+                            <button class="tab-btn" data-unit="dollar" data-tooltip="Measure in dollar volume (Price × Shares)">$</button>
                         </div>
                     </div>
                     <div class="vs-control-group">
@@ -280,13 +288,13 @@
     <!-- ETF Card Chart Tooltip -->
     <div id="card-chart-tooltip"></div>
 
-    <script src="js/config.js?v=20261018e"></script>
+    <script src="js/config.js?v=20261025a"></script>
     <script src="js/data.js?v=20261021a"></script>
     <script src="js/metrics.js?v=20261024a"></script>
     <script src="js/charts.js?v=20261024d"></script>
     <script src="js/cards.js?v=20261018e"></script>
     <script src="js/signals.js?v=20261024d"></script>
-    <script src="js/volume-studies.js?v=20261024c"></script>
+    <script src="js/volume-studies.js?v=20261025a"></script>
     <script src="js/app.js?v=20261021a"></script>
 </body>
 </html>

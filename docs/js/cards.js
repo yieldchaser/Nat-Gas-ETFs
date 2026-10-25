@@ -353,8 +353,7 @@ const Cards = {
                     </div>
                 </div>
 
-                <!-- DOLLAR MODE sections (hidden by default) -->
-                <div class="card-metrics dollar-section" style="display:none">
+                                <div class="card-metrics dollar-section" style="display:none">
                     <div class="metric-item">
                         <span class="metric-label" data-tooltip="Today's dollar volume traded (price × shares). Split-agnostic capital flow metric.">$ VOL</span>
                         <span class="metric-value" data-live="dvol">${this.formatNumber(c.dollarVolume, 0)}</span>
