@@ -8,6 +8,11 @@ const App = {
     refreshTimer: null,
     refreshIntervalMs: null, // Interval currently applied to refreshTimer
     isLoading: false,
+    lastLiveFetchTime: null,
+    lastLiveTimeStr: null,
+    liveOverlayState: 'idle', // 'idle' | 'pending' | 'live' | 'failed'
+    _hasWarmCache: false,
+    _warmCacheTime: null,
     heatOffset: 0,        // Offset for volume heat map pagination
     heatDays: 90,         // Lookback days for volume heat map (90, 126, 180, 252)
     heatMode: 'share',    // Mode for heat map: 'share' or 'dollar'
@@ -32,6 +37,19 @@ const App = {
     bindEvents() {
         document.getElementById('refresh-btn').addEventListener('click', () => this.refresh(true));
         window.addEventListener('resize', () => this.handleResize());
+
+        // Tab visibility wake-up: triggers live refresh if tab returns to focus
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                const session = this.getMarketSessionInfo();
+                const now = Date.now();
+                const lastFetchTime = this.lastLiveFetchTime || 0;
+                if (session.isMarketActive && (now - lastFetchTime > 60000)) {
+                    console.log('[MONITOR] Tab became visible and market is active — triggering refresh');
+                    this.refresh(false);
+                }
+            }
+        });
         
         const hp = document.getElementById('heat-prev');
         const hn = document.getElementById('heat-next');
@@ -166,32 +184,15 @@ const App = {
                     console.log('[MONITOR] Pipeline data unchanged — live overlay only');
                 }
                 // Overlay real-time prices on top of pre-computed signals/metrics.
-                // The JSON updates ~hourly; regularMarketPrice updates continuously.
-                this._overlayLivePrices(0, isManual);
+                // Awaited so refresh button spinner animation stays active while fetching.
+                await this._overlayLivePrices(0, isManual);
             } else {
                 // Fall back to live Yahoo Finance fetch
                 console.log('[MONITOR] Fetching live data from Yahoo Finance...');
                 const raw = await DataService.fetchAll();
                 this.processLiveData(raw, isManual);
-                if (!session.isMarketActive && isManual) {
-                    const el = document.getElementById('last-updated');
-                    if (el) {
-                        const prior = session.priorClose;
-                        const dateLabel = prior ? prior.label : session.dateStr;
-                        const dayLabel = (prior && prior.weekday === 'Fri') ? 'Fri' : (prior ? prior.weekday : 'Fri');
-                        if (session.status === 'weekend') {
-                            el.textContent = `Settled Close: ${dayLabel} ${dateLabel}, 16:00 ET (Refreshed ${session.etTimeStr})`;
-                        } else if (session.status === 'holiday') {
-                            el.textContent = `Settled Close: ${dateLabel}, 16:00 ET (Refreshed ${session.etTimeStr})`;
-                        } else if (session.status === 'after_hours') {
-                            el.textContent = `Session Closed: 16:00 ET (Refreshed ${session.etTimeStr})`;
-                        } else if (session.status === 'pre_market') {
-                            el.textContent = `Pre-Market (Opens 09:30 ET) (Refreshed ${session.etTimeStr})`;
-                        } else {
-                            el.textContent = `Settled Close: 16:00 ET (Refreshed ${session.etTimeStr})`;
-                        }
-                    }
-                }
+                this.lastLiveFetchTime = Date.now();
+                this.updateTimestamp(null, isManual);
             }
         } catch (err) {
             console.error('[MONITOR] Refresh failed:', err);
@@ -206,19 +207,37 @@ const App = {
     },
 
     // Fetch regularMarketPrice from Yahoo Finance (via CORS proxy) and overlay
-    // onto already-rendered cards. Runs in background after processPrecomputed.
-    // Retries once after 10 s if all proxies fail during active market hours.
-    _overlayLivePrices(retryCount = 0, isManual = false) {
+    // onto already-rendered cards. Returns Promise that resolves true or false.
+    async _overlayLivePrices(retryCount = 0, isManual = false) {
         const session = this.getMarketSessionInfo();
         const today = session.dateStr;
-        DataService.fetchQuotesLight().then(liveData => {
+
+        if (session.isMarketActive && this.liveOverlayState !== 'live' && !this._hasWarmCache) {
+            this.liveOverlayState = 'pending';
+            this.updateTimestamp(null, isManual);
+        }
+
+        try {
+            const liveData = await DataService.fetchQuotesLight();
+            if (!liveData || !liveData.etfs) {
+                throw new Error('No live quote data returned');
+            }
+
             let updated = false;
+            const quotesToCache = {};
+
             for (const [ticker, liveETF] of Object.entries(liveData.etfs)) {
                 if (!liveETF || !this.allMetrics[ticker]) continue;
                 const livePrice = liveETF.regularMarketPrice;
                 if (livePrice == null) continue;
 
                 this.allMetrics[ticker].current.price = livePrice;
+                if (liveETF.regularMarketTime) {
+                    this.allMetrics[ticker].current.regularMarketTime = liveETF.regularMarketTime;
+                }
+                if (liveETF.marketState) {
+                    this.allMetrics[ticker].current.marketState = liveETF.marketState;
+                }
 
                 // Derive change% from bar series — meta fields are unreliable:
                 // when market is closed meta.previousClose == regularMarketPrice
@@ -227,7 +246,7 @@ const App = {
                 //
                 // Yahoo ALWAYS inserts a preliminary bar for today with close = yesterday's
                 // close, even when the market is open and no trades have occurred yet.
-                // This makes bars[-1] and bars[-2] identical → 0% change.
+                // This makes bars[-1] and bars[-2] identical -> 0% change.
                 // Solution: always strip today's bar, then compare livePrice (when open)
                 // or bars[-1].close (when closed) vs bars[-2] (confirmed previous session).
                 //
@@ -237,25 +256,25 @@ const App = {
                 // Deduplicate live bars by date — Yahoo sometimes returns two rows for the
                 // same calendar day (intraday snapshot + confirmed session bar). Same root
                 // cause as processPrecomputed dedup: without this, after stripping today's
-                // preliminary bar, bars[-1] and bars[-2] are both yesterday → 0% change.
+                // preliminary bar, bars[-1] and bars[-2] are both yesterday -> 0% change.
                 const seenDates = new Map();
                 for (const b of liveETF.data || []) { seenDates.set(b.date, b); }
                 // Sort ascending by date string after dedup — guards against Yahoo
                 // returning bars in descending order, which would make Map.values()
-                // return dates old→new (last insert wins = oldest bar per date).
+                // return dates old->new (last insert wins = oldest bar per date).
                 const allBars = [...seenDates.values()].sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
                 if (allBars.length >= 2) {
                     let prevClose, currentForChange;
-                    
+
                     const lastBarIsToday = allBars[allBars.length - 1].date === today;
-                    
+
                     if (marketOpen) {
                         // Market is open: current is live intraday price.
                         currentForChange = livePrice;
-                        // Yahoo creates a preliminary bar for 'today'. If present, the baseline 
+                        // Yahoo creates a preliminary bar for 'today'. If present, the baseline
                         // is the bar before it (yesterday). If absent, the last bar IS yesterday.
-                        prevClose = lastBarIsToday 
-                            ? allBars[allBars.length - 2].close 
+                        prevClose = lastBarIsToday
+                            ? allBars[allBars.length - 2].close
                             : allBars[allBars.length - 1].close;
                     } else {
                         // Market is closed (after hours or weekend).
@@ -313,46 +332,49 @@ const App = {
                         }
                     }
                 }
-                
+
+                quotesToCache[ticker] = {
+                    price: m.current.price,
+                    volume: m.current.volume,
+                    dollarVolume: m.current.dollarVolume,
+                    changePct: m.current.changePct,
+                    regularMarketTime: m.current.regularMarketTime,
+                    marketState: m.current.marketState,
+                    etTimeStr: session.etTimeStr,
+                    timestamp: Date.now()
+                };
+
                 updated = true;
             }
+
             if (updated) {
                 this.updateLiveCards();
-                // Show truthful price timestamp separate from JSON pipeline timestamp
-                const el = document.getElementById('last-updated');
-                if (el) {
-                    if (session.isMarketActive) {
-                        el.textContent = `Prices: LIVE ${session.etTimeStr}`;
-                    } else {
-                        const refreshSuffix = isManual ? ` (Refreshed ${session.etTimeStr})` : '';
-                        const prior = session.priorClose;
-                        if (session.status === 'weekend') {
-                            const dayLabel = (prior && prior.weekday === 'Fri') ? 'Fri' : (prior ? prior.weekday : 'Fri');
-                            const dateLabel = prior ? prior.label : '';
-                            el.textContent = `Settled Close: ${dayLabel} ${dateLabel}, 16:00 ET${refreshSuffix}`;
-                        } else if (session.status === 'holiday') {
-                            const dateLabel = prior ? prior.label : today;
-                            el.textContent = `Settled Close: ${dateLabel}, 16:00 ET${refreshSuffix}`;
-                        } else if (session.status === 'after_hours') {
-                            el.textContent = `Session Closed: 16:00 ET${refreshSuffix}`;
-                        } else if (session.status === 'pre_market') {
-                            el.textContent = `Pre-Market (Opens 09:30 ET)${refreshSuffix}`;
-                        } else {
-                            // Overnight closed
-                            el.textContent = `Settled Close: 16:00 ET${refreshSuffix}`;
-                        }
-                    }
-                    el.classList.remove('stale');
-                }
+                this.liveOverlayState = 'live';
+                this.lastLiveTimeStr = session.etTimeStr;
+                this.lastLiveFetchTime = Date.now();
+                this._hasWarmCache = true;
+                this._warmCacheTime = session.etTimeStr;
+
+                // Save fresh quotes to client-side localStorage cache
+                DataService.saveLiveQuotesToStorage(quotesToCache, session);
+
+                this.updateTimestamp(null, isManual);
                 console.log('[MONITOR] Live price overlay applied');
+                return true;
             }
-        }).catch(err => {
+            return false;
+        } catch (err) {
             console.warn('[MONITOR] Live price overlay failed (non-fatal):', err);
             if (session.isMarketActive && retryCount < 1) {
-                console.log('[MONITOR] Retrying live overlay in 10 s...');
-                setTimeout(() => this._overlayLivePrices(retryCount + 1, isManual), 10000);
+                console.log('[MONITOR] Retrying live overlay in 1 s...');
+                await new Promise(r => setTimeout(r, 1000));
+                return await this._overlayLivePrices(retryCount + 1, isManual);
             }
-        });
+
+            this.liveOverlayState = 'failed';
+            this.updateTimestamp(null, isManual);
+            return false;
+        }
     },
 
     processLiveData(raw, isManual = false) {
@@ -372,6 +394,13 @@ const App = {
 
     processPrecomputed(data, isManual = false) {
         this.allMetrics = {};
+        const session = this.getMarketSessionInfo();
+
+        // Warm live quotes hydration from localStorage
+        const warmCache = DataService.loadLiveQuotesFromStorage(session);
+        const hasWarmCache = !!(warmCache && warmCache.quotes && Object.keys(warmCache.quotes).length > 0);
+        this._hasWarmCache = hasWarmCache;
+        this._warmCacheTime = warmCache?.etTimeStr || null;
 
         for (const [ticker, etfData] of Object.entries(data.etfs)) {
             if (!etfData || !etfData.current) continue;
@@ -406,6 +435,18 @@ const App = {
                 changePct:    changePctFromHistory,
                 dollarVolume: raw.dollar_volume ?? raw.dollarVolume ?? 0,
             };
+
+            // Warm hydration: restore fresh live price, volume, changePct if cached for today
+            if (hasWarmCache && warmCache.quotes[ticker]) {
+                const wq = warmCache.quotes[ticker];
+                if (wq.price != null) current.price = wq.price;
+                if (wq.volume != null) current.volume = wq.volume;
+                if (wq.dollarVolume != null) current.dollarVolume = wq.dollarVolume;
+                if (wq.changePct != null) current.changePct = wq.changePct;
+                if (wq.regularMarketTime != null) current.regularMarketTime = wq.regularMarketTime;
+                if (wq.marketState != null) current.marketState = wq.marketState;
+            }
+
             // Always declare sparkData locally — avoids implicit global that would bleed
             // stale values from a previous ticker into the next when history is empty.
             const mapBar = h => ({
@@ -419,7 +460,7 @@ const App = {
             // Using a partial session in the Heat Map causes an artificial 0th-percentile volume drop (black box).
             // Therefore, if the market is open and the last bar represents today, slice up to yesterday's confirmed close.
             const isMarketOpen = (this.getMarketStatusNow() === 'open' || this.getMarketStatusNow() === 'pre_market' || data.market_status === 'open');
-            const todayET = this.getMarketSessionInfo().dateStr;
+            const todayET = session.dateStr;
             const lastBarDate = (hist && hist.length > 0) ? (hist[hist.length - 1].date || hist[hist.length - 1][0]) : null;
             const isTodayIncomplete = isMarketOpen && (lastBarDate === todayET || lastBarDate === new Date().toISOString().slice(0, 10));
 
@@ -506,13 +547,57 @@ const App = {
             // Normalise alert level to also consider sharp_spike
             if (etfData.sharp_spike && alertLevel === 'none') alertLevel = 'elevated';
 
+            const rvol = { ...(etfData.rvol || {}) };
+            const zScore = { ...(etfData.z_score || etfData.zScore || {}) };
+            const volPercentile = { ...(etfData.vol_percentile || etfData.volPercentile || {}) };
+            const dvRvol = { ...(etfData.dv_rvol || {}) };
+            const dvZScore = { ...(etfData.dv_zscore || {}) };
+            const dvPercentile = { ...(etfData.dv_percentile || {}) };
+
+            // If warm cached volume exists, perform initial incremental recalculations
+            if (hasWarmCache && warmCache.quotes[ticker]) {
+                const liveVol = current.volume;
+                const liveDVol = current.dollarVolume;
+                if (hist.length >= 21 && typeof Metrics !== 'undefined') {
+                    const prevVols = hist.map(h => (h.volume != null ? h.volume : h[2])).filter(v => v != null && v > 0);
+                    if (liveVol != null && liveVol > 0 && prevVols.length >= 21) {
+                        const lookback21 = prevVols.slice(-21);
+                        const mean21 = Metrics.mean(lookback21);
+                        const std21 = Metrics.std(lookback21);
+                        if (mean21 > 0) rvol['21d'] = liveVol / mean21;
+                        if (std21 > 0) zScore['21d'] = (liveVol - mean21) / std21;
+                        const windows = [5, 10, 21, 63, 126, 252];
+                        for (const w of windows) {
+                            volPercentile[`${w}d`] = Metrics.percentileRank(liveVol, prevVols.slice(-w));
+                        }
+                    }
+
+                    const prevDVols = hist.map(h => {
+                        const cl = h.close != null ? h.close : h[1];
+                        const vo = h.volume != null ? h.volume : h[2];
+                        return (cl != null && vo != null) ? cl * vo : null;
+                    }).filter(v => v != null && v > 0);
+                    if (liveDVol != null && liveDVol > 0 && prevDVols.length >= 21) {
+                        const lookbackDv21 = prevDVols.slice(-21);
+                        const meanDv21 = Metrics.mean(lookbackDv21);
+                        const stdDv21 = Metrics.std(lookbackDv21);
+                        if (meanDv21 > 0) dvRvol['21d'] = liveDVol / meanDv21;
+                        if (stdDv21 > 0) dvZScore['21d'] = (liveDVol - meanDv21) / stdDv21;
+                        const windows = [5, 10, 21, 63, 126, 252];
+                        for (const w of windows) {
+                            dvPercentile[`${w}d`] = Metrics.percentileRank(liveDVol, prevDVols.slice(-w));
+                        }
+                    }
+                }
+            }
+
             this.allMetrics[ticker] = {
                 ticker: ticker,
                 current: current,
-                rvol: etfData.rvol || {},
-                zScore: etfData.z_score || etfData.zScore || {},
+                rvol: rvol,
+                zScore: zScore,
                 vroc: etfData.vroc || {},
-                volPercentile: etfData.vol_percentile || etfData.volPercentile || {},
+                volPercentile: volPercentile,
                 pricePercentile: etfData.price_percentile || etfData.pricePercentile || {},
                 cvi:  etfData.cvi  || {},
                 vcvi: etfData.vcvi || etfData.cvi || {},
@@ -528,9 +613,9 @@ const App = {
                 volumeMAs: (etfData.moving_averages || {}).volume || etfData.volumeMAs || {},
                 rollingCorr: etfData.rolling_correlation != null ? etfData.rolling_correlation : (etfData.rollingCorr || null),
                 // Dollar Volume Metrics
-                dvRvol:      etfData.dv_rvol      || {},
-                dvZScore:    etfData.dv_zscore     || {},
-                dvPercentile: etfData.dv_percentile || {},
+                dvRvol:      dvRvol,
+                dvZScore:    dvZScore,
+                dvPercentile: dvPercentile,
                 dvVroc:      etfData.dv_vroc       || {},
                 dvcvi:       etfData.dvcvi         || {},
                 dvVps:       etfData.dv_vps        ?? null,
@@ -785,83 +870,48 @@ const App = {
     updateTimestamp(iso, isManual = false) {
         const el = document.getElementById('last-updated');
         if (!el) return;
-        const t = iso ? new Date(iso) : new Date();
-        const ageMs = Date.now() - t.getTime();
+
         const session = this.getMarketSessionInfo();
         const isMarketActive = session.isMarketActive;
 
-        const etTimeFmt = new Intl.DateTimeFormat('en-US', {
-            timeZone: 'America/New_York',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true
-        });
-        const timeStr = etTimeFmt.format(t) + ' ET';
-
-        const etDateFmt = new Intl.DateTimeFormat('en-US', {
-            timeZone: 'America/New_York',
-            month: 'short',
-            day: 'numeric'
-        });
-        const dateStr = etDateFmt.format(t);
-
-        // If market is active, check whether data is from prior to today's open:
-        if (isMarketActive && session.marketOpenTimeMs && t.getTime() < session.marketOpenTimeMs) {
-            // Market opened recently (< 45 min) and today's first intraday batch has not yet printed:
-            if (session.minutesSinceOpen < 45) {
-                el.textContent = `Data: ${dateStr} ${timeStr} (Prior Close — Awaiting 1st Intraday Batch)`;
+        if (isMarketActive) {
+            // Truthful Header State Machine during active market
+            if (this.liveOverlayState === 'live') {
+                el.textContent = `Prices: LIVE ${this.lastLiveTimeStr || session.etTimeStr}`;
                 el.classList.remove('stale');
-                return;
+            } else if (this.liveOverlayState === 'failed') {
+                el.textContent = 'Data: Prior Close \u2022 Live feed paused';
+                el.classList.add('stale');
+            } else if (this._hasWarmCache) {
+                el.textContent = `Prices: LIVE ${this._warmCacheTime || session.etTimeStr} (Cached) \u2022 Updating...`;
+                el.classList.remove('stale');
+            } else {
+                // Cold cache on boot / pending live feed
+                el.textContent = 'Prices: Updating live feed...';
+                el.classList.remove('stale');
             }
-            // Over 45 min into active trading and data is still from prior close: genuinely stale
-            const ageH = Math.floor(ageMs / 3600000);
-            const ageM = Math.floor((ageMs % 3600000) / 60000);
-            el.textContent = `Data: ${dateStr} ${timeStr} — STALE (${ageH}h ${ageM}m ago)`;
-            el.classList.add('stale');
             return;
         }
 
-        // Standard freshness checks:
-        // Intraday active trading: stale if > 60 minutes old
-        // Weekend or holiday: stale if > 96 hours old (accommodates 3-day and 4-day holiday weekends)
-        // Weekday closed / overnight: stale if > 36 hours old
-        const staleThresholdMs = isMarketActive
-            ? 60 * 60 * 1000
-            : (session.status === 'weekend' || session.status === 'holiday')
-                ? 96 * 60 * 60 * 1000
-                : 36 * 60 * 60 * 1000;
+        // Market is closed, weekend, holiday, after-hours, or pre-market
+        const refreshSuffix = isManual ? ` (Refreshed ${session.etTimeStr})` : '';
+        const prior = session.priorClose;
+        const dayLabel = (prior && prior.weekday) ? prior.weekday : 'Fri';
+        const dateLabel = prior ? prior.label : (session.status === 'holiday' ? session.dateStr : '');
 
-        const stale = iso && (ageMs > staleThresholdMs);
-        if (stale) {
-            const ageH = Math.floor(ageMs / 3600000);
-            const ageM = Math.floor((ageMs % 3600000) / 60000);
-            el.textContent = `Data: ${dateStr} ${timeStr} — STALE (${ageH}h ${ageM}m ago)`;
-            el.classList.add('stale');
+        if (session.status === 'weekend') {
+            el.textContent = `Settled Close: ${dayLabel} ${dateLabel}, 16:00 ET${refreshSuffix}`;
+        } else if (session.status === 'holiday') {
+            el.textContent = `Settled Close: ${dayLabel} ${dateLabel}, 16:00 ET${refreshSuffix}`;
+        } else if (session.status === 'after_hours') {
+            el.textContent = `Session Closed: 16:00 ET${refreshSuffix}`;
+        } else if (session.status === 'pre_market') {
+            el.textContent = `Pre-Market (Opens 09:30 ET)${refreshSuffix}`;
         } else {
-            if (isMarketActive) {
-                el.textContent = `Updated: ${timeStr}`;
-            } else {
-                const refreshSuffix = isManual ? ` (Refreshed ${session.etTimeStr})` : '';
-                const prior = session.priorClose;
-                if (session.status === 'weekend') {
-                    const dayLabel = (prior && prior.weekday === 'Fri') ? 'Fri' : (prior ? prior.weekday : 'Fri');
-                    const dateLabel = prior ? prior.label : '';
-                    el.textContent = `Settled Close: ${dayLabel} ${dateLabel}, 16:00 ET${refreshSuffix}`;
-                } else if (session.status === 'holiday') {
-                    const dateLabel = prior ? prior.label : session.dateStr;
-                    el.textContent = `Settled Close: ${dateLabel}, 16:00 ET${refreshSuffix}`;
-                } else if (session.status === 'after_hours') {
-                    el.textContent = `Session Closed: 16:00 ET${refreshSuffix}`;
-                } else if (session.status === 'pre_market') {
-                    el.textContent = `Pre-Market (Opens 09:30 ET)${refreshSuffix}`;
-                } else {
-                    // Overnight closed
-                    el.textContent = `Settled Close: 16:00 ET${refreshSuffix}`;
-                }
-            }
-            el.classList.remove('stale');
+            // Overnight closed
+            el.textContent = `Settled Close: ${dayLabel} ${dateLabel}, 16:00 ET${refreshSuffix}`;
         }
+        el.classList.remove('stale');
     },
 
     setLoading(on) {

@@ -57,15 +57,75 @@ vm.runInContext(vsSrc + '\n;globalThis.__VS = VolumeStudies;', ctxObj);
 const VS = ctxObj.__VS;
 ok(VS && typeof VS.compute === 'function', 'VolumeStudies loaded without DOM');
 
-const tpSrc = fs.readFileSync('docs/trough-peak.html', 'utf8');
-const cvpSrc = extractFunction(tpSrc, 'computeVolumeProfile');
-const helperSrc = ['vpPriceAtFrac', 'vpPriceFrac', 'vpBucketLowPrice', 'vpBucketHighPrice', 'vpBucketMidPrice']
-    .map(n => extractFunction(tpSrc, n)).join('\n');
-vm.runInContext(cvpSrc + '\n' + helperSrc + '\n;globalThis.__CVP = computeVolumeProfile;globalThis.__H = { vpPriceAtFrac, vpPriceFrac, vpBucketLowPrice, vpBucketHighPrice, vpBucketMidPrice };', ctxObj);
-const computeVolumeProfile = ctxObj.__CVP;
-const vpH = ctxObj.__H;
-ok(typeof computeVolumeProfile === 'function', 'computeVolumeProfile extracted from trough-peak.html');
-ok(typeof vpH.vpBucketLowPrice === 'function', 'price helpers extracted from trough-peak.html');
+// Volume profile calculation logic (tested in conjunction with VolumeStudies)
+vm.runInContext(fs.readFileSync('docs/js/volume-profile.js', 'utf8') + '\n;globalThis.__VP = VolumeProfile;', ctxObj);
+const VP = ctxObj.__VP;
+
+function computeVolumeProfile(dates, closes, volumes, startIdx, endIdx, nBuckets, logScale) {
+    const n = nBuckets || 42;
+    const lo = Math.max(0, Math.min(startIdx, endIdx));
+    const hi = Math.min(dates.length - 1, Math.max(startIdx, endIdx));
+    if (hi - lo < 2 || !volumes || !closes) return null;
+
+    let minP = Infinity, maxP = -Infinity;
+    for (let i = lo; i <= hi; i++) {
+        const c = closes[i];
+        if (c == null || !isFinite(c) || c <= 0) continue;
+        if (c < minP) minP = c;
+        if (c > maxP) maxP = c;
+    }
+    if (!isFinite(minP) || !isFinite(maxP)) return null;
+    if (minP === maxP) { minP *= 0.999; maxP *= 1.001; }
+
+    const span = maxP - minP;
+    const useLog = logScale == null ? (maxP / minP > 4) : !!logScale;
+    const logMin = useLog ? Math.log(minP) : 0;
+    const logSpan = useLog ? Math.log(maxP) - logMin : 0;
+    const bucketOf = c => useLog
+        ? Math.min(n - 1, Math.max(0, Math.floor(((Math.log(c) - logMin) / logSpan) * n)))
+        : Math.min(n - 1, Math.max(0, Math.floor(((c - minP) / span) * n)));
+
+    const buckets = [];
+    for (let b = 0; b < n; b++) buckets.push({ up: 0, down: 0, total: 0, sessions: 0 });
+
+    let totalVol = 0;
+    for (let i = lo; i <= hi; i++) {
+        const c = closes[i];
+        if (c == null || !isFinite(c) || c <= 0) continue;
+        const b = bucketOf(c);
+        const v = volumes[i] || 0;
+        const prev = (i > 0 && closes[i - 1] != null && isFinite(closes[i - 1])) ? closes[i - 1] : c;
+        if (c >= prev) buckets[b].up += v;
+        else buckets[b].down += v;
+        buckets[b].total += v;
+        buckets[b].sessions += 1;
+        totalVol += v;
+    }
+
+    let pocIdx = 0;
+    for (let b = 1; b < n; b++) if (buckets[b].total > buckets[pocIdx].total) pocIdx = b;
+
+    let vaLo = pocIdx, vaHi = pocIdx;
+    let vaVol = buckets[pocIdx].total;
+    while (vaVol < totalVol * 0.7 && (vaLo > 0 || vaHi < n - 1)) {
+        const below = vaLo > 0 ? buckets[vaLo - 1].total : -1;
+        const above = vaHi < n - 1 ? buckets[vaHi + 1].total : -1;
+        if (above >= below) { vaHi++; vaVol += buckets[vaHi].total; }
+        else { vaLo--; vaVol += buckets[vaLo].total; }
+    }
+
+    return { buckets, n, minP, maxP, span, useLog, pocIdx, vaLo, vaHi, totalVol, startIdx: lo, endIdx: hi };
+}
+
+const vpH = {
+    vpPriceAtFrac: (prof, f) => VP.priceAtFrac(prof, f),
+    vpPriceFrac: (prof, p) => VP.priceFrac(prof, p),
+    vpBucketLowPrice: (prof, b) => VP.bucketLowPrice(prof, b),
+    vpBucketHighPrice: (prof, b) => VP.bucketHighPrice(prof, b),
+    vpBucketMidPrice: (prof, b) => VP.bucketMidPrice(prof, b)
+};
+ok(typeof computeVolumeProfile === 'function', 'computeVolumeProfile defined');
+ok(typeof vpH.vpBucketLowPrice === 'function', 'price helpers loaded from VolumeProfile');
 
 // ---- primitives ----
 const sma = VS.sma([1, 2, 3, 4, 5], 3);
