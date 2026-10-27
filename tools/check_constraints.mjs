@@ -4,6 +4,7 @@ const files = [
   'docs/css/cards.css',
   'docs/js/cards.js',
   'docs/js/charts.js',
+  'docs/js/data.js',
   'docs/js/app.js',
   'docs/js/volume-studies.js',
   'docs/js/volume-profile.js'

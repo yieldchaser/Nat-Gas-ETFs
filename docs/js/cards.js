@@ -280,7 +280,7 @@ const Cards = {
         const decayPct = Math.round(decayRate * 100);
         const metaTooltip = `${config.exchange || 'NYSE'} · ${config.leverage || '2x'} ${sideLabel} — Annual rebalancing decay rate: ~${decayPct}%/yr`;
         const metaBadge = `<span class="card-pill-meta" data-tooltip="${metaTooltip}">${config.exchange || 'NYSE'} · ${config.leverage || '2x'} ${sideLabel}</span>`;
-        const session = this.getExchangeSession(config.exchange, ticker);
+        const session = this.getExchangeSession(config.exchange, ticker, c.marketState);
         const benchmark = this.getBenchmark(ticker);
         const nameTooltip = `${config.name} — ${config.leverage || '2x'} ${sideLabel} · ${config.exchange || 'NYSE'} (Benchmark: ${benchmark})`;
 
@@ -479,7 +479,7 @@ const Cards = {
                 // Update session badge
                 const sessionEl = card.querySelector('[data-live="session"]');
                 if (sessionEl) {
-                    const session = this.getExchangeSession(config?.exchange, ticker);
+                    const session = this.getExchangeSession(config?.exchange, ticker, c.marketState);
                     sessionEl.className = 'session-badge ' + session.cls;
                     sessionEl.textContent = session.text;
                     sessionEl.setAttribute('data-tooltip', session.tooltip);
