@@ -333,6 +333,27 @@ const App = {
                     }
                 }
 
+                // Synchronize sparkData with live price and volume
+                if (!m.sparkData) {
+                    m.sparkData = [];
+                }
+                const lastBar = m.sparkData.length > 0 ? m.sparkData[m.sparkData.length - 1] : null;
+                if (lastBar && lastBar.date === today) {
+                    lastBar.close = livePrice;
+                    lastBar.volume = m.current.volume;
+                    lastBar.dollarVolume = m.current.dollarVolume;
+                } else {
+                    m.sparkData.push({
+                        date: today,
+                        close: livePrice,
+                        volume: m.current.volume,
+                        dollarVolume: m.current.dollarVolume
+                    });
+                    if (m.sparkData.length > CONFIG.sparklineDays) {
+                        m.sparkData = m.sparkData.slice(-CONFIG.sparklineDays);
+                    }
+                }
+
                 quotesToCache[ticker] = {
                     price: m.current.price,
                     volume: m.current.volume,
@@ -362,6 +383,9 @@ const App = {
                 console.log('[MONITOR] Live price overlay applied');
                 return true;
             }
+
+            this.liveOverlayState = 'failed';
+            this.updateTimestamp(null, isManual);
             return false;
         } catch (err) {
             console.warn('[MONITOR] Live price overlay failed (non-fatal):', err);
@@ -466,9 +490,31 @@ const App = {
 
             const confirmedHist = isTodayIncomplete ? hist.slice(0, -1) : hist;
 
-            const sparkData = (hist && hist.length > 0)
+            let sparkData = (hist && hist.length > 0)
                 ? hist.slice(-CONFIG.sparklineDays).map(mapBar)
                 : [];
+
+            if (hasWarmCache && warmCache.quotes[ticker]) {
+                const wq = warmCache.quotes[ticker];
+                if (wq.price != null && wq.volume != null) {
+                    const lastBar = sparkData.length > 0 ? sparkData[sparkData.length - 1] : null;
+                    if (lastBar && lastBar.date === session.dateStr) {
+                        lastBar.close = wq.price;
+                        lastBar.volume = wq.volume;
+                        lastBar.dollarVolume = wq.dollarVolume || (wq.price * wq.volume);
+                    } else if (!lastBar || lastBar.date < session.dateStr) {
+                        sparkData.push({
+                            date: session.dateStr,
+                            close: wq.price,
+                            volume: wq.volume,
+                            dollarVolume: wq.dollarVolume || (wq.price * wq.volume)
+                        });
+                        if (sparkData.length > CONFIG.sparklineDays) {
+                            sparkData = sparkData.slice(-CONFIG.sparklineDays);
+                        }
+                    }
+                }
+            }
             const heatmapData = (confirmedHist && confirmedHist.length > 0)
                 ? confirmedHist.slice(-CONFIG.heatmapDays).map(mapBar)
                 : [];
