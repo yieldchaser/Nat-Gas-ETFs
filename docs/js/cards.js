@@ -599,6 +599,21 @@ const Cards = {
                         }
                     }
                 }
+
+                // Synchronize sparkline and volume bar canvases with live data
+                const sparkCanvas = card.querySelector('.card-sparkline canvas');
+                const volCanvas = card.querySelector('.card-volume-bar canvas');
+                const wrap = card.querySelector('.card-chart-interactive');
+                const data = m.sparkData;
+                const side = (config && config.side) || ((typeof CONFIG !== 'undefined' && CONFIG.etfs && CONFIG.etfs[ticker]) ? CONFIG.etfs[ticker].side : 'long');
+                const color = side === 'long' ? '#3db87a' : '#c04040';
+                const mode = card.dataset.mode || 'share';
+
+                if (sparkCanvas && volCanvas && wrap && data && data.length >= 2) {
+                    Charts.drawSparkline(sparkCanvas, data, color);
+                    Charts.drawVolumeBars(volCanvas, data, null, null, mode);
+                    this.bindCardHover(wrap, sparkCanvas, volCanvas, data, color, ticker);
+                }
             }
         }
     },
@@ -682,8 +697,6 @@ const Cards = {
         tooltipEl.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.65)';
         tooltipEl.style.minWidth = '160px';
 
-        const maxVol = Math.max(...data.map(x => x.volume || 0)) || 1;
-
         const onMove = (clientX, clientY) => {
             const rect = wrap.getBoundingClientRect();
             const mouseX = clientX - rect.left;
@@ -697,6 +710,8 @@ const Cards = {
             const idx = Math.min(data.length - 1, Math.max(0, Math.floor(mouseX / step)));
             const d = data[idx];
             if (!d) return;
+
+            const maxVol = Math.max(...data.map(x => x.volume || 0)) || 1;
 
             // Redraw sparkline and volume bars with crosshairs & dot at idx
             Charts.drawSparkline(sparkCanvas, data, color, 0.1, idx);

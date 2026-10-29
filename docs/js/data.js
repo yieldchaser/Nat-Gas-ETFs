@@ -23,11 +23,11 @@ const DataService = {
     // Build standard Yahoo Finance URL for 2-year chart or 5-day quote
     buildYahooUrl(ticker, light = false) {
         if (light) {
-            return `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=5d&interval=1d&includePrePost=false`;
+            return `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=5d&interval=1d&includePrePost=false&_t=${Date.now()}`;
         }
         const period2 = Math.floor(Date.now() / 1000);
         const period1 = period2 - (2 * 365 * 86400); // 2 years back
-        return `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${period1}&period2=${period2}&interval=1d&includePrePost=false`;
+        return `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${period1}&period2=${period2}&interval=1d&includePrePost=false&_t=${Date.now()}`;
     },
 
     // Legacy helper endpoints
@@ -41,62 +41,52 @@ const DataService = {
         return `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
     },
 
-    // Structured proxy failover pool with hard timeouts and fast failover
+    // Structured parallel proxy racing with AbortController and fast failover
     async fetchETF(ticker, light) {
         const yahooUrl = this.buildYahooUrl(ticker, light);
 
         const providers = [
             {
-                name: 'allorigins_raw',
-                buildUrl: (yUrl) => `https://api.allorigins.win/raw?url=${encodeURIComponent(yUrl)}`,
-                parse: async (resp) => {
-                    const text = await resp.text();
-                    const json = JSON.parse(text);
-                    return this.parseYahooResponse(ticker, json);
-                }
-            },
-            {
-                name: 'allorigins_get',
-                buildUrl: (yUrl) => `https://api.allorigins.win/get?url=${encodeURIComponent(yUrl)}`,
-                parse: async (resp) => {
-                    const outer = await resp.json();
-                    if (!outer || !outer.contents) throw new Error('Missing contents in allorigins get response');
-                    if (outer.status && outer.status.http_code && outer.status.http_code !== 200) {
-                        throw new Error(`Target HTTP ${outer.status.http_code}`);
-                    }
-                    const json = typeof outer.contents === 'string' ? JSON.parse(outer.contents) : outer.contents;
-                    return this.parseYahooResponse(ticker, json);
-                }
+                name: 'corsproxy.io',
+                url: `https://corsproxy.io/?url=${encodeURIComponent(yahooUrl)}`
             },
             {
                 name: 'codetabs',
-                buildUrl: (yUrl) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yUrl)}`,
-                parse: async (resp) => {
-                    const text = await resp.text();
-                    const json = JSON.parse(text);
-                    return this.parseYahooResponse(ticker, json);
-                }
+                url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`
+            },
+            {
+                name: 'allorigins_raw',
+                url: `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`
             }
         ];
 
-        for (const provider of providers) {
+        const racePromises = providers.map(async (provider) => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2500);
             try {
-                const proxyUrl = provider.buildUrl(yahooUrl);
-                const resp = await this.fetchWithTimeout(proxyUrl, {}, 3500);
+                const resp = await fetch(provider.url, {
+                    signal: controller.signal,
+                    cache: 'no-store'
+                });
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                const result = await provider.parse(resp);
+                const text = await resp.text();
+                const json = JSON.parse(text);
+                const result = this.parseYahooResponse(ticker, json);
                 if (result && result.data) {
                     return result;
                 }
                 throw new Error('Parsed response missing data');
-            } catch (err) {
-                console.warn(`Provider ${provider.name} failed for ${ticker}:`, err.name === 'AbortError' ? 'Timeout (3500ms)' : (err.message || err));
-                // Immediately fail over to next provider
+            } finally {
+                clearTimeout(timeoutId);
             }
-        }
+        });
 
-        console.error(`All proxies failed for ${ticker}`);
-        return null;
+        try {
+            return await Promise.any(racePromises);
+        } catch (err) {
+            console.error(`All proxies failed for ${ticker}:`, err);
+            return null;
+        }
     },
 
     // Backwards-compatible alias for proxy fallback
