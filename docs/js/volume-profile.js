@@ -457,17 +457,21 @@ const VolumeProfile = {
             }
         }
 
-        const closeSpan = (lastClose != null && isFinite(lastClose))
-            ? `<span><b>RANGE CLOSE</b> $${this.fmtPrice(lastClose)} <span style="color:${vaPosColor};font-weight:800;">${vaPos}</span></span>`
-            : '';
+        const closeHtml = (lastClose != null && isFinite(lastClose))
+            ? `<div class="vp-stat-item vp-stat-range-close vp-stat-end"><b>RANGE CLOSE</b> $${this.fmtPrice(lastClose)} <span style="color:${vaPosColor};font-weight:800;">${vaPos}</span></div>`
+            : `<div class="vp-stat-item vp-stat-range-close vp-stat-end"></div>`;
 
         statsEl.innerHTML =
-            `<span><b>POC</b> $${this.fmtPrice(pocP)}</span>` +
-            `<span><b>VALUE AREA</b> $${this.fmtPrice(vaLoP)} – $${this.fmtPrice(vaHiP)}</span>` +
-            closeSpan +
-            `<span><b>TOTAL VOL</b> ${this.fmtVol(prof.totalVol, unit)}</span>` +
-            `<span style="color:#3db87a;"><b style="color:#3db87a;">UP-DAY VOL</b> ${upPct.toFixed(0)}%</span>` +
-            `<span style="color:#da3633;"><b style="color:#da3633;">DOWN-DAY VOL</b> ${(100 - upPct).toFixed(0)}%</span>`;
+            `<div class="vp-stats-row vp-stats-row-top">` +
+                `<div class="vp-stat-item vp-stat-poc"><b>POC</b> $${this.fmtPrice(pocP)}</div>` +
+                `<div class="vp-stat-item vp-stat-va"><b>VALUE AREA</b> $${this.fmtPrice(vaLoP)} – $${this.fmtPrice(vaHiP)}</div>` +
+                closeHtml +
+            `</div>` +
+            `<div class="vp-stats-row vp-stats-row-bottom">` +
+                `<div class="vp-stat-item vp-stat-tot"><b>TOTAL VOL</b> ${this.fmtVol(prof.totalVol, unit)}</div>` +
+                `<div class="vp-stat-item vp-stat-up" style="color:#3db87a;"><b style="color:#3db87a;">UP-DAY VOL</b> ${upPct.toFixed(0)}%</div>` +
+                `<div class="vp-stat-item vp-stat-down vp-stat-end" style="color:#da3633;"><b style="color:#da3633;">DOWN-DAY VOL</b> ${(100 - upPct).toFixed(0)}%</div>` +
+            `</div>`;
     },
 
     _onMove(e) {
