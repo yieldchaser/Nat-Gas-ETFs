@@ -2596,33 +2596,60 @@
 }
 .vp-stats {
     margin-top: 8px;
-    padding: 8px 14px;
+    padding: 8px 12px;
     background: rgba(255, 255, 255, 0.025);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 6px;
-    font-size: 0.72rem;
+    font-size: 0.69rem;
     font-weight: 700;
     color: #ffffff;
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    overflow-x: auto;
-    white-space: nowrap;
-    scrollbar-width: none;
     font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    overflow: hidden;
+    white-space: normal;
 }
-.vp-stats::-webkit-scrollbar {
-    display: none;
+.vp-stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1.35fr 1.85fr;
+    align-items: center;
+    width: 100%;
+    gap: 8px 12px;
 }
-.vp-stats b {
+.vp-stat-item {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.vp-stat-item b {
     color: var(--cyan);
     font-weight: 800;
     margin-right: 4px;
 }
+.vp-stat-end {
+    text-align: right;
+    justify-self: end;
+}
 .vp-stats-na {
     color: rgba(255, 255, 255, 0.45);
+}
+@media (max-width: 900px) {
+    .vp-stats {
+        font-size: 0.65rem;
+        padding: 6px 10px;
+    }
+}
+@media (max-width: 500px) {
+    .vp-stats-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+    .vp-stat-end {
+        text-align: left;
+        justify-self: start;
+    }
 }
 .vp-tooltip {
     position: absolute;
