@@ -751,10 +751,11 @@
    Shared: Panel Subtitle
    ============================================ */
 .panel-subtitle {
-    font-size: 0.6rem;
-    color: rgba(255, 255, 255, 0.85);
-    font-weight: 400;
-    letter-spacing: 0.3px;
+    font-size: 0.62rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
 }
 /* ============================================
    Side-Wide Volume Convergence (SWVC)
@@ -2596,59 +2597,145 @@
 }
 .vp-stats {
     margin-top: 8px;
-    padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 6px;
-    font-size: 0.69rem;
-    font-weight: 700;
-    color: #ffffff;
+    padding: 0;
+    background: transparent;
+    border: none;
     font-family: 'JetBrains Mono', monospace;
+    overflow: hidden;
+}
+.vp-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.vp-card {
+    background: rgba(22, 22, 31, 0.75);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    padding: 9px 12px;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-    overflow: hidden;
-    white-space: normal;
+    justify-content: space-between;
+    min-width: 0;
+    box-sizing: border-box;
 }
-.vp-stats-row {
-    display: grid;
-    grid-template-columns: 1fr 1.35fr 1.85fr;
+.vp-card-poc {
+    border-left: 2px solid #d4a830;
+    background: linear-gradient(135deg, rgba(212, 168, 48, 0.06) 0%, rgba(22, 22, 31, 0.75) 100%);
+}
+.vp-card-poc .vp-card-value {
+    color: #f5d565;
+}
+.vp-card-va {
+    border-left: 2px solid var(--cyan);
+    background: linear-gradient(135deg, rgba(80, 144, 160, 0.06) 0%, rgba(22, 22, 31, 0.75) 100%);
+}
+.vp-card-header {
+    display: flex;
     align-items: center;
-    width: 100%;
-    gap: 8px 12px;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 6px;
 }
-.vp-stat-item {
+.vp-card-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.vp-stat-item b {
-    color: var(--cyan);
-    font-weight: 800;
-    margin-right: 4px;
+.vp-card-tag {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
 }
-.vp-stat-end {
-    text-align: right;
-    justify-self: end;
+.vp-card-value-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.vp-card-value {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.2px;
+}
+.vp-pill {
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.vp-pill-above {
+    background: rgba(61, 184, 122, 0.15);
+    color: #3db87a;
+    border: 1px solid rgba(61, 184, 122, 0.35);
+}
+.vp-pill-below {
+    background: rgba(218, 54, 51, 0.15);
+    color: #da3633;
+    border: 1px solid rgba(218, 54, 51, 0.35);
+}
+.vp-pill-inside {
+    background: rgba(80, 144, 160, 0.15);
+    color: #5090a0;
+    border: 1px solid rgba(80, 144, 160, 0.35);
+}
+.vp-delta-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+.vp-delta-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.25s ease;
+}
+.vp-delta-fill-up {
+    background: #3db87a;
+}
+.vp-delta-fill-down {
+    background: #da3633;
 }
 .vp-stats-na {
     color: rgba(255, 255, 255, 0.45);
+    font-size: 0.72rem;
+    padding: 12px;
+    display: block;
+    text-align: center;
 }
-@media (max-width: 900px) {
-    .vp-stats {
-        font-size: 0.65rem;
-        padding: 6px 10px;
+@media (max-width: 860px) {
+    .vp-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
-@media (max-width: 500px) {
-    .vp-stats-row {
+@media (max-width: 460px) {
+    .vp-stats-grid {
         grid-template-columns: 1fr;
-        gap: 4px;
-    }
-    .vp-stat-end {
-        text-align: left;
-        justify-self: start;
     }
 }
 .vp-tooltip {

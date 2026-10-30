@@ -155,8 +155,8 @@ const App = {
                 const subtitle = document.getElementById('vdds-subtitle');
                 if (subtitle) {
                     subtitle.textContent = this.vddsMode === 'vol'
-                        ? '\u2014 share volume relative (RVOL-21d)'
-                        : '\u2014 volume-dollar divergence per ETF';
+                        ? '\u00B7 SHARE VOLUME RELATIVE (RVOL-21D)'
+                        : '\u00B7 VOLUME-DOLLAR DIVERGENCE';
                 }
                 Signals.renderVddsBar(this.allMetrics, this.vddsMode);
             });

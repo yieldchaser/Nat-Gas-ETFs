@@ -175,7 +175,7 @@
             <!-- VDDS CROSS-ETF COMPARISON BAR -->
             <div class="signal-panel" id="vdds-panel">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
-                    <h3 style="margin-bottom:0;" data-tooltip="VDDS (Volume-Dollar Divergence Score) = DV-RVOL-21d ÷ S-RVOL-21d per ETF. Below 1.0: share volume growing faster than dollar volume → price is low per share → capitulation pattern. Above 1.0: dollar value growing faster → price rising per unit → momentum/accumulation. Left of centre = bearish ETF price, right = bullish.">VDDS <span class="panel-subtitle" id="vdds-subtitle">— share volume relative (RVOL-21d)</span></h3>
+                    <h3 style="margin-bottom:0;" data-tooltip="VDDS (Volume-Dollar Divergence Score) = DV-RVOL-21d ÷ S-RVOL-21d per ETF. Below 1.0: share volume growing faster than dollar volume → price is low per share → capitulation pattern. Above 1.0: dollar value growing faster → price rising per unit → momentum/accumulation. Left of centre = bearish ETF price, right = bullish.">VDDS <span class="panel-subtitle" id="vdds-subtitle">· SHARE VOLUME RELATIVE (RVOL-21D)</span></h3>
                     <!-- VOL / $ flip toggle — mirrors heatmap mode toggle -->
                     <div class="tab-group" id="vdds-mode-group" style="margin:0; padding:2px;">
                         <button class="tab-btn active" data-vdds-mode="vol" id="vdds-btn-vol" data-tooltip="VOL mode: shows S-RVOL-21d (share volume relative to 21-day average) per ETF — pure volume bar.">VOL</button>
@@ -191,7 +191,7 @@
             <!-- PRICE-VOLUME STUDIES (classic volume indicators) -->
             <div class="signal-panel" id="vs-panel">
                 <div class="vs-head">
-                    <h3 data-tooltip="Price and volume indicators computed from the ETF's full daily history.">PRICE-VOLUME STUDIES <span class="panel-subtitle">— six indicators</span></h3>
+                    <h3 data-tooltip="Price and volume indicators computed from the ETF's full daily history.">PRICE-VOLUME STUDIES <span class="panel-subtitle">· TECHNICAL INDICATORS</span></h3>
                     <div class="tab-group" id="vs-range-tabs" style="margin:0; padding:2px;">
                         <button class="tab-btn" data-range="3m" data-tooltip="Last 3 months">3M</button>
                         <button class="tab-btn" data-range="6m" data-tooltip="Last 6 months">6M</button>
@@ -249,7 +249,7 @@
             <div class="signal-panel" id="vp-panel">
                 <div class="vp-head">
                     <div class="vp-head-top">
-                        <h3 data-tooltip="Shares or dollar volume traded at each price level over the selected window. Green/red splits volume by up versus down sessions.">VOLUME PROFILE <span class="panel-subtitle">— volume at price</span></h3>
+                        <h3 data-tooltip="Shares or dollar volume traded at each price level over the selected window. Green/red splits volume by up versus down sessions.">VOLUME PROFILE <span class="panel-subtitle">· PRICE DISTRIBUTION</span></h3>
                         <div class="vp-header-controls">
                             <div class="tab-group" id="vp-range-tabs" style="margin:0; padding:2px;">
                                 <button class="tab-btn" data-range="1m" data-tooltip="Last month (30 days)">1M</button>
@@ -293,7 +293,7 @@
 
             <!-- SIDE-WIDE VOLUME CONVERGENCE -->
             <div class="signal-panel" id="swvc-panel">
-                <h3 data-tooltip="Tracks whether all 3 ETFs on the same side (e.g., KOLD + HND.TO + 3NGS.L) each had an RVOL-21d spike ≥2.0× within a 10-day window across the 15-day lookback. Independent cross-market spiking across US, Canadian, and UK markets confirms structural institutional capitulation or accumulation.">SIDE-WIDE CONVERGENCE <span class="panel-subtitle">— tri-ETF rolling window</span></h3>
+                <h3 data-tooltip="Tracks whether all 3 ETFs on the same side (e.g., KOLD + HND.TO + 3NGS.L) each had an RVOL-21d spike ≥2.0× within a 10-day window across the 15-day lookback. Independent cross-market spiking across US, Canadian, and UK markets confirms structural institutional capitulation or accumulation.">SIDE-WIDE CONVERGENCE <span class="panel-subtitle">· TRI-ETF ROLLING WINDOW</span></h3>
                 <div id="swvc-container">
                     <div class="swvc-loading">Scanning cross-market activity…</div>
                 </div>
@@ -301,7 +301,7 @@
 
             <!-- MULTI-WINDOW CONVERGENCE -->
             <div class="signal-panel" id="convergence-panel">
-                <h3 data-tooltip="Tracks how many of the 6 lookback windows (5d, 10d, 21d, 63d, 126d, 252d) are simultaneously in the 90th+ volume percentile. All 6 converging triggers the full Multi-Window Convergence Alarm (MWCA).">MULTI-WINDOW CONVERGENCE <span class="panel-subtitle">— 6-window percentile alarm</span></h3>
+                <h3 data-tooltip="Tracks how many of the 6 lookback windows (5d, 10d, 21d, 63d, 126d, 252d) are simultaneously in the 90th+ volume percentile. All 6 converging triggers the full Multi-Window Convergence Alarm (MWCA).">MULTI-WINDOW CONVERGENCE <span class="panel-subtitle">· 6-WINDOW PERCENTILE ALARM</span></h3>
                 <div class="convergence-gauges" id="convergence-gauges">
                     <!-- Filled dynamically -->
                 </div>
