@@ -1083,7 +1083,7 @@ select.calc-input { cursor: pointer; }
             <div class="chart-controls">
                 <div class="tab-group dd-mode-tabs" id="dd-mode-tabs" style="margin:0; padding:3px;">
                     <button class="tab-btn active" data-mode="rolling_52w" data-tooltip="Decline from trailing 52-week rolling high">ROLLING 52W</button>
-                    <button class="tab-btn" data-mode="ath" data-tooltip="Decline from all-time peak since inception">ALL-TIME HIGH</button>
+                    <button class="tab-btn" data-mode="rolling_2y" data-tooltip="Decline from trailing 2-year multi-season cycle peak">ROLLING 2Y</button>
                 </div>
                 <div class="horizon-group" id="dd-horizon-group">
                     <button class="horizon-btn dd-horizon-btn" data-horizon="1m">1M</button>
@@ -1129,6 +1129,21 @@ select.calc-input { cursor: pointer; }
 
         <!-- Symmetrical 6 ETF chips -->
         <div id="dd-etf-chips" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin:10px 0 8px;"></div>
+
+        <!-- Drawdown Range Slider (Dual-Handle Brush) -->
+        <div class="range-slider-container" id="dd-range-slider-container">
+            <div class="range-slider-wrap" id="dd-range-wrap">
+                <div class="range-inputs">
+                    <div class="range-slider-track"></div>
+                    <div id="dd-range-highlight" class="range-slider-highlight"></div>
+                    <input type="range" id="dd-range-start" min="0" max="100" value="0" data-tooltip="Drag to set the start of the visible drawdown window">
+                    <input type="range" id="dd-range-end" min="0" max="100" value="100" data-tooltip="Drag to set the end of the visible drawdown window">
+                </div>
+            </div>
+            <div class="range-labels" style="justify-content: center;">
+                <span id="dd-range-active-label" style="color:var(--text-bright); text-transform: uppercase; letter-spacing: 2px;">ALL DATA</span>
+            </div>
+        </div>
 
         <div class="chart-footer">
             <div id="dd-footer-desc" style="font-size: 0.7rem; color: #fff; opacity: 0.85;">
@@ -2086,6 +2101,7 @@ function renderChartTabs() {
             renderChartTabs();
             // Re-sync range slider bounds for the newly selected ETF
             syncRangeSlidersToRange(state.timeRange);
+            if (typeof syncDDRangeSlidersToHorizon === 'function') syncDDRangeSlidersToHorizon(ddHorizon);
             renderChart();
             renderTable();
             if (typeof renderCalc === 'function') renderCalc();
@@ -2627,6 +2643,7 @@ function initFilterTabs() {
 // Drawdown Chart Renderer
 let ddMode = 'rolling_52w';
 let ddHorizon = 'all';
+const ddCustomRange = { tMin: null, tMax: null, startIdx: 0, endIdx: 100 };
 const DD_WIN_DAYS = { '1m': 30, '3m': 90, '6m': 180, '1y': 365, '3y': 1095, '5y': 1826 };
 const DD_ETFS = ['BOIL', 'KOLD', 'HNU.TO', 'HND.TO', '3NGL.L', '3NGS.L'];
 const DD_COLORS = {
@@ -2666,13 +2683,14 @@ function ddHexToRgba(hex, alpha) {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-function computeRolling52WDD(dates, closes) {
+function computeRollingLookbackDD(dates, closes, lookbackDays) {
     const n = closes.length;
     const ts = new Array(n);
     for (let i = 0; i < n; i++) {
         ts[i] = typeof dates[i] === 'number' ? dates[i] : Date.parse(dates[i]);
     }
-    const WIN = 52 * 7 * 86400 * 1000; // 364 days lookback
+    const days = lookbackDays || 364;
+    const WIN = days * 86400 * 1000;
     const dd = new Array(n);
     const peaks = new Array(n);
     const peakIndices = new Array(n);
@@ -2708,6 +2726,14 @@ function computeRolling52WDD(dates, closes) {
     }
 
     return { ts, dd, peaks, peakIndices, peakTimestamps };
+}
+
+function computeRolling52WDD(dates, closes) {
+    return computeRollingLookbackDD(dates, closes, 364);
+}
+
+function computeRolling2YDD(dates, closes) {
+    return computeRollingLookbackDD(dates, closes, 730);
 }
 
 function computeATHDD(dates, closes) {
@@ -2821,17 +2847,31 @@ function buildDDView() {
     for (const ticker of DD_ETFS) {
         const data = state.rawData[ticker];
         if (!data || !data.closes || !data.closes.length) continue;
-        const calcFn = ddMode === 'ath' ? computeATHDD : computeRolling52WDD;
+        let calcFn;
+        if (ddMode === 'rolling_2y') {
+            calcFn = (dates, closes) => computeRollingLookbackDD(dates, closes, 730);
+        } else if (ddMode === 'ath') {
+            calcFn = computeATHDD;
+        } else {
+            calcFn = (dates, closes) => computeRollingLookbackDD(dates, closes, 364);
+        }
         const { ts, dd, peaks, peakIndices, peakTimestamps } = calcFn(data.dates, data.closes);
         if (ts.length && ts[ts.length - 1] > lastTs) lastTs = ts[ts.length - 1];
         full.push({ ticker, ts, dd, peaks, peakIndices, peakTimestamps, closes: data.closes });
     }
     if (!full.length || !isFinite(lastTs)) return null;
 
-    let cutoff = -Infinity;
-    const days = DD_WIN_DAYS[ddHorizon];
-    if (days) {
-        cutoff = lastTs - days * 24 * 3600 * 1000;
+    let tMinCutoff = -Infinity;
+    let tMaxCutoff = Infinity;
+
+    if (ddHorizon === 'custom') {
+        if (ddCustomRange.tMin != null) tMinCutoff = ddCustomRange.tMin;
+        if (ddCustomRange.tMax != null) tMaxCutoff = ddCustomRange.tMax;
+    } else {
+        const days = DD_WIN_DAYS[ddHorizon];
+        if (days) {
+            tMinCutoff = lastTs - days * 24 * 3600 * 1000;
+        }
     }
 
     const series = [];
@@ -2840,9 +2880,10 @@ function buildDDView() {
         const pts = [];
         let sWorst = 0;
         for (let i = 0; i < s.ts.length; i++) {
-            if (s.ts[i] < cutoff) continue;
+            const t = s.ts[i];
+            if (t < tMinCutoff || t > tMaxCutoff) continue;
             const p = {
-                t: s.ts[i],
+                t,
                 dd: s.dd[i],
                 close: s.closes[i],
                 peak: s.peaks[i],
@@ -2868,6 +2909,10 @@ function buildDDView() {
         }
     }
     if (!series.length) return null;
+    if (ddHorizon === 'custom' && ddCustomRange.tMin != null && ddCustomRange.tMax != null && ddCustomRange.tMax > ddCustomRange.tMin) {
+        tMin = ddCustomRange.tMin;
+        tMax = ddCustomRange.tMax;
+    }
     if (tMax <= tMin) tMax = tMin + 24 * 3600 * 1000;
     return { series, tMin, tMax };
 }
@@ -2882,7 +2927,8 @@ function ddDataSig() {
 }
 
 function getDDView() {
-    const key = `${ddMode}|${ddHorizon}|${ddDataSig()}`;
+    const customSig = (ddHorizon === 'custom') ? `${ddCustomRange.tMin}_${ddCustomRange.tMax}` : ddHorizon;
+    const key = `${ddMode}|${customSig}|${ddDataSig()}`;
     if (ddViewCache.key !== key) {
         ddViewCache.key = key;
         ddViewCache.view = buildDDView();
@@ -3187,15 +3233,19 @@ function renderDrawdownKPIs() {
     const activeSym = activeTicker.symbol;
     const s = view && view.series ? view.series.find(x => x.ticker === activeSym) : null;
 
+    const curTitle = ddHorizon === 'custom' ? 'WINDOW END DRAWDOWN' : 'CURRENT DRAWDOWN';
+    const mddTitle = ddHorizon === 'custom' ? 'MAX DRAWDOWN (WINDOW)' : `MAX DRAWDOWN (${ddHorizon.toUpperCase()})`;
+    const peakTitle = ddMode === 'rolling_2y' ? '2Y PEAK REFERENCE' : (ddMode === 'ath' ? 'ALL-TIME HIGH' : '52W PEAK REFERENCE');
+
     if (!s || !s.pts || !s.pts.length) {
         const setCard = (el, lbl, val, sub) => {
             el.querySelector('.dd-kpi-lbl').textContent = lbl;
             el.querySelector('.dd-kpi-val').textContent = val;
             el.querySelector('.dd-kpi-sub').textContent = sub;
         };
-        setCard(curEl, 'Current Drawdown', '\u2013', 'Awaiting data');
-        setCard(mddEl, `Max Drawdown (${ddHorizon.toUpperCase()})`, '\u2013', 'Awaiting data');
-        setCard(peakEl, ddMode === 'ath' ? 'All-Time High' : '52W Peak Ref', '\u2013', 'Awaiting data');
+        setCard(curEl, curTitle, '\u2013', 'Awaiting data');
+        setCard(mddEl, mddTitle, '\u2013', 'Awaiting data');
+        setCard(peakEl, ddMode === 'rolling_2y' ? '2Y Peak Ref' : (ddMode === 'ath' ? 'All-Time High' : '52W Peak Ref'), '\u2013', 'Awaiting data');
         setCard(uwEl, 'Days Underwater', '\u2013', 'Awaiting data');
         return;
     }
@@ -3203,17 +3253,17 @@ function renderDrawdownKPIs() {
     const m = s.metrics;
     const tickerColor = DD_COLORS[activeSym] || '#3db87a';
 
-    // Card 1: Current Drawdown
-        curEl.querySelector('.dd-kpi-lbl').innerHTML = `<span style="color:${tickerColor}">${activeTicker.label}</span> &middot; CURRENT DRAWDOWN`;
+    // Card 1: Current / Window End Drawdown
+    curEl.querySelector('.dd-kpi-lbl').innerHTML = `<span style="color:${tickerColor}">${activeTicker.label}</span> &middot; ${curTitle}`;
     const curValEl = curEl.querySelector('.dd-kpi-val');
     curValEl.textContent = `${m.currentDD.toFixed(1)}%`;
     curValEl.style.color = m.currentDD < -0.01 ? '#e06060' : '#3db87a';
     curEl.querySelector('.dd-kpi-sub').textContent = m.currentDD < -0.01 
         ? `Req. Gain: +${m.breakEvenGain.toFixed(1)}%`
-        : (ddMode === 'ath' ? 'Trading at ATH' : 'Trading at 52W High');
+        : (ddMode === 'rolling_2y' ? 'Trading at 2Y High' : (ddMode === 'ath' ? 'Trading at ATH' : 'Trading at 52W High'));
 
     // Card 2: Max Drawdown
-        mddEl.querySelector('.dd-kpi-lbl').textContent = `MAX DRAWDOWN (${ddHorizon.toUpperCase()})`;
+    mddEl.querySelector('.dd-kpi-lbl').textContent = mddTitle;
     const mddValEl = mddEl.querySelector('.dd-kpi-val');
     mddValEl.textContent = `${m.maxDD.toFixed(1)}%`;
     mddValEl.style.color = '#e06060';
@@ -3221,7 +3271,7 @@ function renderDrawdownKPIs() {
     mddEl.querySelector('.dd-kpi-sub').textContent = `Trough: $${m.troughPrice.toFixed(2)} (${formatDisplayDate(trgIso)})`;
 
     // Card 3: Peak Reference
-        peakEl.querySelector('.dd-kpi-lbl').textContent = ddMode === 'ath' ? 'ALL-TIME HIGH' : '52W PEAK REFERENCE';
+    peakEl.querySelector('.dd-kpi-lbl').textContent = peakTitle;
     const peakValEl = peakEl.querySelector('.dd-kpi-val');
     peakValEl.textContent = `$${m.peakPrice.toFixed(2)}`;
     peakValEl.style.color = tickerColor;
@@ -3230,13 +3280,17 @@ function renderDrawdownKPIs() {
 
     // Card 4: Days Underwater
     const isDeepUnderwater = m.daysUnderwater > 180;
-        uwEl.querySelector('.dd-kpi-lbl').textContent = 'DAYS UNDERWATER';
+    uwEl.querySelector('.dd-kpi-lbl').textContent = 'DAYS UNDERWATER';
     const uwValEl = uwEl.querySelector('.dd-kpi-val');
     uwValEl.textContent = m.daysUnderwater === 0 ? '0d' : `${m.daysUnderwater}d`;
     uwValEl.style.color = isDeepUnderwater ? '#d4a830' : 'var(--text-bright)';
     uwEl.querySelector('.dd-kpi-sub').textContent = m.daysUnderwater === 0
         ? 'Currently at Peak'
         : `Since ${formatDisplayDate(pkIso)}`;
+}
+
+function updateDDKPICards() {
+    renderDrawdownKPIs();
 }
 
 function renderDrawdownChart() {
@@ -3258,7 +3312,8 @@ function renderDrawdownChart() {
         canvas.width = needW;
         canvas.height = needH;
     }
-    const key = `${w}|${h}|${dpr}|${ddMode}|${ddHorizon}|${state.activeTab}|${ddDataSig()}|${DD_ETFS.filter(t => ddVisible[t]).join(',')}`;
+    const customSig = (ddHorizon === 'custom') ? `${ddCustomRange.tMin}_${ddCustomRange.tMax}` : ddHorizon;
+    const key = `${w}|${h}|${dpr}|${ddMode}|${customSig}|${state.activeTab}|${ddDataSig()}|${DD_ETFS.filter(t => ddVisible[t]).join(',')}`;
     if (key !== ddBaseKey) {
         buildDDBase(view, w, h, dpr);
         ddBaseKey = ddMap.ready ? key : null;
@@ -3411,6 +3466,7 @@ function renderDDChips() {
             if (state.activeTab !== t.label) {
                 state.activeTab = t.label;
                 ddVisible[sym] = true;
+                syncDDRangeSlidersToHorizon(ddHorizon);
             } else {
                 const visCount = DD_ETFS.reduce((n, k) => n + (ddVisible[k] ? 1 : 0), 0);
                 if (isVis && visCount > 1) {
@@ -3433,6 +3489,7 @@ function toggleDDSeries(ticker) {
     if (tObj && state.activeTab !== tObj.label) {
         state.activeTab = tObj.label;
         ddVisible[ticker] = true;
+        syncDDRangeSlidersToHorizon(ddHorizon);
     } else {
         const visibleCount = DD_ETFS.reduce((n, t) => n + (ddVisible[t] ? 1 : 0), 0);
         if (ddVisible[ticker] && visibleCount <= 1) return;
@@ -3491,6 +3548,221 @@ function downloadDrawdownCSV() {
     URL.revokeObjectURL(url);
 }
 
+function getDDRefData() {
+    const activeTicker = TICKERS.find(x => x.label === state.activeTab || x.symbol === state.activeTab) || TICKERS[0];
+    const data = state.rawData[activeTicker.symbol];
+    if (data && data.dates && data.dates.length) return data;
+    for (const sym of DD_ETFS) {
+        const d = state.rawData[sym];
+        if (d && d.dates && d.dates.length) return d;
+    }
+    return null;
+}
+
+function updateDDRangeUI() {
+    const sStart = document.getElementById('dd-range-start');
+    const sEnd = document.getElementById('dd-range-end');
+    const highlight = document.getElementById('dd-range-highlight');
+    const lblStatus = document.getElementById('dd-range-active-label');
+    if (!sStart || !sEnd) return;
+
+    const v1 = parseInt(sStart.value) || 0;
+    const v2 = parseInt(sEnd.value) || 0;
+    const max = parseInt(sStart.max) || 100;
+
+    const p1 = max > 0 ? (v1 / max) : 0;
+    const p2 = max > 0 ? (v2 / max) : 1;
+
+    if (highlight) {
+        highlight.style.left = `calc(${p1 * 100}% + ${(10 - p1 * 20)}px)`;
+        highlight.style.width = `calc(${(p2 - p1) * 100}% + ${( (p1 - p2) * 20)}px)`;
+    }
+
+    if (lblStatus) {
+        if (ddHorizon === 'custom') {
+            lblStatus.textContent = 'CUSTOM SELECTION';
+        } else if (ddHorizon === 'all') {
+            lblStatus.textContent = 'ALL DATA';
+        } else {
+            lblStatus.textContent = `PRESET: ${ddHorizon.toUpperCase()}`;
+        }
+    }
+}
+
+function syncDDRangeSlidersToHorizon(horizon) {
+    const sStart = document.getElementById('dd-range-start');
+    const sEnd = document.getElementById('dd-range-end');
+    if (!sStart || !sEnd) return;
+
+    const ref = getDDRefData();
+    if (!ref || !ref.dates || !ref.dates.length) {
+        sStart.max = 100;
+        sEnd.max = 100;
+        sStart.value = 0;
+        sEnd.value = 100;
+        updateDDRangeUI();
+        return;
+    }
+
+    const n = ref.dates.length;
+    const maxIdx = Math.max(0, n - 1);
+    sStart.max = maxIdx;
+    sEnd.max = maxIdx;
+
+    if (horizon === 'all' || !horizon) {
+        sStart.value = 0;
+        sEnd.value = maxIdx;
+        const t1 = typeof ref.dates[0] === 'number' ? ref.dates[0] : Date.parse(ref.dates[0]);
+        const t2 = typeof ref.dates[maxIdx] === 'number' ? ref.dates[maxIdx] : Date.parse(ref.dates[maxIdx]);
+        ddCustomRange.tMin = t1;
+        ddCustomRange.tMax = t2;
+        ddCustomRange.startIdx = 0;
+        ddCustomRange.endIdx = maxIdx;
+        updateDDRangeUI();
+        return;
+    }
+
+    if (horizon === 'custom') {
+        let v1 = Math.min(parseInt(sStart.value) || 0, maxIdx);
+        let v2 = Math.min(parseInt(sEnd.value) || maxIdx, maxIdx);
+        if (ddCustomRange.tMin != null && ddCustomRange.tMax != null) {
+            v1 = 0;
+            v2 = maxIdx;
+            for (let i = 0; i < n; i++) {
+                const t = typeof ref.dates[i] === 'number' ? ref.dates[i] : Date.parse(ref.dates[i]);
+                if (t >= ddCustomRange.tMin) { v1 = i; break; }
+            }
+            for (let i = n - 1; i >= 0; i--) {
+                const t = typeof ref.dates[i] === 'number' ? ref.dates[i] : Date.parse(ref.dates[i]);
+                if (t <= ddCustomRange.tMax) { v2 = i; break; }
+            }
+            if (v2 < v1 + 2) v2 = Math.min(maxIdx, v1 + 2);
+        }
+        sStart.value = v1;
+        sEnd.value = v2;
+        updateDDRangeUI();
+        return;
+    }
+
+    const days = DD_WIN_DAYS[horizon];
+    const lastTs = typeof ref.dates[maxIdx] === 'number' ? ref.dates[maxIdx] : Date.parse(ref.dates[maxIdx]);
+    const cutoff = days ? (lastTs - days * 24 * 3600 * 1000) : -Infinity;
+
+    let startIdx = 0;
+    while (startIdx < maxIdx) {
+        const t = typeof ref.dates[startIdx] === 'number' ? ref.dates[startIdx] : Date.parse(ref.dates[startIdx]);
+        if (t >= cutoff) break;
+        startIdx++;
+    }
+
+    sStart.value = startIdx;
+    sEnd.value = maxIdx;
+    const tStart = typeof ref.dates[startIdx] === 'number' ? ref.dates[startIdx] : Date.parse(ref.dates[startIdx]);
+    ddCustomRange.tMin = tStart;
+    ddCustomRange.tMax = lastTs;
+    ddCustomRange.startIdx = startIdx;
+    ddCustomRange.endIdx = maxIdx;
+
+    updateDDRangeUI();
+}
+
+function initDDRangeSlider() {
+    const sStart = document.getElementById('dd-range-start');
+    const sEnd = document.getElementById('dd-range-end');
+    if (!sStart || !sEnd) return;
+
+    let ddSliderRafId = null;
+    const scheduleDDSliderRender = () => {
+        if (ddSliderRafId !== null) return;
+        ddSliderRafId = requestAnimationFrame(() => {
+            ddSliderRafId = null;
+            ddViewCache.key = null;
+            ddBaseKey = null;
+            renderDrawdownChart();
+            updateDDKPICards();
+        });
+    };
+
+    const MIN_GAP = 5;
+    const onChange = (e) => {
+        const tooltip = document.getElementById('dd-tooltip');
+        if (tooltip) tooltip.style.display = 'none';
+        ddHover.t = null;
+        ddTipT = null;
+
+        const maxVal = parseInt(sStart.max) || 100;
+        let v1 = parseInt(sStart.value);
+        let v2 = parseInt(sEnd.value);
+
+        if (e.target.id === 'dd-range-start') {
+            if (v1 > v2 - MIN_GAP) {
+                v1 = Math.max(0, v2 - MIN_GAP);
+                sStart.value = v1;
+            }
+        } else {
+            if (v2 < v1 + MIN_GAP) {
+                v2 = Math.min(maxVal, v1 + MIN_GAP);
+                sEnd.value = v2;
+            }
+        }
+
+        // Final safety clamp: guarantee v2 - v1 >= 2 and within [0, maxVal]
+        if (v2 - v1 < 2) {
+            if (v2 >= maxVal) {
+                v1 = Math.max(0, maxVal - Math.max(2, MIN_GAP));
+                v2 = maxVal;
+            } else {
+                v2 = Math.min(maxVal, v1 + Math.max(2, MIN_GAP));
+            }
+            sStart.value = v1;
+            sEnd.value = v2;
+        }
+
+        // Dynamic z-index: ensure the handle near the right edge remains clickable
+        if (v1 > maxVal - 60) {
+            sStart.style.zIndex = '5';
+            sEnd.style.zIndex = '4';
+        } else {
+            sStart.style.zIndex = '4';
+            sEnd.style.zIndex = '3';
+        }
+
+        ddHorizon = 'custom';
+        const ref = getDDRefData();
+        if (ref && ref.dates && ref.dates.length) {
+            const t1 = typeof ref.dates[v1] === 'number' ? ref.dates[v1] : Date.parse(ref.dates[v1]);
+            const t2 = typeof ref.dates[v2] === 'number' ? ref.dates[v2] : Date.parse(ref.dates[v2]);
+            ddCustomRange.tMin = t1;
+            ddCustomRange.tMax = t2;
+            ddCustomRange.startIdx = v1;
+            ddCustomRange.endIdx = v2;
+        }
+
+        // Deactivate dd-horizon buttons
+        document.querySelectorAll('#dd-horizon-group .dd-horizon-btn').forEach(b => b.classList.remove('active'));
+
+        const badge = document.getElementById('dd-badge');
+        if (badge) {
+            const modeLabel = ddMode === 'rolling_2y' ? 'ROLLING 2Y' : (ddMode === 'ath' ? 'ALL-TIME HIGH' : 'ROLLING 52W');
+            badge.textContent = `${modeLabel} \u00b7 CUSTOM`;
+        }
+
+        updateDDRangeUI();
+        scheduleDDSliderRender();
+    };
+
+    const elevateThumb = (e) => {
+        if (e.target) e.target.style.zIndex = '6';
+    };
+    sStart.addEventListener('mousedown', elevateThumb);
+    sStart.addEventListener('touchstart', elevateThumb);
+    sEnd.addEventListener('mousedown', elevateThumb);
+    sEnd.addEventListener('touchstart', elevateThumb);
+
+    sStart.addEventListener('input', onChange);
+    sEnd.addEventListener('input', onChange);
+}
+
 function initDrawdownControls() {
     const modeTabs = document.querySelectorAll('#dd-mode-tabs .tab-btn');
     modeTabs.forEach(btn => {
@@ -3500,14 +3772,19 @@ function initDrawdownControls() {
             ddMode = btn.dataset.mode;
             const badge = document.getElementById('dd-badge');
             if (badge) {
-                const modeLabel = ddMode === 'ath' ? 'ALL-TIME HIGH' : 'ROLLING 52W';
-                badge.textContent = `${modeLabel} \u00b7 ${ddHorizon.toUpperCase()}`;
+                const modeLabel = ddMode === 'rolling_2y' ? 'ROLLING 2Y' : (ddMode === 'ath' ? 'ALL-TIME HIGH' : 'ROLLING 52W');
+                const horizonLabel = ddHorizon === 'custom' ? 'CUSTOM' : ddHorizon.toUpperCase();
+                badge.textContent = `${modeLabel} \u00b7 ${horizonLabel}`;
             }
             const descEl = document.getElementById('dd-footer-desc');
             if (descEl) {
-                descEl.textContent = ddMode === 'ath'
-                    ? 'Tracks maximum decline from the all-time high (ATH) inception peak for each ETF. Captures long-term structural decay in leveraged and inverse compounding.'
-                    : 'Tracks maximum decline from the trailing 52-week rolling high for each ETF. Highlights cyclical depth, acute contraction, and underwater recovery horizons.';
+                if (ddMode === 'rolling_2y') {
+                    descEl.textContent = 'Tracks maximum decline from the trailing 2-year multi-season cycle peak for each ETF. Captures full summer injection / winter withdrawal cycle dynamics and intermediate structural recoveries.';
+                } else if (ddMode === 'ath') {
+                    descEl.textContent = 'Tracks maximum decline from the all-time high (ATH) inception peak for each ETF. Captures long-term structural decay in leveraged and inverse compounding.';
+                } else {
+                    descEl.textContent = 'Tracks maximum decline from the trailing 52-week rolling high for each ETF. Highlights cyclical depth, acute contraction, and underwater recovery horizons.';
+                }
             }
             ddViewCache.key = null;
             ddBaseKey = null;
@@ -3523,9 +3800,10 @@ function initDrawdownControls() {
             btns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             ddHorizon = btn.dataset.horizon;
+            syncDDRangeSlidersToHorizon(ddHorizon);
             const badge = document.getElementById('dd-badge');
             if (badge) {
-                const modeLabel = ddMode === 'ath' ? 'ALL-TIME HIGH' : 'ROLLING 52W';
+                const modeLabel = ddMode === 'rolling_2y' ? 'ROLLING 2Y' : (ddMode === 'ath' ? 'ALL-TIME HIGH' : 'ROLLING 52W');
                 badge.textContent = `${modeLabel} \u00b7 ${ddHorizon.toUpperCase()}`;
             }
             ddViewCache.key = null;
@@ -3563,6 +3841,7 @@ function renderAll() {
     const ddSig = ddDataSig();
     if (ddSig !== ddLastSig) {
         ddLastSig = ddSig;
+        if (typeof syncDDRangeSlidersToHorizon === 'function') syncDDRangeSlidersToHorizon(ddHorizon);
         renderDrawdownChart();
         if (typeof renderDrawdownKPIs === 'function') renderDrawdownKPIs();
         if (typeof renderDDChips === 'function') renderDDChips();
@@ -3623,6 +3902,7 @@ initHorizonControls();
 const priceDl = document.getElementById('download-price-csv');
 if (priceDl) priceDl.addEventListener('click', downloadActiveEtfPriceCSV);
 initRangeSlider();
+initDDRangeSlider();
 initChartHover();
 initDrawdownControls();
 initDrawdownHover();
@@ -6007,6 +6287,7 @@ function calcExportCSV() {
             }
             // Initialize Slider Max with KOLD data length
             syncRangeSlidersToRange('all');
+            if (typeof syncDDRangeSlidersToHorizon === 'function') syncDDRangeSlidersToHorizon('all');
             renderAll();
             updateBadge();
             // Init Vol Regime Monitor (needs dashboard_data.json, not trough_peak_data.json)
@@ -6025,6 +6306,7 @@ function calcExportCSV() {
                         
                         
                         // Render drawdown chart with loaded data
+                        if (typeof syncDDRangeSlidersToHorizon === 'function') syncDDRangeSlidersToHorizon(ddHorizon);
                         renderDrawdownChart();
                         if (typeof renderDrawdownKPIs === 'function') renderDrawdownKPIs();
                         if (typeof renderDDChips === 'function') renderDDChips();
@@ -6042,6 +6324,7 @@ function calcExportCSV() {
                 state.rawData[t.symbol] = d; 
                 if (t.symbol === 'KOLD' || Object.keys(state.rawData).length === 1) {
                     syncRangeSlidersToRange('all');
+                    if (typeof syncDDRangeSlidersToHorizon === 'function') syncDDRangeSlidersToHorizon('all');
                 }
             }
             else   { state.fetchErr[t.symbol] = true; }
