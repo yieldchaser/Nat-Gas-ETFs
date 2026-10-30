@@ -62,9 +62,17 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
     border-radius: 8px; padding: 12px 14px; display: grid;
     grid-template-columns: 90px 1fr auto;
     gap: 12px; align-items: center;
-    transition: border-color 0.2s, box-shadow 0.2s; cursor: pointer;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.22s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
 }
-.flow-card:hover { border-color: var(--border-accent); background: var(--bg-hover); }
+.flow-card:hover {
+    transform: translateY(-3px);
+    z-index: 2;
+    border-color: rgba(255, 255, 255, 0.22);
+    background: var(--bg-hover);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.48), 0 0 12px rgba(0, 255, 255, 0.05);
+}
 
 .fc-left { display: flex; flex-direction: column; gap: 5px; border-right: 1px solid var(--border-primary); padding-right: 12px; }
 .fc-ticker { font-size: 1.15rem; font-weight: 900; letter-spacing: 1px; color: var(--text-bright); }

@@ -664,3 +664,11 @@ footer {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(80, 144, 160, 0.2);
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .etf-card, .dd-kpi-card, .flow-card, .cvol-kpi-card,
+    .composite-card, .kpi-card, .alert-item, .vp-card,
+    .convergence-gauge, .calc-stat {
+        transform: none !important;
+        transition: none !important;
+    }
+}
