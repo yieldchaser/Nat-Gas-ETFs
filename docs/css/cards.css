@@ -7,11 +7,15 @@
     border: 1px solid var(--border-primary);
     border-radius: var(--card-radius);
     padding: 14px;
-    transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+    position: relative;
+    transition: transform 0.22s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
 }
 
 .etf-card:hover {
-    border-color: var(--border-accent);
+    transform: translateY(-3px);
+    z-index: 2;
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.48), 0 0 12px rgba(0, 255, 255, 0.05);
 }
 
 .etf-card.alert-elevated {
@@ -42,22 +46,22 @@
 
 .etf-card.alert-elevated:hover {
     border-color: rgba(212, 168, 48, 0.7);
-    box-shadow: 0 0 22px 0px rgba(212, 168, 48, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.48), 0 0 22px 0px rgba(212, 168, 48, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .etf-card.alert-high:hover {
     border-color: rgba(192, 120, 40, 0.75);
-    box-shadow: 0 0 24px 0px rgba(192, 120, 40, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.48), 0 0 24px 0px rgba(192, 120, 40, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .etf-card.alert-critical:hover {
     border-color: rgba(192, 64, 64, 0.8);
-    box-shadow: 0 0 26px 0px rgba(192, 64, 64, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.48), 0 0 26px 0px rgba(192, 64, 64, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .etf-card.alert-extreme:hover {
     border-color: rgba(136, 85, 187, 0.85);
-    box-shadow: 0 0 28px 0px rgba(136, 85, 187, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.48), 0 0 28px 0px rgba(136, 85, 187, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 /* Card Header */
