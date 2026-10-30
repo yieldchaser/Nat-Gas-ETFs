@@ -442,35 +442,91 @@ const VolumeProfile = {
         }
         const upPct = prof.totalVol > 0 ? (upTot / prof.totalVol) * 100 : 0;
 
-        let vaPos = '';
-        let vaPosColor = 'rgba(255,255,255,0.7)';
+        const downPct = Math.max(0, 100 - upPct);
+
+        let vaPosClass = 'vp-pill-inside';
+        let vaPosText = 'INSIDE VA';
         if (lastClose != null && isFinite(lastClose)) {
             if (lastClose > vaHiP) {
-                vaPos = 'ABOVE VALUE AREA';
-                vaPosColor = '#3db87a';
+                vaPosClass = 'vp-pill-above';
+                vaPosText = 'ABOVE VA';
             } else if (lastClose < vaLoP) {
-                vaPos = 'BELOW VALUE AREA';
-                vaPosColor = '#da3633';
+                vaPosClass = 'vp-pill-below';
+                vaPosText = 'BELOW VA';
             } else {
-                vaPos = 'INSIDE VALUE AREA';
-                vaPosColor = '#5090a0';
+                vaPosClass = 'vp-pill-inside';
+                vaPosText = 'INSIDE VA';
             }
         }
 
-        const closeHtml = (lastClose != null && isFinite(lastClose))
-            ? `<div class="vp-stat-item vp-stat-range-close vp-stat-end"><b>RANGE CLOSE</b> $${this.fmtPrice(lastClose)} <span style="color:${vaPosColor};font-weight:800;">${vaPos}</span></div>`
-            : `<div class="vp-stat-item vp-stat-range-close vp-stat-end"></div>`;
+        const unitLabel = (unit === 'dollar' || (!unit && prof.unit === 'dollar')) ? 'TURNOVER' : 'SHARES';
+        const closeValHtml = (lastClose != null && isFinite(lastClose))
+            ? `$${this.fmtPrice(lastClose)}`
+            : '—';
+        const closePillHtml = (lastClose != null && isFinite(lastClose))
+            ? `<span class="vp-pill ${vaPosClass}">${vaPosText}</span>`
+            : '';
 
         statsEl.innerHTML =
-            `<div class="vp-stats-row vp-stats-row-top">` +
-                `<div class="vp-stat-item vp-stat-poc"><b>POC</b> $${this.fmtPrice(pocP)}</div>` +
-                `<div class="vp-stat-item vp-stat-va"><b>VALUE AREA</b> $${this.fmtPrice(vaLoP)} – $${this.fmtPrice(vaHiP)}</div>` +
-                closeHtml +
-            `</div>` +
-            `<div class="vp-stats-row vp-stats-row-bottom">` +
-                `<div class="vp-stat-item vp-stat-tot"><b>TOTAL VOL</b> ${this.fmtVol(prof.totalVol, unit)}</div>` +
-                `<div class="vp-stat-item vp-stat-up" style="color:#3db87a;"><b style="color:#3db87a;">UP-DAY VOL</b> ${upPct.toFixed(0)}%</div>` +
-                `<div class="vp-stat-item vp-stat-down vp-stat-end" style="color:#da3633;"><b style="color:#da3633;">DOWN-DAY VOL</b> ${(100 - upPct).toFixed(0)}%</div>` +
+            `<div class="vp-stats-grid">` +
+                `<div class="vp-card vp-card-poc">` +
+                    `<div class="vp-card-header">` +
+                        `<span class="vp-card-label">POINT OF CONTROL (POC)</span>` +
+                        `<span class="vp-card-tag tag-poc">POC</span>` +
+                    `</div>` +
+                    `<div class="vp-card-value-row">` +
+                        `<span class="vp-card-value" style="color:#f5d565;">$${this.fmtPrice(pocP)}</span>` +
+                    `</div>` +
+                `</div>` +
+                `<div class="vp-card vp-card-va">` +
+                    `<div class="vp-card-header">` +
+                        `<span class="vp-card-label">VALUE AREA (VA 70%)</span>` +
+                        `<span class="vp-card-tag tag-va">70%</span>` +
+                    `</div>` +
+                    `<div class="vp-card-value-row">` +
+                        `<span class="vp-card-value">$${this.fmtPrice(vaLoP)} &ndash; $${this.fmtPrice(vaHiP)}</span>` +
+                    `</div>` +
+                `</div>` +
+                `<div class="vp-card vp-card-close">` +
+                    `<div class="vp-card-header">` +
+                        `<span class="vp-card-label">RANGE CLOSE</span>` +
+                    `</div>` +
+                    `<div class="vp-card-value-row">` +
+                        `<span class="vp-card-value">${closeValHtml}</span>` +
+                        closePillHtml +
+                    `</div>` +
+                `</div>` +
+                `<div class="vp-card vp-card-tot">` +
+                    `<div class="vp-card-header">` +
+                        `<span class="vp-card-label">TOTAL VOLUME</span>` +
+                        `<span class="vp-card-tag tag-tot">${unitLabel}</span>` +
+                    `</div>` +
+                    `<div class="vp-card-value-row">` +
+                        `<span class="vp-card-value">${this.fmtVol(prof.totalVol, unit)}</span>` +
+                    `</div>` +
+                `</div>` +
+                `<div class="vp-card vp-card-up">` +
+                    `<div class="vp-card-header">` +
+                        `<span class="vp-card-label">UP-DAY VOLUME</span>` +
+                    `</div>` +
+                    `<div class="vp-card-value-row">` +
+                        `<span class="vp-card-value" style="color:#3db87a;">${upPct.toFixed(0)}%</span>` +
+                    `</div>` +
+                    `<div class="vp-delta-track">` +
+                        `<div class="vp-delta-fill vp-delta-fill-up" style="width:${Math.min(100, Math.max(0, upPct)).toFixed(1)}%;"></div>` +
+                    `</div>` +
+                `</div>` +
+                `<div class="vp-card vp-card-down">` +
+                    `<div class="vp-card-header">` +
+                        `<span class="vp-card-label">DOWN-DAY VOLUME</span>` +
+                    `</div>` +
+                    `<div class="vp-card-value-row">` +
+                        `<span class="vp-card-value" style="color:#da3633;">${downPct.toFixed(0)}%</span>` +
+                    `</div>` +
+                    `<div class="vp-delta-track">` +
+                        `<div class="vp-delta-fill vp-delta-fill-down" style="width:${Math.min(100, Math.max(0, downPct)).toFixed(1)}%;"></div>` +
+                    `</div>` +
+                `</div>` +
             `</div>`;
     },
 
