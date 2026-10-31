@@ -38,6 +38,7 @@ logger = logging.getLogger("data_pipeline")
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
+DOCS_DATA_DIR = PROJECT_ROOT / "docs" / "data"
 DASHBOARD_JSON = DATA_DIR / "dashboard_data.json"
 SIGNALS_JSON = DATA_DIR / "latest_signals.json"
 SPLIT_WARNINGS_JSON = DATA_DIR / "split_warnings.json"
@@ -662,6 +663,28 @@ def _fetch_ng_price_context() -> dict:
     # ---- Precompute full series for historical event tagging (internal only) ----
     ng_z_full_series = _compute_ng_seasonal_z_series(close)
     ng_regime_full_series = _compute_ng_regime_series(close, ng_z_full_series)
+
+    # Save clean NG=F history for tail risk & flow models
+    try:
+        ng_records = []
+        for dt_idx, r in df.iterrows():
+            ng_records.append({
+                "date": dt_idx.strftime("%Y-%m-%d"),
+                "open": round(float(r["open"]), 4) if "open" in r and not pd.isna(r["open"]) else None,
+                "high": round(float(r["high"]), 4) if "high" in r and not pd.isna(r["high"]) else None,
+                "low": round(float(r["low"]), 4) if "low" in r and not pd.isna(r["low"]) else None,
+                "close": round(float(r["close"]), 4) if "close" in r and not pd.isna(r["close"]) else None,
+                "volume": float(r["volume"]) if "volume" in r and not pd.isna(r["volume"]) else 0.0,
+            })
+        if ng_records:
+            DOCS_DATA_DIR.mkdir(parents=True, exist_ok=True)
+            with open(DATA_DIR / "ng_history.json", "w", encoding="utf-8") as f:
+                json.dump(ng_records, f)
+            with open(DOCS_DATA_DIR / "ng_history.json", "w", encoding="utf-8") as f:
+                json.dump(ng_records, f)
+            logger.info("Exported %d NG=F bars to ng_history.json", len(ng_records))
+    except Exception as ex:
+        logger.warning("Could not export ng_history.json: %s", ex)
 
     return {
         "price":           round(current, 3),

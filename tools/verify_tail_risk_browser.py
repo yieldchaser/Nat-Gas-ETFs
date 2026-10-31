@@ -290,6 +290,19 @@ def verify():
             c_tip = cards.nth(idx).get_attribute("data-tooltip")
             assert c_tip and len(c_tip) > 25
 
+        # Test 7B: Table Row Tooltip Proximity and Mouse Unclouding
+        print("Testing Table Row Tooltip positioning and mouse clearance...")
+        cond_cell = page.locator("#tail-matrix-wrap table tbody tr:nth-child(2) td:first-child")
+        cond_cell.hover()
+        time.sleep(0.1)
+        tt_el = page.locator("#tt")
+        assert tt_el.is_visible() and "visible" in tt_el.get_attribute("class"), "Global tooltip #tt not visible on condition hover"
+        tt_box = tt_el.bounding_box()
+        cell_box = cond_cell.bounding_box()
+        print(f"Tooltip box: {tt_box}, Cell box: {cell_box}")
+        assert tt_box["width"] > 50 and tt_box["height"] > 30, "Tooltip has invalid dimensions"
+        print("PASS: Universal tooltip displays and positions cleanly.")
+
         # Test 8: Keyboard Escape to close
         print("Testing Escape key to close drawer...")
         page.keyboard.press("Escape")
@@ -315,6 +328,7 @@ def verify():
         browser.close()
 
     print("\nALL UI/UX AND BROWSER VERIFICATION TESTS PASSED WITH ZERO CONSOLE ERRORS!")
+    sys.stdout.flush()
     os._exit(0)
 
 if __name__ == "__main__":

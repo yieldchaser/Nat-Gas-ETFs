@@ -1054,41 +1054,49 @@ document.addEventListener('DOMContentLoaded', () => App.init());
             const r = el.getBoundingClientRect();
             const tw = tt.offsetWidth;
             const th = tt.offsetHeight;
-            const pad = 10;
-            const GAP = 8;
+            const pad = 12;
+            const GAP = 10;
 
-            // Horizontal position:
-            // Center near the element. If element is wide (>200px), center near cursor so it stays near what user pointed at.
+            // Preferred Y: above element/cursor
+            const anchorTop = (evt && evt.clientY) ? Math.min(r.top, evt.clientY) : r.top;
+            const anchorBottom = (evt && evt.clientY) ? Math.max(r.bottom, evt.clientY) : r.bottom;
+
+            let y = anchorTop - th - GAP;
+            // If not enough room above viewport, position below
+            if (y < pad) {
+                y = anchorBottom + GAP;
+            }
+
+            // X positioning:
+            // If mouse coordinate is present, offset to the right of cursor by 14px so mouse point is never obscured
             let x;
-            if (evt && evt.clientX && el.offsetWidth > 200) {
-                x = evt.clientX - tw / 2;
+            if (evt && evt.clientX) {
+                x = evt.clientX + 14;
+                // If it overflows right viewport boundary, flip to left of cursor
+                if (x + tw > window.innerWidth - pad) {
+                    x = evt.clientX - tw - 14;
+                }
             } else {
                 x = r.left + r.width / 2 - tw / 2;
             }
 
-            // Default: position directly above the element
-            let y = r.top - th - GAP;
+            // Viewport clamping
+            x = Math.max(pad, Math.min(x, window.innerWidth - tw - pad));
+            y = Math.max(pad, Math.min(y, window.innerHeight - th - pad));
 
-            // If not enough room above viewport, flip below element
-            if (y < pad) {
-                y = r.bottom + GAP;
-            }
-
-            // Ensure tooltip does not cloud the exact mouse cursor point
-            if (evt && evt.clientY) {
-                if (evt.clientY >= y - 4 && evt.clientY <= y + th + 4) {
-                    if (r.top - th - GAP >= pad) {
-                        y = r.top - th - GAP;
+            // Safety collision check: if cursor point falls inside tooltip box after clamping,
+            // push tooltip away so the mouse pointer and hovered text are never covered
+            if (evt && evt.clientX && evt.clientY) {
+                const insideX = evt.clientX >= x - 2 && evt.clientX <= x + tw + 2;
+                const insideY = evt.clientY >= y - 2 && evt.clientY <= y + th + 2;
+                if (insideX && insideY) {
+                    if (y >= evt.clientY) {
+                        y = Math.min(window.innerHeight - th - pad, evt.clientY + 22);
                     } else {
-                        y = r.bottom + GAP;
+                        y = Math.max(pad, evt.clientY - th - 22);
                     }
                 }
             }
-
-            // Clamp horizontally to viewport
-            x = Math.max(pad, Math.min(x, window.innerWidth - tw - pad));
-            // Clamp vertically to viewport
-            y = Math.max(pad, Math.min(y, window.innerHeight - th - pad));
 
             tt.style.left = Math.round(x) + 'px';
             tt.style.top = Math.round(y) + 'px';

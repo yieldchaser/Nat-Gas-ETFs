@@ -464,6 +464,25 @@ def _load_history(ticker: str, dashboard_data: dict) -> pd.DataFrame:
                     df[c] = df[c].astype(float)
             return df
 
+        # Additional fallback: flows summary JSON
+        flows_summary = DOCS_DATA_DIR / "flows" / "all_flows_summary.json"
+        if flows_summary.exists():
+            try:
+                with open(flows_summary, "r", encoding="utf-8") as f:
+                    s_data = json.load(f)
+                hist = s_data.get("ng_history", [])
+                if hist:
+                    df = pd.DataFrame(hist)
+                    df["date"] = pd.to_datetime(df["date"])
+                    df.set_index("date", inplace=True)
+                    df.sort_index(inplace=True)
+                    for c in ("open", "high", "low", "close", "volume"):
+                        if c in df.columns:
+                            df[c] = df[c].astype(float)
+                    return df
+            except Exception as e:
+                logger.warning("Could not read flows summary: %s", e)
+
     return pd.DataFrame()
 
 

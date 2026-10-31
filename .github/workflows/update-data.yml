@@ -48,6 +48,12 @@ jobs:
         env:
           PYTHONUNBUFFERED: '1'
 
+      - name: Run return distribution and tail risk generator
+        run: |
+          python scripts/generate_return_distributions.py
+        env:
+          PYTHONUNBUFFERED: '1'
+
       - name: Copy data to docs folder
         run: |
           cp data/dashboard_data.json docs/data/ 2>/dev/null || true
@@ -55,6 +61,8 @@ jobs:
           cp data/validation_results.json docs/data/ 2>/dev/null || true
           cp data/split_warnings.json docs/data/ 2>/dev/null || true
           cp data/known_splits.json docs/data/ 2>/dev/null || true
+          cp data/return_distributions.json docs/data/ 2>/dev/null || true
+          cp data/ng_history.json docs/data/ 2>/dev/null || true
 
       - name: Commit and push if changed
         run: |
