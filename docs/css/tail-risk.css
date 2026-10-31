@@ -566,6 +566,28 @@
     background: rgba(255, 255, 255, 0.02);
 }
 
+.tail-matrix-table th.col-left,
+.tail-matrix-table td.col-left {
+    text-align: left !important;
+    padding-left: 10px;
+}
+
+.tail-matrix-table th.col-center,
+.tail-matrix-table td.col-center {
+    text-align: center !important;
+}
+
+.tail-matrix-table th:first-child,
+.tail-matrix-table td:first-child {
+    text-align: left;
+    padding-left: 10px;
+}
+
+.tail-matrix-table th:not(:first-child),
+.tail-matrix-table td:not(:first-child) {
+    text-align: center;
+}
+
 .tail-edge-badge {
     padding: 2px 6px;
     border-radius: 3px;

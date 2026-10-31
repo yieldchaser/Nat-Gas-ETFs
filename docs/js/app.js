@@ -1040,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', () => App.init());
     let active = null;
     let hideTimer = null;
 
-    function show(el) {
+    function show(el, evt) {
         if (el === active && tt.classList.contains('visible')) return;
         active = el;
         tt.innerHTML = el.getAttribute('data-tooltip');
@@ -1054,21 +1054,44 @@ document.addEventListener('DOMContentLoaded', () => App.init());
             const r = el.getBoundingClientRect();
             const tw = tt.offsetWidth;
             const th = tt.offsetHeight;
-            const pad = 8;
-            const GAP = 12;
+            const pad = 10;
+            const GAP = 8;
 
-            // Default: above element, horizontally centred
-            let x = r.left + r.width / 2 - tw / 2;
+            // Horizontal position:
+            // Center near the element. If element is wide (>200px), center near cursor so it stays near what user pointed at.
+            let x;
+            if (evt && evt.clientX && el.offsetWidth > 200) {
+                x = evt.clientX - tw / 2;
+            } else {
+                x = r.left + r.width / 2 - tw / 2;
+            }
+
+            // Default: position directly above the element
             let y = r.top - th - GAP;
 
-            // Flip below if no room above
-            if (y < pad) y = r.bottom + GAP;
+            // If not enough room above viewport, flip below element
+            if (y < pad) {
+                y = r.bottom + GAP;
+            }
+
+            // Ensure tooltip does not cloud the exact mouse cursor point
+            if (evt && evt.clientY) {
+                if (evt.clientY >= y - 4 && evt.clientY <= y + th + 4) {
+                    if (r.top - th - GAP >= pad) {
+                        y = r.top - th - GAP;
+                    } else {
+                        y = r.bottom + GAP;
+                    }
+                }
+            }
 
             // Clamp horizontally to viewport
             x = Math.max(pad, Math.min(x, window.innerWidth - tw - pad));
+            // Clamp vertically to viewport
+            y = Math.max(pad, Math.min(y, window.innerHeight - th - pad));
 
-            tt.style.left = x + 'px';
-            tt.style.top = y + 'px';
+            tt.style.left = Math.round(x) + 'px';
+            tt.style.top = Math.round(y) + 'px';
         });
     }
 
@@ -1087,7 +1110,7 @@ document.addEventListener('DOMContentLoaded', () => App.init());
 
     document.addEventListener('mouseover', function (e) {
         const el = e.target.closest('[data-tooltip]');
-        if (el) show(el);
+        if (el) show(el, e);
     });
 
     document.addEventListener('mouseout', function (e) {

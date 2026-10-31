@@ -149,6 +149,25 @@ def verify():
             assert ctip and len(ctip) > 20, f"Chip {i} missing tooltip"
         print("PASS: Universal tooltips verified on table headers and ticker switcher chips.")
 
+        # Test 2D: Column alignment verification (first col left, remaining 6 cols centered)
+        print("Testing column alignments: CONDITION left-aligned, all others middle-aligned...")
+        alignments = page.evaluate('''() => {
+            const ths = Array.from(document.querySelectorAll('#tail-matrix-wrap table th')).map(th => window.getComputedStyle(th).textAlign);
+            const tds = Array.from(document.querySelectorAll('#tail-matrix-wrap table tbody tr:first-child td')).map(td => window.getComputedStyle(td).textAlign);
+            const trHasTip = document.querySelector('#tail-matrix-wrap table tbody tr').hasAttribute('data-tooltip');
+            const condHasTip = document.querySelector('#tail-matrix-wrap table tbody tr td:first-child').hasAttribute('data-tooltip');
+            return { ths, tds, trHasTip, condHasTip };
+        }''')
+        print(f"Alignment audit results: {alignments}")
+        assert alignments["ths"][0] == "left", f"Expected CONDITION header left-aligned, got {alignments['ths'][0]}"
+        assert alignments["tds"][0] == "left", f"Expected CONDITION cells left-aligned, got {alignments['tds'][0]}"
+        for col_idx in range(1, 7):
+            assert alignments["ths"][col_idx] == "center", f"Expected header {col_idx} centered, got {alignments['ths'][col_idx]}"
+            assert alignments["tds"][col_idx] == "center", f"Expected cell {col_idx} centered, got {alignments['tds'][col_idx]}"
+        assert not alignments["trHasTip"], "Row <tr> should not have data-tooltip (prevents clouding table numbers)"
+        assert alignments["condHasTip"], "First column condition cell must have data-tooltip"
+        print("PASS: CONDITION is left-aligned; TRIGGER, SAMPLES, FWD 1D/5D/10D, and EDGE are all middle-aligned!")
+
         # Test 3: Switching Horizons
         print("Testing switching horizons (1D, 5D, 21D)...")
         btn_5d = page.locator("button[data-horizon='5d']")

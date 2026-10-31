@@ -944,13 +944,13 @@ const TailRiskDrawer = {
             <table class="tail-table tail-matrix-table">
                 <thead>
                     <tr>
-                        <th data-tooltip="&lt;strong&gt;Volume-Conditioned Market Regime&lt;/strong&gt;&lt;br&gt;Microstructure state cross-tabulating volume Z-score and RVOL-21d to identify exhaustion vs momentum.">CONDITION</th>
-                        <th data-tooltip="&lt;strong&gt;Quantitative Trigger Criteria&lt;/strong&gt;&lt;br&gt;Standardized volume threshold and relative volume condition defining regime membership.">TRIGGER</th>
-                        <th style="text-align:right;" data-tooltip="&lt;strong&gt;Historical Sample Count&lt;/strong&gt;&lt;br&gt;Number of historical trading sessions satisfying the trigger condition across the selected regime.">SAMPLES</th>
-                        <th style="text-align:right;" data-tooltip="&lt;strong&gt;Forward 1-Day Expectancy&lt;/strong&gt;&lt;br&gt;Historical win rate (percentage &gt; 0.0%) and arithmetic mean forward 1-day return.">FWD 1D</th>
-                        <th style="text-align:right;" data-tooltip="&lt;strong&gt;Forward 5-Day Expectancy&lt;/strong&gt;&lt;br&gt;Historical win rate (percentage &gt; 0.0%) and arithmetic mean forward 5-day return.">FWD 5D</th>
-                        <th style="text-align:right;" data-tooltip="&lt;strong&gt;Forward 10-Day Expectancy&lt;/strong&gt;&lt;br&gt;Historical win rate (percentage &gt; 0.0%) and arithmetic mean forward 10-day return.">FWD 10D</th>
-                        <th data-tooltip="&lt;strong&gt;Empirical Statistical Edge&lt;/strong&gt;&lt;br&gt;Algorithmic edge classification derived from forward win rate and positive return skew.">EDGE</th>
+                        <th class="col-left" style="text-align:left;" data-tooltip="&lt;strong&gt;Volume-Conditioned Market Regime&lt;/strong&gt;&lt;br&gt;Microstructure state cross-tabulating volume Z-score and RVOL-21d to identify exhaustion vs momentum.">CONDITION</th>
+                        <th class="col-center" style="text-align:center;" data-tooltip="&lt;strong&gt;Quantitative Trigger Criteria&lt;/strong&gt;&lt;br&gt;Standardized volume threshold and relative volume condition defining regime membership.">TRIGGER</th>
+                        <th class="col-center" style="text-align:center;" data-tooltip="&lt;strong&gt;Historical Sample Count&lt;/strong&gt;&lt;br&gt;Number of historical trading sessions satisfying the trigger condition across the selected regime.">SAMPLES</th>
+                        <th class="col-center" style="text-align:center;" data-tooltip="&lt;strong&gt;Forward 1-Day Expectancy&lt;/strong&gt;&lt;br&gt;Historical win rate (percentage &gt; 0.0%) and arithmetic mean forward 1-day return.">FWD 1D</th>
+                        <th class="col-center" style="text-align:center;" data-tooltip="&lt;strong&gt;Forward 5-Day Expectancy&lt;/strong&gt;&lt;br&gt;Historical win rate (percentage &gt; 0.0%) and arithmetic mean forward 5-day return.">FWD 5D</th>
+                        <th class="col-center" style="text-align:center;" data-tooltip="&lt;strong&gt;Forward 10-Day Expectancy&lt;/strong&gt;&lt;br&gt;Historical win rate (percentage &gt; 0.0%) and arithmetic mean forward 10-day return.">FWD 10D</th>
+                        <th class="col-center" style="text-align:center;" data-tooltip="&lt;strong&gt;Empirical Statistical Edge&lt;/strong&gt;&lt;br&gt;Algorithmic edge classification derived from forward win rate and positive return skew.">EDGE</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -975,14 +975,14 @@ const TailRiskDrawer = {
                             `Edge Classification: ${r.fwd_1d.edge}`;
 
                         return `
-                            <tr data-tooltip="${rowTooltip}">
-                                <td style="font-weight:700; color:#f0f4fc;">${r.label}</td>
-                                <td style="color:rgba(255,255,255,0.50);">${r.definition}</td>
-                                <td style="text-align:right;">${r.count}</td>
-                                <td style="text-align:right;">${fwdFmt(r.fwd_1d)}</td>
-                                <td style="text-align:right;">${fwdFmt(r.fwd_5d)}</td>
-                                <td style="text-align:right;">${fwdFmt(r.fwd_10d)}</td>
-                                <td><span class="tail-edge-badge ${edgeCls}" data-tooltip="Classification: ${r.fwd_1d.edge}">${r.fwd_1d.edge}</span></td>
+                            <tr>
+                                <td class="col-left" style="text-align:left; font-weight:700; color:#f0f4fc;" data-tooltip="${rowTooltip}">${r.label}</td>
+                                <td class="col-center" style="text-align:center; color:rgba(255,255,255,0.50);">${r.definition}</td>
+                                <td class="col-center" style="text-align:center;">${r.count}</td>
+                                <td class="col-center" style="text-align:center;">${fwdFmt(r.fwd_1d)}</td>
+                                <td class="col-center" style="text-align:center;">${fwdFmt(r.fwd_5d)}</td>
+                                <td class="col-center" style="text-align:center;">${fwdFmt(r.fwd_10d)}</td>
+                                <td class="col-center" style="text-align:center;"><span class="tail-edge-badge ${edgeCls}" data-tooltip="Classification: ${r.fwd_1d.edge}">${r.fwd_1d.edge}</span></td>
                             </tr>
                         `;
                     }).join('')}
