@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/styles.css?v=20261021a">
     <link rel="stylesheet" href="css/cards.css?v=20261024a">
     <link rel="stylesheet" href="css/signals.css?v=20261030a">
+    <link rel="stylesheet" href="css/tail-risk.css?v=20261031a">
     <link rel="preload" href="data/dashboard_data.json" as="fetch">
 </head>
 <body>
@@ -332,6 +333,73 @@
     <!-- ETF Card Chart Tooltip -->
     <div id="card-chart-tooltip"></div>
 
+    <div id="tail-risk-backdrop" class="tail-backdrop" onclick="TailRiskDrawer.close()"></div>
+
+    <aside id="tail-risk-drawer" class="tail-drawer" aria-label="Tail Risk Analysis Drawer">
+        <header class="tail-header">
+            <div class="tail-header-left">
+                <h2 class="tail-title" id="tail-header-title">Tail Risk Engine</h2>
+                <span class="tail-ticker-badge" id="tail-header-badge">BOIL</span>
+                <span class="tail-subtitle" id="tail-header-sub">Historical Empirical Distribution</span>
+            </div>
+            <div class="tail-header-right">
+                <button class="tail-close-btn" onclick="TailRiskDrawer.close()" aria-label="Close Tail Risk Drawer">&times;</button>
+            </div>
+        </header>
+
+        <nav class="tail-ticker-chips" id="tail-ticker-chips" aria-label="Instrument Switcher"></nav>
+
+        <div class="tail-body" id="tail-drawer-body">
+            <div class="tail-controls-row">
+                <div class="tail-control-group">
+                    <span class="tail-control-label">Horizon</span>
+                    <div class="tail-btn-group" id="tail-horizon-tabs">
+                        <button class="tail-tab-btn active" data-horizon="1d" onclick="TailRiskDrawer.setHorizon('1d')">1-DAY</button>
+                        <button class="tail-tab-btn" data-horizon="5d" onclick="TailRiskDrawer.setHorizon('5d')">5-DAY SWING</button>
+                        <button class="tail-tab-btn" data-horizon="21d" onclick="TailRiskDrawer.setHorizon('21d')">21-DAY MONTHLY</button>
+                    </div>
+                </div>
+                <div class="tail-control-group">
+                    <span class="tail-control-label">Regime</span>
+                    <div class="tail-btn-group" id="tail-regime-tabs">
+                        <button class="tail-tab-btn active" data-regime="trailing_252d" onclick="TailRiskDrawer.setRegime('trailing_252d')">TRAILING 252D</button>
+                        <button class="tail-tab-btn" data-regime="lng_era" onclick="TailRiskDrawer.setRegime('lng_era')">MODERN LNG ERA (2023+)</button>
+                        <button class="tail-tab-btn" data-regime="full_inception" onclick="TailRiskDrawer.setRegime('full_inception')">FULL INCEPTION</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tail-shock-banner" id="tail-shock-banner"></div>
+
+            <div class="tail-kpi-grid" id="tail-kpi-grid"></div>
+
+            <div class="tail-canvas-container">
+                <div class="tail-chart-header">
+                    <span class="tail-chart-title">EMPIRICAL PROBABILITY DENSITY (80-BIN ZERO-ANCHORED HISTOGRAM)</span>
+                    <div class="tail-legend">
+                        <span class="tail-legend-item"><span class="tail-legend-swatch" style="background:#c04040;"></span>Loss Tail</span>
+                        <span class="tail-legend-item"><span class="tail-legend-swatch" style="background:#3db87a;"></span>Gain Tail</span>
+                        <span class="tail-legend-item"><span class="tail-legend-swatch" style="background:#d4a830; border: 1px dashed #d4a830;"></span>VaR 95%</span>
+                        <span class="tail-legend-item"><span class="tail-legend-swatch" style="background:#c04040; border: 1px dashed #c04040;"></span>CVaR 95%</span>
+                        <span class="tail-legend-item"><span class="tail-legend-swatch" style="background:#5090a0;"></span>Live Needle</span>
+                    </div>
+                </div>
+                <div class="tail-canvas-wrap">
+                    <canvas id="tail-risk-canvas"></canvas>
+                    <div id="tail-risk-tooltip"></div>
+                </div>
+            </div>
+
+            <div class="tail-matrix-card">
+                <div class="tail-matrix-title-row">
+                    <span class="tail-matrix-title">VOLUME-CONDITIONED FORWARD RETURN EXPECTANCY MATRIX</span>
+                    <span class="tail-matrix-subtitle">Cross-tabulated against Z-Score and Relative Volume (RVOL-21d)</span>
+                </div>
+                <div class="tail-matrix-wrap" id="tail-matrix-wrap"></div>
+            </div>
+        </div>
+    </aside>
+
     <script src="js/config.js?v=20261025a"></script>
     <script src="js/data.js?v=20261021a"></script>
     <script src="js/metrics.js?v=20261024a"></script>
@@ -340,6 +408,7 @@
     <script src="js/signals.js?v=20261024d"></script>
     <script src="js/volume-studies.js?v=20261025a"></script>
     <script src="js/volume-profile.js?v=20261030a"></script>
+    <script src="js/tail-risk.js?v=20261031a"></script>
     <script src="js/app.js?v=20261021a"></script>
 </body>
 </html>

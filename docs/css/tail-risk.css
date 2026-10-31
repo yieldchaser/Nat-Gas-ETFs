@@ -1,0 +1,683 @@
+/* ============================================================
+   Historical Return Distribution & Tail Risk Engine Styles
+   Blue Meridian Platform - High-Precision Quantitative Module
+   ============================================================ */
+
+/* ── Tail Backdrop ────────────────────────────────────────── */
+.tail-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(3px);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tail-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ── Tail Drawer Panel ────────────────────────────────────── */
+.tail-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 880px;
+    max-width: 95vw;
+    height: 100vh;
+    background: #0d1117;
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: -12px 0 40px rgba(0, 0, 0, 0.85);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #e6edf3;
+    overflow: hidden;
+}
+
+.tail-drawer.open {
+    transform: translateX(0);
+}
+
+/* ── Drawer Header ────────────────────────────────────────── */
+.tail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: #161b22;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.tail-header-left {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tail-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #f0f4fc;
+    margin: 0;
+}
+
+.tail-ticker-badge {
+    font-family: ui-monospace, 'SF Mono', 'Fira Code', Menlo, Consolas, monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.03em;
+}
+
+.tail-badge-long {
+    background: rgba(61, 184, 122, 0.15);
+    color: #3db87a;
+    border: 1px solid rgba(61, 184, 122, 0.35);
+}
+
+.tail-badge-short {
+    background: rgba(192, 64, 64, 0.15);
+    color: #c04040;
+    border: 1px solid rgba(192, 64, 64, 0.35);
+}
+
+.tail-badge-benchmark {
+    background: rgba(80, 144, 160, 0.15);
+    color: #5090a0;
+    border: 1px solid rgba(80, 144, 160, 0.35);
+}
+
+.tail-subtitle {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.50);
+}
+
+.tail-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tail-close-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 1.1rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    line-height: 1;
+}
+
+.tail-close-btn:hover {
+    background: rgba(192, 64, 64, 0.25);
+    border-color: #c04040;
+    color: #fff;
+}
+
+/* ── Ticker Switcher Chips ────────────────────────────────── */
+.tail-ticker-chips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: #11151c;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    overflow-x: auto;
+    flex-shrink: 0;
+}
+
+.tail-chip {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    color: rgba(255, 255, 255, 0.70);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.tail-chip:hover {
+    background: rgba(80, 144, 160, 0.12);
+    color: #ffffff;
+    border-color: rgba(80, 144, 160, 0.40);
+    box-shadow: 0 0 6px rgba(80, 144, 160, 0.20);
+}
+
+.tail-chip.active {
+    background: rgba(80, 144, 160, 0.25);
+    color: #7ad1e8;
+    border-color: #5090a0;
+    box-shadow: 0 0 8px rgba(80, 144, 160, 0.35);
+}
+
+/* ── Drawer Scrollable Body ───────────────────────────────── */
+.tail-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px 20px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ── Controls Row (Horizon & Regime) ──────────────────────── */
+.tail-controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    background: #161b22;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tail-control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tail-control-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.tail-btn-group {
+    display: flex;
+    background: #0d1117;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 4px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.tail-tab-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: rgba(255, 255, 255, 0.60);
+    padding: 4px 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.tail-tab-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.tail-tab-btn.active {
+    background: #21262d;
+    color: #7ad1e8;
+    border-color: rgba(80, 144, 160, 0.35);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.50);
+}
+
+/* ── Live Shock Banner ────────────────────────────────────── */
+.tail-shock-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: #131920;
+    border: 1px solid rgba(80, 144, 160, 0.30);
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.tail-shock-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tail-shock-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #5090a0;
+    box-shadow: 0 0 8px #5090a0;
+    animation: tailPulse 2s infinite;
+}
+
+@keyframes tailPulse {
+    0% { transform: scale(0.95); opacity: 0.7; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.7; }
+}
+
+.tail-shock-title {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #e6edf3;
+    letter-spacing: 0.03em;
+}
+
+.tail-shock-metrics {
+    font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #5090a0;
+}
+
+.tail-shock-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tail-shock-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.tail-shock-normal {
+    background: rgba(61, 184, 122, 0.15);
+    color: #3db87a;
+    border: 1px solid rgba(61, 184, 122, 0.30);
+}
+
+.tail-shock-elevated {
+    background: rgba(212, 168, 48, 0.15);
+    color: #d4a830;
+    border: 1px solid rgba(212, 168, 48, 0.30);
+}
+
+.tail-shock-critical {
+    background: rgba(192, 64, 64, 0.20);
+    color: #ff5555;
+    border: 1px solid rgba(192, 64, 64, 0.40);
+    animation: tailPulse 1.2s infinite;
+}
+
+/* ── KPI Grid (Moments & Risk Metrics) ─────────────────────── */
+.tail-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+}
+
+@media (max-width: 860px) {
+    .tail-kpi-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 540px) {
+    .tail-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.tail-kpi-card {
+    background: #161b22;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: help;
+    transition: all 0.15s ease;
+}
+
+.tail-kpi-card:hover {
+    background: #1c222d;
+    border-color: rgba(80, 144, 160, 0.40);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.40);
+    transform: translateY(-1px);
+}
+
+.tail-kpi-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tail-kpi-value {
+    font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #f0f4fc;
+}
+
+.tail-kpi-sub {
+    font-size: 0.60rem;
+    color: rgba(255, 255, 255, 0.40);
+}
+
+/* ── Canvas Chart Container ───────────────────────────────── */
+.tail-canvas-container {
+    background: #161b22;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 14px 14px 8px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tail-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tail-chart-title {
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #e6edf3;
+}
+
+.tail-legend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.64rem;
+    color: rgba(255, 255, 255, 0.65);
+    flex-wrap: wrap;
+}
+
+.tail-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.tail-legend-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.tail-canvas-wrap {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    background: #0d1117;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.tail-canvas-wrap canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+}
+
+/* ── Interactive Crosshair Tooltip ────────────────────────── */
+#tail-risk-tooltip {
+    position: absolute;
+    display: none;
+    pointer-events: none;
+    z-index: 1050;
+    background: rgba(13, 17, 23, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 5px;
+    padding: 8px 12px;
+    font-size: 0.68rem;
+    color: #e6edf3;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75);
+    min-width: 160px;
+}
+
+.tail-tt-header {
+    font-weight: 800;
+    font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.74rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+}
+
+.tail-tt-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 2px;
+}
+
+.tail-tt-lbl {
+    color: rgba(255, 255, 255, 0.50);
+}
+
+.tail-tt-val {
+    font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+    font-weight: 700;
+}
+
+/* ── Forward Expectancy Matrix ────────────────────────────── */
+.tail-matrix-card {
+    background: #161b22;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tail-matrix-title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tail-matrix-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #e6edf3;
+}
+
+.tail-matrix-subtitle {
+    font-size: 0.64rem;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.tail-matrix-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+
+.tail-table,
+.tail-matrix-table {
+    width: 100%;
+    min-width: 580px;
+    border-collapse: collapse;
+    font-size: 0.68rem;
+    text-align: left;
+}
+
+.tail-table th,
+.tail-matrix-table th {
+    background: #0d1117;
+    color: rgba(255, 255, 255, 0.55);
+    font-weight: 700;
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.tail-table td,
+.tail-matrix-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+    white-space: nowrap;
+}
+
+.tail-table tr:hover td,
+.tail-matrix-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.tail-edge-badge {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.60rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    display: inline-block;
+}
+
+.tail-edge-strong-bull {
+    background: rgba(61, 184, 122, 0.20);
+    color: #3db87a;
+    border: 1px solid rgba(61, 184, 122, 0.40);
+}
+
+.tail-edge-mod-bull {
+    background: rgba(61, 184, 122, 0.10);
+    color: #6edb9f;
+    border: 1px solid rgba(61, 184, 122, 0.25);
+}
+
+.tail-edge-strong-bear {
+    background: rgba(192, 64, 64, 0.20);
+    color: #ff5555;
+    border: 1px solid rgba(192, 64, 64, 0.40);
+}
+
+.tail-edge-mod-bear {
+    background: rgba(192, 64, 64, 0.10);
+    color: #e07070;
+    border: 1px solid rgba(192, 64, 64, 0.25);
+}
+
+.tail-edge-neutral {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.50);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+/* ── Card Action Button (TAIL) ────────────────────────────── */
+.card-tail-btn {
+    background: rgba(80, 144, 160, 0.15);
+    color: #5090a0;
+    border: 1px solid rgba(80, 144, 160, 0.35);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.04em;
+    font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+}
+
+.card-tail-btn:hover {
+    background: rgba(80, 144, 160, 0.32);
+    border-color: #5090a0;
+    color: #ffffff;
+    box-shadow: 0 0 6px rgba(80, 144, 160, 0.35);
+}
+
+/* ── Mobile and Viewport Responsiveness ──────────────────── */
+@media (max-width: 600px) {
+    .tail-drawer {
+        width: 100vw;
+        max-width: 100vw;
+        border-left: none;
+        border-radius: 0;
+    }
+
+    .tail-header {
+        padding: 10px 14px;
+    }
+
+    .tail-body {
+        padding: 12px 12px 24px;
+        gap: 12px;
+    }
+
+    .tail-controls-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .tail-control-group {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .tail-canvas-wrap {
+        height: 260px;
+    }
+}
+
+@media (max-width: 480px) {
+    .tail-header {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .tail-title {
+        font-size: 0.95rem;
+    }
+
+    .tail-ticker-badge {
+        font-size: 0.72rem;
+        padding: 1px 6px;
+    }
+
+    .tail-shock-banner {
+        padding: 8px 10px;
+        gap: 8px;
+    }
+}

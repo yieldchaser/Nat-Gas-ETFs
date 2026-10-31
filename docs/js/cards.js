@@ -299,6 +299,7 @@ const Cards = {
                     <div class="card-header-right">
                         <div class="card-header-actions">
                             <button class="card-study-btn" data-tooltip="Open full Price-Volume Study for ${ticker}" onclick="Cards.openStudy('${ticker}', event)">Study ↗</button>
+                            <button class="card-tail-btn" data-tooltip="Open Tail Risk & Historical Return Distribution for ${ticker}" onclick="Cards.openTail('${ticker}', event)">TAIL</button>
                             <div class="mode-toggle" title="Toggle Share / Dollar Volume mode">
                                 <span class="mode-pill share-pill active-pill" onclick="Cards.setMode(this,'share')">S</span>
                                 <span class="mode-pill dollar-pill" onclick="Cards.setMode(this,'dollar')">$</span>
@@ -306,7 +307,7 @@ const Cards = {
                         </div>
                         <div class="card-price-group">
                             <span class="card-price" data-live="price">${this.formatPrice(c.price)}</span>
-                            <span class="card-change ${changeClass}" data-live="change">${changeSign}${c.changePct.toFixed(2)}%</span>
+                            <span class="card-change ${changeClass}" data-live="change" data-tooltip="Click to inspect Tail Risk & Empirical Distribution for ${ticker}" onclick="Cards.openTail('${ticker}', event)" style="cursor:pointer">${changeSign}${c.changePct.toFixed(2)}%</span>
                         </div>
                     </div>
                 </div>
@@ -426,6 +427,15 @@ const Cards = {
         }
     },
 
+    openTail(ticker, event) {
+        if (event) {
+            event.stopPropagation();
+        }
+        if (typeof TailRiskDrawer !== 'undefined' && typeof TailRiskDrawer.open === 'function') {
+            TailRiskDrawer.open(ticker, event);
+        }
+    },
+
     openStudy(ticker, event) {
         if (event) {
             event.stopPropagation();
@@ -493,6 +503,11 @@ const Cards = {
                 if (chgEl && c.changePct != null) {
                     chgEl.className = 'card-change ' + (c.changePct >= 0 ? 'positive' : 'negative');
                     chgEl.textContent = (c.changePct >= 0 ? '+' : '') + c.changePct.toFixed(2) + '%';
+                }
+
+                if (typeof TailRiskDrawer !== 'undefined' && TailRiskDrawer.state && TailRiskDrawer.state.isOpen && TailRiskDrawer.state.ticker === ticker) {
+                    const prev = c.prevClose || (c.price && c.changePct != null ? (c.price / (1 + c.changePct / 100)) : c.price);
+                    TailRiskDrawer.updateLive(ticker, c.price, prev);
                 }
 
                 // Update volume and dollar volume

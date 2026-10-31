@@ -47,6 +47,10 @@ const DataService = {
 
         const providers = [
             {
+                name: 'allorigins_get',
+                url: `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`
+            },
+            {
                 name: 'corsproxy.io',
                 url: `https://corsproxy.io/?url=${encodeURIComponent(yahooUrl)}`
             },
@@ -62,7 +66,7 @@ const DataService = {
 
         const racePromises = providers.map(async (provider) => {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2500);
+            const timeoutId = setTimeout(() => controller.abort(), 4500);
             try {
                 const resp = await fetch(provider.url, {
                     signal: controller.signal,
@@ -70,7 +74,10 @@ const DataService = {
                 });
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const text = await resp.text();
-                const json = JSON.parse(text);
+                let json = JSON.parse(text);
+                if (json && typeof json.contents === 'string') {
+                    try { json = JSON.parse(json.contents); } catch (_) {}
+                }
                 const result = this.parseYahooResponse(ticker, json);
                 if (result && result.data) {
                     return result;

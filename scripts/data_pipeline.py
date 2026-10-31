@@ -2394,7 +2394,16 @@ def run_pipeline() -> None:
     else:
         logger.info("Split check clean — no unregistered splits detected")
 
-    logger.info("Pipeline complete – %d ETFs, %d signals", len(etfs_out), len(all_signals))
+    logger.info("Pipeline complete - %d ETFs, %d signals", len(etfs_out), len(all_signals))
+
+    # 9. Generate Historical Return Distributions and Tail Risk Engine
+    try:
+        from scripts.generate_return_distributions import generate_distributions
+        logger.info("Generating historical return distributions and tail risk metrics...")
+        generate_distributions()
+        logger.info("Historical return distributions generation complete")
+    except Exception as exc:
+        logger.error("Failed to generate return distributions: %s", exc)
 
 
 # ---------------------------------------------------------------------------

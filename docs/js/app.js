@@ -30,6 +30,9 @@ const App = {
         if (typeof VolumeProfile !== 'undefined' && typeof VolumeProfile.init === 'function') {
             VolumeProfile.init();
         }
+        if (typeof TailRiskDrawer !== 'undefined' && typeof TailRiskDrawer.init === 'function') {
+            TailRiskDrawer.init();
+        }
         await this.refresh(false);
         console.log('[MONITOR] Dashboard ready.');
     },
@@ -712,6 +715,15 @@ const App = {
         } else {
             this.render();
         }
+        if (typeof TailRiskDrawer !== 'undefined' && TailRiskDrawer.state && TailRiskDrawer.state.isOpen) {
+            const activeTicker = TailRiskDrawer.state.ticker;
+            const m = this.allMetrics ? this.allMetrics[activeTicker] : null;
+            if (m && m.current) {
+                const c = m.current;
+                const prevClose = c.prevClose || (c.price && c.changePct != null ? (c.price / (1 + c.changePct / 100)) : c.price);
+                TailRiskDrawer.updateLive(activeTicker, c.price, prevClose);
+            }
+        }
     },
 
     renderHeatCalendarOnly() {
@@ -925,12 +937,13 @@ const App = {
             if (this.liveOverlayState === 'live') {
                 el.textContent = `Prices: LIVE ${this.lastLiveTimeStr || session.etTimeStr}`;
                 el.classList.remove('stale');
+            } else if (this._hasWarmCache && (Date.now() - (this.lastLiveFetchTime || 0)) < 600000) {
+                // Keep recent warm cached live data active and resilient during temporary proxy blips
+                el.textContent = `Prices: LIVE ${this._warmCacheTime || session.etTimeStr} (Cached) \u2022 Updating...`;
+                el.classList.remove('stale');
             } else if (this.liveOverlayState === 'failed') {
                 el.textContent = 'Data: Prior Close \u2022 Live feed paused';
                 el.classList.add('stale');
-            } else if (this._hasWarmCache) {
-                el.textContent = `Prices: LIVE ${this._warmCacheTime || session.etTimeStr} (Cached) \u2022 Updating...`;
-                el.classList.remove('stale');
             } else {
                 // Cold cache on boot / pending live feed
                 el.textContent = 'Prices: Updating live feed...';
