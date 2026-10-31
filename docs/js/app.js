@@ -685,6 +685,9 @@ const App = {
         this.updateMarketStatus(this.getMarketStatusNow());
         this.computeAllGlobalPercentiles();
         this.render();
+        if (typeof TailRiskDrawer !== 'undefined' && typeof TailRiskDrawer.seedFromPrecomputed === 'function') {
+            TailRiskDrawer.seedFromPrecomputed(this.allMetrics);
+        }
         this.updateTimestamp(data.last_updated, isManual);
     },
 

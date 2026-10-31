@@ -338,12 +338,12 @@
     <aside id="tail-risk-drawer" class="tail-drawer" aria-label="Tail Risk Analysis Drawer">
         <header class="tail-header">
             <div class="tail-header-left">
-                <h2 class="tail-title" id="tail-header-title">Tail Risk Engine</h2>
+                <h2 class="tail-title" id="tail-header-title" data-tooltip="<strong>Historical Return Distribution &amp; Tail Risk Engine</strong><br>Non-parametric fat-tail modeling, Value-at-Risk quantiles, Expected Shortfall, and volume-conditioned forward return expectancy.">Tail Risk Engine</h2>
                 <span class="tail-ticker-badge" id="tail-header-badge">BOIL</span>
                 <span class="tail-subtitle" id="tail-header-sub">Historical Empirical Distribution</span>
             </div>
             <div class="tail-header-right">
-                <button class="tail-close-btn" onclick="TailRiskDrawer.close()" aria-label="Close Tail Risk Drawer">&times;</button>
+                <button class="tail-close-btn" onclick="TailRiskDrawer.close()" aria-label="Close Tail Risk Drawer" data-tooltip="Close Tail Risk Engine (Esc)">&times;</button>
             </div>
         </header>
 
@@ -354,17 +354,17 @@
                 <div class="tail-control-group">
                     <span class="tail-control-label">Horizon</span>
                     <div class="tail-btn-group" id="tail-horizon-tabs">
-                        <button class="tail-tab-btn active" data-horizon="1d" onclick="TailRiskDrawer.setHorizon('1d')">1-DAY</button>
-                        <button class="tail-tab-btn" data-horizon="5d" onclick="TailRiskDrawer.setHorizon('5d')">5-DAY SWING</button>
-                        <button class="tail-tab-btn" data-horizon="21d" onclick="TailRiskDrawer.setHorizon('21d')">21-DAY MONTHLY</button>
+                        <button class="tail-tab-btn active" data-horizon="1d" onclick="TailRiskDrawer.setHorizon('1d')" data-tooltip="<strong>1-Day Daily Return Horizon</strong><br>Close-to-close percentage change. Evaluates intraday execution risk, daily jump diffusion, and standard volatility.">1-DAY</button>
+                        <button class="tail-tab-btn" data-horizon="5d" onclick="TailRiskDrawer.setHorizon('5d')" data-tooltip="<strong>5-Day Swing Cycle Horizon</strong><br>Rolling 5-trading-day compound return. Evaluates multi-day momentum persistence, weekend gap risk, and swing trader holding risk.">5-DAY SWING</button>
+                        <button class="tail-tab-btn" data-horizon="21d" onclick="TailRiskDrawer.setHorizon('21d')" data-tooltip="<strong>21-Day Monthly Cycle Horizon</strong><br>Rolling 21-trading-day compound return (~1 calendar month). Measures path-dependent volatility drag, storage cycle risk, and structural drift.">21-DAY MONTHLY</button>
                     </div>
                 </div>
                 <div class="tail-control-group">
                     <span class="tail-control-label">Regime</span>
                     <div class="tail-btn-group" id="tail-regime-tabs">
-                        <button class="tail-tab-btn active" data-regime="trailing_252d" onclick="TailRiskDrawer.setRegime('trailing_252d')">TRAILING 252D</button>
-                        <button class="tail-tab-btn" data-regime="lng_era" onclick="TailRiskDrawer.setRegime('lng_era')">MODERN LNG ERA (2023+)</button>
-                        <button class="tail-tab-btn" data-regime="full_inception" onclick="TailRiskDrawer.setRegime('full_inception')">FULL INCEPTION</button>
+                        <button class="tail-tab-btn active" data-regime="trailing_252d" onclick="TailRiskDrawer.setRegime('trailing_252d')" data-tooltip="<strong>Trailing 252-Trading-Day Regime</strong><br>Exactly the past 252 active market sessions (1 calendar year). Calibrated to current volatility baseline and immediate seasonal cycle.">TRAILING 252D</button>
+                        <button class="tail-tab-btn" data-regime="lng_era" onclick="TailRiskDrawer.setRegime('lng_era')" data-tooltip="<strong>Modern LNG Export Era (2023&ndash;Present)</strong><br>Filters data from January 2023 onward. Captures globalized US LNG export market pricing post-Freeport LNG terminal restart.">MODERN LNG ERA (2023+)</button>
+                        <button class="tail-tab-btn" data-regime="full_inception" onclick="TailRiskDrawer.setRegime('full_inception')" data-tooltip="<strong>Full Inception Historical Sample</strong><br>Includes entire recorded trading history back to ETF inception (up to 15 years, 3,780+ sessions). Reveals extreme structural tail shocks.">FULL INCEPTION</button>
                     </div>
                 </div>
             </div>
@@ -377,11 +377,11 @@
                 <div class="tail-chart-header">
                     <span class="tail-chart-title">EMPIRICAL PROBABILITY DENSITY (80-BIN ZERO-ANCHORED HISTOGRAM)</span>
                     <div class="tail-legend">
-                        <span class="tail-legend-item"><span class="tail-legend-swatch" style="background:#c04040;"></span>Loss Tail</span>
-                        <span class="tail-legend-item"><span class="tail-legend-swatch" style="background:#3db87a;"></span>Gain Tail</span>
-                        <span class="tail-legend-item"><span class="tail-legend-swatch" style="background:#d4a830; border: 1px dashed #d4a830;"></span>VaR 95%</span>
-                        <span class="tail-legend-item"><span class="tail-legend-swatch" style="background:#c04040; border: 1px dashed #c04040;"></span>CVaR 95%</span>
-                        <span class="tail-legend-item"><span class="tail-legend-swatch" style="background:#5090a0;"></span>Live Needle</span>
+                        <span class="tail-legend-item" data-tooltip="<strong>Loss Tail (Negative Bins)</strong><br>40 zero-anchored crimson bins spanning negative return sessions (R &lt; 0.00%). Height indicates total historical occurrences."><span class="tail-legend-swatch" style="background:#c04040;"></span>Loss Tail</span>
+                        <span class="tail-legend-item" data-tooltip="<strong>Gain Tail (Positive Bins)</strong><br>40 zero-anchored emerald bins spanning positive return sessions (R &ge; 0.00%). Height indicates total historical occurrences."><span class="tail-legend-swatch" style="background:#3db87a;"></span>Gain Tail</span>
+                        <span class="tail-legend-item" data-tooltip="<strong>Empirical Value-at-Risk (95% Confidence)</strong><br>Dashed gold cutoff line at the 5th percentile worst loss. Returns were better than this threshold on 95% of historical sessions."><span class="tail-legend-swatch" style="background:#d4a830; border: 1px dashed #d4a830;"></span>VaR 95%</span>
+                        <span class="tail-legend-item" data-tooltip="<strong>Expected Shortfall / CVaR 95%</strong><br>Dashed crimson cutoff line showing the conditional average loss of all sessions breaching the 95% VaR threshold."><span class="tail-legend-swatch" style="background:#c04040; border: 1px dashed #c04040;"></span>CVaR 95%</span>
+                        <span class="tail-legend-item" data-tooltip="<strong>Session Move Needle</strong><br>Cyan vertical indicator with glowing circular head projecting the current session percentage move directly onto the historical frequency curve."><span class="tail-legend-swatch" style="background:#5090a0;"></span>Session Needle</span>
                     </div>
                 </div>
                 <div class="tail-canvas-wrap">
@@ -392,8 +392,8 @@
 
             <div class="tail-matrix-card">
                 <div class="tail-matrix-title-row">
-                    <span class="tail-matrix-title">VOLUME-CONDITIONED FORWARD RETURN EXPECTANCY MATRIX</span>
-                    <span class="tail-matrix-subtitle">Cross-tabulated against Z-Score and Relative Volume (RVOL-21d)</span>
+                    <span class="tail-matrix-title" data-tooltip="<strong>Volume-Conditioned Forward Return Expectancy Matrix</strong><br>Cross-tabulates price return shocks (|Z| &ge; 1.5&sigma;) against relative trading volume (RVOL-21d &ge; 1.5&times;) to isolate liquidity absorption from momentum continuation.">VOLUME-CONDITIONED FORWARD RETURN EXPECTANCY MATRIX</span>
+                    <span class="tail-matrix-subtitle" data-tooltip="Evaluates subsequent 1-day, 5-day, and 10-day forward return expectations and win rates across 5 distinct market regimes.">Cross-tabulated against Z-Score and Relative Volume (RVOL-21d)</span>
                 </div>
                 <div class="tail-matrix-wrap" id="tail-matrix-wrap"></div>
             </div>

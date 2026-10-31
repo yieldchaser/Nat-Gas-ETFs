@@ -432,7 +432,8 @@ const Cards = {
             event.stopPropagation();
         }
         if (typeof TailRiskDrawer !== 'undefined' && typeof TailRiskDrawer.open === 'function') {
-            TailRiskDrawer.open(ticker, event);
+            const m = (typeof App !== 'undefined' && App.allMetrics) ? App.allMetrics[ticker] : null;
+            TailRiskDrawer.open(ticker, event, m?.current);
         }
     },
 

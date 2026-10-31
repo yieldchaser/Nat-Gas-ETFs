@@ -29,8 +29,8 @@
     top: 0;
     right: 0;
     bottom: 0;
-    width: 880px;
-    max-width: 95vw;
+    width: 960px;
+    max-width: 96vw;
     height: 100vh;
     background: #0d1117;
     border-left: 1px solid rgba(255, 255, 255, 0.12);
@@ -538,7 +538,7 @@
     width: 100%;
     min-width: 580px;
     border-collapse: collapse;
-    font-size: 0.68rem;
+    font-size: 0.67rem;
     text-align: left;
 }
 
@@ -547,7 +547,7 @@
     background: #0d1117;
     color: rgba(255, 255, 255, 0.55);
     font-weight: 700;
-    padding: 6px 10px;
+    padding: 5px 8px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     letter-spacing: 0.03em;
     white-space: nowrap;
@@ -555,7 +555,7 @@
 
 .tail-table td,
 .tail-matrix-table td {
-    padding: 7px 10px;
+    padding: 6px 8px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
     white-space: nowrap;
@@ -680,4 +680,35 @@
         padding: 8px 10px;
         gap: 8px;
     }
+}
+
+@media (min-width: 920px) {
+    .tail-matrix-wrap {
+        overflow-x: visible;
+    }
+    .tail-matrix-table {
+        min-width: 0;
+        table-layout: auto;
+    }
+}
+
+.tail-sim-btn {
+    background: rgba(80, 144, 160, 0.12);
+    border: 1px solid rgba(80, 144, 160, 0.35);
+    color: #5090a0;
+    font-size: 0.60rem;
+    font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.tail-sim-btn:hover {
+    background: rgba(80, 144, 160, 0.25);
+    border-color: #5090a0;
+    color: #fff;
+    box-shadow: 0 0 8px rgba(80, 144, 160, 0.35);
 }

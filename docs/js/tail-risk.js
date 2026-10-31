@@ -19,6 +19,13 @@ const TailRiskDrawer = {
     _liveQuotes: {},
     _bound: false,
     _resizeHandler: null,
+    _simIndex: -1,
+    _simScenarios: [
+        { label: '+11.50% Surge', pct: 11.50, note: 'Elevated Bull Shock (+1.6σ)' },
+        { label: '-18.50% Drawdown', pct: -18.50, note: 'Critical Outlier Liquidation (-2.6σ)' },
+        { label: '+35.00% Tail Spike', pct: 35.00, note: 'Extreme Right Tail Jump (Beyond Axis Bounds ▶)' },
+        { label: '+1.20% Normal Flow', pct: 1.20, note: 'Standard Intraday Fluctuation (+0.2σ)' },
+    ],
 
     // ── Colors ─────────────────────────────────────────────
     COLORS: {
@@ -75,8 +82,101 @@ const TailRiskDrawer = {
         });
     },
 
+    // ── Seed from Precomputed Metrics ───────────────────────
+    seedFromPrecomputed(allMetrics) {
+        if (!allMetrics) return;
+        for (const [ticker, m] of Object.entries(allMetrics)) {
+            if (m && m.current && m.current.price != null && m.current.changePct != null) {
+                const c = m.current;
+                const prev = c.prevClose || (c.price / (1 + c.changePct / 100));
+                // Only seed if not currently in active live feed or simulation
+                if (!this._liveQuotes[ticker] || (!this._liveQuotes[ticker].isLive && !this._liveQuotes[ticker].isSimulated)) {
+                    this._liveQuotes[ticker] = {
+                        price: c.price,
+                        prevClose: prev,
+                        changePct: c.changePct,
+                        time: c.regularMarketTime ? c.regularMarketTime * 1000 : Date.now(),
+                        isLive: false,
+                        isSettled: true,
+                        source: 'SETTLED CLOSE',
+                    };
+                }
+            }
+        }
+    },
+
+    // ── Helper: Effective Quote Resolution ──────────────────
+    getEffectiveQuote(ticker) {
+        const live = this._liveQuotes[ticker];
+        if (live && live.changePct != null && Number.isFinite(live.changePct)) {
+            return live;
+        }
+        if (typeof App !== 'undefined' && App.allMetrics && App.allMetrics[ticker]?.current) {
+            const c = App.allMetrics[ticker].current;
+            if (c.changePct != null && Number.isFinite(c.changePct)) {
+                const prev = c.prevClose || (c.price && c.changePct != null ? (c.price / (1 + c.changePct / 100)) : c.price);
+                return {
+                    price: c.price,
+                    prevClose: prev,
+                    changePct: c.changePct,
+                    time: c.regularMarketTime ? c.regularMarketTime * 1000 : Date.now(),
+                    isLive: false,
+                    isSettled: true,
+                    source: 'SETTLED CLOSE',
+                };
+            }
+        }
+        const inst = this._data?.instruments?.[ticker];
+        if (inst && inst.latest_bar && inst.latest_bar.return_pct != null) {
+            return {
+                price: inst.latest_bar.close,
+                prevClose: inst.latest_bar.prev_close || (inst.latest_bar.close / (1 + inst.latest_bar.return_pct / 100)),
+                changePct: inst.latest_bar.return_pct,
+                time: inst.latest_bar.date ? new Date(inst.latest_bar.date).getTime() : Date.now(),
+                isLive: false,
+                isSettled: true,
+                source: 'SETTLED CLOSE',
+            };
+        }
+        return null;
+    },
+
+    // ── Interactive Shock Simulation ───────────────────────
+    simulateTick(event) {
+        if (event) {
+            event.stopPropagation();
+            if (event.preventDefault) event.preventDefault();
+        }
+        const ticker = this.state.ticker;
+        this._simIndex = (this._simIndex + 1) % (this._simScenarios.length + 1);
+
+        if (this._simIndex >= this._simScenarios.length) {
+            // Reset to settled close
+            delete this._liveQuotes[ticker];
+            this._simIndex = -1;
+        } else {
+            const scen = this._simScenarios[this._simIndex];
+            const base = this.getEffectiveQuote(ticker) || { price: 20.0, prevClose: 20.0, changePct: 0.0 };
+            const prev = base.prevClose || (base.price / (1 + base.changePct / 100)) || 20.0;
+            const simPrice = prev * (1 + scen.pct / 100.0);
+            this._liveQuotes[ticker] = {
+                price: simPrice,
+                prevClose: prev,
+                changePct: scen.pct,
+                time: Date.now(),
+                isLive: true,
+                isSimulated: true,
+                simLabel: scen.label,
+                simNote: scen.note,
+            };
+        }
+
+        this._renderShockBanner();
+        this.renderHistogram();
+    },
+
     // ── Open / Close ───────────────────────────────────────
-    open(ticker, event) {
+    open(ticker, event, cardCurrent) {
         if (event) {
             event.stopPropagation();
             if (event.preventDefault) event.preventDefault();
@@ -84,6 +184,21 @@ const TailRiskDrawer = {
 
         if (ticker) {
             this.state.ticker = ticker;
+        }
+
+        if (cardCurrent && cardCurrent.price != null && cardCurrent.changePct != null) {
+            const prev = cardCurrent.prevClose || (cardCurrent.price / (1 + cardCurrent.changePct / 100));
+            if (!this._liveQuotes[this.state.ticker] || (!this._liveQuotes[this.state.ticker].isLive && !this._liveQuotes[this.state.ticker].isSimulated)) {
+                this._liveQuotes[this.state.ticker] = {
+                    price: cardCurrent.price,
+                    prevClose: prev,
+                    changePct: cardCurrent.changePct,
+                    time: cardCurrent.regularMarketTime ? cardCurrent.regularMarketTime * 1000 : Date.now(),
+                    isLive: false,
+                    isSettled: true,
+                    source: 'CARD FEED',
+                };
+            }
         }
 
         const drawer = document.getElementById('tail-risk-drawer');
@@ -117,6 +232,7 @@ const TailRiskDrawer = {
         if (!ticker || ticker === this.state.ticker) return;
         this.state.ticker = ticker;
         this.state.hoverBin = null;
+        this._simIndex = -1;
         this.render();
     },
 
@@ -144,6 +260,9 @@ const TailRiskDrawer = {
             prevClose: prevClose,
             changePct: chgPct,
             time: Date.now(),
+            isLive: true,
+            isSettled: false,
+            source: 'LIVE FEED',
         };
 
         // If drawer is open on this ticker, refresh shock banner and needle
@@ -189,7 +308,7 @@ const TailRiskDrawer = {
 
         if (titleEl) titleEl.textContent = inst.name || inst.ticker;
         if (badgeEl) {
-            badgeEl.textContent = `${inst.ticker} \u00b7 ${inst.leverage} \u00b7 ${inst.exchange}`;
+            badgeEl.textContent = `${inst.ticker} · ${inst.leverage} · ${inst.exchange}`;
             badgeEl.className = 'tail-ticker-badge ' +
                 (inst.side === 'long' ? 'tail-badge-long' :
                  inst.side === 'short' ? 'tail-badge-short' : 'tail-badge-benchmark');
@@ -203,11 +322,20 @@ const TailRiskDrawer = {
         const container = document.getElementById('tail-ticker-chips');
         if (!container || !this._data?.instruments) return;
 
-        const tickers = ['BOIL', 'KOLD', 'HNU.TO', 'HND.TO', '3NGL.L', '3NGS.L', 'NG=F'];
+        const tickers = [
+            { id: 'BOIL', desc: 'ProShares Ultra Bloomberg Natural Gas · 2x Daily Leveraged Long (NYSE Arca)' },
+            { id: 'KOLD', desc: 'ProShares UltraShort Bloomberg Natural Gas · 2x Daily Leveraged Inverse (NYSE Arca)' },
+            { id: 'HNU.TO', desc: 'BetaPro Natural Gas 2x Daily Bull ETF · 2x Daily Leveraged Long (TSX)' },
+            { id: 'HND.TO', desc: 'BetaPro Natural Gas 2x Daily Bear ETF · 2x Daily Leveraged Inverse (TSX)' },
+            { id: '3NGL.L', desc: 'WisdomTree Natural Gas 3x Daily Leveraged · 3x Daily Leveraged Long (LSE)' },
+            { id: '3NGS.L', desc: 'WisdomTree Natural Gas 3x Daily Short · 3x Daily Leveraged Inverse (LSE)' },
+            { id: 'NG=F', desc: 'Henry Hub Natural Gas Front-Month Futures · Benchmark Physical Commodity (NYMEX)' },
+        ];
+
         container.innerHTML = tickers.map((t) => {
-            const isActive = t === this.state.ticker;
-            const disp = t.replace('.TO', '').replace('.L', '');
-            return `<button class="tail-chip${isActive ? ' active' : ''}" onclick="TailRiskDrawer.selectTicker('${t}')">${disp}</button>`;
+            const isActive = t.id === this.state.ticker;
+            const disp = t.id.replace('.TO', '').replace('.L', '');
+            return `<button class="tail-chip${isActive ? ' active' : ''}" data-tooltip="&lt;strong&gt;${t.id}&lt;/strong&gt;&lt;br&gt;${t.desc}" onclick="TailRiskDrawer.selectTicker('${t.id}')">${disp}</button>`;
         }).join('');
     },
 
@@ -232,31 +360,32 @@ const TailRiskDrawer = {
         if (!banner) return;
 
         const ticker = this.state.ticker;
-        const live = this._liveQuotes[ticker];
+        const quote = this.getEffectiveQuote(ticker);
         const inst = this._data?.instruments?.[ticker];
         const reg = inst?.regimes?.[this.state.regime];
         const hData = reg?.horizons?.['1d'];
 
-        if (!live || live.changePct == null || !hData) {
+        if (!quote || quote.changePct == null || !hData) {
             banner.innerHTML = `
                 <div class="tail-shock-left">
                     <span class="tail-shock-dot"></span>
                     <span class="tail-shock-title">LIVE MONITOR PENDING</span>
-                    <span class="tail-shock-metrics">Waiting for session tick\u2026</span>
+                    <span class="tail-shock-metrics">Waiting for session tick…</span>
                 </div>
                 <div class="tail-shock-right">
                     <span class="tail-shock-badge tail-shock-normal">STANDBY</span>
+                    <button class="tail-sim-btn" data-tooltip="Cycle through real-time shock simulations (+7.8% elevated, -14.5% outlier, +35% tail spike) to verify dynamic needle response" onclick="TailRiskDrawer.simulateTick(event)">SIMULATE TICK</button>
                 </div>`;
             return;
         }
 
-        const chg = live.changePct;
+        const chg = quote.changePct;
         const m = hData.moments.mean;
         const s = hData.moments.std;
         const z = s > 0 ? (chg - m) / s : 0.0;
         const absZ = Math.abs(z);
 
-        // Empirical percentile
+        // Empirical percentile with boundary clamping
         const bins = hData.histogram?.bins || [];
         let empPct = 50.0;
         if (bins.length > 0) {
@@ -276,30 +405,49 @@ const TailRiskDrawer = {
 
         let shockCls = 'tail-shock-normal';
         let shockLabel = 'NORMAL REGIME';
-        let desc = 'Within 1.5\u03c3 historical fluctuation';
+        let desc = 'Within 1.5σ historical fluctuation';
 
         if (absZ >= 2.5) {
             shockCls = 'tail-shock-critical';
             shockLabel = 'CRITICAL OUTLIER';
-            desc = `Severe ${z < 0 ? 'Tail Liquidation' : 'Tail Surge'} (\u00b1${absZ.toFixed(2)}\u03c3)`;
+            desc = `Severe ${z < 0 ? 'Tail Liquidation' : 'Tail Surge'} (±${absZ.toFixed(2)}σ)`;
         } else if (absZ >= 1.5) {
             shockCls = 'tail-shock-elevated';
             shockLabel = 'ELEVATED SHOCK';
-            desc = `High-impact ${z < 0 ? 'Drawdown' : 'Impulse'} (${absZ.toFixed(2)}\u03c3)`;
+            desc = `High-impact ${z < 0 ? 'Drawdown' : 'Impulse'} (${absZ.toFixed(2)}σ)`;
         }
 
         const sign = chg >= 0 ? '+' : '';
         const zSign = z >= 0 ? '+' : '';
 
+        const modePrefix = quote.isSimulated
+            ? 'SIMULATED 1D MOVE:'
+            : (quote.isLive ? 'LIVE 1D MOVE:' : 'SETTLED SESSION 1D MOVE:');
+
+        const modeSub = quote.isSimulated
+            ? `· Simulation Mode (${quote.simLabel}) · ${desc} · ${empPct.toFixed(1)}th Pct`
+            : (quote.isLive
+                ? `· Real-Time Streaming Feed · ${desc} · ${empPct.toFixed(1)}th Pct`
+                : `· Settled Prior Close · ${desc} · ${empPct.toFixed(1)}th Pct`);
+
+        const dotStyle = quote.isSimulated
+            ? 'background:#e5a83b; box-shadow:0 0 8px #e5a83b;'
+            : (quote.isLive ? 'background:#3db87a; box-shadow:0 0 8px #3db87a;' : 'background:#5090a0; box-shadow:0 0 6px #5090a0;');
+
+        const badgeText = quote.isSimulated
+            ? `SIM: ${shockLabel}`
+            : (quote.isLive ? shockLabel : `${shockLabel} (SETTLED)`);
+
         banner.innerHTML = `
             <div class="tail-shock-left">
-                <span class="tail-shock-dot"></span>
-                <span class="tail-shock-title">LIVE 1D MOVE:</span>
-                <span class="tail-shock-metrics" style="color:${chg >= 0 ? '#3db87a' : '#c04040'}">${sign}${chg.toFixed(2)}% (${zSign}${z.toFixed(2)}\u03c3)</span>
-                <span style="font-size:0.68rem; color:rgba(255,255,255,0.45); font-family:ui-monospace, monospace;">\u00b7 ${desc} \u00b7 ${empPct.toFixed(1)}th Pct</span>
+                <span class="tail-shock-dot" style="${dotStyle}" data-tooltip="Session status: ${quote.isSimulated ? 'Simulated tick running' : quote.isLive ? 'Live real-time feed streaming' : 'Official settled session close'}"></span>
+                <span class="tail-shock-title" data-tooltip="Current 1-day percentage price change and standardized deviation relative to regime baseline">${modePrefix}</span>
+                <span class="tail-shock-metrics" style="color:${chg >= 0 ? '#3db87a' : '#c04040'}" data-tooltip="Return: ${sign}${chg.toFixed(2)}%, Standardized Z-Score: ${zSign}${z.toFixed(2)}σ">${sign}${chg.toFixed(2)}% (${zSign}${z.toFixed(2)}σ)</span>
+                <span style="font-size:0.68rem; color:rgba(255,255,255,0.45); font-family:ui-monospace, monospace;">${modeSub}</span>
             </div>
             <div class="tail-shock-right">
-                <span class="tail-shock-badge ${shockCls}">${shockLabel}</span>
+                <span class="tail-shock-badge ${shockCls}" data-tooltip="Statistical volatility regime categorization">${badgeText}</span>
+                <button class="tail-sim-btn" data-tooltip="Cycle through real-time shock simulations (+7.8% elevated, -14.5% outlier, +35% tail spike) to verify dynamic needle response" onclick="TailRiskDrawer.simulateTick(event)">SIMULATE TICK</button>
             </div>`;
     },
 
@@ -575,10 +723,10 @@ const TailRiskDrawer = {
             ctx.fillText(`CVaR: ${cvar95.toFixed(1)}%`, cvarX, pad.top + 8);
         }
 
-        // Draw Live Real-Time Outlier Needle
-        const live = this._liveQuotes[this.state.ticker];
-        if (live && live.changePct != null && this.state.horizon === '1d') {
-            const chg = live.changePct;
+        // Draw Session Needle (Resolved from Live Quote, Simulation, or Settled Prior Close)
+        const quote = this.getEffectiveQuote(this.state.ticker);
+        if (quote && quote.changePct != null && this.state.horizon === '1d') {
+            const chg = quote.changePct;
             const rawNeedleX = xCoord(chg);
             const isOutOfBoundsLeft = chg < rangeMin;
             const isOutOfBoundsRight = chg > rangeMax;
@@ -587,7 +735,10 @@ const TailRiskDrawer = {
             let needleX = Math.max(pad.left, Math.min(w - pad.right, rawNeedleX));
 
             ctx.save();
-            const needleColor = isOutOfBounds ? (isOutOfBoundsLeft ? '#ff5555' : '#3db87a') : this.COLORS.needle;
+            const needleColor = quote.isSimulated
+                ? '#e5a83b'
+                : (isOutOfBounds ? (isOutOfBoundsLeft ? '#ff5555' : '#3db87a') : this.COLORS.needle);
+
             ctx.shadowColor = needleColor;
             ctx.shadowBlur = 10;
 
@@ -638,11 +789,12 @@ const TailRiskDrawer = {
             const z = s > 0 ? (chg - m) / s : 0.0;
             const chgSign = chg >= 0 ? '+' : '';
             const zSign = z >= 0 ? '+' : '';
+            const prefix = quote.isSimulated ? 'SIM' : (quote.isLive ? 'LIVE' : 'SETTLED');
             const tagStr = isOutOfBoundsLeft
-                ? `\u25c0 OUTLIER: ${chgSign}${chg.toFixed(2)}% (${zSign}${z.toFixed(1)}\u03c3)`
+                ? `◀ OUTLIER: ${chgSign}${chg.toFixed(2)}% (${zSign}${z.toFixed(1)}σ)`
                 : isOutOfBoundsRight
-                ? `OUTLIER \u25b6: ${chgSign}${chg.toFixed(2)}% (${zSign}${z.toFixed(1)}\u03c3)`
-                : `LIVE: ${chgSign}${chg.toFixed(2)}% (${zSign}${z.toFixed(1)}\u03c3)`;
+                ? `OUTLIER ▶: ${chgSign}${chg.toFixed(2)}% (${zSign}${z.toFixed(1)}σ)`
+                : `${prefix}: ${chgSign}${chg.toFixed(2)}% (${zSign}${z.toFixed(1)}σ)`;
 
             ctx.font = 'bold 9px ui-monospace, monospace';
             const pillW = Math.round(ctx.measureText(tagStr).width + 12);
@@ -792,13 +944,13 @@ const TailRiskDrawer = {
             <table class="tail-table tail-matrix-table">
                 <thead>
                     <tr>
-                        <th>REGIME / CONDITION</th>
-                        <th>TRIGGER DEFINITION</th>
-                        <th style="text-align:right;">SAMPLES</th>
-                        <th style="text-align:right;">FWD 1D WIN% (MEAN)</th>
-                        <th style="text-align:right;">FWD 5D WIN% (MEAN)</th>
-                        <th style="text-align:right;">FWD 10D WIN% (MEAN)</th>
-                        <th>STATISTICAL EDGE</th>
+                        <th data-tooltip="&lt;strong&gt;Volume-Conditioned Market Regime&lt;/strong&gt;&lt;br&gt;Microstructure state cross-tabulating volume Z-score and RVOL-21d to identify exhaustion vs momentum.">CONDITION</th>
+                        <th data-tooltip="&lt;strong&gt;Quantitative Trigger Criteria&lt;/strong&gt;&lt;br&gt;Standardized volume threshold and relative volume condition defining regime membership.">TRIGGER</th>
+                        <th style="text-align:right;" data-tooltip="&lt;strong&gt;Historical Sample Count&lt;/strong&gt;&lt;br&gt;Number of historical trading sessions satisfying the trigger condition across the selected regime.">SAMPLES</th>
+                        <th style="text-align:right;" data-tooltip="&lt;strong&gt;Forward 1-Day Expectancy&lt;/strong&gt;&lt;br&gt;Historical win rate (percentage &gt; 0.0%) and arithmetic mean forward 1-day return.">FWD 1D</th>
+                        <th style="text-align:right;" data-tooltip="&lt;strong&gt;Forward 5-Day Expectancy&lt;/strong&gt;&lt;br&gt;Historical win rate (percentage &gt; 0.0%) and arithmetic mean forward 5-day return.">FWD 5D</th>
+                        <th style="text-align:right;" data-tooltip="&lt;strong&gt;Forward 10-Day Expectancy&lt;/strong&gt;&lt;br&gt;Historical win rate (percentage &gt; 0.0%) and arithmetic mean forward 10-day return.">FWD 10D</th>
+                        <th data-tooltip="&lt;strong&gt;Empirical Statistical Edge&lt;/strong&gt;&lt;br&gt;Algorithmic edge classification derived from forward win rate and positive return skew.">EDGE</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -810,21 +962,27 @@ const TailRiskDrawer = {
                                         'tail-edge-neutral';
 
                         const fwdFmt = (f) => {
-                            if (f.count === 0 || f.win_rate == null) return '\u2014';
+                            if (f.count === 0 || f.win_rate == null) return '—';
                             const meanSign = f.mean >= 0 ? '+' : '';
                             const color = f.mean >= 0 ? '#3db87a' : '#c04040';
                             return `${f.win_rate.toFixed(0)}% <span style="color:${color}">(${meanSign}${f.mean.toFixed(1)}%)</span>`;
                         };
 
+                        const rowTooltip = `&lt;strong&gt;${r.label} Setup (${r.count} Historical Sessions)&lt;/strong&gt;&lt;br&gt;` +
+                            `Trigger: ${r.definition}&lt;br&gt;` +
+                            `Forward 1D: ${r.fwd_1d.win_rate != null ? r.fwd_1d.win_rate.toFixed(0) + '% win rate (' + (r.fwd_1d.mean >= 0 ? '+' : '') + r.fwd_1d.mean.toFixed(1) + '% mean)' : 'N/A'}&lt;br&gt;` +
+                            `Forward 5D: ${r.fwd_5d.win_rate != null ? r.fwd_5d.win_rate.toFixed(0) + '% win rate (' + (r.fwd_5d.mean >= 0 ? '+' : '') + r.fwd_5d.mean.toFixed(1) + '% mean)' : 'N/A'}&lt;br&gt;` +
+                            `Edge Classification: ${r.fwd_1d.edge}`;
+
                         return `
-                            <tr>
+                            <tr data-tooltip="${rowTooltip}">
                                 <td style="font-weight:700; color:#f0f4fc;">${r.label}</td>
                                 <td style="color:rgba(255,255,255,0.50);">${r.definition}</td>
                                 <td style="text-align:right;">${r.count}</td>
                                 <td style="text-align:right;">${fwdFmt(r.fwd_1d)}</td>
                                 <td style="text-align:right;">${fwdFmt(r.fwd_5d)}</td>
                                 <td style="text-align:right;">${fwdFmt(r.fwd_10d)}</td>
-                                <td><span class="tail-edge-badge ${edgeCls}">${r.fwd_1d.edge}</span></td>
+                                <td><span class="tail-edge-badge ${edgeCls}" data-tooltip="Classification: ${r.fwd_1d.edge}">${r.fwd_1d.edge}</span></td>
                             </tr>
                         `;
                     }).join('')}
