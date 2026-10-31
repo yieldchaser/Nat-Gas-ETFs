@@ -156,8 +156,8 @@ const TailRiskDrawer = {
             this._simIndex = -1;
         } else {
             const scen = this._simScenarios[this._simIndex];
-            const base = this.getEffectiveQuote(ticker) || { price: 20.0, prevClose: 20.0, changePct: 0.0 };
-            const prev = base.prevClose || (base.price / (1 + base.changePct / 100)) || 20.0;
+            const base = this.getEffectiveQuote(ticker);
+            const prev = base ? (base.prevClose || (base.price / (1 + (base.changePct || 0) / 100))) : 1.0;
             const simPrice = prev * (1 + scen.pct / 100.0);
             this._liveQuotes[ticker] = {
                 price: simPrice,
@@ -374,7 +374,7 @@ const TailRiskDrawer = {
                 </div>
                 <div class="tail-shock-right">
                     <span class="tail-shock-badge tail-shock-normal">STANDBY</span>
-                    <button class="tail-sim-btn" data-tooltip="Cycle through real-time shock simulations (+7.8% elevated, -14.5% outlier, +35% tail spike) to verify dynamic needle response" onclick="TailRiskDrawer.simulateTick(event)">SIMULATE TICK</button>
+                    <button class="tail-sim-btn" data-tooltip="Cycle through real-time shock simulations (+11.5% elevated, -18.5% outlier, +35% tail spike) to verify dynamic needle response" onclick="TailRiskDrawer.simulateTick(event)">SIMULATE TICK</button>
                 </div>`;
             return;
         }
@@ -447,7 +447,7 @@ const TailRiskDrawer = {
             </div>
             <div class="tail-shock-right">
                 <span class="tail-shock-badge ${shockCls}" data-tooltip="Statistical volatility regime categorization">${badgeText}</span>
-                <button class="tail-sim-btn" data-tooltip="Cycle through real-time shock simulations (+7.8% elevated, -14.5% outlier, +35% tail spike) to verify dynamic needle response" onclick="TailRiskDrawer.simulateTick(event)">SIMULATE TICK</button>
+                <button class="tail-sim-btn" data-tooltip="Cycle through real-time shock simulations (+11.5% elevated, -18.5% outlier, +35% tail spike) to verify dynamic needle response" onclick="TailRiskDrawer.simulateTick(event)">SIMULATE TICK</button>
             </div>`;
     },
 

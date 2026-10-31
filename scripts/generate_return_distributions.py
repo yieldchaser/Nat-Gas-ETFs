@@ -492,6 +492,14 @@ def generate_distributions() -> Dict[str, Any]:
             logger.warning("Insufficient history for %s (len: %d)", ticker, len(df_full))
             continue
 
+        last_row = df_full.iloc[-1]
+        prev_row = df_full.iloc[-2] if len(df_full) > 1 else last_row
+        ret_1d_val = (
+            float(((last_row["close"] - prev_row["close"]) / prev_row["close"]) * 100.0)
+            if prev_row["close"] > 0
+            else 0.0
+        )
+
         inst_data: Dict[str, Any] = {
             "ticker": ticker,
             "name": inst["name"],
@@ -501,6 +509,13 @@ def generate_distributions() -> Dict[str, Any]:
             "total_bars": len(df_full),
             "earliest_date": df_full.index[0].strftime("%Y-%m-%d"),
             "latest_date": df_full.index[-1].strftime("%Y-%m-%d"),
+            "latest_bar": {
+                "date": df_full.index[-1].strftime("%Y-%m-%d"),
+                "close": round(float(last_row["close"]), 4),
+                "prev_close": round(float(prev_row["close"]), 4),
+                "return_pct": round(ret_1d_val, 4),
+                "volume": int(last_row.get("volume", 0)),
+            },
             "regimes": {},
         }
 
