@@ -235,13 +235,13 @@ const Signals = {
             return `
                 <tr>
                     <td class="pair-name">${pair.label}${seasonTag}</td>
-                    <td style="color:${rvolColor(longRvol)}" data-tooltip="Long ETF 21d RVOL">${longRvol != null ? longRvol.toFixed(1) + 'x' : '--'}</td>
-                    <td style="color:${rvolColor(shortRvol)}" data-tooltip="Short/Inverse ETF 21d RVOL">${shortRvol != null ? shortRvol.toFixed(1) + 'x' : '--'}</td>
-                    <td style="color:${lCapColor}" data-tooltip="Long-side VCVI-63d (${pair.long}) — GAS BOTTOM signal. Threshold: 55 watch, 72 critical. Values >100 reflect extreme capitulation in quiet vol regimes.">${longVcvi != null ? longVcvi.toFixed(0) : '--'}</td>
-                    <td style="color:${sCapColor}" data-tooltip="Short-side VCVI-63d (${pair.short}) — GAS TOP signal. Threshold: 55 watch, 72 critical.">${shortVcvi != null ? shortVcvi.toFixed(0) : '--'}</td>
+                    <td style="color:${rvolColor(longRvol)}" data-tooltip="Long ETF 21d RVOL">${longRvol != null ? longRvol.toFixed(1) + 'x' : '—'}</td>
+                    <td style="color:${rvolColor(shortRvol)}" data-tooltip="Short/Inverse ETF 21d RVOL">${shortRvol != null ? shortRvol.toFixed(1) + 'x' : '—'}</td>
+                    <td style="color:${lCapColor}" data-tooltip="Long-side VCVI-63d (${pair.long}) — GAS BOTTOM signal. Threshold: 55 watch, 72 critical. Values >100 reflect extreme capitulation in quiet vol regimes.">${longVcvi != null ? longVcvi.toFixed(0) : '—'}</td>
+                    <td style="color:${sCapColor}" data-tooltip="Short-side VCVI-63d (${pair.short}) — GAS TOP signal. Threshold: 55 watch, 72 critical.">${shortVcvi != null ? shortVcvi.toFixed(0) : '—'}</td>
                     <td data-tooltip="5d fast-window VCVI — Long: ${longVcvi5!=null?longVcvi5.toFixed(0):'—'} | Short: ${shortVcvi5!=null?shortVcvi5.toFixed(0):'—'}. Threshold: 45.">${fastBadge}</td>
                     <td>${spikeBadge}</td>
-                    <td style="color:${ipsiColor}" data-tooltip="${ipsiTip}">${ipsi != null ? ipsi.toFixed(1) + 'x' : '--'}</td>
+                    <td style="color:${ipsiColor}" data-tooltip="${ipsiTip}">${ipsi != null ? ipsi.toFixed(1) + 'x' : '—'}</td>
                     <td data-tooltip="Volatility regime: ${regInfo.label}"><span class="vol-regime-badge ${regInfo.cls}" style="font-size:0.6rem">${regInfo.label}</span></td>
                     <td data-tooltip="${statusInfo.tooltip}"><span class="stress-status ${statusInfo.cls}">${statusInfo.label}</span></td>
                 </tr>`;
@@ -493,9 +493,9 @@ const Signals = {
             return `
                 <div class="validation-card" data-tooltip="${tipText}">
                     <div class="ticker" style="color:${tickerColor}">${t}</div>
-                    <div class="corr-value" style="color:${color}">${corr != null ? corr.toFixed(3) : '--'}</div>
+                    <div class="corr-value" style="color:${color}">${corr != null ? corr.toFixed(3) : '—'}</div>
                     <div class="corr-label">30d Spearman</div>
-                    <div class="pvalue ${corr != null && corr < -0.2 ? 'pv-confirmed' : corr != null && corr < 0 ? 'pv-weak' : 'pv-none'}">${corr != null && corr < -0.2 ? 'INVERSE' : corr != null && corr < 0 ? 'WEAK' : '--'}</div>
+                    <div class="pvalue ${corr != null && corr < -0.2 ? 'pv-confirmed' : corr != null && corr < 0 ? 'pv-weak' : 'pv-none'}">${corr != null && corr < -0.2 ? 'INVERSE' : corr != null && corr < 0 ? 'WEAK' : '—'}</div>
                 </div>`;
         }).join('');
     },
@@ -961,7 +961,7 @@ const Signals = {
                     : sRvol < 2.5  ? 'var(--orange)'           // high
                     : sRvol < 3.0  ? 'var(--red)'              // extreme
                     : 'var(--purple)';                         // absolute extreme
-                displayVal = sRvol != null ? sRvol.toFixed(2) + 'x' : '--';
+                displayVal = sRvol != null ? sRvol.toFixed(2) + 'x' : '—';
                 tip = `S-RVOL-21d for ${ticker}: current share volume is ${displayVal} of the 21-day average. 1.0x is normal baseline. >1.5x = notable surge; >2x = extreme volume event.`;
             } else {
                 // --- DV MODE: VDDS ratio (DV-RVOL / S-RVOL) ---
@@ -979,8 +979,8 @@ const Signals = {
                     : 'var(--red)';
                 const dvRvol = ((m.dv_rvol || m.dvRvol) || {})['21d'];
                 const sRvol  = (m.rvol   || {})['21d'];
-                displayVal = vdds != null ? vdds.toFixed(2) + 'x' : '--';
-                tip = `VDDS for ${ticker}: DV-RVOL=${dvRvol!=null?dvRvol.toFixed(2):'--'} ÷ S-RVOL=${sRvol!=null?sRvol.toFixed(2):'--'} = ${displayVal}. ${vdds!=null&&vdds<0.90?'Capitulation pattern — share vol outpacing dollar vol.':vdds!=null&&vdds>1.10?'Momentum pattern — dollar vol outpacing share vol.':'Neutral — balanced flows.'}`;
+                displayVal = vdds != null ? vdds.toFixed(2) + 'x' : '—';
+                tip = `VDDS for ${ticker}: DV-RVOL=${dvRvol!=null?dvRvol.toFixed(2): '—'} ÷ S-RVOL=${sRvol!=null?sRvol.toFixed(2): '—'} = ${displayVal}. ${vdds!=null&&vdds<0.90?'Capitulation pattern — share vol outpacing dollar vol.':vdds!=null&&vdds>1.10?'Momentum pattern — dollar vol outpacing share vol.':'Neutral — balanced flows.'}`;
             }
 
             // Baseline marker: sits at 1.0x in VOL mode (33.33%), or at ratio centre in DV mode (50%)

@@ -42,7 +42,7 @@ const VolRegime = {
 
     // Regime buckets: percentile of current HV vs all available history
     _regime(pct) {
-        if (pct == null) return { label: '--',       cls: 'vrm-reg-unknown',  color: 'rgba(255, 255, 255, 0.85)' };
+        if (pct == null) return { label: '—',       cls: 'vrm-reg-unknown',  color: 'rgba(255, 255, 255, 0.85)' };
         if (pct >= 90)   return { label: 'SPIKE',    cls: 'vrm-reg-spike',    color: '#c04040' };
         if (pct >= 75)   return { label: 'ELEVATED', cls: 'vrm-reg-elevated', color: '#c07828' };
         if (pct >= 25)   return { label: 'NORMAL',   cls: 'vrm-reg-normal',   color: '#3db87a' };
@@ -309,7 +309,7 @@ const VolRegime = {
                 <div class="vrm-hv-box${activeClass}" onclick="VolRegime._toggleSeries('${ticker}', '${w.key}')" data-tooltip="${tTip}" style="cursor:pointer">
                     <div class="vrm-hv-label">${w.label}</div>
                     <div class="vrm-hv-val" style="color:${reg.color}">
-                        ${val != null ? val.toFixed(1) + '%' : '--'}
+                        ${val != null ? val.toFixed(1) + '%' : '—'}
                     </div>
                     <div class="vrm-hv-regime-pip ${reg.cls}" data-tooltip="${reg.label} REGIME"></div>
                 </div>`;
@@ -323,7 +323,7 @@ const VolRegime = {
                     ${lev   ? `<span class="vrm-badge-lev">${lev}</span>` : ''}
                     ${exch  ? `<span class="vrm-badge-exch">${exch}</span>` : ''}
                     <span class="vrm-regime-badge ${regBadge.cls}"
-                          data-tooltip="${ticker} Vol Regime: 21D HV currently sits at the ${hvPcts['21d'] != null ? hvPcts['21d'].toFixed(0)+'th' : '--'} percentile of all available history${regimeDuration > 1 ? '. Current regime active for ' + regimeDuration + ' consecutive sessions.' : ''}">
+                          data-tooltip="${ticker} Vol Regime: 21D HV currently sits at the ${hvPcts['21d'] != null ? hvPcts['21d'].toFixed(0)+'th' : '—'} percentile of all available history${regimeDuration > 1 ? '. Current regime active for ' + regimeDuration + ' consecutive sessions.' : ''}">
                         ${regBadge.label}${regimeDuration > 2 ? `<span class="vrm-regime-dur">&nbsp;·&nbsp;${regimeDuration}d</span>` : ''}
                     </span>
                     ${regSignal ? `<span class="vrm-regime-signal ${regSignal.cls}" data-tooltip="${regSignal.tip}">${regSignal.label}</span>` : ''}
@@ -398,11 +398,11 @@ const VolRegime = {
                     </div>
                     <div class="vrm-stat-box" data-tooltip="${ticker} Vol-of-Vol (21-day std of rolling HV-10). High VoV means volatility itself is volatile — structural regime shift is likely imminent.">
                         <span class="vrm-stat-lbl">VoV-21</span>
-                        <span class="vrm-stat-val ${vovInfo.cls}">${vov != null ? vov.toFixed(1) + '%' : '--'}&nbsp;${vovInfo.label}</span>
+                        <span class="vrm-stat-val ${vovInfo.cls}">${vov != null ? vov.toFixed(1) + '%' : '—'}&nbsp;${vovInfo.label}</span>
                     </div>
                     <div class="vrm-stat-box" data-tooltip="Trend Ratio (TR): weekly-sampled RV ÷ daily-sampled RV over 20 sessions. TR ≥ 1.2 = sustained directional moves dominate (trending). TR < 0.8 = intraday noise dominates (choppy). Audit-validated signal (t=3.42, p&lt;0.001): low TR periods in ${ticker} show +4% better 21d forward returns vs high TR. Does NOT predict direction — only regime character.">
                         <span class="vrm-stat-lbl">TREND RATIO</span>
-                        <span class="vrm-stat-val ${trInfo.cls}">${trCurrent != null ? trCurrent.toFixed(3) : '--'}&nbsp;${trInfo.arrow}&nbsp;${trInfo.label}</span>
+                        <span class="vrm-stat-val ${trInfo.cls}">${trCurrent != null ? trCurrent.toFixed(3) : '—'}&nbsp;${trInfo.arrow}&nbsp;${trInfo.label}</span>
                     </div>
                     ${effVol != null ? `
                     <div class="vrm-stat-box" data-tooltip="Effective ETF volatility = HV-21 × ${levMult}× leverage. This represents the realistic annual swing scale for ${ticker} — expressing what you are actually mathematically exposed to.">
@@ -1475,7 +1475,7 @@ const VolRegime = {
 
     // ── Label helpers ──────────────────────────────────────
     _tsLabel(ratio) {
-        if (ratio == null)  return { label: '--',                   arrow: '',   cls: 'ts-neutral' };
+        if (ratio == null)  return { label: '—',                   arrow: '',   cls: 'ts-neutral' };
         if (ratio >= 1.5)   return { label: ratio.toFixed(2) + 'x', arrow: '↑↑', cls: 'ts-accel'   };
         if (ratio >= 1.15)  return { label: ratio.toFixed(2) + 'x', arrow: '↑',  cls: 'ts-building' };
         if (ratio >= 0.85)  return { label: ratio.toFixed(2) + 'x', arrow: '→',  cls: 'ts-neutral'  };
@@ -1484,7 +1484,7 @@ const VolRegime = {
     },
 
     _vovLabel(vov) {
-        if (vov == null) return { label: '--',        cls: ''          };
+        if (vov == null) return { label: '—',        cls: ''          };
         if (vov >= 20)   return { label: 'UNSTABLE',  cls: 'vov-high'  };
         if (vov >= 12)   return { label: 'SHIFTING',  cls: 'vov-mid'   };
         if (vov >= 6)    return { label: 'MODERATE',  cls: 'vov-mod'   };
@@ -1494,7 +1494,7 @@ const VolRegime = {
     // TR (Trend Ratio) label — uses percentile rank since leveraged ETFs are structurally < 1.0
     // Audit-validated thresholds: TR > 1.2 (P76) = trending, TR < 0.8 (P35) = choppy
     _trLabel(trCurrent, trPct) {
-        if (trCurrent == null) return { label: '--',          cls: '',            arrow: ''  };
+        if (trCurrent == null) return { label: '—',          cls: '',            arrow: ''  };
         if (trCurrent >= 1.2)  return { label: 'TRENDING',   cls: 'tr-trending', arrow: '→' };
         if (trCurrent >= 1.0)  return { label: 'MIXED',      cls: 'tr-mixed',    arrow: '~' };
         if (trCurrent >= 0.8)  return { label: 'CHOPPY',     cls: 'tr-choppy',   arrow: '↔' };

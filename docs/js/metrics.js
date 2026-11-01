@@ -361,7 +361,7 @@ const Metrics = {
 
     // Human-readable vol regime label
     getVolRegimeLabel(volRegimePct) {
-        if (volRegimePct == null) return { label: '--', cls: 'vr-unknown' };
+        if (volRegimePct == null) return { label: '—', cls: 'vr-unknown' };
         const t = CONFIG.thresholds.volRegime;
         if (volRegimePct >= t.extreme)  return { label: 'EXTREME', cls: 'vr-extreme' };
         if (volRegimePct >= t.high)     return { label: 'HIGH',    cls: 'vr-high' };
@@ -372,7 +372,7 @@ const Metrics = {
 
     // HV term structure label + arrow
     getTermStructureLabel(ratio) {
-        if (ratio == null) return { label: '--', arrow: '', cls: 'ts-neutral' };
+        if (ratio == null) return { label: '—', arrow: '', cls: 'ts-neutral' };
         const t = CONFIG.thresholds.hvTermStructure;
         if (ratio >= t.accelerating)   return { label: ratio.toFixed(2) + 'x', arrow: '↑↑', cls: 'ts-accel' };
         if (ratio >= t.stable_high)    return { label: ratio.toFixed(2) + 'x', arrow: '↑',  cls: 'ts-building' };
@@ -657,7 +657,7 @@ const Metrics = {
                 return {
                     label: 'L-CRITICAL',
                     cls: 'critical',
-                    tooltip: `Long-Side Critical: Exceptional capitulation spike on long ETF (VCVI ${longVcvi != null ? longVcvi.toFixed(0) : '--'}). Historically signals natural gas bottom / price exhaustion.`
+                    tooltip: `Long-Side Critical: Exceptional capitulation spike on long ETF (VCVI ${longVcvi != null ? longVcvi.toFixed(0) : '—'}). Historically signals natural gas bottom / price exhaustion.`
                 };
             }
             if ((longVcvi != null && longVcvi >= tVcvi.high) || (longVcvi5 != null && longVcvi5 >= 45) || (longRvol != null && longRvol >= 2.0) || longMetrics?.sharpSpike) {
@@ -679,7 +679,7 @@ const Metrics = {
                 return {
                     label: 'S-CRITICAL',
                     cls: 'critical',
-                    tooltip: `Short-Side Critical: Severe panic buying into inverse ETF (IPSI ${ipsi != null ? ipsi.toFixed(1) + 'x' : '--'}, VCVI ${shortVcvi != null ? shortVcvi.toFixed(0) : '--'}). Signals natural gas top exhaustion.`
+                    tooltip: `Short-Side Critical: Severe panic buying into inverse ETF (IPSI ${ipsi != null ? ipsi.toFixed(1) + 'x' : '—'}, VCVI ${shortVcvi != null ? shortVcvi.toFixed(0) : '—'}). Signals natural gas top exhaustion.`
                 };
             }
             if ((shortVcvi != null && shortVcvi >= tVcvi.high) || (shortVcvi5 != null && shortVcvi5 >= 45) || (shortRvol != null && shortRvol >= 2.0) || (ipsi != null && ipsi >= tIpsi.stress) || shortMetrics?.sharpSpike) {

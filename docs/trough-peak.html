@@ -1748,8 +1748,8 @@ function renderCards() {
                 <div class="kpi-val val-muted">0%</div>
             </div>
             <div class="kpi-stats-row">
-                <div class="stat-item"><div class="stat-lbl">AVG DAYS</div><div class="stat-val">--</div></div>
-                <div class="stat-item"><div class="stat-lbl">MAX GAIN</div><div class="stat-val">--</div></div>
+                <div class="stat-item"><div class="stat-lbl">AVG DAYS</div><div class="stat-val">—</div></div>
+                <div class="stat-item"><div class="stat-lbl">MAX GAIN</div><div class="stat-val">—</div></div>
             </div>
         </div>`;
 
@@ -1767,13 +1767,13 @@ function renderCards() {
         for (let i = 0; i < cycles.length - 1; i++) {
             gaps.push(Math.round((new Date(cycles[i+1].troughDate) - new Date(cycles[i].peakDate)) / 86400000));
         }
-        const avgGapStr = gaps.length ? Math.round(avg(gaps)) + 'D' : '--';
+        const avgGapStr = gaps.length ? Math.round(avg(gaps)) + 'D' : '—';
 
         // --- Micro Analytics Calculations ---
         const lastPrice = d.closes[d.closes.length - 1];
         
         // 1. Cycle Position & Regime Label
-        let cycPosStr = '--', cycLabel = '';
+        let cycPosStr = '—', cycLabel = '';
         let cycColor = 'rgba(255,255,255,0.85)';
         let isBreakout = false, cycPosPct = 0;
         if (cycles.length > 0) {
@@ -1793,7 +1793,7 @@ function renderCards() {
         }
 
         // 2. Stretch Index (3D Return Z-Score)
-        let strStr = '--';
+        let strStr = '—';
         let strColor = 'rgba(255,255,255,0.85)';
         if (d.closes.length > 63) {
             const p = d.closes;
@@ -1812,7 +1812,7 @@ function renderCards() {
 
         // 3. Multi-Horizon (1M, 3M, 6M)
         const getRangePos = (len, name, label) => {
-            if (d.closes.length < len) return '--';
+            if (d.closes.length < len) return '—';
             const slice = d.closes.slice(-len);
             let min = Infinity, max = -Infinity;
             for (let k = 0; k < slice.length; k++) { if (slice[k] < min) min = slice[k]; if (slice[k] > max) max = slice[k]; }
@@ -1824,7 +1824,7 @@ function renderCards() {
         const m1 = getRangePos(21, '21-day', '1M'), m3 = getRangePos(63, '63-day', '3M'), m6 = getRangePos(126, '126-day', '6M');
 
         // 4. Distances & Range
-        let distPk = '--', distTr = '--', rngStr = '--';
+        let distPk = '—', distTr = '—', rngStr = '—';
         if (cycles.length > 0) {
             const lastC = cycles[cycles.length - 1];
             const pkVal = Math.round(((lastPrice / lastC.peakPrice) - 1) * 100);
@@ -2300,13 +2300,13 @@ function downloadCSV() {
     if (!filtered.length) return alert('No cycle data to export.');
 
     const getVolStats = (dateStr) => {
-        if (!vols || !vols.length) return Array(10).fill('--');
+        if (!vols || !vols.length) return Array(10).fill('—');
         const idx = dates.indexOf(dateStr);
-        if (idx === -1) return Array(10).fill('--');
+        if (idx === -1) return Array(10).fill('—');
 
-        // Returns null (→ '--') when slice is empty, not 0
+        // Returns null (→ '—') when slice is empty, not 0
         const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
-        const fmt0 = v => v === null ? '--' : v.toFixed(0);
+        const fmt0 = v => v === null ? '—' : v.toFixed(0);
 
         const exact = vols[idx];
         const w3 = vols.slice(Math.max(0, idx-3), Math.min(vols.length, idx+4));
@@ -2347,7 +2347,7 @@ function downloadCSV() {
 
     const rows = filtered.map(c => {
         const idx = cycles.indexOf(c);
-        let gap = '--';
+        let gap = '—';
         if (idx > 0) {
             const prev = cycles[idx - 1];
             const d1 = new Date(prev.peakDate);
@@ -2490,7 +2490,7 @@ function renderTable() {
         <tbody>
         ${filtered.slice().reverse().map(c => {
             const idx = cycles.indexOf(c);
-            let gapDays = null, gapStr = '--';
+            let gapDays = null, gapStr = '—';
             if (idx > 0) {
                 const prev = cycles[idx - 1];
                 gapDays = Math.round((new Date(c.troughDate) - new Date(prev.peakDate)) / 86400000);
@@ -2543,7 +2543,7 @@ function renderTable() {
                 <td style="color:rgba(255,255,255,0.85);font-weight:800;letter-spacing:1px;" colspan="5">${n} CYCLES</td>
                 <td style="color:#3db87a;font-weight:800;" data-tooltip="Avg: ${Math.round(avgG)}% | Median: ${Math.round(medG)}%">~${Math.round(avgG)}%</td>
                 <td style="color:rgba(255,255,255,0.85);font-weight:700;" data-tooltip="Average cycle duration">${Math.round(avgD)}D</td>
-                <td style="color:rgba(255,255,255,0.55);font-weight:700;" data-tooltip="Average gap between cycles">${avgGap ? avgGap + 'D' : '--'}</td>
+                <td style="color:rgba(255,255,255,0.55);font-weight:700;" data-tooltip="Average gap between cycles">${avgGap ? avgGap + 'D' : '—'}</td>
             </tr>`;
         })()}
         </tfoot>

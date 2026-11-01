@@ -731,7 +731,7 @@ function getSeason(dateStr) {
 
 // ── Regime Classification ─────────────────────────────────────
 function ngvlRegime(pct) {
-    if (pct == null) return { label: '--', cls: 'cvol-reg-unknown', color: '#666' };
+    if (pct == null) return { label: '—', cls: 'cvol-reg-unknown', color: '#666' };
     if (pct >= 90) return { label: 'EXTREME', cls: 'cvol-reg-extreme', color: '#c04040' };
     if (pct >= 75) return { label: 'ELEVATED', cls: 'cvol-reg-elevated', color: '#c07828' };
     if (pct >= 25) return { label: 'NORMAL', cls: 'cvol-reg-normal', color: '#3db87a' };

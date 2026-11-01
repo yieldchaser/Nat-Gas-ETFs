@@ -886,7 +886,7 @@ function renderInflectionRadar(range) {
     var cells = '';
 
     // 1) Skew Regime
-    var skLabel = '--', skColor = '#94a3b8';
+    var skLabel = '—', skColor = '#94a3b8';
     if (skZ != null) {
         if (skZ > 1.5)       { skLabel = 'STRONG \u2191'; skColor = '#3db87a'; }
         else if (skZ > 0.75) { skLabel = 'BUILDING \u2191'; skColor = '#6ddc8b'; }
@@ -897,7 +897,7 @@ function renderInflectionRadar(range) {
     cells += cell('SKEW REGIME', skLabel, skColor, 'rgba(255,255,255,0.03)', 'Directional intensity of the ATM Skew ratio vs its 21D average');
 
     // 2) Wing Bias
-    var wbLabel = '--', wbColor = '#94a3b8';
+    var wbLabel = '—', wbColor = '#94a3b8';
     if (vs != null && vsZ != null) {
         if (vsZ > 1.0)       { wbLabel = 'CALLS RICH'; wbColor = '#3db87a'; }
         else if (vsZ > 0.5) { wbLabel = 'CALL LEAN'; wbColor = '#6ddc8b'; }
@@ -908,7 +908,7 @@ function renderInflectionRadar(range) {
     cells += cell('WING BIAS', wbLabel, wbColor, 'rgba(255,255,255,0.02)', 'Net variance spread indicating whether Calls or Puts command a premium in the tails');
 
     // 3) Momentum (Skew Acceleration)
-    var moLabel = '--', moColor = '#94a3b8';
+    var moLabel = '—', moColor = '#94a3b8';
     if (sa != null) {
         if (sa > 0.01)       { moLabel = 'ACCEL \u2191'; moColor = '#3db87a'; }
         else if (sa > 0.003) { moLabel = 'BUILDING \u2191'; moColor = '#6ddc8b'; }
@@ -919,7 +919,7 @@ function renderInflectionRadar(range) {
     cells += cell('MOMENTUM', moLabel, moColor, 'rgba(255,255,255,0.03)', 'Acceleration (2nd derivative) of the Skew trend to catch early inflections');
 
     // 4) Tension
-    var tnLabel = '--', tnColor = '#94a3b8', tnBg = 'rgba(255,255,255,0.02)';
+    var tnLabel = '—', tnColor = '#94a3b8', tnBg = 'rgba(255,255,255,0.02)';
     if (rtP != null) {
         if (rtP >= 90)      { tnLabel = 'CRITICAL'; tnColor = '#ef4444'; tnBg = 'rgba(239,68,68,0.08)'; }
         else if (rtP >= 75) { tnLabel = 'ELEVATED'; tnColor = '#f59e0b'; tnBg = 'rgba(245,158,11,0.06)'; }
@@ -929,7 +929,7 @@ function renderInflectionRadar(range) {
     cells += cell('TENSION', tnLabel, tnColor, tnBg, 'Composite measure of volatility structure stress (Spread \u00d7 Convexity \u00d7 Skew Accel)');
 
     // 5) Price-Skew Sync
-    var psLabel = '--', psColor = '#94a3b8';
+    var psLabel = '—', psColor = '#94a3b8';
     if (psc != null) {
         if (Math.abs(psc) < 0.2)     { psLabel = 'DISLOCATED'; psColor = '#f59e0b'; }
         else if (Math.abs(psc) < 0.4){ psLabel = 'DECOUPLING'; psColor = '#fbbf24'; }
