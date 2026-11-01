@@ -1959,18 +1959,23 @@
     justify-content: space-between;
     align-items: center;
     gap: 8px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+    row-gap: 6px;
     margin-bottom: 8px;
 }
 .vs-head h3 {
     margin-bottom: 0;
-    white-space: nowrap;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px;
 }
 .tab-group#vs-range-tabs {
     display: inline-flex;
     flex-shrink: 0;
     margin: 0;
     padding: 2px;
+    margin-left: auto;
 }
 .vs-range-labels-row {
     display: flex;
@@ -2009,6 +2014,45 @@
     text-align: left;
     user-select: none;
 }
+/* Suite segmented controller */
+.tab-group#vs-suite-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+.tab-group#vs-suite-tabs .tab-btn {
+    padding: 3px 6px;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(20, 24, 34, 0.6);
+    color: rgba(255, 255, 255, 0.65);
+    border-radius: 4px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tab-group#vs-suite-tabs .tab-btn:hover {
+    color: var(--text-bright, #fff);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+.tab-group#vs-suite-tabs .tab-btn.active {
+    background: rgba(80, 144, 160, 0.22);
+    color: #5090a0;
+    border-color: rgba(80, 144, 160, 0.65);
+    box-shadow: 0 0 8px rgba(80, 144, 160, 0.25), inset 0 0 4px rgba(80, 144, 160, 0.15);
+}
+
 .tab-group#vs-study-tabs,
 .tab-group#vs-chips {
     display: grid;
@@ -2020,6 +2064,7 @@
     box-sizing: border-box;
 }
 .tab-group#vs-study-tabs .tab-btn {
+    text-transform: none;
     padding: 3px 2px;
     font-size: 0.58rem;
     font-weight: 700;
@@ -2236,7 +2281,7 @@
 .vs-reading .vs-lbl {
     color: rgba(255, 255, 255, 0.52);
     font-weight: 800;
-    text-transform: uppercase;
+    text-transform: none;
     font-size: 0.62rem;
     letter-spacing: 0.8px;
 }
@@ -2290,7 +2335,7 @@
 .vs-tt-lbl {
     color: rgba(255, 255, 255, 0.65);
     font-weight: 700;
-    text-transform: uppercase;
+    text-transform: none;
     font-size: 0.62rem;
 }
 .vs-tt-val {
@@ -2334,6 +2379,15 @@
         flex: 0 0 auto;
         width: auto;
         margin-bottom: 0;
+    }
+    .tab-group#vs-suite-tabs {
+        gap: 2px;
+    }
+    .tab-group#vs-suite-tabs .tab-btn {
+        font-size: 0.54rem;
+        padding: 2px 3px;
+        letter-spacing: 0.3px;
+        height: 22px;
     }
     .tab-group#vs-study-tabs,
     .tab-group#vs-chips {

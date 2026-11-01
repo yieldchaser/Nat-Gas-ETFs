@@ -1,15 +1,17 @@
 /* ============================================
-   Price-Volume Studies — classic volume indicators
-   Volume, Volume Oscillator, Net Volume, CMF, OBV, PVT
+   Price-Volume Studies — Institutional Suite
+   Classic Technical (Volume, Vol Osc, Net Vol, CMF, OBV, PVT)
+   Institutional Microstructure (BVC-VPIN, ILLIQ-Z, ESVD, LMSW-ρ, VWAP-Z, TKVF)
    ============================================ */
 
 const VolumeStudies = {
     state: {
         ticker: 'BOIL',
-        study: 'vol',
-        unit: 'shares',
+        suite: 'classic',    // 'classic' | 'micro'
+        study: 'vol',        // 'vol'|'osc'|'net'|'cmf'|'obv'|'pvt' | 'vpin'|'illiq'|'esvd'|'lmsw'|'vwapz'|'tkvf'
+        unit: 'shares',      // 'shares' | 'dollar'
         range: '1y',
-        customRange: null,    // { startIdx, endIdx }
+        customRange: null,   // { startIdx, endIdx }
         hoverIdx: null,
         lastMouse: { x: 0, y: 0 }
     },
@@ -20,12 +22,32 @@ const VolumeStudies = {
     _payload: null,
     _rafId: null,
 
+    STUDIES: {
+        classic: [
+            { key: 'vol', label: 'VOLUME', tip: 'Daily share volume with 21-day average line. Up days green, down days red.' },
+            { key: 'osc', label: 'VOL OSC', tip: 'Volume oscillator: percentage spread between 5-day and 21-day volume moving averages.' },
+            { key: 'net', label: 'NET VOL', tip: 'Daily signed volume (+V on up days, -V on down days) with 21-day running total.' },
+            { key: 'cmf', label: 'CMF', tip: 'Chaikin Money Flow (21-day): measures accumulation/distribution using close location in daily range.' },
+            { key: 'obv', label: 'OBV', tip: 'On-Balance Volume: cumulative running total of signed volume with 21-day signal line.' },
+            { key: 'pvt', label: 'PVT', tip: 'Price-Volume Trend: cumulative volume scaled continuously by percentage price change.' },
+        ],
+        micro: [
+            { key: 'vpin', label: 'BVC-VPIN', tip: 'Bulk Volume Classification Imbalance (OFI) & Order-Flow Toxicity (VPIN) based on volatility-scaled Gaussian probability partitioning.' },
+            { key: 'illiq', label: 'ILLIQ-Z', tip: 'Range-Adjusted Amihud Illiquidity Z-score & Liquidity Absorption Index (LAI = Z_vol - Z_illiq) isolating institutional limit walls.' },
+            { key: 'esvd', label: 'ESVD', tip: 'Abdi-Ranaldo Effective Spread-Volume Divergence: detects market maker liquidity withdrawal before volatility regime shifts.' },
+            { key: 'lmsw', label: 'LMSW-ρ', tip: 'Llorente-Michaely-Saar-Wang Return-Volume Serial Correlation: separates informed continuation (rho > 0.25) from liquidity reversal (rho < -0.25).' },
+            { key: 'vwapz', label: 'VWAP-Z', tip: 'Volume-Weighted Typical Price Dispersion & Institutional Cost Basis Z-Score: measures stretch away from 21-day rolling VWAP.' },
+            { key: 'tkvf', label: 'TKVF', tip: 'True-Range Adjusted Klinger-Arms Volume Force Oscillator with 9-day trigger line: captures gap-inclusive institutional force persistence.' },
+        ]
+    },
+
     COLORS: {
         up: '#3db87a',
         down: '#c04040',
         flat: 'rgba(255,255,255,0.30)',
         line: '#5090a0',
         ma: '#d4a830',
+        secondaryLine: '#d4a830',
         grid: 'rgba(255,255,255,0.06)',
         label: 'rgba(255,255,255,0.40)',
         crosshair: 'rgba(255,255,255,0.35)'
@@ -44,11 +66,11 @@ const VolumeStudies = {
         const prefix = unit === 'dollar' ? '$' : '';
         const a = Math.abs(v);
         const sign = v < 0 ? '-' : '';
-        if (a >= 1e12) return `${sign}${prefix}${(a / 1e12).toFixed(2)}T`;
-        if (a >= 1e9) return `${sign}${prefix}${(a / 1e9).toFixed(2)}B`;
-        if (a >= 1e6) return `${sign}${prefix}${(a / 1e6).toFixed(2)}M`;
-        if (a >= 1e3) return `${sign}${prefix}${(a / 1e3).toFixed(0)}K`;
-        return `${sign}${prefix}${a.toFixed(0)}`;
+        if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(2) + 'T';
+        if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(2) + 'B';
+        if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(2) + 'M';
+        if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(0) + 'K';
+        return sign + prefix + a.toFixed(0);
     },
 
     fmtSigned(v, unit) {
@@ -56,11 +78,11 @@ const VolumeStudies = {
         const sign = v > 0 ? '+' : (v < 0 ? '-' : '');
         const prefix = unit === 'dollar' ? '$' : '';
         const a = Math.abs(v);
-        if (a >= 1e12) return `${sign}${prefix}${(a / 1e12).toFixed(2)}T`;
-        if (a >= 1e9) return `${sign}${prefix}${(a / 1e9).toFixed(2)}B`;
-        if (a >= 1e6) return `${sign}${prefix}${(a / 1e6).toFixed(2)}M`;
-        if (a >= 1e3) return `${sign}${prefix}${(a / 1e3).toFixed(0)}K`;
-        return `${sign}${prefix}${a.toFixed(0)}`;
+        if (a >= 1e12) return sign + prefix + (a / 1e12).toFixed(2) + 'T';
+        if (a >= 1e9) return sign + prefix + (a / 1e9).toFixed(2) + 'B';
+        if (a >= 1e6) return sign + prefix + (a / 1e6).toFixed(2) + 'M';
+        if (a >= 1e3) return sign + prefix + (a / 1e3).toFixed(0) + 'K';
+        return sign + prefix + a.toFixed(0);
     },
 
     fmtPct(v) {
@@ -83,7 +105,7 @@ const VolumeStudies = {
         if (!d) return '—';
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const m = parseInt(d.slice(5, 7), 10);
-        return `${months[m - 1] || '?'} '${d.slice(2, 4)}`;
+        return (months[m - 1] || '?') + " '" + d.slice(2, 4);
     },
 
     fmtFullDate(d) {
@@ -92,9 +114,10 @@ const VolumeStudies = {
         const dt = new Date(d + 'T00:00:00');
         const dayName = isNaN(dt.getDay()) ? '' : days[dt.getDay()];
         const formatted = typeof formatDisplayDate === 'function' ? formatDisplayDate(d) : d;
-        return dayName ? `${dayName}, ${formatted}` : formatted;
+        return dayName ? dayName + ', ' + formatted : formatted;
     },
 
+    // Mathematical Primitives & Moving Averages
     sma(values, n) {
         const out = new Array(values.length).fill(null);
         if (!values || n <= 0) return out;
@@ -103,6 +126,24 @@ const VolumeStudies = {
             sum += values[i] || 0;
             if (i >= n) sum -= values[i - n] || 0;
             if (i >= n - 1) out[i] = sum / n;
+        }
+        return out;
+    },
+
+    ema(values, n) {
+        const out = new Array(values.length).fill(null);
+        if (!values || n <= 0) return out;
+        const k = 2 / (n + 1);
+        let prev = null;
+        for (let i = 0; i < values.length; i++) {
+            const v = values[i];
+            if (v == null || !isFinite(v)) continue;
+            if (prev == null) {
+                prev = v;
+            } else {
+                prev = v * k + prev * (1 - k);
+            }
+            out[i] = prev;
         }
         return out;
     },
@@ -117,6 +158,47 @@ const VolumeStudies = {
             if (i >= n - 1) out[i] = sum;
         }
         return out;
+    },
+
+    rollingMeanAndStd(values, n) {
+        const len = values.length;
+        const means = new Array(len).fill(null);
+        const stds = new Array(len).fill(null);
+        if (len < n || n <= 1) return { means, stds };
+
+        let sum = 0, sumSq = 0;
+        for (let i = 0; i < len; i++) {
+            const v = values[i] || 0;
+            sum += v;
+            sumSq += v * v;
+            if (i >= n) {
+                const old = values[i - n] || 0;
+                sum -= old;
+                sumSq -= old * old;
+            }
+            if (i >= n - 1) {
+                const mean = sum / n;
+                const variance = Math.max(0, (sumSq - (sum * sum) / n) / (n - 1));
+                means[i] = mean;
+                stds[i] = Math.sqrt(variance);
+            }
+        }
+        return { means, stds };
+    },
+
+    // Abramowitz & Stegun (7.1.26) polynomial error function approximation
+    erf(x) {
+        const a1 =  0.254829592, a2 = -0.284496736, a3 =  1.421413741, a4 = -1.453152027, a5 =  1.061405429, p  =  0.3275911;
+        const sign = x < 0 ? -1 : 1;
+        const absX = Math.abs(x);
+        const t = 1.0 / (1.0 + p * absX);
+        const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-absX * absX);
+        return sign * y;
+    },
+
+    normCdf(z) {
+        if (z == null || !isFinite(z)) return 0.5;
+        return 0.5 * (1.0 + this.erf(z / Math.SQRT2));
     },
 
     signSeries(closes) {
@@ -190,6 +272,306 @@ const VolumeStudies = {
         return out;
     },
 
+    // ============================================
+    // INSTITUTIONAL MICROSTRUCTURE ALGORITHMS
+    // ============================================
+
+    // 1. Bulk Volume Classification (BVC) & Order-Flow Toxicity (VPIN)
+    bvcVpin(closes, dollarVolumes, w = 21, m = 10) {
+        const n = closes.length;
+        const ofi = new Array(n).fill(null);
+        const vpin = new Array(n).fill(null);
+        if (n < w + m) return { ofi, vpin };
+
+        const logRet = new Array(n).fill(0);
+        for (let i = 1; i < n; i++) {
+            logRet[i] = (closes[i - 1] > 0 && closes[i] > 0) ? Math.log(closes[i] / closes[i - 1]) : 0;
+        }
+
+        const { means: retMeans, stds: retStds } = this.rollingMeanAndStd(logRet, w);
+
+        const buyVol = new Array(n).fill(0);
+        const sellVol = new Array(n).fill(0);
+        for (let i = 0; i < n; i++) {
+            const sigma = retStds[i];
+            const mean = retMeans[i] || 0;
+            const dv = dollarVolumes[i] || 0;
+            if (sigma && sigma > 1e-8) {
+                const z = (logRet[i] - mean) / sigma;
+                const probBuy = this.normCdf(z);
+                buyVol[i] = dv * probBuy;
+                sellVol[i] = dv * (1 - probBuy);
+            } else {
+                buyVol[i] = dv * 0.5;
+                sellVol[i] = dv * 0.5;
+            }
+        }
+
+        let sumImb = 0, sumAbs = 0, sumDv = 0;
+        for (let i = 0; i < m; i++) {
+            const diff = buyVol[i] - sellVol[i];
+            sumImb += diff;
+            sumAbs += Math.abs(diff);
+            sumDv += dollarVolumes[i] || 0;
+        }
+        if (sumDv > 0 && (m - 1) >= w) {
+            ofi[m - 1] = Math.max(-1, Math.min(1, sumImb / sumDv));
+            vpin[m - 1] = Math.max(0, Math.min(1, sumAbs / sumDv));
+        }
+
+        for (let i = m; i < n; i++) {
+            const newDiff = buyVol[i] - sellVol[i];
+            const oldDiff = buyVol[i - m] - sellVol[i - m];
+            sumImb += newDiff - oldDiff;
+            sumAbs += Math.abs(newDiff) - Math.abs(oldDiff);
+            sumDv += (dollarVolumes[i] || 0) - (dollarVolumes[i - m] || 0);
+
+            if (sumDv > 0 && i >= w) {
+                ofi[i] = Math.max(-1, Math.min(1, sumImb / sumDv));
+                vpin[i] = Math.max(0, Math.min(1, sumAbs / sumDv));
+            }
+        }
+        return { ofi, vpin };
+    },
+
+    // 2. Range-Adjusted Amihud Illiquidity (ILLIQ-Z) & Liquidity Absorption Index (LAI)
+    amihudIlliqLai(highs, lows, closes, dollarVolumes, w = 21, m = 5) {
+        const n = closes.length;
+        const illiqZ = new Array(n).fill(null);
+        const lai = new Array(n).fill(null);
+        const zDvSeries = new Array(n).fill(null);
+        if (n < w + m) return { illiqZ, lai, zDv: zDvSeries };
+
+        const dvSma = this.sma(dollarVolumes, w);
+        const { means: dvMeans, stds: dvStds } = this.rollingMeanAndStd(dollarVolumes, w);
+
+        const logLambda = new Array(n).fill(0);
+        for (let i = 1; i < n; i++) {
+            const c0 = closes[i - 1], c1 = closes[i], h = highs[i], l = lows[i];
+            const r = (c0 > 0 && c1 > 0) ? Math.abs(Math.log(c1 / c0)) : 0;
+            const park = (h > 0 && l > 0 && h >= l) ? Math.log(h / l) : 0;
+            const rdv = (dvSma[i] && dvSma[i] > 0) ? (dollarVolumes[i] / dvSma[i]) : 1.0;
+            const lambda = (r + 0.5 * park) / (rdv + 1e-8);
+            logLambda[i] = Math.log(lambda + 1e-8);
+        }
+
+        const smoothLogLambda = this.ema(logLambda, m);
+        const { means: lMeans, stds: lStds } = this.rollingMeanAndStd(logLambda, w);
+
+        for (let i = w; i < n; i++) {
+            const lStd = lStds[i], lMean = lMeans[i];
+            const dvStd = dvStds[i], dvMean = dvMeans[i];
+            if (lStd && lStd > 0 && smoothLogLambda[i] != null) {
+                const zIlliq = (smoothLogLambda[i] - lMean) / lStd;
+                illiqZ[i] = zIlliq;
+                if (dvStd && dvStd > 0) {
+                    const zDv = (dollarVolumes[i] - dvMean) / dvStd;
+                    zDvSeries[i] = zDv;
+                    lai[i] = zDv - zIlliq;
+                }
+            }
+        }
+        return { illiqZ, lai, zDv: zDvSeries };
+    },
+
+    // 3. Abdi-Ranaldo Effective Spread-Volume Divergence (ESVD)
+    abdiRanaldoEsvd(opens, highs, lows, closes, dollarVolumes, m = 10, w = 21) {
+        const n = closes.length;
+        const spreadAR = new Array(n).fill(null);
+        const esvd = new Array(n).fill(null);
+        const zSpread = new Array(n).fill(null);
+        const zDv = new Array(n).fill(null);
+        if (n < w + m) return { spreadAR, esvd, zSpread, zDv };
+
+        const s2 = new Array(n).fill(0);
+        for (let i = 1; i < n; i++) {
+            if (closes[i - 1] > 0 && highs[i - 1] > 0 && lows[i - 1] > 0 && highs[i] > 0 && lows[i] > 0) {
+                const cPrev = Math.log(closes[i - 1]);
+                const etaPrev = 0.5 * (Math.log(highs[i - 1]) + Math.log(lows[i - 1]));
+                const etaCurr = 0.5 * (Math.log(highs[i]) + Math.log(lows[i]));
+                const val = 4 * (cPrev - etaPrev) * (cPrev - etaCurr);
+                s2[i] = Math.max(0, val);
+            }
+        }
+
+        const rawSpread = new Array(n).fill(0);
+        let sumS2 = 0;
+        for (let i = 0; i < m; i++) sumS2 += s2[i];
+        rawSpread[m - 1] = Math.sqrt(sumS2 / m) * 100;
+        spreadAR[m - 1] = rawSpread[m - 1];
+
+        for (let i = m; i < n; i++) {
+            sumS2 += s2[i] - s2[i - m];
+            rawSpread[i] = Math.sqrt(Math.max(0, sumS2 / m)) * 100;
+            spreadAR[i] = rawSpread[i];
+        }
+
+        const logDv = dollarVolumes.map(v => Math.log(Math.max(1, v || 0)));
+        const { means: sMeans, stds: sStds } = this.rollingMeanAndStd(rawSpread, w);
+        const { means: vMeans, stds: vStds } = this.rollingMeanAndStd(logDv, w);
+
+        for (let i = w; i < n; i++) {
+            if (sStds[i] && sStds[i] > 0 && vStds[i] && vStds[i] > 0) {
+                const zs = (rawSpread[i] - sMeans[i]) / sStds[i];
+                const zv = (logDv[i] - vMeans[i]) / vStds[i];
+                zSpread[i] = zs;
+                zDv[i] = zv;
+                esvd[i] = zs - zv;
+            }
+        }
+        return { spreadAR, esvd, zSpread, zDv };
+    },
+
+    // 4. LMSW Return-Volume Serial Correlation (LMSW-ρ)
+    lmswRho(closes, dollarVolumes, w = 21, m = 21) {
+        const n = closes.length;
+        const out = new Array(n).fill(null);
+        if (n < w + m + 2) return out;
+
+        const logRet = new Array(n).fill(0);
+        const logDv = new Array(n).fill(0);
+        for (let i = 1; i < n; i++) {
+            logRet[i] = (closes[i - 1] > 0 && closes[i] > 0) ? Math.log(closes[i] / closes[i - 1]) : 0;
+            logDv[i] = Math.log(Math.max(1, dollarVolumes[i] || 0));
+        }
+
+        const dvSma = this.sma(logDv, w);
+        const psi = new Array(n).fill(0);
+        for (let i = 1; i < n; i++) {
+            const vTilde = dvSma[i] != null ? (logDv[i] - dvSma[i]) : 0;
+            const vClamped = Math.max(-3, Math.min(3, vTilde));
+            const rClamped = Math.max(-0.5, Math.min(0.5, logRet[i]));
+            psi[i] = vClamped * rClamped;
+        }
+
+        for (let i = w + m; i < n; i++) {
+            let sumR = 0, sumPsi = 0;
+            for (let j = 0; j < m; j++) {
+                sumR += logRet[i - j];
+                sumPsi += psi[i - j - 1];
+            }
+            const meanR = sumR / m;
+            const meanPsi = sumPsi / m;
+
+            let num = 0, denR = 0, denPsi = 0;
+            for (let j = 0; j < m; j++) {
+                const dr = logRet[i - j] - meanR;
+                const dp = psi[i - j - 1] - meanPsi;
+                num += dr * dp;
+                denR += dr * dr;
+                denPsi += dp * dp;
+            }
+            const den = Math.sqrt(denR * denPsi);
+            out[i] = den > 1e-12 ? Math.max(-1, Math.min(1, num / den)) : 0;
+        }
+        return out;
+    },
+
+    // 5. Rolling VWAP & Intrabar Dispersion Z-Score (VWAP-Z)
+    rollingVwapZ(highs, lows, closes, volumes, m = 21, k = 5) {
+        const n = closes.length;
+        const vwapZ = new Array(n).fill(null);
+        const rvwap = new Array(n).fill(null);
+        const slopeVwap = new Array(n).fill(null);
+        if (n < m + k) return { vwapZ, rvwap, slopeVwap };
+
+        const typ = new Array(n);
+        const barVar = new Array(n);
+        for (let i = 0; i < n; i++) {
+            typ[i] = (highs[i] + lows[i] + 2 * closes[i]) / 4;
+            const range = highs[i] - lows[i];
+            barVar[i] = (range * range) / 12;
+        }
+
+        for (let i = m - 1; i < n; i++) {
+            let sumPv = 0, sumV = 0;
+            for (let j = 0; j < m; j++) {
+                const idx = i - j;
+                const v = volumes[idx] || 0;
+                sumPv += typ[idx] * v;
+                sumV += v;
+            }
+            if (sumV <= 0) continue;
+            const curVwap = sumPv / sumV;
+            rvwap[i] = curVwap;
+
+            let sumVwDisp = 0;
+            for (let j = 0; j < m; j++) {
+                const idx = i - j;
+                const v = volumes[idx] || 0;
+                const d = typ[idx] - curVwap;
+                sumVwDisp += v * (d * d + barVar[idx]);
+            }
+            const sigmaVw = Math.sqrt(sumVwDisp / sumV);
+            if (sigmaVw > 0) {
+                vwapZ[i] = (closes[i] - curVwap) / sigmaVw;
+                if (i >= m - 1 + k && rvwap[i - k] != null) {
+                    slopeVwap[i] = (curVwap - rvwap[i - k]) / (k * sigmaVw);
+                }
+            }
+        }
+        return { vwapZ, rvwap, slopeVwap };
+    },
+
+    // 6. True-Range Adjusted Klinger-Arms Volume Force (TKVF)
+    tkvfOscillator(highs, lows, closes, dollarVolumes, w = 21, kf = 13, ks = 34, ksig = 9) {
+        const n = closes.length;
+        const tkvf = new Array(n).fill(null);
+        const trig = new Array(n).fill(null);
+        const hist = new Array(n).fill(null);
+        if (n < Math.max(w, ks) + ksig) return { tkvf, trig, hist };
+
+        const dvSma = this.sma(dollarVolumes, w);
+        const vf = new Array(n).fill(0);
+
+        let prevT = 0, prevCm = 0, prevDm = 0;
+        for (let i = 1; i < n; i++) {
+            const th = Math.max(highs[i], closes[i - 1]);
+            const tl = Math.min(lows[i], closes[i - 1]);
+            const dm = th - tl;
+            const typCurr = (highs[i] + lows[i] + closes[i]) / 3;
+            const typPrev = (highs[i - 1] + lows[i - 1] + closes[i - 1]) / 3;
+            const t = typCurr > typPrev ? 1 : -1;
+
+            let cm = 0;
+            if (t === prevT) {
+                cm = prevCm + dm;
+            } else {
+                cm = prevDm + dm;
+            }
+            prevT = t;
+            prevCm = cm;
+            prevDm = dm;
+
+            const rdv = (dvSma[i] && dvSma[i] > 0) ? (dollarVolumes[i] / dvSma[i]) : 1.0;
+            const ratio = cm > 0 ? (dm / cm) : 0.5;
+            vf[i] = rdv * t * Math.abs(2 * ratio - 1) * 100;
+        }
+
+        const fastEma = this.ema(vf, kf);
+        const slowEma = this.ema(vf, ks);
+        const diff = new Array(n).fill(0);
+        for (let i = 0; i < n; i++) {
+            if (fastEma[i] != null && slowEma[i] != null) {
+                diff[i] = fastEma[i] - slowEma[i];
+                tkvf[i] = diff[i];
+            }
+        }
+
+        const sigEma = this.ema(diff, ksig);
+        for (let i = 0; i < n; i++) {
+            trig[i] = sigEma[i];
+            if (tkvf[i] != null && trig[i] != null) {
+                hist[i] = tkvf[i] - trig[i];
+            }
+        }
+        return { tkvf, trig, hist };
+    },
+
+    // ============================================
+    // SLICING & PAYLOAD ASSEMBLY
+    // ============================================
+
     sliceStartForDays(dates, days, nowMs) {
         if (!dates || !dates.length) return 0;
         if (days == null) return 0;
@@ -228,13 +610,17 @@ const VolumeStudies = {
             bars: slice(actualExtra && actualExtra.bars),
             line: slice(actualExtra && actualExtra.line),
             ma: slice(actualExtra && actualExtra.ma),
+            secondaryLine: slice(actualExtra && actualExtra.secondaryLine),
             colorSigns: slice(actualExtra && actualExtra.colorSigns),
             zeroCentered: !!(actualExtra && actualExtra.zeroCentered),
             study: actualExtra ? actualExtra.study : null,
             unit: (actualExtra && actualExtra.unit) || 'shares',
             startIdx,
             endIdx: end,
-            fullLength: dates.length
+            fullLength: dates.length,
+            extraData: actualExtra && actualExtra.extraData ? Object.fromEntries(
+                Object.entries(actualExtra.extraData).map(([k, v]) => [k, Array.isArray(v) ? slice(v) : v])
+            ) : {}
         };
     },
 
@@ -242,12 +628,14 @@ const VolumeStudies = {
         if (!history || !history.length) return null;
         const options = opts || {};
         const unit = options.unit || this.state.unit || 'shares';
-        const dates = [], closes = [], highs = [], lows = [], rawVolumes = [], dollarVolumes = [];
+        const dates = [], opens = [], closes = [], highs = [], lows = [], rawVolumes = [], dollarVolumes = [];
         for (const b of history) {
             if (!b || b.close == null) continue;
             const c = b.close;
+            const o = (b.open != null && isFinite(b.open)) ? b.open : c;
             const v = b.volume || 0;
             dates.push(b.date);
+            opens.push(o);
             closes.push(c);
             highs.push(b.high != null ? b.high : c);
             lows.push(b.low != null ? b.low : c);
@@ -282,6 +670,7 @@ const VolumeStudies = {
             dollarVolumes
         };
 
+        // --- CLASSIC TECHNICAL SUITE ---
         if (study === 'vol') {
             const ma = this.sma(volumes, maLen);
             const signs = this.signSeries(closes);
@@ -319,13 +708,84 @@ const VolumeStudies = {
                 ...extraBase, bars: null, line, ma, zeroCentered: false, study
             });
         }
+
+        // --- INSTITUTIONAL MICROSTRUCTURE SUITE ---
+        if (study === 'vpin' || study === 'bvc') {
+            const { ofi, vpin } = this.bvcVpin(closes, dollarVolumes, maLen, 10);
+            return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
+                ...extraBase,
+                bars: null,
+                line: ofi,
+                secondaryLine: vpin,
+                zeroCentered: true,
+                study: 'vpin',
+                extraData: { ofi, vpin }
+            });
+        }
+        if (study === 'illiq') {
+            const { illiqZ, lai, zDv } = this.amihudIlliqLai(highs, lows, closes, dollarVolumes, maLen, 5);
+            return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
+                ...extraBase,
+                bars: lai,
+                line: illiqZ,
+                zeroCentered: true,
+                study: 'illiq',
+                extraData: { illiqZ, lai, zDv }
+            });
+        }
+        if (study === 'esvd') {
+            const { spreadAR, esvd, zSpread, zDv } = this.abdiRanaldoEsvd(opens, highs, lows, closes, dollarVolumes, 10, maLen);
+            return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
+                ...extraBase,
+                bars: esvd,
+                line: zSpread,
+                zeroCentered: true,
+                study: 'esvd',
+                extraData: { spreadAR, esvd, zSpread, zDv }
+            });
+        }
+        if (study === 'lmsw') {
+            const rho = this.lmswRho(closes, dollarVolumes, maLen, maLen);
+            return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
+                ...extraBase,
+                bars: null,
+                line: rho,
+                zeroCentered: true,
+                study: 'lmsw',
+                extraData: { rho }
+            });
+        }
+        if (study === 'vwapz') {
+            const { vwapZ, rvwap, slopeVwap } = this.rollingVwapZ(highs, lows, closes, volumes, maLen, 5);
+            return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
+                ...extraBase,
+                bars: null,
+                line: vwapZ,
+                zeroCentered: true,
+                study: 'vwapz',
+                extraData: { vwapZ, rvwap, slopeVwap }
+            });
+        }
+        if (study === 'tkvf') {
+            const { tkvf, trig, hist } = this.tkvfOscillator(highs, lows, closes, dollarVolumes, maLen, 13, 34, 9);
+            return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
+                ...extraBase,
+                bars: hist,
+                line: tkvf,
+                ma: trig,
+                zeroCentered: true,
+                study: 'tkvf',
+                extraData: { tkvf, trig, hist }
+            });
+        }
+
         return null;
     },
 
     _getPayload(ticker, history) {
         const last = history.length ? (history[history.length - 1].date || '') : '';
-        const customPart = this.state.customRange ? `${this.state.customRange.startIdx}-${this.state.customRange.endIdx}` : '';
-        const key = `${ticker}|${this.state.study}|${this.state.unit}|${this.state.range}|${customPart}|${history.length}|${last}`;
+        const customPart = this.state.customRange ? (this.state.customRange.startIdx + '-' + this.state.customRange.endIdx) : '';
+        const key = ticker + '|' + this.state.suite + '|' + this.state.study + '|' + this.state.unit + '|' + this.state.range + '|' + customPart + '|' + history.length + '|' + last;
         if (this._cache && this._cache.key === key) return this._cache.payload;
         const payload = this.compute(history, this.state.study, this.state.range, {
             unit: this.state.unit,
@@ -334,6 +794,36 @@ const VolumeStudies = {
         });
         this._cache = { key, payload };
         return payload;
+    },
+
+    // ============================================
+    // DOM & RENDERING MANAGEMENT
+    // ============================================
+
+    renderStudyTabs() {
+        const container = document.getElementById('vs-study-tabs');
+        if (!container) return;
+        const currentSuite = this.state.suite || 'classic';
+        const studies = this.STUDIES[currentSuite] || this.STUDIES.classic;
+
+        container.innerHTML = '';
+        for (const s of studies) {
+            const btn = document.createElement('button');
+            const isActive = s.key === this.state.study || (s.key === 'vpin' && this.state.study === 'bvc');
+            btn.className = 'tab-btn' + (isActive ? ' active' : '');
+            btn.setAttribute('data-study', s.key);
+            btn.setAttribute('data-tooltip', s.tip);
+            btn.textContent = s.label;
+            btn.addEventListener('click', () => {
+                container.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.state.study = s.key;
+                this.state.hoverIdx = null;
+                this._cache = null;
+                this.render();
+            });
+            container.appendChild(btn);
+        }
     },
 
     render() {
@@ -368,12 +858,32 @@ const VolumeStudies = {
         }
         this._payload = payload;
         this._syncSliderToRange(payload.fullLength, payload.startIdx, payload.endIdx);
-        const studyTabs = document.getElementById('vs-study-tabs');
-        if (studyTabs) {
-            studyTabs.querySelectorAll('button').forEach(b => {
-                b.classList.toggle('active', b.getAttribute('data-study') === this.state.study);
+
+        // Synchronize suite controller tabs
+        const suiteTabs = document.getElementById('vs-suite-tabs');
+        if (suiteTabs) {
+            suiteTabs.querySelectorAll('button').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-suite') === (this.state.suite || 'classic'));
             });
         }
+
+        // Synchronize header subtitle
+        const sub = document.getElementById('vs-subtitle');
+        if (sub) {
+            sub.textContent = (this.state.suite === 'micro')
+                ? '· INSTITUTIONAL MICROSTRUCTURE'
+                : '· TECHNICAL INDICATORS';
+        }
+
+        // Synchronize study tabs
+        const studyTabs = document.getElementById('vs-study-tabs');
+        if (studyTabs) {
+            const curStudy = this.state.study === 'bvc' ? 'vpin' : this.state.study;
+            studyTabs.querySelectorAll('button').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-study') === curStudy);
+            });
+        }
+
         const unitTabs = document.getElementById('vs-unit-tabs');
         if (unitTabs) {
             unitTabs.querySelectorAll('button').forEach(b => {
@@ -393,25 +903,44 @@ const VolumeStudies = {
 
     _bind() {
         if (this._bound) return;
-        const studyTabs = document.getElementById('vs-study-tabs');
+        const suiteTabs = document.getElementById('vs-suite-tabs');
         const unitTabs = document.getElementById('vs-unit-tabs');
         const rangeTabs = document.getElementById('vs-range-tabs');
         const chips = document.getElementById('vs-chips');
         const canvas = document.getElementById('vs-canvas');
-        if (!studyTabs || !rangeTabs || !chips || !canvas) return;
+        if (!rangeTabs || !chips || !canvas) return;
 
-        studyTabs.addEventListener('click', e => {
-            const btn = e.target.closest('button');
-            if (!btn) return;
-            studyTabs.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            this.state.study = btn.getAttribute('data-study');
-            this.state.hoverIdx = null;
-            this._cache = null;
-            this.render();
-        });
+        this.renderStudyTabs();
 
+        if (suiteTabs) {
+            suiteTabs.addEventListener('click', e => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const newSuite = btn.getAttribute('data-suite');
+                if (newSuite === this.state.suite) return;
+                this.state.suite = newSuite;
+                suiteTabs.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
 
+                const sub = document.getElementById('vs-subtitle');
+                if (sub) {
+                    sub.textContent = newSuite === 'micro'
+                        ? '· INSTITUTIONAL MICROSTRUCTURE'
+                        : '· TECHNICAL INDICATORS';
+                }
+
+                // If current study is not in selected suite, switch to first study in suite
+                const currentInSuite = this.STUDIES[newSuite].some(s => s.key === this.state.study || (s.key === 'vpin' && this.state.study === 'bvc'));
+                if (!currentInSuite) {
+                    this.state.study = this.STUDIES[newSuite][0].key;
+                }
+
+                this.renderStudyTabs();
+                this.state.hoverIdx = null;
+                this._cache = null;
+                this.render();
+            });
+        }
 
         if (unitTabs) {
             unitTabs.addEventListener('click', e => {
@@ -505,7 +1034,6 @@ const VolumeStudies = {
                 sEnd.value = v2;
             }
 
-            // Dynamic z-index
             if (v1 > maxVal - 60) {
                 sStart.style.zIndex = '5';
                 sEnd.style.zIndex = '4';
@@ -563,14 +1091,14 @@ const VolumeStudies = {
         const p2 = (v2 / maxVal);
 
         if (highlight) {
-            highlight.style.left = `calc(${p1 * 100}% + ${(10 - p1 * 20)}px)`;
-            highlight.style.width = `calc(${(p2 - p1) * 100}% + ${((p1 - p2) * 20)}px)`;
+            highlight.style.left = 'calc(' + (p1 * 100) + '% + ' + (10 - p1 * 20) + 'px)';
+            highlight.style.width = 'calc(' + ((p2 - p1) * 100) + '% + ' + ((p1 - p2) * 20) + 'px)';
         }
 
         if (lblActive) {
             lblActive.textContent = (this.state.range === 'custom')
                 ? 'CUSTOM SELECTION'
-                : `PRESET: ${this.state.range.toUpperCase()}`;
+                : 'PRESET: ' + this.state.range.toUpperCase();
         }
     },
 
@@ -587,7 +1115,7 @@ const VolumeStudies = {
             chip.className = 'vs-chip';
             chip.textContent = t;
             chip.setAttribute('data-ticker', t);
-            chip.setAttribute('data-tooltip', `${t} (${name})`);
+            chip.setAttribute('data-tooltip', t + ' (' + name + ')');
             chip.style.color = color;
             chip.style.borderColor = color;
             chip.addEventListener('click', () => {
@@ -661,9 +1189,17 @@ const VolumeStudies = {
     _yFormat(study, unit) {
         if (study === 'osc') return v => (v >= 0 ? '+' : '') + v.toFixed(0) + '%';
         if (study === 'cmf') return v => (v >= 0 ? '+' : '') + v.toFixed(2);
+        if (study === 'vpin') return v => (v >= 0 ? '+' : '') + v.toFixed(2);
+        if (study === 'illiq' || study === 'esvd' || study === 'vwapz') return v => (v >= 0 ? '+' : '') + v.toFixed(1) + 'σ';
+        if (study === 'lmsw') return v => (v >= 0 ? '+' : '') + v.toFixed(2);
+        if (study === 'tkvf') return v => (v >= 0 ? '+' : '') + v.toFixed(0);
         if (unit === 'dollar') return v => (v < 0 ? '-' : '') + '$' + this.fmtVol(Math.abs(v));
         return v => this.fmtVol(v);
     },
+
+    // ============================================
+    // CANVAS RENDERING ENGINE
+    // ============================================
 
     _draw() {
         const payload = this._payload;
@@ -686,7 +1222,7 @@ const VolumeStudies = {
         if (chartW < 10 || chartH < 10) return;
 
         const n = payload.dates.length;
-        const bars = payload.bars, line = payload.line, ma = payload.ma;
+        const bars = payload.bars, line = payload.line, ma = payload.ma, secondaryLine = payload.secondaryLine;
 
         let yMin = Infinity, yMax = -Infinity;
         const consider = arr => {
@@ -697,12 +1233,25 @@ const VolumeStudies = {
                 if (v > yMax) yMax = v;
             }
         };
-        consider(bars); consider(line); consider(ma);
+        consider(bars); consider(line); consider(ma); consider(secondaryLine);
         if (!isFinite(yMin) || !isFinite(yMax)) { this._drawMessage('No data in range'); return; }
         if (bars && !payload.zeroCentered) { yMin = Math.min(0, yMin); }
         if (payload.zeroCentered || (yMin < 0 && yMax > 0)) {
             yMin = Math.min(0, yMin); yMax = Math.max(0, yMax);
         }
+
+        // Bounded normalization for institutional indicators
+        if (payload.study === 'vpin') {
+            yMin = Math.min(-1.0, yMin);
+            yMax = Math.max(1.0, yMax);
+        } else if (payload.study === 'lmsw') {
+            yMin = Math.min(-0.5, yMin);
+            yMax = Math.max(0.5, yMax);
+        } else if (payload.study === 'illiq' || payload.study === 'esvd' || payload.study === 'vwapz') {
+            yMin = Math.min(-2.5, yMin);
+            yMax = Math.max(2.5, yMax);
+        }
+
         if (yMin === yMax) { yMin -= 1; yMax += 1; }
         const padY = (yMax - yMin) * 0.05;
         yMin -= padY; yMax += padY;
@@ -712,8 +1261,28 @@ const VolumeStudies = {
         const mapY = v => pad.top + chartH - ((v - yMin) / (yMax - yMin)) * chartH;
         const clampY = v => Math.max(pad.top, Math.min(pad.top + chartH, v));
 
+        // Horizontal Guide Helper
+        const drawGuide = (val, color, dash, label) => {
+            if (val < yMin || val > yMax) return;
+            const gy = clampY(mapY(val));
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            if (dash) ctx.setLineDash(dash);
+            ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(pad.left + chartW, gy); ctx.stroke();
+            if (label) {
+                ctx.fillStyle = color;
+                ctx.font = '8px monospace';
+                ctx.textAlign = 'right';
+                ctx.fillText(label, pad.left + chartW - 4, gy - 2);
+                ctx.textAlign = 'left';
+            }
+            ctx.restore();
+        };
+
         ctx.font = '9px monospace';
 
+        // Background Grid & Y-Axis Scale
         const yFmt = this._yFormat(payload.study, payload.unit);
         for (let i = 0; i <= 4; i++) {
             const v = yMax - (i / 4) * (yMax - yMin);
@@ -726,6 +1295,7 @@ const VolumeStudies = {
             ctx.fillText(yFmt(v), pad.left - 6, y + 3);
         }
 
+        // X-Axis Date Labels
         ctx.fillStyle = this.COLORS.label;
         const xTicks = Math.min(5, n);
         for (let k = 0; k < xTicks; k++) {
@@ -735,6 +1305,7 @@ const VolumeStudies = {
         }
         ctx.textAlign = 'left';
 
+        // Zero Reference Line
         if (yMin < 0 && yMax > 0) {
             const zy = mapY(0);
             ctx.strokeStyle = 'rgba(255,255,255,0.25)';
@@ -743,25 +1314,70 @@ const VolumeStudies = {
             ctx.setLineDash([]);
         }
 
+        // Institutional Microstructure Reference Bands & Zones
+        if (payload.study === 'vpin') {
+            drawGuide(0.40, 'rgba(212,168,48,0.40)', [3, 3], 'TOXIC 0.40');
+        } else if (payload.study === 'illiq') {
+            drawGuide(2.0, 'rgba(61,184,122,0.40)', [3, 3], '+2.0σ ABSORPTION');
+        } else if (payload.study === 'esvd') {
+            drawGuide(1.5, 'rgba(224,108,117,0.40)', [3, 3], '+1.5σ STRESS');
+        } else if (payload.study === 'lmsw') {
+            if (0.25 < yMax) {
+                const yTop = clampY(mapY(yMax));
+                const yBottom = clampY(mapY(0.25));
+                ctx.fillStyle = 'rgba(61,184,122,0.06)';
+                ctx.fillRect(pad.left, yTop, chartW, Math.max(0, yBottom - yTop));
+            }
+            if (-0.25 > yMin) {
+                const yTop = clampY(mapY(-0.25));
+                const yBottom = clampY(mapY(yMin));
+                ctx.fillStyle = 'rgba(192,64,64,0.06)';
+                ctx.fillRect(pad.left, yTop, chartW, Math.max(0, yBottom - yTop));
+            }
+            drawGuide(0.25, 'rgba(61,184,122,0.40)', [3, 3], '+0.25 CONTINUATION');
+            drawGuide(-0.25, 'rgba(192,64,64,0.40)', [3, 3], '-0.25 REVERSAL');
+        } else if (payload.study === 'vwapz') {
+            if (2.0 < yMax) {
+                const yTop = clampY(mapY(yMax));
+                const yBottom = clampY(mapY(2.0));
+                ctx.fillStyle = 'rgba(212,168,48,0.07)';
+                ctx.fillRect(pad.left, yTop, chartW, Math.max(0, yBottom - yTop));
+            }
+            if (-2.0 > yMin) {
+                const yTop = clampY(mapY(-2.0));
+                const yBottom = clampY(mapY(yMin));
+                ctx.fillStyle = 'rgba(192,64,64,0.07)';
+                ctx.fillRect(pad.left, yTop, chartW, Math.max(0, yBottom - yTop));
+            }
+            drawGuide(2.0, 'rgba(212,168,48,0.45)', [3, 3], '+2.0σ PEAK');
+            drawGuide(1.0, 'rgba(255,255,255,0.12)', [2, 2], '+1.0σ');
+            drawGuide(-1.0, 'rgba(255,255,255,0.12)', [2, 2], '-1.0σ');
+            drawGuide(-2.0, 'rgba(192,64,64,0.45)', [3, 3], '-2.0σ TROUGH');
+        }
+
+        // Render Histogram Bars
         if (bars) {
             const colW = chartW / n;
             const barW = Math.max(1, colW * 0.7);
             const zeroY = (yMin < 0 && yMax > 0) ? mapY(0) : pad.top + chartH;
-            const fillBar = (v, sign, x, w) => {
-                const color = sign > 0 ? this.COLORS.up : sign < 0 ? this.COLORS.down : this.COLORS.flat;
+            const fillBar = (v, sign, x, bw) => {
+                let color = sign > 0 ? this.COLORS.up : sign < 0 ? this.COLORS.down : this.COLORS.flat;
+                if (payload.study === 'esvd') {
+                    color = v > 0 ? '#d4a830' : (v < 0 ? '#5090a0' : this.COLORS.flat);
+                }
                 const yv = clampY(mapY(v));
                 ctx.fillStyle = color;
-                ctx.globalAlpha = 0.75;
+                ctx.globalAlpha = 0.70;
                 const hBar = Math.max(1.5, Math.abs(zeroY - yv));
-                ctx.fillRect(x, Math.min(yv, zeroY), w, hBar);
+                ctx.fillRect(x, Math.min(yv, zeroY), bw, hBar);
                 ctx.globalAlpha = 1;
             };
+
             if (colW < 1) {
-                // Dense ranges: one column per pixel — averaged daily value, net up/down colour
                 const per = Math.ceil(n / Math.max(1, Math.floor(chartW)));
                 const nCols = Math.ceil(n / per);
                 const colStep = chartW / nCols;
-                const w = Math.max(1, colStep * 0.7);
+                const bw = Math.max(1, colStep * 0.7);
                 for (let c = 0; c < nCols; c++) {
                     let sum = 0, cnt = 0, dir = 0;
                     const i0 = c * per, i1 = Math.min(n, i0 + per);
@@ -773,7 +1389,7 @@ const VolumeStudies = {
                         dir += payload.colorSigns ? payload.colorSigns[i] : (v > 0 ? 1 : v < 0 ? -1 : 0);
                     }
                     if (!cnt) continue;
-                    fillBar(sum / cnt, dir > 0 ? 1 : dir < 0 ? -1 : 0, pad.left + c * colStep + (colStep - w) / 2, w);
+                    fillBar(sum / cnt, dir > 0 ? 1 : dir < 0 ? -1 : 0, pad.left + c * colStep + (colStep - bw) / 2, bw);
                 }
             } else {
                 for (let i = 0; i < n; i++) {
@@ -803,7 +1419,8 @@ const VolumeStudies = {
             if (dash) ctx.setLineDash([]);
         };
 
-        if (line && (payload.study === 'osc' || payload.study === 'cmf')) {
+        // Render Directional Gradient Fills for Oscillators
+        if (line && (payload.study === 'osc' || payload.study === 'cmf' || payload.study === 'vpin')) {
             const colW = chartW / n;
             const zeroY = mapY(0);
             for (let i = 0; i < n; i++) {
@@ -816,11 +1433,21 @@ const VolumeStudies = {
             }
             drawPath(line, this.COLORS.line, 1.4, null);
         } else if (line) {
-            drawPath(line, this.COLORS.line, 1.4, null);
+            const lineColor = payload.study === 'esvd' ? '#e06c75' : this.COLORS.line;
+            drawPath(line, lineColor, 1.4, null);
         }
 
-        if (ma) drawPath(ma, this.COLORS.ma, 1, [3, 3]);
+        // Render Secondary Line (e.g. VPIN Unsigned Toxicity Line)
+        if (secondaryLine) {
+            drawPath(secondaryLine, '#d4a830', 1.2, [3, 3]);
+        }
 
+        // Render Moving Average or Trigger Signal Line
+        if (ma) {
+            drawPath(ma, this.COLORS.ma, 1.1, [3, 3]);
+        }
+
+        // Render Active Hover Crosshair
         if (this.state.hoverIdx != null && this.state.hoverIdx >= 0 && this.state.hoverIdx < n) {
             const i = this.state.hoverIdx;
             const x = getX(i);
@@ -828,6 +1455,7 @@ const VolumeStudies = {
             ctx.setLineDash([3, 3]);
             ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + chartH); ctx.stroke();
             ctx.setLineDash([]);
+
             if (bars) {
                 const colW = chartW / n;
                 const barW = Math.max(1, colW * 0.7);
@@ -836,21 +1464,44 @@ const VolumeStudies = {
                 if (v != null && isFinite(v)) {
                     const yv = clampY(mapY(v));
                     const y0 = (yMin < 0 && yMax > 0) ? mapY(0) : pad.top + chartH;
-                    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+                    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
                     ctx.lineWidth = 1;
                     ctx.strokeRect(bx - 0.5, Math.min(yv, y0) - 0.5, barW + 1, Math.max(1.5, Math.abs(y0 - yv)) + 1);
                 }
-            } else if (line) {
+            }
+            if (line) {
                 const v = line[i];
                 if (v != null && isFinite(v)) {
                     ctx.beginPath();
-                    ctx.arc(x, clampY(mapY(v)), 3, 0, Math.PI * 2);
-                    ctx.fillStyle = this.COLORS.line;
+                    ctx.arc(x, clampY(mapY(v)), 3.5, 0, Math.PI * 2);
+                    ctx.fillStyle = payload.study === 'esvd' ? '#e06c75' : this.COLORS.line;
+                    ctx.fill();
+                }
+            }
+            if (secondaryLine) {
+                const sv = secondaryLine[i];
+                if (sv != null && isFinite(sv)) {
+                    ctx.beginPath();
+                    ctx.arc(x, clampY(mapY(sv)), 3, 0, Math.PI * 2);
+                    ctx.fillStyle = '#d4a830';
+                    ctx.fill();
+                }
+            }
+            if (ma) {
+                const mv = ma[i];
+                if (mv != null && isFinite(mv)) {
+                    ctx.beginPath();
+                    ctx.arc(x, clampY(mapY(mv)), 3, 0, Math.PI * 2);
+                    ctx.fillStyle = this.COLORS.ma;
                     ctx.fill();
                 }
             }
         }
     },
+
+    // ============================================
+    // USER INTERACTION & TOOLTIPS
+    // ============================================
 
     _onMove(e) {
         if (!this._payload) return;
@@ -915,7 +1566,21 @@ const VolumeStudies = {
         const rawVol = payload.rawVolumes ? payload.rawVolumes[i] : payload.volumes[i];
         const dollarVol = payload.dollarVolumes ? payload.dollarVolumes[i] : (close * rawVol);
 
-        const studyNames = { vol: 'VOLUME', osc: 'VOL OSC', net: 'NET VOL', cmf: 'CMF-21', obv: 'OBV', pvt: 'PVT' };
+        const studyNames = {
+            vol: 'VOLUME',
+            osc: 'VOL OSC',
+            net: 'NET VOL',
+            cmf: 'CMF-21',
+            obv: 'OBV',
+            pvt: 'PVT',
+            vpin: 'OFI (IMBALANCE)',
+            illiq: 'LAI (ABSORPTION)',
+            esvd: 'ESVD (DIVERGENCE)',
+            lmsw: 'LMSW-ρ',
+            vwapz: 'VWAP-Z',
+            tkvf: 'TKVF'
+        };
+
         let value = null, valueLabel = studyNames[payload.study] || payload.study;
         if (payload.bars) value = payload.bars[i];
         else if (payload.line) value = payload.line[i];
@@ -926,8 +1591,188 @@ const VolumeStudies = {
         let studyValStr = 'n/a';
         let badgeText = '';
         let badgeColor = '';
+        let extraRowsHtml = '';
 
-        if (payload.study === 'osc') {
+        // --- STUDY-SPECIFIC METRIC & BADGE EXTRACTION ---
+        if (payload.study === 'vpin') {
+            const ofi = payload.line ? payload.line[i] : null;
+            const vpin = payload.secondaryLine ? payload.secondaryLine[i] : null;
+            studyValStr = ofi == null ? 'n/a' : (ofi >= 0 ? '+' : '') + ofi.toFixed(3);
+            if (ofi != null && vpin != null) {
+                if (vpin >= 0.45 && Math.abs(ofi) >= 0.40) {
+                    badgeText = 'TOXICITY CLIMAX';
+                    badgeColor = '#d4a830';
+                } else if (ofi >= 0.25) {
+                    badgeText = 'INFORMED BUYING';
+                    badgeColor = this.COLORS.up;
+                } else if (ofi <= -0.25) {
+                    badgeText = 'INFORMED SELLING';
+                    badgeColor = this.COLORS.down;
+                } else if (vpin >= 0.40) {
+                    badgeText = 'ELEVATED TOXICITY';
+                    badgeColor = '#d4a830';
+                } else {
+                    badgeText = 'BALANCED FLOW';
+                    badgeColor = this.COLORS.label;
+                }
+                extraRowsHtml += `
+                    <div class="vs-tt-row">
+                        <span class="vs-tt-lbl">VPIN TOXICITY</span>
+                        <span class="vs-tt-val" style="color:${vpin >= 0.40 ? '#d4a830' : 'inherit'};">${(vpin * 100).toFixed(1)}%</span>
+                    </div>
+                `;
+            }
+        } else if (payload.study === 'illiq') {
+            const lai = payload.bars ? payload.bars[i] : null;
+            const zIlliq = payload.line ? payload.line[i] : null;
+            const zDv = payload.extraData && payload.extraData.zDv ? payload.extraData.zDv[i] : null;
+            studyValStr = lai == null ? 'n/a' : (lai >= 0 ? '+' : '') + lai.toFixed(2);
+            if (lai != null && zIlliq != null) {
+                if (lai >= 2.0 && (zDv == null || zDv >= 1.2)) {
+                    badgeText = 'INSTITUTIONAL ABSORPTION WALL';
+                    badgeColor = this.COLORS.up;
+                } else if (zIlliq >= 1.5 && (zDv == null || zDv < 0)) {
+                    badgeText = 'LIQUIDITY VACUUM';
+                    badgeColor = '#d4a830';
+                } else if (zIlliq <= -1.0 && (zDv == null || zDv <= -1.0)) {
+                    badgeText = 'THIN CONSOLIDATION';
+                    badgeColor = this.COLORS.label;
+                } else {
+                    badgeText = lai > 0 ? 'NET ABSORPTION' : 'NORMAL LIQUIDITY';
+                    badgeColor = lai > 0 ? this.COLORS.up : this.COLORS.label;
+                }
+                extraRowsHtml += `
+                    <div class="vs-tt-row">
+                        <span class="vs-tt-lbl">ILLIQ-Z</span>
+                        <span class="vs-tt-val" style="color:${this.COLORS.line};">${(zIlliq >= 0 ? '+' : '') + zIlliq.toFixed(2)}σ</span>
+                    </div>
+                `;
+                if (zDv != null) {
+                    extraRowsHtml += `
+                        <div class="vs-tt-row">
+                            <span class="vs-tt-lbl">VOL Z-SCORE</span>
+                            <span class="vs-tt-val">${(zDv >= 0 ? '+' : '') + zDv.toFixed(2)}σ</span>
+                        </div>
+                    `;
+                }
+            }
+        } else if (payload.study === 'esvd') {
+            const esvd = payload.bars ? payload.bars[i] : null;
+            const zSpread = payload.line ? payload.line[i] : null;
+            const spreadAR = payload.extraData && payload.extraData.spreadAR ? payload.extraData.spreadAR[i] : null;
+            studyValStr = esvd == null ? 'n/a' : (esvd >= 0 ? '+' : '') + esvd.toFixed(2) + 'σ';
+            if (esvd != null && zSpread != null) {
+                if (esvd >= 1.5 && zSpread >= 1.0) {
+                    badgeText = 'SPREAD STRESS / WITHDRAWAL';
+                    badgeColor = this.COLORS.down;
+                } else if (esvd <= -1.5) {
+                    badgeText = 'DEEP LIQUIDITY SPONSORSHIP';
+                    badgeColor = this.COLORS.up;
+                } else {
+                    badgeText = esvd > 0 ? 'SPREAD SPREADING' : 'BALANCED SPREAD';
+                    badgeColor = esvd > 0 ? '#d4a830' : this.COLORS.label;
+                }
+                if (spreadAR != null) {
+                    extraRowsHtml += `
+                        <div class="vs-tt-row">
+                            <span class="vs-tt-lbl">EFF SPREAD</span>
+                            <span class="vs-tt-val" style="color:#e06c75;">${spreadAR.toFixed(2)}%</span>
+                        </div>
+                    `;
+                }
+                extraRowsHtml += `
+                    <div class="vs-tt-row">
+                        <span class="vs-tt-lbl">SPREAD Z-SCORE</span>
+                        <span class="vs-tt-val">${(zSpread >= 0 ? '+' : '') + zSpread.toFixed(2)}σ</span>
+                    </div>
+                `;
+            }
+        } else if (payload.study === 'lmsw') {
+            const rho = payload.line ? payload.line[i] : null;
+            studyValStr = rho == null ? 'n/a' : (rho >= 0 ? '+' : '') + rho.toFixed(3);
+            if (rho != null) {
+                if (rho >= 0.25) {
+                    badgeText = 'INFORMED CONTINUATION';
+                    badgeColor = this.COLORS.up;
+                } else if (rho <= -0.25) {
+                    badgeText = 'LIQUIDITY REVERSAL REGIME';
+                    badgeColor = this.COLORS.down;
+                } else {
+                    badgeText = 'NOISE / NEUTRAL REGIME';
+                    badgeColor = this.COLORS.label;
+                }
+            }
+        } else if (payload.study === 'vwapz') {
+            const vwapZ = payload.line ? payload.line[i] : null;
+            const rvwap = payload.extraData && payload.extraData.rvwap ? payload.extraData.rvwap[i] : null;
+            const slope = payload.extraData && payload.extraData.slopeVwap ? payload.extraData.slopeVwap[i] : null;
+            studyValStr = vwapZ == null ? 'n/a' : (vwapZ >= 0 ? '+' : '') + vwapZ.toFixed(2) + 'σ';
+            if (vwapZ != null) {
+                if (vwapZ >= 2.0) {
+                    badgeText = 'COST-BASIS STRETCH (PEAK)';
+                    badgeColor = '#d4a830';
+                } else if (vwapZ <= -2.0) {
+                    badgeText = 'CAPITULATION STRETCH (TROUGH)';
+                    badgeColor = this.COLORS.down;
+                } else if (Math.abs(vwapZ) < 0.50 && slope != null && slope > 0.08) {
+                    badgeText = 'INST PULLBACK DEFENSE';
+                    badgeColor = this.COLORS.up;
+                } else {
+                    badgeText = 'FAIR VALUE BAND';
+                    badgeColor = this.COLORS.label;
+                }
+                if (rvwap != null) {
+                    extraRowsHtml += `
+                        <div class="vs-tt-row">
+                            <span class="vs-tt-lbl">ROLLING VWAP</span>
+                            <span class="vs-tt-val" style="color:${this.COLORS.line};">$${this.fmtPrice(rvwap)}</span>
+                        </div>
+                    `;
+                }
+                if (slope != null) {
+                    extraRowsHtml += `
+                        <div class="vs-tt-row">
+                            <span class="vs-tt-lbl">MIGRATION SLOPE</span>
+                            <span class="vs-tt-val">${(slope >= 0 ? '+' : '') + slope.toFixed(2)}σ/d</span>
+                        </div>
+                    `;
+                }
+            }
+        } else if (payload.study === 'tkvf') {
+            const tkvf = payload.line ? payload.line[i] : null;
+            const trig = payload.ma ? payload.ma[i] : null;
+            studyValStr = tkvf == null ? 'n/a' : (tkvf >= 0 ? '+' : '') + tkvf.toFixed(1);
+            if (tkvf != null && trig != null) {
+                if (tkvf > trig && tkvf > 0) {
+                    badgeText = 'BULLISH VOLUME FORCE';
+                    badgeColor = this.COLORS.up;
+                } else if (tkvf < trig && tkvf < 0) {
+                    badgeText = 'BEARISH VOLUME FORCE';
+                    badgeColor = this.COLORS.down;
+                } else if (tkvf > trig && tkvf <= 0) {
+                    badgeText = 'BULLISH CROSSOVER';
+                    badgeColor = this.COLORS.up;
+                } else {
+                    badgeText = 'BEARISH CROSSOVER';
+                    badgeColor = '#d4a830';
+                }
+                extraRowsHtml += `
+                    <div class="vs-tt-row">
+                        <span class="vs-tt-lbl">TRIGGER (9D)</span>
+                        <span class="vs-tt-val" style="color:${this.COLORS.ma};">${(trig >= 0 ? '+' : '') + trig.toFixed(1)}</span>
+                    </div>
+                `;
+                const hist = payload.bars ? payload.bars[i] : null;
+                if (hist != null) {
+                    extraRowsHtml += `
+                        <div class="vs-tt-row">
+                            <span class="vs-tt-lbl">FORCE HIST</span>
+                            <span class="vs-tt-val" style="color:${hist >= 0 ? this.COLORS.up : this.COLORS.down};">${(hist >= 0 ? '+' : '') + hist.toFixed(1)}</span>
+                        </div>
+                    `;
+                }
+            }
+        } else if (payload.study === 'osc') {
             studyValStr = value == null ? 'n/a' : (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
             if (value != null) {
                 badgeText = value > 0 ? 'EXPANSION' : value < 0 ? 'CONTRACTION' : 'NEUTRAL';
@@ -976,7 +1821,9 @@ const VolumeStudies = {
             </div>
         `;
 
-        if (payload.ma && payload.ma[i] != null) {
+        rowsHtml += extraRowsHtml;
+
+        if (payload.ma && payload.ma[i] != null && payload.study !== 'tkvf') {
             const maVal = payload.ma[i];
             const maFmt = payload.study === 'vol'
                 ? (payload.unit === 'dollar' ? '$' + this.fmtVol(maVal) : this.fmtVol(maVal))
@@ -1012,7 +1859,7 @@ const VolumeStudies = {
             `;
         }
 
-        rowsHtml += `<div class="vs-tt-divider"></div>`;
+        rowsHtml += '<div class="vs-tt-divider"></div>';
         rowsHtml += `
             <div class="vs-tt-row">
                 <span class="vs-tt-lbl">SHARES</span>
@@ -1034,19 +1881,23 @@ const VolumeStudies = {
             ${rowsHtml}
         `;
 
-        const w = wrap.clientWidth, h = wrap.clientHeight;
+        const twrap = wrap.clientWidth, thrap = wrap.clientHeight;
         tooltip.style.display = 'block';
         const m = this.state.lastMouse;
         const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
         let left = m.x + 14;
-        if (left + tw > w - 4) left = m.x - tw - 14;
+        if (left + tw > twrap - 4) left = m.x - tw - 14;
         left = Math.max(4, left);
         let top = m.y + 12;
-        if (top + th > h - 4) top = h - th - 4;
+        if (top + th > thrap - 4) top = thrap - th - 4;
         top = Math.max(4, top);
         tooltip.style.left = left + 'px';
         tooltip.style.top = top + 'px';
     },
+
+    // ============================================
+    // QUANTITATIVE READING BAR
+    // ============================================
 
     _updateReading(metrics, payload, hoverIdx) {
         const el = document.getElementById('vs-reading');
@@ -1078,7 +1929,95 @@ const VolumeStudies = {
         if (dateTag) parts.push(dateTag);
         parts.push(closeTag);
 
-        if (study === 'vol') {
+        // --- MICROSTRUCTURE STUDIES READING LOGIC ---
+        if (study === 'vpin') {
+            const ofi = payload.line ? payload.line[last] : null;
+            const vpin = payload.secondaryLine ? payload.secondaryLine[last] : null;
+            const ofiStr = ofi != null ? (ofi >= 0 ? '+' : '') + ofi.toFixed(3) : 'n/a';
+            const vpinStr = vpin != null ? (vpin * 100).toFixed(1) + '%' : 'n/a';
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">OFI</span> ${ofiStr}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">VPIN</span> ${vpinStr}</span>`);
+            let flowText = 'BALANCED';
+            let flowColor = this.COLORS.label;
+            if (ofi != null && vpin != null) {
+                if (vpin >= 0.45 && Math.abs(ofi) >= 0.40) { flowText = 'TOXICITY CLIMAX'; flowColor = '#d4a830'; }
+                else if (ofi >= 0.25) { flowText = 'INFORMED BUY'; flowColor = this.COLORS.up; }
+                else if (ofi <= -0.25) { flowText = 'INFORMED SELL'; flowColor = this.COLORS.down; }
+                else if (vpin >= 0.40) { flowText = 'ELEVATED TOXICITY'; flowColor = '#d4a830'; }
+            }
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">FLOW</span> <span style="color:${flowColor}">${flowText}</span></span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">VALUE</span> $${this.fmtVol(dollarVol)}</span>`);
+        } else if (study === 'illiq') {
+            const lai = payload.bars ? payload.bars[last] : null;
+            const zIlliq = payload.line ? payload.line[last] : null;
+            const zDv = payload.extraData && payload.extraData.zDv ? payload.extraData.zDv[last] : null;
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">LAI</span> ${lai != null ? (lai >= 0 ? '+' : '') + lai.toFixed(2) : 'n/a'}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">ILLIQ-Z</span> ${zIlliq != null ? (zIlliq >= 0 ? '+' : '') + zIlliq.toFixed(2) + 'σ' : 'n/a'}</span>`);
+            let regText = 'NORMAL';
+            let regColor = this.COLORS.label;
+            if (lai != null && zIlliq != null) {
+                if (lai >= 2.0 && (zDv == null || zDv >= 1.2)) { regText = 'ABSORPTION WALL'; regColor = this.COLORS.up; }
+                else if (zIlliq >= 1.5 && (zDv == null || zDv < 0)) { regText = 'LIQUIDITY VACUUM'; regColor = '#d4a830'; }
+                else if (zIlliq <= -1.0) { regText = 'CONSOLIDATION'; regColor = this.COLORS.label; }
+            }
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">REGIME</span> <span style="color:${regColor}">${regText}</span></span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">VALUE</span> $${this.fmtVol(dollarVol)}</span>`);
+        } else if (study === 'esvd') {
+            const esvd = payload.bars ? payload.bars[last] : null;
+            const zSpread = payload.line ? payload.line[last] : null;
+            const spreadAR = payload.extraData && payload.extraData.spreadAR ? payload.extraData.spreadAR[last] : null;
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">ESVD</span> ${esvd != null ? (esvd >= 0 ? '+' : '') + esvd.toFixed(2) + 'σ' : 'n/a'}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">SPREAD</span> ${spreadAR != null ? spreadAR.toFixed(2) + '%' : 'n/a'}</span>`);
+            let stateText = 'BALANCED';
+            let stateColor = this.COLORS.label;
+            if (esvd != null && zSpread != null) {
+                if (esvd >= 1.5 && zSpread >= 1.0) { stateText = 'LIQUIDITY WITHDRAWAL'; stateColor = this.COLORS.down; }
+                else if (esvd <= -1.5) { stateText = 'DEEP SPONSORSHIP'; stateColor = this.COLORS.up; }
+                else if (esvd > 0) { stateText = 'SPREAD STRETCH'; stateColor = '#d4a830'; }
+            }
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">STATE</span> <span style="color:${stateColor}">${stateText}</span></span>`);
+        } else if (study === 'lmsw') {
+            const rho = payload.line ? payload.line[last] : null;
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">LMSW-ρ</span> ${rho != null ? (rho >= 0 ? '+' : '') + rho.toFixed(3) : 'n/a'}</span>`);
+            let regText = 'NOISE / NEUTRAL';
+            let regColor = this.COLORS.label;
+            if (rho != null) {
+                if (rho >= 0.25) { regText = 'INFORMED CONTINUATION'; regColor = this.COLORS.up; }
+                else if (rho <= -0.25) { regText = 'LIQUIDITY REVERSAL'; regColor = this.COLORS.down; }
+            }
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">REGIME</span> <span style="color:${regColor}">${regText}</span></span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">VALUE</span> $${this.fmtVol(dollarVol)}</span>`);
+        } else if (study === 'vwapz') {
+            const vwapZ = payload.line ? payload.line[last] : null;
+            const rvwap = payload.extraData && payload.extraData.rvwap ? payload.extraData.rvwap[last] : null;
+            const slope = payload.extraData && payload.extraData.slopeVwap ? payload.extraData.slopeVwap[last] : null;
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">VWAP-Z</span> ${vwapZ != null ? (vwapZ >= 0 ? '+' : '') + vwapZ.toFixed(2) + 'σ' : 'n/a'}</span>`);
+            if (rvwap != null) parts.push(`<span class="vs-reading-item"><span class="vs-lbl">RVWAP</span> $${this.fmtPrice(rvwap)}</span>`);
+            if (slope != null) parts.push(`<span class="vs-reading-item"><span class="vs-lbl">SLOPE</span> ${(slope >= 0 ? '+' : '') + slope.toFixed(2)}σ/d</span>`);
+            let zoneText = 'FAIR VALUE';
+            let zoneColor = this.COLORS.label;
+            if (vwapZ != null) {
+                if (vwapZ >= 2.0) { zoneText = 'OVERBOUGHT STRETCH'; zoneColor = '#d4a830'; }
+                else if (vwapZ <= -2.0) { zoneText = 'CAPITULATION STRETCH'; zoneColor = this.COLORS.down; }
+                else if (Math.abs(vwapZ) < 0.50 && slope != null && slope > 0.08) { zoneText = 'INST PULLBACK DEFENSE'; zoneColor = this.COLORS.up; }
+            }
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">ZONE</span> <span style="color:${zoneColor}">${zoneText}</span></span>`);
+        } else if (study === 'tkvf') {
+            const tkvf = payload.line ? payload.line[last] : null;
+            const trig = payload.ma ? payload.ma[last] : null;
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">TKVF</span> ${tkvf != null ? (tkvf >= 0 ? '+' : '') + tkvf.toFixed(1) : 'n/a'}</span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">TRIG</span> ${trig != null ? (trig >= 0 ? '+' : '') + trig.toFixed(1) : 'n/a'}</span>`);
+            let forceText = 'NEUTRAL';
+            let forceColor = this.COLORS.label;
+            if (tkvf != null && trig != null) {
+                if (tkvf > trig && tkvf > 0) { forceText = 'BULLISH FORCE'; forceColor = this.COLORS.up; }
+                else if (tkvf < trig && tkvf < 0) { forceText = 'BEARISH FORCE'; forceColor = this.COLORS.down; }
+                else if (tkvf > trig) { forceText = 'BULLISH REBOUND'; forceColor = this.COLORS.up; }
+                else { forceText = 'BEARISH EXHAUSTION'; forceColor = '#d4a830'; }
+            }
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">FORCE</span> <span style="color:${forceColor}">${forceText}</span></span>`);
+        // --- CLASSIC STUDIES READING LOGIC ---
+        } else if (study === 'vol') {
             const ma = payload.ma ? payload.ma[last] : null;
             const rvol = (ma && ma > 0) ? (payload.bars[last] / ma) : ((metrics && metrics.rvol) ? metrics.rvol['21d'] : null);
             parts.push(`<span class="vs-reading-item"><span class="vs-lbl">RVOL-21</span> ${rvol != null ? rvol.toFixed(2) + '×' : 'n/a'}</span>`);
@@ -1142,7 +2081,6 @@ const VolumeStudies = {
             const biasColor = bias === 'ACCUMULATION' ? this.COLORS.up : bias === 'DISTRIBUTION' ? this.COLORS.down : 'inherit';
             parts.push(`<span class="vs-reading-item"><span class="vs-lbl">BIAS</span> <span style="color:${biasColor}">${bias}</span></span>`);
 
-            // Divergence detection
             const pLast = payload.closes[last];
             const pBack = payload.closes[back];
             const priceDelta = (pLast != null && pBack != null && pBack > 0) ? ((pLast - pBack) / pBack) : 0;
