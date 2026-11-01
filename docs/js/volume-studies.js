@@ -32,7 +32,7 @@ const VolumeStudies = {
             { key: 'pvt', label: 'PVT', tip: 'Price-Volume Trend: cumulative volume scaled continuously by percentage price change.' },
         ],
         micro: [
-            { key: 'vpin', label: 'BVC-VPIN', tip: 'Bulk Volume Classification Imbalance (OFI) & Order-Flow Toxicity (VPIN) based on volatility-scaled Gaussian probability partitioning.' },
+            { key: 'vpin', label: 'BVC-VPIN', tip: 'Bulk Volume Classification Imbalance (OFI) & Order-Flow Toxicity (VPIN): tracks institutional adverse selection; extreme peaks signal panic capitulation bottoms or blow-off tops.' },
             { key: 'illiq', label: 'ILLIQ-Z', tip: 'Range-Adjusted Amihud Illiquidity Z-score & Liquidity Absorption Index (LAI = Z_vol - Z_illiq) isolating institutional limit walls.' },
             { key: 'esvd', label: 'ESVD', tip: 'Abdi-Ranaldo Effective Spread-Volume Divergence: detects market maker liquidity withdrawal before volatility regime shifts.' },
             { key: 'lmsw', label: 'LMSW-ρ', tip: 'Llorente-Michaely-Saar-Wang Return-Volume Serial Correlation: separates informed continuation (rho > 0.25) from liquidity reversal (rho < -0.25).' },
@@ -1599,26 +1599,39 @@ const VolumeStudies = {
             const vpin = payload.secondaryLine ? payload.secondaryLine[i] : null;
             studyValStr = ofi == null ? 'n/a' : (ofi >= 0 ? '+' : '') + ofi.toFixed(3);
             if (ofi != null && vpin != null) {
-                if (vpin >= 0.45 && Math.abs(ofi) >= 0.40) {
-                    badgeText = 'TOXICITY CLIMAX';
+                let regimeDesc = '';
+                if (vpin >= 0.45 && ofi <= -0.40) {
+                    badgeText = 'SELLING CLIMAX (BOTTOM)';
+                    badgeColor = this.COLORS.up;
+                    regimeDesc = 'Extreme panic selling exhaustion into bids — historical capitulation bottom buy zone';
+                } else if (vpin >= 0.45 && ofi >= 0.40) {
+                    badgeText = 'BUYING CLIMAX (TOP)';
                     badgeColor = '#d4a830';
+                    regimeDesc = 'Extreme aggressive buying exhaustion into offers — historical blow-off top risk';
                 } else if (ofi >= 0.25) {
                     badgeText = 'INFORMED BUYING';
                     badgeColor = this.COLORS.up;
+                    regimeDesc = 'Persistent buyer-initiated volume imbalance (institutional accumulation)';
                 } else if (ofi <= -0.25) {
                     badgeText = 'INFORMED SELLING';
                     badgeColor = this.COLORS.down;
+                    regimeDesc = 'Persistent seller-initiated volume imbalance (institutional distribution)';
                 } else if (vpin >= 0.40) {
                     badgeText = 'ELEVATED TOXICITY';
                     badgeColor = '#d4a830';
+                    regimeDesc = 'High one-sided adverse selection; market makers may widen spreads';
                 } else {
                     badgeText = 'BALANCED FLOW';
                     badgeColor = this.COLORS.label;
+                    regimeDesc = 'Routine two-sided volume without directional toxicity';
                 }
                 extraRowsHtml += `
                     <div class="vs-tt-row">
                         <span class="vs-tt-lbl">VPIN TOXICITY</span>
                         <span class="vs-tt-val" style="color:${vpin >= 0.40 ? '#d4a830' : 'inherit'};">${(vpin * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="vs-tt-subtext">
+                        ${regimeDesc}
                     </div>
                 `;
             }
@@ -1628,18 +1641,23 @@ const VolumeStudies = {
             const zDv = payload.extraData && payload.extraData.zDv ? payload.extraData.zDv[i] : null;
             studyValStr = lai == null ? 'n/a' : (lai >= 0 ? '+' : '') + lai.toFixed(2);
             if (lai != null && zIlliq != null) {
+                let regimeDesc = '';
                 if (lai >= 2.0 && (zDv == null || zDv >= 1.2)) {
                     badgeText = 'INSTITUTIONAL ABSORPTION WALL';
                     badgeColor = this.COLORS.up;
+                    regimeDesc = 'High turnover with compressed price impact; passive limit walls absorbing supply';
                 } else if (zIlliq >= 1.5 && (zDv == null || zDv < 0)) {
                     badgeText = 'LIQUIDITY VACUUM';
                     badgeColor = '#d4a830';
+                    regimeDesc = 'Thin order book; price moving on low turnover due to vacuum in resting liquidity';
                 } else if (zIlliq <= -1.0 && (zDv == null || zDv <= -1.0)) {
                     badgeText = 'THIN CONSOLIDATION';
                     badgeColor = this.COLORS.label;
+                    regimeDesc = 'Light trading with deep resting liquidity; tight consolidation band';
                 } else {
                     badgeText = lai > 0 ? 'NET ABSORPTION' : 'NORMAL LIQUIDITY';
                     badgeColor = lai > 0 ? this.COLORS.up : this.COLORS.label;
+                    regimeDesc = lai > 0 ? 'Volume expansion exceeds price impact' : 'Standard order book depth and price impact';
                 }
                 extraRowsHtml += `
                     <div class="vs-tt-row">
@@ -1655,6 +1673,11 @@ const VolumeStudies = {
                         </div>
                     `;
                 }
+                extraRowsHtml += `
+                    <div class="vs-tt-subtext">
+                        ${regimeDesc}
+                    </div>
+                `;
             }
         } else if (payload.study === 'esvd') {
             const esvd = payload.bars ? payload.bars[i] : null;
@@ -1662,15 +1685,19 @@ const VolumeStudies = {
             const spreadAR = payload.extraData && payload.extraData.spreadAR ? payload.extraData.spreadAR[i] : null;
             studyValStr = esvd == null ? 'n/a' : (esvd >= 0 ? '+' : '') + esvd.toFixed(2) + 'σ';
             if (esvd != null && zSpread != null) {
+                let regimeDesc = '';
                 if (esvd >= 1.5 && zSpread >= 1.0) {
                     badgeText = 'SPREAD STRESS / WITHDRAWAL';
                     badgeColor = this.COLORS.down;
+                    regimeDesc = 'Effective bid-ask spread widened sharply while volume lagged; market makers pulling depth';
                 } else if (esvd <= -1.5) {
                     badgeText = 'DEEP LIQUIDITY SPONSORSHIP';
                     badgeColor = this.COLORS.up;
+                    regimeDesc = 'High turnover with tight spreads; active institutional participation';
                 } else {
                     badgeText = esvd > 0 ? 'SPREAD SPREADING' : 'BALANCED SPREAD';
                     badgeColor = esvd > 0 ? '#d4a830' : this.COLORS.label;
+                    regimeDesc = esvd > 0 ? 'Spread widening moderately relative to volume' : 'Spread and volume dynamically aligned';
                 }
                 if (spreadAR != null) {
                     extraRowsHtml += `
@@ -1685,22 +1712,34 @@ const VolumeStudies = {
                         <span class="vs-tt-lbl">SPREAD Z-SCORE</span>
                         <span class="vs-tt-val">${(zSpread >= 0 ? '+' : '') + zSpread.toFixed(2)}σ</span>
                     </div>
+                    <div class="vs-tt-subtext">
+                        ${regimeDesc}
+                    </div>
                 `;
             }
         } else if (payload.study === 'lmsw') {
             const rho = payload.line ? payload.line[i] : null;
             studyValStr = rho == null ? 'n/a' : (rho >= 0 ? '+' : '') + rho.toFixed(3);
             if (rho != null) {
+                let regimeDesc = '';
                 if (rho >= 0.25) {
                     badgeText = 'INFORMED CONTINUATION';
                     badgeColor = this.COLORS.up;
+                    regimeDesc = 'Volume positively predicts returns; institutional momentum trend continuation';
                 } else if (rho <= -0.25) {
                     badgeText = 'LIQUIDITY REVERSAL REGIME';
                     badgeColor = this.COLORS.down;
+                    regimeDesc = 'Volume negatively predicts returns; liquidity-driven inventory rebalancing and mean reversion';
                 } else {
                     badgeText = 'NOISE / NEUTRAL REGIME';
                     badgeColor = this.COLORS.label;
+                    regimeDesc = 'Uncorrelated order flow; standard random noise';
                 }
+                extraRowsHtml += `
+                    <div class="vs-tt-subtext">
+                        ${regimeDesc}
+                    </div>
+                `;
             }
         } else if (payload.study === 'vwapz') {
             const vwapZ = payload.line ? payload.line[i] : null;
@@ -1708,18 +1747,23 @@ const VolumeStudies = {
             const slope = payload.extraData && payload.extraData.slopeVwap ? payload.extraData.slopeVwap[i] : null;
             studyValStr = vwapZ == null ? 'n/a' : (vwapZ >= 0 ? '+' : '') + vwapZ.toFixed(2) + 'σ';
             if (vwapZ != null) {
+                let regimeDesc = '';
                 if (vwapZ >= 2.0) {
                     badgeText = 'COST-BASIS STRETCH (PEAK)';
                     badgeColor = '#d4a830';
+                    regimeDesc = 'Price >2σ above 21-day volume-weighted cost basis; extended premium and exhaustion top risk';
                 } else if (vwapZ <= -2.0) {
                     badgeText = 'CAPITULATION STRETCH (TROUGH)';
                     badgeColor = this.COLORS.down;
+                    regimeDesc = 'Price >2σ below 21-day volume-weighted cost basis; deep discount and statistical mean reversion buy zone';
                 } else if (Math.abs(vwapZ) < 0.50 && slope != null && slope > 0.08) {
                     badgeText = 'INST PULLBACK DEFENSE';
                     badgeColor = this.COLORS.up;
+                    regimeDesc = 'Institutional defense of rising volume-weighted cost basis; trend pullback support';
                 } else {
                     badgeText = 'FAIR VALUE BAND';
                     badgeColor = this.COLORS.label;
+                    regimeDesc = 'Price trading inside normal 1σ institutional volume-weighted fair value channel';
                 }
                 if (rvwap != null) {
                     extraRowsHtml += `
@@ -1737,24 +1781,34 @@ const VolumeStudies = {
                         </div>
                     `;
                 }
+                extraRowsHtml += `
+                    <div class="vs-tt-subtext">
+                        ${regimeDesc}
+                    </div>
+                `;
             }
         } else if (payload.study === 'tkvf') {
             const tkvf = payload.line ? payload.line[i] : null;
             const trig = payload.ma ? payload.ma[i] : null;
             studyValStr = tkvf == null ? 'n/a' : (tkvf >= 0 ? '+' : '') + tkvf.toFixed(1);
             if (tkvf != null && trig != null) {
+                let regimeDesc = '';
                 if (tkvf > trig && tkvf > 0) {
                     badgeText = 'BULLISH VOLUME FORCE';
                     badgeColor = this.COLORS.up;
+                    regimeDesc = 'True-range volume force accelerating above 9-day trigger; strong buying persistence';
                 } else if (tkvf < trig && tkvf < 0) {
                     badgeText = 'BEARISH VOLUME FORCE';
                     badgeColor = this.COLORS.down;
+                    regimeDesc = 'True-range volume force decelerating below 9-day trigger; strong selling persistence';
                 } else if (tkvf > trig && tkvf <= 0) {
                     badgeText = 'BULLISH CROSSOVER';
                     badgeColor = this.COLORS.up;
+                    regimeDesc = 'Bullish trigger crossover from oversold territory; early volume force rebound';
                 } else {
                     badgeText = 'BEARISH CROSSOVER';
                     badgeColor = '#d4a830';
+                    regimeDesc = 'Bearish trigger crossover from overbought territory; fading volume force';
                 }
                 extraRowsHtml += `
                     <div class="vs-tt-row">
@@ -1771,6 +1825,11 @@ const VolumeStudies = {
                         </div>
                     `;
                 }
+                extraRowsHtml += `
+                    <div class="vs-tt-subtext">
+                        ${regimeDesc}
+                    </div>
+                `;
             }
         } else if (payload.study === 'osc') {
             studyValStr = value == null ? 'n/a' : (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
@@ -1940,7 +1999,8 @@ const VolumeStudies = {
             let flowText = 'BALANCED';
             let flowColor = this.COLORS.label;
             if (ofi != null && vpin != null) {
-                if (vpin >= 0.45 && Math.abs(ofi) >= 0.40) { flowText = 'TOXICITY CLIMAX'; flowColor = '#d4a830'; }
+                if (vpin >= 0.45 && ofi <= -0.40) { flowText = 'PANIC SELLING CLIMAX'; flowColor = this.COLORS.up; }
+                else if (vpin >= 0.45 && ofi >= 0.40) { flowText = 'BLOW-OFF BUYING CLIMAX'; flowColor = '#d4a830'; }
                 else if (ofi >= 0.25) { flowText = 'INFORMED BUY'; flowColor = this.COLORS.up; }
                 else if (ofi <= -0.25) { flowText = 'INFORMED SELL'; flowColor = this.COLORS.down; }
                 else if (vpin >= 0.40) { flowText = 'ELEVATED TOXICITY'; flowColor = '#d4a830'; }
