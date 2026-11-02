@@ -374,6 +374,7 @@ const App = {
             if (updated) {
                 this.updateLiveCards();
                 this.liveOverlayState = 'live';
+                this._consecutiveLiveFailures = 0;
                 this.lastLiveTimeStr = session.etTimeStr;
                 this.lastLiveFetchTime = Date.now();
                 this._hasWarmCache = true;
@@ -387,17 +388,20 @@ const App = {
                 return true;
             }
 
+            this._consecutiveLiveFailures = (this._consecutiveLiveFailures || 0) + 1;
             this.liveOverlayState = 'failed';
             this.updateTimestamp(null, isManual);
             return false;
         } catch (err) {
             console.warn('[MONITOR] Live price overlay failed (non-fatal):', err);
-            if (session.isMarketActive && retryCount < 1) {
-                console.log('[MONITOR] Retrying live overlay in 1 s...');
-                await new Promise(r => setTimeout(r, 1000));
+            if (session.isMarketActive && retryCount < 2) {
+                const backoff = (retryCount + 1) * 1200;
+                console.log(`[MONITOR] Retrying live overlay in ${backoff}ms...`);
+                await new Promise(r => setTimeout(r, backoff));
                 return await this._overlayLivePrices(retryCount + 1, isManual);
             }
 
+            this._consecutiveLiveFailures = (this._consecutiveLiveFailures || 0) + 1;
             this.liveOverlayState = 'failed';
             this.updateTimestamp(null, isManual);
             return false;
@@ -944,11 +948,11 @@ const App = {
                 // Keep recent warm cached live data active and resilient during temporary proxy blips
                 el.textContent = `Prices: LIVE ${this._warmCacheTime || session.etTimeStr} (Cached) \u2022 Updating...`;
                 el.classList.remove('stale');
-            } else if (this.liveOverlayState === 'failed') {
+            } else if (this.liveOverlayState === 'failed' && (this._consecutiveLiveFailures || 0) >= 3) {
                 el.textContent = 'Data: Prior Close \u2022 Live feed paused';
                 el.classList.add('stale');
             } else {
-                // Cold cache on boot / pending live feed
+                // Cold cache on boot / transient proxy retry
                 el.textContent = 'Prices: Updating live feed...';
                 el.classList.remove('stale');
             }
