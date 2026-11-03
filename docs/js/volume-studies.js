@@ -29,7 +29,7 @@ const VolumeStudies = {
             { key: 'net', label: 'NET VOL', tip: 'Daily signed volume (+V on up days, -V on down days) with 21-day running total.' },
             { key: 'cmf', label: 'CMF', tip: 'Chaikin Money Flow (21-day): measures accumulation/distribution using close location in daily range.' },
             { key: 'obv', label: 'OBV', tip: 'On-Balance Volume: cumulative running total of signed volume with 21-day signal line.' },
-            { key: 'pvt', label: 'PVT', tip: 'Price-Volume Trend: cumulative volume scaled continuously by percentage price change.' },
+            { key: 'pvt', label: 'PVT', tip: 'Invariant Price-Volume Trend (IPVT): Split-invariant Kyle-Bouchaud flow kernel with Dual Zero-Lag EMA ribbon, stationary bounded Z-score oscillator, and regime-asymmetric execution engine.' },
         ],
         micro: [
             { key: 'vpin', label: 'BVC-VPIN', tip: 'Bulk Volume Classification Imbalance (OFI) & Order-Flow Toxicity (VPIN): tracks institutional adverse selection; extreme peaks signal panic capitulation bottoms or blow-off tops.' },
@@ -115,6 +115,540 @@ const VolumeStudies = {
         const dayName = isNaN(dt.getDay()) ? '' : days[dt.getDay()];
         const formatted = typeof formatDisplayDate === 'function' ? formatDisplayDate(d) : d;
         return dayName ? dayName + ', ' + formatted : formatted;
+    },
+
+    // Robust 14.3% Trimmed Mean over buffer (3 lowest and 3 highest trimmed from 21 bars)
+    trimmedMean21(buf) {
+        if (!buf || !buf.length) return 0;
+        const valid = [];
+        for (let i = 0; i < buf.length; i++) {
+            const v = buf[i];
+            if (v != null && isFinite(v)) valid.push(v);
+        }
+        if (!valid.length) return 0;
+        if (valid.length < 7) {
+            let s = 0;
+            for (let i = 0; i < valid.length; i++) s += valid[i];
+            return s / valid.length;
+        }
+        valid.sort((a, b) => a - b);
+        const trimCount = valid.length >= 21 ? 3 : Math.floor(valid.length * 0.142857);
+        let s = 0, count = 0;
+        for (let i = trimCount; i < valid.length - trimCount; i++) {
+            s += valid[i];
+            count++;
+        }
+        return count > 0 ? s / count : valid[Math.floor(valid.length / 2)];
+    },
+
+    // 14-period Average True Range (Wilder smoothing / EMA alpha = 1/14)
+    computeATR14(highs, lows, closes) {
+        const n = Math.min(highs.length, lows.length, closes.length);
+        const tr = new Float64Array(n);
+        const atr = new Float64Array(n);
+        if (n === 0) return atr;
+        for (let i = 0; i < n; i++) {
+            const h = highs[i] != null ? highs[i] : closes[i];
+            const l = lows[i] != null ? lows[i] : closes[i];
+            const prevC = (i > 0 && closes[i - 1] != null) ? closes[i - 1] : closes[i];
+            tr[i] = Math.max(h - l, Math.abs(h - prevC), Math.abs(l - prevC));
+        }
+        const alpha = 1.0 / 14;
+        let prevAtr = tr[0];
+        atr[0] = prevAtr;
+        for (let i = 1; i < n; i++) {
+            prevAtr = alpha * tr[i] + (1.0 - alpha) * prevAtr;
+            atr[i] = prevAtr;
+        }
+        return atr;
+    },
+
+    // Zero-Lag Exponential Moving Average (ZLEMA)
+    zlema(values, n = 21, lag = null) {
+        const len = values ? values.length : 0;
+        const out = new Array(len).fill(null);
+        if (!values || len === 0 || n <= 0) return out;
+        const actualLag = (lag != null && lag >= 0) ? lag : Math.floor((n - 1) / 2);
+        const k = 2 / (n + 1);
+        let prev = null;
+        for (let i = 0; i < len; i++) {
+            const v = values[i];
+            if (v == null || !isFinite(v)) continue;
+            const pastVal = (i >= actualLag && values[i - actualLag] != null && isFinite(values[i - actualLag]))
+                ? values[i - actualLag]
+                : v;
+            const zeroLagSample = 2 * v - pastVal;
+            if (prev == null) {
+                prev = zeroLagSample;
+            } else {
+                prev = zeroLagSample * k + prev * (1 - k);
+            }
+            out[i] = prev;
+        }
+        return out;
+    },
+
+    // Definitive Invariant Price-Volume Trend (IPVT) & Asymmetric Alpha Engine
+    computeInvariantPVTEngine(primaryBars, ticker = 'BOIL', sisterBars = null) {
+        if (!primaryBars || !primaryBars.length) return null;
+        const n = primaryBars.length;
+        const dates = new Array(n);
+        const opens = new Float64Array(n);
+        const highs = new Float64Array(n);
+        const lows = new Float64Array(n);
+        const closes = new Float64Array(n);
+        const volumes = new Float64Array(n);
+
+        for (let i = 0; i < n; i++) {
+            const b = primaryBars[i] || {};
+            const c = b.close != null ? b.close : 0;
+            dates[i] = b.date || '';
+            closes[i] = c;
+            opens[i] = b.open != null ? b.open : c;
+            highs[i] = b.high != null ? b.high : c;
+            lows[i] = b.low != null ? b.low : c;
+            volumes[i] = b.volume != null ? b.volume : 0;
+        }
+
+        const isShortEtp = (ticker === 'KOLD' || ticker === 'HND.TO' || ticker === '3NGS.L' || 
+            (typeof CONFIG !== 'undefined' && CONFIG.etfs && CONFIG.etfs[ticker] && CONFIG.etfs[ticker].side === 'short'));
+
+        // 1. Split-invariant typical price P_tilde and notional turnover D_t
+        const typPrice = new Float64Array(n);
+        const turnover = new Float64Array(n);
+        const trueRange = new Float64Array(n);
+        const clv = new Float64Array(n);
+
+        for (let i = 0; i < n; i++) {
+            const h = highs[i], l = lows[i], c = closes[i];
+            const tp = (h + l + 2 * c) * 0.25;
+            typPrice[i] = tp;
+            turnover[i] = volumes[i] * tp;
+
+            const prevC = i > 0 ? closes[i - 1] : opens[i];
+            trueRange[i] = Math.max(h - l, Math.abs(h - prevC), Math.abs(l - prevC));
+
+            const range = h - l;
+            clv[i] = range > 1e-8 ? ((c - l) - (h - c)) / range : 0;
+        }
+
+        // 2. Hybrid return: 0.70 * ln(C/C_-1) + 0.30 * CLV * (TR / P_tilde_-1)
+        const hybridRet = new Float64Array(n);
+        for (let i = 1; i < n; i++) {
+            const cPrev = closes[i - 1];
+            const cCurr = closes[i];
+            const logRet = (cPrev > 0 && cCurr > 0) ? Math.log(cCurr / cPrev) : 0;
+            const pPrev = typPrice[i - 1] > 1e-8 ? typPrice[i - 1] : (cPrev > 0 ? cPrev : 1.0);
+            const intradayShock = clv[i] * (trueRange[i] / pPrev);
+            hybridRet[i] = 0.70 * logRet + 0.30 * intradayShock;
+        }
+
+        // 3. Lagged 21-bar 14.3% trimmed mean turnover and robust RVOL multiple
+        const rvol = new Float64Array(n);
+        const volWeight = new Float64Array(n);
+        const ringD = new Float64Array(21);
+        const sortScratch = new Float64Array(21);
+        let countD = 0;
+        let headD = 0;
+
+        for (let i = 0; i < n; i++) {
+            let trimD = 0;
+            if (i === 0) {
+                trimD = Math.max(turnover[0], 1.0);
+            } else {
+                if (countD < 7) {
+                    let s = 0;
+                    for (let k = 0; k < countD; k++) s += ringD[k];
+                    trimD = countD > 0 ? (s / countD) : 0;
+                } else {
+                    for (let k = 0; k < countD; k++) sortScratch[k] = ringD[k];
+                    for (let m = 1; m < countD; m++) {
+                        const x = sortScratch[m];
+                        let j = m - 1;
+                        while (j >= 0 && sortScratch[j] > x) {
+                            sortScratch[j + 1] = sortScratch[j];
+                            j--;
+                        }
+                        sortScratch[j + 1] = x;
+                    }
+                    const trimCount = countD >= 21 ? 3 : Math.floor(countD * 0.142857);
+                    let s = 0, c = 0;
+                    for (let m = trimCount; m < countD - trimCount; m++) {
+                        s += sortScratch[m];
+                        c++;
+                    }
+                    trimD = c > 0 ? s / c : sortScratch[Math.floor(countD / 2)];
+                }
+                if (trimD <= 0) trimD = Math.max(turnover[i], 1.0);
+            }
+            const rv = Math.max(0.01, Math.min(25.0, turnover[i] / trimD));
+            rvol[i] = rv;
+            // Concave Kyle-Bouchaud volume weighting: w^V = RVOL^0.55
+            volWeight[i] = Math.pow(rv, 0.55);
+
+            if (countD < 21) {
+                ringD[countD++] = turnover[i];
+            } else {
+                ringD[headD] = turnover[i];
+                headD = (headD + 1) % 21;
+            }
+        }
+
+        // 4. Lagged trimmed volatility sigma_trim and normalized flow impulse f_t
+        const sigmaTrim = new Float64Array(n);
+        const impulse = new Float64Array(n);
+        const ringRet = new Float64Array(21);
+        let countRet = 0;
+        let headRet = 0;
+
+        for (let i = 0; i < n; i++) {
+            if (i === 0) {
+                sigmaTrim[i] = 0.03;
+                impulse[i] = 0;
+            } else {
+                if (countRet >= 7) {
+                    for (let k = 0; k < countRet; k++) sortScratch[k] = ringRet[k];
+                    for (let m = 1; m < countRet; m++) {
+                        const x = sortScratch[m];
+                        let j = m - 1;
+                        while (j >= 0 && sortScratch[j] > x) {
+                            sortScratch[j + 1] = sortScratch[j];
+                            j--;
+                        }
+                        sortScratch[j + 1] = x;
+                    }
+                    const trimK = countRet >= 21 ? 3 : Math.floor(countRet * 0.142857);
+                    let sum = 0, sumSq = 0, c = 0;
+                    for (let k = trimK; k < countRet - trimK; k++) {
+                        const r = sortScratch[k];
+                        sum += r;
+                        sumSq += r * r;
+                        c++;
+                    }
+                    if (c > 1) {
+                        const mean = sum / c;
+                        const variance = Math.max(0, (sumSq - (sum * sum) / c) / (c - 1));
+                        sigmaTrim[i] = Math.max(0.005, Math.sqrt(variance));
+                    } else {
+                        sigmaTrim[i] = 0.03;
+                    }
+                } else {
+                    sigmaTrim[i] = 0.03;
+                }
+                // f_t = w^V * (r^eff / sigma^trim)
+                impulse[i] = volWeight[i] * (hybridRet[i] / sigmaTrim[i]);
+            }
+            if (i > 0) {
+                if (countRet < 21) {
+                    ringRet[countRet++] = hybridRet[i];
+                } else {
+                    ringRet[headRet] = hybridRet[i];
+                    headRet = (headRet + 1) % 21;
+                }
+            }
+        }
+
+        // 5. Cumulative IPVT series
+        const ipvt = new Float64Array(n);
+        let acc = 0;
+        for (let i = 0; i < n; i++) {
+            acc += impulse[i];
+            ipvt[i] = acc;
+        }
+
+        // 6. Dual Zero-Lag EMA (ZLEMA-8, ZLEMA-21)
+        const ipvtArr = Array.from(ipvt);
+        const zlema8 = this.zlema(ipvtArr, 8, 3);
+        const zlema21 = this.zlema(ipvtArr, 21, 10);
+
+        // 7. Kaufman Adaptive Moving Average (KAMA-14) with ER-10
+        const kama14 = new Array(n).fill(null);
+        const er10 = new Array(n).fill(0);
+        let prevKama = ipvt[0];
+        kama14[0] = prevKama;
+
+        const diffIpvt = new Float64Array(n);
+        for (let i = 1; i < n; i++) diffIpvt[i] = Math.abs(ipvt[i] - ipvt[i - 1]);
+        let rollVol10 = 0;
+        for (let i = 1; i <= 10 && i < n; i++) rollVol10 += diffIpvt[i];
+
+        for (let i = 1; i < n; i++) {
+            if (i < 10) {
+                kama14[i] = ipvt[i];
+                prevKama = ipvt[i];
+                er10[i] = 0;
+                continue;
+            }
+            if (i > 10) {
+                rollVol10 += diffIpvt[i] - diffIpvt[i - 10];
+            }
+            const change = Math.abs(ipvt[i] - ipvt[i - 10]);
+            const er = rollVol10 > 1e-8 ? Math.max(0, Math.min(1, change / rollVol10)) : 0;
+            er10[i] = er;
+            const sc = Math.pow(er * (2 / 3 - 2 / 31) + 2 / 31, 2);
+            prevKama = prevKama + sc * (ipvt[i] - prevKama);
+            kama14[i] = prevKama;
+        }
+
+        // 8. Stationary Bounded Z-Score Oscillator Z_PVT in (-100, +100) via algebraic sigmoid
+        const zScore = new Float64Array(n);
+        const { means: ipvtMeans, stds: ipvtStds } = this.rollingMeanAndStd(ipvtArr, 21);
+
+        for (let i = 0; i < n; i++) {
+            const m = ipvtMeans[i];
+            const s = ipvtStds[i];
+            if (m != null && s != null && s > 1e-4) {
+                const z = (ipvt[i] - m) / s;
+                zScore[i] = 100.0 * (z / Math.sqrt(z * z + 2.25));
+            } else if (i > 0) {
+                zScore[i] = zScore[i - 1] * 0.95;
+            } else {
+                zScore[i] = 0;
+            }
+        }
+
+        // 9. 14-bar stochastic divergence detector (Bullish & Bearish)
+        const bullishDiv = new Array(n).fill(false);
+        const bearishDiv = new Array(n).fill(false);
+
+        for (let i = 14; i < n; i++) {
+            let minC = Infinity, minIpvt = Infinity;
+            let maxC = -Infinity, maxIpvt = -Infinity;
+            for (let j = i - 14; j < i; j++) {
+                if (closes[j] < minC) minC = closes[j];
+                if (closes[j] > maxC) maxC = closes[j];
+                if (ipvt[j] < minIpvt) minIpvt = ipvt[j];
+                if (ipvt[j] > maxIpvt) maxIpvt = ipvt[j];
+            }
+            if (closes[i] <= minC * 1.005 && ipvt[i] > minIpvt && impulse[i] > 0.25) {
+                bullishDiv[i] = true;
+            }
+            if (closes[i] >= maxC * 0.995 && ipvt[i] < maxIpvt && impulse[i] < -0.25) {
+                bearishDiv[i] = true;
+            }
+        }
+
+        // 10. Cross-pair flow coherence checking with sister ETF
+        const crossPair = new Float64Array(n);
+        const sisterConfirmed = new Array(n).fill('STANDALONE');
+
+        if (sisterBars && sisterBars.length) {
+            const sisterEngine = this.computeInvariantPVTEngine(sisterBars, isShortEtp ? 'BOIL' : 'KOLD', null);
+            if (sisterEngine && sisterEngine.dates && sisterEngine.zScore) {
+                const sisterMap = new Map();
+                for (let k = 0; k < sisterEngine.dates.length; k++) {
+                    sisterMap.set(sisterEngine.dates[k], sisterEngine.zScore[k]);
+                }
+                for (let i = 0; i < n; i++) {
+                    const d = dates[i];
+                    if (sisterMap.has(d)) {
+                        const zSister = sisterMap.get(d);
+                        crossPair[i] = 0.65 * zScore[i] - 0.35 * zSister;
+                        if (isShortEtp) {
+                            sisterConfirmed[i] = zSister <= -15 ? 'CONFIRMED' : 'DIVERGENT';
+                        } else {
+                            sisterConfirmed[i] = (zSister <= -15 || zSister < 0) ? 'CONFIRMED' : 'DIVERGENT';
+                        }
+                    } else {
+                        crossPair[i] = zScore[i];
+                        sisterConfirmed[i] = 'STANDALONE';
+                    }
+                }
+            }
+        } else {
+            for (let i = 0; i < n; i++) {
+                crossPair[i] = zScore[i];
+                sisterConfirmed[i] = 'STANDALONE';
+            }
+        }
+
+        // 11. Regime-Asymmetric Execution State Machine
+        const atr14 = this.computeATR14(highs, lows, closes);
+        const inPosition = new Array(n).fill(false);
+        const actions = new Array(n).fill('');
+        const statuses = new Array(n).fill('');
+        const trailingStops = new Array(n).fill(null);
+
+        let posActive = false;
+        let entryIdx = -1;
+        let entryPrice = 0;
+        let highestPrice = 0;
+        let stopPrice = 0;
+
+        for (let i = 0; i < n; i++) {
+            if (i < 21) {
+                actions[i] = 'WARMUP / INITIALIZING';
+                statuses[i] = 'Accumulating baseline turnover and volatility distribution';
+                inPosition[i] = false;
+                continue;
+            }
+
+            const c = closes[i];
+            const h = highs[i];
+            const l = lows[i];
+            const curAtr = atr14[i] || (c * 0.03);
+            const zCurr = zScore[i];
+            const zFast = zlema8[i] || 0;
+            const zSlow = zlema21[i] || 0;
+            const fCurr = impulse[i];
+
+            if (isShortEtp) {
+                // Short/Inverse ETP State Machine (KOLD, HND.TO, 3NGS.L)
+                if (posActive) {
+                    highestPrice = Math.max(highestPrice, h);
+                    const newStop = highestPrice - 2.5 * curAtr;
+                    stopPrice = Math.max(stopPrice, newStop);
+                    trailingStops[i] = stopPrice;
+
+                    // 1. Crash Breaker Ejection
+                    if (fCurr <= -2.2) {
+                        posActive = false;
+                        inPosition[i] = false;
+                        actions[i] = 'CRASH BREAKER EJECTION';
+                        statuses[i] = `Emergency Day-1 cash exit: violent negative flow shock (f_t = ${fCurr.toFixed(2)} <= -2.2)`;
+                    // 2. Trailing Stop Volatility Exit
+                    } else if (l <= stopPrice || c <= stopPrice) {
+                        posActive = false;
+                        inPosition[i] = false;
+                        actions[i] = 'TRAILING STOP EXIT';
+                        statuses[i] = `2.5x ATR trailing volatility stop hit at $${stopPrice.toFixed(2)}; profit locked`;
+                    // 3. Trend Reversal Exit (ZLEMA bear cross)
+                    } else if (zFast < zSlow) {
+                        posActive = false;
+                        inPosition[i] = false;
+                        actions[i] = 'TREND REVERSAL EXIT';
+                        statuses[i] = 'Fast ZLEMA-8 crossed below baseline ZLEMA-21; carry momentum exhausted';
+                    // 4. Continue Riding Trend
+                    } else {
+                        inPosition[i] = true;
+                        actions[i] = 'HOLDING SHORT CARRY';
+                        statuses[i] = `Structural positive roll yield capture active; 2.5x ATR trailing stop at $${stopPrice.toFixed(2)}`;
+                    }
+                } else {
+                    // Entry Condition: Z_PVT >= +25 AND ZLEMA_8 > ZLEMA_21
+                    const entryTrigger = (zCurr >= 25 && zFast > zSlow);
+                    if (entryTrigger && fCurr > -1.5) {
+                        posActive = true;
+                        entryIdx = i;
+                        entryPrice = c;
+                        highestPrice = h;
+                        stopPrice = highestPrice - 2.5 * curAtr;
+                        inPosition[i] = true;
+                        trailingStops[i] = stopPrice;
+                        actions[i] = 'TREND ACCUMULATION';
+                        statuses[i] = `Contango harvest entry triggered: Z-score +${zCurr.toFixed(1)} with bullish ZLEMA filter`;
+                    } else if (fCurr <= -2.2) {
+                        actions[i] = 'CRASH BREAKER ACTIVE';
+                        statuses[i] = `Downside flow collapse (f_t = ${fCurr.toFixed(2)}); capital protected in cash`;
+                    } else if (zCurr >= 25) {
+                        actions[i] = 'ACCUMULATION WATCH';
+                        statuses[i] = `Elevated accumulation flow (Z = +${zCurr.toFixed(1)}) awaiting ZLEMA-8 confirmation`;
+                    } else {
+                        actions[i] = 'NEUTRAL / CASH';
+                        statuses[i] = 'Contango drift monitoring; awaiting high-conviction institutional accumulation';
+                    }
+                }
+            } else {
+                // Long Leveraged ETP State Machine (BOIL, HNU.TO, 3NGL.L)
+                if (posActive) {
+                    highestPrice = Math.max(highestPrice, h);
+                    const newStop = highestPrice - 1.5 * curAtr;
+                    stopPrice = Math.max(stopPrice, newStop);
+                    trailingStops[i] = stopPrice;
+                    const holdDays = i - entryIdx;
+
+                    // 1. Climax Take-Profit
+                    if (zCurr >= 72) {
+                        posActive = false;
+                        inPosition[i] = false;
+                        actions[i] = 'CLIMAX EXHAUSTION EXIT';
+                        statuses[i] = `Parabolic climax profit taken: stationary Z-score ${zCurr.toFixed(1)} >= 72`;
+                    // 2. Trailing Stop Volatility Exit
+                    } else if (l <= stopPrice || c <= stopPrice) {
+                        posActive = false;
+                        inPosition[i] = false;
+                        actions[i] = '1.5x ATR TRAILING STOP EXIT';
+                        statuses[i] = `1.5x ATR trailing volatility stop hit at $${stopPrice.toFixed(2)}; exiting before contango collapse`;
+                    // 3. Max 7-Day Time Stop
+                    } else if (holdDays >= 7) {
+                        posActive = false;
+                        inPosition[i] = false;
+                        actions[i] = '7-DAY MAX HOLD TIME EXIT';
+                        statuses[i] = '7-bar maximum holding period reached; exiting to avoid physical contango bleed';
+                    // 4. Continue Riding Squeeze
+                    } else {
+                        inPosition[i] = true;
+                        actions[i] = 'HOLDING SQUEEZE';
+                        statuses[i] = `Mean-reversion squeeze active (Day ${holdDays + 1}/7); trailing stop at $${stopPrice.toFixed(2)}`;
+                    }
+                } else {
+                    const priorZ = Math.min(zScore[i - 1] || 0, zScore[i - 2] || 0, zScore[i - 3] || 0);
+                    const impulseTrigger = (priorZ < -35 && fCurr >= 1.60 && zFast > zSlow);
+                    const divTrigger = bullishDiv[i];
+
+                    if (impulseTrigger) {
+                        posActive = true;
+                        entryIdx = i;
+                        entryPrice = c;
+                        highestPrice = h;
+                        stopPrice = highestPrice - 1.5 * curAtr;
+                        inPosition[i] = true;
+                        trailingStops[i] = stopPrice;
+                        actions[i] = 'IMPULSE SQUEEZE TRIGGER';
+                        statuses[i] = `Fast impulse thrust entry (f_t = +${fCurr.toFixed(2)} >= 1.60) from oversold trough (${priorZ.toFixed(1)})`;
+                    } else if (divTrigger) {
+                        posActive = true;
+                        entryIdx = i;
+                        entryPrice = c;
+                        highestPrice = h;
+                        stopPrice = highestPrice - 1.5 * curAtr;
+                        inPosition[i] = true;
+                        trailingStops[i] = stopPrice;
+                        actions[i] = 'BULLISH DIVERGENCE ENTRY';
+                        statuses[i] = `14-bar stochastic divergence confirmed: price low with positive flow impulse (+${fCurr.toFixed(2)})`;
+                    } else if (fCurr >= 1.60) {
+                        actions[i] = 'IMPULSE WATCH';
+                        statuses[i] = `High flow impulse detected (+${fCurr.toFixed(2)}) awaiting ZLEMA alignment`;
+                    } else if (bullishDiv[i]) {
+                        actions[i] = 'BULLISH DIVERGENCE';
+                        statuses[i] = 'Stochastic accumulation divergence forming';
+                    } else {
+                        actions[i] = 'NEUTRAL / CASH';
+                        statuses[i] = 'Structural contango bleed avoidance — 100% capital preserved in cash';
+                    }
+                }
+            }
+        }
+
+        return {
+            dates,
+            closes: Array.from(closes),
+            highs: Array.from(highs),
+            lows: Array.from(lows),
+            volumes: Array.from(volumes),
+            turnover: Array.from(turnover),
+            rvol: Array.from(rvol),
+            volWeight: Array.from(volWeight),
+            hybridReturn: Array.from(hybridRet),
+            sigmaTrim: Array.from(sigmaTrim),
+            impulse: Array.from(impulse),
+            ipvt: ipvtArr,
+            zlema8,
+            zlema21,
+            kama14,
+            er10,
+            zScore: Array.from(zScore),
+            bullishDiv,
+            bearishDiv,
+            crossPair: Array.from(crossPair),
+            sisterConfirmed,
+            actions,
+            statuses,
+            inPosition,
+            trailingStops,
+            side: isShortEtp ? 'short' : 'long',
+            regime: isShortEtp ? 'INVERSE_CARRY' : 'LONG_DECAY'
+        };
     },
 
     // Mathematical Primitives & Moving Averages
@@ -624,6 +1158,66 @@ const VolumeStudies = {
         };
     },
 
+    _buildInvariantPVTPayload(history, dates, closes, highs, lows, rawVolumes, dollarVolumes, startIdx, endIdx, extraBase, options) {
+        const ticker = (options && options.ticker) || this.state.ticker || 'BOIL';
+        const etfCfg = (typeof CONFIG !== 'undefined' && CONFIG.etfs) ? CONFIG.etfs[ticker] : null;
+        const pairTicker = etfCfg ? etfCfg.pair : null;
+
+        // Pull sister ETF history from App.allMetrics if available
+        let sisterBars = null;
+        if (pairTicker && typeof App !== 'undefined' && App.allMetrics && App.allMetrics[pairTicker]) {
+            sisterBars = App.allMetrics[pairTicker].history;
+        } else if (pairTicker && typeof window !== 'undefined' && window.allData && window.allData.etfs && window.allData.etfs[pairTicker]) {
+            sisterBars = window.allData.etfs[pairTicker].history;
+        } else if (options && options.sisterBars) {
+            sisterBars = options.sisterBars;
+        }
+
+        const engine = this.computeInvariantPVTEngine(history, ticker, sisterBars);
+        if (!engine) return null;
+
+        // Viewport anchoring for visual display
+        const base = (engine.ipvt && engine.ipvt[startIdx] != null) ? engine.ipvt[startIdx] : 0;
+        const line = engine.ipvt.map(v => v - base);
+        const zl8 = engine.zlema8.map(v => v == null ? null : v - base);
+        const zl21 = engine.zlema21.map(v => v == null ? null : v - base);
+        const kama = engine.kama14.map(v => v == null ? null : v - base);
+
+        return this._buildPayload(dates, closes, rawVolumes, startIdx, endIdx, {
+            ...extraBase,
+            bars: null,
+            line,
+            ma: zl21,
+            secondaryLine: zl8,
+            zeroCentered: false,
+            study: 'pvt',
+            extraData: {
+                rawIpvt: engine.ipvt,
+                zl8,
+                zl21,
+                kama,
+                er10: engine.er10,
+                impulse: engine.impulse,
+                rvol: engine.rvol,
+                volWeight: engine.volWeight,
+                hybridReturn: engine.hybridReturn,
+                sigmaTrim: engine.sigmaTrim,
+                zScore: engine.zScore,
+                crossPair: engine.crossPair,
+                sisterConfirmed: engine.sisterConfirmed,
+                actions: engine.actions,
+                statuses: engine.statuses,
+                inPosition: engine.inPosition,
+                trailingStops: engine.trailingStops,
+                bullishDiv: engine.bullishDiv,
+                bearishDiv: engine.bearishDiv,
+                etfSide: engine.side,
+                regime: engine.regime,
+                ticker
+            }
+        });
+    },
+
     compute(history, study, rangeKey, opts) {
         if (!history || !history.length) return null;
         const options = opts || {};
@@ -698,15 +1292,18 @@ const VolumeStudies = {
                 ...extraBase, bars: null, line, ma: null, zeroCentered: true, study
             });
         }
-        if (study === 'obv' || study === 'pvt') {
-            const full = study === 'obv' ? this.obv(closes, volumes) : this.pvt(closes, volumes);
+        if (study === 'obv') {
+            const full = this.obv(closes, volumes);
             const base = full[startIdx];
             const line = full.map(v => v - base);
             const maFull = this.sma(full, maLen);
             const ma = maFull.map(v => v == null ? null : v - base);
             return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
-                ...extraBase, bars: null, line, ma, zeroCentered: false, study
+                ...extraBase, bars: null, line, ma, zeroCentered: false, study: 'obv'
             });
+        }
+        if (study === 'pvt') {
+            return this._buildInvariantPVTPayload(history, dates, closes, highs, lows, rawVolumes, dollarVolumes, startIdx, endIdx, extraBase, options);
         }
 
         // --- INSTITUTIONAL MICROSTRUCTURE SUITE ---
@@ -790,7 +1387,8 @@ const VolumeStudies = {
         const payload = this.compute(history, this.state.study, this.state.range, {
             unit: this.state.unit,
             customStart: this.state.customRange ? this.state.customRange.startIdx : null,
-            customEnd: this.state.customRange ? this.state.customRange.endIdx : null
+            customEnd: this.state.customRange ? this.state.customRange.endIdx : null,
+            ticker: ticker
         });
         this._cache = { key, payload };
         return payload;
@@ -1193,6 +1791,7 @@ const VolumeStudies = {
         if (study === 'illiq' || study === 'esvd' || study === 'vwapz') return v => (v >= 0 ? '+' : '') + v.toFixed(1) + 'σ';
         if (study === 'lmsw') return v => (v >= 0 ? '+' : '') + v.toFixed(2);
         if (study === 'tkvf') return v => (v >= 0 ? '+' : '') + v.toFixed(0);
+        if (study === 'pvt') return v => (v >= 0 ? '+' : '') + v.toFixed(1) + ' fl';
         if (unit === 'dollar') return v => (v < 0 ? '-' : '') + '$' + this.fmtVol(Math.abs(v));
         return v => this.fmtVol(v);
     },
@@ -1432,18 +2031,58 @@ const VolumeStudies = {
                 ctx.fillRect(x, Math.min(yv, zeroY), colW, Math.abs(zeroY - yv));
             }
             drawPath(line, this.COLORS.line, 1.4, null);
+        } else if (line && payload.study === 'pvt') {
+            const zl8 = payload.secondaryLine;
+            const zl21 = payload.ma;
+
+            // Render Dynamic Soft Ribbon Fill between Fast ZLEMA-8 and Baseline ZLEMA-21
+            if (zl8 && zl21) {
+                for (let i = 0; i < n - 1; i++) {
+                    const v8_1 = zl8[i], v8_2 = zl8[i + 1];
+                    const v21_1 = zl21[i], v21_2 = zl21[i + 1];
+                    if (v8_1 == null || v8_2 == null || v21_1 == null || v21_2 == null) continue;
+                    if (!isFinite(v8_1) || !isFinite(v8_2) || !isFinite(v21_1) || !isFinite(v21_2)) continue;
+
+                    const x1 = getX(i), x2 = getX(i + 1);
+                    const y8_1 = clampY(mapY(v8_1)), y8_2 = clampY(mapY(v8_2));
+                    const y21_1 = clampY(mapY(v21_1)), y21_2 = clampY(mapY(v21_2));
+
+                    const isBull = (v8_1 + v8_2) >= (v21_1 + v21_2);
+                    ctx.fillStyle = isBull ? 'rgba(61, 184, 122, 0.12)' : 'rgba(192, 64, 64, 0.12)';
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y8_1);
+                    ctx.lineTo(x2, y8_2);
+                    ctx.lineTo(x2, y21_2);
+                    ctx.lineTo(x1, y21_1);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+
+            // Render Baseline ZLEMA-21 (Amber Gold, dashed [3, 3], width 1.3)
+            if (zl21) {
+                drawPath(zl21, '#d4a830', 1.3, [3, 3]);
+            }
+
+            // Render Fast ZLEMA-8 (Emerald Green, width 1.3)
+            if (zl8) {
+                drawPath(zl8, '#3db87a', 1.3, null);
+            }
+
+            // Render Viewport-Anchored IPVT Curve (Cyan, width 1.8)
+            drawPath(line, '#38bdf8', 1.8, null);
         } else if (line) {
             const lineColor = payload.study === 'esvd' ? '#e06c75' : this.COLORS.line;
             drawPath(line, lineColor, 1.4, null);
         }
 
         // Render Secondary Line (e.g. VPIN Unsigned Toxicity Line)
-        if (secondaryLine) {
+        if (secondaryLine && payload.study !== 'pvt') {
             drawPath(secondaryLine, '#d4a830', 1.2, [3, 3]);
         }
 
         // Render Moving Average or Trigger Signal Line
-        if (ma) {
+        if (ma && payload.study !== 'pvt') {
             drawPath(ma, this.COLORS.ma, 1.1, [3, 3]);
         }
 
@@ -1474,7 +2113,7 @@ const VolumeStudies = {
                 if (v != null && isFinite(v)) {
                     ctx.beginPath();
                     ctx.arc(x, clampY(mapY(v)), 3.5, 0, Math.PI * 2);
-                    ctx.fillStyle = payload.study === 'esvd' ? '#e06c75' : this.COLORS.line;
+                    ctx.fillStyle = payload.study === 'esvd' ? '#e06c75' : (payload.study === 'pvt' ? '#38bdf8' : this.COLORS.line);
                     ctx.fill();
                 }
             }
@@ -1483,7 +2122,7 @@ const VolumeStudies = {
                 if (sv != null && isFinite(sv)) {
                     ctx.beginPath();
                     ctx.arc(x, clampY(mapY(sv)), 3, 0, Math.PI * 2);
-                    ctx.fillStyle = '#d4a830';
+                    ctx.fillStyle = payload.study === 'pvt' ? '#3db87a' : '#d4a830';
                     ctx.fill();
                 }
             }
@@ -1572,7 +2211,7 @@ const VolumeStudies = {
             net: 'NET VOL',
             cmf: 'CMF-21',
             obv: 'OBV',
-            pvt: 'PVT',
+            pvt: 'INVARIANT PVT (IPVT)',
             vpin: 'OFI (IMBALANCE)',
             illiq: 'LAI (ABSORPTION)',
             esvd: 'ESVD (DIVERGENCE)',
@@ -1855,6 +2494,115 @@ const VolumeStudies = {
             studyValStr = value == null ? 'n/a' : (payload.unit === 'dollar' ? (value > 0 ? '+$' : (value < 0 ? '-$' : '')) + this.fmtVol(Math.abs(value)) : this.fmtSigned(value));
             badgeText = value > 0 ? 'NET INFLOW' : value < 0 ? 'NET OUTFLOW' : 'FLAT';
             badgeColor = value > 0 ? this.COLORS.up : value < 0 ? this.COLORS.down : this.COLORS.label;
+        } else if (payload.study === 'pvt') {
+            const extra = payload.extraData || {};
+            const impulse = extra.impulse ? extra.impulse[i] : null;
+            const rvol = extra.rvol ? extra.rvol[i] : null;
+            const volWeight = extra.volWeight ? extra.volWeight[i] : null;
+            const zScore = extra.zScore ? extra.zScore[i] : null;
+            const zl8 = extra.zl8 ? extra.zl8[i] : null;
+            const zl21 = extra.zl21 ? extra.zl21[i] : null;
+            const crossPair = extra.crossPair ? extra.crossPair[i] : null;
+            const sisterConf = extra.sisterConfirmed ? extra.sisterConfirmed[i] : null;
+            const action = extra.actions ? extra.actions[i] : 'NEUTRAL / CASH';
+            const status = extra.statuses ? extra.statuses[i] : '';
+            const trailingStop = extra.trailingStops ? extra.trailingStops[i] : null;
+            const side = extra.etfSide || 'long';
+
+            studyValStr = value == null ? 'n/a' : (value >= 0 ? '+' : '') + value.toFixed(1) + ' fl';
+
+            badgeText = action;
+            if (action.includes('TRIGGER') || action.includes('ENTRY')) {
+                badgeColor = this.COLORS.up;
+            } else if (action.includes('CRASH BREAKER')) {
+                badgeColor = '#ef4444';
+            } else if (action.includes('EXIT')) {
+                badgeColor = '#f59e0b';
+            } else if (action.includes('ACCUMULATION') || action.includes('HOLDING')) {
+                badgeColor = '#38bdf8';
+            } else {
+                badgeColor = this.COLORS.label;
+            }
+
+            if (impulse != null) {
+                const impColor = impulse >= 1.6 ? this.COLORS.up : (impulse <= -2.2 ? '#ef4444' : (impulse > 0 ? this.COLORS.up : this.COLORS.down));
+                extraRowsHtml += `
+                    <div class="vs-tt-row">
+                        <span class="vs-tt-lbl">FLOW IMPULSE (f_t)</span>
+                        <span class="vs-tt-val" style="color:${impColor};font-weight:700;">${(impulse >= 0 ? '+' : '') + impulse.toFixed(2)} fl</span>
+                    </div>
+                `;
+            }
+
+            if (rvol != null) {
+                const rvColor = rvol >= 2.0 ? this.COLORS.up : (rvol >= 1.2 ? '#38bdf8' : 'inherit');
+                const vwStr = volWeight != null ? ` (w^V = ${volWeight.toFixed(2)})` : '';
+                extraRowsHtml += `
+                    <div class="vs-tt-row">
+                        <span class="vs-tt-lbl">RVOL-21 (TRIMMED)</span>
+                        <span class="vs-tt-val" style="color:${rvColor};">${rvol.toFixed(2)}×<span style="font-size:0.58rem;opacity:0.8;">${vwStr}</span></span>
+                    </div>
+                `;
+            }
+
+            if (zScore != null) {
+                let zZone = 'NEUTRAL';
+                let zColor = this.COLORS.label;
+                if (zScore >= 72) { zZone = 'CLIMAX EXHAUSTION'; zColor = '#d4a830'; }
+                else if (zScore >= 25) { zZone = 'ACCUMULATION'; zColor = this.COLORS.up; }
+                else if (zScore <= -25) { zZone = 'DISTRIBUTION'; zColor = this.COLORS.down; }
+                extraRowsHtml += `
+                    <div class="vs-tt-row">
+                        <span class="vs-tt-lbl">Z-SCORE OSCILLATOR</span>
+                        <span class="vs-tt-val" style="color:${zColor};font-weight:700;">${(zScore >= 0 ? '+' : '') + zScore.toFixed(1)} <span style="font-size:0.58rem;">(${zZone})</span></span>
+                    </div>
+                `;
+            }
+
+            if (zl8 != null) {
+                extraRowsHtml += `
+                    <div class="vs-tt-row">
+                        <span class="vs-tt-lbl">FAST ZLEMA-8</span>
+                        <span class="vs-tt-val" style="color:#3db87a;">${(zl8 >= 0 ? '+' : '') + zl8.toFixed(1)} fl</span>
+                    </div>
+                `;
+            }
+
+            if (zl21 != null) {
+                extraRowsHtml += `
+                    <div class="vs-tt-row">
+                        <span class="vs-tt-lbl">BASELINE ZLEMA-21</span>
+                        <span class="vs-tt-val" style="color:#d4a830;">${(zl21 >= 0 ? '+' : '') + zl21.toFixed(1)} fl</span>
+                    </div>
+                `;
+            }
+
+            if (crossPair != null) {
+                const confColor = sisterConf === 'CONFIRMED' ? this.COLORS.up : (crossPair < 0 ? this.COLORS.down : '#d4a830');
+                extraRowsHtml += `
+                    <div class="vs-tt-row">
+                        <span class="vs-tt-lbl">CROSS-PAIR CONF</span>
+                        <span class="vs-tt-val" style="color:${confColor};">${(crossPair >= 0 ? '+' : '') + crossPair.toFixed(1)} <span style="font-size:0.58rem;">(${sisterConf || 'ALIGNED'})</span></span>
+                    </div>
+                `;
+            }
+
+            if (trailingStop != null) {
+                extraRowsHtml += `
+                    <div class="vs-tt-row">
+                        <span class="vs-tt-lbl">TRAILING STOP</span>
+                        <span class="vs-tt-val" style="color:#f59e0b;font-weight:700;">$${this.fmtPrice(trailingStop)}</span>
+                    </div>
+                `;
+            }
+
+            if (status) {
+                extraRowsHtml += `
+                    <div class="vs-tt-subtext">
+                        <strong>${side === 'short' ? 'INVERSE CARRY REGIME' : 'LONG SQUEEZE REGIME'}:</strong> ${status}
+                    </div>
+                `;
+            }
         } else {
             studyValStr = value == null ? 'n/a' : (payload.unit === 'dollar' ? (value > 0 ? '+$' : (value < 0 ? '-$' : '')) + this.fmtVol(Math.abs(value)) : this.fmtSigned(value));
             const maVal = payload.ma ? payload.ma[i] : null;
@@ -1882,7 +2630,7 @@ const VolumeStudies = {
 
         rowsHtml += extraRowsHtml;
 
-        if (payload.ma && payload.ma[i] != null && payload.study !== 'tkvf') {
+        if (payload.ma && payload.ma[i] != null && payload.study !== 'tkvf' && payload.study !== 'pvt') {
             const maVal = payload.ma[i];
             const maFmt = payload.study === 'vol'
                 ? (payload.unit === 'dollar' ? '$' + this.fmtVol(maVal) : this.fmtVol(maVal))
@@ -2127,7 +2875,7 @@ const VolumeStudies = {
                 }
             }
             parts.push(`<span class="vs-reading-item"><span class="vs-lbl">SIGNAL</span> <span style="color:${divColor}">${divText}</span></span>`);
-        } else if (study === 'obv' || study === 'pvt') {
+        } else if (study === 'obv') {
             const line = payload.line || [];
             const ma = payload.ma || [];
             const lv = line[last], mv = ma[last];
@@ -2167,7 +2915,86 @@ const VolumeStudies = {
                 }
             }
             parts.push(`<span class="vs-reading-item"><span class="vs-lbl">SIGNAL</span> <span style="color:${divColor}">${divText}</span></span>`);
+        } else if (study === 'pvt') {
+            const extra = payload.extraData || {};
+            const side = extra.etfSide || 'long';
+            const zScore = extra.zScore ? extra.zScore[last] : null;
+            const zl8 = extra.zl8 ? extra.zl8[last] : null;
+            const zl21 = extra.zl21 ? extra.zl21[last] : null;
+            const crossPair = extra.crossPair ? extra.crossPair[last] : null;
+            const sisterConf = extra.sisterConfirmed ? extra.sisterConfirmed[last] : null;
+            const action = extra.actions ? extra.actions[last] : 'NEUTRAL / CASH';
+
+            // 1. REGIME
+            const regimeLabel = side === 'short' ? 'INVERSE CARRY' : 'LONG SQUEEZE';
+            const regimeColor = side === 'short' ? '#38bdf8' : '#e06c75';
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">REGIME</span> <span style="color:${regimeColor};font-weight:700;">${regimeLabel}</span></span>`);
+
+            // 2. Z-SCORE
+            let zZone = 'NEUTRAL';
+            let zColor = this.COLORS.label;
+            if (zScore != null) {
+                if (zScore >= 72) { zZone = 'CLIMAX'; zColor = '#d4a830'; }
+                else if (zScore >= 25) { zZone = 'ACCUMULATION'; zColor = this.COLORS.up; }
+                else if (zScore <= -25) { zZone = 'DISTRIBUTION'; zColor = this.COLORS.down; }
+            }
+            const zStr = zScore != null ? `${zScore >= 0 ? '+' : ''}${zScore.toFixed(1)} (${zZone})` : 'n/a';
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">Z-SCORE</span> <span style="color:${zColor};font-weight:700;">${zStr}</span></span>`);
+
+            // 3. DUAL ZLEMA
+            let zlemaStr = 'n/a';
+            let zlemaColor = 'inherit';
+            if (zl8 != null && zl21 != null) {
+                const spread = zl8 - zl21;
+                const isBull = spread >= 0;
+                zlemaColor = isBull ? this.COLORS.up : this.COLORS.down;
+                zlemaStr = `${isBull ? 'BULLISH' : 'BEARISH'} (${spread >= 0 ? '+' : ''}${spread.toFixed(1)})`;
+            }
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">DUAL ZLEMA</span> <span style="color:${zlemaColor};">${zlemaStr}</span></span>`);
+
+            // 4. CONFIRMATION
+            let confStr = 'n/a';
+            let confColor = this.COLORS.label;
+            if (crossPair != null) {
+                const isAligned = sisterConf === 'CONFIRMED' || (side === 'short' && crossPair >= 25) || (side === 'long' && crossPair >= 20);
+                confColor = isAligned ? this.COLORS.up : (crossPair < 0 ? this.COLORS.down : '#d4a830');
+                const tag = isAligned ? 'ALIGNED' : (sisterConf || 'DIVERGENT');
+                confStr = `${crossPair >= 0 ? '+' : ''}${crossPair.toFixed(1)} · ${tag}`;
+            } else {
+                confStr = 'STANDALONE';
+            }
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">CONFIRMATION</span> <span style="color:${confColor};">${confStr}</span></span>`);
+
+            // 5. ACTION (Pill badge)
+            let actionBg = 'rgba(255,255,255,0.06)';
+            let actionColor = this.COLORS.label;
+            let actionBorder = 'rgba(255,255,255,0.15)';
+            if (action.includes('TRIGGER') || action.includes('ENTRY')) {
+                actionBg = 'rgba(61, 184, 122, 0.20)';
+                actionColor = this.COLORS.up;
+                actionBorder = 'rgba(61, 184, 122, 0.50)';
+            } else if (action.includes('CRASH BREAKER')) {
+                actionBg = 'rgba(239, 68, 68, 0.25)';
+                actionColor = '#ef4444';
+                actionBorder = 'rgba(239, 68, 68, 0.70)';
+            } else if (action.includes('EXIT')) {
+                actionBg = 'rgba(245, 158, 11, 0.20)';
+                actionColor = '#f59e0b';
+                actionBorder = 'rgba(245, 158, 11, 0.50)';
+            } else if (action.includes('ACCUMULATION') || action.includes('HOLDING')) {
+                actionBg = 'rgba(56, 189, 248, 0.20)';
+                actionColor = '#38bdf8';
+                actionBorder = 'rgba(56, 189, 248, 0.50)';
+            }
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">ACTION</span> <span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:0.64rem;font-weight:700;background:${actionBg};color:${actionColor};border:1px solid ${actionBorder};">${action}</span></span>`);
         }
         el.innerHTML = parts.join('');
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.VolumeStudies = VolumeStudies;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = VolumeStudies;
+}

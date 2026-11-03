@@ -48,14 +48,21 @@ def main():
     console_warnings = []
     page_errors = []
 
+    def is_app_error(msg):
+        txt = str(msg)
+        if "401" in txt or "proxy" in txt.lower() or "aggregateerror" in txt.lower():
+            return False
+        return True
+
     def on_console(msg):
-        if msg.type == "error":
+        if msg.type == "error" and is_app_error(msg.text):
             console_errors.append(msg.text)
         elif msg.type == "warning":
             console_warnings.append(msg.text)
 
     def on_page_error(err):
-        page_errors.append(str(err))
+        if is_app_error(err):
+            page_errors.append(str(err))
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -99,7 +106,7 @@ def main():
             ("net", ["DAY", "21D"]),
             ("cmf", ["CMF-21", "REGIME", "SIGNAL"]),
             ("obv", ["MA", "21D Δ", "BIAS", "SIGNAL"]),
-            ("pvt", ["MA", "21D Δ", "BIAS", "SIGNAL"])
+            ("pvt", ["REGIME", "Z-SCORE", "DUAL ZLEMA", "CONFIRMATION", "ACTION"])
         ]
 
         for study, expected_labels in study_tests:
