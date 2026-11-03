@@ -19,16 +19,17 @@ const VolumeStudies = {
     _sliderBound: false,
     _chipsBuilt: false,
     _cache: null,
+    _suiteCache: null,
     _payload: null,
     _rafId: null,
 
     STUDIES: {
         classic: [
-            { key: 'vol', label: 'VOLUME', tip: 'Daily share volume with 21-day average line. Up days green, down days red.' },
-            { key: 'osc', label: 'VOL OSC', tip: 'Volume oscillator: percentage spread between 5-day and 21-day volume moving averages.' },
-            { key: 'net', label: 'NET VOL', tip: 'Daily signed volume (+V on up days, -V on down days) with 21-day running total.' },
-            { key: 'cmf', label: 'CMF', tip: 'Chaikin Money Flow (21-day): measures accumulation/distribution using close location in daily range.' },
-            { key: 'obv', label: 'OBV', tip: 'On-Balance Volume: cumulative running total of signed volume with 21-day signal line.' },
+            { key: 'vol', label: 'VOLUME', tip: 'RVOL-FLOW: Split-invariant relative volume with continuous order-flow pressure bar coloring.' },
+            { key: 'osc', label: 'VOL OSC', tip: 'DV-OSC: Directional volume velocity oscillator (EMA5 - EMA21 signed flow momentum) with participation acceleration envelope.' },
+            { key: 'net', label: 'NET VOL', tip: 'EW-NETFLOW: Exponentially weighted 21-day net impulse accumulation with stationary Z-score bounds, eliminating boxcar drop-off jumps.' },
+            { key: 'cmf', label: 'CMF', tip: 'ACMF: Adaptive True-Range Chaikin Money Flow with 10-bar efficiency ratio, dynamically contracting lag in squeezes.' },
+            { key: 'obv', label: 'OBV', tip: 'IOBV: Split-invariant continuous cumulative flow with EMA5/KAMA14/EMA34 ribbon, stationary Z-OBV oscillator, and Day-1 crash breaker.' },
             { key: 'pvt', label: 'PVT', tip: 'Invariant Price-Volume Trend (IPVT): Split-invariant Kyle-Bouchaud flow kernel with Dual Zero-Lag EMA ribbon, stationary bounded Z-score oscillator, and regime-asymmetric execution engine.' },
         ],
         micro: [
@@ -186,6 +187,517 @@ const VolumeStudies = {
             out[i] = prev;
         }
         return out;
+    },
+
+    // ============================================
+    // UPGRADED QUANTITATIVE VOLUME SUITE (MODERNIZED)
+    // ============================================
+
+    computeUpgradedVolumeSuite(primaryBars, ticker = 'BOIL', sisterBars = null) {
+        if (!primaryBars || !primaryBars.length) return null;
+        const n = primaryBars.length;
+        const dates = new Array(n);
+        const opens = new Float64Array(n);
+        const highs = new Float64Array(n);
+        const lows = new Float64Array(n);
+        const closes = new Float64Array(n);
+        const volumes = new Float64Array(n);
+
+        for (let i = 0; i < n; i++) {
+            const b = primaryBars[i] || {};
+            const c = b.close != null ? b.close : 0;
+            dates[i] = b.date || '';
+            closes[i] = c;
+            opens[i] = (b.open != null && isFinite(b.open)) ? b.open : c;
+            highs[i] = (b.high != null && isFinite(b.high)) ? b.high : c;
+            lows[i] = (b.low != null && isFinite(b.low)) ? b.low : c;
+            volumes[i] = (b.volume != null && isFinite(b.volume)) ? b.volume : 0;
+        }
+
+        const isShortEtp = (ticker === 'KOLD' || ticker === 'HND.TO' || ticker === '3NGS.L' ||
+            (typeof CONFIG !== 'undefined' && CONFIG.etfs && CONFIG.etfs[ticker] && CONFIG.etfs[ticker].side === 'short'));
+
+        // 1. Typical Price, Dollar Turnover, True Range, CLV, Log Returns
+        const tp = new Float64Array(n);
+        const turnover = new Float64Array(n);
+        const clvTR = new Float64Array(n);
+        const logRet = new Float64Array(n);
+        const absLogRet = new Float64Array(n);
+        const EPS = 1e-9;
+
+        for (let i = 0; i < n; i++) {
+            const h = highs[i], l = lows[i], c = closes[i];
+            const p = (h + l + 2 * c) * 0.25;
+            tp[i] = p;
+            turnover[i] = volumes[i] * p;
+
+            const prevC = i > 0 ? closes[i - 1] : opens[i];
+            const trH = Math.max(h, prevC);
+            const trL = Math.min(l, prevC);
+            const tr = trH - trL;
+
+            const hlSpan = h - l;
+            clvTR[i] = hlSpan > EPS
+                ? ((c - l) - (h - c)) / hlSpan
+                : ((c - trL) - (trH - c)) / (tr + EPS);
+
+            if (i > 0) {
+                const lr = (prevC > EPS && c > EPS) ? Math.log(c / prevC) : 0;
+                logRet[i] = lr;
+                absLogRet[i] = Math.abs(lr);
+            }
+        }
+
+        // 2. Lagged Outlier-Trimmed Baseline & Kyle-Bouchaud RVOL
+        const baseTurnover = new Float64Array(n);
+        const rvol = new Float64Array(n);
+        const volWeight = new Float64Array(n);
+        const phi = new Float64Array(n);
+        const impulse = new Float64Array(n);
+
+        const ringD = new Float64Array(21);
+        const ringSig = new Float64Array(21);
+        const sortScratch = new Float64Array(21);
+        let countD = 0, headD = 0;
+
+        for (let i = 0; i < n; i++) {
+            if (i < 21) {
+                let s = 0;
+                for (let k = 0; k < countD; k++) s += ringD[k];
+                const avgD = countD > 0 ? (s / countD) : Math.max(turnover[i], 1.0);
+                baseTurnover[i] = avgD;
+                rvol[i] = Math.max(0.01, Math.min(25.0, turnover[i] / (avgD + EPS)));
+                volWeight[i] = Math.pow(rvol[i], 0.55);
+                phi[i] = clvTR[i] * 0.45;
+                impulse[i] = volWeight[i] * phi[i];
+            } else {
+                // Trimmed Mean of Turnover
+                for (let k = 0; k < 21; k++) sortScratch[k] = ringD[k];
+                sortScratch.sort();
+                let sumD = 0;
+                for (let k = 3; k < 18; k++) sumD += sortScratch[k];
+                const trimD = sumD / 15.0;
+                baseTurnover[i] = trimD;
+
+                // Trimmed Mean of Volatility
+                for (let k = 0; k < 21; k++) sortScratch[k] = ringSig[k];
+                sortScratch.sort();
+                let sumSig = 0;
+                for (let k = 3; k < 18; k++) sumSig += sortScratch[k];
+                const trimSig = (sumSig / 15.0) * 1.2533;
+
+                const rv = Math.max(0.01, Math.min(25.0, turnover[i] / (trimD + EPS)));
+                rvol[i] = rv;
+                const wV = Math.pow(rv, 0.55);
+                volWeight[i] = wV;
+
+                const rNorm = Math.tanh((0.65 * logRet[i]) / (trimSig + EPS));
+                const phi_t = Math.max(-1.0, Math.min(1.0, 0.55 * rNorm + 0.45 * clvTR[i]));
+                phi[i] = phi_t;
+                impulse[i] = wV * phi_t;
+            }
+
+            ringD[headD] = turnover[i];
+            ringSig[headD] = absLogRet[i];
+            headD = (headD + 1) % 21;
+            if (countD < 21) countD++;
+        }
+
+        // 3. IOBV Cumulative Flow & Adaptive KAMA Ribbon
+        const iobv = new Float64Array(n);
+        const ema5 = new Float64Array(n);
+        const kama14 = new Float64Array(n);
+        const ema34 = new Float64Array(n);
+        const er10 = new Float64Array(n);
+        const zObv = new Float64Array(n);
+
+        let runningIobv = 0;
+        const alpha5 = 2.0 / (5.0 + 1.0);
+        const alpha21 = 2.0 / (21.0 + 1.0);
+        const alpha34 = 2.0 / (34.0 + 1.0);
+        const kamaFastSC = 2.0 / (3.0 + 1.0);
+        const kamaSlowSC = 2.0 / (34.0 + 1.0);
+
+        const obvSpreadRing = new Float64Array(21);
+        let obvRingCount = 0, obvRingHead = 0;
+
+        for (let i = 0; i < n; i++) {
+            runningIobv += impulse[i];
+            iobv[i] = runningIobv;
+
+            // Efficiency Ratio ER_10
+            let netDelta = Math.abs(iobv[i] - iobv[Math.max(0, i - 10)]);
+            let sumAbsF = 0;
+            for (let j = 0; j < 10 && i - j >= 0; j++) sumAbsF += Math.abs(impulse[i - j]);
+            const er = sumAbsF > EPS ? Math.min(1.0, netDelta / sumAbsF) : 0;
+            er10[i] = er;
+
+            if (i === 0) {
+                ema5[i] = runningIobv;
+                kama14[i] = runningIobv;
+                ema34[i] = runningIobv;
+            } else {
+                const sc = Math.pow(er * (kamaFastSC - kamaSlowSC) + kamaSlowSC, 2.0);
+                kama14[i] = kama14[i - 1] + sc * (runningIobv - kama14[i - 1]);
+                ema5[i] = ema5[i - 1] + alpha5 * (runningIobv - ema5[i - 1]);
+                ema34[i] = ema34[i - 1] + alpha34 * (runningIobv - ema34[i - 1]);
+            }
+
+            const obvSpread = runningIobv - kama14[i];
+            obvSpreadRing[obvRingHead] = obvSpread * obvSpread;
+            obvRingHead = (obvRingHead + 1) % 21;
+            if (obvRingCount < 21) obvRingCount++;
+
+            let sumObvSq = 0;
+            for (let k = 0; k < obvRingCount; k++) sumObvSq += obvSpreadRing[k];
+            const rmsObv = Math.sqrt(sumObvSq / obvRingCount + EPS);
+            const z = obvSpread / rmsObv;
+            zObv[i] = (100.0 * z) / Math.sqrt(z * z + 2.25);
+        }
+
+        // 4. VOL OSC (DV-OSC) & Participation Acceleration
+        const volScalarAccel = new Float64Array(n);
+        const dvOsc = new Float64Array(n);
+        const dvOscState = new Array(n);
+        let ema5VolW = 1.0, ema21VolW = 1.0;
+        let ema5Flow = 0.0, ema21Flow = 0.0;
+        const dvSpreadRing = new Float64Array(21);
+        let dvRingCount = 0, dvRingHead = 0;
+
+        for (let i = 0; i < n; i++) {
+            const wV = volWeight[i];
+            const f_t = impulse[i];
+            ema5VolW = i === 0 ? wV : ema5VolW + alpha5 * (wV - ema5VolW);
+            ema21VolW = i === 0 ? wV : ema21VolW + alpha21 * (wV - ema21VolW);
+            volScalarAccel[i] = (100.0 * (ema5VolW - ema21VolW)) / (ema21VolW + EPS);
+
+            ema5Flow = i === 0 ? f_t : ema5Flow + alpha5 * (f_t - ema5Flow);
+            ema21Flow = i === 0 ? f_t : ema21Flow + alpha21 * (f_t - ema21Flow);
+            const flowSpread = ema5Flow - ema21Flow;
+
+            dvSpreadRing[dvRingHead] = flowSpread * flowSpread;
+            dvRingHead = (dvRingHead + 1) % 21;
+            if (dvRingCount < 21) dvRingCount++;
+
+            let sumDvSq = 0;
+            for (let k = 0; k < dvRingCount; k++) sumDvSq += dvSpreadRing[k];
+            const rmsDv = Math.sqrt(sumDvSq / dvRingCount + EPS);
+            const z = flowSpread / rmsDv;
+            const dv = (100.0 * z) / Math.sqrt(z * z + 2.25);
+            dvOsc[i] = dv;
+
+            dvOscState[i] = (dv >= 20.0 && volScalarAccel[i] > 0)
+                ? 'BULL_EXPANSION'
+                : (dv <= -20.0 && volScalarAccel[i] > 0)
+                ? 'BEAR_EXPANSION'
+                : 'CONTRACTION_CHOP';
+        }
+
+        // 5. NET VOL (EW-NETFLOW)
+        const ewNet21 = new Float64Array(n);
+        const ewNetZ = new Float64Array(n);
+        let runningEwNet = 0;
+        const netSqRing = new Float64Array(21);
+        let netRingCount = 0, netRingHead = 0;
+
+        for (let i = 0; i < n; i++) {
+            runningEwNet = (1.0 - alpha21) * runningEwNet + impulse[i];
+            ewNet21[i] = runningEwNet;
+
+            netSqRing[netRingHead] = runningEwNet * runningEwNet;
+            netRingHead = (netRingHead + 1) % 21;
+            if (netRingCount < 21) netRingCount++;
+
+            let sumNetSq = 0;
+            for (let k = 0; k < netRingCount; k++) sumNetSq += netSqRing[k];
+            const rmsNet = Math.sqrt(sumNetSq / netRingCount + EPS);
+            const z = runningEwNet / rmsNet;
+            ewNetZ[i] = (100.0 * z) / Math.sqrt(z * z + 2.25);
+        }
+
+        // 6. CMF (ACMF)
+        const acmf = new Float64Array(n);
+        const acmfRegime = new Array(n);
+        let acmfNum = 0, acmfDen = 1.0;
+
+        for (let i = 0; i < n; i++) {
+            const er = er10[i];
+            const alphaAcmf = 0.0909 + er * (0.40 - 0.0909);
+            acmfNum = (1.0 - alphaAcmf) * acmfNum + phi[i] * volWeight[i];
+            acmfDen = (1.0 - alphaAcmf) * acmfDen + volWeight[i];
+            const val = Math.max(-1.0, Math.min(1.0, acmfNum / (acmfDen + EPS)));
+            acmf[i] = val;
+            acmfRegime[i] = val >= 0.08 ? 'ACCUMULATION' : val <= -0.08 ? 'DISTRIBUTION' : 'NEUTRAL_DEADBAND';
+        }
+
+        // 7. Single Asset Composite & 14-bar Stochastic Divergences
+        const composite = new Float64Array(n);
+        const bullDiv = new Array(n).fill(false);
+        const bearDiv = new Array(n).fill(false);
+
+        for (let i = 0; i < n; i++) {
+            composite[i] = 0.40 * zObv[i] + 0.35 * (100.0 * acmf[i]) + 0.25 * dvOsc[i];
+
+            if (i >= 21 + 14) {
+                let minP = Infinity, maxP = -Infinity;
+                let minObv = Infinity, maxObv = -Infinity;
+                for (let j = i - 13; j <= i; j++) {
+                    if (lows[j] < minP) minP = lows[j];
+                    if (highs[j] > maxP) maxP = highs[j];
+                    if (iobv[j] < minObv) minObv = iobv[j];
+                    if (iobv[j] > maxObv) maxObv = iobv[j];
+                }
+                const pLoc = (closes[i] - minP) / (maxP - minP + EPS);
+                const obvLoc = (iobv[i] - minObv) / (maxObv - minObv + EPS);
+
+                bullDiv[i] = pLoc <= 0.15 && (obvLoc - pLoc >= 0.30 || acmf[i] >= 0.05) && impulse[i] > 0.20;
+                bearDiv[i] = pLoc >= 0.85 && (pLoc - obvLoc >= 0.30 || acmf[i] <= -0.05) && impulse[i] < -0.20;
+            }
+        }
+
+        // 8. Date-Keyed Cross-Pair Coherence (Guardrail 5)
+        const crossPair = new Float64Array(n);
+        const sisterConfirmed = new Array(n).fill('STANDALONE');
+
+        if (sisterBars && sisterBars.length) {
+            const sisterTicker = (typeof CONFIG !== 'undefined' && CONFIG.etfs && CONFIG.etfs[ticker] && CONFIG.etfs[ticker].pair)
+                ? CONFIG.etfs[ticker].pair
+                : (isShortEtp ? 'BOIL' : 'KOLD');
+            const sisterSuite = this.computeUpgradedVolumeSuite(sisterBars, sisterTicker, null);
+            if (sisterSuite && sisterSuite.dates && sisterSuite.composite) {
+                const sisterMap = new Map();
+                for (let k = 0; k < sisterSuite.dates.length; k++) {
+                    sisterMap.set(sisterSuite.dates[k], sisterSuite.composite[k]);
+                }
+                for (let i = 0; i < n; i++) {
+                    const d = dates[i];
+                    if (sisterMap.has(d)) {
+                        const zSister = sisterMap.get(d);
+                        crossPair[i] = 0.65 * composite[i] - 0.35 * zSister;
+                        if (isShortEtp) {
+                            sisterConfirmed[i] = zSister <= -15 ? 'CONFIRMED' : 'DIVERGENT';
+                        } else {
+                            sisterConfirmed[i] = zSister <= 0 ? 'CONFIRMED' : 'DIVERGENT';
+                        }
+                    } else {
+                        crossPair[i] = composite[i];
+                        sisterConfirmed[i] = 'STANDALONE';
+                    }
+                }
+            }
+        } else {
+            for (let i = 0; i < n; i++) {
+                crossPair[i] = composite[i];
+                sisterConfirmed[i] = 'STANDALONE';
+            }
+        }
+
+        // 9. Causal Regime-Asymmetric Execution Engine (Guardrail 3)
+        const atr14 = this.computeATR14(highs, lows, closes);
+        const inPosition = new Array(n).fill(false);
+        const actions = new Array(n).fill('NEUTRAL / CASH');
+        const statuses = new Array(n).fill('Monitoring order-flow dynamics');
+        const trailingStops = new Array(n).fill(null);
+
+        let posActive = false;
+        let entryIdx = -1;
+        let highestPricePrior = 0;
+        let stopPrice = 0;
+
+        for (let i = 0; i < n; i++) {
+            if (i < 21) {
+                actions[i] = 'WARMUP / INITIALIZING';
+                statuses[i] = 'Accumulating baseline turnover and volatility distribution';
+                inPosition[i] = false;
+                continue;
+            }
+
+            const c = closes[i];
+            const h = highs[i];
+            const l = lows[i];
+            const prevAtr = (i > 0 && atr14[i - 1] != null) ? atr14[i - 1] : (c * 0.03);
+            const zObvCurr = zObv[i];
+            const fCurr = impulse[i];
+            const acmfCurr = acmf[i];
+            const crossComp = crossPair[i];
+            const fastAboveKama = ema5[i] > kama14[i];
+            const kamaAboveSlow = kama14[i] > ema34[i];
+
+            if (isShortEtp) {
+                // INVERSE CARRY REGIME (KOLD, HND.TO, 3NGS.L)
+                if (posActive) {
+                    // Evaluate trailing stop against prior highest price
+                    const activeStop = Math.max(stopPrice, highestPricePrior - 2.5 * prevAtr);
+                    stopPrice = activeStop;
+                    trailingStops[i] = activeStop;
+
+                    if (fCurr <= -2.0 && iobv[i] < kama14[i]) {
+                        posActive = false;
+                        inPosition[i] = false;
+                        actions[i] = 'CRASH BREAKER EJECTION';
+                        statuses[i] = `Emergency Day-1 cash exit: violent negative flow shock (f_t = ${fCurr.toFixed(2)} <= -2.0)`;
+                    } else if (l <= activeStop || c <= activeStop) {
+                        posActive = false;
+                        inPosition[i] = false;
+                        actions[i] = 'TRAILING STOP EXIT';
+                        statuses[i] = `2.5x ATR trailing volatility stop hit at $${activeStop.toFixed(2)}; profit locked`;
+                    } else if (!fastAboveKama && crossComp <= -10.0) {
+                        posActive = false;
+                        inPosition[i] = false;
+                        actions[i] = 'TREND BREAKDOWN EXIT';
+                        statuses[i] = 'Fast EMA-5 crossed below KAMA-14 with negative composite conviction';
+                    } else {
+                        posActive = true;
+                        inPosition[i] = true;
+                        actions[i] = 'HOLDING SHORT CARRY';
+                        statuses[i] = `Structural positive roll yield capture active; 2.5x ATR trailing stop at $${activeStop.toFixed(2)}`;
+                        highestPricePrior = Math.max(highestPricePrior, h);
+                    }
+                } else {
+                    const trendEntry = crossComp >= 22.0 && acmfCurr >= 0.08 && fastAboveKama && (kamaAboveSlow || er10[i] >= 0.35);
+                    if ((trendEntry || (bullDiv[i] && crossComp >= 5.0)) && fCurr > -1.5) {
+                        posActive = true;
+                        entryIdx = i;
+                        highestPricePrior = h;
+                        stopPrice = h - 2.5 * prevAtr;
+                        inPosition[i] = true;
+                        trailingStops[i] = stopPrice;
+                        actions[i] = 'TREND ACCUMULATION';
+                        statuses[i] = `Contango harvest entry triggered: cross-pair conviction +${crossComp.toFixed(1)} with ribbon alignment`;
+                    } else {
+                        actions[i] = 'NEUTRAL / CASH';
+                        statuses[i] = 'Contango drift monitoring; awaiting high-conviction institutional accumulation';
+                    }
+                }
+            } else {
+                // LONG DECAY REGIME (BOIL, HNU.TO, 3NGL.L) - Guardrail 3 Causal Trailing Stop
+                if (posActive) {
+                    const holdDays = i - entryIdx;
+                    const activeStop = Math.max(stopPrice, highestPricePrior - 1.5 * prevAtr);
+                    stopPrice = activeStop;
+                    trailingStops[i] = activeStop;
+
+                    if (zObvCurr >= 70.0 || acmfCurr >= 0.42 || bearDiv[i]) {
+                        posActive = false;
+                        inPosition[i] = false;
+                        actions[i] = 'CLIMAX EXHAUSTION EXIT';
+                        statuses[i] = `Parabolic climax profit taken: Z-OBV ${zObvCurr.toFixed(1)} or ACMF ${acmfCurr.toFixed(2)}`;
+                    } else if (l <= activeStop || c <= activeStop) {
+                        posActive = false;
+                        inPosition[i] = false;
+                        actions[i] = '1.5x ATR TRAILING STOP EXIT';
+                        statuses[i] = `1.5x ATR trailing volatility stop hit at $${activeStop.toFixed(2)}; exiting before contango collapse`;
+                    } else if (holdDays >= 7) {
+                        posActive = false;
+                        inPosition[i] = false;
+                        actions[i] = '7-DAY MAX HOLD TIME EXIT';
+                        statuses[i] = '7-bar maximum holding period reached; exiting to avoid physical contango bleed';
+                    } else if (fCurr <= -0.45 || !fastAboveKama) {
+                        posActive = false;
+                        inPosition[i] = false;
+                        actions[i] = 'FLOW STALL EXIT';
+                        statuses[i] = `Flow impulse stalled (f_t = ${fCurr.toFixed(2)}) or EMA-5 fell below KAMA-14`;
+                    } else {
+                        posActive = true;
+                        inPosition[i] = true;
+                        actions[i] = 'HOLDING SQUEEZE';
+                        statuses[i] = `Mean-reversion squeeze active (Day ${holdDays + 1}/7); trailing stop at $${activeStop.toFixed(2)}`;
+                        highestPricePrior = Math.max(highestPricePrior, h);
+                    }
+                } else {
+                    const priorOversold = Math.min(zObv[i - 1] || 0, zObv[i - 2] || 0) <= -35.0;
+                    const stoppingVolThrust = priorOversold && fCurr >= 1.50 && dvOsc[i] > (dvOsc[i - 1] || 0) && crossComp >= 8.0;
+
+                    if (bullDiv[i] || stoppingVolThrust) {
+                        posActive = true;
+                        entryIdx = i;
+                        highestPricePrior = h;
+                        stopPrice = h - 1.5 * prevAtr;
+                        inPosition[i] = true;
+                        trailingStops[i] = stopPrice;
+                        actions[i] = bullDiv[i] ? 'BULLISH DIVERGENCE ENTRY' : 'IMPULSE SQUEEZE TRIGGER';
+                        statuses[i] = bullDiv[i]
+                            ? `14-bar stochastic divergence confirmed with positive flow impulse (+${fCurr.toFixed(2)})`
+                            : `Oversold thrust entry (f_t = +${fCurr.toFixed(2)} >= 1.50) from trough (${(zObv[i - 1] || 0).toFixed(1)})`;
+                    } else {
+                        actions[i] = 'NEUTRAL / CASH';
+                        statuses[i] = 'Structural contango bleed avoidance — 100% capital preserved in cash';
+                    }
+                }
+            }
+        }
+
+        return {
+            dates,
+            closes: Array.from(closes),
+            highs: Array.from(highs),
+            lows: Array.from(lows),
+            volumes: Array.from(volumes),
+            turnover: Array.from(turnover),
+            baseTurnover: Array.from(baseTurnover),
+            rvol: Array.from(rvol),
+            volWeight: Array.from(volWeight),
+            phi: Array.from(phi),
+            impulse: Array.from(impulse),
+            volScalarAccel: Array.from(volScalarAccel),
+            dvOsc: Array.from(dvOsc),
+            dvOscState,
+            ewNet21: Array.from(ewNet21),
+            ewNetZ: Array.from(ewNetZ),
+            acmf: Array.from(acmf),
+            acmfRegime,
+            er10: Array.from(er10),
+            iobv: Array.from(iobv),
+            ema5: Array.from(ema5),
+            kama14: Array.from(kama14),
+            ema34: Array.from(ema34),
+            zObv: Array.from(zObv),
+            composite: Array.from(composite),
+            crossPair: Array.from(crossPair),
+            sisterConfirmed,
+            bullDiv,
+            bearDiv,
+            actions,
+            statuses,
+            inPosition,
+            trailingStops,
+            side: isShortEtp ? 'short' : 'long',
+            regime: isShortEtp ? 'INVERSE_CARRY' : 'LONG_DECAY'
+        };
+    },
+
+    _getSuiteData(ticker, history, options) {
+        if (!this._suiteCache) {
+            this._suiteCache = new Map();
+        }
+        const t = ticker || this.state.ticker || 'BOIL';
+        if (!history || !history.length) return null;
+        const lastDate = history[history.length - 1] ? (history[history.length - 1].date || '') : '';
+
+        // Determine sister ETF bars
+        const etfCfg = (typeof CONFIG !== 'undefined' && CONFIG.etfs) ? CONFIG.etfs[t] : null;
+        const pairTicker = etfCfg ? etfCfg.pair : null;
+        let sisterBars = null;
+        if (pairTicker && typeof App !== 'undefined' && App.allMetrics && App.allMetrics[pairTicker]) {
+            sisterBars = App.allMetrics[pairTicker].history;
+        } else if (pairTicker && typeof window !== 'undefined' && window.allData && window.allData.etfs && window.allData.etfs[pairTicker]) {
+            sisterBars = window.allData.etfs[pairTicker].history;
+        } else if (options && options.sisterBars) {
+            sisterBars = options.sisterBars;
+        }
+
+        const sisterLen = sisterBars ? sisterBars.length : 0;
+        const cacheKey = `${t}|${history.length}|${lastDate}|${pairTicker || ''}|${sisterLen}`;
+
+        if (this._suiteCache.has(cacheKey)) {
+            return this._suiteCache.get(cacheKey);
+        }
+
+        const suite = this.computeUpgradedVolumeSuite(history, t, sisterBars);
+        if (suite) {
+            this._suiteCache.set(cacheKey, suite);
+        }
+        return suite;
     },
 
     // Definitive Invariant Price-Volume Trend (IPVT) & Asymmetric Alpha Engine
@@ -1119,6 +1631,7 @@ const VolumeStudies = {
     _sliceStart(dates, rangeKey) {
         const cfg = this._cfg();
         let days = null;
+        if (rangeKey === '1m') days = 30;
         const ranges = cfg.ranges || [];
         for (const r of ranges) {
             if (r.key === rangeKey) { days = r.days; break; }
@@ -1153,7 +1666,7 @@ const VolumeStudies = {
             endIdx: end,
             fullLength: dates.length,
             extraData: actualExtra && actualExtra.extraData ? Object.fromEntries(
-                Object.entries(actualExtra.extraData).map(([k, v]) => [k, Array.isArray(v) ? slice(v) : v])
+                Object.entries(actualExtra.extraData).map(([k, v]) => [k, (Array.isArray(v) || ArrayBuffer.isView(v)) ? slice(v) : v])
             ) : {}
         };
     },
@@ -1265,43 +1778,119 @@ const VolumeStudies = {
         };
 
         // --- CLASSIC TECHNICAL SUITE ---
-        if (study === 'vol') {
-            const ma = this.sma(volumes, maLen);
-            const signs = this.signSeries(closes);
+        const suite = (study === 'vol' || study === 'osc' || study === 'net' || study === 'cmf' || study === 'obv')
+            ? this._getSuiteData(options.ticker || this.state.ticker, history, options)
+            : null;
+
+        if (study === 'vol' && suite) {
+            const isDollar = unit === 'dollar';
+            const barsData = isDollar ? suite.turnover : suite.rvol;
+            const maData = isDollar ? suite.baseTurnover : null;
             return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
-                ...extraBase, bars: volumes, line: null, ma, colorSigns: signs, zeroCentered: false, study
+                ...extraBase,
+                bars: barsData,
+                line: null,
+                ma: maData,
+                zeroCentered: false,
+                study: 'vol',
+                extraData: {
+                    rvol: suite.rvol,
+                    phi: suite.phi,
+                    impulse: suite.impulse,
+                    turnover: suite.turnover,
+                    baseTurnover: suite.baseTurnover,
+                    volWeight: suite.volWeight
+                }
             });
         }
-        if (study === 'osc') {
-            const line = this.volumeOscillator(volumes, fast, slow);
+
+        if (study === 'osc' && suite) {
             return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
-                ...extraBase, bars: null, line, ma: null, zeroCentered: true, study
+                ...extraBase,
+                bars: null,
+                line: suite.dvOsc,
+                secondaryLine: suite.volScalarAccel,
+                zeroCentered: true,
+                study: 'osc',
+                extraData: {
+                    dvOsc: suite.dvOsc,
+                    volScalarAccel: suite.volScalarAccel,
+                    dvOscState: suite.dvOscState
+                }
             });
         }
-        if (study === 'net') {
-            const signed = this.signedVolume(closes, volumes);
-            const line = this.rollingSum(signed, maLen);
+
+        if (study === 'net' && suite) {
             return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
-                ...extraBase, bars: signed, line, ma: null, zeroCentered: true, study
+                ...extraBase,
+                bars: suite.impulse,
+                line: suite.ewNet21,
+                zeroCentered: true,
+                study: 'net',
+                extraData: {
+                    impulse: suite.impulse,
+                    ewNet21: suite.ewNet21,
+                    ewNetZ: suite.ewNetZ
+                }
             });
         }
-        if (study === 'cmf') {
-            const cmfLen = (cfg && cfg.cmf) || maLen || 21;
-            const line = this.cmf(highs, lows, closes, volumes, cmfLen);
+
+        if (study === 'cmf' && suite) {
             return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
-                ...extraBase, bars: null, line, ma: null, zeroCentered: true, study
+                ...extraBase,
+                bars: null,
+                line: suite.acmf,
+                ma: null,
+                zeroCentered: true,
+                study: 'cmf',
+                extraData: {
+                    acmf: suite.acmf,
+                    acmfRegime: suite.acmfRegime,
+                    er10: suite.er10,
+                    bullDiv: suite.bullDiv,
+                    bearDiv: suite.bearDiv
+                }
             });
         }
-        if (study === 'obv') {
-            const full = this.obv(closes, volumes);
-            const base = full[startIdx];
-            const line = full.map(v => v - base);
-            const maFull = this.sma(full, maLen);
-            const ma = maFull.map(v => v == null ? null : v - base);
+
+        if (study === 'obv' && suite) {
+            // Viewport anchoring strictly applied to cumulative IOBV & ribbon (Guardrail 1)
+            const base = (suite.iobv && suite.iobv[startIdx] != null) ? suite.iobv[startIdx] : 0;
+            const line = suite.iobv.map(v => v - base);
+            const ema5Line = suite.ema5.map(v => v - base);
+            const kama14Line = suite.kama14.map(v => v - base);
+            const ema34Line = suite.ema34.map(v => v - base);
+
             return this._buildPayload(dates, closes, volumes, startIdx, endIdx, {
-                ...extraBase, bars: null, line, ma, zeroCentered: false, study: 'obv'
+                ...extraBase,
+                bars: null,
+                line: line,
+                ma: kama14Line,
+                secondaryLine: ema5Line,
+                zeroCentered: false,
+                study: 'obv',
+                extraData: {
+                    rawIobv: suite.iobv,
+                    ema5: ema5Line,
+                    kama14: kama14Line,
+                    ema34: ema34Line,
+                    zObv: suite.zObv,
+                    er10: suite.er10,
+                    composite: suite.composite,
+                    crossPair: suite.crossPair,
+                    sisterConfirmed: suite.sisterConfirmed,
+                    bullDiv: suite.bullDiv,
+                    bearDiv: suite.bearDiv,
+                    actions: suite.actions,
+                    statuses: suite.statuses,
+                    inPosition: suite.inPosition,
+                    trailingStops: suite.trailingStops,
+                    side: suite.side,
+                    regime: suite.regime
+                }
             });
         }
+
         if (study === 'pvt') {
             return this._buildInvariantPVTPayload(history, dates, closes, highs, lows, rawVolumes, dollarVolumes, startIdx, endIdx, extraBase, options);
         }
@@ -1785,8 +2374,14 @@ const VolumeStudies = {
     },
 
     _yFormat(study, unit) {
-        if (study === 'osc') return v => (v >= 0 ? '+' : '') + v.toFixed(0) + '%';
+        if (study === 'vol') {
+            if (unit === 'dollar') return v => '$' + this.fmtVol(v);
+            return v => v.toFixed(1) + '×';
+        }
+        if (study === 'osc') return v => (v >= 0 ? '+' : '') + v.toFixed(0);
+        if (study === 'net') return v => (v >= 0 ? '+' : '') + v.toFixed(1) + ' fl';
         if (study === 'cmf') return v => (v >= 0 ? '+' : '') + v.toFixed(2);
+        if (study === 'obv') return v => (v >= 0 ? '+' : '') + v.toFixed(0) + ' fl';
         if (study === 'vpin') return v => (v >= 0 ? '+' : '') + v.toFixed(2);
         if (study === 'illiq' || study === 'esvd' || study === 'vwapz') return v => (v >= 0 ? '+' : '') + v.toFixed(1) + 'σ';
         if (study === 'lmsw') return v => (v >= 0 ? '+' : '') + v.toFixed(2);
@@ -1833,14 +2428,43 @@ const VolumeStudies = {
             }
         };
         consider(bars); consider(line); consider(ma); consider(secondaryLine);
+        if (payload.study === 'obv' && payload.extraData && payload.extraData.ema34) {
+            consider(payload.extraData.ema34);
+        }
         if (!isFinite(yMin) || !isFinite(yMax)) { this._drawMessage('No data in range'); return; }
         if (bars && !payload.zeroCentered) { yMin = Math.min(0, yMin); }
         if (payload.zeroCentered || (yMin < 0 && yMax > 0)) {
             yMin = Math.min(0, yMin); yMax = Math.max(0, yMax);
         }
 
-        // Bounded normalization for institutional indicators
-        if (payload.study === 'vpin') {
+        // Bounded normalization and winsorization
+        if (payload.study === 'vol') {
+            if (payload.unit === 'dollar') {
+                // Winsorized dollar mode ceiling
+                const vals = bars ? bars.filter(v => v != null && isFinite(v)) : [];
+                vals.sort((a, b) => a - b);
+                const p98 = vals[Math.floor(vals.length * 0.98)] || (yMax * 0.8);
+                yMin = 0;
+                yMax = Math.max(yMax * 0.5, p98 * 1.25);
+            } else {
+                // Winsorized RVOL ceiling (Guardrail 4)
+                const vals = bars ? bars.filter(v => v != null && isFinite(v)) : [];
+                vals.sort((a, b) => a - b);
+                const p98 = vals[Math.floor(vals.length * 0.98)] || 2.0;
+                yMin = 0;
+                yMax = Math.max(3.5, Math.min(6.0, p98 * 1.25));
+            }
+        } else if (payload.study === 'osc') {
+            yMin = Math.min(-100, yMin);
+            yMax = Math.max(100, yMax);
+        } else if (payload.study === 'net') {
+            const maxAbs = Math.max(Math.abs(yMin), Math.abs(yMax), 1.0);
+            yMin = -maxAbs;
+            yMax = maxAbs;
+        } else if (payload.study === 'cmf') {
+            yMin = Math.min(-1.0, yMin);
+            yMax = Math.max(1.0, yMax);
+        } else if (payload.study === 'vpin') {
             yMin = Math.min(-1.0, yMin);
             yMax = Math.max(1.0, yMax);
         } else if (payload.study === 'lmsw') {
@@ -1852,8 +2476,10 @@ const VolumeStudies = {
         }
 
         if (yMin === yMax) { yMin -= 1; yMax += 1; }
-        const padY = (yMax - yMin) * 0.05;
-        yMin -= padY; yMax += padY;
+        if (payload.study !== 'vol') {
+            const padY = (yMax - yMin) * 0.05;
+            yMin -= padY; yMax += padY;
+        }
         if (bars && !payload.zeroCentered) yMin = Math.max(0, yMin);
 
         const getX = i => pad.left + (n <= 1 ? 0 : (i / (n - 1)) * chartW);
@@ -1913,8 +2539,20 @@ const VolumeStudies = {
             ctx.setLineDash([]);
         }
 
-        // Institutional Microstructure Reference Bands & Zones
-        if (payload.study === 'vpin') {
+        // Reference Guides
+        if (payload.study === 'vol') {
+            if (payload.unit !== 'dollar') {
+                drawGuide(1.0, 'rgba(255,255,255,0.25)', [3, 3], '1.0× BASELINE');
+                drawGuide(2.0, 'rgba(61,184,122,0.40)', [2, 2], '2.0× EXPANSION');
+                drawGuide(4.0, 'rgba(212,168,48,0.45)', [2, 2], '4.0× CLIMAX');
+            }
+        } else if (payload.study === 'osc') {
+            drawGuide(20.0, 'rgba(61,184,122,0.35)', [3, 3], '+20 BULL EXPANSION');
+            drawGuide(-20.0, 'rgba(192,64,64,0.35)', [3, 3], '-20 BEAR EXPANSION');
+        } else if (payload.study === 'cmf') {
+            drawGuide(0.08, 'rgba(61,184,122,0.35)', [3, 3], '+0.08 ACCUMULATION');
+            drawGuide(-0.08, 'rgba(192,64,64,0.35)', [3, 3], '-0.08 DISTRIBUTION');
+        } else if (payload.study === 'vpin') {
             drawGuide(0.40, 'rgba(212,168,48,0.40)', [3, 3], 'TOXIC 0.40');
         } else if (payload.study === 'illiq') {
             drawGuide(2.0, 'rgba(61,184,122,0.40)', [3, 3], '+2.0σ ABSORPTION');
@@ -1959,17 +2597,42 @@ const VolumeStudies = {
             const colW = chartW / n;
             const barW = Math.max(1, colW * 0.7);
             const zeroY = (yMin < 0 && yMax > 0) ? mapY(0) : pad.top + chartH;
-            const fillBar = (v, sign, x, bw) => {
-                let color = sign > 0 ? this.COLORS.up : sign < 0 ? this.COLORS.down : this.COLORS.flat;
-                if (payload.study === 'esvd') {
+            const isVolTab = payload.study === 'vol';
+            const extra = payload.extraData || {};
+            const phiArr = extra.phi || [];
+
+            const fillBar = (v, sign, phiVal, x, bw) => {
+                let color;
+                if (isVolTab) {
+                    const phi_t = phiVal != null ? phiVal : 0;
+                    const absPhi = Math.abs(phi_t);
+                    const alpha = 0.40 + 0.60 * absPhi;
+                    if (phi_t >= 0.15) {
+                        color = `rgba(61, 184, 122, ${alpha.toFixed(2)})`; // Bullish green
+                    } else if (phi_t <= -0.15) {
+                        color = `rgba(192, 64, 64, ${alpha.toFixed(2)})`;   // Bearish red
+                    } else {
+                        color = `rgba(212, 168, 48, 0.65)`;                 // Neutral amber churn
+                    }
+                } else if (payload.study === 'esvd') {
                     color = v > 0 ? '#d4a830' : (v < 0 ? '#5090a0' : this.COLORS.flat);
+                } else {
+                    color = sign > 0 ? this.COLORS.up : sign < 0 ? this.COLORS.down : this.COLORS.flat;
                 }
-                const yv = clampY(mapY(v));
+                const isCapped = isVolTab && v > yMax;
+                const renderVal = Math.min(v, yMax);
+                const yv = clampY(mapY(renderVal));
                 ctx.fillStyle = color;
-                ctx.globalAlpha = 0.70;
+                ctx.globalAlpha = 0.85;
                 const hBar = Math.max(1.5, Math.abs(zeroY - yv));
                 ctx.fillRect(x, Math.min(yv, zeroY), bw, hBar);
                 ctx.globalAlpha = 1;
+
+                // Subtle top-cap marker on bars exceeding maxY (Guardrail 4)
+                if (isCapped) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(x - 0.5, pad.top, bw + 1, 2.5);
+                }
             };
 
             if (colW < 1) {
@@ -1978,7 +2641,7 @@ const VolumeStudies = {
                 const colStep = chartW / nCols;
                 const bw = Math.max(1, colStep * 0.7);
                 for (let c = 0; c < nCols; c++) {
-                    let sum = 0, cnt = 0, dir = 0;
+                    let sum = 0, cnt = 0, dir = 0, sumPhi = 0;
                     const i0 = c * per, i1 = Math.min(n, i0 + per);
                     for (let i = i0; i < i1; i++) {
                         const v = bars[i];
@@ -1986,16 +2649,18 @@ const VolumeStudies = {
                         sum += v;
                         cnt++;
                         dir += payload.colorSigns ? payload.colorSigns[i] : (v > 0 ? 1 : v < 0 ? -1 : 0);
+                        if (phiArr[i] != null) sumPhi += phiArr[i];
                     }
                     if (!cnt) continue;
-                    fillBar(sum / cnt, dir > 0 ? 1 : dir < 0 ? -1 : 0, pad.left + c * colStep + (colStep - bw) / 2, bw);
+                    fillBar(sum / cnt, dir > 0 ? 1 : dir < 0 ? -1 : 0, sumPhi / cnt, pad.left + c * colStep + (colStep - bw) / 2, bw);
                 }
             } else {
                 for (let i = 0; i < n; i++) {
                     const v = bars[i];
                     if (v == null || !isFinite(v)) continue;
                     const sign = payload.colorSigns ? payload.colorSigns[i] : (v > 0 ? 1 : v < 0 ? -1 : 0);
-                    fillBar(v, sign, pad.left + i * colW + (colW - barW) / 2, barW);
+                    const phiVal = phiArr[i];
+                    fillBar(v, sign, phiVal, pad.left + i * colW + (colW - barW) / 2, barW);
                 }
             }
         }
@@ -2071,18 +2736,53 @@ const VolumeStudies = {
 
             // Render Viewport-Anchored IPVT Curve (Cyan, width 1.8)
             drawPath(line, '#38bdf8', 1.8, null);
+        } else if (line && payload.study === 'obv') {
+            const extra = payload.extraData || {};
+            const ema5Arr = extra.ema5 || payload.secondaryLine;
+            const kama14Arr = extra.kama14 || payload.ma;
+            const ema34Arr = extra.ema34;
+
+            // Ribbon Fill between EMA-5 and KAMA-14 (Guardrail 2)
+            if (ema5Arr && kama14Arr) {
+                for (let i = 0; i < n - 1; i++) {
+                    const v5_1 = ema5Arr[i], v5_2 = ema5Arr[i + 1];
+                    const vk_1 = kama14Arr[i], vk_2 = kama14Arr[i + 1];
+                    if (v5_1 == null || v5_2 == null || vk_1 == null || vk_2 == null) continue;
+                    if (!isFinite(v5_1) || !isFinite(v5_2) || !isFinite(vk_1) || !isFinite(vk_2)) continue;
+
+                    const x1 = getX(i), x2 = getX(i + 1);
+                    const y5_1 = clampY(mapY(v5_1)), y5_2 = clampY(mapY(v5_2));
+                    const yk_1 = clampY(mapY(vk_1)), yk_2 = clampY(mapY(vk_2));
+
+                    const isBull = (v5_1 + v5_2) >= (vk_1 + vk_2);
+                    ctx.fillStyle = isBull ? 'rgba(61, 184, 122, 0.12)' : 'rgba(192, 64, 64, 0.12)';
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y5_1);
+                    ctx.lineTo(x2, y5_2);
+                    ctx.lineTo(x2, yk_2);
+                    ctx.lineTo(x1, yk_1);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+
+            // Draw EMA34, KAMA14, EMA5, and IOBV Curve
+            if (ema34Arr) drawPath(ema34Arr, '#818cf8', 1.1, [2, 2]); // Slow EMA34
+            if (kama14Arr) drawPath(kama14Arr, '#d4a830', 1.3, [3, 3]); // Adaptive KAMA14
+            if (ema5Arr) drawPath(ema5Arr, '#3db87a', 1.3, null);       // Fast EMA5
+            drawPath(line, '#38bdf8', 1.8, null);                       // Viewport IOBV
         } else if (line) {
-            const lineColor = payload.study === 'esvd' ? '#e06c75' : this.COLORS.line;
+            const lineColor = payload.study === 'esvd' ? '#e06c75' : (payload.study === 'net' ? '#38bdf8' : this.COLORS.line);
             drawPath(line, lineColor, 1.4, null);
         }
 
-        // Render Secondary Line (e.g. VPIN Unsigned Toxicity Line)
-        if (secondaryLine && payload.study !== 'pvt') {
+        // Render Secondary Line (e.g. VPIN Unsigned Toxicity Line, Vol Accel)
+        if (secondaryLine && payload.study !== 'pvt' && payload.study !== 'obv') {
             drawPath(secondaryLine, '#d4a830', 1.2, [3, 3]);
         }
 
         // Render Moving Average or Trigger Signal Line
-        if (ma && payload.study !== 'pvt') {
+        if (ma && payload.study !== 'pvt' && payload.study !== 'obv') {
             drawPath(ma, this.COLORS.ma, 1.1, [3, 3]);
         }
 
@@ -2101,7 +2801,7 @@ const VolumeStudies = {
                 const bx = pad.left + i * colW + (colW - barW) / 2;
                 const v = bars[i];
                 if (v != null && isFinite(v)) {
-                    const yv = clampY(mapY(v));
+                    const yv = clampY(mapY(Math.min(v, yMax)));
                     const y0 = (yMin < 0 && yMax > 0) ? mapY(0) : pad.top + chartH;
                     ctx.strokeStyle = 'rgba(255,255,255,0.7)';
                     ctx.lineWidth = 1;
@@ -2113,7 +2813,7 @@ const VolumeStudies = {
                 if (v != null && isFinite(v)) {
                     ctx.beginPath();
                     ctx.arc(x, clampY(mapY(v)), 3.5, 0, Math.PI * 2);
-                    ctx.fillStyle = payload.study === 'esvd' ? '#e06c75' : (payload.study === 'pvt' ? '#38bdf8' : this.COLORS.line);
+                    ctx.fillStyle = payload.study === 'esvd' ? '#e06c75' : (payload.study === 'pvt' || payload.study === 'obv' || payload.study === 'net' ? '#38bdf8' : this.COLORS.line);
                     ctx.fill();
                 }
             }
@@ -2122,7 +2822,7 @@ const VolumeStudies = {
                 if (sv != null && isFinite(sv)) {
                     ctx.beginPath();
                     ctx.arc(x, clampY(mapY(sv)), 3, 0, Math.PI * 2);
-                    ctx.fillStyle = payload.study === 'pvt' ? '#3db87a' : '#d4a830';
+                    ctx.fillStyle = (payload.study === 'pvt' || payload.study === 'obv') ? '#3db87a' : '#d4a830';
                     ctx.fill();
                 }
             }
@@ -2470,30 +3170,136 @@ const VolumeStudies = {
                     </div>
                 `;
             }
-        } else if (payload.study === 'osc') {
-            studyValStr = value == null ? 'n/a' : (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
-            if (value != null) {
-                badgeText = value > 0 ? 'EXPANSION' : value < 0 ? 'CONTRACTION' : 'NEUTRAL';
-                badgeColor = value > 0 ? this.COLORS.up : value < 0 ? this.COLORS.down : this.COLORS.label;
-            }
-        } else if (payload.study === 'cmf') {
-            studyValStr = value == null ? 'n/a' : (value >= 0 ? '+' : '') + value.toFixed(3);
-            if (value != null) {
-                badgeText = value >= 0.10 ? 'INSTITUTIONAL ACCUMULATION'
-                    : value <= -0.10 ? 'INSTITUTIONAL DISTRIBUTION'
-                    : value > 0 ? 'ACCUMULATION'
-                    : value < 0 ? 'DISTRIBUTION'
-                    : 'NEUTRAL';
-                badgeColor = value > 0 ? this.COLORS.up : value < 0 ? this.COLORS.down : this.COLORS.label;
-            }
         } else if (payload.study === 'vol') {
-            studyValStr = value == null ? 'n/a' : (payload.unit === 'dollar' ? '$' + this.fmtVol(value) : this.fmtVol(value));
-            badgeText = dirSign > 0 ? 'UP DAY' : dirSign < 0 ? 'DOWN DAY' : 'FLAT';
-            badgeColor = dirSign > 0 ? this.COLORS.up : dirSign < 0 ? this.COLORS.down : this.COLORS.label;
+            const extra = payload.extraData || {};
+            const rvol = extra.rvol ? extra.rvol[i] : null;
+            const phi_t = extra.phi ? extra.phi[i] : null;
+            const baseD = extra.baseTurnover ? extra.baseTurnover[i] : null;
+
+            studyValStr = rvol != null ? rvol.toFixed(2) + '×' : 'n/a';
+            badgeText = phi_t >= 0.15 ? 'NET ACCUMULATION' : phi_t <= -0.15 ? 'NET DISTRIBUTION' : 'TWO-WAY ABSORPTION';
+            badgeColor = phi_t >= 0.15 ? this.COLORS.up : phi_t <= -0.15 ? this.COLORS.down : '#d4a830';
+
+            extraRowsHtml += `
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">UNCAPPED RVOL</span>
+                    <span class="vs-tt-val" style="color:${rvol >= 2.0 ? this.COLORS.up : 'inherit'};font-weight:700;">${rvol != null ? rvol.toFixed(2) + '×' : 'n/a'}</span>
+                </div>
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">FLOW PRESSURE (Φ)</span>
+                    <span class="vs-tt-val" style="color:${badgeColor};font-weight:700;">${phi_t != null ? (phi_t >= 0 ? '+' : '') + (phi_t * 100).toFixed(1) + '%' : 'n/a'}</span>
+                </div>
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">BASELINE TURNOVER</span>
+                    <span class="vs-tt-val">$${this.fmtVol(baseD)}</span>
+                </div>
+                <div class="vs-tt-subtext">
+                    Continuous order-flow pressure combining 55% normalized returns and 45% True-Range Close Location Value (solves gap-down hammer misclassification).
+                </div>
+            `;
+        } else if (payload.study === 'osc') {
+            const extra = payload.extraData || {};
+            const dv = extra.dvOsc ? extra.dvOsc[i] : null;
+            const accel = extra.volScalarAccel ? extra.volScalarAccel[i] : null;
+            const state = extra.dvOscState ? extra.dvOscState[i] : 'CHOP';
+
+            studyValStr = dv != null ? (dv >= 0 ? '+' : '') + dv.toFixed(1) : 'n/a';
+            badgeText = state.replace('_', ' ');
+            badgeColor = state === 'BULL_EXPANSION' ? this.COLORS.up : state === 'BEAR_EXPANSION' ? this.COLORS.down : this.COLORS.label;
+
+            extraRowsHtml += `
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">DV-OSC (Z-SCORE)</span>
+                    <span class="vs-tt-val" style="color:${badgeColor};font-weight:700;">${studyValStr}</span>
+                </div>
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">PARTICIPATION ACCEL</span>
+                    <span class="vs-tt-val" style="color:${accel > 0 ? this.COLORS.up : this.COLORS.down};">${accel != null ? (accel >= 0 ? '+' : '') + accel.toFixed(1) + '%' : 'n/a'}</span>
+                </div>
+                <div class="vs-tt-subtext">
+                    Directional Volume Velocity: 5d vs 21d signed flow impulse momentum normalized by trailing 21-day RMS volatility.
+                </div>
+            `;
         } else if (payload.study === 'net') {
-            studyValStr = value == null ? 'n/a' : (payload.unit === 'dollar' ? (value > 0 ? '+$' : (value < 0 ? '-$' : '')) + this.fmtVol(Math.abs(value)) : this.fmtSigned(value));
-            badgeText = value > 0 ? 'NET INFLOW' : value < 0 ? 'NET OUTFLOW' : 'FLAT';
-            badgeColor = value > 0 ? this.COLORS.up : value < 0 ? this.COLORS.down : this.COLORS.label;
+            const extra = payload.extraData || {};
+            const impulse = extra.impulse ? extra.impulse[i] : null;
+            const zNet = extra.ewNetZ ? extra.ewNetZ[i] : null;
+            const ewNet = extra.ewNet21 ? extra.ewNet21[i] : null;
+
+            studyValStr = impulse != null ? (impulse >= 0 ? '+' : '') + impulse.toFixed(2) + ' fl' : 'n/a';
+            badgeText = zNet >= 25 ? 'SUSTAINED INFLOW' : zNet <= -25 ? 'SUSTAINED OUTFLOW' : 'BALANCED FLOW';
+            badgeColor = zNet >= 25 ? this.COLORS.up : zNet <= -25 ? this.COLORS.down : this.COLORS.label;
+
+            extraRowsHtml += `
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">DAY IMPULSE (f_t)</span>
+                    <span class="vs-tt-val" style="color:${impulse > 0 ? this.COLORS.up : this.COLORS.down};font-weight:700;">${studyValStr}</span>
+                </div>
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">EW-21 NET ACCUM</span>
+                    <span class="vs-tt-val">${ewNet != null ? (ewNet >= 0 ? '+' : '') + ewNet.toFixed(1) + ' fl' : 'n/a'}</span>
+                </div>
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">STATIONARY Z-SCORE</span>
+                    <span class="vs-tt-val" style="color:${badgeColor};">${zNet != null ? (zNet >= 0 ? '+' : '') + zNet.toFixed(1) : 'n/a'}</span>
+                </div>
+                <div class="vs-tt-subtext">
+                    Exponentially decaying accumulation window (alpha = 1/11): zero 21-day rectangular boxcar drop-off jumps.
+                </div>
+            `;
+        } else if (payload.study === 'cmf') {
+            const extra = payload.extraData || {};
+            const acmfVal = extra.acmf ? extra.acmf[i] : null;
+            const er = extra.er10 ? extra.er10[i] : null;
+            const bullD = extra.bullDiv ? extra.bullDiv[i] : false;
+            const bearD = extra.bearDiv ? extra.bearDiv[i] : false;
+
+            studyValStr = acmfVal != null ? (acmfVal >= 0 ? '+' : '') + acmfVal.toFixed(3) : 'n/a';
+            badgeText = bullD ? 'BULLISH DIVERGENCE' : bearD ? 'BEARISH DIVERGENCE' : (acmfVal >= 0.08 ? 'INST ACCUMULATION' : acmfVal <= -0.08 ? 'INST DISTRIBUTION' : 'NEUTRAL DEADBAND');
+            badgeColor = bullD ? this.COLORS.up : bearD ? this.COLORS.down : (acmfVal >= 0.08 ? this.COLORS.up : acmfVal <= -0.08 ? this.COLORS.down : this.COLORS.label);
+
+            extraRowsHtml += `
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">ACMF-14</span>
+                    <span class="vs-tt-val" style="color:${badgeColor};font-weight:700;">${studyValStr}</span>
+                </div>
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">EFFICIENCY RATIO</span>
+                    <span class="vs-tt-val" style="color:#d4a830;">${er != null ? (er * 100).toFixed(0) + '%' : 'n/a'} <span style="font-size:0.58rem;">(${er >= 0.5 ? 'TRENDING' : 'CHOP'})</span></span>
+                </div>
+                <div class="vs-tt-subtext">
+                    Adaptive True-Range CMF: lookback contracts dynamically from 21 bars down to 4.5 bars during high-efficiency squeezes.
+                </div>
+            `;
+        } else if (payload.study === 'obv') {
+            const extra = payload.extraData || {};
+            const zObvVal = extra.zObv ? extra.zObv[i] : null;
+            const er = extra.er10 ? extra.er10[i] : null;
+            const action = extra.actions ? extra.actions[i] : 'NEUTRAL / CASH';
+            const trailingStop = extra.trailingStops ? extra.trailingStops[i] : null;
+
+            studyValStr = value != null ? (value >= 0 ? '+' : '') + value.toFixed(1) + ' fl' : 'n/a';
+            badgeText = action;
+            badgeColor = action.includes('TRIGGER') || action.includes('ENTRY') ? this.COLORS.up : action.includes('EXIT') ? '#f59e0b' : action.includes('CRASH') ? '#ef4444' : this.COLORS.label;
+
+            extraRowsHtml += `
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">VIEWPORT IOBV</span>
+                    <span class="vs-tt-val" style="color:#38bdf8;font-weight:700;">${studyValStr}</span>
+                </div>
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">Z-OBV OSCILLATOR</span>
+                    <span class="vs-tt-val" style="color:${zObvVal >= 25 ? this.COLORS.up : zObvVal <= -25 ? this.COLORS.down : 'inherit'};font-weight:700;">${zObvVal != null ? (zObvVal >= 0 ? '+' : '') + zObvVal.toFixed(1) : 'n/a'}</span>
+                </div>
+                ${trailingStop != null ? `
+                <div class="vs-tt-row">
+                    <span class="vs-tt-lbl">CAUSAL TRAILING STOP</span>
+                    <span class="vs-tt-val" style="color:#f59e0b;font-weight:700;">$${this.fmtPrice(trailingStop)}</span>
+                </div>` : ''}
+                <div class="vs-tt-subtext">
+                    Split-invariant continuous cumulative order flow with adaptive EMA5/KAMA14/EMA34 ribbon. Zero ZLEMA ringing after volume climax spikes.
+                </div>
+            `;
         } else if (payload.study === 'pvt') {
             const extra = payload.extraData || {};
             const impulse = extra.impulse ? extra.impulse[i] : null;
@@ -2826,95 +3632,125 @@ const VolumeStudies = {
             parts.push(`<span class="vs-reading-item"><span class="vs-lbl">FORCE</span> <span style="color:${forceColor}">${forceText}</span></span>`);
         // --- CLASSIC STUDIES READING LOGIC ---
         } else if (study === 'vol') {
-            const ma = payload.ma ? payload.ma[last] : null;
-            const rvol = (ma && ma > 0) ? (payload.bars[last] / ma) : ((metrics && metrics.rvol) ? metrics.rvol['21d'] : null);
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">RVOL-21</span> ${rvol != null ? rvol.toFixed(2) + '×' : 'n/a'}</span>`);
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">VOL</span> ${this.fmtVol(rawVol)}</span>`);
+            const extra = payload.extraData || {};
+            const rvol = extra.rvol ? extra.rvol[last] : null;
+            const phi_t = extra.phi ? extra.phi[last] : null;
+            const rvolColor = rvol >= 2.0 ? this.COLORS.up : rvol >= 1.2 ? '#38bdf8' : 'inherit';
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">RVOL-ROB</span> <span style="color:${rvolColor};font-weight:700;">${rvol != null ? rvol.toFixed(2) + '×' : 'n/a'}</span></span>`);
+            const flowText = phi_t >= 0.15 ? 'NET ACCUMULATION' : phi_t <= -0.15 ? 'NET DISTRIBUTION' : 'TWO-WAY ABSORPTION';
+            const flowColor = phi_t >= 0.15 ? this.COLORS.up : phi_t <= -0.15 ? this.COLORS.down : '#d4a830';
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">PRESSURE</span> <span style="color:${flowColor}">${flowText} (${phi_t != null ? (phi_t * 100).toFixed(0) : 0}%)</span></span>`);
             parts.push(`<span class="vs-reading-item"><span class="vs-lbl">VALUE</span> $${this.fmtVol(dollarVol)}</span>`);
         } else if (study === 'osc') {
-            const v = payload.line ? payload.line[last] : null;
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">OSC</span> ${v != null ? (v >= 0 ? '+' : '') + v.toFixed(1) + '%' : 'n/a'}</span>`);
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">STATE</span> <span style="color:${v > 0 ? this.COLORS.up : v < 0 ? this.COLORS.down : 'inherit'}">${v == null ? 'n/a' : v > 0 ? 'EXPANSION' : v < 0 ? 'CONTRACTION' : 'NEUTRAL'}</span></span>`);
+            const extra = payload.extraData || {};
+            const dv = extra.dvOsc ? extra.dvOsc[last] : null;
+            const state = extra.dvOscState ? extra.dvOscState[last] : 'CHOP';
+            const stateColor = state === 'BULL_EXPANSION' ? this.COLORS.up : state === 'BEAR_EXPANSION' ? this.COLORS.down : this.COLORS.label;
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">DV-OSC</span> <span style="font-weight:700;color:${stateColor}">${dv != null ? (dv >= 0 ? '+' : '') + dv.toFixed(1) : 'n/a'}</span></span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">STATE</span> <span style="color:${stateColor}">${state.replace('_', ' ')}</span></span>`);
         } else if (study === 'net') {
-            const r = payload.line ? payload.line[last] : null;
-            const day = payload.bars ? payload.bars[last] : null;
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">DAY</span> ${day != null ? this.fmtSigned(day) : 'n/a'}</span>`);
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">21D</span> ${r != null ? this.fmtSigned(r) : 'n/a'}</span>`);
+            const extra = payload.extraData || {};
+            const impulse = extra.impulse ? extra.impulse[last] : null;
+            const zNet = extra.ewNetZ ? extra.ewNetZ[last] : null;
+            const zColor = zNet >= 25 ? this.COLORS.up : zNet <= -25 ? this.COLORS.down : this.COLORS.label;
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">DAY IMPULSE</span> <span style="font-weight:700;color:${impulse > 0 ? this.COLORS.up : this.COLORS.down}">${impulse != null ? (impulse >= 0 ? '+' : '') + impulse.toFixed(2) + ' fl' : 'n/a'}</span></span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">EW-21 Z</span> <span style="color:${zColor}">${zNet != null ? (zNet >= 0 ? '+' : '') + zNet.toFixed(1) : 'n/a'}</span></span>`);
         } else if (study === 'cmf') {
-            const v = payload.line ? payload.line[last] : null;
-            const cmfStr = v != null ? (v >= 0 ? '+' : '') + v.toFixed(3) : 'n/a';
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">CMF-21</span> ${cmfStr}</span>`);
-            const regime = v == null ? 'n/a' : (v >= 0.10 ? 'INST ACCUMULATION' : v <= -0.10 ? 'INST DISTRIBUTION' : v > 0 ? 'ACCUMULATION' : v < 0 ? 'DISTRIBUTION' : 'NEUTRAL');
-            const regimeColor = v == null ? 'inherit' : v > 0 ? this.COLORS.up : v < 0 ? this.COLORS.down : this.COLORS.label;
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">REGIME</span> <span style="color:${regimeColor}">${regime}</span></span>`);
-
-            const back = Math.max(0, last - 21);
-            const pLast = payload.closes[last];
-            const pBack = payload.closes[back];
-            const priceDelta = (pLast != null && pBack != null && pBack > 0) ? ((pLast - pBack) / pBack) : 0;
-            const indicatorSignal = v;
-
-            let divText = 'NEUTRAL';
-            let divColor = this.COLORS.label;
-            if (indicatorSignal != null) {
-                if (priceDelta < -0.01 && indicatorSignal > 0) {
+            const extra = payload.extraData || {};
+            const acmfVal = extra.acmf ? extra.acmf[last] : (payload.line ? payload.line[last] : null);
+            const er = extra.er10 ? extra.er10[last] : null;
+            const bullD = extra.bullDiv ? extra.bullDiv[last] : false;
+            const bearD = extra.bearDiv ? extra.bearDiv[last] : false;
+            const cmfColor = acmfVal >= 0.08 ? this.COLORS.up : acmfVal <= -0.08 ? this.COLORS.down : this.COLORS.label;
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">ACMF-14</span> <span style="font-weight:700;color:${cmfColor}">${acmfVal != null ? (acmfVal >= 0 ? '+' : '') + acmfVal.toFixed(3) : 'n/a'}</span></span>`);
+            let divText = bullD ? 'BULLISH DIVERGENCE' : bearD ? 'BEARISH DIVERGENCE' : null;
+            let divColor = bullD ? this.COLORS.up : bearD ? this.COLORS.down : '#d4a830';
+            if (!divText) {
+                const back = Math.max(0, last - 21);
+                const pLast = payload.closes[last];
+                const pBack = payload.closes[back];
+                const priceDelta = (pLast != null && pBack != null && pBack > 0) ? ((pLast - pBack) / pBack) : 0;
+                if (priceDelta < -0.01 && acmfVal > 0) {
                     divText = 'BULLISH DIVERGENCE';
                     divColor = this.COLORS.up;
-                } else if (priceDelta > 0.01 && indicatorSignal < 0) {
+                } else if (priceDelta > 0.01 && acmfVal < 0) {
                     divText = 'BEARISH DIVERGENCE';
                     divColor = this.COLORS.down;
-                } else if (priceDelta > 0.01 && indicatorSignal > 0) {
+                } else if (priceDelta > 0.01 && acmfVal > 0) {
                     divText = 'VOLUME CONFIRMED';
                     divColor = this.COLORS.up;
-                } else if (priceDelta < -0.01 && indicatorSignal < 0) {
+                } else if (priceDelta < -0.01 && acmfVal < 0) {
                     divText = 'DISTRIBUTION CONFIRMED';
                     divColor = this.COLORS.down;
                 } else {
-                    divText = indicatorSignal > 0 ? 'ACCUMULATION' : indicatorSignal < 0 ? 'DISTRIBUTION' : 'NEUTRAL';
-                    divColor = indicatorSignal > 0 ? this.COLORS.up : indicatorSignal < 0 ? this.COLORS.down : this.COLORS.label;
+                    divText = acmfVal > 0 ? 'ACCUMULATION' : acmfVal < 0 ? 'DISTRIBUTION' : ((er != null && er >= 0.5) ? 'TRENDING FLOW' : 'CHOP');
+                    divColor = acmfVal > 0 ? this.COLORS.up : acmfVal < 0 ? this.COLORS.down : '#d4a830';
                 }
             }
             parts.push(`<span class="vs-reading-item"><span class="vs-lbl">SIGNAL</span> <span style="color:${divColor}">${divText}</span></span>`);
         } else if (study === 'obv') {
-            const line = payload.line || [];
-            const ma = payload.ma || [];
-            const lv = line[last], mv = ma[last];
-            const state = (lv != null && mv != null) ? (lv >= mv ? 'ABOVE' : 'BELOW') : 'n/a';
-            const stateColor = state === 'ABOVE' ? this.COLORS.up : state === 'BELOW' ? this.COLORS.down : 'inherit';
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">MA</span> <span style="color:${stateColor}">${state}</span></span>`);
-            const back = Math.max(0, last - 21);
-            const delta = (lv != null && line[back] != null) ? lv - line[back] : null;
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">21D Δ</span> ${delta != null ? this.fmtSigned(delta) : 'n/a'}</span>`);
-            const bias = delta == null ? 'n/a' : delta > 0 ? 'ACCUMULATION' : delta < 0 ? 'DISTRIBUTION' : 'FLAT';
-            const biasColor = bias === 'ACCUMULATION' ? this.COLORS.up : bias === 'DISTRIBUTION' ? this.COLORS.down : 'inherit';
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">BIAS</span> <span style="color:${biasColor}">${bias}</span></span>`);
-
-            const pLast = payload.closes[last];
-            const pBack = payload.closes[back];
-            const priceDelta = (pLast != null && pBack != null && pBack > 0) ? ((pLast - pBack) / pBack) : 0;
-            const indicatorSignal = delta;
-
-            let divText = 'NEUTRAL';
-            let divColor = this.COLORS.label;
-            if (indicatorSignal != null) {
-                if (priceDelta < -0.01 && indicatorSignal > 0) {
+            const extra = payload.extraData || {};
+            const zObvVal = extra.zObv ? extra.zObv[last] : null;
+            const action = extra.actions ? extra.actions[last] : null;
+            const trailingStop = extra.trailingStops ? extra.trailingStops[last] : null;
+            const zColor = zObvVal >= 25 ? this.COLORS.up : zObvVal <= -25 ? this.COLORS.down : this.COLORS.label;
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">Z-OBV</span> <span style="font-weight:700;color:${zColor}">${zObvVal != null ? (zObvVal >= 0 ? '+' : '') + zObvVal.toFixed(1) : 'n/a'}</span></span>`);
+            if (trailingStop != null) {
+                parts.push(`<span class="vs-reading-item"><span class="vs-lbl">STOP</span> <span style="color:#f59e0b;font-weight:700;">$${this.fmtPrice(trailingStop)}</span></span>`);
+            }
+            const bullD = extra.bullDiv ? extra.bullDiv[last] : false;
+            const bearD = extra.bearDiv ? extra.bearDiv[last] : false;
+            let divText = bullD ? 'BULLISH DIVERGENCE' : bearD ? 'BEARISH DIVERGENCE' : null;
+            let divColor = bullD ? this.COLORS.up : bearD ? this.COLORS.down : '#d4a830';
+            if (!divText) {
+                const back = Math.max(0, last - 21);
+                const pLast = payload.closes[last];
+                const pBack = payload.closes[back];
+                const priceDelta = (pLast != null && pBack != null && pBack > 0) ? ((pLast - pBack) / pBack) : 0;
+                const line = payload.line || [];
+                const lv = line[last];
+                const delta = (lv != null && line[back] != null) ? lv - line[back] : null;
+                const sig = delta != null ? delta : (zObvVal != null ? zObvVal : 0);
+                if (priceDelta < -0.01 && sig > 0) {
                     divText = 'BULLISH DIVERGENCE';
                     divColor = this.COLORS.up;
-                } else if (priceDelta > 0.01 && indicatorSignal < 0) {
+                } else if (priceDelta > 0.01 && sig < 0) {
                     divText = 'BEARISH DIVERGENCE';
                     divColor = this.COLORS.down;
-                } else if (priceDelta > 0.01 && indicatorSignal > 0) {
+                } else if (priceDelta > 0.01 && sig > 0) {
                     divText = 'VOLUME CONFIRMED';
                     divColor = this.COLORS.up;
-                } else if (priceDelta < -0.01 && indicatorSignal < 0) {
+                } else if (priceDelta < -0.01 && sig < 0) {
                     divText = 'DISTRIBUTION CONFIRMED';
                     divColor = this.COLORS.down;
-                } else {
-                    divText = indicatorSignal > 0 ? 'ACCUMULATION' : indicatorSignal < 0 ? 'DISTRIBUTION' : 'NEUTRAL';
-                    divColor = indicatorSignal > 0 ? this.COLORS.up : indicatorSignal < 0 ? this.COLORS.down : this.COLORS.label;
                 }
             }
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">SIGNAL</span> <span style="color:${divColor}">${divText}</span></span>`);
+            if (divText) {
+                parts.push(`<span class="vs-reading-item"><span class="vs-lbl">SIGNAL</span> <span style="color:${divColor}">${divText}</span></span>`);
+            }
+            if (action) {
+                let actionBg = 'rgba(255,255,255,0.06)';
+                let actionColor = this.COLORS.label;
+                let actionBorder = 'rgba(255,255,255,0.15)';
+                if (action.includes('TRIGGER') || action.includes('ENTRY')) {
+                    actionBg = 'rgba(61, 184, 122, 0.20)';
+                    actionColor = this.COLORS.up;
+                    actionBorder = 'rgba(61, 184, 122, 0.50)';
+                } else if (action.includes('CRASH BREAKER')) {
+                    actionBg = 'rgba(239, 68, 68, 0.25)';
+                    actionColor = '#ef4444';
+                    actionBorder = 'rgba(239, 68, 68, 0.70)';
+                } else if (action.includes('EXIT')) {
+                    actionBg = 'rgba(245, 158, 11, 0.20)';
+                    actionColor = '#f59e0b';
+                    actionBorder = 'rgba(245, 158, 11, 0.50)';
+                } else if (action.includes('ACCUMULATION') || action.includes('HOLDING')) {
+                    actionBg = 'rgba(56, 189, 248, 0.20)';
+                    actionColor = '#38bdf8';
+                    actionBorder = 'rgba(56, 189, 248, 0.50)';
+                }
+                parts.push(`<span class="vs-reading-item"><span class="vs-lbl">ACTION</span> <span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:0.64rem;font-weight:700;background:${actionBg};color:${actionColor};border:1px solid ${actionBorder};">${action}</span></span>`);
+            }
         } else if (study === 'pvt') {
             const extra = payload.extraData || {};
             const side = extra.etfSide || 'long';

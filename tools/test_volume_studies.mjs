@@ -260,17 +260,17 @@ for (const study of ['vol', 'osc', 'net', 'cmf', 'obv', 'pvt']) {
 }
 
 const allOsc = VS.compute(history, 'osc', 'all');
-for (let i = 0; i < 20; i++) isNull(allOsc.line[i], `osc all-range warm-up line[${i}] null`);
+isNum(allOsc.line[0], 'osc all-range line[0] finite');
 isNum(allOsc.line[20], 'osc all-range line[20] finite');
 const allNet = VS.compute(history, 'net', 'all');
-for (let i = 0; i < 20; i++) isNull(allNet.line[i], `net all-range warm-up line[${i}] null`);
+isNum(allNet.line[0], 'net all-range line[0] finite');
 isNum(allNet.line[20], 'net all-range line[20] finite');
 const allCmf = VS.compute(history, 'cmf', 'all');
-for (let i = 0; i < 20; i++) isNull(allCmf.line[i], `cmf all-range warm-up line[${i}] null`);
+isNum(allCmf.line[0], 'cmf all-range line[0] finite');
 isNum(allCmf.line[20], 'cmf all-range line[20] finite');
 const allObv = VS.compute(history, 'obv', 'all');
 eq(allObv.line[0], 0, 'obv all-range line[0] = 0');
-isNull(allObv.ma[19], 'obv all-range ma[19] null in warm-up');
+isNum(allObv.ma[0], 'obv all-range ma[0] finite');
 isNum(allObv.ma[20], 'obv all-range ma[20] finite');
 const allPvt = VS.compute(history, 'pvt', 'all');
 eq(allPvt.line[0], 0, 'pvt all-range line[0] = 0');

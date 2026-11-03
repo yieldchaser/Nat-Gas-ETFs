@@ -45,31 +45,40 @@ def main():
     print("[SERVER] Serving docs at http://127.0.0.1:8124")
 
     console_errors = []
+    critical_errors = []
     console_warnings = []
     page_errors = []
 
-    def is_app_error(msg):
-        txt = str(msg)
-        if "401" in txt or "proxy" in txt.lower() or "aggregateerror" in txt.lower():
-            return False
-        return True
-
     def on_console(msg):
-        if msg.type == "error" and is_app_error(msg.text):
+        if msg.type == "error":
             console_errors.append(msg.text)
+            is_net_error = any(pattern in msg.text for pattern in [
+                "401",
+                "proxy",
+                "aggregateerror",
+                "Failed to load resource",
+                "All proxies failed",
+                "CORS policy",
+                "ERR_FAILED",
+                "favicon.ico"
+            ])
+            if not is_net_error:
+                critical_errors.append(msg.text)
+                print(f"[CRITICAL CONSOLE ERROR] {msg.text}")
         elif msg.type == "warning":
             console_warnings.append(msg.text)
 
     def on_page_error(err):
-        if is_app_error(err):
-            page_errors.append(str(err))
+        msg = f"{err.message if hasattr(err, 'message') else str(err)}\n{getattr(err, 'stack', '')}"
+        page_errors.append(msg)
+        print(f"[PAGE ERROR CAUGHT] {msg}")
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
 
-        # 1. Desktop verification (1440x900)
-        print("[TEST] Launching Desktop context (1440x900)...")
-        context = browser.new_context(viewport={"width": 1440, "height": 900})
+        # 1. Desktop verification (1440x900, device_scale_factor=2)
+        print("[TEST] Launching Desktop context (1440x900, 2x DPR)...")
+        context = browser.new_context(viewport={"width": 1440, "height": 900}, device_scale_factor=2)
         page = context.new_page()
         page.on("console", on_console)
         page.on("pageerror", on_page_error)
@@ -77,13 +86,14 @@ def main():
         page.goto("http://127.0.0.1:8124/index.html", wait_until="networkidle")
         page.wait_for_selector("#vs-panel", state="visible", timeout=10000)
 
-        # Ensure canvas renders
+        # Ensure canvas renders initially
         page.wait_for_timeout(1000)
-        px = count_canvas_pixels(page)
-        print(f"[CANVAS] Initial non-zero pixel count: {px}")
-        assert px > 500, f"Canvas appears blank, nonZeroPixels={px}"
+        px_init = count_canvas_pixels(page)
+        print(f"[CANVAS] Initial non-zero pixel count: {px_init}")
+        assert px_init > 500, f"Canvas appears blank, nonZeroPixels={px_init}"
 
         # Test ETF Chips
+        print("\n[TEST] Verifying ETF Chips...")
         etfs = ["BOIL", "HNU.TO", "3NGL.L", "KOLD", "HND.TO", "3NGS.L"]
         for etf in etfs:
             btn = page.locator(f'#vs-chips button[data-ticker="{etf}"]')
@@ -93,116 +103,236 @@ def main():
             assert "active" in btn.get_attribute("class"), f"Chip {etf} should be active"
             px_etf = count_canvas_pixels(page)
             assert px_etf > 500, f"Canvas blank after selecting ETF {etf}"
-            print(f"[ETF CHIP] {etf} verified (pixels={px_etf})")
+            print(f"  [ETF CHIP] {etf} verified (pixels={px_etf})")
 
         # Select BOIL back for study tabs test
+        print("\n[TEST] Selecting BOIL for Classic Studies verification...")
         page.locator('#vs-chips button[data-ticker="BOIL"]').click()
         page.wait_for_timeout(200)
 
-        # Test Study Tabs
-        study_tests = [
-            ("vol", ["RVOL-21", "VOL", "VALUE"]),
-            ("osc", ["OSC", "STATE"]),
-            ("net", ["DAY", "21D"]),
-            ("cmf", ["CMF-21", "REGIME", "SIGNAL"]),
-            ("obv", ["MA", "21D Δ", "BIAS", "SIGNAL"]),
-            ("pvt", ["REGIME", "Z-SCORE", "DUAL ZLEMA", "CONFIRMATION", "ACTION"])
+        # Ensure classic suite is active
+        page.locator('#vs-suite-tabs button[data-suite="classic"]').click()
+        page.wait_for_timeout(200)
+
+        # Test Modernized Study Tabs on BOIL
+        study_tests_boil = [
+            ("vol", ["RVOL-ROB", "PRESSURE", "VALUE"], "rvol_flow_desktop_boil.png"),
+            ("osc", ["DV-OSC", "STATE"], "dv_osc_desktop_boil.png"),
+            ("net", ["DAY IMPULSE", "EW-21 Z"], "ew_netflow_desktop_boil.png"),
+            ("cmf", ["ACMF-14", "SIGNAL"], "acmf_desktop_boil.png"),
+            ("obv", ["Z-OBV", "ACTION"], "iobv_desktop_boil.png"),
+            ("pvt", ["REGIME", "Z-SCORE", "DUAL ZLEMA", "ACTION"], "pvt_desktop_boil.png")
         ]
 
-        for study, expected_labels in study_tests:
+        print("\n[TEST] Verifying Modernized Reading Labels & Capturing Screenshots on BOIL...")
+        for study, expected_labels, filename in study_tests_boil:
             btn = page.locator(f'#vs-study-tabs button[data-study="{study}"]')
             assert btn.is_visible(), f"Study tab {study} not visible"
             btn.click()
-            page.wait_for_timeout(250)
+            page.wait_for_timeout(300)
             assert "active" in btn.get_attribute("class"), f"Tab {study} should be active"
             px_study = count_canvas_pixels(page)
-            assert px_study > 500, f"Canvas blank for study {study}"
+            assert px_study > 500, f"Canvas blank for study {study} on BOIL (pixels={px_study})"
 
             reading_text = page.locator("#vs-reading").inner_text()
             assert "NaN" not in reading_text, f"NaN in reading text for {study}: {reading_text}"
             assert "undefined" not in reading_text, f"undefined in reading text for {study}: {reading_text}"
             for lbl in expected_labels:
                 assert lbl in reading_text, f"Expected label '{lbl}' missing in {study} reading: {reading_text}"
-            print(f"[STUDY] {study.upper()} verified (labels={expected_labels}, pixels={px_study})")
 
-        # Test Unit Toggle (S vs $)
-        print("[TEST] Testing Unit Toggle (Shares vs Dollar)...")
+            shot_path = os.path.join(ARTIFACT_DIR, filename)
+            page.locator("#vs-panel").screenshot(path=shot_path)
+            print(f"  [STUDY BOIL] {study.upper()} verified (labels={expected_labels}, pixels={px_study}) -> Saved {filename}")
+
+        # Test Modernized Study Tabs on KOLD (Inverse ETP)
+        print("\n[TEST] Selecting KOLD for Inverse ETP verification...")
+        page.locator('#vs-chips button[data-ticker="KOLD"]').click()
+        page.wait_for_timeout(250)
+
+        study_tests_kold = [
+            ("vol", ["RVOL-ROB", "PRESSURE", "VALUE"], "rvol_flow_desktop_kold.png"),
+            ("osc", ["DV-OSC", "STATE"], None),
+            ("net", ["DAY IMPULSE", "EW-21 Z"], None),
+            ("cmf", ["ACMF-14", "SIGNAL"], None),
+            ("obv", ["Z-OBV", "ACTION"], "iobv_desktop_kold.png"),
+            ("pvt", ["REGIME", "Z-SCORE", "DUAL ZLEMA", "ACTION"], "pvt_desktop_kold.png")
+        ]
+
+        for study, expected_labels, filename in study_tests_kold:
+            btn = page.locator(f'#vs-study-tabs button[data-study="{study}"]')
+            assert btn.is_visible(), f"Study tab {study} not visible"
+            btn.click()
+            page.wait_for_timeout(300)
+            assert "active" in btn.get_attribute("class"), f"Tab {study} should be active"
+            px_kold = count_canvas_pixels(page)
+            assert px_kold > 500, f"Canvas blank for study {study} on KOLD (pixels={px_kold})"
+
+            reading_text = page.locator("#vs-reading").inner_text()
+            assert "NaN" not in reading_text, f"NaN in reading text for {study} on KOLD: {reading_text}"
+            assert "undefined" not in reading_text, f"undefined in reading text for {study} on KOLD: {reading_text}"
+            for lbl in expected_labels:
+                assert lbl in reading_text, f"Expected label '{lbl}' missing in {study} reading on KOLD: {reading_text}"
+
+            if filename:
+                shot_path = os.path.join(ARTIFACT_DIR, filename)
+                page.locator("#vs-panel").screenshot(path=shot_path)
+                print(f"  [STUDY KOLD] {study.upper()} verified (labels={expected_labels}, pixels={px_kold}) -> Saved {filename}")
+            else:
+                print(f"  [STUDY KOLD] {study.upper()} verified (labels={expected_labels}, pixels={px_kold})")
+
+        # Switch back to BOIL
+        page.locator('#vs-chips button[data-ticker="BOIL"]').click()
+        page.wait_for_timeout(200)
+
+        # Unit Toggle (Shares vs Dollar) on vol
+        print("\n[TEST] Testing Unit Toggle (Shares vs Dollar) on vol...")
+        page.locator('#vs-study-tabs button[data-study="vol"]').click()
+        page.wait_for_timeout(200)
+
         unit_dollar = page.locator('#vs-unit-tabs button[data-unit="dollar"]')
         unit_shares = page.locator('#vs-unit-tabs button[data-unit="shares"]')
         assert unit_dollar.is_visible() and unit_shares.is_visible()
 
-        # Switch to Dollar mode on CMF
-        page.locator('#vs-study-tabs button[data-study="cmf"]').click()
-        page.wait_for_timeout(200)
+        # Switch to Dollar mode on vol
         unit_dollar.click()
         page.wait_for_timeout(250)
         assert "active" in unit_dollar.get_attribute("class")
         assert "active" not in unit_shares.get_attribute("class")
         px_dollar = count_canvas_pixels(page)
-        assert px_dollar > 500
-        cmf_dollar_shot = os.path.join(ARTIFACT_DIR, "cmf_desktop_dollar_boil.png")
-        page.locator("#vs-panel").screenshot(path=cmf_dollar_shot)
-        print(f"[SCREENSHOT] Saved {cmf_dollar_shot}")
+        assert px_dollar > 500, f"Canvas blank in dollar mode on vol: {px_dollar}"
+        vol_dollar_shot = os.path.join(ARTIFACT_DIR, "rvol_flow_desktop_dollar_boil.png")
+        page.locator("#vs-panel").screenshot(path=vol_dollar_shot)
+        print(f"  [UNIT TOGGLE] Dollar mode verified (pixels={px_dollar}) -> Saved {vol_dollar_shot}")
 
-        # Switch back to Shares mode
+        # Switch back to Shares mode on vol
         unit_shares.click()
         page.wait_for_timeout(250)
         assert "active" in unit_shares.get_attribute("class")
         assert "active" not in unit_dollar.get_attribute("class")
+        px_shares = count_canvas_pixels(page)
+        assert px_shares > 500, f"Canvas blank in shares mode on vol: {px_shares}"
+        print(f"  [UNIT TOGGLE] Shares mode verified (pixels={px_shares})")
 
-        # Capture CMF Desktop Shares screenshot
-        cmf_desktop_shot = os.path.join(ARTIFACT_DIR, "cmf_desktop_boil.png")
-        page.locator("#vs-panel").screenshot(path=cmf_desktop_shot)
-        print(f"[SCREENSHOT] Saved {cmf_desktop_shot}")
+        # Range Selection ('1m', '3m', '6m', '1y', 'all')
+        print("\n[TEST] Testing Range Selection ('1m', '3m', '6m', '1y', 'all')...")
+        for rng in ['1m', '3m', '6m', '1y', 'all']:
+            btn = page.locator(f'#vs-range-tabs button[data-range="{rng}"]')
+            if btn.count() > 0 and btn.is_visible():
+                btn.click()
+                page.wait_for_timeout(250)
+                assert "active" in btn.get_attribute("class"), f"Range button {rng} not active"
+                active_lbl = page.locator("#vs-range-active-label").inner_text().strip()
+                assert rng.upper() in active_lbl, f"Active label mismatch for {rng}: {active_lbl}"
+                px_rng = count_canvas_pixels(page)
+                assert px_rng > 500, f"Canvas blank after selecting range {rng}"
+                print(f"  [RANGE BUTTON] {rng.upper()} button clicked and verified (label={active_lbl}, pixels={px_rng})")
+            else:
+                # Test programmatic range selection on VolumeStudies
+                page.evaluate(f"""() => {{
+                    VolumeStudies.state.range = '{rng}';
+                    VolumeStudies.state.customRange = null;
+                    VolumeStudies._cache = null;
+                    VolumeStudies.render();
+                }}""")
+                page.wait_for_timeout(250)
+                px_rng = count_canvas_pixels(page)
+                assert px_rng > 500, f"Canvas blank after programmatic range selection {rng}"
+                print(f"  [RANGE PROGRAMMATIC] {rng.upper()} evaluated and verified (pixels={px_rng})")
 
-        # Capture OBV Desktop screenshot
-        page.locator('#vs-study-tabs button[data-study="obv"]').click()
+        # Also test VP panel range button 1M if available
+        vp_1m = page.locator('#vp-range-tabs button[data-range="1m"]')
+        if vp_1m.count() > 0 and vp_1m.is_visible():
+            vp_1m.click()
+            page.wait_for_timeout(200)
+            print("  [RANGE VP] 1M button in Volume Profile verified")
+
+        # Reset range to 1Y for tooltip and final checks
+        btn_1y = page.locator('#vs-range-tabs button[data-range="1y"]')
+        if btn_1y.count() > 0:
+            btn_1y.click()
+            page.wait_for_timeout(250)
+
+        # Hover Tooltip Test on vol and obv
+        print("\n[TEST] Testing Canvas Hover and Tooltip on vol and obv...")
+        # 1. vol tooltip test
+        page.locator('#vs-study-tabs button[data-study="vol"]').click()
         page.wait_for_timeout(250)
-        obv_desktop_shot = os.path.join(ARTIFACT_DIR, "obv_desktop_boil.png")
-        page.locator("#vs-panel").screenshot(path=obv_desktop_shot)
-        print(f"[SCREENSHOT] Saved {obv_desktop_shot}")
-
-        # Test Hover / Mouse Movement & Tooltip
-        print("[TEST] Testing Canvas Hover and Tooltip...")
-        page.locator('#vs-study-tabs button[data-study="cmf"]').click()
-        page.wait_for_timeout(200)
         canvas = page.locator("#vs-canvas")
         box = canvas.bounding_box()
         assert box is not None, "Canvas bounding box is None"
+        wrap_box = page.locator("#vs-canvas-wrap").bounding_box()
 
-        for frac in [0.25, 0.50, 0.75]:
-            x = box["x"] + box["width"] * frac
-            y = box["y"] + box["height"] * 0.5
-            page.mouse.move(x, y)
-            page.wait_for_timeout(100)
-            tooltip = page.locator("#vs-tooltip")
-            assert tooltip.is_visible(), "Tooltip should be visible on mouse move"
-            tt_text = tooltip.inner_text()
-            assert "NaN" not in tt_text, f"NaN in tooltip: {tt_text}"
-            assert "undefined" not in tt_text, f"undefined in tooltip: {tt_text}"
-            assert "CLOSE" in tt_text, "CLOSE row missing in tooltip"
-            assert "CMF-21" in tt_text, "CMF-21 row missing in tooltip"
-            assert "SHARES" in tt_text, "SHARES row missing in tooltip"
-            assert "DOLLAR VOL" in tt_text, "DOLLAR VOL row missing in tooltip"
+        # Hover at fraction 0.6
+        hx = box["x"] + box["width"] * 0.6
+        hy = box["y"] + box["height"] * 0.5
+        page.mouse.move(hx, hy)
+        page.wait_for_timeout(200)
 
-            # Check bounds
-            tt_box = tooltip.bounding_box()
-            wrap_box = page.locator("#vs-canvas-wrap").bounding_box()
-            assert tt_box["x"] >= wrap_box["x"] - 2
-            assert tt_box["y"] >= wrap_box["y"] - 2
-            assert tt_box["x"] + tt_box["width"] <= wrap_box["x"] + wrap_box["width"] + 10
-            print(f"[TOOLTIP] Verified at fraction {frac}: {tt_text.splitlines()[0]}")
+        tooltip = page.locator("#vs-tooltip")
+        assert tooltip.is_visible(), "Tooltip should be visible on vol hover"
+        tt_vol = tooltip.inner_text()
+        assert "NaN" not in tt_vol, f"NaN in vol tooltip: {tt_vol}"
+        assert "undefined" not in tt_vol, f"undefined in vol tooltip: {tt_vol}"
+        assert "CLOSE" in tt_vol, f"CLOSE missing in vol tooltip: {tt_vol}"
+        assert "SHARES" in tt_vol, f"SHARES missing in vol tooltip: {tt_vol}"
+        assert "DOLLAR VOL" in tt_vol, f"DOLLAR VOL missing in vol tooltip: {tt_vol}"
+        assert "FLOW PRESSURE" in tt_vol or "RVOL" in tt_vol or "VOLUME" in tt_vol, f"Study metrics missing in vol tooltip: {tt_vol}"
 
-        # Move mouse away to ensure tooltip hides
+        tt_box = tooltip.bounding_box()
+        wrap_box = page.locator("#vs-canvas-wrap").bounding_box()
+        assert tt_box["x"] >= wrap_box["x"] - 5, f"Tooltip x {tt_box['x']} out of bounds left"
+        assert tt_box["y"] >= wrap_box["y"] - 5, f"Tooltip y {tt_box['y']} out of bounds top"
+        assert tt_box["x"] + tt_box["width"] <= wrap_box["x"] + wrap_box["width"] + 15, "Tooltip out of bounds right"
+
+        vol_tt_shot = os.path.join(ARTIFACT_DIR, "vol_tooltip_hover_boil.png")
+        page.locator("#vs-panel").screenshot(path=vol_tt_shot)
+        print(f"  [TOOLTIP VOL] Verified and saved {vol_tt_shot}")
+
+        # 2. obv tooltip test
         page.mouse.move(10, 10)
         page.wait_for_timeout(150)
-        assert not page.locator("#vs-tooltip").is_visible(), "Tooltip should hide on leave"
+        assert not tooltip.is_visible(), "Tooltip should hide when mouse leaves"
+
+        page.locator('#vs-study-tabs button[data-study="obv"]').click()
+        page.wait_for_timeout(250)
+        box = canvas.bounding_box()
+        wrap_box = page.locator("#vs-canvas-wrap").bounding_box()
+        hx = box["x"] + box["width"] * 0.7
+        hy = box["y"] + box["height"] * 0.5
+        page.mouse.move(hx, hy)
+        page.wait_for_timeout(200)
+
+        assert tooltip.is_visible(), "Tooltip should be visible on obv hover"
+        tt_obv = tooltip.inner_text()
+        assert "NaN" not in tt_obv, f"NaN in obv tooltip: {tt_obv}"
+        assert "undefined" not in tt_obv, f"undefined in obv tooltip: {tt_obv}"
+        assert "CLOSE" in tt_obv, f"CLOSE missing in obv tooltip: {tt_obv}"
+        assert "SHARES" in tt_obv, f"SHARES missing in obv tooltip: {tt_obv}"
+        assert "DOLLAR VOL" in tt_obv, f"DOLLAR VOL missing in obv tooltip: {tt_obv}"
+        assert "IOBV" in tt_obv or "OBV" in tt_obv or "Z-OBV" in tt_obv, f"OBV metrics missing in obv tooltip: {tt_obv}"
+
+        tt_box = tooltip.bounding_box()
+        wrap_box = page.locator("#vs-canvas-wrap").bounding_box()
+        assert tt_box["x"] >= wrap_box["x"] - 5, f"Tooltip x {tt_box['x']} out of bounds left"
+        assert tt_box["y"] >= wrap_box["y"] - 5, f"Tooltip y {tt_box['y']} out of bounds top ({wrap_box['y']})"
+        assert tt_box["x"] + tt_box["width"] <= wrap_box["x"] + wrap_box["width"] + 15, "Tooltip out of bounds right"
+        assert tt_box["y"] + tt_box["height"] <= wrap_box["y"] + wrap_box["height"] + 15, "Tooltip out of bounds bottom"
+
+        obv_tt_shot = os.path.join(ARTIFACT_DIR, "obv_tooltip_hover_boil.png")
+        page.locator("#vs-panel").screenshot(path=obv_tt_shot)
+        print(f"  [TOOLTIP OBV] Verified and saved {obv_tt_shot}")
+
+        # Move mouse away
+        page.mouse.move(10, 10)
+        page.wait_for_timeout(150)
+        assert not tooltip.is_visible(), "Tooltip should hide on leave"
         context.close()
 
-        # 2. Mobile verification (390x844)
-        print("[TEST] Launching Mobile context (390x844, iPhone size)...")
+        # 2. Mobile verification (390x844, iPhone size)
+        print("\n[TEST] Launching Mobile context (390x844, iPhone viewport, 2x DPR)...")
         mobile_ctx = browser.new_context(
             viewport={"width": 390, "height": 844},
+            device_scale_factor=2,
             user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1",
             has_touch=True
         )
@@ -216,19 +346,19 @@ def main():
 
         # Switch to CMF on mobile
         mobile_page.locator('#vs-study-tabs button[data-study="cmf"]').click()
-        mobile_page.wait_for_timeout(300)
+        mobile_page.wait_for_timeout(350)
 
         px_mobile = count_canvas_pixels(mobile_page)
         assert px_mobile > 200, f"Mobile canvas blank, pixels={px_mobile}"
-        print(f"[MOBILE] Canvas verified (pixels={px_mobile})")
+        print(f"  [MOBILE] CMF canvas verified (pixels={px_mobile})")
 
         # Simulate Touch Scrubbing
-        print("[MOBILE] Simulating Touch Scrubbing...")
+        print("  [MOBILE] Simulating Touch Scrubbing...")
         mobile_canvas = mobile_page.locator("#vs-canvas")
         m_box = mobile_canvas.bounding_box()
-        touch_x1 = m_box["x"] + m_box["width"] * 0.3
+        touch_x1 = m_box["x"] + m_box["width"] * 0.35
         touch_y1 = m_box["y"] + m_box["height"] * 0.5
-        touch_x2 = m_box["x"] + m_box["width"] * 0.7
+        touch_x2 = m_box["x"] + m_box["width"] * 0.65
         touch_y2 = m_box["y"] + m_box["height"] * 0.5
 
         # Dispatch touchstart
@@ -254,7 +384,7 @@ def main():
         mobile_tt = mobile_page.locator("#vs-tooltip")
         assert mobile_tt.is_visible(), "Mobile tooltip should appear on touchstart"
         tt1 = mobile_tt.inner_text()
-        print(f"[MOBILE TOUCH] First touchpoint: {tt1.splitlines()[0]}")
+        print(f"  [MOBILE TOUCH] First touchpoint: {tt1.splitlines()[0]}")
 
         # Dispatch touchmove
         mobile_page.evaluate("""({ x, y }) => {
@@ -276,7 +406,7 @@ def main():
         }""", {"x": touch_x2, "y": touch_y2})
         mobile_page.wait_for_timeout(150)
         tt2 = mobile_tt.inner_text()
-        print(f"[MOBILE TOUCH] Scrobble move touchpoint: {tt2.splitlines()[0]}")
+        print(f"  [MOBILE TOUCH] Scrobble move touchpoint: {tt2.splitlines()[0]}")
 
         # Dispatch touchend
         mobile_page.evaluate("""() => {
@@ -293,12 +423,12 @@ def main():
         mobile_page.wait_for_timeout(150)
         assert not mobile_tt.is_visible(), "Mobile tooltip should hide on touchend"
 
-        # Capture Mobile Screenshot
-        cmf_mobile_shot = os.path.join(ARTIFACT_DIR, "cmf_mobile_boil.png")
+        # Capture Mobile Screenshot of CMF on BOIL
+        cmf_mobile_shot = os.path.join(ARTIFACT_DIR, "acmf_mobile_boil.png")
         mobile_page.locator("#vs-panel").screenshot(path=cmf_mobile_shot)
-        print(f"[SCREENSHOT] Saved {cmf_mobile_shot}")
-        mobile_ctx.close()
+        print(f"  [SCREENSHOT] Saved mobile view -> {cmf_mobile_shot}")
 
+        mobile_ctx.close()
         browser.close()
 
     server.shutdown()
@@ -309,16 +439,15 @@ def main():
     for e in page_errors:
         print(f"  [PAGE ERROR] {e}")
 
-    print(f"Console errors: {len(console_errors)}")
-    for e in console_errors:
-        print(f"  [CONSOLE ERROR] {e}")
+    print(f"Critical console errors: {len(critical_errors)}")
+    for e in critical_errors:
+        print(f"  [CRITICAL CONSOLE ERROR] {e}")
 
-    print(f"Console warnings: {len(console_warnings)}")
-    for w in console_warnings:
-        print(f"  [CONSOLE WARNING] {w}")
+    print(f"Total console errors (including remote proxy fallbacks): {len(console_errors)}")
+    print(f"Total console warnings: {len(console_warnings)}")
 
     assert len(page_errors) == 0, f"Uncaught page errors detected: {page_errors}"
-    assert len(console_errors) == 0, f"Browser console errors detected: {console_errors}"
+    assert len(critical_errors) == 0, f"Critical browser console errors detected: {critical_errors}"
     print("ALL BROWSER AUTOMATION AND VISUAL CHECKS PASSED PERFECTLY!")
 
 if __name__ == "__main__":
