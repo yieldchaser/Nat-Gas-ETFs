@@ -362,7 +362,9 @@ const Metrics = {
     // Human-readable vol regime label
     getVolRegimeLabel(volRegimePct) {
         if (volRegimePct == null) return { label: '—', cls: 'vr-unknown' };
-        const t = CONFIG.thresholds.volRegime;
+        const t = (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.thresholds && CONFIG.thresholds.volRegime)
+            ? CONFIG.thresholds.volRegime
+            : { extreme: 92, high: 80, normal: 60, low: 30 };
         if (volRegimePct >= t.extreme)  return { label: 'EXTREME', cls: 'vr-extreme' };
         if (volRegimePct >= t.high)     return { label: 'HIGH',    cls: 'vr-high' };
         if (volRegimePct >= t.normal)   return { label: 'NORMAL',  cls: 'vr-normal' };
@@ -492,10 +494,15 @@ const Metrics = {
         for (const dw of CONFIG.windows.percentile) {
             dvcvi[`${dw}d`] = this.computeCVI(dvPercentile[`${dw}d`], pricePercentile[`${dw}d`]);
         }
-        // VDDS = DV-RVOL-21d / S-RVOL-21d (current reading)
+        // Upgraded VDDS kernel (volume-preserving, split-invariant)
+        const upgradedVddsSeries = this.computeUpgradedVDDS(d);
+        const latestVddsRecord = (upgradedVddsSeries && upgradedVddsSeries.length)
+            ? upgradedVddsSeries[upgradedVddsSeries.length - 1]
+            : null;
         const dvRvol21 = dvRvol['21d'];
         const sRvol21  = rvol['21d'];
-        const vdds = (dvRvol21 != null && sRvol21 != null && sRvol21 !== 0) ? dvRvol21 / sRvol21 : null;
+        const vdds = latestVddsRecord ? latestVddsRecord.vddsStar : ((dvRvol21 != null && sRvol21 != null && sRvol21 !== 0) ? dvRvol21 / sRvol21 : null);
+        const drvol = latestVddsRecord ? latestVddsRecord.drvol : dvRvol21;
         // DV-VPS (same weights as VPS but using DV metrics)
         const dvRvolNorm  = dvRvol['21d']         != null ? Math.min(100, Math.max(0, (Math.log2(Math.max(0.5, dvRvol['21d'])) + 1) * 33.3)) : 0;
         const dvZNorm     = dvZScore['21d']        != null ? Math.min(100, Math.max(0, (dvZScore['21d'] + 2) * 12.5)) : 0;
@@ -564,7 +571,7 @@ const Metrics = {
             volPercentile, pricePercentile,
             cvi, vcvi, vps, mwca, mwcaCount,
             volatility: { hv, hvSeries21, hvPercentiles, atr14Pct, volRegimePct, hvTermStructure, vov21 },
-            dvRvol, dvZScore, dvPercentile, dvVroc, dvcvi, dvVps, vdds,
+            dvRvol, dvZScore, dvPercentile, dvVroc, dvcvi, dvVps, vdds, drvol, vddsRecord: latestVddsRecord,
             priceMAs, volumeMAs,
             rollingCorr,
             alerts, alertLevel,
@@ -619,88 +626,644 @@ const Metrics = {
         return alerts;
     },
 
-    // ---- CROSS-INSTRUMENT METRICS ----
+    // ---- CROSS-INSTRUMENT METRICS & UPGRADED STRESS ENGINE ----
+
+    _clamp(val, min, max) {
+        if (typeof val !== 'number' || !Number.isFinite(val)) return min;
+        return val < min ? min : val > max ? max : val;
+    },
+
+    _sigmoid(x) {
+        if (typeof x !== 'number' || !Number.isFinite(x)) return 0.5;
+        if (x >= 30.0) return 1.0;
+        if (x <= -30.0) return 0.0;
+        return 1.0 / (1.0 + Math.exp(-x));
+    },
+
+    _softWinsorizeVolTrack(drvol, knee = 2.25, maxTrack = 3.0, scale = 1.5) {
+        if (!Number.isFinite(drvol) || drvol <= 0.0) return 0.0;
+        if (drvol <= knee) return drvol;
+        return this._clamp(knee + (maxTrack - knee) * Math.tanh((drvol - knee) / scale), 0.0, maxTrack);
+    },
+
+    _resolveVolModeColorBand(drvol) {
+        if (!Number.isFinite(drvol) || drvol < 0.8) return 'rgba(255, 255, 255, 0.35)';
+        if (drvol < 1.2) return 'rgba(255, 255, 255, 0.70)';
+        if (drvol < 1.5) return 'var(--blue)';
+        if (drvol < 2.0) return 'var(--yellow)';
+        if (drvol < 2.5) return 'var(--orange)';
+        if (drvol < 3.0) return 'var(--red)';
+        return 'var(--purple)';
+    },
+
+    _resolveDollarModeColorBand(vddsStar) {
+        if (!Number.isFinite(vddsStar)) return 'rgba(255, 255, 255, 0.70)';
+        if (vddsStar < 0.78) return '#10b981'; // Emerald (Deep Capitulation)
+        if (vddsStar < 0.97) return '#06b6d4'; // Cyan (Mild Capitulation / Distribution)
+        if (vddsStar <= 1.03) return 'rgba(255, 255, 255, 0.70)'; // Neutral Balanced
+        if (vddsStar <= 1.25) return '#f97316'; // Orange (Accumulation)
+        return '#ef4444'; // Red (Strong Momentum)
+    },
+
+    /**
+     * Upgraded Volume-Dollar Flow Divergence (VDDS*) Kernel
+     * Grounded in Kyle-Bouchaud microstructure impact physics:
+     * Eliminates the volume cancellation dilemma (V_t vanishing in C_t / VWAP_21),
+     * guarantees split-invariance via notional turnover D_t = P_typ * V_t,
+     * and bounds output cleanly within [0.50, 1.50] with 1.00x neutral center.
+     */
+    computeUpgradedVDDS(barHistory, options = {}) {
+        if (!Array.isArray(barHistory) || barHistory.length === 0) return [];
+
+        const cacheKey = barHistory.length > 0
+            ? `${barHistory.length}|${barHistory[barHistory.length - 1].date || ''}|${barHistory[0].date || ''}`
+            : '';
+        if (!this._vddsCache) this._vddsCache = new Map();
+        if (cacheKey && this._vddsCache.has(cacheKey)) {
+            return this._vddsCache.get(cacheKey);
+        }
+
+        const ewmaSpan = Math.max(options.ewmaSpan ?? 21, 2);
+        const atrSpan = Math.max(options.atrSpan ?? 14, 2);
+        const baselineCapMultiple = Math.max(options.baselineOutlierCap ?? 5.0, 1.5);
+        const kappaD = Math.max(options.vddsParticipationPrior ?? 0.25, 0.01);
+        const gammaD = this._clamp(options.vddsParticipationPower ?? 0.65, 0.1, 1.5);
+        const kappaE = Math.max(options.vddsEfficiencyPrior ?? 0.35, 0.01);
+        const betaE = this._clamp(options.vddsEfficiencyPower ?? 0.35, 0.1, 1.0);
+        const lambdaV = Math.max(options.vddsTanhLambda ?? 0.90, 0.1);
+        const splitJumpThreshold = Math.max(options.splitJumpRatioThreshold ?? 2.8, 1.8);
+        const priceEpsilon = 1e-4;
+        const epsilon = 1e-9;
+
+        const byDate = new Map();
+        for (let i = 0; i < barHistory.length; i++) {
+            const b = barHistory[i];
+            const px = (b.close != null ? b.close : b.price);
+            if (b && typeof b.date === 'string' && b.date.length >= 10 && Number.isFinite(px) && px > 0) {
+                byDate.set(b.date.slice(0, 10), b);
+            }
+        }
+        const sorted = Array.from(byDate.values()).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+        if (sorted.length === 0) return [];
+
+        const alpha21 = 2.0 / (ewmaSpan + 1.0);
+        const alphaAtr = 2.0 / (atrSpan + 1.0);
+
+        let ewmaDollarVol = 0.0;
+        let ewmaShareVol = 0.0;
+        let ewmaPctAtr = 0.03;
+        let ewmaVariance = 0.0009;
+        let ewmaEfficiency = 0.0;
+        let syntheticPriceIndex = 100.0;
+        let dwmaSyntheticPriceIndex = 100.0;
+
+        const canonicalSplits = [4, 5, 8, 10, 12, 15, 20, 25, 0.5, 0.25, 0.2, 0.1];
+        const output = new Array(sorted.length);
+
+        for (let i = 0; i < sorted.length; i++) {
+            const bar = sorted[i];
+            const close = Math.max(bar.close != null ? bar.close : bar.price, priceEpsilon);
+            const high = Number.isFinite(bar.high) && bar.high >= close ? bar.high : close;
+            const low = Number.isFinite(bar.low) && bar.low <= close && bar.low > 0 ? bar.low : close;
+            const volume = Number.isFinite(bar.volume) && bar.volume >= 0 ? bar.volume : 0.0;
+
+            const typicalPrice = (high + low + 2.0 * close) * 0.25;
+            const dollarTurnover = typicalPrice * volume;
+
+            const prevRawClose = i > 0 ? Math.max(sorted[i - 1].close != null ? sorted[i - 1].close : sorted[i - 1].price, priceEpsilon) : close;
+            let effPrevClose = prevRawClose;
+            let isSplitBar = false;
+            let splitFactor = 1.0;
+
+            if (i > 0) {
+                const explicitSplit = Number.isFinite(bar.splitFactor) && bar.splitFactor > 0 ? bar.splitFactor : 1.0;
+                if (Math.abs(explicitSplit - 1.0) > 1e-6) {
+                    effPrevClose = prevRawClose * explicitSplit;
+                    isSplitBar = true;
+                    splitFactor = explicitSplit;
+                } else {
+                    const rawRatio = close / prevRawClose;
+                    if (rawRatio >= splitJumpThreshold || rawRatio <= 1.0 / splitJumpThreshold) {
+                        const openPx = Number.isFinite(bar.open) && bar.open > 0 ? bar.open : close;
+                        const openRatio = openPx / prevRawClose;
+                        let bestFactor = openRatio;
+                        let minErr = Infinity;
+                        for (let k = 0; k < canonicalSplits.length; k++) {
+                            const cand = canonicalSplits[k];
+                            const err = Math.abs(openRatio - cand) / cand;
+                            if (err < minErr && err < 0.25) {
+                                minErr = err;
+                                bestFactor = cand;
+                            }
+                        }
+                        effPrevClose = prevRawClose * bestFactor;
+                        isSplitBar = true;
+                        splitFactor = bestFactor;
+                    }
+                }
+            }
+            effPrevClose = Math.max(effPrevClose, priceEpsilon);
+
+            const logReturn = i > 0 ? Math.log(this._clamp(close / effPrevClose, 0.05, 20.0)) : 0.0;
+            const intrabarRange = Math.max(0.0, high - low);
+            const trueRange = i > 0
+                ? Math.max(intrabarRange, Math.abs(high - effPrevClose), Math.abs(low - effPrevClose), priceEpsilon * close)
+                : Math.max(intrabarRange, 0.015 * close, priceEpsilon * close);
+            const pctTrueRange = this._clamp(trueRange / effPrevClose, priceEpsilon, 2.0);
+
+            if (i === 0) {
+                ewmaDollarVol = Math.max(dollarTurnover, epsilon);
+                ewmaShareVol = Math.max(volume, epsilon);
+                ewmaPctAtr = Math.max(pctTrueRange, 0.005);
+                ewmaVariance = ewmaPctAtr * ewmaPctAtr;
+                ewmaEfficiency = dollarTurnover / ewmaPctAtr;
+                syntheticPriceIndex = 100.0;
+                dwmaSyntheticPriceIndex = 100.0;
+            } else {
+                syntheticPriceIndex *= Math.exp(logReturn);
+            }
+
+            const baselineDollarVol = Math.max(ewmaDollarVol, epsilon);
+            const baselineShareVol = isSplitBar && splitFactor > 0
+                ? Math.max(ewmaShareVol / splitFactor, epsilon)
+                : Math.max(ewmaShareVol, epsilon);
+            const causalPctAtr = Math.max(ewmaPctAtr, priceEpsilon);
+            const causalDailySigma = Math.max(Math.sqrt(ewmaVariance), priceEpsilon);
+            const baselineEfficiency = Math.max(ewmaEfficiency, epsilon);
+
+            // 1. Causal Notional Dollar RVOL & Split-Guarded Share RVOL
+            const drvol = dollarTurnover > 0 ? dollarTurnover / baselineDollarVol : 0.0;
+            const srvol = volume > 0 ? volume / baselineShareVol : 0.0;
+
+            // 2. Concave Participation Gate W_part,t
+            const regDrvol = (dollarTurnover + kappaD * baselineDollarVol) / ((1.0 + kappaD) * baselineDollarVol);
+            const participationGate = Math.pow(Math.max(regDrvol, 0.0), gammaD) * this._sigmoid((drvol - 0.75) / 0.25);
+
+            // 3. Continuous Order-Flow Pressure Kernel Phi_t in [-1, +1]
+            const clvDenom = Math.max(intrabarRange, 0.25 * causalPctAtr * close, priceEpsilon * close);
+            const clv = this._clamp((2.0 * close - high - low) / clvDenom, -1.0, 1.0);
+            const returnImpulse = Math.tanh(logReturn / causalPctAtr);
+            const orderFlowPhi = Math.tanh(0.55 * clv + 0.75 * returnImpulse);
+
+            // 4. Capital Intensity per Unit of Volatility E_t
+            const effectiveVolFloor = Math.max(pctTrueRange, 0.20 * causalDailySigma, priceEpsilon);
+            const currentEfficiency = dollarTurnover / effectiveVolFloor;
+            const regEfficiency = (currentEfficiency + kappaE * baselineEfficiency) / ((1.0 + kappaE) * baselineEfficiency);
+            const volatilityEfficiency = this._clamp(Math.pow(Math.max(regEfficiency, 0.0), betaE), 0.50, 2.00);
+
+            // 5. Split-Invariant Notional-Anchored Price Displacement q_t in [-1, +1]
+            const anchorDisplacement = Math.tanh(
+                Math.log(Math.max(syntheticPriceIndex, epsilon) / Math.max(dwmaSyntheticPriceIndex, epsilon)) /
+                Math.max(2.5 * causalDailySigma, priceEpsilon)
+            );
+
+            // 6. Synthesize VDDS* in [0.50, 1.50]
+            const directionalComposite = 0.70 * orderFlowPhi + 0.30 * anchorDisplacement;
+            const flowKernel = participationGate * volatilityEfficiency * directionalComposite;
+            const vddsStar = this._clamp(1.0 + 0.50 * Math.tanh(lambdaV * flowKernel), 0.50, 1.50);
+
+            // 7. Dual-Mode UI Geometry
+            const volClamped = this._softWinsorizeVolTrack(drvol, 2.25, 3.0, 1.5);
+            const volTrackWidthPct = this._clamp((volClamped / 3.0) * 100.0, 0.0, 100.0);
+            const signedOffsetPct = this._clamp((vddsStar - 1.0) * 100.0, -50.0, 50.0);
+            const barLeftPct = signedOffsetPct < 0 ? 50.0 + signedOffsetPct : 50.0;
+            const barWidthPct = Math.abs(signedOffsetPct);
+
+            output[i] = {
+                date: bar.date.slice(0, 10),
+                close,
+                volume,
+                dollarTurnover,
+                drvol,
+                srvol,
+                vddsStar,
+                orderFlowPhi,
+                participationGate,
+                volatilityEfficiency,
+                anchorDisplacement,
+                syntheticPriceIndex,
+                logReturn,
+                atr14Pct: causalPctAtr,
+                hv21Annualized: Math.sqrt(Math.max(ewmaVariance, epsilon) * 252.0),
+                isSplitAdjustedBar: isSplitBar,
+                inferredSplitFactor: splitFactor,
+                ui: {
+                    volMode: {
+                        displayValue: Number(this._clamp(drvol, 0.0, 15.0).toFixed(2)),
+                        clampedValue: Number(volClamped.toFixed(3)),
+                        trackWidthPct: Number(volTrackWidthPct.toFixed(2)),
+                        baselineAnchorPct: 33.33,
+                        colorBand: this._resolveVolModeColorBand(drvol)
+                    },
+                    dollarMode: {
+                        displayValue: Number(vddsStar.toFixed(2)),
+                        centerAnchorPct: 50.0,
+                        barLeftPct: Number(barLeftPct.toFixed(2)),
+                        barWidthPct: Number(barWidthPct.toFixed(2)),
+                        direction: vddsStar < 0.97 ? 'CAPITULATION_LEFT' : (vddsStar > 1.03 ? 'MOMENTUM_RIGHT' : 'BALANCED_CENTER'),
+                        colorBand: this._resolveDollarModeColorBand(vddsStar)
+                    }
+                }
+            };
+
+            if (!bar.isHolidayCarryover) {
+                const cappedDollarVol = Math.min(dollarTurnover, baselineCapMultiple * baselineDollarVol);
+                const cappedShareVol = Math.min(volume, baselineCapMultiple * baselineShareVol);
+                const cappedEff = Math.min(currentEfficiency, baselineCapMultiple * baselineEfficiency);
+
+                ewmaDollarVol = alpha21 * cappedDollarVol + (1.0 - alpha21) * baselineDollarVol;
+                ewmaShareVol = alpha21 * cappedShareVol + (1.0 - alpha21) * baselineShareVol;
+                ewmaPctAtr = alphaAtr * pctTrueRange + (1.0 - alphaAtr) * causalPctAtr;
+                ewmaVariance = alpha21 * (logReturn * logReturn) + (1.0 - alpha21) * ewmaVariance;
+                ewmaEfficiency = alpha21 * cappedEff + (1.0 - alpha21) * baselineEfficiency;
+
+                const dwmaNum = alpha21 * cappedDollarVol * syntheticPriceIndex + (1.0 - alpha21) * baselineDollarVol * dwmaSyntheticPriceIndex;
+                const dwmaDen = Math.max(alpha21 * cappedDollarVol + (1.0 - alpha21) * baselineDollarVol, epsilon);
+                dwmaSyntheticPriceIndex = dwmaNum / dwmaDen;
+            }
+        }
+
+        if (cacheKey) {
+            this._vddsCache.set(cacheKey, output);
+        }
+        return output;
+    },
+
+    /**
+     * Enriches a single leg with participation-gated VCVI* and continuous fast-shock impulse.
+     */
+    enrichLegMicrostructureSeries(barHistory, options = {}) {
+        const vddsSeries = this.computeUpgradedVDDS(barHistory, options);
+        const n = vddsSeries.length;
+        if (n === 0) return [];
+
+        const dollarTurnovers = vddsSeries.map(r => r.dollarTurnover);
+        const syntheticPrices = vddsSeries.map(r => r.syntheticPriceIndex);
+        const hv21Series = vddsSeries.map(r => r.hv21Annualized);
+
+        const enriched = new Array(n);
+        let smoothedVcvi63 = 0.0;
+        let smoothedVcvi5 = 0.0;
+
+        for (let i = 0; i < n; i++) {
+            const vdds = vddsSeries[i];
+            const dvWin63 = dollarTurnovers.slice(Math.max(0, i - 62), i + 1);
+            const pxWin63 = syntheticPrices.slice(Math.max(0, i - 62), i + 1);
+            const dvWin21 = dollarTurnovers.slice(Math.max(0, i - 20), i + 1);
+            const pxWin21 = syntheticPrices.slice(Math.max(0, i - 20), i + 1);
+            const dvWin5 = dollarTurnovers.slice(Math.max(0, i - 4), i + 1);
+            const pxWin5 = syntheticPrices.slice(Math.max(0, i - 4), i + 1);
+            const hvWin252 = hv21Series.slice(Math.max(0, i - 251), i + 1);
+
+            const volRegimePct = this.percentileRank(hv21Series[i], hvWin252);
+            const volRegime = this.getVolRegimeLabel(volRegimePct).label;
+            const volMultiplier = this._clamp(1.5 - volRegimePct / 100.0, 0.5, 1.5);
+
+            const cvi63Raw = this.percentileRank(dollarTurnovers[i], dvWin63) * (1.0 - this.percentileRank(syntheticPrices[i], pxWin63) / 100.0);
+            const cvi21Raw = this.percentileRank(dollarTurnovers[i], dvWin21) * (1.0 - this.percentileRank(syntheticPrices[i], pxWin21) / 100.0);
+            const cvi5Raw = this.percentileRank(dollarTurnovers[i], dvWin5) * (1.0 - this.percentileRank(syntheticPrices[i], pxWin5) / 100.0);
+
+            // Participation gate eliminates the 3NGL.L low-volume percentile mirage (L-CAP 70 on 0.7x RVOL)
+            const capParticipationGate = this._sigmoid((vdds.drvol - 0.90) / 0.20);
+
+            const vcvi63Instant = this._clamp(cvi63Raw * volMultiplier * capParticipationGate, 0.0, 100.0);
+            const vcvi21Instant = this._clamp(cvi21Raw * volMultiplier * capParticipationGate, 0.0, 100.0);
+            const vcvi5Instant = this._clamp(cvi5Raw * volMultiplier * capParticipationGate, 0.0, 100.0);
+
+            smoothedVcvi63 = i === 0 ? vcvi63Instant : 0.65 * vcvi63Instant + 0.35 * smoothedVcvi63;
+            smoothedVcvi5 = i === 0 ? vcvi5Instant : 0.75 * vcvi5Instant + 0.25 * smoothedVcvi5;
+
+            const absPctReturn = Math.abs(Math.exp(vdds.logReturn) - 1.0);
+            const absReturnAtrMultiple = absPctReturn / Math.max(vdds.atr14Pct, 1e-4);
+            const spikeActivation = this._sigmoid((vcvi5Instant - 42.0) / 4.0) * this._sigmoid((absReturnAtrMultiple - 1.85) / 0.25);
+
+            enriched[i] = {
+                ...vdds,
+                cvi63Raw: Number(cvi63Raw.toFixed(2)),
+                vcvi63: Number(smoothedVcvi63.toFixed(2)),
+                vcvi21: Number(vcvi21Instant.toFixed(2)),
+                vcvi5: Number(smoothedVcvi5.toFixed(2)),
+                volRegimePct: Number(volRegimePct.toFixed(2)),
+                volRegime,
+                absReturnAtrMultiple: Number(absReturnAtrMultiple.toFixed(2)),
+                spikeActivation: Number(spikeActivation.toFixed(4)),
+                sharpSpikeFlag: spikeActivation >= 0.50,
+                isHolidayCarryover: false,
+                stalenessDays: 0
+            };
+        }
+
+        return enriched;
+    },
+
+    /**
+     * Upgraded Cross-Pair Stress Index (IPSI*)
+     * Split- & float-invariant notional dollar formulation with Tikhonov prior (kappa = 0.50),
+     * concave participation gate, structural carry asymmetry, and Schmitt-trigger hysteresis.
+     */
+    computeUpgradedIPSI(longHistory, shortHistory, options = {}) {
+        if (!Array.isArray(longHistory) || !Array.isArray(shortHistory) || longHistory.length === 0 || shortHistory.length === 0) {
+            return [];
+        }
+
+        const cacheKey = `${longHistory.length}|${shortHistory.length}|${longHistory[longHistory.length - 1].date || ''}|${shortHistory[shortHistory.length - 1].date || ''}`;
+        if (!this._ipsiCache) this._ipsiCache = new Map();
+        if (cacheKey && this._ipsiCache.has(cacheKey)) {
+            return this._ipsiCache.get(cacheKey);
+        }
+
+        const kappa = Math.max(options.regularizationKappa ?? 0.50, 0.05);
+        const gammaP = Math.max(options.participationGamma ?? 1.10, 0.1);
+        const etaP = this._clamp(options.participationExponent ?? 0.65, 0.1, 1.5);
+        const lambdaCap = this._clamp(options.capitulationWeight ?? 0.35, 0.0, 1.0);
+        const tauZ = Math.max(options.sigmoidScaleTau ?? 1.15, 0.2);
+        const maxStalenessDays = Math.max(options.maxHolidayStalenessDays ?? 4, 1);
+
+        const longSeries = this.enrichLegMicrostructureSeries(longHistory, options);
+        const shortSeries = this.enrichLegMicrostructureSeries(shortHistory, options);
+        if (longSeries.length === 0 || shortSeries.length === 0) return [];
+
+        const longByDate = new Map();
+        for (let i = 0; i < longSeries.length; i++) longByDate.set(longSeries[i].date, longSeries[i]);
+
+        const shortByDate = new Map();
+        for (let i = 0; i < shortSeries.length; i++) shortByDate.set(shortSeries[i].date, shortSeries[i]);
+
+        const unionDates = Array.from(new Set([...longByDate.keys(), ...shortByDate.keys()])).sort();
+
+        const records = [];
+        let prevState = null;
+        let lastValidLong = null;
+        let lastValidShort = null;
+
+        for (let i = 0; i < unionDates.length; i++) {
+            const date = unionDates[i];
+            let lMetrics = longByDate.get(date) ?? null;
+            let sMetrics = shortByDate.get(date) ?? null;
+
+            if (!lMetrics && lastValidLong) {
+                const stale = this._daysBetween(lastValidLong.date, date);
+                if (stale <= maxStalenessDays) {
+                    lMetrics = { ...lastValidLong, date, isHolidayCarryover: true, stalenessDays: stale };
+                }
+            } else if (lMetrics) {
+                lastValidLong = lMetrics;
+            }
+
+            if (!sMetrics && lastValidShort) {
+                const stale = this._daysBetween(lastValidShort.date, date);
+                if (stale <= maxStalenessDays) {
+                    sMetrics = { ...lastValidShort, date, isHolidayCarryover: true, stalenessDays: stale };
+                }
+            } else if (sMetrics) {
+                lastValidShort = sMetrics;
+            }
+
+            if (!lMetrics || !sMetrics) continue;
+
+            const drvolL = Math.max(lMetrics.drvol, 0.0);
+            const drvolS = Math.max(sMetrics.drvol, 0.0);
+
+            // 1. Regularized Log Turnover Ratio (immunized against denominator collapse)
+            const logTurnoverRatio = Math.log((drvolS + kappa) / (drvolL + kappa));
+
+            // 2. Concave Pair Participation Gate Omega_t in [0, 1]
+            const avgPairDrvol = 0.5 * (drvolL + drvolS);
+            const participationGate = Math.tanh(gammaP * Math.pow(Math.max(avgPairDrvol, 0.0), etaP));
+
+            // 3. Structural Carry & Capitulation Differential Delta_cap,t
+            const vcviLEff = 0.60 * lMetrics.vcvi63 + 0.40 * lMetrics.vcvi5;
+            const vcviSEff = 0.60 * sMetrics.vcvi63 + 0.40 * sMetrics.vcvi5;
+            const capitulationDifferential = lambdaCap * ((vcviSEff - vcviLEff) / 100.0);
+
+            // 4. Latent Cross-Pair Stress Score Z_IPSI,t & Bounded Projections
+            const latentScoreZ = participationGate * (logTurnoverRatio + capitulationDifferential);
+            const tanhProjected = Math.tanh(latentScoreZ / tauZ);
+
+            const ipsiSigned = this._clamp(100.0 * tanhProjected, -100.0, 100.0);
+            const ipsi0to10 = this._clamp(5.0 + 5.0 * tanhProjected, 0.0, 10.0);
+            const ipsiRegularizedRatio = this._clamp(Math.exp(latentScoreZ), 0.20, 5.00);
+
+            const ipsiStar = {
+                ipsiSigned: Number(ipsiSigned.toFixed(2)),
+                ipsi0to10: Number(ipsi0to10.toFixed(2)),
+                ipsiRegularizedRatio: Number(ipsiRegularizedRatio.toFixed(2)),
+                participationGate: Number(participationGate.toFixed(4)),
+                capitulationDifferential: Number(capitulationDifferential.toFixed(4)),
+                latentScoreZ: Number(latentScoreZ.toFixed(4))
+            };
+
+            const stressState = this.evaluatePairStressState(ipsiStar, lMetrics, sMetrics, prevState);
+            prevState = stressState;
+
+            records.push({
+                date,
+                ipsiStar,
+                longMetrics: lMetrics,
+                shortMetrics: sMetrics,
+                stressState
+            });
+        }
+
+        if (cacheKey) {
+            this._ipsiCache.set(cacheKey, records);
+        }
+        return records;
+    },
+
+    _daysBetween(dateA, dateB) {
+        if (!dateA || !dateB) return Infinity;
+        const tA = Date.UTC(Number(dateA.slice(0, 4)), Number(dateA.slice(5, 7)) - 1, Number(dateA.slice(8, 10)));
+        const tB = Date.UTC(Number(dateB.slice(0, 4)), Number(dateB.slice(5, 7)) - 1, Number(dateB.slice(8, 10)));
+        if (!Number.isFinite(tA) || !Number.isFinite(tB)) return Infinity;
+        return Math.round(Math.abs(tB - tA) / 86400000);
+    },
+
+    /**
+     * Evaluates the continuous multi-factor stress potentials (Psi_L, Psi_S) and resolves
+     * the 8-state classification via a volatility-conditioned Schmitt-Trigger hysteresis machine.
+     */
+    evaluatePairStressState(ipsiStar, longMetrics, shortMetrics, previousState = null) {
+        const maxStale = Math.max(longMetrics?.stalenessDays ?? 0, shortMetrics?.stalenessDays ?? 0);
+        const avgVolPct = this._clamp(0.5 * ((longMetrics?.volRegimePct ?? 50) + (shortMetrics?.volRegimePct ?? 50)), 0.0, 100.0);
+        const volRegime = this.getVolRegimeLabel(avgVolPct).label;
+
+        if (maxStale > 4) {
+            return {
+                status: 'DATA_STALE',
+                longTier: 0,
+                shortTier: 0,
+                longPotential: 0.0,
+                shortPotential: 0.0,
+                dwellBars: 1,
+                hysteresisLatchActive: false,
+                volRegime,
+                volRegimePct: Number(avgVolPct.toFixed(1))
+            };
+        }
+
+        const prevStatus = previousState?.status ?? 'QUIET';
+        const prevLongTier = previousState?.longTier ?? 0;
+        const prevShortTier = previousState?.shortTier ?? 0;
+        const prevDwellBars = previousState?.dwellBars ?? 0;
+
+        const ipsiSigned = this._clamp(ipsiStar?.ipsiSigned ?? 0.0, -100.0, 100.0);
+
+        function computePotential(leg, signedIpsiForLeg, selfRef) {
+            const s63 = selfRef._clamp(leg.vcvi63 ?? 0.0, 0.0, 100.0);
+            const s5 = selfRef._clamp((55.0 / 45.0) * (leg.vcvi5 ?? 0.0), 0.0, 100.0);
+            const drvol = Math.max(leg.drvol ?? 0.0, 0.05);
+            const sDrvol = 100.0 * selfRef._sigmoid(1.65 * (Math.log(drvol) - 0.28));
+
+            // Log-Sum-Exp aggregation over (s63, s5, sDrvol)
+            const beta = 0.12;
+            const maxS = Math.max(s63, s5, sDrvol);
+            const lseCore = maxS + Math.log(
+                Math.exp(beta * (s63 - maxS)) +
+                Math.exp(beta * (s5 - maxS)) +
+                Math.exp(beta * (sDrvol - maxS))
+            ) / beta - (0.35 * Math.log(3.0)) / beta;
+
+            const spikeBoost = 18.0 * selfRef._clamp(leg.spikeActivation ?? 0.0, 0.0, 1.0);
+            const ipsiBoost = 20.0 * selfRef._clamp((signedIpsiForLeg - 20.0) / 80.0, 0.0, 1.0);
+            const stalenessDecay = Math.exp(-0.35 * Math.max(0, leg.stalenessDays ?? 0));
+
+            const rawPotential = Math.max(0.0, lseCore + spikeBoost + ipsiBoost) * stalenessDecay;
+            return selfRef._clamp(100.0 * Math.tanh(rawPotential / 82.0), 0.0, 100.0);
+        }
+
+        const longPotential = computePotential(longMetrics, -ipsiSigned, this);
+        const shortPotential = computePotential(shortMetrics, +ipsiSigned, this);
+
+        // Volatility regime threshold shift delta_reg (-1.5 in LOW to +3.0 in EXTREME)
+        const regimeShift = avgVolPct < 30.0 ? -1.5 : (avgVolPct < 60.0 ? -0.5 : (avgVolPct < 80.0 ? 0.0 : (avgVolPct < 92.0 ? +1.5 : +3.0)));
+
+        const upThresholds = [0.0, 55.0 + regimeShift, 65.0 + regimeShift, 75.0 + regimeShift];
+        const downThresholds = [0.0, 48.0 + regimeShift, 58.0 + regimeShift, 67.0 + regimeShift];
+
+        function resolveTier(potential, prevTier) {
+            for (let t = 3; t > prevTier; t--) {
+                if (potential >= upThresholds[t]) return t;
+            }
+            let tier = prevTier;
+            while (tier > 0 && potential < downThresholds[tier]) {
+                tier--;
+            }
+            return tier;
+        }
+
+        const longTier = resolveTier(longPotential, prevLongTier);
+        const shortTier = resolveTier(shortPotential, prevShortTier);
+
+        const dualRetentionFloor = 46.0 + regimeShift;
+        const holdDualFromPrev = prevStatus === 'DUAL' && longPotential >= dualRetentionFloor && shortPotential >= dualRetentionFloor;
+
+        let status = 'QUIET';
+        if ((longTier >= 1 && shortTier >= 1) || holdDualFromPrev) {
+            status = 'DUAL';
+        } else if (longTier >= 1) {
+            status = longTier === 3 ? 'L-CRITICAL' : (longTier === 2 ? 'L-STRESS' : 'L-ELEVATED');
+        } else if (shortTier >= 1) {
+            status = shortTier === 3 ? 'S-CRITICAL' : (shortTier === 2 ? 'S-STRESS' : 'S-ELEVATED');
+        }
+
+        const hysteresisLatchActive = holdDualFromPrev ||
+            (longTier > 0 && longPotential < upThresholds[longTier]) ||
+            (shortTier > 0 && shortPotential < upThresholds[shortTier]);
+
+        const dwellBars = status === prevStatus ? prevDwellBars + 1 : 1;
+
+        return {
+            status,
+            longTier: holdDualFromPrev && longTier === 0 ? 1 : longTier,
+            shortTier: holdDualFromPrev && shortTier === 0 ? 1 : shortTier,
+            longPotential: Number(longPotential.toFixed(2)),
+            shortPotential: Number(shortPotential.toFixed(2)),
+            dwellBars,
+            hysteresisLatchActive,
+            volRegime,
+            volRegimePct: Number(avgVolPct.toFixed(1))
+        };
+    },
 
     computeIPSI(longMetrics, shortMetrics) {
         if (!longMetrics || !shortMetrics) return null;
-        const longRvol = longMetrics?.rvol?.['21d'];
-        const shortRvol = shortMetrics?.rvol?.['21d'];
-        if (longRvol == null || shortRvol == null || longRvol === 0) return null;
-        return shortRvol / longRvol;
+
+        if (longMetrics.history && shortMetrics.history && longMetrics.history.length && shortMetrics.history.length) {
+            const ipsiSeries = this.computeUpgradedIPSI(longMetrics.history, shortMetrics.history);
+            if (ipsiSeries && ipsiSeries.length) {
+                const latest = ipsiSeries[ipsiSeries.length - 1];
+                const ratio = latest.ipsiStar.ipsiRegularizedRatio;
+                const num = new Number(ratio);
+                num.ipsiStar = latest.ipsiStar;
+                num.signed = latest.ipsiStar.ipsiSigned;
+                num.scale10 = latest.ipsiStar.ipsi0to10;
+                num.stressState = latest.stressState;
+                num.latestRecord = latest;
+                return num;
+            }
+        }
+
+        const longRvol = longMetrics?.drvol ?? longMetrics?.rvol?.['21d'];
+        const shortRvol = shortMetrics?.drvol ?? shortMetrics?.rvol?.['21d'];
+        if (longRvol == null || shortRvol == null) return null;
+        const regRatio = this._clamp((shortRvol + 0.5) / (longRvol + 0.5), 0.20, 5.00);
+        return Number(regRatio.toFixed(2));
     },
 
     computePairStatus(ipsi, longMetrics, shortMetrics) {
-        // Evaluate directional stress and capitulation across BOTH sides of the pair
+        if (ipsi && ipsi.stressState) {
+            const st = ipsi.stressState;
+            const status = st.status;
+            let cls = 'quiet';
+            if (status.includes('CRITICAL')) cls = 'critical';
+            else if (status.includes('STRESS') || status === 'DUAL') cls = 'stress';
+            else if (status.includes('ELEVATED')) cls = 'elevated';
+
+            let tooltip = '';
+            if (status === 'DUAL') {
+                tooltip = `Dual Stress: Both long and short legs are under elevated volume pressure (Long: ${st.longPotential.toFixed(0)} pts, Short: ${st.shortPotential.toFixed(0)} pts). Dwell: ${st.dwellBars} bars.`;
+            } else if (status.startsWith('L-')) {
+                tooltip = `Long-Side ${status.slice(2)}: Capitulation pressure on long ETF (Potential: ${st.longPotential.toFixed(0)} pts, VCVI: ${longMetrics?.vcvi?.['63d']?.toFixed(0) ?? '—'}). Historically signals commodity bottom / exhaustion. Dwell: ${st.dwellBars} bars.`;
+            } else if (status.startsWith('S-')) {
+                tooltip = `Short-Side ${status.slice(2)}: Panic buying/hedging into inverse ETF (Potential: ${st.shortPotential.toFixed(0)} pts, VCVI: ${shortMetrics?.vcvi?.['63d']?.toFixed(0) ?? '—'}). Signals commodity top exhaustion. Dwell: ${st.dwellBars} bars.`;
+            } else {
+                tooltip = `Balanced (QUIET): Neither ETF exhibits abnormal volume pressure or capitulation spikes (Long: ${st.longPotential.toFixed(0)} pts, Short: ${st.shortPotential.toFixed(0)} pts).`;
+            }
+
+            return {
+                label: status,
+                cls,
+                tooltip,
+                stressState: st
+            };
+        }
+
+        // Fallback for isolated metrics without full history
         const tIpsi = CONFIG.thresholds.ipsi;
         const tVcvi = CONFIG.thresholds.vcvi;
-
-        const longVcvi  = longMetrics?.vcvi?.['63d'] ?? longMetrics?.cvi?.['63d'];
+        const longVcvi = longMetrics?.vcvi?.['63d'] ?? longMetrics?.cvi?.['63d'];
         const shortVcvi = shortMetrics?.vcvi?.['63d'] ?? shortMetrics?.cvi?.['63d'];
-        const longVcvi5 = longMetrics?.vcvi?.['5d']  ?? longMetrics?.cvi?.['5d'];
+        const longVcvi5 = longMetrics?.vcvi?.['5d'] ?? longMetrics?.cvi?.['5d'];
         const shortVcvi5 = shortMetrics?.vcvi?.['5d'] ?? shortMetrics?.cvi?.['5d'];
-        const longRvol  = longMetrics?.rvol?.['21d'];
-        const shortRvol = shortMetrics?.rvol?.['21d'];
+        const longRvol = longMetrics?.drvol ?? longMetrics?.rvol?.['21d'];
+        const shortRvol = shortMetrics?.drvol ?? shortMetrics?.rvol?.['21d'];
 
         const hasLongCap = (longVcvi != null && longVcvi >= tVcvi.elevated) || (longVcvi5 != null && longVcvi5 >= 45) || (longRvol != null && longRvol >= 1.5) || (longMetrics?.sharpSpike === true);
         const hasShortCap = (shortVcvi != null && shortVcvi >= tVcvi.elevated) || (shortVcvi5 != null && shortVcvi5 >= 45) || (shortRvol != null && shortRvol >= 1.5) || (ipsi != null && ipsi >= tIpsi.elevated) || (shortMetrics?.sharpSpike === true);
 
-        if (hasLongCap && hasShortCap) {
-            return {
-                label: 'DUAL',
-                cls: 'stress',
-                tooltip: 'Dual Stress: Both long and short ETFs are under elevated volume pressure or capitulation spikes simultaneously.'
-            };
-        }
-
+        if (hasLongCap && hasShortCap) return { label: 'DUAL', cls: 'stress', tooltip: 'Dual Stress: Both legs under elevated volume pressure.' };
         if (hasLongCap) {
-            if ((longVcvi != null && longVcvi >= tVcvi.critical) || (longVcvi5 != null && longVcvi5 >= 65) || (longRvol != null && longRvol >= 3.0)) {
-                return {
-                    label: 'L-CRITICAL',
-                    cls: 'critical',
-                    tooltip: `Long-Side Critical: Exceptional capitulation spike on long ETF (VCVI ${longVcvi != null ? longVcvi.toFixed(0) : '—'}). Historically signals natural gas bottom / price exhaustion.`
-                };
-            }
-            if ((longVcvi != null && longVcvi >= tVcvi.high) || (longVcvi5 != null && longVcvi5 >= 45) || (longRvol != null && longRvol >= 2.0) || longMetrics?.sharpSpike) {
-                return {
-                    label: 'L-STRESS',
-                    cls: 'stress',
-                    tooltip: `Long-Side Stress: Strong capitulation pressure on long ETF. Bullish turnaround watch.`
-                };
-            }
-            return {
-                label: 'L-ELEVATED',
-                cls: 'elevated',
-                tooltip: `Long-Side Elevated: Above-average buying/volume pressure on long ETF relative to peer.`
-            };
+            if ((longVcvi != null && longVcvi >= tVcvi.critical) || (longVcvi5 != null && longVcvi5 >= 65) || (longRvol != null && longRvol >= 3.0)) return { label: 'L-CRITICAL', cls: 'critical', tooltip: 'Long-Side Critical: Exceptional capitulation spike on long ETF.' };
+            if ((longVcvi != null && longVcvi >= tVcvi.high) || (longVcvi5 != null && longVcvi5 >= 45) || (longRvol != null && longRvol >= 2.0) || longMetrics?.sharpSpike) return { label: 'L-STRESS', cls: 'stress', tooltip: 'Long-Side Stress: Strong capitulation pressure on long ETF.' };
+            return { label: 'L-ELEVATED', cls: 'elevated', tooltip: 'Long-Side Elevated: Above-average buying/volume pressure on long ETF.' };
         }
-
         if (hasShortCap) {
-            if ((shortVcvi != null && shortVcvi >= tVcvi.critical) || (shortVcvi5 != null && shortVcvi5 >= 65) || (shortRvol != null && shortRvol >= 3.0) || (ipsi != null && ipsi >= tIpsi.critical)) {
-                return {
-                    label: 'S-CRITICAL',
-                    cls: 'critical',
-                    tooltip: `Short-Side Critical: Severe panic buying into inverse ETF (IPSI ${ipsi != null ? ipsi.toFixed(1) + 'x' : '—'}, VCVI ${shortVcvi != null ? shortVcvi.toFixed(0) : '—'}). Signals natural gas top exhaustion.`
-                };
-            }
-            if ((shortVcvi != null && shortVcvi >= tVcvi.high) || (shortVcvi5 != null && shortVcvi5 >= 45) || (shortRvol != null && shortRvol >= 2.0) || (ipsi != null && ipsi >= tIpsi.stress) || shortMetrics?.sharpSpike) {
-                return {
-                    label: 'S-STRESS',
-                    cls: 'stress',
-                    tooltip: `Short-Side Stress: Inverse ETF volume surging relative to long peer.`
-                };
-            }
-            return {
-                label: 'S-ELEVATED',
-                cls: 'elevated',
-                tooltip: `Short-Side Elevated: Modest directional stress favoring inverse ETF.`
-            };
+            if ((shortVcvi != null && shortVcvi >= tVcvi.critical) || (shortVcvi5 != null && shortVcvi5 >= 65) || (shortRvol != null && shortRvol >= 3.0) || (ipsi != null && ipsi >= tIpsi.critical)) return { label: 'S-CRITICAL', cls: 'critical', tooltip: 'Short-Side Critical: Severe panic buying into inverse ETF.' };
+            if ((shortVcvi != null && shortVcvi >= tVcvi.high) || (shortVcvi5 != null && shortVcvi5 >= 45) || (shortRvol != null && shortRvol >= 2.0) || (ipsi != null && ipsi >= tIpsi.stress) || shortMetrics?.sharpSpike) return { label: 'S-STRESS', cls: 'stress', tooltip: 'Short-Side Stress: Inverse ETF volume surging relative to long peer.' };
+            return { label: 'S-ELEVATED', cls: 'elevated', tooltip: 'Short-Side Elevated: Modest directional stress favoring inverse ETF.' };
         }
-
-        return {
-            label: 'QUIET',
-            cls: 'quiet',
-            tooltip: 'Balanced: Neither ETF in this pair exhibits abnormal volume pressure or capitulation spikes.'
-        };
+        return { label: 'QUIET', cls: 'quiet', tooltip: 'Balanced: Neither ETF in this pair exhibits abnormal volume pressure.' };
     },
 
     getPercentileClass(value) {
@@ -722,3 +1285,10 @@ const Metrics = {
         return 'var(--blue)';
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.Metrics = Metrics;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Metrics;
+}

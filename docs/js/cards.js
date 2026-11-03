@@ -264,14 +264,14 @@ const Cards = {
                 </div>`;
         }).join('');
 
-        // VDDS colour — < 0.85 = capitulation, > 1.15 = momentum/accumulation
+        // Upgraded VDDS colour — < 0.97 = capitulation, > 1.03 = momentum/accumulation
         const vddsColor = vdds == null ? 'rgba(255, 255, 255, 0.85)'
-            : vdds < 0.75 ? 'var(--green)'
-            : vdds < 0.90 ? 'var(--blue)'
-            : vdds > 1.25 ? 'var(--red)'
-            : vdds > 1.10 ? 'var(--orange)'
-            : 'rgba(255, 255, 255, 0.85)';
-        const vddsTip = `VDDS — Volume-Dollar Divergence Score: DV-RVOL-21d ÷ S-RVOL-21d. < 0.90: share volume outpacing dollar volume — price is low per unit, capitulation pattern. > 1.10: dollar value outpacing shares — price rising per unit, momentum/accumulation. Current: ${vdds != null ? vdds.toFixed(2) + 'x' : '—'}`;
+            : vdds < 0.78 ? '#10b981'
+            : vdds < 0.97 ? '#06b6d4'
+            : vdds <= 1.03 ? 'rgba(255, 255, 255, 0.85)'
+            : vdds <= 1.25 ? '#f97316'
+            : '#ef4444';
+        const vddsTip = `VDDS — Volume-Dollar Divergence Score: Upgraded split-invariant flow divergence kernel. Centered at 1.00x Balanced. <0.97x: capitulation/selling pressure under volume. >1.03x: institutional accumulation/buying momentum under volume. Current: ${vdds != null ? vdds.toFixed(2) + 'x' : '—'}`;
         const dvVpsColor = Metrics.getValueColor(dvVps, CONFIG.thresholds.vps);
 
         const safeTicker = ticker.replace(/\./g, '-');

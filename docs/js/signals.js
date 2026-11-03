@@ -335,14 +335,29 @@ const Signals = {
             const ipsi   = Metrics.computeIPSI(longM, shortM);
             const statusInfo = Metrics.computePairStatus(ipsi, longM, shortM);
 
-            const longRvol  = longM?.rvol?.['21d'];
-            const shortRvol = shortM?.rvol?.['21d'];
+            const longRvol  = longM?.drvol ?? longM?.rvol?.['21d'];
+            const shortRvol = shortM?.drvol ?? shortM?.rvol?.['21d'];
 
             // Keep long and short VCVI separate — they signal OPPOSITE directions:
             // Long-side VCVI spike  = long ETF price low + high vol = gas BOTTOM signal
             // Short-side VCVI spike = short ETF price low + high vol = gas TOP signal
-            const shortVcvi = shortM?.vcvi?.['63d'] ?? shortM?.cvi?.['63d'];
-            const longVcvi  = longM?.vcvi?.['63d']  ?? longM?.cvi?.['63d'];
+            let shortVcvi = shortM?.vcvi?.['63d'] ?? shortM?.cvi?.['63d'];
+            let longVcvi  = longM?.vcvi?.['63d']  ?? longM?.cvi?.['63d'];
+            let longVcvi5  = longM?.vcvi?.['5d']  ?? longM?.cvi?.['5d'];
+            let shortVcvi5 = shortM?.vcvi?.['5d'] ?? shortM?.cvi?.['5d'];
+            let anySpike   = longM?.sharpSpike || shortM?.sharpSpike;
+            let spikeTicker = longM?.sharpSpike ? pair.long : (shortM?.sharpSpike ? pair.short : null);
+
+            // Use enriched microstructure metrics from upgraded IPSI record if available
+            if (ipsi && ipsi.latestRecord) {
+                const rec = ipsi.latestRecord;
+                longVcvi = rec.longMetrics.vcvi63;
+                shortVcvi = rec.shortMetrics.vcvi63;
+                longVcvi5 = rec.longMetrics.vcvi5;
+                shortVcvi5 = rec.shortMetrics.vcvi5;
+                anySpike = rec.longMetrics.sharpSpikeFlag || rec.shortMetrics.sharpSpikeFlag;
+                spikeTicker = rec.longMetrics.sharpSpikeFlag ? pair.long : (rec.shortMetrics.sharpSpikeFlag ? pair.short : null);
+            }
 
             // Vol regime: show the pair's long side vol regime (both should be similar)
             const volReg = longM?.volatility?.volRegimePct ?? shortM?.volatility?.volRegimePct;
@@ -351,13 +366,7 @@ const Signals = {
             const rvolColor  = v => v != null ? Metrics.getValueColor(v, CONFIG.thresholds.rvol) : 'rgba(255, 255, 255, 0.85)';
             const lCapColor  = longVcvi  != null ? Metrics.getValueColor(longVcvi,  CONFIG.thresholds.vcvi) : 'rgba(255, 255, 255, 0.85)';
             const sCapColor  = shortVcvi != null ? Metrics.getValueColor(shortVcvi, CONFIG.thresholds.vcvi) : 'rgba(255, 255, 255, 0.85)';
-            const ipsiColor  = ipsi != null ? Metrics.getValueColor(ipsi, CONFIG.thresholds.ipsi) : 'rgba(255, 255, 255, 0.85)';
-
-            // 5d fast-window VCVI for both sides (Feature 1)
-            const longVcvi5  = longM?.vcvi?.['5d']  ?? longM?.cvi?.['5d'];
-            const shortVcvi5 = shortM?.vcvi?.['5d'] ?? shortM?.cvi?.['5d'];
-            const anySpike   = longM?.sharpSpike || shortM?.sharpSpike;
-            const spikeTicker = longM?.sharpSpike ? pair.long : shortM?.sharpSpike ? pair.short : null;
+            const ipsiColor  = ipsi != null ? Metrics.getValueColor(typeof ipsi === 'number' ? ipsi : ipsi.valueOf(), CONFIG.thresholds.ipsi) : 'rgba(255, 255, 255, 0.85)';
 
             const fastColor = v => {
                 if (v == null) return 'rgba(255, 255, 255, 0.4)';
@@ -367,7 +376,12 @@ const Signals = {
                 return 'rgba(255, 255, 255, 0.7)';
             };
 
-            const ipsiTip = ipsi != null ? `IPSI ${ipsi.toFixed(2)}x — short RVOL ÷ long RVOL for this pair. >1.5x indicates short-side volume dominance.` : 'IPSI unavailable';
+            const ipsiVal = ipsi != null ? (typeof ipsi === 'number' ? ipsi : ipsi.valueOf()) : null;
+            const ipsiTip = ipsi != null
+                ? (ipsi.signed != null
+                    ? `IPSI ${ipsiVal.toFixed(1)}x (Signed: ${ipsi.signed > 0 ? '+' : ''}${ipsi.signed.toFixed(1)}, Scale: ${ipsi.scale10.toFixed(1)}/10) — Regularized Split-Invariant Cross-Pair Stress Index. Centered at 1.0x (5.0). >1.5x indicates short-side volume dominance.`
+                    : `IPSI ${ipsiVal.toFixed(2)}x — short RVOL ÷ long RVOL for this pair. >1.5x indicates short-side volume dominance.`)
+                : 'IPSI unavailable';
 
             // Season badge for this pair (use long side)
             const season = longM?.seasonality?.season;
@@ -380,19 +394,19 @@ const Signals = {
             const fastBadge = `<span style="color:${fastColor(longVcvi5)}">${longVcvi5 != null ? longVcvi5.toFixed(0) : '—'}</span><span style="opacity:0.35">/</span><span style="color:${fastColor(shortVcvi5)}">${shortVcvi5 != null ? shortVcvi5.toFixed(0) : '—'}</span>`;
 
             const spikeBadge = anySpike
-                ? `<span class="spike-badge" data-tooltip="Sharp Spike on ${spikeTicker}: Move >2×ATR with VCVI-5d > 45">SPIKE</span>`
+                ? `<span class="spike-badge" data-tooltip="Sharp Spike on ${spikeTicker}: Fast 5d VCVI spike with daily move >2×ATR">SPIKE</span>`
                 : '—';
 
             return `
                 <tr>
                     <td class="pair-name">${pair.label}${seasonTag}</td>
-                    <td style="color:${rvolColor(longRvol)}" data-tooltip="Long ETF 21d RVOL">${longRvol != null ? longRvol.toFixed(1) + 'x' : '—'}</td>
-                    <td style="color:${rvolColor(shortRvol)}" data-tooltip="Short/Inverse ETF 21d RVOL">${shortRvol != null ? shortRvol.toFixed(1) + 'x' : '—'}</td>
-                    <td style="color:${lCapColor}" data-tooltip="Long-side VCVI-63d (${pair.long}) — GAS BOTTOM signal. Threshold: 55 watch, 72 critical. Values >100 reflect extreme capitulation in quiet vol regimes.">${longVcvi != null ? longVcvi.toFixed(0) : '—'}</td>
-                    <td style="color:${sCapColor}" data-tooltip="Short-side VCVI-63d (${pair.short}) — GAS TOP signal. Threshold: 55 watch, 72 critical.">${shortVcvi != null ? shortVcvi.toFixed(0) : '—'}</td>
+                    <td style="color:${rvolColor(longRvol)}" data-tooltip="Long ETF 21d Notional Dollar RVOL: ${longRvol != null ? longRvol.toFixed(2) + 'x' : '—'} vs 21-day EWMA baseline. Split-invariant.">${longRvol != null ? longRvol.toFixed(1) + 'x' : '—'}</td>
+                    <td style="color:${rvolColor(shortRvol)}" data-tooltip="Short/Inverse ETF 21d Notional Dollar RVOL: ${shortRvol != null ? shortRvol.toFixed(2) + 'x' : '—'} vs 21-day EWMA baseline. Split-invariant.">${shortRvol != null ? shortRvol.toFixed(1) + 'x' : '—'}</td>
+                    <td style="color:${lCapColor}" data-tooltip="Long-side VCVI-63d (${pair.long}) — GAS BOTTOM signal. Participation-gated. Threshold: 55 watch, 72 critical.">${longVcvi != null ? longVcvi.toFixed(0) : '—'}</td>
+                    <td style="color:${sCapColor}" data-tooltip="Short-side VCVI-63d (${pair.short}) — GAS TOP signal. Participation-gated. Threshold: 55 watch, 72 critical.">${shortVcvi != null ? shortVcvi.toFixed(0) : '—'}</td>
                     <td data-tooltip="5d fast-window VCVI — Long: ${longVcvi5!=null?longVcvi5.toFixed(0):'—'} | Short: ${shortVcvi5!=null?shortVcvi5.toFixed(0):'—'}. Threshold: 45.">${fastBadge}</td>
                     <td>${spikeBadge}</td>
-                    <td style="color:${ipsiColor}" data-tooltip="${ipsiTip}">${ipsi != null ? ipsi.toFixed(1) + 'x' : '—'}</td>
+                    <td style="color:${ipsiColor}" data-tooltip="${ipsiTip}">${ipsiVal != null ? ipsiVal.toFixed(1) + 'x' : '—'}</td>
                     <td data-tooltip="Volatility regime: ${regInfo.label}"><span class="vol-regime-badge ${regInfo.cls}" style="font-size:0.6rem">${regInfo.label}</span></td>
                     <td data-tooltip="${statusInfo.tooltip}"><span class="stress-status ${statusInfo.cls}">${statusInfo.label}</span></td>
                 </tr>`;
@@ -1019,41 +1033,26 @@ const Signals = {
             let displayVal, barColor, tip, fillStart, fillWidth;
 
             if (isVolMode) {
-                // --- VOL MODE: S-RVOL-21d pure volume bars ---
+                // --- VOL MODE: Notional Dollar RVOL (21d) with Soft-Winsorized Track ---
                 // Scale: 0.0x → 0% | 1.0x → 33.33% (baseline tick) | 3.0x+ → 100%
-                const sRvol = (m.rvol || {})['21d'];
-                const val = sRvol ?? 0;
-                const clamped = Math.max(0, Math.min(3.0, val));
+                const val = m.drvol ?? (m.rvol || {})['21d'] ?? 0;
+                const clamped = Metrics._softWinsorizeVolTrack(val, 2.25, 3.0, 1.5);
                 fillStart = 0;
                 fillWidth = (clamped / 3.0) * 100;
-                barColor = sRvol == null ? 'rgba(255,255,255,0.3)'
-                    : sRvol < 0.8  ? 'rgba(255,255,255,0.35)' // sub-normal (dim)
-                    : sRvol < 1.2  ? 'rgba(255,255,255,0.7)'  // normal (neutral)
-                    : sRvol < 1.5  ? 'var(--blue)'             // mild surge
-                    : sRvol < 2.0  ? 'var(--yellow)'           // notable
-                    : sRvol < 2.5  ? 'var(--orange)'           // high
-                    : sRvol < 3.0  ? 'var(--red)'              // extreme
-                    : 'var(--purple)';                         // absolute extreme
-                displayVal = sRvol != null ? sRvol.toFixed(2) + 'x' : '—';
-                tip = `S-RVOL-21d for ${ticker}: current share volume is ${displayVal} of the 21-day average. 1.0x is normal baseline. >1.5x = notable surge; >2x = extreme volume event.`;
+                barColor = Metrics._resolveVolModeColorBand(val);
+                displayVal = val != null ? val.toFixed(2) + 'x' : '—';
+                tip = `Notional Dollar RVOL (21d) for ${ticker}: ${displayVal} vs 21-day EWMA baseline. Split-invariant. 1.0x is normal baseline. >1.5x = notable institutional participation; >2.5x = extreme volume event.`;
             } else {
-                // --- DV MODE: VDDS ratio (DV-RVOL / S-RVOL) ---
-                const vdds = m.vdds;
-                const clamped = Math.max(0.5, Math.min(1.5, vdds ?? 1.0));
-                const pct = ((clamped - 0.5) / 1.0) * 100;
-                const centerPct = 50;
-                fillStart = Math.min(pct, centerPct);
-                fillWidth = Math.abs(pct - centerPct);
-                barColor = vdds == null ? 'rgba(255,255,255,0.85)'
-                    : vdds < 0.85 ? 'var(--green)'
-                    : vdds < 0.95 ? 'var(--blue)'
-                    : vdds <= 1.05 ? 'rgba(255, 255, 255, 0.85)'
-                    : vdds <= 1.15 ? 'var(--orange)'
-                    : 'var(--red)';
-                const dvRvol = ((m.dv_rvol || m.dvRvol) || {})['21d'];
-                const sRvol  = (m.rvol   || {})['21d'];
+                // --- DV MODE: Upgraded VDDS* (Volume-Dollar Flow Divergence) ---
+                // Scale: 0.50x (Capitulation) ← 1.00x (Center Anchor) → 1.50x (Momentum)
+                const vdds = m.vdds != null ? m.vdds : 1.0;
+                const clamped = Math.max(0.5, Math.min(1.5, vdds));
+                const signedOffset = (clamped - 1.0) * 100; // in [-50%, +50%]
+                fillStart = signedOffset < 0 ? 50 + signedOffset : 50;
+                fillWidth = Math.abs(signedOffset);
+                barColor = Metrics._resolveDollarModeColorBand(vdds);
                 displayVal = vdds != null ? vdds.toFixed(2) + 'x' : '—';
-                tip = `VDDS for ${ticker}: DV-RVOL=${dvRvol!=null?dvRvol.toFixed(2): '—'} ÷ S-RVOL=${sRvol!=null?sRvol.toFixed(2): '—'} = ${displayVal}. ${vdds!=null&&vdds<0.90?'Capitulation pattern — share vol outpacing dollar vol.':vdds!=null&&vdds>1.10?'Momentum pattern — dollar vol outpacing share vol.':'Neutral — balanced flows.'}`;
+                tip = `VDDS for ${ticker}: Upgraded Volume-Dollar Flow Divergence (${displayVal}). Centered at 1.00x Balanced. ${vdds < 0.97 ? 'Capitulation pattern — selling pressure and price compression under active volume.' : (vdds > 1.03 ? 'Accumulation/momentum pattern — buying pressure and price expansion under active volume.' : 'Balanced neutral flow (dormant volume dampens noise toward 1.0x).')}`;
             }
 
             // Baseline marker: sits at 1.0x in VOL mode (33.33%), or at ratio centre in DV mode (50%)

@@ -2070,17 +2070,18 @@ def compute_pairs(
         long_rvol = metrics.get(long_t, {}).get("_rvol_21_last")
         short_rvol = metrics.get(short_t, {}).get("_rvol_21_last")
 
-        if long_rvol and short_rvol and long_rvol != 0:
-            ipsi = _safe_float(short_rvol / long_rvol)
+        if long_rvol is not None and short_rvol is not None:
+            # Regularized split- & float-invariant IPSI with Tikhonov prior
+            ipsi = _safe_float(min(5.0, max(0.2, (short_rvol + 0.5) / (long_rvol + 0.5))))
         else:
             ipsi = None
 
-        # Status buckets
+        # Status buckets with regularized threshold and dual confirmation
         if ipsi is None:
             status = "quiet"
-        elif ipsi > 2.0:
+        elif ipsi > 2.2 and short_rvol is not None and short_rvol >= 1.5:
             status = "stress"
-        elif ipsi > 1.3:
+        elif ipsi > 1.4:
             status = "elevated"
         else:
             status = "quiet"
