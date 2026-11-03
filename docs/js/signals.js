@@ -14,9 +14,162 @@ const Signals = {
         return icons[type] || '●';
     },
 
+    computeTrimmedMean21(buf) {
+        const sorted = Array.from(buf).sort((a, b) => a - b);
+        let sum = 0.0;
+        const start = 3;
+        const end = 18;
+        for (let i = start; i < end; i++) {
+            sum += sorted[i];
+        }
+        return sum / 15;
+    },
+
+    computeEtfMicrostructure(history, mode = 'share') {
+        const EPS = 1e-9;
+        const WINDOW_LAG = 21;
+        const KAPPA_PEAK = 1.35;
+        const KAPPA_VALLEY = 1.60;
+        const T = history.length;
+
+        const turnover = new Float64Array(T);
+        const dollarTurnover = new Float64Array(T);
+        const trueRange = new Float64Array(T);
+        const typPrice = new Float64Array(T);
+        const abdiSpread = new Float64Array(T);
+
+        for (let t = 0; t < T; t++) {
+            const b = history[t];
+            const h = b.high != null ? b.high : b.close;
+            const l = b.low != null ? b.low : b.close;
+            const c = b.close;
+            const v = b.volume || 0;
+            const tp = (h + l + 2.0 * c) * 0.25;
+            typPrice[t] = tp;
+            dollarTurnover[t] = v * tp;
+            turnover[t] = mode === 'dollar' ? (v * tp) : v;
+
+            const prevClose = t > 0 ? history[t - 1].close : (b.open != null ? b.open : c);
+            const trHigh = Math.max(h, prevClose);
+            const trLow = Math.min(l, prevClose);
+            trueRange[t] = trHigh - trLow;
+
+            if (t > 0) {
+                const prevB = history[t - 1];
+                const prevH = prevB.high != null ? prevB.high : prevB.close;
+                const prevL = prevB.low != null ? prevB.low : prevB.close;
+                const prevC = prevB.close;
+                const cPrev = Math.log(Math.max(prevC, EPS));
+                const etaPrev = 0.5 * (Math.log(Math.max(prevH, EPS)) + Math.log(Math.max(prevL, EPS)));
+                const etaCurr = 0.5 * (Math.log(Math.max(h, EPS)) + Math.log(Math.max(l, EPS)));
+                const s2 = 4.0 * (cPrev - etaPrev) * (cPrev - etaCurr);
+                abdiSpread[t] = s2 > 0.0 ? Math.sqrt(s2) : 0.0;
+            }
+        }
+
+        const peakScores = new Float64Array(T);
+        const valleyScores = new Float64Array(T);
+        const rvolArr = new Float64Array(T);
+        const trimDollarTurnover = new Float64Array(T);
+
+        const scratchTurnover = new Float64Array(WINDOW_LAG);
+        const scratchDollar = new Float64Array(WINDOW_LAG);
+        const scratchTR = new Float64Array(WINDOW_LAG);
+        const scratchSpread = new Float64Array(WINDOW_LAG);
+
+        for (let t = 0; t < T; t++) {
+            if (t < WINDOW_LAG) {
+                let sumD = 0.0;
+                let sumDollar = 0.0;
+                for (let i = 0; i <= t; i++) {
+                    sumD += turnover[i];
+                    sumDollar += dollarTurnover[i];
+                }
+                trimDollarTurnover[t] = sumDollar / (t + 1);
+                rvolArr[t] = 1.0;
+                continue;
+            }
+
+            for (let i = 0; i < WINDOW_LAG; i++) {
+                const idx = t - WINDOW_LAG + i;
+                scratchTurnover[i] = turnover[idx];
+                scratchDollar[i] = dollarTurnover[idx];
+                scratchTR[i] = trueRange[idx];
+                scratchSpread[i] = abdiSpread[idx];
+            }
+
+            const trimMeanD = this.computeTrimmedMean21(scratchTurnover);
+            const trimMeanDollar = this.computeTrimmedMean21(scratchDollar);
+            const trimMeanTR = this.computeTrimmedMean21(scratchTR);
+            const trimMeanSpread = this.computeTrimmedMean21(scratchSpread);
+
+            trimDollarTurnover[t] = trimMeanDollar;
+            const rvol = turnover[t] / (trimMeanD + EPS);
+            rvolArr[t] = rvol;
+
+            let maxH22 = -Infinity;
+            let minL22 = Infinity;
+            for (let j = t - WINDOW_LAG; j <= t; j++) {
+                const barH = history[j].high != null ? history[j].high : history[j].close;
+                const barL = history[j].low != null ? history[j].low : history[j].close;
+                if (barH > maxH22) maxH22 = barH;
+                if (barL < minL22) minL22 = barL;
+            }
+
+            // 1. Peak (Capitulation Climax) Intensity & Algebraic Sigmoid
+            const curL = history[t].low != null ? history[t].low : history[t].close;
+            const curC = history[t].close;
+            const volElasticity = Math.pow(1.0 + rvol, 0.55) - 1.0;
+            const rangePos = (maxH22 - curC) / (maxH22 - minL22 + EPS);
+            const rawDownShock = Math.max(0.0, typPrice[t - 1] - curL) / (trimMeanTR + EPS);
+            const shockTerm = Math.tanh(0.35 * rawDownShock);
+
+            const isNewLow = curL <= minL22 + EPS ? 1.0 : 0.0;
+            const lowerWickRatio = (curC - curL) / (trueRange[t] + EPS);
+            const absorptionMult = 1.0 + 0.20 * lowerWickRatio * isNewLow;
+
+            const priceDrawdownFactor = (0.70 * Math.pow(rangePos, 1.25) + 0.30 * shockTerm) * absorptionMult;
+            const peakIntensity = volElasticity * priceDrawdownFactor;
+            peakScores[t] = (100.0 * peakIntensity) / Math.sqrt(peakIntensity * peakIntensity + KAPPA_PEAK * KAPPA_PEAK);
+
+            // 2. Valley (Liquidity Drought) Intensity & Algebraic Sigmoid
+            const rDrought = trimMeanD / (turnover[t] + EPS);
+            const droughtBase = Math.max(0.0, Math.pow(rDrought, 0.60) - 0.85);
+            const rangeComp = Math.exp(-trueRange[t] / (2.0 * trimMeanTR + EPS));
+            const rawSpreadRatio = abdiSpread[t] / (trimMeanSpread + EPS);
+            const spreadMult = Math.min(2.0, Math.max(0.75, rawSpreadRatio));
+
+            const valleyIntensity = droughtBase * rangeComp * spreadMult;
+            valleyScores[t] = (100.0 * valleyIntensity) / Math.sqrt(valleyIntensity * valleyIntensity + KAPPA_VALLEY * KAPPA_VALLEY);
+        }
+
+        return {
+            peakScores,
+            valleyScores,
+            rvolArr,
+            trimDollarTurnover
+        };
+    },
+
     computeHeatGlobalPercentiles(allMetrics, mode = 'share', side = 'all') {
+        const EPS = 1e-9;
+        const WINDOW_LAG = 21;
+        const STRUCTURAL_FLOORS = {
+            PEAKS: { P99: 68.0, P95: 52.0, P90: 38.0 },
+            VALLEYS: { P99: 64.0, P95: 48.0, P90: 34.0 }
+        };
+
         const allTickers = Object.keys(allMetrics).filter(t => allMetrics[t] != null);
-        if (allTickers.length === 0) return { p90: 90, p95: 95, p99: 99 };
+        if (allTickers.length === 0) {
+            return {
+                p90: STRUCTURAL_FLOORS.PEAKS.P90,
+                p95: STRUCTURAL_FLOORS.PEAKS.P95,
+                p99: STRUCTURAL_FLOORS.PEAKS.P99,
+                peaks: STRUCTURAL_FLOORS.PEAKS,
+                valleys: STRUCTURAL_FLOORS.VALLEYS,
+                series: []
+            };
+        }
 
         let activeTickers = allTickers;
         if (side === 'long') {
@@ -27,107 +180,105 @@ const Signals = {
             activeTickers = [side];
         }
 
-        if (activeTickers.length === 0) return { p90: 90, p95: 95, p99: 99 };
-
-        let longestData = [];
-        for (const t of activeTickers) {
-            const data = allMetrics[t].heatmapData;
-            if (data && data.length > longestData.length) longestData = data;
+        if (activeTickers.length === 0) {
+            return {
+                p90: STRUCTURAL_FLOORS.PEAKS.P90,
+                p95: STRUCTURAL_FLOORS.PEAKS.P95,
+                p99: STRUCTURAL_FLOORS.PEAKS.P99,
+                peaks: STRUCTURAL_FLOORS.PEAKS,
+                valleys: STRUCTURAL_FLOORS.VALLEYS,
+                series: []
+            };
         }
-        if (longestData.length === 0) return { p90: 90, p95: 95, p99: 99 };
 
+        const etfMetrics = {};
         const indexMaps = {};
+        let longestDates = [];
+
         for (const t of activeTickers) {
-            const sd = allMetrics[t].heatmapData;
+            const hist = allMetrics[t].heatmapData;
+            if (!hist || hist.length === 0) continue;
+            etfMetrics[t] = this.computeEtfMicrostructure(hist, mode);
             const map = new Map();
-            if (sd) {
-                for (let idx = 0; idx < sd.length; idx++) {
-                    if (sd[idx] && sd[idx].date) {
-                        map.set(sd[idx].date, idx);
-                    }
+            const dates = [];
+            for (let i = 0; i < hist.length; i++) {
+                if (hist[i] && hist[i].date) {
+                    map.set(hist[i].date, i);
+                    dates.push(hist[i].date);
                 }
             }
             indexMaps[t] = map;
+            if (dates.length > longestDates.length) {
+                longestDates = dates;
+            }
         }
 
-        const scores = [];
-        const valleyScores = [];
-        for (let i = 0; i < longestData.length; i++) {
-            let maxScore = 0;
-            let sumDrought = 0;
-            let droughtCount = 0;
-            const date = longestData[i]?.date || '';
-            if (!date) continue;
-            let hasData = false;
+        const T = longestDates.length;
+        const LAMBDA = 0.75;
+        const records = [];
 
-            for (const t of activeTickers) {
-                const sd = allMetrics[t].heatmapData;
-                const map = indexMaps[t];
-                if (!sd || !map) continue;
+        for (let t = 0; t < T; t++) {
+            const date = longestDates[t];
+            let maxPeak = 0.0;
+            let maxValley = 0.0;
+            let maxRvol = 0.0;
+            let weightedPeakSum = 0.0;
+            let weightedValleySum = 0.0;
+            let weightSum = 0.0;
+            let activeCount = 0;
 
+            for (const ticker of activeTickers) {
+                const map = indexMaps[ticker];
+                if (!map) continue;
                 const idx = map.get(date);
-                if (idx === undefined) continue;
+                if (idx === undefined || idx < WINDOW_LAG) continue;
 
-                const subData = sd.slice(Math.max(0, idx - 21), idx + 1);
-                if (subData.length < 5) continue;
+                const m = etfMetrics[ticker];
+                if (!m) continue;
+                const pScore = m.peakScores[idx];
+                const vScore = m.valleyScores[idx];
+                const rv = m.rvolArr[idx];
+                const w = Math.sqrt(Math.max(0.0, m.trimDollarTurnover[idx]));
 
-                let values;
-                if (mode === 'dollar') {
-                    values = subData.map(d => (d.volume || 0) * (d.close || 0));
-                } else {
-                    values = subData.map(d => d.volume || 0);
-                }
-                const closes = subData.map(d => d.close || 0);
+                if (pScore > maxPeak) maxPeak = pScore;
+                if (vScore > maxValley) maxValley = vScore;
+                if (rv > maxRvol) maxRvol = rv;
 
-                const valPct = Metrics.percentileRank(values[values.length - 1], values);
-                const pricePct = Metrics.percentileRank(closes[closes.length - 1], closes);
-                const cvi = valPct * (1 - pricePct / 100);
-                maxScore = Math.max(maxScore, cvi);
-
-                sumDrought += (100 - valPct);
-                droughtCount++;
-                hasData = true;
+                weightedPeakSum += w * pScore;
+                weightedValleySum += w * vScore;
+                weightSum += w;
+                activeCount++;
             }
-            if (hasData) {
-                scores.push(maxScore);
-                if (droughtCount > 0) {
-                    valleyScores.push(sumDrought / droughtCount);
-                }
-            }
+
+            if (activeCount === 0) continue;
+
+            const meanPeak = weightSum > 0.0 ? (weightedPeakSum / weightSum) : maxPeak;
+            const meanValley = weightSum > 0.0 ? (weightedValleySum / weightSum) : maxValley;
+
+            const compPeak = LAMBDA * maxPeak + (1.0 - LAMBDA) * meanPeak;
+            const compValley = LAMBDA * maxValley + (1.0 - LAMBDA) * meanValley;
+
+            const tieKeyPeak = compPeak + 1e-7 * maxRvol + 1e-11 * t;
+            const tieKeyValley = compValley + 1e-7 * (1.0 / (maxRvol + EPS)) + 1e-11 * t;
+
+            records.push({
+                index: t,
+                date,
+                peakScore: compPeak,
+                valleyScore: compValley,
+                maxRvol,
+                compositeTieKeyPeak: tieKeyPeak,
+                compositeTieKeyValley: tieKeyValley
+            });
         }
-
-        if (scores.length === 0) {
-            return {
-                p90: 90, p95: 95, p99: 99,
-                peaks: { p90: 90, p95: 95, p99: 99 },
-                valleys: { p90: 90, p95: 95, p99: 99 }
-            };
-        }
-        scores.sort((a, b) => a - b);
-        valleyScores.sort((a, b) => a - b);
-
-        const getPercentile = (p, arr) => {
-            const idx = Math.floor((p / 100) * arr.length);
-            return arr[Math.min(idx, arr.length - 1)];
-        };
-
-        const peaks = {
-            p90: getPercentile(90, scores),
-            p95: getPercentile(95, scores),
-            p99: getPercentile(99, scores)
-        };
-        const valleys = {
-            p90: getPercentile(90, valleyScores),
-            p95: getPercentile(95, valleyScores),
-            p99: getPercentile(99, valleyScores)
-        };
 
         return {
-            p90: peaks.p90,
-            p95: peaks.p95,
-            p99: peaks.p99,
-            peaks,
-            valleys
+            p90: STRUCTURAL_FLOORS.PEAKS.P90,
+            p95: STRUCTURAL_FLOORS.PEAKS.P95,
+            p99: STRUCTURAL_FLOORS.PEAKS.P99,
+            peaks: STRUCTURAL_FLOORS.PEAKS,
+            valleys: STRUCTURAL_FLOORS.VALLEYS,
+            series: records
         };
     },
 
@@ -267,36 +418,18 @@ const Signals = {
         if (spotlightMode === true) spotlightMode = 'peaks';
         else if (!spotlightMode) spotlightMode = 'off';
 
-        // Build daily max CVI scores across all ETFs
-        const allTickers = Object.keys(allMetrics).filter(t => allMetrics[t] != null);
-        if (allTickers.length === 0) return;
-
-        // Filter active tickers by side
-        let activeTickers = allTickers;
-        if (side === 'long') {
-            activeTickers = allTickers.filter(t => CONFIG.etfs[t] && CONFIG.etfs[t].side === 'long');
-        } else if (side === 'short') {
-            activeTickers = allTickers.filter(t => CONFIG.etfs[t] && CONFIG.etfs[t].side === 'short');
-        } else if (allTickers.includes(side)) {
-            activeTickers = [side];
+        if (!globalPercentiles || !globalPercentiles.series || globalPercentiles.series.length === 0) {
+            globalPercentiles = this.computeHeatGlobalPercentiles(allMetrics, mode, side);
         }
 
-        if (activeTickers.length === 0) {
-            container.innerHTML = `<div style="grid-column: 1 / -1; padding: 24px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No active ETFs for the selected filter.</div>`;
+        const series = globalPercentiles?.series || [];
+        if (series.length === 0) {
+            container.innerHTML = '<div style="grid-column: 1 / -1; padding: 24px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No active data for the selected filter.</div>';
             return;
         }
 
-        // Find ETF with most data to get date index
-        let longestData = [];
-        for (const t of activeTickers) {
-            const data = allMetrics[t].heatmapData;
-            if (data && data.length > longestData.length) longestData = data;
-        }
-
-        if (longestData.length === 0) return;
-
         // Pagination controls
-        const maxOffset = Math.max(0, Math.floor((longestData.length - 1) / days));
+        const maxOffset = Math.max(0, Math.floor((series.length - 1) / days));
         offset = Math.max(0, Math.min(offset, maxOffset));
 
         const hp = document.getElementById('heat-prev');
@@ -310,102 +443,42 @@ const Signals = {
                 hp.setAttribute('data-tooltip', 'No older data available');
             } else {
                 const prevStart = (offset + 1) * days + 1;
-                const prevEnd = Math.min((offset + 2) * days, longestData.length);
-                hp.setAttribute('data-tooltip', `View previous ${days} days (Days ${prevStart}–${prevEnd})`);
+                const prevEnd = Math.min((offset + 2) * days, series.length);
+                hp.setAttribute('data-tooltip', 'View previous ' + days + ' days (Days ' + prevStart + '–' + prevEnd + ')');
             }
         }
         if (hn) {
             const isNextDisabled = (offset === 0);
             hn.disabled = isNextDisabled;
             if (isNextDisabled) {
-                hn.setAttribute('data-tooltip', `Currently viewing most recent ${days} days (Days 1–${days})`);
+                hn.setAttribute('data-tooltip', 'Currently viewing most recent ' + days + ' days (Days 1–' + days + ')');
             } else {
                 const nextStart = (offset - 1) * days + 1;
                 const nextEnd = offset * days;
-                hn.setAttribute('data-tooltip', `View recent ${days} days (Days ${nextStart}–${nextEnd})`);
+                hn.setAttribute('data-tooltip', 'View recent ' + days + ' days (Days ' + nextStart + '–' + nextEnd + ')');
             }
         }
 
         if (titleEl) {
             const startDay = offset * days + 1;
-            const endDay = Math.min((offset + 1) * days, longestData.length);
+            const endDay = Math.min((offset + 1) * days, series.length);
             const modeLabel = mode === 'dollar' ? 'DOLLAR VOL' : 'VOLUME';
-            const subjectLabel = (side === 'all') ? '' : ` [${side.replace('.TO', '').replace('.L', '')}]`;
-            titleEl.innerHTML = `${modeLabel} HEAT MAP${subjectLabel} <span style="font-size:0.54rem; font-weight:normal; color:rgba(255,255,255,0.45); text-transform:none; margin-left:2px;">(${startDay}–${endDay}d)</span>`;
+            const subjectLabel = (side === 'all') ? '' : ' [' + side.replace('.TO', '').replace('.L', '') + ']';
+            titleEl.innerHTML = modeLabel + ' HEAT MAP' + subjectLabel + ' <span style="font-size:0.54rem; font-weight:normal; color:rgba(255,255,255,0.45); text-transform:none; margin-left:2px;">(' + startDay + '–' + endDay + 'd)</span>';
         }
 
-        // Build a date-to-index map for each active ETF to ensure date alignment across holidays
-        const indexMaps = {};
-        for (const t of activeTickers) {
-            const sd = allMetrics[t].heatmapData;
-            const map = new Map();
-            if (sd) {
-                for (let idx = 0; idx < sd.length; idx++) {
-                    if (sd[idx] && sd[idx].date) {
-                        map.set(sd[idx].date, idx);
-                    }
-                }
-            }
-            indexMaps[t] = map;
-        }
+        const startIndex = Math.max(0, series.length - (offset + 1) * days);
+        const endIndex = series.length - offset * days;
+        const visibleSlice = series.slice(startIndex, endIndex);
 
-        const dailyScores = [];
-        const dataLength = longestData.length;
-        const startIndex = dataLength - (offset + 1) * days;
-        const endIndex = dataLength - offset * days;
-        const isValleys = (spotlightMode === 'valleys');
-
-        for (let i = Math.max(0, startIndex); i < endIndex; i++) {
-            let maxScore = 0;
-            let sumDrought = 0;
-            let droughtCount = 0;
-            const date = longestData[i]?.date || '';
-            if (!date) continue;
-
-            for (const t of activeTickers) {
-                const sd = allMetrics[t].heatmapData;
-                const map = indexMaps[t];
-                if (!sd || !map) continue;
-
-                const idx = map.get(date);
-                if (idx === undefined) continue;
-
-                const subData = sd.slice(Math.max(0, idx - 21), idx + 1);
-                if (subData.length < 5) continue;
-
-                let values;
-                if (mode === 'dollar') {
-                    values = subData.map(d => (d.volume || 0) * (d.close || 0));
-                } else {
-                    values = subData.map(d => d.volume || 0);
-                }
-                const closes = subData.map(d => d.close || 0);
-
-                const valPct = Metrics.percentileRank(values[values.length - 1], values);
-                if (isValleys) {
-                    sumDrought += (100 - valPct);
-                    droughtCount++;
-                } else {
-                    const pricePct = Metrics.percentileRank(closes[closes.length - 1], closes);
-                    const cvi = valPct * (1 - pricePct / 100);
-                    maxScore = Math.max(maxScore, cvi);
-                }
-            }
-
-            const dayScore = isValleys
-                ? (droughtCount > 0 ? (sumDrought / droughtCount) : 0)
-                : maxScore;
-            dailyScores.push({ date, score: dayScore });
-        }
-
-        const spotlightCount = Charts.drawHeatCalendar(container, dailyScores, mode, spotlightMode, peaksThreshold, globalPercentiles, side);
+        const spotlightCount = Charts.drawHeatCalendar(container, visibleSlice, mode, spotlightMode, peaksThreshold, globalPercentiles, side);
         const peakBadge = document.getElementById('heat-peak-count');
         if (peakBadge) {
             if (spotlightMode === 'peaks') {
-                peakBadge.textContent = `${spotlightCount} ${spotlightCount === 1 ? 'PEAK' : 'PEAKS'}`;
+                peakBadge.textContent = spotlightCount + ' ' + (spotlightCount === 1 ? 'PEAK' : 'PEAKS');
                 peakBadge.className = 'heat-peak-count visible peak-style';
             } else if (spotlightMode === 'valleys') {
-                peakBadge.textContent = `${spotlightCount} ${spotlightCount === 1 ? 'VALLEY' : 'VALLEYS'}`;
+                peakBadge.textContent = spotlightCount + ' ' + (spotlightCount === 1 ? 'VALLEY' : 'VALLEYS');
                 peakBadge.className = 'heat-peak-count visible valley-style';
             } else {
                 peakBadge.className = 'heat-peak-count';

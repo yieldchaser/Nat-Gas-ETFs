@@ -168,14 +168,88 @@ const Charts = {
         }
     },
 
+    evaluateViewportSpotlight(visibleSlice, mode, activeFilter) {
+        const N = visibleSlice.length;
+        if (N === 0) return [];
+
+        const k99 = Math.max(1, Math.round(0.01 * N));
+        const k95 = Math.max(k99 + 1, Math.round(0.05 * N));
+        const k90 = Math.max(k95 + 1, Math.round(0.10 * N));
+
+        const sortedIndices = Array.from({ length: N }, (_, i) => i);
+        sortedIndices.sort((a, b) => {
+            const keyA = mode === 'PEAKS' ? visibleSlice[a].compositeTieKeyPeak : visibleSlice[a].compositeTieKeyValley;
+            const keyB = mode === 'PEAKS' ? visibleSlice[b].compositeTieKeyPeak : visibleSlice[b].compositeTieKeyValley;
+            return keyB - keyA;
+        });
+
+        const ranks = new Int32Array(N);
+        const baselineBins = new Uint8Array(N);
+        for (let rankZero = 0; rankZero < N; rankZero++) {
+            const origIdx = sortedIndices[rankZero];
+            ranks[origIdx] = rankZero + 1;
+            baselineBins[origIdx] = Math.min(4, Math.floor(((N - 1 - rankZero) / N) * 5));
+        }
+
+        const STRUCTURAL_FLOORS = {
+            PEAKS: { P99: 68.0, P95: 52.0, P90: 38.0 },
+            VALLEYS: { P99: 64.0, P95: 48.0, P90: 34.0 }
+        };
+        const floors = STRUCTURAL_FLOORS[mode] || STRUCTURAL_FLOORS.PEAKS;
+        const output = new Array(N);
+
+        for (let i = 0; i < N; i++) {
+            const rec = visibleSlice[i];
+            const score = mode === 'PEAKS' ? rec.peakScore : rec.valleyScore;
+            const r = ranks[i];
+
+            let visualTier = 'NONE';
+            let isStructuralClimax = false;
+
+            if (r <= k99) {
+                visualTier = 'RED_P99';
+                isStructuralClimax = score >= floors.P99;
+            } else if (r <= k95) {
+                visualTier = 'ORANGE_P95';
+                isStructuralClimax = score >= floors.P95;
+            } else if (r <= k90) {
+                visualTier = 'AMBER_P90';
+                isStructuralClimax = score >= floors.P90;
+            }
+
+            let isHighlighted = true;
+            if (activeFilter === 'P99') {
+                isHighlighted = r <= k99;
+            } else if (activeFilter === 'P95') {
+                isHighlighted = r <= k95;
+            } else if (activeFilter === 'P90') {
+                isHighlighted = r <= k90;
+            }
+
+            output[i] = {
+                date: rec.date,
+                score,
+                maxRvol: rec.maxRvol,
+                windowRank: r,
+                visualTier,
+                isHighlighted,
+                isStructuralClimax,
+                baselineQuantileBin: baselineBins[i]
+            };
+        }
+
+        return output;
+    },
+
     /* HEAT CALENDAR */
-    drawHeatCalendar(container, dailyScores, mode = 'share', spotlightMode = false, peaksThreshold = 95, globalPercentiles = null, side = 'all') {
+    drawHeatCalendar(container, visibleSlice, mode = 'share', spotlightMode = false, peaksThreshold = 95, globalPercentiles = null, side = 'all') {
         container.innerHTML = '';
         const isPeaks = (spotlightMode === 'peaks' || spotlightMode === true);
         const isValleys = (spotlightMode === 'valleys');
+        const isSpotlight = isPeaks || isValleys;
         container.classList.toggle('peaks-mode', isPeaks);
         container.classList.toggle('valleys-mode', isValleys);
-        if (!dailyScores || !dailyScores.length) return 0;
+        if (!visibleSlice || !visibleSlice.length) return 0;
 
         const colors = [
             '#14141e', '#1a1a28', '#202838', '#283848',
@@ -184,68 +258,76 @@ const Charts = {
         ];
 
         const label = mode === 'dollar' ? 'DVCVI' : 'CVI';
-        const subject = (side && side !== 'all') ? `${side} ` : '';
+        const subject = (side && side !== 'all') ? (side + ' ') : '';
+        const N = visibleSlice.length;
+        const regimeMode = isValleys ? 'VALLEYS' : 'PEAKS';
+        const activeFilter = isSpotlight ? ('P' + peaksThreshold) : 'NONE';
+
+        const cellStates = this.evaluateViewportSpotlight(visibleSlice, regimeMode, activeFilter);
         let count = 0;
 
-        // Choose appropriate threshold set based on mode
-        const pObj = isValleys ? (globalPercentiles?.valleys || globalPercentiles)
-                               : (globalPercentiles?.peaks || globalPercentiles);
-
-        // Fallback thresholds if not provided
-        const p90 = pObj?.p90 ?? 90;
-        const p95 = pObj?.p95 ?? 95;
-        const p99 = pObj?.p99 ?? 99;
-
-        // The threshold cutoff score below which cells are dimmed
-        const thresholdCutoff = peaksThreshold === 99 ? p99
-                              : peaksThreshold === 90 ? p90
-                              : p95; // default to p95
-
-        for (const day of dailyScores) {
+        for (let i = 0; i < N; i++) {
+            const day = visibleSlice[i];
+            const state = cellStates[i];
             const cell = document.createElement('div');
             cell.className = 'heat-cell';
 
-            // Map score (0-100) to color index
-            const idx = Math.min(colors.length - 1, Math.floor((day.score / 100) * colors.length));
+            const score = state.score;
+            const idx = Math.min(colors.length - 1, Math.floor((score / 100) * colors.length));
             cell.style.background = colors[idx];
 
             const dateFormatted = typeof formatDisplayDate === 'function' ? formatDisplayDate(day.date) : day.date;
-            if (isValleys) {
-                cell.setAttribute('data-tooltip', `${dateFormatted}: ${subject}VOL DROUGHT ${day.score.toFixed(0)} (Vol Rank ${(100 - day.score).toFixed(0)}%)`);
-            } else {
-                cell.setAttribute('data-tooltip', `${dateFormatted}: ${subject}${label} ${day.score.toFixed(0)}`);
-            }
+            const rvolVal = day.maxRvol != null ? day.maxRvol : 1.0;
+            const rvolText = ' · RVOL ' + rvolVal.toFixed(1) + 'x';
 
-            if (isPeaks) {
-                if (day.score < thresholdCutoff) {
+            if (isSpotlight) {
+                if (!state.isHighlighted) {
                     cell.classList.add('heat-dim');
                 } else {
                     count++;
-                    if (day.score >= p99) {
-                        cell.classList.add('heat-peak-extreme');
-                    } else if (day.score >= p95) {
-                        cell.classList.add('heat-peak-significant');
-                    } else {
-                        cell.classList.add('heat-peak-notable');
+                    if (isPeaks) {
+                        if (state.visualTier === 'RED_P99') {
+                            cell.classList.add('heat-peak-extreme');
+                        } else if (state.visualTier === 'ORANGE_P95') {
+                            cell.classList.add('heat-peak-significant');
+                        } else {
+                            cell.classList.add('heat-peak-notable');
+                        }
+                        if (!state.isStructuralClimax) {
+                            cell.classList.add('local-max');
+                        }
+                    } else if (isValleys) {
+                        if (state.visualTier === 'RED_P99') {
+                            cell.classList.add('heat-valley-extreme');
+                        } else if (state.visualTier === 'ORANGE_P95') {
+                            cell.classList.add('heat-valley-significant');
+                        } else {
+                            cell.classList.add('heat-valley-notable');
+                        }
+                        if (!state.isStructuralClimax) {
+                            cell.classList.add('local-min');
+                        }
                     }
                 }
-            } else if (isValleys) {
-                if (day.score < thresholdCutoff) {
-                    cell.classList.add('heat-dim');
+
+                const climaxTag = state.isStructuralClimax
+                    ? (isPeaks ? 'MACRO CLIMAX' : 'MACRO DROUGHT')
+                    : (isPeaks ? 'LOCAL PEAK' : 'LOCAL DROUGHT');
+                const filterTag = state.visualTier === 'RED_P99' ? 'P99' : state.visualTier === 'ORANGE_P95' ? 'P95' : 'P90';
+
+                if (isValleys) {
+                    cell.setAttribute('data-tooltip', dateFormatted + ': ' + subject + 'VOL DROUGHT ' + score.toFixed(1) + rvolText + ' [' + climaxTag + ' · ' + filterTag + ' #' + state.windowRank + '/' + N + ']');
                 } else {
-                    count++;
-                    if (day.score >= p99) {
-                        cell.classList.add('heat-valley-extreme');
-                    } else if (day.score >= p95) {
-                        cell.classList.add('heat-valley-significant');
-                    } else {
-                        cell.classList.add('heat-valley-notable');
-                    }
+                    cell.setAttribute('data-tooltip', dateFormatted + ': ' + subject + label + ' ' + score.toFixed(1) + rvolText + ' [' + climaxTag + ' · ' + filterTag + ' #' + state.windowRank + '/' + N + ']');
                 }
+            } else {
+                const regimeLabel = isValleys ? (subject + 'VOL DROUGHT') : (subject + label);
+                cell.setAttribute('data-tooltip', dateFormatted + ': ' + regimeLabel + ' ' + score.toFixed(1) + rvolText + ' (Rank #' + state.windowRank + '/' + N + ')');
             }
 
             container.appendChild(cell);
         }
+
         return count;
     },
 

@@ -482,6 +482,9 @@ const App = {
             // stale values from a previous ticker into the next when history is empty.
             const mapBar = h => ({
                 date: h.date || h[0],
+                open: h.open != null ? h.open : (h[3] != null ? h[3] : (h.close != null ? h.close : h[1])),
+                high: h.high != null ? h.high : (h[4] != null ? h[4] : (h.close != null ? h.close : h[1])),
+                low: h.low != null ? h.low : (h[5] != null ? h[5] : (h.close != null ? h.close : h[1])),
                 close: h.close != null ? h.close : h[1],
                 volume: h.volume != null ? h.volume : h[2],
                 dollarVolume: h.dollar_volume != null ? h.dollar_volume : ((h.close != null && h.volume != null) ? h.close * h.volume : 0)
