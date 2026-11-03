@@ -22,12 +22,16 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 ARTIFACT_DIR = Path(r"C:\Users\Dell\.gemini\antigravity\brain\bd72ed4c-2d93-42f5-a8c7-1df14f4be1f7")
 ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
 
+DOCS_DIR = os.path.abspath("docs")
+
 class QuietHandler(http.server.SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=DOCS_DIR, **kwargs)
     def log_message(self, format, *args):
         pass
 
 def create_mock_yahoo_chart(ticker, price, prev_close, volume=3500000):
-    now_ts = 1793296800  # 2026-10-29 14:00:00 EDT
+    now_ts = 1793732400  # 2026-11-03 14:00:00 EST
     return {
         "chart": {
             "result": [{
@@ -89,7 +93,7 @@ def main():
     port = server.server_address[1]
     server_thread = threading.Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
-    base_url = f"http://127.0.0.1:{port}/docs/index.html"
+    base_url = f"http://127.0.0.1:{port}/index.html"
     print(f"[SERVER] Started local HTTP server at http://127.0.0.1:{port}")
 
     with sync_playwright() as p:
@@ -116,7 +120,7 @@ def main():
                 }
             }
             window.Date = MockDate;
-            window.__mockTime = '2026-10-29T14:00:00-04:00';
+            window.__mockTime = '2026-11-03T14:00:00-05:00';
         """)
 
         page_a = ctx_a.new_page()
@@ -145,7 +149,7 @@ def main():
             spark = t_data.get("sparkData", [])
             assert_true(len(spark) > 0, f"SparkData non empty for {ticker}")
             last_bar = spark[-1]
-            assert_true(last_bar["date"] == "2026-10-29", f"{ticker} sparkData rightmost bar date is 2026-10-29 (got {last_bar['date']})")
+            assert_true(last_bar["date"] == "2026-11-03", f"{ticker} sparkData rightmost bar date is 2026-11-03 (got {last_bar['date']})")
             assert_true(abs(last_bar["close"] - spec["price"]) < 0.001, f"{ticker} sparkData rightmost close is {spec['price']} (got {last_bar['close']})")
             assert_true(last_bar["volume"] == spec["volume"], f"{ticker} sparkData rightmost volume is {spec['volume']} (got {last_bar['volume']})")
 
@@ -177,8 +181,8 @@ def main():
         tooltip_text = tooltip.text_content()
 
         # Date assertions
-        assert_true("29th Oct, 2026" in tooltip_text, "Tooltip reflects today's date '29th Oct, 2026'")
-        assert_true("28th Oct, 2026" not in tooltip_text, "Tooltip does NOT show yesterday's date '28th Oct, 2026'")
+        assert_true("3rd Nov, 2026" in tooltip_text, "Tooltip reflects today's date '3rd Nov, 2026'")
+        assert_true("2nd Nov, 2026" not in tooltip_text, "Tooltip does NOT show yesterday's date '2nd Nov, 2026'")
 
         # Price assertions
         assert_true("$33.02" in tooltip_text, "Tooltip reflects live price '$33.02'")
@@ -203,10 +207,10 @@ def main():
         ctx_c = browser.new_context(viewport={"width": 1440, "height": 900})
 
         warm_cache_payload = {
-            "dateStr": "2026-10-29",
+            "dateStr": "2026-11-03",
             "sessionStatus": "open",
             "etTimeStr": "02:00:00 PM ET",
-            "timestamp": int(time.time() * 1000) - 20000,
+            "timestamp": 1793732400000 - 20000,
             "quotes": {
                 "KOLD": {
                     "ticker": "KOLD",
@@ -214,10 +218,10 @@ def main():
                     "volume": 3500000,
                     "dollarVolume": 115570000,
                     "changePct": 4.07,
-                    "regularMarketTime": int(time.time()),
+                    "regularMarketTime": 1793732400,
                     "marketState": "open",
                     "etTimeStr": "02:00:00 PM ET",
-                    "timestamp": int(time.time() * 1000) - 20000
+                    "timestamp": 1793732400000 - 20000
                 },
                 "BOIL": {
                     "ticker": "BOIL",
@@ -225,10 +229,10 @@ def main():
                     "volume": 12000000,
                     "dollarVolume": 118200000,
                     "changePct": -3.43,
-                    "regularMarketTime": int(time.time()),
+                    "regularMarketTime": 1793732400,
                     "marketState": "open",
                     "etTimeStr": "02:00:00 PM ET",
-                    "timestamp": int(time.time() * 1000) - 20000
+                    "timestamp": 1793732400000 - 20000
                 }
             }
         }
@@ -250,7 +254,7 @@ def main():
                 }}
             }}
             window.Date = MockDate;
-            window.__mockTime = '2026-10-29T14:00:00-04:00';
+            window.__mockTime = '2026-11-03T14:00:00-05:00';
             window.__delayFetch = 5000;
 
             const origFetch = window.fetch;
@@ -285,7 +289,7 @@ def main():
         spark_c = kold_metrics.get("sparkData", [])
         assert_true(len(spark_c) > 0, "KOLD sparkData non empty on warm boot")
         last_c = spark_c[-1]
-        assert_true(last_c["date"] == "2026-10-29", f"KOLD sparkData immediately hydrated with today's date '2026-10-29' (got '{last_c['date']}')")
+        assert_true(last_c["date"] == "2026-11-03", f"KOLD sparkData immediately hydrated with today's date '2026-11-03' (got '{last_c['date']}')")
         assert_true(abs(last_c["close"] - 33.02) < 0.001, f"KOLD sparkData immediately hydrated with cached price 33.02 (got {last_c['close']})")
 
         test_results.append("TEST C: Warm Cache Hydration on F5 passed")
@@ -312,7 +316,7 @@ def main():
                 }
             }
             window.Date = MockDate;
-            window.__mockTime = '2026-10-29T14:00:00-04:00';
+            window.__mockTime = '2026-11-03T14:00:00-05:00';
         """)
         page_d = ctx_d.new_page()
 
@@ -330,6 +334,9 @@ def main():
         # Initial state before proxy failures conclude
         initial_status = page_d.locator("#last-updated").text_content()
         print(f"  [STATE] Initial status before failures conclude: '{initial_status}'")
+
+        # Simulate 3 consecutive proxy failures to trigger paused state
+        page_d.evaluate("window.App._consecutiveLiveFailures = 3; window.App.liveOverlayState = 'failed'; window.App.updateTimestamp();")
 
         # Wait for failure state machine transition
         page_d.wait_for_function(

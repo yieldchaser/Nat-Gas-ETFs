@@ -269,7 +269,8 @@ const App = {
                 if (allBars.length >= 2) {
                     let prevClose, currentForChange;
 
-                    const lastBarIsToday = allBars[allBars.length - 1].date === today;
+                    const lastBar = allBars[allBars.length - 1];
+                    const lastBarIsToday = lastBar.date === today;
 
                     if (marketOpen) {
                         // Market is open: current is live intraday price.
@@ -278,15 +279,22 @@ const App = {
                         // is the bar before it (yesterday). If absent, the last bar IS yesterday.
                         prevClose = lastBarIsToday
                             ? allBars[allBars.length - 2].close
-                            : allBars[allBars.length - 1].close;
+                            : lastBar.close;
                     } else {
-                        // Market is closed (after hours or weekend).
-                        // The last available bar is the confirmed most recent close.
-                        currentForChange = allBars[allBars.length - 1].close;
-                        prevClose = allBars[allBars.length - 2].close;
+                        // Market is closed (e.g. LSE closed while US is open, or after hours / weekend).
+                        // If livePrice differs from lastBar.close, livePrice is a newer session close not yet in allBars.
+                        const liveMatchesLastBar = lastBar.close != null && Math.abs(livePrice - lastBar.close) / Math.max(lastBar.close, 1e-6) < 1e-3;
+                        if (liveMatchesLastBar) {
+                            currentForChange = livePrice;
+                            prevClose = allBars[allBars.length - 2].close;
+                        } else {
+                            currentForChange = livePrice;
+                            prevClose = lastBar.close;
+                        }
                     }
 
                     if (prevClose && prevClose > 0) {
+                        this.allMetrics[ticker].current.prevClose = prevClose;
                         this.allMetrics[ticker].current.changePct =
                             (currentForChange - prevClose) / prevClose * 100;
                     }
@@ -346,11 +354,13 @@ const App = {
                     lastBar.volume = m.current.volume;
                     lastBar.dollarVolume = m.current.dollarVolume;
                 } else {
+                    const prevBarClose = lastBar ? lastBar.close : (m.current.prevClose ?? null);
                     m.sparkData.push({
                         date: today,
                         close: livePrice,
                         volume: m.current.volume,
-                        dollarVolume: m.current.dollarVolume
+                        dollarVolume: m.current.dollarVolume,
+                        prevClose: prevBarClose
                     });
                     if (m.sparkData.length > CONFIG.sparklineDays) {
                         m.sparkData = m.sparkData.slice(-CONFIG.sparklineDays);
@@ -451,10 +461,25 @@ const App = {
                 const da = a.date ?? a[0], db = b.date ?? b[0];
                 return da < db ? -1 : da > db ? 1 : 0;
             });
+            let prevCloseForCurrent = null;
+            let isSnapshotNewerSession = false;
             if (hist.length >= 2) {
                 const c1 = hist[hist.length - 1].close ?? hist[hist.length - 1][1];
                 const c0 = hist[hist.length - 2].close ?? hist[hist.length - 2][1];
-                if (c1 != null && c0 && c0 > 0) changePctFromHistory = (c1 - c0) / c0 * 100;
+                const priceMatchesLastBar = (raw.price == null) || (c1 != null && Math.abs(raw.price - c1) / Math.max(c1, 1e-6) < 1e-3);
+                if (priceMatchesLastBar) {
+                    if (c1 != null && c0 && c0 > 0) {
+                        changePctFromHistory = (c1 - c0) / c0 * 100;
+                        prevCloseForCurrent = c0;
+                    }
+                } else if (c1 != null && c1 > 0 && raw.price != null) {
+                    // Snapshot price represents a newer session not yet appended to hist (e.g. LSE 3NGL.L / 3NGS.L)
+                    isSnapshotNewerSession = true;
+                    prevCloseForCurrent = c1;
+                    changePctFromHistory = (raw.change_pct != null && !isNaN(raw.change_pct))
+                        ? raw.change_pct
+                        : ((raw.price - c1) / c1 * 100);
+                }
             }
             // For some TSX tickers (HNU.TO / HND.TO) Yahoo doesn't return
             // regularMarketPrice / regularMarketVolume in the meta, so the pipeline
@@ -465,6 +490,7 @@ const App = {
                 volume:       raw.volume      ?? lastBar?.volume ?? lastBar?.[2] ?? 0,
                 changePct:    changePctFromHistory,
                 dollarVolume: raw.dollar_volume ?? raw.dollarVolume ?? 0,
+                prevClose:    prevCloseForCurrent
             };
 
             // Warm hydration: restore fresh live price, volume, changePct if cached for today
@@ -480,15 +506,22 @@ const App = {
 
             // Always declare sparkData locally — avoids implicit global that would bleed
             // stale values from a previous ticker into the next when history is empty.
-            const mapBar = h => ({
-                date: h.date || h[0],
-                open: h.open != null ? h.open : (h[3] != null ? h[3] : (h.close != null ? h.close : h[1])),
-                high: h.high != null ? h.high : (h[4] != null ? h[4] : (h.close != null ? h.close : h[1])),
-                low: h.low != null ? h.low : (h[5] != null ? h[5] : (h.close != null ? h.close : h[1])),
-                close: h.close != null ? h.close : h[1],
-                volume: h.volume != null ? h.volume : h[2],
-                dollarVolume: h.dollar_volume != null ? h.dollar_volume : ((h.close != null && h.volume != null) ? h.close * h.volume : 0)
-            });
+            const mapBar = (h, idx, arr) => {
+                const cl = h.close != null ? h.close : h[1];
+                const vo = h.volume != null ? h.volume : h[2];
+                const prevH = (arr && idx > 0) ? arr[idx - 1] : null;
+                const prevCl = h.prevClose != null ? h.prevClose : (prevH ? (prevH.close != null ? prevH.close : prevH[1]) : null);
+                return {
+                    date: h.date || h[0],
+                    open: h.open != null ? h.open : (h[3] != null ? h[3] : cl),
+                    high: h.high != null ? h.high : (h[4] != null ? h[4] : cl),
+                    low: h.low != null ? h.low : (h[5] != null ? h[5] : cl),
+                    close: cl,
+                    volume: vo,
+                    dollarVolume: h.dollar_volume != null ? h.dollar_volume : ((cl != null && vo != null) ? cl * vo : 0),
+                    prevClose: prevCl
+                };
+            };
             // Slicing heatmapData:
             // When market is open or in pre-market, today's bar in hist is incomplete/partial.
             // Using a partial session in the Heat Map causes an artificial 0th-percentile volume drop (black box).
@@ -500,9 +533,36 @@ const App = {
 
             const confirmedHist = isTodayIncomplete ? hist.slice(0, -1) : hist;
 
+            const sparkStartIdx = Math.max(0, hist.length - CONFIG.sparklineDays);
             let sparkData = (hist && hist.length > 0)
-                ? hist.slice(-CONFIG.sparklineDays).map(mapBar)
+                ? hist.slice(sparkStartIdx).map((h, i) => {
+                    const mapped = mapBar(h, sparkStartIdx + i, hist);
+                    return mapped;
+                })
                 : [];
+
+            // If current snapshot is a newer session not yet in hist (e.g. 3NGL.L / 3NGS.L), append it to sparkData
+            if (isSnapshotNewerSession && current.price != null && current.volume != null) {
+                const snapDate = (data.last_updated && typeof data.last_updated === 'string' && data.last_updated.length >= 10)
+                    ? data.last_updated.slice(0, 10)
+                    : (session.priorClose?.dateStr || session.dateStr);
+                const lastSpark = sparkData.length > 0 ? sparkData[sparkData.length - 1] : null;
+                if (!lastSpark || lastSpark.date < snapDate) {
+                    sparkData.push({
+                        date: snapDate,
+                        open: current.price,
+                        high: current.price,
+                        low: current.price,
+                        close: current.price,
+                        volume: current.volume,
+                        dollarVolume: current.dollarVolume || (current.price * current.volume),
+                        prevClose: lastSpark ? lastSpark.close : prevCloseForCurrent
+                    });
+                    if (sparkData.length > CONFIG.sparklineDays) {
+                        sparkData = sparkData.slice(-CONFIG.sparklineDays);
+                    }
+                }
+            }
 
             if (hasWarmCache && warmCache.quotes[ticker]) {
                 const wq = warmCache.quotes[ticker];
@@ -605,15 +665,55 @@ const App = {
 
             const rvol = { ...(etfData.rvol || {}) };
             const zScore = { ...(etfData.z_score || etfData.zScore || {}) };
+            const vroc = { ...(etfData.vroc || {}) };
             const volPercentile = { ...(etfData.vol_percentile || etfData.volPercentile || {}) };
+            const pricePercentile = { ...(etfData.price_percentile || etfData.pricePercentile || {}) };
+            const cvi = { ...(etfData.cvi || {}) };
+            const vcvi = { ...(etfData.vcvi || etfData.cvi || {}) };
             const dvRvol = { ...(etfData.dv_rvol || {}) };
             const dvZScore = { ...(etfData.dv_zscore || {}) };
+            const dvVroc = { ...(etfData.dv_vroc || {}) };
             const dvPercentile = { ...(etfData.dv_percentile || {}) };
+            const dvcvi = { ...(etfData.dvcvi || {}) };
+            let vps = etfData.vps || 0;
+            let dvVps = etfData.dv_vps ?? null;
+            let mwca = etfData.mwca || false;
+            let decayBlock = etfData.decay ? { ...etfData.decay } : null;
+            let sharpSpike = etfData.sharp_spike || false;
 
-            // If warm cached volume exists, perform initial incremental recalculations
-            if (hasWarmCache && warmCache.quotes[ticker]) {
+            // Ensure DVCVI has volatility regime scaling applied across all windows
+            if (typeof Metrics !== 'undefined' && volatility.volRegimePct != null) {
+                for (const w of CONFIG.windows.percentile) {
+                    const key = `${w}d`;
+                    if (dvPercentile[key] != null && pricePercentile[key] != null) {
+                        const rawDvCvi = Metrics.computeCVI(dvPercentile[key], pricePercentile[key]);
+                        dvcvi[key] = Metrics.computeVCVI(rawDvCvi, volatility.volRegimePct);
+                    }
+                }
+            }
+
+            // Recompute decay-adjusted 21d VCVI using correct exp(-dailyDecay * age) over 21d window
+            const annualDecay = (typeof CONFIG !== 'undefined' && CONFIG.etfDecayRates && CONFIG.etfDecayRates[ticker] != null)
+                ? CONFIG.etfDecayRates[ticker]
+                : (decayBlock?.annual_rate || 0.35);
+            if (typeof Metrics !== 'undefined' && typeof Metrics.computeDecayAdjustedVCVI21 === 'function' && histCloses.length >= 21) {
+                const decayCalc = Metrics.computeDecayAdjustedVCVI21(histCloses, volPercentile['21d'], volatility.volRegimePct, annualDecay, 21);
+                if (decayCalc) {
+                    decayBlock = {
+                        annual_rate: annualDecay,
+                        adj_price_pct: decayCalc.adjPricePct,
+                        adj_vcvi_21d: decayCalc.adjVcvi21,
+                        correction_active: annualDecay > 0
+                    };
+                }
+            }
+
+            // If warm cached volume exists OR current snapshot is a newer session than hist[-1],
+            // perform full incremental recalculation so all card metrics match current price & volume
+            if ((hasWarmCache && warmCache.quotes[ticker]) || isSnapshotNewerSession) {
                 const liveVol = current.volume;
                 const liveDVol = current.dollarVolume;
+                const livePrice = current.price;
                 if (hist.length >= 21 && typeof Metrics !== 'undefined') {
                     const prevVols = hist.map(h => (h.volume != null ? h.volume : h[2])).filter(v => v != null && v > 0);
                     if (liveVol != null && liveVol > 0 && prevVols.length >= 21) {
@@ -622,10 +722,17 @@ const App = {
                         const std21 = Metrics.std(lookback21);
                         if (mean21 > 0) rvol['21d'] = liveVol / mean21;
                         if (std21 > 0) zScore['21d'] = (liveVol - mean21) / std21;
-                        const windows = [5, 10, 21, 63, 126, 252];
-                        for (const w of windows) {
-                            volPercentile[`${w}d`] = Metrics.percentileRank(liveVol, prevVols.slice(-w));
+                        if (prevVols.length >= 10 && prevVols[prevVols.length - 10] > 0) {
+                            vroc['10d'] = ((liveVol - prevVols[prevVols.length - 10]) / prevVols[prevVols.length - 10]) * 100;
                         }
+                        const windows = [5, 10, 21, 63, 126, 252];
+                        mwcaCount = 0;
+                        for (const w of windows) {
+                            const pct = Metrics.percentileRank(liveVol, prevVols.slice(-w));
+                            volPercentile[`${w}d`] = pct;
+                            if (pct >= mwcaThreshold) mwcaCount++;
+                        }
+                        mwca = (mwcaCount === windows.length);
                     }
 
                     const prevDVols = hist.map(h => {
@@ -639,12 +746,91 @@ const App = {
                         const stdDv21 = Metrics.std(lookbackDv21);
                         if (meanDv21 > 0) dvRvol['21d'] = liveDVol / meanDv21;
                         if (stdDv21 > 0) dvZScore['21d'] = (liveDVol - meanDv21) / stdDv21;
+                        if (prevDVols.length >= 10 && prevDVols[prevDVols.length - 10] > 0) {
+                            dvVroc['10d'] = ((liveDVol - prevDVols[prevDVols.length - 10]) / prevDVols[prevDVols.length - 10]) * 100;
+                        }
                         const windows = [5, 10, 21, 63, 126, 252];
                         for (const w of windows) {
                             dvPercentile[`${w}d`] = Metrics.percentileRank(liveDVol, prevDVols.slice(-w));
                         }
                     }
+
+                    const prevCloses = hist.map(h => (h.close != null ? h.close : h[1])).filter(v => v != null && v > 0);
+                    if (livePrice != null && livePrice > 0 && prevCloses.length >= 21) {
+                        const windows = [5, 10, 21, 63, 126, 252];
+                        for (const w of windows) {
+                            const key = `${w}d`;
+                            const pPct = Metrics.percentileRank(livePrice, prevCloses.slice(-w));
+                            pricePercentile[key] = pPct;
+                            if (volPercentile[key] != null) {
+                                cvi[key] = Metrics.computeCVI(volPercentile[key], pPct);
+                                vcvi[key] = Metrics.computeVCVI(cvi[key], volatility.volRegimePct);
+                            }
+                            if (dvPercentile[key] != null) {
+                                const rawDvCvi = Metrics.computeCVI(dvPercentile[key], pPct);
+                                dvcvi[key] = Metrics.computeVCVI(rawDvCvi, volatility.volRegimePct);
+                            }
+                        }
+
+                        if (typeof Metrics.computeDecayAdjustedVCVI21 === 'function') {
+                            const closesWithLive = [...prevCloses.slice(-20), livePrice];
+                            const decayCalc = Metrics.computeDecayAdjustedVCVI21(closesWithLive, volPercentile['21d'], volatility.volRegimePct, annualDecay, 21);
+                            if (decayCalc) {
+                                decayBlock = {
+                                    annual_rate: annualDecay,
+                                    adj_price_pct: decayCalc.adjPricePct,
+                                    adj_vcvi_21d: decayCalc.adjVcvi21,
+                                    correction_active: annualDecay > 0
+                                };
+                            }
+                        }
+
+                        const vw = CONFIG.vpsWeights || { rvol: 0.25, zScore: 0.20, percentile: 0.25, vroc: 0.10, volRegime: 0.20 };
+                        const invVolReg = volatility.volRegimePct != null ? (100 - volatility.volRegimePct) : 50;
+                        if (rvol['21d'] != null) {
+                            const rvolNorm = Math.min(100, Math.max(0, (Math.log2(Math.max(0.5, rvol['21d'])) + 1) * 33.3));
+                            const zNorm = zScore['21d'] != null ? Math.min(100, Math.max(0, (zScore['21d'] + 2) * 12.5)) : 0;
+                            const pctNorm = volPercentile['21d'] != null ? volPercentile['21d'] : 0;
+                            const vrocNorm = vroc['10d'] != null ? Math.min(100, Math.max(0, (vroc['10d'] + 100) / 5)) : 0;
+                            vps = vw.rvol * rvolNorm + vw.zScore * zNorm + vw.percentile * pctNorm + vw.vroc * vrocNorm + vw.volRegime * invVolReg;
+                        }
+                        if (dvRvol['21d'] != null) {
+                            const dvRvolNorm = Math.min(100, Math.max(0, (Math.log2(Math.max(0.5, dvRvol['21d'])) + 1) * 33.3));
+                            const dvZNorm = dvZScore['21d'] != null ? Math.min(100, Math.max(0, (dvZScore['21d'] + 2) * 12.5)) : 0;
+                            const dvPctNorm = dvPercentile['21d'] != null ? dvPercentile['21d'] : 0;
+                            const dvVrocNorm = dvVroc['10d'] != null ? Math.min(100, Math.max(0, (dvVroc['10d'] + 100) / 5)) : 0;
+                            dvVps = vw.rvol * dvRvolNorm + vw.zScore * dvZNorm + vw.percentile * dvPctNorm + vw.vroc * dvVrocNorm + vw.volRegime * invVolReg;
+                        }
+                    }
                 }
+            }
+
+            // Compute Upgraded VDDS* and Notional Dollar RVOL (drvol) from bar history
+            let vddsVal = etfData.vdds ?? null;
+            let drvolVal = dvRvol['21d'] ?? null;
+            let latestVddsRecord = null;
+            if (typeof Metrics !== 'undefined' && typeof Metrics.computeUpgradedVDDS === 'function' && hist.length > 0) {
+                const effectiveHist = isSnapshotNewerSession && current.price != null
+                    ? [...hist, {
+                        date: sparkData[sparkData.length - 1]?.date || session.dateStr,
+                        open: current.price,
+                        high: current.price,
+                        low: current.price,
+                        close: current.price,
+                        volume: current.volume || 0
+                    }]
+                    : hist;
+                const upgradedVddsSeries = Metrics.computeUpgradedVDDS(effectiveHist);
+                if (upgradedVddsSeries && upgradedVddsSeries.length > 0) {
+                    latestVddsRecord = upgradedVddsSeries[upgradedVddsSeries.length - 1];
+                    vddsVal = latestVddsRecord.vddsStar;
+                    drvolVal = latestVddsRecord.drvol;
+                }
+            }
+
+            // Re-evaluate card alertLevel using active displayed windows & volume participation gate
+            if (typeof Metrics !== 'undefined' && typeof Metrics.computeCardAlertLevel === 'function') {
+                alertLevel = Metrics.computeCardAlertLevel(vcvi, mwca, sharpSpike, rvol['21d'], volPercentile);
             }
 
             this.allMetrics[ticker] = {
@@ -652,18 +838,18 @@ const App = {
                 current: current,
                 rvol: rvol,
                 zScore: zScore,
-                vroc: etfData.vroc || {},
+                vroc: vroc,
                 volPercentile: volPercentile,
-                pricePercentile: etfData.price_percentile || etfData.pricePercentile || {},
-                cvi:  etfData.cvi  || {},
-                vcvi: etfData.vcvi || etfData.cvi || {},
+                pricePercentile: pricePercentile,
+                cvi:  cvi,
+                vcvi: vcvi,
                 volatility,
-                decay:             etfData.decay             || null,   // Feature 6
+                decay:             decayBlock,                      // Feature 6
                 seasonality:       etfData.seasonality       || null,   // Feature 3
-                sharpSpike:        etfData.sharp_spike       || false,  // Feature 1
+                sharpSpike:        sharpSpike,                      // Feature 1
                 fastSignal:        etfData.fast_signal       || null,   // Feature 1
-                vps: etfData.vps || 0,
-                mwca: etfData.mwca || false,
+                vps: vps,
+                mwca: mwca,
                 mwcaCount: mwcaCount,
                 priceMAs: (etfData.moving_averages || {}).price || etfData.priceMAs || {},
                 volumeMAs: (etfData.moving_averages || {}).volume || etfData.volumeMAs || {},
@@ -672,10 +858,12 @@ const App = {
                 dvRvol:      dvRvol,
                 dvZScore:    dvZScore,
                 dvPercentile: dvPercentile,
-                dvVroc:      etfData.dv_vroc       || {},
-                dvcvi:       etfData.dvcvi         || {},
-                dvVps:       etfData.dv_vps        ?? null,
-                vdds:        etfData.vdds          ?? null,
+                dvVroc:      dvVroc,
+                dvcvi:       dvcvi,
+                dvVps:       dvVps,
+                vdds:        vddsVal,
+                drvol:       drvolVal,
+                vddsRecord:  latestVddsRecord,
                 alerts: alerts,
                 alertLevel: alertLevel,
                 sparkData: sparkData,
@@ -722,6 +910,14 @@ const App = {
         const shortEl = document.getElementById('short-cards');
         if (longEl && shortEl && typeof Cards !== 'undefined' && Cards.updateLive) {
             Cards.updateLive(this.allMetrics, [longEl, shortEl]);
+            if (typeof Signals !== 'undefined') {
+                if (typeof Signals.renderConvergenceGauges === 'function') {
+                    Signals.renderConvergenceGauges(this.allMetrics);
+                }
+                if (typeof Signals.renderVddsBar === 'function') {
+                    Signals.renderVddsBar(this.allMetrics, this.vddsMode || 'vol');
+                }
+            }
         } else {
             this.render();
         }
@@ -947,7 +1143,7 @@ const App = {
             if (this.liveOverlayState === 'live') {
                 el.textContent = `Prices: LIVE ${this.lastLiveTimeStr || session.etTimeStr}`;
                 el.classList.remove('stale');
-            } else if (this._hasWarmCache && (Date.now() - (this.lastLiveFetchTime || 0)) < 600000) {
+            } else if (this._hasWarmCache && (!this.lastLiveFetchTime || (Date.now() - this.lastLiveFetchTime) < 600000)) {
                 // Keep recent warm cached live data active and resilient during temporary proxy blips
                 el.textContent = `Prices: LIVE ${this._warmCacheTime || session.etTimeStr} (Cached) \u2022 Updating...`;
                 el.classList.remove('stale');

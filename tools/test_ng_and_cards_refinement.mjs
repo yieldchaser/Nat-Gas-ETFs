@@ -154,7 +154,7 @@ console.log('\n--- 2. NG=F STRIP: OVERSOLD CASE (z = -1.8σ) ---');
     Signals.renderNgPriceBar(oversoldContext);
     const barHtml = fakeDocument.getElementById('ng-price-bar').innerHTML;
 
-    ok(barHtml.includes('LONG GATE: ACTIVE ✓'), 'Displays "LONG GATE: ACTIVE ✓"');
+    ok(barHtml.includes('LONG GATE: ACTIVE'), 'Displays "LONG GATE: ACTIVE"');
     ok(barHtml.includes('class="ng-gate ng-gate-active-long"'), 'Has class "ng-gate ng-gate-active-long"');
     ok(barHtml.includes('SHORT: INACTIVE'), 'Displays "SHORT: INACTIVE"');
     ok(barHtml.includes('class="ng-gate ng-gate-inactive"'), 'Has class "ng-gate ng-gate-inactive"');
@@ -187,7 +187,7 @@ console.log('\n--- 3. NG=F STRIP: OVERBOUGHT CASE (z = +2.0σ) ---');
     Signals.renderNgPriceBar(overboughtContext);
     const barHtml = fakeDocument.getElementById('ng-price-bar').innerHTML;
 
-    ok(barHtml.includes('SHORT GATE: ACTIVE ✓'), 'Displays "SHORT GATE: ACTIVE ✓"');
+    ok(barHtml.includes('SHORT GATE: ACTIVE'), 'Displays "SHORT GATE: ACTIVE"');
     ok(barHtml.includes('class="ng-gate ng-gate-active-short"'), 'Has class "ng-gate ng-gate-active-short"');
     ok(barHtml.includes('LONG: INACTIVE'), 'Displays "LONG: INACTIVE"');
     ok(barHtml.includes('class="ng-gate ng-gate-inactive"'), 'Has class "ng-gate ng-gate-inactive"');

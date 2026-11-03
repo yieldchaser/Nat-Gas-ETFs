@@ -456,17 +456,17 @@ def _season_label(month: int) -> str:
 # Decay-adjusted price percentile (Feature 6)
 # ---------------------------------------------------------------------------
 def _decay_adjusted_price_percentile(
-    close: "pd.Series", annual_decay: float, window: int
+    close: "pd.Series", annual_decay: float, window: int = 21
 ) -> "pd.Series":
     """
     For each date, project historical prices forward to today's equivalent value
     using the leveraged-ETF decay model, then rank today's price against
     that adjusted distribution (0-100).
 
-    adj_price[i] = price[i] × (1 + annual_decay/252)^(age_days)
+    adj_price[i] = price[i] × exp(-(annual_decay / 252) × age_days)
 
     This removes the structural downward drift so that 'low price' actually
-    signals that the underlying gas price is high, not just that time has passed.
+    signals that the underlying gas price moved against the ETF, not just that time has passed.
     """
     daily_decay = annual_decay / 252.0
     result = pd.Series(np.nan, index=close.index, dtype=float)
@@ -477,7 +477,7 @@ def _decay_adjusted_price_percentile(
     for i in range(window, n):
         window_slice = close_arr[i - window: i + 1]  # length = window + 1
         ages = np.arange(len(window_slice) - 1, -1, -1, dtype=float)  # 0=today
-        adj_prices = window_slice * ((1.0 + daily_decay) ** ages)
+        adj_prices = window_slice * np.exp(-daily_decay * ages)
         current = adj_prices[-1]
         pct = float((adj_prices[:-1] < current).sum() / len(adj_prices[:-1]) * 100)
         result.iloc[i] = pct
@@ -1109,6 +1109,14 @@ def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
         else:
             vcvi[f"{w}d"] = cvi_val  # Fallback to raw CVI
 
+    # Apply vol-regime multiplier to DVCVI so it matches VCVI scale
+    if vol_regime_pct is not None:
+        dv_mult = 1.5 - vol_regime_pct / 100.0
+        for w in VOL_PCT_WINDOWS:
+            dvcvi_val = dvcvi.get(f"{w}d")
+            if dvcvi_val is not None:
+                dvcvi[f"{w}d"] = _safe_float(max(0.0, dvcvi_val * dv_mult))
+
     # --- Historical Echoes ---
     # Reconstruct rolling VCVI-21 series from already-computed intermediates
     # cvi_21_rolling = vol_pct_21 * (1 - price_pct_21 / 100) vectorised over full history
@@ -1162,7 +1170,7 @@ def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
     if annual_decay > 0 and len(close) >= DECAY_CORRECTION_WINDOW:
         try:
             decay_adj_pct_series = _decay_adjusted_price_percentile(
-                close, annual_decay, DECAY_CORRECTION_WINDOW
+                close, annual_decay, 21
             )
             decay_adj_pct_current = _safe_float(decay_adj_pct_series.iloc[-1])
             # Recompute CVI + VCVI using decay-adjusted price percentile

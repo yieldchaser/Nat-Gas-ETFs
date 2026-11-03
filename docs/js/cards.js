@@ -71,6 +71,13 @@ const Cards = {
 
         const isWeekend = (weekday === 'Sat' || weekday === 'Sun');
         const ex = (exchange || '').toUpperCase();
+        let isNyseHoliday = false;
+        try {
+            if (typeof App !== 'undefined' && App.nyseHolidays && App._getETParts) {
+                const etDateStr = App._getETParts(d).dateStr;
+                isNyseHoliday = App.nyseHolidays.has(etDateStr);
+            }
+        } catch (_) {}
 
         if (ex === 'LSE' || (ticker && ticker.endsWith('.L'))) {
             // LSE: 08:00 – 16:30 London = 03:00 – 11:30 ET Monday–Friday
@@ -81,7 +88,7 @@ const Cards = {
         }
 
         // TSX & NYSE: 09:30 – 16:00 ET Monday–Friday
-        if (marketState === 'open' || (!isWeekend && etMinutes >= 570 && etMinutes < 960)) {
+        if (marketState === 'open' || (!isWeekend && !isNyseHoliday && etMinutes >= 570 && etMinutes < 960)) {
             return { text: 'LIVE', cls: 'session-open session-live', tooltip: `${ex} regular session is LIVE (09:30 – 16:00 ET)` };
         }
         return { text: 'SETTLED', cls: 'session-settled', tooltip: `${ex} regular session is CLOSED (09:30 – 16:00 ET)` };
@@ -139,18 +146,23 @@ const Cards = {
         const vcviEntries = ['5d', '21d', '63d'].map(w => {
             const val = (metrics.vcvi || {})[w];
             const color = val != null ? Metrics.getValueColor(val, CONFIG.thresholds.vcvi) : 'rgba(255, 255, 255, 0.85)';
-            // Show decay-adjusted value alongside 21d if available
             let decayNote = '';
+            let extraTip = '';
             if (w === '21d' && decay.correction_active && decay.adj_vcvi_21d != null) {
-                const diff = decay.adj_vcvi_21d - (val || 0);
-                const diffStr = diff >= 0 ? `+${diff.toFixed(0)}` : diff.toFixed(0);
-                const adjColor = Metrics.getValueColor(decay.adj_vcvi_21d, CONFIG.thresholds.vcvi);
-                decayNote = ` <span style="color:${adjColor};font-size:0.65rem" data-tooltip="Decay-corrected VCVI-21d: removes ETF price drift due to daily rebalancing decay (~${(decay.annual_rate*100).toFixed(0)}%/yr). Raw: ${val!=null?val.toFixed(0):'—'}, Adj: ${decay.adj_vcvi_21d.toFixed(0)} (${diffStr})">†${decay.adj_vcvi_21d.toFixed(0)}</span>`;
+                const rawRounded = val != null ? Math.round(val) : 0;
+                const adjRounded = Math.round(decay.adj_vcvi_21d);
+                const diff = adjRounded - rawRounded;
+                const diffStr = diff >= 0 ? `+${diff}` : `${diff}`;
+                extraTip = ` Decay-adjusted VCVI-21d (~${((decay.annual_rate || 0.35) * 100).toFixed(0)}%/yr drift removed): ${adjRounded} (${diffStr} vs raw).`;
+                if (Math.abs(diff) >= 1) {
+                    const adjColor = Metrics.getValueColor(decay.adj_vcvi_21d, CONFIG.thresholds.vcvi);
+                    decayNote = ` <span class="vcvi-decay-note" style="color:${adjColor};font-size:0.65rem" data-tooltip="Decay-corrected VCVI-21d: removes ETF price drift due to daily rebalancing decay (~${((decay.annual_rate || 0.35)*100).toFixed(0)}%/yr). Raw: ${val!=null?val.toFixed(0):'—'}, Adj: ${decay.adj_vcvi_21d.toFixed(0)} (${diffStr})">†${decay.adj_vcvi_21d.toFixed(0)}</span>`;
+                }
             }
             return `
                 <div class="indicator-block">
-                    <span class="indicator-label" data-tooltip="Vol-Adjusted Capitulation Index (${w}). ${w==='5d'?'FAST window — weather event detection. Threshold: 45.':'Quiet regimes ×1.5, turbulent ×0.5.'} Scale 0–100.">VCVI-${w}</span>
-                    <span class="indicator-value" style="color:${color}">${val != null ? val.toFixed(0) : '—'}${decayNote}</span>
+                    <span class="indicator-label" data-live="vcvi-label-${w}" data-tooltip="Vol-Adjusted Capitulation Index (${w}). ${w==='5d'?'FAST window — weather event detection. Threshold: 45.':'Quiet regimes ×1.5, turbulent ×0.5.'} Scale 0–100.${extraTip}">VCVI-${w}</span>
+                    <span class="indicator-value" data-live="vcvi-${w}" style="color:${color}">${val != null ? val.toFixed(0) : '—'}${decayNote}</span>
                 </div>`;
         }).join('');
 
@@ -222,8 +234,8 @@ const Cards = {
 
         // MWCA
         const mwcaHtml = metrics.mwca
-            ? '<span class="mwca-badge active">MWCA ACTIVE</span>'
-            : `<span class="mwca-badge inactive">${metrics.mwcaCount}/${CONFIG.windows.percentile.length}</span>`;
+            ? '<span class="mwca-badge active" data-live="mwca">MWCA ACTIVE</span>'
+            : `<span class="mwca-badge inactive" data-live="mwca">${metrics.mwcaCount}/${CONFIG.windows.percentile.length}</span>`;
 
         // Dollar mode metrics
         const dv = metrics.dvRvol || {};
@@ -259,8 +271,8 @@ const Cards = {
             const color = val != null ? Metrics.getValueColor(val, CONFIG.thresholds.vcvi) : 'rgba(255, 255, 255, 0.85)';
             return `
                 <div class="indicator-block">
-                    <span class="indicator-label" data-tooltip="Dollar-Volume Capitulation Index (${w}). Same formula as VCVI but uses dollar volume percentile — doubly penalised when price is low (cheap shares AND low dollar value). Stronger capitulation signal.">DVCVI-${w}</span>
-                    <span class="indicator-value" style="color:${color}">${val != null ? val.toFixed(0) : '—'}</span>
+                    <span class="indicator-label" data-tooltip="Dollar-Volume Capitulation Index (${w}). Same formula as VCVI (including vol-regime scaling) but uses dollar volume percentile — doubly penalised when price is low (cheap shares AND low dollar value). Stronger capitulation signal.">DVCVI-${w}</span>
+                    <span class="indicator-value" data-live="dvcvi-${w}" style="color:${color}">${val != null ? val.toFixed(0) : '—'}</span>
                 </div>`;
         }).join('');
 
@@ -338,7 +350,7 @@ const Cards = {
                     </div>
                     <div class="metric-item">
                         <span class="metric-label" data-tooltip="Volume Rate of Change — % change in share volume vs 10 sessions ago." data-tt-pos="right">VROC-10d</span>
-                        <span class="metric-value">${metrics.vroc['10d'] != null ? (metrics.vroc['10d'] > 0 ? '+' : '') + metrics.vroc['10d'].toFixed(0) + '%' : '—'}</span>
+                        <span class="metric-value" data-live="vroc-10">${metrics.vroc['10d'] != null ? (metrics.vroc['10d'] > 0 ? '+' : '') + metrics.vroc['10d'].toFixed(0) + '%' : '—'}</span>
                     </div>
                 </div>
                 <div class="card-percentiles share-section">${pctBarsHtml}</div>
@@ -346,7 +358,7 @@ const Cards = {
                     ${vcviEntries}
                     <div class="indicator-block">
                         <span class="indicator-label" data-tooltip="Volume Pressure Score — 5-component composite: RVOL (25%) + Z-Score (20%) + Vol Percentile (25%) + VROC (10%) + Inv. Vol Regime (20%). 0–100." data-tt-pos="right">VPS</span>
-                        <span class="indicator-value" style="color:${vpsColor}">${metrics.vps != null ? metrics.vps.toFixed(0) : '—'}</span>
+                        <span class="indicator-value" data-live="vps" style="color:${vpsColor}">${metrics.vps != null ? metrics.vps.toFixed(0) : '—'}</span>
                     </div>
                     <div class="indicator-block">
                         <span class="indicator-label" data-tooltip="Multi-Window Convergence Alarm — fires when share volume exceeds the 90th percentile simultaneously across ALL 6 windows." data-tt-pos="right">MWCA</span>
@@ -369,7 +381,7 @@ const Cards = {
                     </div>
                     <div class="metric-item">
                         <span class="metric-label" data-tooltip="Dollar Volume Rate of Change — % change vs 10 sessions ago. Catches capital flow acceleration." data-tt-pos="right">DV-VROC</span>
-                        <span class="metric-value">${dvVr['10d'] != null ? (dvVr['10d'] > 0 ? '+' : '') + dvVr['10d'].toFixed(0) + '%' : '—'}</span>
+                        <span class="metric-value" data-live="dvvroc-10">${dvVr['10d'] != null ? (dvVr['10d'] > 0 ? '+' : '') + dvVr['10d'].toFixed(0) + '%' : '—'}</span>
                     </div>
                 </div>
                 <div class="card-percentiles dollar-section" style="display:none">${dvPctBarsHtml}</div>
@@ -377,11 +389,11 @@ const Cards = {
                     ${dvcviEntries}
                     <div class="indicator-block">
                         <span class="indicator-label" data-tooltip="Dollar Volume Pressure Score — parallel to VPS but uses dollar volume metrics. Measures intensity of capital flow pressure. 0–100." data-tt-pos="right">DV-VPS</span>
-                        <span class="indicator-value" style="color:${dvVpsColor}">${dvVps != null ? dvVps.toFixed(0) : '—'}</span>
+                        <span class="indicator-value" data-live="dv-vps" style="color:${dvVpsColor}">${dvVps != null ? dvVps.toFixed(0) : '—'}</span>
                     </div>
                     <div class="indicator-block">
-                        <span class="indicator-label" data-tooltip="${vddsTip}" data-tt-pos="right">VDDS</span>
-                        <span class="indicator-value" style="color:${vddsColor}">${vdds != null ? vdds.toFixed(2) + 'x' : '—'}</span>
+                        <span class="indicator-label" data-live="vdds-label" data-tooltip="${vddsTip}" data-tt-pos="right">VDDS</span>
+                        <span class="indicator-value" data-live="vdds" style="color:${vddsColor}">${vdds != null ? vdds.toFixed(2) + 'x' : '—'}</span>
                     </div>
                 </div>
 
@@ -547,6 +559,20 @@ const Cards = {
                             zEl.style.color = Metrics.getValueColor(liveZScore21, CONFIG.thresholds.zScore);
                         }
 
+                        // VROC-10d
+                        if (prevVols.length >= 10) {
+                            const pastVol10 = prevVols[prevVols.length - 10];
+                            if (pastVol10 > 0) {
+                                const liveVroc10 = ((liveVol - pastVol10) / pastVol10) * 100;
+                                if (!m.vroc) m.vroc = {};
+                                m.vroc['10d'] = liveVroc10;
+                                const vrocEl = card.querySelector('[data-live="vroc-10"]');
+                                if (vrocEl) {
+                                    vrocEl.textContent = (liveVroc10 > 0 ? '+' : '') + liveVroc10.toFixed(0) + '%';
+                                }
+                            }
+                        }
+
                         // Percentiles across all 6 windows
                         const windows = [5, 10, 21, 63, 126, 252];
                         for (const w of windows) {
@@ -564,6 +590,21 @@ const Cards = {
                                 const valEl = row.querySelector('.percentile-value');
                                 if (valEl) valEl.textContent = this.formatOrdinal(pct);
                             }
+                        }
+
+                        // MWCA live recalculation & badge sync
+                        const mwcaThreshold = (typeof CONFIG !== 'undefined' && CONFIG.thresholds && CONFIG.thresholds.mwca_threshold) ? CONFIG.thresholds.mwca_threshold : 90;
+                        let mwcaCount = 0;
+                        for (const w of windows) {
+                            const pVal = m.volPercentile ? m.volPercentile[w + 'd'] : null;
+                            if (pVal != null && pVal >= mwcaThreshold) mwcaCount++;
+                        }
+                        m.mwcaCount = mwcaCount;
+                        m.mwca = (mwcaCount === windows.length);
+                        const mwcaEl = card.querySelector('[data-live="mwca"]');
+                        if (mwcaEl) {
+                            mwcaEl.className = 'mwca-badge ' + (m.mwca ? 'active' : 'inactive');
+                            mwcaEl.textContent = m.mwca ? 'MWCA ACTIVE' : `${mwcaCount}/${windows.length}`;
                         }
                     }
 
@@ -596,6 +637,20 @@ const Cards = {
                             dvZEl.style.color = Metrics.getValueColor(liveDvZScore21, CONFIG.thresholds.zScore);
                         }
 
+                        // DV-VROC-10d
+                        if (prevDVols.length >= 10) {
+                            const pastDv10 = prevDVols[prevDVols.length - 10];
+                            if (pastDv10 > 0) {
+                                const liveDvVroc10 = ((liveDVol - pastDv10) / pastDv10) * 100;
+                                if (!m.dvVroc) m.dvVroc = {};
+                                m.dvVroc['10d'] = liveDvVroc10;
+                                const dvVrocEl = card.querySelector('[data-live="dvvroc-10"]');
+                                if (dvVrocEl) {
+                                    dvVrocEl.textContent = (liveDvVroc10 > 0 ? '+' : '') + liveDvVroc10.toFixed(0) + '%';
+                                }
+                            }
+                        }
+
                         const windows = [5, 10, 21, 63, 126, 252];
                         for (const w of windows) {
                             const key = w + 'd';
@@ -611,6 +666,170 @@ const Cards = {
                                 if (fill) fill.style.width = Math.max(2, pct) + '%';
                                 const valEl = row.querySelector('.percentile-value');
                                 if (valEl) valEl.textContent = this.formatOrdinal(pct);
+                            }
+                        }
+                    }
+
+                    // Live recalculation of Price Percentile, CVI, VCVI, DVCVI, Decay, VPS, DV-VPS, VDDS, and Alert Level
+                    const prevCloses = hist.map(h => (h.close != null ? h.close : h[1])).filter(v => v != null && v > 0);
+                    if (c.price != null && c.price > 0 && prevCloses.length >= 21) {
+                        const volRegimePct = m.volatility?.volRegimePct ?? null;
+                        const windows = [5, 10, 21, 63, 126, 252];
+                        if (!m.pricePercentile) m.pricePercentile = {};
+                        if (!m.cvi) m.cvi = {};
+                        if (!m.vcvi) m.vcvi = {};
+                        if (!m.dvcvi) m.dvcvi = {};
+
+                        for (const w of windows) {
+                            const key = w + 'd';
+                            const pPct = Metrics.percentileRank(c.price, prevCloses.slice(-w));
+                            m.pricePercentile[key] = pPct;
+                            const vPct = m.volPercentile ? m.volPercentile[key] : null;
+                            const dvPct = m.dvPercentile ? m.dvPercentile[key] : null;
+
+                            if (vPct != null) {
+                                const cviVal = Metrics.computeCVI(vPct, pPct);
+                                m.cvi[key] = cviVal;
+                                m.vcvi[key] = Metrics.computeVCVI(cviVal, volRegimePct);
+                            }
+                            if (dvPct != null) {
+                                const rawDvCvi = Metrics.computeCVI(dvPct, pPct);
+                                m.dvcvi[key] = Metrics.computeVCVI(rawDvCvi, volRegimePct);
+                            }
+                        }
+
+                        // Decay-adjusted 21d VCVI
+                        const annualDecay = (typeof CONFIG !== 'undefined' && CONFIG.etfDecayRates && CONFIG.etfDecayRates[ticker] != null)
+                            ? CONFIG.etfDecayRates[ticker]
+                            : (m.decay?.annual_rate || 0.35);
+                        if (typeof Metrics.computeDecayAdjustedVCVI21 === 'function') {
+                            const closesWithLive = [...prevCloses.slice(-20), c.price];
+                            const decayCalc = Metrics.computeDecayAdjustedVCVI21(closesWithLive, m.volPercentile?.['21d'], volRegimePct, annualDecay, 21);
+                            if (decayCalc) {
+                                m.decay = {
+                                    annual_rate: annualDecay,
+                                    adj_price_pct: decayCalc.adjPricePct,
+                                    adj_vcvi_21d: decayCalc.adjVcvi21,
+                                    correction_active: annualDecay > 0
+                                };
+                            }
+                        }
+
+                        // Update VCVI & DVCVI DOM elements
+                        for (const w of ['5d', '21d', '63d']) {
+                            const vcviVal = m.vcvi[w];
+                            const vcviEl = card.querySelector(`[data-live="vcvi-${w}"]`);
+                            if (vcviEl && vcviVal != null) {
+                                const vcviColor = Metrics.getValueColor(vcviVal, CONFIG.thresholds.vcvi);
+                                vcviEl.style.color = vcviColor;
+                                let decayNoteHtml = '';
+                                if (w === '21d' && m.decay && m.decay.correction_active && m.decay.adj_vcvi_21d != null) {
+                                    const rawRounded = Math.round(vcviVal);
+                                    const adjRounded = Math.round(m.decay.adj_vcvi_21d);
+                                    const diff = adjRounded - rawRounded;
+                                    if (Math.abs(diff) >= 1) {
+                                        const diffStr = diff >= 0 ? `+${diff}` : `${diff}`;
+                                        const adjColor = Metrics.getValueColor(m.decay.adj_vcvi_21d, CONFIG.thresholds.vcvi);
+                                        decayNoteHtml = ` <span class="vcvi-decay-note" style="color:${adjColor};font-size:0.65rem" data-tooltip="Decay-corrected VCVI-21d: removes ETF price drift due to daily rebalancing decay (~${(annualDecay*100).toFixed(0)}%/yr). Raw: ${vcviVal.toFixed(0)}, Adj: ${m.decay.adj_vcvi_21d.toFixed(0)} (${diffStr})">†${m.decay.adj_vcvi_21d.toFixed(0)}</span>`;
+                                    }
+                                }
+                                if (decayNoteHtml) {
+                                    vcviEl.textContent = vcviVal.toFixed(0);
+                                    vcviEl.innerHTML = `${vcviVal.toFixed(0)}${decayNoteHtml}`;
+                                } else {
+                                    vcviEl.innerHTML = "";
+                                    vcviEl.textContent = vcviVal.toFixed(0);
+                                }
+                            }
+
+                            const dvcviVal = m.dvcvi[w];
+                            const dvcviEl = card.querySelector(`[data-live="dvcvi-${w}"]`);
+                            if (dvcviEl && dvcviVal != null) {
+                                dvcviEl.textContent = dvcviVal.toFixed(0);
+                                dvcviEl.style.color = Metrics.getValueColor(dvcviVal, CONFIG.thresholds.vcvi);
+                            }
+                        }
+
+                        // Recompute VPS & DV-VPS
+                        const vw = (typeof CONFIG !== 'undefined' && CONFIG.vpsWeights)
+                            ? CONFIG.vpsWeights
+                            : { rvol: 0.25, zScore: 0.20, percentile: 0.25, vroc: 0.10, volRegime: 0.20 };
+                        const invVolReg = volRegimePct != null ? (100 - volRegimePct) : 50;
+
+                        if (m.rvol?.['21d'] != null) {
+                            const rvolNorm = Math.min(100, Math.max(0, (Math.log2(Math.max(0.5, m.rvol['21d'])) + 1) * 33.3));
+                            const zNorm = m.zScore?.['21d'] != null ? Math.min(100, Math.max(0, (m.zScore['21d'] + 2) * 12.5)) : 0;
+                            const pctNorm = m.volPercentile?.['21d'] != null ? m.volPercentile['21d'] : 0;
+                            const vrocNorm = m.vroc?.['10d'] != null ? Math.min(100, Math.max(0, (m.vroc['10d'] + 100) / 5)) : 0;
+                            m.vps = vw.rvol * rvolNorm + vw.zScore * zNorm + vw.percentile * pctNorm + vw.vroc * vrocNorm + vw.volRegime * invVolReg;
+                            const vpsEl = card.querySelector('[data-live="vps"]');
+                            if (vpsEl && m.vps != null) {
+                                vpsEl.textContent = m.vps.toFixed(0);
+                                vpsEl.style.color = Metrics.getValueColor(m.vps, CONFIG.thresholds.vps);
+                            }
+                        }
+
+                        if (m.dvRvol?.['21d'] != null) {
+                            const dvRvolNorm = Math.min(100, Math.max(0, (Math.log2(Math.max(0.5, m.dvRvol['21d'])) + 1) * 33.3));
+                            const dvZNorm = m.dvZScore?.['21d'] != null ? Math.min(100, Math.max(0, (m.dvZScore['21d'] + 2) * 12.5)) : 0;
+                            const dvPctNorm = m.dvPercentile?.['21d'] != null ? m.dvPercentile['21d'] : 0;
+                            const dvVrocNorm = m.dvVroc?.['10d'] != null ? Math.min(100, Math.max(0, (m.dvVroc['10d'] + 100) / 5)) : 0;
+                            m.dvVps = vw.rvol * dvRvolNorm + vw.zScore * dvZNorm + vw.percentile * dvPctNorm + vw.vroc * dvVrocNorm + vw.volRegime * invVolReg;
+                            const dvVpsEl = card.querySelector('[data-live="dv-vps"]');
+                            if (dvVpsEl && m.dvVps != null) {
+                                dvVpsEl.textContent = m.dvVps.toFixed(0);
+                                dvVpsEl.style.color = Metrics.getValueColor(m.dvVps, CONFIG.thresholds.vps);
+                            }
+                        }
+
+                        // Recompute Upgraded VDDS* if history contains dated bars
+                        if (typeof Metrics.computeUpgradedVDDS === 'function' && hist.length > 0 && hist[hist.length - 1].date) {
+                            const liveHist = hist.slice();
+                            const lastH = liveHist[liveHist.length - 1];
+                            liveHist[liveHist.length - 1] = {
+                                ...lastH,
+                                close: c.price,
+                                high: Math.max(lastH.high || c.price, c.price),
+                                low: Math.min(lastH.low || c.price, c.price),
+                                volume: c.volume != null ? c.volume : lastH.volume
+                            };
+                            const vddsSeries = Metrics.computeUpgradedVDDS(liveHist);
+                            if (vddsSeries && vddsSeries.length > 0) {
+                                const latestVdds = vddsSeries[vddsSeries.length - 1];
+                                m.vdds = latestVdds.vddsStar;
+                                m.drvol = latestVdds.drvol;
+                                m.vddsRecord = latestVdds;
+                                const vddsEl = card.querySelector('[data-live="vdds"]');
+                                if (vddsEl && m.vdds != null) {
+                                    const vddsColor = m.vdds < 0.78 ? '#10b981'
+                                        : m.vdds < 0.97 ? '#06b6d4'
+                                        : m.vdds <= 1.03 ? 'rgba(255, 255, 255, 0.85)'
+                                        : m.vdds <= 1.25 ? '#f97316'
+                                        : '#ef4444';
+                                    vddsEl.textContent = m.vdds.toFixed(2) + 'x';
+                                    vddsEl.style.color = vddsColor;
+                                }
+                                const vddsLbl = card.querySelector('[data-live="vdds-label"]');
+                                if (vddsLbl && m.vdds != null) {
+                                    vddsLbl.setAttribute('data-tooltip', `VDDS — Volume-Dollar Divergence Score: Upgraded split-invariant flow divergence kernel. Centered at 1.00x Balanced. <0.97x: capitulation/selling pressure under volume. >1.03x: institutional accumulation/buying momentum under volume. Current: ${m.vdds.toFixed(2)}x`);
+                                }
+                            }
+                        }
+
+                        // Recompute sharpSpike & card alertLevel
+                        const atr14Pct = m.volatility?.atr14Pct;
+                        const vcvi5d = m.vcvi?.['5d'];
+                        if (vcvi5d != null && atr14Pct != null && atr14Pct > 0 && c.changePct != null) {
+                            m.sharpSpike = Boolean(
+                                Math.abs(c.changePct) > (CONFIG.thresholds?.fastVcvi?.atrMult ?? 2.0) * atr14Pct &&
+                                vcvi5d > (CONFIG.thresholds?.fastVcvi?.threshold ?? 45)
+                            );
+                        }
+                        if (typeof Metrics.computeCardAlertLevel === 'function') {
+                            m.alertLevel = Metrics.computeCardAlertLevel(m.vcvi, m.mwca, m.sharpSpike, m.rvol?.['21d'], m.volPercentile);
+                            card.classList.remove('alert-elevated', 'alert-high', 'alert-critical', 'alert-extreme');
+                            if (m.alertLevel && m.alertLevel !== 'none') {
+                                card.classList.add(`alert-${m.alertLevel}`);
                             }
                         }
                     }
@@ -727,18 +946,26 @@ const Cards = {
             const d = data[idx];
             if (!d) return;
 
-            const maxVol = Math.max(...data.map(x => x.volume || 0)) || 1;
+            const getBarVol = (x) => mode === 'dollar'
+                ? ((x.dollarVolume != null) ? x.dollarVolume : ((x.close || 0) * (x.volume || 0)))
+                : (x.volume != null ? x.volume : 0);
+            const modeVols = data.map(getBarVol);
+            const maxVol = Math.max(...modeVols) || 1;
+            const validModeVols = modeVols.filter(v => v > 0);
+            const meanVol = validModeVols.length ? (validModeVols.reduce((a, b) => a + b, 0) / validModeVols.length) : maxVol;
+            const colorMaxVol = Math.max(maxVol, meanVol * 2.2) || 1;
 
             // Redraw sparkline and volume bars with crosshairs & dot at idx
             Charts.drawSparkline(sparkCanvas, data, color, 0.1, idx);
             Charts.drawVolumeBars(volCanvas, data, null, idx, mode);
 
-            const prev = idx > 0 ? data[idx - 1].close : null;
+            const prev = idx > 0 ? data[idx - 1].close : (d.prevClose != null ? d.prevClose : null);
             const diff = prev != null && d.close != null ? (d.close - prev) : null;
             const pct = prev != null && prev > 0 && diff != null ? (diff / prev) * 100 : null;
-            const dollarVol = (d.close != null && d.volume != null) ? (d.close * d.volume) : null;
+            const dollarVol = d.dollarVolume != null ? d.dollarVolume : ((d.close != null && d.volume != null) ? (d.close * d.volume) : null);
             const vol = d.volume != null ? d.volume : 0;
-            const ratio = vol / maxVol;
+            const activeVol = getBarVol(d);
+            const ratio = activeVol / colorMaxVol;
 
             let volTag = '';
             if (ratio > 0.90) {

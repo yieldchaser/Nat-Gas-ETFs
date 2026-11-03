@@ -359,6 +359,61 @@ const Metrics = {
         return Math.max(0, cvi * multiplier);
     },
 
+    // Decay-adjusted 21-day price percentile & VCVI-21d
+    // Projects trailing window prices forward to today using exp(-dailyDecay * age)
+    // so structural rebalancing bleed is removed before ranking current price.
+    computeDecayAdjustedVCVI21(closes, volPct21, volRegimePct, annualDecayRate = 0.35, window = 21) {
+        if (!Array.isArray(closes) || closes.length < 5 || volPct21 == null) return null;
+        const slice = closes.slice(-window);
+        const n = slice.length;
+        const cur = slice[n - 1];
+        if (cur == null || cur <= 0) return null;
+        const dailyDecay = (annualDecayRate || 0) / 252.0;
+        const adjPrices = new Array(n);
+        for (let i = 0; i < n; i++) {
+            const age = n - 1 - i;
+            adjPrices[i] = slice[i] * Math.exp(-dailyDecay * age);
+        }
+        const adjPricePct = this.percentileRank(cur, adjPrices);
+        const adjCvi = this.computeCVI(volPct21, adjPricePct);
+        return {
+            adjPricePct,
+            adjVcvi21: this.computeVCVI(adjCvi, volRegimePct)
+        };
+    },
+
+    // Evaluates card-level alert border state using active card horizons (5d, 21d, 63d)
+    // and gating on active volume participation so sub-average volume sessions (RVOL < 0.85x)
+    // do not trigger false capitulation borders from multi-month price decay alone.
+    computeCardAlertLevel(vcvi, mwca = false, sharpSpike = false, rvol21 = null, volPercentile = null) {
+        const tv = (typeof CONFIG !== 'undefined' && CONFIG.thresholds && CONFIG.thresholds.vcvi)
+            ? CONFIG.thresholds.vcvi
+            : { elevated: 55, high: 72, critical: 88, extreme: 95 };
+        if (mwca) return 'extreme';
+        const cardWindows = ['5d', '21d', '63d'];
+        const activeVals = cardWindows
+            .map(w => vcvi ? vcvi[w] : null)
+            .filter(v => v != null && !isNaN(v));
+        const maxCardVcvi = activeVals.length ? Math.max(...activeVals) : 0;
+
+        const hasParticipationMeta = (rvol21 != null) || (volPercentile && (volPercentile['21d'] != null || volPercentile['5d'] != null));
+        const isParticipating = !hasParticipationMeta
+            || (rvol21 != null && rvol21 >= 0.85)
+            || (volPercentile && volPercentile['21d'] != null && volPercentile['21d'] >= 50)
+            || (volPercentile && volPercentile['5d'] != null && volPercentile['5d'] >= 50)
+            || sharpSpike;
+
+        let level = 'none';
+        if (isParticipating) {
+            if (maxCardVcvi >= tv.extreme) level = 'extreme';
+            else if (maxCardVcvi >= tv.critical) level = 'critical';
+            else if (maxCardVcvi >= tv.high) level = 'high';
+            else if (maxCardVcvi >= tv.elevated) level = 'elevated';
+        }
+        if (sharpSpike && level === 'none') level = 'elevated';
+        return level;
+    },
+
     // Human-readable vol regime label
     getVolRegimeLabel(volRegimePct) {
         if (volRegimePct == null) return { label: '—', cls: 'vr-unknown' };
@@ -489,10 +544,11 @@ const Metrics = {
         for (const dw of CONFIG.windows.vroc) {
             dvVroc[`${dw}d`] = this.computeVROC(dvSeries, dw);
         }
-        // DVCVI = dv_percentile × (1 − price_percentile / 100)
+        // DVCVI = Vol-Adjusted Dollar-Volume CVI: dv_cvi × (1.5 − volRegimePct / 100)
         const dvcvi = {};
         for (const dw of CONFIG.windows.percentile) {
-            dvcvi[`${dw}d`] = this.computeCVI(dvPercentile[`${dw}d`], pricePercentile[`${dw}d`]);
+            const rawDvCvi = this.computeCVI(dvPercentile[`${dw}d`], pricePercentile[`${dw}d`]);
+            dvcvi[`${dw}d`] = this.computeVCVI(rawDvCvi, volRegimePct);
         }
         // Upgraded VDDS kernel (volume-preserving, split-invariant)
         const upgradedVddsSeries = this.computeUpgradedVDDS(d);
@@ -546,17 +602,46 @@ const Metrics = {
             volRegimePct, vov21, atr14Pct, changePct
         });
 
-        // Get alert level for card styling — use VCVI (vol-adjusted) as primary signal
-        const maxVcvi = Math.max(...Object.values(vcvi).filter(v => v != null), 0);
-        const tv = CONFIG.thresholds.vcvi;
-        let alertLevel = 'none';
-        if (maxVcvi >= tv.extreme || mwca) alertLevel = 'extreme';
-        else if (maxVcvi >= tv.critical)   alertLevel = 'critical';
-        else if (maxVcvi >= tv.high)       alertLevel = 'high';
-        else if (maxVcvi >= tv.elevated)   alertLevel = 'elevated';
+        // Decay block for 21d VCVI
+        const annualDecay = (typeof CONFIG !== 'undefined' && CONFIG.etfDecayRates && CONFIG.etfDecayRates[etfData.ticker] != null)
+            ? CONFIG.etfDecayRates[etfData.ticker]
+            : 0.35;
+        const decayCalc = this.computeDecayAdjustedVCVI21(closes, volPercentile['21d'], volRegimePct, annualDecay, 21);
+        const decay = {
+            annual_rate: annualDecay,
+            adj_price_pct: decayCalc ? decayCalc.adjPricePct : null,
+            adj_vcvi_21d: decayCalc ? decayCalc.adjVcvi21 : null,
+            correction_active: annualDecay > 0
+        };
 
-        // Sparkline data (last N days)
-        const sparkData = d.slice(-CONFIG.sparklineDays);
+        // Fast-window sharp spike detection
+        const vcvi5d = vcvi['5d'];
+        const sharpSpike = Boolean(
+            vcvi5d != null && atr14Pct != null && atr14Pct > 0 &&
+            Math.abs(changePct) > (CONFIG.thresholds?.fastVcvi?.atrMult ?? 2.0) * atr14Pct &&
+            vcvi5d > (CONFIG.thresholds?.fastVcvi?.threshold ?? 45)
+        );
+        const side = (typeof CONFIG !== 'undefined' && CONFIG.etfs && CONFIG.etfs[etfData.ticker])
+            ? CONFIG.etfs[etfData.ticker].side
+            : 'long';
+        const fastSignal = sharpSpike
+            ? (side === 'short' ? 'weather_top_candidate' : 'weather_bottom_candidate')
+            : null;
+
+        // Get alert level for card styling — use displayed card VCVI windows with participation gate
+        const alertLevel = this.computeCardAlertLevel(vcvi, mwca, sharpSpike, rvol['21d'], volPercentile);
+
+        // Sparkline data (last N days) enriched with prevClose and dollarVolume
+        const sparkStartIdx = Math.max(0, d.length - CONFIG.sparklineDays);
+        const sparkData = d.slice(sparkStartIdx).map((bar, idx) => {
+            const absIdx = sparkStartIdx + idx;
+            const prevBar = absIdx > 0 ? d[absIdx - 1] : null;
+            return {
+                ...bar,
+                dollarVolume: bar.dollarVolume != null ? bar.dollarVolume : (bar.dollar_volume != null ? bar.dollar_volume : ((bar.close || 0) * (bar.volume || 0))),
+                prevClose: bar.prevClose != null ? bar.prevClose : (prevBar ? prevBar.close : null)
+            };
+        });
 
         return {
             ticker: etfData.ticker,
@@ -571,6 +656,7 @@ const Metrics = {
             volPercentile, pricePercentile,
             cvi, vcvi, vps, mwca, mwcaCount,
             volatility: { hv, hvSeries21, hvPercentiles, atr14Pct, volRegimePct, hvTermStructure, vov21 },
+            decay, sharpSpike, fastSignal,
             dvRvol, dvZScore, dvPercentile, dvVroc, dvcvi, dvVps, vdds, drvol, vddsRecord: latestVddsRecord,
             priceMAs, volumeMAs,
             rollingCorr,
@@ -675,8 +761,11 @@ const Metrics = {
     computeUpgradedVDDS(barHistory, options = {}) {
         if (!Array.isArray(barHistory) || barHistory.length === 0) return [];
 
+        const firstB = barHistory[0];
+        const midB = barHistory[barHistory.length >> 1];
+        const lastB = barHistory[barHistory.length - 1];
         const cacheKey = barHistory.length > 0
-            ? `${barHistory.length}|${barHistory[barHistory.length - 1].date || ''}|${barHistory[0].date || ''}`
+            ? `${barHistory.length}|${firstB.date || ''}:${firstB.close ?? firstB.price}:${firstB.volume}|${midB.close ?? midB.price}:${midB.volume}|${lastB.date || ''}:${lastB.close ?? lastB.price}:${lastB.volume}`
             : '';
         if (!this._vddsCache) this._vddsCache = new Map();
         if (cacheKey && this._vddsCache.has(cacheKey)) {
@@ -966,7 +1055,9 @@ const Metrics = {
             return [];
         }
 
-        const cacheKey = `${longHistory.length}|${shortHistory.length}|${longHistory[longHistory.length - 1].date || ''}|${shortHistory[shortHistory.length - 1].date || ''}`;
+        const lFirst = longHistory[0], lLast = longHistory[longHistory.length - 1];
+        const sFirst = shortHistory[0], sLast = shortHistory[shortHistory.length - 1];
+        const cacheKey = `${longHistory.length}:${lFirst.close ?? lFirst.price}:${lLast.date || ''}:${lLast.close ?? lLast.price}:${lLast.volume}|${shortHistory.length}:${sFirst.close ?? sFirst.price}:${sLast.date || ''}:${sLast.close ?? sLast.price}:${sLast.volume}`;
         if (!this._ipsiCache) this._ipsiCache = new Map();
         if (cacheKey && this._ipsiCache.has(cacheKey)) {
             return this._ipsiCache.get(cacheKey);

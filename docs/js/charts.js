@@ -123,14 +123,19 @@ const Charts = {
             return d.volume != null ? d.volume : 0;
         });
         const max = Math.max(...volumes) || 1;
+        const validVols = volumes.filter(v => v > 0);
+        const mean = validVols.length ? (validVols.reduce((a, b) => a + b, 0) / validVols.length) : max;
+        // Anchor color scale to at least 2.2x of the 30d mean so quiet windows without a spike
+        // do not falsely color a normal 1.2x bar as an extreme purple climax (#8855bb).
+        const colorMax = Math.max(max, mean * 2.2) || 1;
         const barW = Math.max(1, (w / volumes.length) - 1);
 
         for (let i = 0; i < volumes.length; i++) {
             const x = i * (w / volumes.length);
             const barH = Math.max(2, (volumes[i] / max) * h);
 
-            // Color by relative magnitude
-            const ratio = volumes[i] / max;
+            // Color by regime-anchored magnitude
+            const ratio = volumes[i] / colorMax;
             let color;
             if (ratio > 0.9) color = '#8855bb';
             else if (ratio > 0.75) color = '#c04040';
