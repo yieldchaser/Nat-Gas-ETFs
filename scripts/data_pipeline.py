@@ -917,6 +917,142 @@ def _percentile_rank(series: pd.Series, window: int) -> pd.Series:
     return series.rolling(window, min_periods=max(2, window // 2)).apply(_rank_last, raw=True)
 
 
+
+def _sigmoid_scalar(x: float) -> float:
+    return 1.0 / (1.0 + math.exp(-max(-30.0, min(30.0, x))))
+
+
+def compute_upgraded_vdds_series(df: pd.DataFrame, ewma_span: int = 21, atr_span: int = 14) -> pd.Series:
+    """
+    Split-invariant, volume-preserving VDDS* kernel matching docs/js/metrics.js.
+    VDDS* in [0.50, 1.50]x, centered at 1.00x Balanced.
+    Eliminates algebraic volume cancellation fallacy (VDDS = C_t / VWAP_21).
+    """
+    n = len(df)
+    if n == 0:
+        return pd.Series([], dtype=float)
+
+    alpha21 = 2.0 / (ewma_span + 1.0)
+    alpha_atr = 2.0 / (atr_span + 1.0)
+    kappa_d = 0.25
+    gamma_d = 0.65
+    kappa_e = 0.35
+    beta_e = 0.35
+    lambda_v = 0.90
+    price_eps = 1e-4
+    eps = 1e-9
+
+    canonical_splits = [4, 5, 8, 10, 12, 15, 20, 25, 0.5, 0.25, 0.2, 0.1]
+
+    ewma_dollar_vol = 0.0
+    ewma_share_vol = 0.0
+    ewma_pct_atr = 0.03
+    ewma_variance = 0.0009
+    ewma_efficiency = 0.0
+    synthetic_price_idx = 100.0
+    dwma_synthetic_price_idx = 100.0
+
+    vdds_out = np.zeros(n, dtype=float)
+
+    closes = df["close"].values
+    highs = df["high"].values if "high" in df.columns else closes
+    lows = df["low"].values if "low" in df.columns else closes
+    opens = df["open"].values if "open" in df.columns else closes
+    vols = df["volume"].values
+
+    for i in range(n):
+        close = max(float(closes[i]), price_eps)
+        high = max(float(highs[i]), close)
+        low = min(max(float(lows[i]), price_eps), close)
+        vol = max(float(vols[i]), 0.0)
+
+        typ_price = (high + low + 2.0 * close) * 0.25
+        dollar_turnover = typ_price * vol
+
+        prev_raw_close = max(float(closes[i - 1]), price_eps) if i > 0 else close
+        eff_prev_close = prev_raw_close
+        is_split = False
+        split_factor = 1.0
+
+        if i > 0:
+            raw_ratio = close / prev_raw_close
+            if raw_ratio >= 2.8 or raw_ratio <= 1.0 / 2.8:
+                open_px = max(float(opens[i]), price_eps)
+                open_ratio = open_px / prev_raw_close
+                best_factor = open_ratio
+                min_err = 999.0
+                for cand in canonical_splits:
+                    err = abs(open_ratio - cand) / cand
+                    if err < min_err and err < 0.25:
+                        min_err = err
+                        best_factor = cand
+                eff_prev_close = prev_raw_close * best_factor
+                is_split = True
+                split_factor = best_factor
+
+        eff_prev_close = max(eff_prev_close, price_eps)
+        log_ret = math.log(max(0.05, min(20.0, close / eff_prev_close))) if i > 0 else 0.0
+        intrabar_range = max(0.0, high - low)
+        true_range = max(intrabar_range, abs(high - eff_prev_close), abs(low - eff_prev_close), price_eps * close) if i > 0 else max(intrabar_range, 0.015 * close, price_eps * close)
+        pct_true_range = max(price_eps, min(2.0, true_range / eff_prev_close))
+
+        if i == 0:
+            ewma_dollar_vol = max(dollar_turnover, eps)
+            ewma_share_vol = max(vol, eps)
+            ewma_pct_atr = max(pct_true_range, 0.005)
+            ewma_variance = ewma_pct_atr * ewma_pct_atr
+            ewma_efficiency = dollar_turnover / ewma_pct_atr
+            synthetic_price_idx = 100.0
+            dwma_synthetic_price_idx = 100.0
+        else:
+            synthetic_price_idx *= math.exp(log_ret)
+
+        baseline_dollar_vol = max(ewma_dollar_vol, eps)
+        baseline_share_vol = max(ewma_share_vol / split_factor, eps) if (is_split and split_factor > 0) else max(ewma_share_vol, eps)
+        causal_pct_atr = max(ewma_pct_atr, price_eps)
+        causal_daily_sigma = max(math.sqrt(ewma_variance), price_eps)
+        baseline_efficiency = max(ewma_efficiency, eps)
+
+        drvol = dollar_turnover / baseline_dollar_vol if dollar_turnover > 0 else 0.0
+        reg_drvol = (dollar_turnover + kappa_d * baseline_dollar_vol) / ((1.0 + kappa_d) * baseline_dollar_vol)
+        participation_gate = math.pow(max(reg_drvol, 0.0), gamma_d) * _sigmoid_scalar((drvol - 0.75) / 0.25)
+
+        clv_denom = max(intrabar_range, 0.25 * causal_pct_atr * close, price_eps * close)
+        clv = max(-1.0, min(1.0, (2.0 * close - high - low) / clv_denom))
+        ret_impulse = math.tanh(log_ret / causal_pct_atr)
+        order_flow_phi = math.tanh(0.55 * clv + 0.75 * ret_impulse)
+
+        eff_vol_floor = max(pct_true_range, 0.20 * causal_daily_sigma, price_eps)
+        curr_eff = dollar_turnover / eff_vol_floor
+        reg_eff = (curr_eff + kappa_e * baseline_efficiency) / ((1.0 + kappa_e) * baseline_efficiency)
+        vol_eff = max(0.50, min(2.00, math.pow(max(reg_eff, 0.0), beta_e)))
+
+        anchor_displacement = math.tanh(
+            math.log(max(synthetic_price_idx, eps) / max(dwma_synthetic_price_idx, eps)) /
+            max(2.5 * causal_daily_sigma, price_eps)
+        )
+
+        dir_composite = 0.70 * order_flow_phi + 0.30 * anchor_displacement
+        flow_kernel = participation_gate * vol_eff * dir_composite
+        vdds_star = max(0.50, min(1.50, 1.0 + 0.50 * math.tanh(lambda_v * flow_kernel)))
+        vdds_out[i] = vdds_star
+
+        # Causal EWMA updates
+        capped_dt = min(dollar_turnover, 5.0 * baseline_dollar_vol)
+        ewma_dollar_vol = alpha21 * capped_dt + (1.0 - alpha21) * baseline_dollar_vol
+        capped_sv = min(vol, 5.0 * baseline_share_vol)
+        ewma_share_vol = alpha21 * capped_sv + (1.0 - alpha21) * baseline_share_vol
+        ewma_pct_atr = alpha_atr * pct_true_range + (1.0 - alpha_atr) * causal_pct_atr
+        ewma_variance = 0.05 * (log_ret * log_ret) + 0.95 * ewma_variance
+        ewma_efficiency = alpha21 * min(curr_eff, 5.0 * baseline_efficiency) + (1.0 - alpha21) * baseline_efficiency
+
+        dwma_weight = min(drvol, 4.0)
+        dwma_alpha = alpha21 * dwma_weight / (1.0 + alpha21 * dwma_weight)
+        dwma_synthetic_price_idx = dwma_alpha * synthetic_price_idx + (1.0 - dwma_alpha) * dwma_synthetic_price_idx
+
+    return pd.Series(vdds_out, index=df.index)
+
+
 def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
                         ng_close: "Optional[pd.Series]" = None,
                         ng_seasonal_z_series: "Optional[pd.Series]" = None,
@@ -1031,17 +1167,9 @@ def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
         else:
             dvcvi[f"{w}d"] = None
 
-    # VDDS rolling series (21d) — used for Gate 6 annotation on conviction events.
-    # VDDS = DV-RVOL-21d / S-RVOL-21d:
-    #   < 1 → share volume rising faster than dollar volume → price suppression (capitulation)
-    #   > 1 → dollar value rising faster → price acceleration (momentum / accumulation)
-    _dv_ma21 = dollar_volume.rolling(21, min_periods=1).mean()
-    _sv_ma21 = volume.rolling(21, min_periods=1).mean()
-    _dv_rvol21_series = dollar_volume / _dv_ma21.replace(0, np.nan)
-    _sv_rvol21_series = volume / _sv_ma21.replace(0, np.nan)
-    vdds_21_series = (
-        _dv_rvol21_series / _sv_rvol21_series.replace(0, np.nan)
-    ).replace([np.inf, -np.inf], np.nan)
+    # Upgraded split-invariant, volume-preserving VDDS* series (matches JS docs/js/metrics.js)
+    # Eliminates algebraic volume cancellation fallacy (VDDS = C_t / VWAP_21).
+    vdds_21_series = compute_upgraded_vdds_series(df)
 
     # =========================================================================
     # VOLATILITY MODELLING BLOCK

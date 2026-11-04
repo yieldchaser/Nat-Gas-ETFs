@@ -2300,38 +2300,38 @@
 /* ---- READING BAR & TOOLTIP ---- */
 .vs-reading {
     margin-top: 8px;
-    padding: 8px 14px;
+    padding: 8px 12px;
     background: rgba(255, 255, 255, 0.025);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 6px;
-    font-size: 0.73rem;
+    font-size: 0.71rem;
     font-weight: 700;
     color: #ffffff;
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    overflow-x: auto;
-    white-space: nowrap;
-    scrollbar-width: none;
+    justify-content: flex-start;
+    gap: 6px 10px;
     font-family: 'JetBrains Mono', monospace;
-}
-.vs-reading::-webkit-scrollbar {
-    display: none;
+    min-height: 38px;
 }
 .vs-reading-item {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     flex-shrink: 0;
+    white-space: nowrap;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
 }
 .vs-reading .vs-lbl {
     color: rgba(255, 255, 255, 0.52);
     font-weight: 800;
     text-transform: none;
-    font-size: 0.62rem;
-    letter-spacing: 0.8px;
+    font-size: 0.60rem;
+    letter-spacing: 0.6px;
 }
 .vs-reading-na { color: rgba(255, 255, 255, 0.45); }
 

@@ -150,7 +150,8 @@ def apply_derived_metrics(df: pd.DataFrame) -> pd.DataFrame:
     window = 30
     df["mean_30d"] = df["usd_flow"].rolling(window, min_periods=5).mean()
     df["std_30d"] = df["usd_flow"].rolling(window, min_periods=5).std()
-    df["flow_zscore"] = np.where(df["std_30d"] > 0, (df["usd_flow"] - df["mean_30d"]) / df["std_30d"], 0.0)
+    std_reg = np.maximum(df["std_30d"].fillna(0.0), 1e-4)
+    df["flow_zscore"] = np.where(df["std_30d"] > 0, (df["usd_flow"] - df["mean_30d"]) / std_reg, 0.0)
 
     # Momentum
     df["flow_5d"] = df["usd_flow"].rolling(5, min_periods=1).sum()
@@ -395,24 +396,26 @@ def main():
     abs_bull = abs(flow_30d_bull)
     abs_bear = abs(flow_30d_bear)
     sentiment = "NEUTRAL"
+    # Price-context conditioned sentiment: checks if commodity price aligns with flow
+    ng_ret_30d = 0.0
+    if ng_history and len(ng_history) >= 20:
+        p_now = ng_history[-1].get("close", 0.0)
+        p_past = ng_history[max(0, len(ng_history) - 20)].get("close", p_now)
+        if p_past > 0:
+            ng_ret_30d = (p_now - p_past) / p_past
+
     if flow_30d_bull > 0 and flow_30d_bear < 0:
-        # Both sides bullish (longs in, shorts out) — clear BULLISH
-        sentiment = "BULLISH"
+        sentiment = "BULLISH" if ng_ret_30d >= -0.05 else "BULLISH ACCUMULATION (TACTICAL WATCH)"
     elif flow_30d_bull < 0 and flow_30d_bear > 0:
-        # Both sides bearish (longs out, shorts in) — clear BEARISH
-        sentiment = "BEARISH"
+        sentiment = "BEARISH" if ng_ret_30d <= 0.05 else "BEARISH DISTRIBUTION (TACTICAL WATCH)"
     elif flow_30d_bull > 10000 and abs_bull > abs_bear:
-        # Only longs growing but dominant
-        sentiment = "BULLISH"
+        sentiment = "BULLISH" if ng_ret_30d >= -0.05 else "RETAIL DIP FLOW (CAUTION)"
     elif flow_30d_bear < -10000 and abs_bear > abs_bull:
-        # Only shorts shrinking (outflows from short ETFs) but dominant
-        sentiment = "BULLISH"
+        sentiment = "BULLISH (SHORT COVERING)"
     elif flow_30d_bear > 10000 and abs_bear > abs_bull:
-        # Shorts growing and dominant
-        sentiment = "BEARISH"
+        sentiment = "BEARISH (SHORT PILING)"
     elif flow_30d_bull < -10000 and abs_bull > abs_bear:
-        # Longs shrinking and dominant
-        sentiment = "BEARISH"
+        sentiment = "BEARISH" if ng_ret_30d <= 0.05 else "CAPITULATION PURGE (SQUEEZE WATCH)"
         
     summary_data["cross_etf"]["sentiment"] = sentiment
 

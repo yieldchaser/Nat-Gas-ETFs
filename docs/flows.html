@@ -141,8 +141,81 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .time-tabs .tab-btn { font-size: 0.65rem; padding: 4px 10px; }
 
 .chart-wrap { position: relative; width: 100%; }
-#chartA { width: 100%; height: 290px; }
-#chartB { width: 100%; height: 130px; margin-top: 6px;}
+/* ---- Flow Suite Mode Switcher ---- */
+.flow-suite-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0 16px;
+    padding: 10px 16px;
+    background: rgba(10, 14, 24, 0.85);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    flex-wrap: wrap;
+}
+.flow-suite-tabs {
+    display: flex;
+    gap: 6px;
+    background: #0d121f;
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.flow-suite-btn {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    padding: 7px 16px;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.65);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+.flow-suite-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+}
+.flow-suite-btn.active {
+    color: var(--cyan);
+    background: rgba(0, 229, 255, 0.12);
+    border-color: rgba(0, 229, 255, 0.35);
+    box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
+}
+.flow-suite-sync-toggle {
+    display: flex;
+    align-items: center;
+}
+.sync-slider-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    user-select: none;
+}
+.sync-slider-label input[type="checkbox"] {
+    accent-color: var(--cyan);
+    cursor: pointer;
+    width: 14px;
+    height: 14px;
+}
+.suite-container {
+    display: block;
+    transition: opacity 0.2s ease;
+}
+.suite-container.suite-hidden {
+    display: none !important;
+}
+
+#chartA { width: 100%; height: 350px; }
+#chartB { width: 100%; height: 180px; margin-top: 8px;}
 
 .stats-row {
     display: flex; justify-content: center; gap: 0;
@@ -401,7 +474,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
     .fc-right { width: 100%; flex-direction: row; align-items: center; gap: 8px; }
     .panel-header { flex-direction: column; align-items: flex-start; gap: 10px; }
     .stats-row { flex-wrap: wrap; gap: 16px; }
-    #chartA { height: 280px; }
+    #chartA { height: 300px; }
     #chartB { height: 160px; }
     #chartZ { height: 220px; }
     #chartCross { height: 250px; }
@@ -438,8 +511,8 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 /* Responsive — 420px */
 @media (max-width: 420px) {
     main { padding: 10px 8px 32px; }
-    #chartA { height: 220px; }
-    #chartB { height: 130px; }
+    #chartA { height: 240px; }
+    #chartB { height: 140px; }
     #chartZ { height: 180px; }
     #chartCross { height: 200px; }
     #chartCompZ { height: 200px; }
@@ -746,6 +819,30 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
         </div>
 
+        <!-- Suite Mode Switcher -->
+        <div class="flow-suite-nav" id="flow-suite-nav">
+            <div class="flow-suite-tabs" id="flow-suite-tabs">
+                <button class="flow-suite-btn active" data-suite="classic" data-tooltip="Classic Fund Flow Suite: Physical dollar daily bars, cumulative volume curves, and divergence scanners. Grounded in actual capital flows.">
+                    CLASSIC FLOW SUITE
+                </button>
+                <button class="flow-suite-btn" data-suite="institutional" data-tooltip="Institutional Composite Suite: Normalized cross-asset Z-scores, velocity exhaustion oscillators, price reactivity, and yearly regime matrices.">
+                    INSTITUTIONAL COMPOSITE SUITE
+                </button>
+                <button class="flow-suite-btn" data-suite="all" data-tooltip="Full Desk: Comprehensive unified view containing both Classic and Institutional Flow Suites side-by-side.">
+                    FULL DESK
+                </button>
+            </div>
+            <div class="flow-suite-sync-toggle">
+                <label class="sync-slider-label" data-tooltip="Sync all timeline range sliders across all charts in real time.">
+                    <input type="checkbox" id="sync-all-sliders" checked>
+                    <span>SYNC ALL CHARTS</span>
+                </label>
+            </div>
+        </div>
+
+        <div id="suite-container-classic" class="suite-container">
+
+
         <!-- Section 3 -->
         <div class="panel">
             <div class="panel-header">
@@ -1027,6 +1124,9 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 </div>
             </div>
         </div>
+        </div><!-- /#suite-container-classic -->
+
+        <div id="suite-container-institutional" class="suite-container suite-hidden">
 
         <!-- Section 6.1: Cross-ETF Composite Z-Score History -->
         <div class="panel" id="composite-z-panel">
@@ -1426,6 +1526,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <div style="color:rgba(255, 255, 255, 0.85); padding:20px; text-align:center; font-size:0.7rem; letter-spacing:1px;">Loading matrix…</div>
             </div>
         </div>
+        </div><!-- /#suite-container-institutional -->
 
 
     </main>
@@ -2607,11 +2708,18 @@ function drawChartB(data) {
     ctxB.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctxB.clearRect(0, 0, w, h);
     
-    const pad = { top: 10, right: 60, bottom: 28, left: 60 };
+    const pad = { top: 12, right: 60, bottom: 28, left: 60 };
     const chartW = w - pad.left - pad.right;
     const chartH = h - pad.top - pad.bottom;
 
-    const maxBar = Math.max(...data.map(d => Math.abs(d.usd_flow)), 1);
+    // Winsorized volume ceiling at P98 * 1.35 with subtle white overflow top-caps
+    const absFlows = data.map(d => Math.abs(d.usd_flow)).filter(v => v > 0).sort((a, b) => a - b);
+    let p98 = 1;
+    if (absFlows.length > 0) {
+        const idx = Math.min(absFlows.length - 1, Math.floor(absFlows.length * 0.98));
+        p98 = absFlows[idx];
+    }
+    const maxBar = Math.max(p98 * 1.35, 1);
 
     const getX = i => pad.left + (i / (data.length - 1)) * chartW;
     const y0 = pad.top + chartH / 2;
@@ -2632,15 +2740,27 @@ function drawChartB(data) {
 
     for (let i = 0; i < data.length; i++) {
         const val = data[i].usd_flow;
-        const x = getX(i) - barW/2;
-        const barH = (Math.abs(val) / maxBar) * (chartH / 2);
+        const x = getX(i) - barW / 2;
+        const absVal = Math.abs(val);
+        const isCapped = absVal > maxBar;
+        const barH = Math.min((absVal / maxBar) * (chartH / 2), chartH / 2);
 
         if (val >= 0) {
-            ctxB.fillStyle = 'rgba(61,184,122,0.8)';
+            ctxB.fillStyle = isCapped ? 'rgba(61, 220, 140, 0.95)' : 'rgba(61, 184, 122, 0.8)';
             ctxB.fillRect(x, y0 - barH, barW, barH);
+            if (isCapped) {
+                // Subtle white top-cap marker indicating extreme volume extension
+                ctxB.fillStyle = '#ffffff';
+                ctxB.fillRect(x - 0.5, y0 - barH - 1, barW + 1, 2);
+            }
         } else {
-            ctxB.fillStyle = 'rgba(239,68,68,0.8)';
+            ctxB.fillStyle = isCapped ? 'rgba(255, 80, 80, 0.95)' : 'rgba(239, 68, 68, 0.8)';
             ctxB.fillRect(x, y0, barW, barH);
+            if (isCapped) {
+                // Subtle white bottom-cap marker indicating extreme outflow extension
+                ctxB.fillStyle = '#ffffff';
+                ctxB.fillRect(x - 0.5, y0 + barH - 1, barW + 1, 2);
+            }
         }
     }
 
@@ -3548,9 +3668,17 @@ function renderDivergence() {
         const sigDot   = r.confirmed
             ? `<span style="color:${r.isBear?'var(--red)':'var(--green)'};font-size:0.65rem;">\u25c6</span>`
             : `<span style="color:${r.isBear?'var(--red)':'var(--green)'};font-size:0.55rem;">\u25b2</span>`;
-        const sigLabel = r.confirmed
-            ? `<span style="font-weight:900;letter-spacing:0.3px;">${r.isBear?'CONFIRMED Dist.':'CONFIRMED Accum.'}</span>`
-            : `<span style="font-weight:600;opacity:0.85;">${r.isBear?'Distribution':'Accumulation'}</span>`;
+        const isDipTrap = !r.isBear && !isShortTk && (r.priceMove < -0.15);
+        let sigLabel;
+        if (isDipTrap) {
+            sigLabel = r.confirmed
+                ? `<span style="font-weight:900;letter-spacing:0.3px;color:#f59e0b;">⚠️ RETAIL DIP TRAP</span>`
+                : `<span style="font-weight:600;opacity:0.85;color:#f59e0b;">Dip Buying (Caution)</span>`;
+        } else {
+            sigLabel = r.confirmed
+                ? `<span style="font-weight:900;letter-spacing:0.3px;">${r.isBear?'CONFIRMED Dist.':'CONFIRMED Accum.'}</span>`
+                : `<span style="font-weight:600;opacity:0.85;">${r.isBear?'Distribution':'Accumulation'}</span>`;
+        }
         const sigHtml  = `<span style="color:${r.isBear?'var(--red)':'var(--green)'};font-size:0.72rem;white-space:nowrap;">${sigDot} ${sigLabel}</span>`;
 
         const ngImplication = isShortTk
@@ -3770,16 +3898,26 @@ function scanCrossDivergences(lookback) {
     const perTicker = {};
     allTickers.forEach(tk => { perTicker[tk] = []; });
 
+    const lastCumulativeFlow = {};
+    allTickers.forEach(tk => { lastCumulativeFlow[tk] = 0; });
+
     for (let i = 0; i < baseData.length; i++) {
         const date = baseData[i].date;
-        let longSum = 0, shortSum = 0, skip = false;
+        let longSum = 0, shortSum = 0;
+        let anyTickerHasData = false;
         const dayRows = {};
         for (const tk of allTickers) {
-            const row = tickerByDate[tk][date];
-            if (!row) { skip = true; break; }
-            dayRows[tk] = row.cumulative_flow;
+            const row = tickerByDate[tk]?.[date];
+            if (row && row.cumulative_flow != null) {
+                dayRows[tk] = row.cumulative_flow;
+                lastCumulativeFlow[tk] = row.cumulative_flow;
+                anyTickerHasData = true;
+            } else {
+                // Forward-carry foreign ETF cumulative flow on exchange holidays
+                dayRows[tk] = lastCumulativeFlow[tk];
+            }
         }
-        if (skip) continue;
+        if (!anyTickerHasData) continue; // Only skip if no ETF has data on date
         for (const tk of LONG_SIDE) {
             longSum += dayRows[tk];
             perTicker[tk].push(dayRows[tk]);
@@ -4997,6 +5135,189 @@ window.addEventListener('resize', () => {
         }
     }, { passive: true });
 }());
+
+</script>
+<script>
+
+// =========================================================================
+// FLOW SUITE SWITCHER & MASTER SLIDER SYNCHRONIZATION ENGINE
+// =========================================================================
+
+function setFlowSuiteMode(mode, save = true) {
+    if (save) {
+        try { localStorage.setItem('flows_suite_mode', mode); } catch (_) {}
+    }
+    const btns = document.querySelectorAll('.flow-suite-btn');
+    btns.forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-suite') === mode);
+    });
+
+    const classicContainer = document.getElementById('suite-container-classic');
+    const institutionalContainer = document.getElementById('suite-container-institutional');
+
+    if (classicContainer && institutionalContainer) {
+        if (mode === 'classic') {
+            classicContainer.classList.remove('suite-hidden');
+            institutionalContainer.classList.add('suite-hidden');
+        } else if (mode === 'institutional') {
+            classicContainer.classList.add('suite-hidden');
+            institutionalContainer.classList.remove('suite-hidden');
+        } else {
+            // Full Desk: show both
+            classicContainer.classList.remove('suite-hidden');
+            institutionalContainer.classList.remove('suite-hidden');
+        }
+    }
+
+    // Trigger redrawing for visible charts
+    requestAnimationFrame(() => {
+        if (!state.cache || !state.activeTicker || !state.cache[state.activeTicker]?.data) return;
+        if (mode === 'classic' || mode === 'all') {
+            if (typeof renderCharts === 'function') renderCharts();
+            if (typeof renderCrossChart === 'function') renderCrossChart();
+            if (typeof renderZChart === 'function') renderZChart();
+        }
+        if (mode === 'institutional' || mode === 'all') {
+            if (typeof renderCompZChart === 'function') renderCompZChart();
+            if (typeof renderVelocityChart === 'function') renderVelocityChart();
+            if (typeof renderContrarianDivergence === 'function') renderContrarianDivergence();
+            if (typeof renderReactivityChart === 'function') renderReactivityChart();
+        }
+    });
+}
+
+function initFlowSuiteSwitcher() {
+    const nav = document.getElementById('flow-suite-tabs');
+    if (nav) {
+        nav.addEventListener('click', (e) => {
+            const btn = e.target.closest('.flow-suite-btn');
+            if (!btn) return;
+            const mode = btn.getAttribute('data-suite');
+            setFlowSuiteMode(mode);
+        });
+    }
+
+    let saved = 'classic';
+    try { saved = localStorage.getItem('flows_suite_mode') || 'classic'; } catch (_) {}
+    setFlowSuiteMode(saved, false);
+}
+
+// Master Slider Synchronization across Deep Dive, Z, Cross, and Institutional charts
+function syncMasterSliders(startFrac, endFrac, originId) {
+    const isSyncActive = document.getElementById('sync-all-sliders')?.checked ?? true;
+    if (!isSyncActive) return;
+
+    // Update global state zoom
+    state.zoom = { start: startFrac, end: endFrac };
+    state.zoomZ = { start: startFrac, end: endFrac };
+    state.zoomCross = { start: startFrac, end: endFrac };
+    if (state.zoomCompZ) state.zoomCompZ = { start: startFrac, end: endFrac };
+    if (state.zoomFlowVel) state.zoomFlowVel = { start: startFrac, end: endFrac };
+    if (state.zoomFlowNG) state.zoomFlowNG = { start: startFrac, end: endFrac };
+    if (state.zoomReactivity) state.zoomReactivity = { start: startFrac, end: endFrac };
+
+    // 1. Deep Dive Sliders (0-100)
+    const sDD1 = document.getElementById('range-start');
+    const sDD2 = document.getElementById('range-end');
+    if (sDD1 && originId !== 'range-start') sDD1.value = Math.round(startFrac * 100);
+    if (sDD2 && originId !== 'range-end') sDD2.value = Math.round(endFrac * 100);
+    const hlDD = document.getElementById('range-highlight');
+    if (hlDD) {
+        hlDD.style.left = (startFrac * 100) + '%';
+        hlDD.style.width = ((endFrac - startFrac) * 100) + '%';
+    }
+
+    // 2. Z-Score Sliders (0-100)
+    const sZ1 = document.getElementById('z-range-start');
+    const sZ2 = document.getElementById('z-range-end');
+    if (sZ1 && originId !== 'z-range-start') sZ1.value = Math.round(startFrac * 100);
+    if (sZ2 && originId !== 'z-range-end') sZ2.value = Math.round(endFrac * 100);
+    const hlZ = document.getElementById('z-range-highlight');
+    if (hlZ) {
+        hlZ.style.left = (startFrac * 100) + '%';
+        hlZ.style.width = ((endFrac - startFrac) * 100) + '%';
+    }
+
+    // 3. Cross-ETF Sliders (0-100)
+    const sC1 = document.getElementById('cross-range-start');
+    const sC2 = document.getElementById('cross-range-end');
+    if (sC1 && originId !== 'cross-range-start') sC1.value = Math.round(startFrac * 100);
+    if (sC2 && originId !== 'cross-range-end') sC2.value = Math.round(endFrac * 100);
+    const hlC = document.getElementById('cross-range-highlight');
+    if (hlC) {
+        hlC.style.left = (startFrac * 100) + '%';
+        hlC.style.width = ((endFrac - startFrac) * 100) + '%';
+    }
+
+    // 4. Institutional Sliders (0-1000)
+    const instSliders = [
+        ['compz-range-start', 'compz-range-end', 'compz-range-highlight'],
+        ['flowvel-range-start', 'flowvel-range-end', 'flowvel-range-highlight'],
+        ['flowng-range-start', 'flowng-range-end', 'flowng-range-highlight'],
+        ['reactivity-range-start', 'reactivity-range-end', 'reactivity-range-highlight']
+    ];
+    instSliders.forEach(([id1, id2, hlid]) => {
+        const el1 = document.getElementById(id1);
+        const el2 = document.getElementById(id2);
+        const elHl = document.getElementById(hlid);
+        if (el1 && originId !== id1) el1.value = Math.round(startFrac * 1000);
+        if (el2 && originId !== id2) el2.value = Math.round(endFrac * 1000);
+        if (elHl) {
+            elHl.style.left = (startFrac * 100) + '%';
+            elHl.style.width = ((endFrac - startFrac) * 100) + '%';
+        }
+    });
+
+    // Re-render currently visible charts
+    if (!state.cache || !state.activeTicker || !state.cache[state.activeTicker]?.data) return;
+    const currentMode = document.querySelector('.flow-suite-btn.active')?.getAttribute('data-suite') || 'classic';
+    if (currentMode === 'classic' || currentMode === 'all') {
+        if (typeof renderCharts === 'function') renderCharts();
+        if (typeof renderCrossChart === 'function') renderCrossChart();
+        if (typeof renderZChart === 'function') renderZChart();
+    }
+    if (currentMode === 'institutional' || currentMode === 'all') {
+        if (typeof renderCompZChart === 'function') renderCompZChart();
+        if (typeof renderVelocityChart === 'function') renderVelocityChart();
+        if (typeof renderContrarianDivergence === 'function') renderContrarianDivergence();
+        if (typeof renderReactivityChart === 'function') renderReactivityChart();
+    }
+}
+
+// Hook master sync into window load
+window.addEventListener('DOMContentLoaded', () => {
+    initFlowSuiteSwitcher();
+
+    // Attach sync to all sliders
+    const sliderDefs = [
+        { s1: 'range-start', s2: 'range-end', max: 100 },
+        { s1: 'z-range-start', s2: 'z-range-end', max: 100 },
+        { s1: 'cross-range-start', s2: 'cross-range-end', max: 100 },
+        { s1: 'compz-range-start', s2: 'compz-range-end', max: 1000 },
+        { s1: 'flowvel-range-start', s2: 'flowvel-range-end', max: 1000 },
+        { s1: 'flowng-range-start', s2: 'flowng-range-end', max: 1000 },
+        { s1: 'reactivity-range-start', s2: 'reactivity-range-end', max: 1000 },
+    ];
+
+    sliderDefs.forEach(({ s1, s2, max }) => {
+        const el1 = document.getElementById(s1);
+        const el2 = document.getElementById(s2);
+        if (el1) {
+            el1.addEventListener('input', (e) => {
+                const v1 = parseFloat(el1.value) / max;
+                const v2 = el2 ? parseFloat(el2.value) / max : 1.0;
+                syncMasterSliders(Math.min(v1, v2 - 0.01), Math.max(v1 + 0.01, v2), s1);
+            });
+        }
+        if (el2) {
+            el2.addEventListener('input', (e) => {
+                const v1 = el1 ? parseFloat(el1.value) / max : 0.0;
+                const v2 = parseFloat(el2.value) / max;
+                syncMasterSliders(Math.min(v1, v2 - 0.01), Math.max(v1 + 0.01, v2), s2);
+            });
+        }
+    });
+});
 
 </script>
 </body>
