@@ -1228,7 +1228,11 @@ function toggleBanner() {
 
 // Boot
 window.App = App;
-document.addEventListener('DOMContentLoaded', () => App.init());
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => App.init());
+} else {
+    App.init();
+}
 
 // ============================================================
 // Universal JS Tooltip Singleton

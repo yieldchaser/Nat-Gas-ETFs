@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BLUE MERIDIAN</title>
+<link rel="stylesheet" href="css/auth.css?v=20261104a">
+<script src="js/auth.js?v=20261104a"></script>
+<script>if (typeof Auth !== 'undefined' && !Auth.requireAuth()) { document.documentElement.style.display = 'none'; throw new Error('Auth required'); }</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='60%' r='50%' fx='50%' fy='65%'><stop offset='0%' style='stop-color:%230033ff;stop-opacity:0.5' /><stop offset='100%' style='stop-color:%23001a4d;stop-opacity:0' /></radialGradient></defs><circle cx='50' cy='60' r='40' fill='url(%23g)' /><path d='M50 92 C30 92 18 75 18 52 C18 30 50 5 50 5 C50 5 82 30 82 52 C82 75 70 92 50 92 Z' fill='%230066ff' /><path d='M50 80 C40 80 32 68 32 50 C32 35 50 18 50 18 C50 18 68 35 68 50 C68 68 60 80 50 80 Z' fill='white' /></svg>">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/signals.css">
@@ -1216,30 +1219,30 @@ select.calc-input { cursor: pointer; }
         <div class="calc-howto-overlay" id="calc-howto-overlay" role="dialog" aria-modal="true" aria-label="How to Use the Calculator">
             <div class="calc-howto-modal" id="calc-howto-modal">
                 <div class="calc-howto-head">
-                    <span class="calc-howto-head-title">📖 How to Use This Calculator</span>
+                    <span class="calc-howto-head-title"> How to Use This Calculator</span>
                     <button class="calc-howto-close" id="calc-howto-close" title="Close">✕</button>
                 </div>
                 <div class="calc-howto-body">
 
                     <div class="howto-section">
-                        <div class="howto-section-title">🧠 What is this calculator actually doing?</div>
+                        <div class="howto-section-title"> What is this calculator actually doing?</div>
                         <p class="howto-p">Simple idea: <strong>you trade a leveraged ETF cycle repeatedly, and this calculator compounds your wealth forward year by year</strong> — after every real cost: brokerage, FX markup, Indian LRS/TCS tax, STCG/LTCG slab, surcharge, cess. Every rupee figure you see is genuinely take-home, not gross.</p>
                         <p class="howto-p">Think of it as a flight simulator for your trade strategy. You set the controls, it simulates where you land after N years of compounding.</p>
                         <div class="howto-callout"><strong>The core loop:</strong> Start with ₹X capital → trade a cycle → earn gross return → subtract broker fees + FX drag → subtract tax → repeat next year. The calculator does this <em>swings/year × horizon years</em> times and shows the result.</div>
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">🔀 Step 1 — Auto vs Manual Mode</div>
+                        <div class="howto-section-title"> Step 1 — Auto vs Manual Mode</div>
                         <p class="howto-p">First decision: <strong>where do your numbers come from?</strong></p>
                         <div class="howto-callout" style="border-color:var(--cyan)">
-                            <strong>🤖 Seed from detected cycles (Auto):</strong> The calculator reads actual trough-to-peak cycles detected for your ticker and auto-fills Gross Return and Cycles/Year. Most grounded-in-reality starting point.<br><br>
-                            <strong>✍️ Manual override:</strong> Every number is yours to set freely. Ticker history is ignored. Use when you have your own return target in mind.
+                            <strong> Seed from detected cycles (Auto):</strong> The calculator reads actual trough-to-peak cycles detected for your ticker and auto-fills Gross Return and Cycles/Year. Most grounded-in-reality starting point.<br><br>
+                            <strong>️ Manual override:</strong> Every number is yours to set freely. Ticker history is ignored. Use when you have your own return target in mind.
                         </div>
-                        <p class="howto-p">💡 <strong>Start in Auto mode</strong>, then override specific fields as you get more opinionated about your strategy.</p>
+                        <p class="howto-p"> <strong>Start in Auto mode</strong>, then override specific fields as you get more opinionated about your strategy.</p>
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">🎯 Step 2 — The Most Important Thing: Setting Your Return</div>
+                        <div class="howto-section-title"> Step 2 — The Most Important Thing: Setting Your Return</div>
                         <p class="howto-p">This is where most confusion happens. There are <strong>three completely different ways</strong> to tell the calculator what return you expect per cycle — via the <strong>Gross Return / Cycle</strong> field:</p>
                         <div class="howto-callout" style="border-color:#3db87a; background:rgba(61,184,122,0.05); margin-bottom:10px;">
                             <strong style="color:#3db87a">AUTO — "Use the historical data as my base"</strong><br><br>
@@ -1247,12 +1250,12 @@ select.calc-input { cursor: pointer; }
                             Formula: <strong>Gross Return = Historical Median × Capture %</strong><br><br>
                             Example: KOLD has an 86% median cycle. Set Capture = 60%.<br>
                             → Gross return = 86% × 60% = <strong>51.7% per cycle</strong> — not 60%.<br><br>
-                            ⚠️ Most common misunderstanding. The slider multiplies the historical median — it doesn't set your return directly.
+                            ️ Most common misunderstanding. The slider multiplies the historical median — it doesn't set your return directly.
                         </div>
                         <div class="howto-callout" style="border-color:var(--cyan); margin-bottom:10px;">
                             <strong style="color:var(--cyan)">SINGLE — "I'm targeting exactly X% per trade"</strong><br><br>
                             Type a number. Type <code>60</code> → every cycle is exactly 60% gross. Capture slider disables. Ticker history becomes irrelevant.<br><br>
-                            ✅ <strong>Use this when you have a specific return target in your head</strong> and want to model that directly.
+                             <strong>Use this when you have a specific return target in your head</strong> and want to model that directly.
                         </div>
                         <div class="howto-callout" style="border-color:#c084fc; background:rgba(192,132,252,0.05);">
                             <strong style="color:#c084fc">VARIABLE — "My trades have different return targets"</strong><br><br>
@@ -1262,7 +1265,7 @@ select.calc-input { cursor: pointer; }
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">📅 Step 3 — Cycles/Year vs Swings/Year (they're different!)</div>
+                        <div class="howto-section-title"> Step 3 — Cycles/Year vs Swings/Year (they're different!)</div>
                         <div class="howto-formula">Cycles/Year  →  physical reality  (how many cycles FIT in a year historically)
 Swings/Year  →  your intention   (how many you ACTUALLY plan to trade)</div>
                         <p class="howto-p"><strong>Cycles/Year</strong> comes from data: if a cycle + gap averages 146 days, then 365 ÷ 146 = <strong>2.5 cycles/year</strong>. This is the physical ceiling.</p>
@@ -1271,7 +1274,7 @@ Swings/Year  →  your intention   (how many you ACTUALLY plan to trade)</div>
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">💼 Step 4 — Capital Risked / Trade</div>
+                        <div class="howto-section-title"> Step 4 — Capital Risked / Trade</div>
                         <p class="howto-p"><strong>Do you put your entire corpus into each trade?</strong> Default is 100%. Set to 80% → "I deploy 80% per trade, 20% stays in cash."</p>
                         <div class="howto-formula">Gain = corpus × risked% × net_return × swings/yr
 Example: ₹20L × 80% × 45% net × 2 swings = ₹14.4L gain in Year 1</div>
@@ -1279,7 +1282,7 @@ Example: ₹20L × 80% × 45% net × 2 swings = ₹14.4L gain in Year 1</div>
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">🧾 Step 5 — Tax, TCS &amp; Vault (India-specific)</div>
+                        <div class="howto-section-title"> Step 5 — Tax, TCS &amp; Vault (India-specific)</div>
                         <p class="howto-p"><strong>Holding Period — STCG vs LTCG:</strong></p>
                         <div class="howto-formula">STCG (&lt;24 months):  30% base + surcharge (10–25%) + 4% cess  →  up to 39% effective
 LTCG (&gt;24 months):  12.5% base + surcharge capped at 15% + 4% cess  →  up to ~15% effective</div>
@@ -1289,7 +1292,7 @@ LTCG (&gt;24 months):  12.5% base + surcharge capped at 15% + 4% cess  →  up t
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">📊 Reading the Output Cards</div>
+                        <div class="howto-section-title"> Reading the Output Cards</div>
                         <table class="howto-table">
                             <tr><th>Card</th><th>Plain English</th></tr>
                             <tr><td>Terminal Wealth</td><td>Real take-home net worth at end of horizon — after all fees, taxes, TCS. The number that matters.</td></tr>
@@ -1303,14 +1306,14 @@ LTCG (&gt;24 months):  12.5% base + surcharge capped at 15% + 4% cess  →  up t
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">⚡ The Swing Schedule Table</div>
+                        <div class="howto-section-title"> The Swing Schedule Table</div>
                         <p class="howto-p">Below the chart is a year-by-year breakdown of your exact trade plan. Especially useful with fractional swings or Variable returns.</p>
                         <p class="howto-p">Example: 2.5 swings/year over 8 years → <strong>20 total swings</strong>. Year 1 gets 2, year 2 gets 3, year 3 gets 2... With Variable returns [60%, 70%], you see exactly which swing gets which return, globally numbered.</p>
                         <div class="howto-callout">Colour-coded return tags (cyan / gold / purple) map to each swing's position in your Variable pattern. Hover any tag for a tooltip with the exact global swing number.</div>
                     </div>
 
                     <div class="howto-section">
-                        <div class="howto-section-title">🔗 Saving &amp; Sharing Your Scenario</div>
+                        <div class="howto-section-title"> Saving &amp; Sharing Your Scenario</div>
                         <p class="howto-p"><strong>Share:</strong> Copies a URL encoding your entire setup — ticker, capital, return mode, variable values, swings/year, horizon, tax settings. Anyone who opens it gets your exact scenario. Great for saving your work or comparing strategies.</p>
                         <p class="howto-p"><strong>Download CSV:</strong> Exports the full year-by-year projection — corpus, gain, tax, effective rate, broker cost per year. Open in Excel or Google Sheets for further analysis.</p>
                         <p class="howto-p"><strong>Reset ↺:</strong> Every field has a small reset icon. Click it to restore just that field to its auto value without touching anything else.</p>
@@ -4966,7 +4969,7 @@ function renderCalc() {
     }
 
     if (state.fetchErr[activeSym]) {
-        statsEl.innerHTML = `<div class="calc-empty" style="grid-column:1/-1">⚠️ Failed to load data for ${state.activeTab}. Check internet connection or Yahoo Finance access.</div>`;
+        statsEl.innerHTML = `<div class="calc-empty" style="grid-column:1/-1">️ Failed to load data for ${state.activeTab}. Check internet connection or Yahoo Finance access.</div>`;
         const canvas = document.getElementById('calc-canvas');
         if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }
         calcRenderCompliance(null);
@@ -5039,13 +5042,13 @@ function calcRenderCompliance(inp) {
         ? ` Your ₹${(inp.otherIncomeINR/1e5).toFixed(1)}L other income pushes the 39% bracket to a lower gain.` : '';
 
     const caveats = [
-        { cls: 'cv-red', icon: '🔴', html: `<strong>LRS ELIGIBILITY — GRAY AREA, POSSIBLY A CONTRAVENTION.</strong> RBI LRS bars margin/leveraged instruments abroad; leveraged/inverse ETFs use internal swaps. It is unsettled whether daily-reset leveraged ETFs are prohibited — a bank may reject, or an AO may later reclassify as a technical FEMA contravention. Plain ETFs (VOO/QQQ) are clearly permitted; these are not. Worst realistic case is a compounding settlement (RBI 2025 capped technical LRS contraventions at ₹2 lakh), not prosecution — confirm with a CA.` },
-        { cls: 'cv-amber', icon: '🟠', html: `<strong>TCS IS ANNUAL.</strong> ${tcsRate}% above ${tcsEx}/PAN/FY. Vault-ON (TCS once) holds only with zero fresh remittances. Split funding across two FYs to keep each ≤ ${tcsEx}.` },
-        { cls: 'cv-amber', icon: '🟠', html: `<strong>CAPTURE FRACTION IS THE WHOLE BALLGAME.</strong> Page gains are full trough→peak, hindsight-perfect. Default is MEDIAN × 40%; headline CAGR turns amber above 60% capture.` },
-        { cls: 'cv-amber', icon: '🟠', html: `<strong>SURCHARGE KEYS ON TOTAL INCOME.</strong> Other income > 0 → the 39% bracket arrives at a lower gain.${otherFlag}` },
-        { cls: 'cv-amber', icon: '🟠', html: `<strong>HOLDING-PERIOD CONTRADICTION.</strong> ${p(rg2)} STCG only if held <24mo (the swing thesis); ${p(rltcg)} LTCG contradicts swinging. Both shown.` },
-        { cls: 'cv-green', icon: '🟢', html: `<strong>TAX RATES WEB-VERIFIED (Jun 2026):</strong> STCG-at-slab, no 15% cap for unlisted-foreign → ${p(r50)} ≤50L · ${p(r50_1)} 50L–1Cr · ${p(r1_2)} 1Cr–2Cr · ${p(rg2)} >2Cr; LTCG >2Cr ${p(rltcg)}. 20% TCS above ₹10L unchanged by Budget-2026. (ITD, Winvesta, Zerodha, Bajaj Finserv.)` },
-        { cls: 'cv-green', icon: '🟢', html: `<strong>NOT TAX/LEGAL ADVICE.</strong> Confirm with a CA; rates change every Budget.` },
+        { cls: 'cv-red', icon: '', html: `<strong>LRS ELIGIBILITY — GRAY AREA, POSSIBLY A CONTRAVENTION.</strong> RBI LRS bars margin/leveraged instruments abroad; leveraged/inverse ETFs use internal swaps. It is unsettled whether daily-reset leveraged ETFs are prohibited — a bank may reject, or an AO may later reclassify as a technical FEMA contravention. Plain ETFs (VOO/QQQ) are clearly permitted; these are not. Worst realistic case is a compounding settlement (RBI 2025 capped technical LRS contraventions at ₹2 lakh), not prosecution — confirm with a CA.` },
+        { cls: 'cv-amber', icon: '', html: `<strong>TCS IS ANNUAL.</strong> ${tcsRate}% above ${tcsEx}/PAN/FY. Vault-ON (TCS once) holds only with zero fresh remittances. Split funding across two FYs to keep each ≤ ${tcsEx}.` },
+        { cls: 'cv-amber', icon: '', html: `<strong>CAPTURE FRACTION IS THE WHOLE BALLGAME.</strong> Page gains are full trough→peak, hindsight-perfect. Default is MEDIAN × 40%; headline CAGR turns amber above 60% capture.` },
+        { cls: 'cv-amber', icon: '', html: `<strong>SURCHARGE KEYS ON TOTAL INCOME.</strong> Other income > 0 → the 39% bracket arrives at a lower gain.${otherFlag}` },
+        { cls: 'cv-amber', icon: '', html: `<strong>HOLDING-PERIOD CONTRADICTION.</strong> ${p(rg2)} STCG only if held <24mo (the swing thesis); ${p(rltcg)} LTCG contradicts swinging. Both shown.` },
+        { cls: 'cv-green', icon: '', html: `<strong>TAX RATES WEB-VERIFIED (Jun 2026):</strong> STCG-at-slab, no 15% cap for unlisted-foreign → ${p(r50)} ≤50L · ${p(r50_1)} 50L–1Cr · ${p(r1_2)} 1Cr–2Cr · ${p(rg2)} >2Cr; LTCG >2Cr ${p(rltcg)}. 20% TCS above ₹10L unchanged by Budget-2026. (ITD, Winvesta, Zerodha, Bajaj Finserv.)` },
+        { cls: 'cv-green', icon: '', html: `<strong>NOT TAX/LEGAL ADVICE.</strong> Confirm with a CA; rates change every Budget.` },
     ];
     el.innerHTML = caveats.map(c => `<div class="calc-caveat ${c.cls}"><span class="cv-icon">${c.icon}</span><span>${c.html}</span></div>`).join('');
 }
@@ -5123,7 +5126,7 @@ function renderSwingSchedule(inp, sim) {
     let html = `
     <div class="swing-schedule" data-tooltip="Swing Schedule: Shows exactly how many trade cycles (swings) are targeted each year, the cumulative running total, and the gross return assigned to each swing. Useful when using decimal swings/year (e.g. 2.5/yr = 25 swings over 10 years) or variable per-swing returns (e.g. '60, 70' alternating).">
         <div class="swing-schedule-header">
-            <span class="swing-schedule-title">⚡ Swing Schedule &amp; Year-wise Goals</span>
+            <span class="swing-schedule-title"> Swing Schedule &amp; Year-wise Goals</span>
             <div class="swing-schedule-pills">
                 <span class="swing-pill pill-cyan" data-tooltip="Total compounding events (swings) over the entire horizon = Swings/Year × Horizon Years">${totalStr} total swings</span>
                 <span class="swing-pill pill-green" data-tooltip="Number of swings targeted per year (can be fractional). Compounding math applies this as an exponent.">${spyStr} swings / yr</span>
@@ -6351,5 +6354,6 @@ function calcExportCSV() {
         await Promise.all(fetchPromises);
 })();
 </script>
+<script>if (typeof Auth !== 'undefined') Auth.attachLogoutButton();</script>
 </body>
 </html>

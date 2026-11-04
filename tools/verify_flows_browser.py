@@ -59,6 +59,7 @@ def main():
             device_scale_factor=2
         )
         page = ctx.new_page()
+        page.add_init_script("sessionStorage.setItem('bm_session_token', 'afb7e506684308d8a03f01396765b6222b3b417438ad7e5f923302f92bde7b8b'); localStorage.setItem('bm_session_token', 'afb7e506684308d8a03f01396765b6222b3b417438ad7e5f923302f92bde7b8b');")
         page.on("console", on_console)
         page.on("pageerror", on_page_error)
 
@@ -188,6 +189,8 @@ def main():
             device_scale_factor=2
         )
         mobile_page = mobile_ctx.new_page()
+        mobile_page.add_init_script("sessionStorage.setItem('bm_session_token', 'afb7e506684308d8a03f01396765b6222b3b417438ad7e5f923302f92bde7b8b'); localStorage.setItem('bm_session_token', 'afb7e506684308d8a03f01396765b6222b3b417438ad7e5f923302f92bde7b8b');")
+        mobile_page.add_init_script("sessionStorage.setItem('bm_session_token', 'afb7e506684308d8a03f01396765b6222b3b417438ad7e5f923302f92bde7b8b');")
         mobile_page.goto("http://127.0.0.1:8131/flows.html")
         mobile_page.wait_for_selector(".summary-grid", timeout=12000)
         mobile_page.wait_for_timeout(1000)

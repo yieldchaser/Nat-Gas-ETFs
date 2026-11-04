@@ -1,0 +1,309 @@
+/* =========================================================================
+   BLUE MERIDIAN — SECURE ACCESS TERMINAL STYLES (auth.css)
+   Clean institutional access control gateway matching Bloomberg / cyberpunk palette
+   ========================================================================= */
+
+:root {
+    --bm-auth-bg: #070a12;
+    --bm-auth-card-bg: rgba(13, 18, 30, 0.95);
+    --bm-auth-border: rgba(0, 229, 255, 0.22);
+    --bm-auth-cyan: #00e5ff;
+    --bm-auth-text: #e2e8f0;
+    --bm-auth-muted: rgba(226, 232, 240, 0.60);
+    --bm-auth-red: #ef4444;
+}
+
+body.bm-locked {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background-color: var(--bm-auth-bg);
+    background-image: 
+        radial-gradient(circle at 50% 25%, rgba(0, 229, 255, 0.08) 0%, transparent 55%),
+        linear-gradient(180deg, #070a12 0%, #0a0e1a 100%);
+    font-family: 'JetBrains Mono', 'Segoe UI', -apple-system, monospace;
+    color: var(--bm-auth-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#bm-auth-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: inherit;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.bm-auth-card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--bm-auth-card-bg);
+    border: 1px solid var(--bm-auth-border);
+    border-radius: 12px;
+    padding: 36px 32px 32px;
+    box-shadow: 
+        0 24px 64px rgba(0, 0, 0, 0.85),
+        0 0 32px rgba(0, 229, 255, 0.12);
+    box-sizing: border-box;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    text-align: center;
+    position: relative;
+}
+
+.bm-auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--bm-auth-cyan), transparent);
+}
+
+.bm-auth-emblem {
+    width: 54px;
+    height: 54px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 0 12px rgba(0, 229, 255, 0.4));
+}
+
+.bm-auth-emblem svg {
+    width: 100%;
+    height: 100%;
+}
+
+.bm-auth-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    letter-spacing: 2.5px;
+    color: #ffffff;
+    margin: 0 0 14px;
+    text-transform: uppercase;
+}
+
+.bm-auth-subtitle {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--bm-auth-cyan);
+    margin: 0 0 20px;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+.bm-auth-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.60rem;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 3px 12px;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+}
+
+.bm-auth-pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--bm-auth-cyan);
+    box-shadow: 0 0 6px var(--bm-auth-cyan);
+}
+
+.bm-auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+}
+
+.bm-auth-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bm-auth-label {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    color: rgba(255, 255, 255, 0.65);
+    text-transform: uppercase;
+}
+
+.bm-auth-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.bm-auth-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(5, 8, 16, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 11px 14px;
+    font-size: 0.82rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: #ffffff;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.bm-auth-input:focus {
+    border-color: var(--bm-auth-cyan);
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+    background: rgba(8, 14, 26, 0.95);
+}
+
+.bm-auth-input::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+    font-weight: 500;
+}
+
+.bm-auth-pw-toggle {
+    position: absolute;
+    right: 10px;
+    background: transparent;
+    border: none;
+    color: var(--bm-auth-cyan);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    cursor: pointer;
+    padding: 4px 6px;
+    font-family: inherit;
+    text-transform: uppercase;
+    opacity: 0.75;
+    transition: opacity 0.2s;
+}
+
+.bm-auth-pw-toggle:hover {
+    opacity: 1;
+}
+
+.bm-auth-remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.65);
+    cursor: pointer;
+    user-select: none;
+    margin-top: 2px;
+}
+
+.bm-auth-remember input[type="checkbox"] {
+    accent-color: var(--bm-auth-cyan);
+    cursor: pointer;
+    width: 14px;
+    height: 14px;
+}
+
+.bm-auth-btn {
+    margin-top: 8px;
+    width: 100%;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, rgba(0, 229, 255, 0.20), rgba(0, 229, 255, 0.08));
+    border: 1px solid var(--bm-auth-cyan);
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 0.76rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 16px rgba(0, 229, 255, 0.15);
+}
+
+.bm-auth-btn:hover {
+    background: linear-gradient(135deg, rgba(0, 229, 255, 0.35), rgba(0, 229, 255, 0.15));
+    box-shadow: 0 6px 24px rgba(0, 229, 255, 0.30);
+    transform: translateY(-1px);
+}
+
+.bm-auth-btn:active {
+    transform: translateY(0);
+}
+
+.bm-auth-error {
+    display: none;
+    margin-top: 14px;
+    padding: 8px 12px;
+    border-radius: 5px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.bm-auth-error.visible {
+    display: block;
+    animation: bmShake 0.3s ease;
+}
+
+@keyframes bmShake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+
+.bm-auth-footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 0.58rem;
+    color: rgba(255, 255, 255, 0.40);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+/* ---- LOGOUT BUTTON IN TOP BAR ---- */
+.bm-logout-btn {
+    background: rgba(239, 68, 68, 0.10);
+    border: 1px solid rgba(239, 68, 68, 0.30);
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.80);
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    margin-left: 10px;
+}
+
+.bm-logout-btn:hover {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
