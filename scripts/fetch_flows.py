@@ -387,7 +387,29 @@ def main():
         "bull_flow_30d": round(flow_30d_bull, 2),
         "bear_flow_30d": round(flow_30d_bear, 2)
     }
-    
+
+    # ---- Fetch NG=F history for Flow Pressure vs Gas Price chart & Sentiment Context ----
+    summary_out = FLOWS_DIR / "all_flows_summary.json"
+    existing_ng_history = []
+    if summary_out.exists():
+        try:
+            with open(summary_out) as f:
+                existing_ng_history = json.load(f).get("ng_history", [])
+        except Exception:
+            existing_ng_history = []
+
+    ng_history = fetch_ng_history()
+    if ng_history:
+        summary_data["ng_history"] = ng_history
+        logger.info(f"Added {len(ng_history)} NG=F daily closes to summary")
+    elif existing_ng_history:
+        ng_history = existing_ng_history
+        summary_data["ng_history"] = existing_ng_history
+        logger.warning(f"Using cached NG=F history ({len(existing_ng_history)} closes) due to fetch failure")
+    else:
+        ng_history = []
+        summary_data["ng_history"] = []
+
     # Sentiment logic:
     # flow_30d_bull  = sum of 30d flows for LONG ETFs  (positive = longs receiving inflows = bullish)
     # flow_30d_bear  = sum of 30d flows for SHORT ETFs  (negative = shorts losing assets = bullish for gas)
@@ -418,24 +440,6 @@ def main():
         sentiment = "BEARISH" if ng_ret_30d <= 0.05 else "BEARISH (CAPITULATION WATCH)"
         
     summary_data["cross_etf"]["sentiment"] = sentiment
-
-    # ---- Fetch NG=F history for Flow Pressure vs Gas Price chart ----
-    summary_out = FLOWS_DIR / "all_flows_summary.json"
-    existing_ng_history = []
-    if summary_out.exists():
-        try:
-            with open(summary_out) as f:
-                existing_ng_history = json.load(f).get("ng_history", [])
-        except Exception:
-            existing_ng_history = []
-
-    ng_history = fetch_ng_history()
-    if ng_history:
-        summary_data["ng_history"] = ng_history
-        logger.info(f"Added {len(ng_history)} NG=F daily closes to summary")
-    elif existing_ng_history:
-        summary_data["ng_history"] = existing_ng_history
-        logger.warning(f"Using cached NG=F history ({len(existing_ng_history)} closes) due to fetch failure")
 
     with open(summary_out, "w") as f:
         json.dump(summary_data, f, indent=2)
