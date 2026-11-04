@@ -189,7 +189,7 @@ def apply_derived_metrics(df: pd.DataFrame) -> pd.DataFrame:
         # Momentum factor: basic scale +10 if 5d>0, -10 if 5d<0
         mom_factor = 10 if row["flow_5d"] > 0 else (-10 if row["flow_5d"] < 0 else 0)
         # Add a streak bonus
-        streak_bonus = min(abs(s) * 2, 20) * (1 if s > 0 else -1)
+        streak_bonus = min(abs(s) * 2, 20) * (1 if s > 0 else (-1 if s < 0 else 0))
         raw = (row["flow_zscore"] * 25) + mom_factor + streak_bonus
         return max(-100.0, min(100.0, raw))
 
@@ -227,6 +227,7 @@ def main():
     args = parser.parse_args()
 
     FLOWS_DIR.mkdir(parents=True, exist_ok=True)
+    DOCS_FLOWS_DIR.mkdir(parents=True, exist_ok=True)
     today_str = datetime.today().strftime("%Y-%m-%d")
 
     summary_data = {
@@ -330,25 +331,28 @@ def main():
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
         df.fillna(0, inplace=True)
 
+        actual_latest = df["date"].max()
+        if actual_latest:
+            latest_dates.append(actual_latest)
+
         json_dict = {
             "ticker": ticker,
-            "updated": today_str,
+            "updated": actual_latest or today_str,
             "data": df.to_dict(orient="records")
         }
         
         with open(json_out, "w") as f:
             json.dump(json_dict, f, indent=2)
+
+        docs_json_out = DOCS_FLOWS_DIR / f"{ticker}_flows.json"
+        with open(docs_json_out, "w") as f:
+            json.dump(json_dict, f, indent=2)
             
-        logger.info(f"Saved {len(df)} rows to {json_out}")
+        logger.info(f"Saved {len(df)} rows to {json_out} and {docs_json_out}")
         
         # Populate summary
         last_row = df.iloc[-1]
         last_30d_net = df.tail(30)["usd_flow"].sum()
-
-        # Track actual latest data date (not today's run date)
-        actual_latest = df["date"].max()
-        if actual_latest:
-            latest_dates.append(actual_latest)
         
         summary_data["tickers"][ticker] = {
             "last_30d_net": round(last_30d_net, 2),
@@ -388,7 +392,6 @@ def main():
     # flow_30d_bear  = sum of 30d flows for SHORT ETFs  (negative = shorts losing assets = bullish for gas)
     # BULLISH: longs growing AND/OR shorts shrinking (net capital favours long side)
     # BEARISH: shorts growing (positive bear flow) AND/OR longs shrinking
-    flow_30d_bull + flow_30d_bear
     abs_bull = abs(flow_30d_bull)
     abs_bear = abs(flow_30d_bear)
     sentiment = "NEUTRAL"
@@ -414,18 +417,28 @@ def main():
     summary_data["cross_etf"]["sentiment"] = sentiment
 
     # ---- Fetch NG=F history for Flow Pressure vs Gas Price chart ----
+    summary_out = FLOWS_DIR / "all_flows_summary.json"
+    existing_ng_history = []
+    if summary_out.exists():
+        try:
+            with open(summary_out) as f:
+                existing_ng_history = json.load(f).get("ng_history", [])
+        except Exception:
+            existing_ng_history = []
+
     ng_history = fetch_ng_history()
     if ng_history:
         summary_data["ng_history"] = ng_history
         logger.info(f"Added {len(ng_history)} NG=F daily closes to summary")
+    elif existing_ng_history:
+        summary_data["ng_history"] = existing_ng_history
+        logger.warning(f"Using cached NG=F history ({len(existing_ng_history)} closes) due to fetch failure")
 
-    summary_out = FLOWS_DIR / "all_flows_summary.json"
     with open(summary_out, "w") as f:
         json.dump(summary_data, f, indent=2)
     logger.info(f"Saved summary to {summary_out}")
 
     # Copy to docs/ for GitHub Pages
-    DOCS_FLOWS_DIR.mkdir(parents=True, exist_ok=True)
     docs_summary = DOCS_FLOWS_DIR / "all_flows_summary.json"
     with open(docs_summary, "w") as f:
         json.dump(summary_data, f, indent=2)
