@@ -409,13 +409,13 @@ def main():
     elif flow_30d_bull < 0 and flow_30d_bear > 0:
         sentiment = "BEARISH" if ng_ret_30d <= 0.05 else "BEARISH DISTRIBUTION (TACTICAL WATCH)"
     elif flow_30d_bull > 10000 and abs_bull > abs_bear:
-        sentiment = "BULLISH" if ng_ret_30d >= -0.05 else "RETAIL DIP FLOW (CAUTION)"
+        sentiment = "BULLISH" if ng_ret_30d >= -0.05 else "BULLISH (COUNTER-TREND INFLOWS)"
     elif flow_30d_bear < -10000 and abs_bear > abs_bull:
         sentiment = "BULLISH (SHORT COVERING)"
     elif flow_30d_bear > 10000 and abs_bear > abs_bull:
-        sentiment = "BEARISH (SHORT PILING)"
+        sentiment = "BEARISH (SHORT EXPANSION)"
     elif flow_30d_bull < -10000 and abs_bull > abs_bear:
-        sentiment = "BEARISH" if ng_ret_30d <= 0.05 else "CAPITULATION PURGE (SQUEEZE WATCH)"
+        sentiment = "BEARISH" if ng_ret_30d <= 0.05 else "BEARISH (CAPITULATION WATCH)"
         
     summary_data["cross_etf"]["sentiment"] = sentiment
 

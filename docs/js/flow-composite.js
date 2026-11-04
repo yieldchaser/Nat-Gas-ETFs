@@ -983,9 +983,9 @@ function drawChartReactivity(flow) {
     ctxReactivity.font = 'bold 9px sans-serif';
     ctxReactivity.textAlign = 'left';
     ctxReactivity.fillStyle = 'rgba(0, 229, 255, 0.65)';
-    ctxReactivity.fillText('▲ BULLISH BREAKOUT CHASING (FLOW + PRICE UP · 67% 5D CONTINUATION)', pad.left + 6, Math.max(pad.top + 12, (pad.top + y10pos) / 2));
+    ctxReactivity.fillText('▲ BULLISH TREND MOMENTUM (FLOW + PRICE UP · 67% 5D CONTINUATION)', pad.left + 6, Math.max(pad.top + 12, (pad.top + y10pos) / 2));
     ctxReactivity.fillStyle = 'rgba(245, 158, 11, 0.7)';
-    ctxReactivity.fillText('▼ DOWNSIDE CAPITULATION PURGE (FLOW + PRICE DOWN · +5.1% 5D REVERSAL)', pad.left + 6, Math.min(pad.top + chartH - 8, (y10neg + pad.top + chartH) / 2));
+    ctxReactivity.fillText('▼ DOWNSIDE CAPITULATION (FLOW + PRICE DOWN · +5.1% 5D REBOUND)', pad.left + 6, Math.min(pad.top + chartH - 8, (y10neg + pad.top + chartH) / 2));
 
     // ── Threshold lines (±1.0σ and ±1.5σ) ──
     [1.5, 1.0, -1.0, -1.5].forEach(z => {
@@ -1124,13 +1124,13 @@ function handleReactivityHover(e) {
 
         let statusText, statusColor, descText;
         if (sVal > 0) {
-            statusText = intensity >= 1.0 ? '◆ STRONG BREAKOUT CHASING' : '▲ BULLISH MOMENTUM ALIGNED';
+            statusText = intensity >= 1.0 ? '◆ STRONG TREND MOMENTUM' : '▲ BULLISH MOMENTUM ALIGNED';
             statusColor = '#00e5ff';
-            descText = `Flows (+${compZ.toFixed(2)}σ) chasing 5d NG rally (+${(ng5d * 100).toFixed(1)}%). Historical 5d continuation hit-rate: 67.3% (+5.8% 21d avg).`;
+            descText = `Inflows (+${compZ.toFixed(2)}σ) aligned with 5d price rally (+${(ng5d * 100).toFixed(1)}%). Historical 5d continuation hit rate: 67.3% (+5.8% 21d avg).`;
         } else if (sVal < 0) {
-            statusText = intensity >= 1.0 ? '◆ DOWNSIDE CAPITULATION PURGE' : '▼ BEARISH MOMENTUM ALIGNED';
+            statusText = intensity >= 1.0 ? '◆ DOWNSIDE CAPITULATION' : '▼ BEARISH MOMENTUM ALIGNED';
             statusColor = '#f59e0b';
-            descText = `Flows (${compZ.toFixed(2)}σ) capitulating into 5d NG selloff (${(ng5d * 100).toFixed(1)}%). Historical 5d mean-reversion bounce: +5.1% (63.3% hit-rate).`;
+            descText = `Outflows (${compZ.toFixed(2)}σ) during 5d price drop (${(ng5d * 100).toFixed(1)}%). Historical 5d mean-reversion rebound: +5.1% (63.3% hit rate).`;
         } else {
             statusText = '○ CONTRARIAN / FLAT (NO REACTIVE SIGNAL)';
             statusColor = 'rgba(148,163,184,0.65)';
@@ -1487,7 +1487,7 @@ function setupFlowHeatTooltip() {
                 const divDesc = srcDivVal > 0 ? 'Bullish flow positioning despite falling 5d gas prices' : 'Bearish flow positioning despite rising 5d gas prices';
                 divHtml = `
                     <div style="margin-top:5px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.06);">
-                        <div style="color:${divColor}; font-size:0.62rem; font-weight:800;">⚡ ${divType}</div>
+                        <div style="color:${divColor}; font-size:0.62rem; font-weight:800;">${divType}</div>
                         <div style="color:rgba(255,255,255,0.6); font-size:0.56rem; font-style:italic;">${divDesc}</div>
                     </div>`;
             } else if (d.ng5d !== null && Math.abs(bullVal) >= 0.3) {
@@ -1763,11 +1763,11 @@ function drawChartFlowVelocity(flow) {
         // CRITICAL FIX: Evaluate extreme price exhaustion and climax BEFORE raw velocity
         // Prevents calling blow-off tops 'LONG ACCELERATION' and capitulation bottoms 'SHORT ACCELERATION'
         if (isHigh30 && (z1 >= 1.5 || f.longZ >= 1.8)) {
-            timingStatus = 'BLOW-OFF BUYER CLIMAX (FADE / EXIT LONGS)';
-            timingDesc = 'Extreme inflow velocity into 30-day high — 85.7% historical win-rate fade signal in empirical backtests.';
+            timingStatus = 'BUYER CLIMAX (EXIT LONGS)';
+            timingDesc = 'Inflow velocity surge into 30-day highs — historically precedes upward momentum exhaustion.';
         } else if (isLow30 && (z1 <= -1.5 || f.longZ <= -1.5)) {
-            timingStatus = 'CAPITULATION SQUEEZE (TACTICAL 3–5D REBOUND)';
-            timingDesc = 'Long ETF capitulation purge at 30-day lows — mean-reversion snapback zone with 63.3% 5D win rate; monetize quickly.';
+            timingStatus = 'SELLER CAPITULATION (REBOUND WATCH)';
+            timingDesc = 'Heavy outflows at 30-day price lows — historically indicates seller exhaustion and potential 3–5 day rebound.';
         } else if (exZone === 'long' && z3 < -0.5) {
             timingStatus = 'BUYER EXHAUSTION WARNING (DISTRIBUTION)';
             timingDesc = 'NG=F near 30-day high while 3-day flow velocity is draining (<−0.5σ) — distribution divergence.';
@@ -1994,8 +1994,8 @@ function handleFlowVelocityHover(e) {
                 <span style="color:var(--text-dim);">NG=F Price</span>
                 <span style="font-family:monospace; font-weight:700; color:#fff;">${ngPrice !== null ? '$' + ngPrice.toFixed(2) : '—'}</span>
             </div>
-            ${v.exZone === 'long' ? `<div style="font-size:0.6rem; color:#f59e0b; font-weight:700; margin-top:2px;">⚠ Buyer Exhaustion Zone (30d Price High + Draining Flow)</div>` : ''}
-            ${v.exZone === 'short' ? `<div style="font-size:0.6rem; color:#a855f7; font-weight:700; margin-top:2px;">⚠ Short Crowding Zone (Short Raw Z: +${v.rawShortZ.toFixed(2)}σ at 30d Low)</div>` : ''}
+            ${v.exZone === 'long' ? `<div style="font-size:0.6rem; color:#f59e0b; font-weight:700; margin-top:2px;">Buyer Exhaustion Zone (30d Price High + Draining Flow)</div>` : ''}
+            ${v.exZone === 'short' ? `<div style="font-size:0.6rem; color:#a855f7; font-weight:700; margin-top:2px;">Short Crowding Zone (Short Raw Z: +${v.rawShortZ.toFixed(2)}σ at 30d Low)</div>` : ''}
             <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:4px; margin-top:4px;">
                 <div style="font-size:0.62rem; font-weight:800; color:${badgeCol};">${v.timingStatus}</div>
                 <div style="font-size:0.56rem; color:rgba(255,255,255,0.6); margin-top:2px; line-height:1.3;">${v.timingDesc}</div>
