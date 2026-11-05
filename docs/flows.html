@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BLUE MERIDIAN</title>
+<style>
+html, body {
+    background-color: #070a12 !important;
+    background: #070a12 !important;
+    color: #e2e8f0;
+    margin: 0;
+    padding: 0;
+}
+</style>
 <link rel="stylesheet" href="css/auth.css?v=20261104a">
 <script src="js/auth.js?v=20261104a"></script>
 <script>if (typeof Auth !== 'undefined' && !Auth.requireAuth()) { document.documentElement.style.display = 'none'; throw new Error('Auth required'); }</script>
@@ -144,81 +153,8 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
 .time-tabs .tab-btn { font-size: 0.65rem; padding: 4px 10px; }
 
 .chart-wrap { position: relative; width: 100%; }
-/* ---- Flow Suite Mode Switcher ---- */
-.flow-suite-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin: 12px 0 16px;
-    padding: 10px 16px;
-    background: rgba(10, 14, 24, 0.85);
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    flex-wrap: wrap;
-}
-.flow-suite-tabs {
-    display: flex;
-    gap: 6px;
-    background: #0d121f;
-    padding: 4px;
-    border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-}
-.flow-suite-btn {
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 1.2px;
-    padding: 7px 16px;
-    border-radius: 5px;
-    border: 1px solid transparent;
-    background: transparent;
-    color: rgba(255, 255, 255, 0.65);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-transform: uppercase;
-}
-.flow-suite-btn:hover {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.05);
-}
-.flow-suite-btn.active {
-    color: var(--cyan);
-    background: rgba(0, 229, 255, 0.12);
-    border-color: rgba(0, 229, 255, 0.35);
-    box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
-}
-.flow-suite-sync-toggle {
-    display: flex;
-    align-items: center;
-}
-.sync-slider-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.68rem;
-    font-weight: 800;
-    letter-spacing: 1.2px;
-    color: rgba(255, 255, 255, 0.8);
-    cursor: pointer;
-    user-select: none;
-}
-.sync-slider-label input[type="checkbox"] {
-    accent-color: var(--cyan);
-    cursor: pointer;
-    width: 14px;
-    height: 14px;
-}
-.suite-container {
-    display: block;
-    transition: opacity 0.2s ease;
-}
-.suite-container.suite-hidden {
-    display: none !important;
-}
-
-#chartA { width: 100%; height: 350px; }
-#chartB { width: 100%; height: 180px; margin-top: 8px;}
+#chartA { width: 100%; height: 290px; }
+#chartB { width: 100%; height: 130px; margin-top: 6px;}
 
 .stats-row {
     display: flex; justify-content: center; gap: 0;
@@ -477,7 +413,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
     .fc-right { width: 100%; flex-direction: row; align-items: center; gap: 8px; }
     .panel-header { flex-direction: column; align-items: flex-start; gap: 10px; }
     .stats-row { flex-wrap: wrap; gap: 16px; }
-    #chartA { height: 300px; }
+    #chartA { height: 280px; }
     #chartB { height: 160px; }
     #chartZ { height: 220px; }
     #chartCross { height: 250px; }
@@ -514,8 +450,8 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 /* Responsive — 420px */
 @media (max-width: 420px) {
     main { padding: 10px 8px 32px; }
-    #chartA { height: 240px; }
-    #chartB { height: 140px; }
+    #chartA { height: 220px; }
+    #chartB { height: 130px; }
     #chartZ { height: 180px; }
     #chartCross { height: 200px; }
     #chartCompZ { height: 200px; }
@@ -822,43 +758,10 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
         </div>
 
-        <!-- Suite Mode Switcher -->
-        <div class="flow-suite-nav" id="flow-suite-nav">
-            <div class="flow-suite-tabs" id="flow-suite-tabs">
-                <button class="flow-suite-btn active" data-suite="classic" data-tooltip="Classic Fund Flow Suite: Physical dollar daily bars, cumulative volume curves, and divergence scanners. Grounded in actual capital flows.">
-                    CLASSIC FLOW SUITE
-                </button>
-                <button class="flow-suite-btn" data-suite="institutional" data-tooltip="Institutional Composite Suite: Normalized cross-asset Z-scores, velocity exhaustion oscillators, price reactivity, and yearly regime matrices.">
-                    INSTITUTIONAL COMPOSITE SUITE
-                </button>
-                <button class="flow-suite-btn" data-suite="all" data-tooltip="Full Desk: Comprehensive unified view containing both Classic and Institutional Flow Suites side-by-side.">
-                    FULL DESK
-                </button>
-            </div>
-            <div class="flow-suite-sync-toggle">
-                <label class="sync-slider-label" data-tooltip="Sync all timeline range sliders across all charts in real time.">
-                    <input type="checkbox" id="sync-all-sliders" checked>
-                    <span>SYNC ALL CHARTS</span>
-                </label>
-            </div>
-        </div>
-
-        <div id="suite-container-classic" class="suite-container">
-
-
         <!-- Section 3 -->
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Deep Dive: Select an ETF then adjust time range. Range slider zooms Chart A & B simultaneously. Drag on Chart A to measure split-adjusted price return & cumulative flow between any two dates." style="font-size:1.05rem; ">DEEP DIVE</div>
-                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <div class="cross-mode-group">
-                        <span class="cross-mode-label">PRICE AXIS</span>
-                        <div class="tab-group" id="dd-scale-tabs">
-                            <button class="tab-btn active" data-scale="auto" data-tooltip="Auto Scale: Automatically uses Logarithmic price scale on multi-year views (when max/min > 8x) so leveraged decay does not flatten recent years, and Linear scale on shorter windows.">AUTO</button>
-                            <button class="tab-btn" data-scale="log" data-tooltip="Logarithmic Price Scale: Equalizes percentage moves across all years — ideal for multi-year leveraged ETF histories.">LOG</button>
-                            <button class="tab-btn" data-scale="lin" data-tooltip="Linear Price Scale: Standard dollar scale — best for 1W to 1Y windows.">LIN</button>
-                        </div>
-                    </div>
+                <div class="panel-title" data-tooltip="Deep Dive: Select an ETF then adjust time range. Range slider zooms all charts simultaneously. Drag on chart to measure price/flow." style="font-size:1.05rem; ">DEEP DIVE</div>
                 <div class="tab-group time-tabs" id="time-tabs">
                     <button class="tab-btn" data-range="1w">1W</button>
                     <button class="tab-btn" data-range="1m">1M</button>
@@ -869,7 +772,6 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <button class="tab-btn" data-range="3y">3Y</button>
                     <button class="tab-btn" data-range="5y">5Y</button>
                     <button class="tab-btn active" data-range="all">ALL</button>
-                </div>
                 </div>
             </div>
 
@@ -931,7 +833,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <div class="legend-item" data-tooltip="Red bars: net outflow on this trading day"><span class="legend-swatch" style="background:rgba(239,68,68,0.8)"></span> DAILY OUTFLOW</div>
                 </div>
                 <div>
-                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE DEEP DIVE</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #00e5ff; background:rgba(255,255,255,0.02);"><strong style="color:#00e5ff; font-weight:800;">1. PRICE VS CUMULATIVE FLOW DIVERGENCE</strong><br><span style="color:rgba(255,255,255,0.85);">Compare white price line against cumulative flow area.<br>&bull; Price rising while cumulative flow falls = <em>Distribution (Smart money selling into strength)</em><br>&bull; Price falling while cumulative flow rises = <em>Accumulation (Smart money buying weakness)</em></span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #3db87a; background:rgba(255,255,255,0.02);"><strong style="color:#3db87a; font-weight:800;">2. DAILY FLOW BARS</strong><br><span style="color:rgba(255,255,255,0.85);">Green bars = Daily net inflows. Red bars = Daily net outflows.<br>&bull; Taller bars indicate high-conviction institutional block orders.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #f59e0b; background:rgba(255,255,255,0.02);"><strong style="color:#f59e0b; font-weight:800;">3. MEASURE RANGE TOOL</strong><br><span style="color:rgba(255,255,255,0.85);">Click &amp; drag mouse across canvas to calculate exact price % return vs net $ flow accumulation between any two dates.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">HOW TO USE</span>
+                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE DEEP DIVE</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #00e5ff; background:rgba(255,255,255,0.02);"><strong style="color:#00e5ff; font-weight:800;">1. PRICE VS CUMULATIVE FLOW DIVERGENCE</strong><br><span style="color:rgba(255,255,255,0.85);">Compare white price line against cumulative flow area.<br>&bull; Price rising while cumulative flow falls = <em>Distribution (Smart money selling into strength)</em><br>&bull; Price falling while cumulative flow rises = <em>Accumulation (Smart money buying weakness)</em></span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #3db87a; background:rgba(255,255,255,0.02);"><strong style="color:#3db87a; font-weight:800;">2. DAILY FLOW BARS</strong><br><span style="color:rgba(255,255,255,0.85);">Green bars = Daily net inflows. Red bars = Daily net outflows.<br>&bull; Taller bars indicate high-conviction institutional block orders.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #f59e0b; background:rgba(255,255,255,0.02);"><strong style="color:#f59e0b; font-weight:800;">3. MEASURE RANGE TOOL</strong><br><span style="color:rgba(255,255,255,0.85);">Click &amp; drag mouse across canvas to calculate exact price % return vs net $ flow accumulation between any two dates.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">[?] HOW TO USE</span>
                 </div>
             </div>
 
@@ -1028,11 +930,10 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <div class="chart-footer" style="margin-top:6px;">
                 <div class="chart-legend">
                     <div class="legend-item" data-tooltip="Z-Score line showing 30-day standardized capital flow intensity"><span class="legend-line" style="background:var(--cyan)"></span> FLOW Z-SCORE</div>
-                    <div class="legend-item" data-tooltip="20-day rolling mean of the Flow Z-Score — highlights multi-week institutional accumulation or distribution waves"><span class="legend-line" style="background:#f59e0b; height:2px;"></span> 20D ROLLING AVG</div>
                     <div class="legend-item" data-tooltip="Standard deviation threshold lines at +1.5&sigma; (bullish anomaly) and -1.5&sigma; (bearish anomaly)"><span class="legend-line" style="background:rgba(255,255,255,0.4); height:1px; border-top:1px dashed rgba(255,255,255,0.4);"></span> &plusmn;1.5&sigma; THRESHOLD</div>
                 </div>
                 <div>
-                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE FLOW Z-SCORES</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #3db87a; background:rgba(255,255,255,0.02);"><strong style="color:#3db87a; font-weight:800;">1. EXTREME Z-SCORE ANOMALIES (&ge;&plusmn;2.0&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Spikes beyond +2.0&sigma; or -2.0&sigma; flag statistically rare institutional capital accumulation or distribution events.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #ef4444; background:rgba(255,255,255,0.02);"><strong style="color:#ef4444; font-weight:800;">2. SHORT ETF SIGN CONVENTION</strong><br><span style="color:rgba(255,255,255,0.85);">On KOLD, HND, 3NGS: Positive Z = short accumulation (bearish gas signal); Negative Z = short unwinding (bullish gas signal).</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #00e5ff; background:rgba(255,255,255,0.02);"><strong style="color:#00e5ff; font-weight:800;">3. MULTI-ETF SELECTOR</strong><br><span style="color:rgba(255,255,255,0.85);">Click ETF chips (BOIL, KOLD, etc.) to isolate individual fund flow volatility over time.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">HOW TO USE</span>
+                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE FLOW Z-SCORES</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #3db87a; background:rgba(255,255,255,0.02);"><strong style="color:#3db87a; font-weight:800;">1. EXTREME Z-SCORE ANOMALIES (&ge;&plusmn;2.0&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Spikes beyond +2.0&sigma; or -2.0&sigma; flag statistically rare institutional capital accumulation or distribution events.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #ef4444; background:rgba(255,255,255,0.02);"><strong style="color:#ef4444; font-weight:800;">2. SHORT ETF SIGN CONVENTION</strong><br><span style="color:rgba(255,255,255,0.85);">On KOLD, HND, 3NGS: Positive Z = short accumulation (bearish gas signal); Negative Z = short unwinding (bullish gas signal).</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #00e5ff; background:rgba(255,255,255,0.02);"><strong style="color:#00e5ff; font-weight:800;">3. MULTI-ETF SELECTOR</strong><br><span style="color:rgba(255,255,255,0.85);">Click ETF chips (BOIL, KOLD, etc.) to isolate individual fund flow volatility over time.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">[?] HOW TO USE</span>
                 </div>
             </div>
         </div>
@@ -1123,13 +1024,10 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <div class="legend-item" data-tooltip="Net Long minus Short cumulative flow spread"><span class="legend-line" style="background:#00e5ff; border-top:1px dashed #00e5ff;"></span> NET SPREAD</div>
                 </div>
                 <div>
-                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE CROSS-ETF FLOWS</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #00e5ff; background:rgba(255,255,255,0.02);"><strong style="color:#00e5ff; font-weight:800;">1. NET SPREAD OVERLAY</strong><br><span style="color:rgba(255,255,255,0.85);">Click NET SPREAD to view Aggregate Long minus Short cumulative flow. Positive = complex is net-long gas; Negative = complex is net-short gas.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #f59e0b; background:rgba(255,255,255,0.02);"><strong style="color:#f59e0b; font-weight:800;">2. INFLECTION MARKERS</strong><br><span style="color:rgba(255,255,255,0.85);">Click INFLECTIONS to mark sudden &ge;2&sigma; rate-of-change accelerations (institutional regime shifts).</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #a78bfa; background:rgba(255,255,255,0.02);"><strong style="color:#a78bfa; font-weight:800;">3. CORRELATION HEATMAP</strong><br><span style="color:rgba(255,255,255,0.85);">Click CORRELATION to inspect rolling pairwise flow correlations. Positive correlation between BOIL and KOLD signals unusual institutional hedging.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">HOW TO USE</span>
+                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE CROSS-ETF FLOWS</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #00e5ff; background:rgba(255,255,255,0.02);"><strong style="color:#00e5ff; font-weight:800;">1. NET SPREAD OVERLAY</strong><br><span style="color:rgba(255,255,255,0.85);">Click NET SPREAD to view Aggregate Long minus Short cumulative flow. Positive = complex is net-long gas; Negative = complex is net-short gas.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #f59e0b; background:rgba(255,255,255,0.02);"><strong style="color:#f59e0b; font-weight:800;">2. INFLECTION MARKERS</strong><br><span style="color:rgba(255,255,255,0.85);">Click INFLECTIONS to mark sudden &ge;2&sigma; rate-of-change accelerations (institutional regime shifts).</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #a78bfa; background:rgba(255,255,255,0.02);"><strong style="color:#a78bfa; font-weight:800;">3. CORRELATION HEATMAP</strong><br><span style="color:rgba(255,255,255,0.85);">Click CORRELATION to inspect rolling pairwise flow correlations. Positive correlation between BOIL and KOLD signals unusual institutional hedging.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px;">[?] HOW TO USE</span>
                 </div>
             </div>
         </div>
-        </div><!-- /#suite-container-classic -->
-
-        <div id="suite-container-institutional" class="suite-container suite-hidden">
 
         <!-- Section 6.1: Cross-ETF Composite Z-Score History -->
         <div class="panel" id="composite-z-panel">
@@ -1161,20 +1059,6 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <canvas id="chartCompZ"></canvas>
                 <div id="compz-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:180px;"></div>
             </div>
-            <!-- Source / ETF Selector -->
-            <div style="display:flex; justify-content:center; align-items:center; gap:6px; flex-wrap:wrap; margin-top:8px;">
-                <div class="tab-group" id="compz-source-tabs">
-                    <button class="tab-btn active" data-source="all" data-tooltip="Composite (All 6 ETFs): Equal-weighted average of flow Z-scores with short-side sign inversion (+ = bullish gas pressure).">COMPOSITE</button>
-                    <button class="tab-btn" data-source="long" data-tooltip="Long Side (BOIL, HNU, 3NGL): Average flow Z-score across bull ETFs (+ = long inflows).">LONGS</button>
-                    <button class="tab-btn" data-source="short" data-tooltip="Short Side (KOLD, HND, 3NGS): Average raw flow Z-score across bear ETFs (+ = short inflows / bearish gas).">SHORTS</button>
-                    <button class="tab-btn" data-source="BOIL" data-tooltip="Isolate BOIL (2x Long) Flow Z-Score">BOIL</button>
-                    <button class="tab-btn" data-source="HNU" data-tooltip="Isolate HNU (2x Long) Flow Z-Score">HNU</button>
-                    <button class="tab-btn" data-source="3NGL" data-tooltip="Isolate 3NGL (3x Long) Flow Z-Score">3NGL</button>
-                    <button class="tab-btn" data-source="KOLD" data-tooltip="Isolate KOLD (2x Short) Raw Flow Z-Score">KOLD</button>
-                    <button class="tab-btn" data-source="HND" data-tooltip="Isolate HND (2x Short) Raw Flow Z-Score">HND</button>
-                    <button class="tab-btn" data-source="3NGS" data-tooltip="Isolate 3NGS (3x Short) Raw Flow Z-Score">3NGS</button>
-                </div>
-            </div>
             <!-- Range slider -->
             <div class="range-slider-container" style="margin-top:8px;">
                 <div class="range-slider-wrap">
@@ -1192,13 +1076,13 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <!-- Legend + methodology -->
             <div class="chart-footer">
                 <div class="chart-legend">
-                    <div class="legend-item" data-tooltip="Positive Z-score territory (bullish complex pressure / net inflows)"><span class="legend-swatch" style="background:rgba(61,184,122,0.5)"></span> UPWARD PRESSURE</div>
-                    <div class="legend-item" data-tooltip="Negative Z-score territory (bearish complex pressure / net outflows)"><span class="legend-swatch" style="background:rgba(239,68,68,0.5)"></span> DOWNWARD PRESSURE</div>
-                    <div class="legend-item" data-tooltip="20-day rolling mean Z-score trend line"><span class="legend-line" style="background:#f59e0b; height:2px;"></span> 20D TREND</div>
-                    <div class="legend-item" data-tooltip="Standard deviation thresholds at ±1.5σ and ±2.0σ"><span class="legend-line" style="background:rgba(0,255,255,0.4); height:1px; border-top:1px dashed rgba(0,255,255,0.4);"></span> &plusmn;1.5&sigma; THRESHOLDS</div>
+                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(61,184,122,0.5)"></span> UPWARD PRESSURE</div>
+                    <div class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,0.5)"></span> DOWNWARD PRESSURE</div>
+                    <div class="legend-item"><span class="legend-line" style="background:rgba(255,255,255,0.3); height:2px;"></span> ZERO LINE</div>
+                    <div class="legend-item"><span class="legend-line" style="background:rgba(0,255,255,0.4); height:1px; border-top:1px dashed rgba(0,255,255,0.4);"></span> &plusmn;1.5&sigma; THRESHOLDS</div>
                 </div>
                 <div>
-                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE COMPOSITE Z-SCORE</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #3db87a; background:rgba(255,255,255,0.02);"><strong style="color:#3db87a; font-weight:800;">1. BULLISH COMPLEX PRESSURE (&ge;+1.5&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Green glow zone. Signals aggregate complex-wide long accumulation and short unwinding across all 6 ETFs.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #ef4444; background:rgba(255,255,255,0.02);"><strong style="color:#ef4444; font-weight:800;">2. BEARISH COMPLEX PRESSURE (&le;-1.5&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Red glow zone. Signals aggregate short accumulation and long distribution across the complex.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #00e5ff; background:rgba(255,255,255,0.02);"><strong style="color:#00e5ff; font-weight:800;">3. ZERO LINE CROSSINGS</strong><br><span style="color:rgba(255,255,255,0.85);">Crossings above 0 confirm bullish momentum recovery; crossings below 0 confirm bearish momentum breakdown.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px; margin-right:12px;">HOW TO USE</span>
+                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE COMPOSITE Z-SCORE</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #3db87a; background:rgba(255,255,255,0.02);"><strong style="color:#3db87a; font-weight:800;">1. BULLISH COMPLEX PRESSURE (&ge;+1.5&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Green glow zone. Signals aggregate complex-wide long accumulation and short unwinding across all 6 ETFs.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #ef4444; background:rgba(255,255,255,0.02);"><strong style="color:#ef4444; font-weight:800;">2. BEARISH COMPLEX PRESSURE (&le;-1.5&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Red glow zone. Signals aggregate short accumulation and long distribution across the complex.</span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #00e5ff; background:rgba(255,255,255,0.02);"><strong style="color:#00e5ff; font-weight:800;">3. ZERO LINE CROSSINGS</strong><br><span style="color:rgba(255,255,255,0.85);">Crossings above 0 confirm bullish momentum recovery; crossings below 0 confirm bearish momentum breakdown.</span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px; margin-right:12px;">[?] HOW TO USE</span>
                     <span data-tooltip="Methodology: Equal-weighted average of 6 ETF flow Z-scores with short-side sign inversion (KOLD, HND, 3NGS scores flipped). 30-day rolling window inherited from per-ETF computation. Positive = net upward pressure (longs accumulating / shorts exiting). Negative = net downward pressure." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ METHODOLOGY</span>
                 </div>
             </div>
@@ -1223,20 +1107,6 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <canvas id="chartFlowVelocity"></canvas>
                 <div id="flowvel-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:220px;"></div>
             </div>
-            <!-- Source / ETF Selector -->
-            <div style="display:flex; justify-content:center; align-items:center; gap:6px; flex-wrap:wrap; margin-top:8px;">
-                <div class="tab-group" id="flowvel-source-tabs">
-                    <button class="tab-btn active" data-source="all" data-tooltip="Composite (All 6 ETFs) Flow Velocity & Exhaustion">COMPOSITE</button>
-                    <button class="tab-btn" data-source="long" data-tooltip="Long Side (BOIL, HNU, 3NGL) Flow Velocity">LONGS</button>
-                    <button class="tab-btn" data-source="short" data-tooltip="Short Side (KOLD, HND, 3NGS) Raw Flow Velocity">SHORTS</button>
-                    <button class="tab-btn" data-source="BOIL" data-tooltip="BOIL 1D/3D Flow Velocity Z-Score">BOIL</button>
-                    <button class="tab-btn" data-source="HNU" data-tooltip="HNU 1D/3D Flow Velocity Z-Score">HNU</button>
-                    <button class="tab-btn" data-source="3NGL" data-tooltip="3NGL 1D/3D Flow Velocity Z-Score">3NGL</button>
-                    <button class="tab-btn" data-source="KOLD" data-tooltip="KOLD 1D/3D Flow Velocity Z-Score">KOLD</button>
-                    <button class="tab-btn" data-source="HND" data-tooltip="HND 1D/3D Flow Velocity Z-Score">HND</button>
-                    <button class="tab-btn" data-source="3NGS" data-tooltip="3NGS 1D/3D Flow Velocity Z-Score">3NGS</button>
-                </div>
-            </div>
             <!-- Range slider -->
             <div class="range-slider-container" style="margin-top:8px;">
                 <div class="range-slider-wrap">
@@ -1254,14 +1124,13 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <!-- Legend + methodology -->
             <div class="chart-footer">
                 <div class="chart-legend">
-                    <div class="legend-item" data-tooltip="LONG ACCELERATION: Spikes in 1D buying velocity (Z &ge; +2.0&sigma;) flagging institutional accumulation impulses."><span class="legend-swatch" style="background:rgba(61,184,122,0.8)"></span> +1D VELOCITY Z</div>
-                    <div class="legend-item" data-tooltip="SHORT ACCELERATION: Spikes in 1D selling/outflow velocity (Z &le; -2.0&sigma;) confirming breakdown momentum."><span class="legend-swatch" style="background:rgba(239,68,68,0.8)"></span> −1D VELOCITY Z</div>
-                    <div class="legend-item" data-tooltip="EXHAUSTION ZONE: Amber = Buyer depletion at 30d price highs (3D Velocity Z < −0.5σ). Violet = Short crowding at 30d price lows (Short Raw Z > +1.5σ)."><span class="legend-swatch" style="background:rgba(245,158,11,0.35)"></span> EXHAUSTION ZONE</div>
-                    <div class="legend-item" data-tooltip="3D VELOCITY Z: 3-day rate of change of flow Z-score (5d EMA-smoothed on multi-year views for clarity)."><span class="legend-line" style="background:#4ab8d8; height:2px;"></span> 3D VELOCITY Z</div>
-                    <div class="legend-item" data-tooltip="NYMEX Henry Hub natural gas front-month futures price on the Right Y-Axis."><span class="legend-line" style="background:rgba(255,255,255,0.55); height:1px; border-top:1px dashed rgba(255,255,255,0.6);"></span> NG=F (RIGHT AXIS)</div>
+                    <div class="legend-item" data-tooltip="LONG ACCELERATION: Spikes in long ETF buying velocity (Z &ge; +2.0&sigma;) flagging institutional accumulation 1-5 days before troughs."><span class="legend-swatch" style="background:rgba(61,184,122,0.8)"></span> LONG ACCELERATION</div>
+                    <div class="legend-item" data-tooltip="SHORT ACCELERATION: Spikes in short ETF buying velocity (Z &le; -2.0&sigma;) confirming aggressive downside breakdown momentum."><span class="legend-swatch" style="background:rgba(239,68,68,0.8)"></span> SHORT ACCELERATION</div>
+                    <div class="legend-item" data-tooltip="EXHAUSTION ZONE: Amber window flagging institutional buyer depletion while prices push to 30-day highs (30-60 day lead warning before tops)."><span class="legend-swatch" style="background:rgba(245,158,11,0.3)"></span> EXHAUSTION ZONE</div>
+                    <div class="legend-item" data-tooltip="3D VELOCITY Z: 3-day smoothed rate of change of composite ETF flow Z-score, tracking directional capital momentum."><span class="legend-line" style="background:#4ab8d8; height:2px;"></span> 3D VELOCITY Z</div>
                 </div>
                 <div>
-                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE THIS ENGINE</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #f59e0b; background:rgba(255,255,255,0.02);"><strong style="color:#f59e0b; font-weight:800;">1. AMBER EXHAUSTION ZONES</strong><br><span style="color:rgba(255,255,255,0.85);">Smart money buyer depletion near 30d price highs.<br>&bull; <em>Action: Exit BOIL / Prepare KOLD (30&ndash;60d ahead of tops)</em></span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #3db87a; background:rgba(255,255,255,0.02);"><strong style="color:#3db87a; font-weight:800;">2. GREEN ACCELERATION BARS (&ge;+2.0&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Institutional accumulation impulse near price lows.<br>&bull; <em>Action: Buy BOIL (1&ndash;5d early trough entry)</em></span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #ef4444; background:rgba(255,255,255,0.02);"><strong style="color:#ef4444; font-weight:800;">3. RED ACCELERATION BARS (&le;-2.0&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Short ETF accumulation spike into breakdown.<br>&bull; <em>Action: Downside breakdown momentum active</em></span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px; margin-right:12px;">HOW TO USE</span>
+                    <span data-tooltip='<div style="font-weight:800; color:var(--cyan); font-size:0.75rem; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:4px; margin-bottom:8px; letter-spacing:0.5px;">HOW TO USE THIS ENGINE</div><div style="display:flex; flex-direction:column; gap:8px; font-size:0.65rem; line-height:1.45;"><div style="padding:5px 8px; border-radius:4px; border:1px solid #f59e0b; background:rgba(255,255,255,0.02);"><strong style="color:#f59e0b; font-weight:800;">1. AMBER EXHAUSTION ZONES</strong><br><span style="color:rgba(255,255,255,0.85);">Smart money buyer depletion near 30d price highs.<br>&bull; <em>Action: Exit BOIL / Prepare KOLD (30&ndash;60d ahead of tops)</em></span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #3db87a; background:rgba(255,255,255,0.02);"><strong style="color:#3db87a; font-weight:800;">2. GREEN ACCELERATION BARS (&ge;+2.0&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Institutional accumulation impulse near price lows.<br>&bull; <em>Action: Buy BOIL (1&ndash;5d early trough entry)</em></span></div><div style="padding:5px 8px; border-radius:4px; border:1px solid #ef4444; background:rgba(255,255,255,0.02);"><strong style="color:#ef4444; font-weight:800;">3. RED ACCELERATION BARS (&le;-2.0&sigma;)</strong><br><span style="color:rgba(255,255,255,0.85);">Short ETF accumulation spike into breakdown.<br>&bull; <em>Action: Downside breakdown momentum active</em></span></div></div>' style="font-size:0.6rem; color:var(--cyan); cursor:help; font-weight:700; letter-spacing:0.5px; margin-right:12px;">[?] HOW TO USE</span>
                     <span data-tooltip="Methodology: Computes daily velocity Z-scores of ETF flows. Flow Exhaustion occurs when NG price is near 30-day highs while 3-day velocity Z is negative, signalling institutional momentum draining 30-60 days ahead of price tops." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ METHODOLOGY</span>
                 </div>
             </div>
@@ -1307,16 +1176,10 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                 <!-- Right: FLOW SOURCE -->
                 <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
                     <span style="font-size:0.6rem; font-weight:800; color:rgba(255,255,255,0.45); letter-spacing:0.8px;">FLOW SOURCE</span>
-                    <div class="tab-group" id="flow-heat-source-tabs" style="flex-wrap:wrap;">
+                    <div class="tab-group" id="flow-heat-source-tabs">
                         <button class="tab-btn active" data-source="all" data-tooltip="All ETFs: Equal-weighted average of flow Z-scores across all 6 long and short ETFs (with short-side sign inversion: inflows to KOLD/HND/3NGS are treated as selling pressure).">ALL ETFs</button>
-                        <button class="tab-btn" data-source="long" data-tooltip="Longs (Bull): Equal-weighted average of flow Z-scores across long ETFs (BOIL, HNU, 3NGL). Positive represents inflows.">LONGS</button>
-                        <button class="tab-btn" data-source="short" data-tooltip="Shorts (Bear): Equal-weighted average of raw flow Z-scores across short ETFs (KOLD, HND, 3NGS). Positive (green) represents inflows to short ETFs (bearish gas positioning).">SHORTS</button>
-                        <button class="tab-btn" data-source="BOIL" data-tooltip="BOIL (2x Long) Daily Flow Z-Score">BOIL</button>
-                        <button class="tab-btn" data-source="HNU" data-tooltip="HNU (2x Long) Daily Flow Z-Score">HNU</button>
-                        <button class="tab-btn" data-source="3NGL" data-tooltip="3NGL (3x Long) Daily Flow Z-Score">3NGL</button>
-                        <button class="tab-btn" data-source="KOLD" data-tooltip="KOLD (2x Short) Daily Flow Z-Score (+ = KOLD Inflow)">KOLD</button>
-                        <button class="tab-btn" data-source="HND" data-tooltip="HND (2x Short) Daily Flow Z-Score (+ = HND Inflow)">HND</button>
-                        <button class="tab-btn" data-source="3NGS" data-tooltip="3NGS (3x Short) Daily Flow Z-Score (+ = 3NGS Inflow)">3NGS</button>
+                        <button class="tab-btn" data-source="long" data-tooltip="Longs (Bull): Equal-weighted average of flow Z-scores across long ETFs (BOIL, HNU, 3NGL). Positive represents inflows.">LONGS (Bull)</button>
+                        <button class="tab-btn" data-source="short" data-tooltip="Shorts (Bear): Equal-weighted average of flow Z-scores across short ETFs (KOLD, HND, 3NGS). Positive represents inflows to short ETFs (bearish sentiment).">SHORTS (Bear)</button>
                     </div>
                 </div>
             </div>
@@ -1329,15 +1192,15 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <!-- Legend -->
             <div class="heat-legend" style="display:flex; align-items:center; gap:12px; margin-top:12px; justify-content:center; flex-wrap:wrap; padding-top:10px; border-top:1px solid rgba(255,255,255,0.05);">
                 <div style="display:flex; align-items:center; gap:6px;">
-                    <span id="flow-heat-lbl-outflow" style="font-size:0.6rem; color:rgba(255,255,255,0.6); font-weight:600;">Outflow (Bear)</span>
+                    <span style="font-size:0.6rem; color:rgba(255,255,255,0.6); font-weight:600;">Outflow (Bear)</span>
                     <span class="flow-heat-swatch" style="background:rgba(239, 68, 68, 0.85); border:1px solid rgba(239, 68, 68, 1);"></span>
                     <span class="flow-heat-swatch" style="background:rgba(239, 68, 68, 0.45); border:1px solid rgba(239, 68, 68, 0.65);"></span>
                     <span class="flow-heat-swatch" style="background:#1a1a28; border:1px solid rgba(255,255,255,0.04);"></span>
                     <span class="flow-heat-swatch" style="background:rgba(61, 184, 122, 0.45); border:1px solid rgba(61, 184, 122, 0.65);"></span>
                     <span class="flow-heat-swatch" style="background:rgba(61, 184, 122, 0.85); border:1px solid rgba(61, 184, 122, 1);"></span>
-                    <span id="flow-heat-lbl-inflow" style="font-size:0.6rem; color:rgba(255,255,255,0.6); font-weight:600;">Inflow (Bull)</span>
+                    <span style="font-size:0.6rem; color:rgba(255,255,255,0.6); font-weight:600;">Inflow (Bull)</span>
                 </div>
-                <span id="flow-heat-legend-sep" style="width:1px; height:12px; background:rgba(255,255,255,0.12); margin:0 4px;"></span>
+                <span style="width:1px; height:12px; background:rgba(255,255,255,0.12); margin:0 4px;"></span>
                 <div id="flow-heat-legend-signals" style="display:flex; align-items:center; gap:8px; font-size:0.58rem; color:#fff;">
                     <div style="display:flex; align-items:center; gap:4px;"><div style="width:6px; height:6px; border-radius:50%; background:#3db87a;"></div>Bullish Div</div>
                     <div style="display:flex; align-items:center; gap:4px;"><div style="width:6px; height:6px; border-radius:50%; background:#ef4444;"></div>Bearish Div</div>
@@ -1365,20 +1228,6 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <div class="chart-wrap" style="position:relative;">
                 <canvas id="chartFlowNG"></canvas>
                 <div id="flowng-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:200px;"></div>
-            </div>
-            <!-- Source / ETF Selector -->
-            <div style="display:flex; justify-content:center; align-items:center; gap:6px; flex-wrap:wrap; margin-top:8px;">
-                <div class="tab-group" id="flowng-source-tabs">
-                    <button class="tab-btn active" data-source="all" data-tooltip="Composite (All 6 ETFs) Contrarian Flow-Price Divergence">COMPOSITE</button>
-                    <button class="tab-btn" data-source="long" data-tooltip="Long Side (BOIL, HNU, 3NGL) Contrarian Divergence">LONGS</button>
-                    <button class="tab-btn" data-source="short" data-tooltip="Short Side (KOLD, HND, 3NGS) Gas-Aligned Contrarian Divergence">SHORTS</button>
-                    <button class="tab-btn" data-source="BOIL" data-tooltip="BOIL Contrarian Flow vs NG=F Divergence">BOIL</button>
-                    <button class="tab-btn" data-source="HNU" data-tooltip="HNU Contrarian Flow vs NG=F Divergence">HNU</button>
-                    <button class="tab-btn" data-source="3NGL" data-tooltip="3NGL Contrarian Flow vs NG=F Divergence">3NGL</button>
-                    <button class="tab-btn" data-source="KOLD" data-tooltip="KOLD Gas-Aligned Contrarian Divergence">KOLD</button>
-                    <button class="tab-btn" data-source="HND" data-tooltip="HND Gas-Aligned Contrarian Divergence">HND</button>
-                    <button class="tab-btn" data-source="3NGS" data-tooltip="3NGS Gas-Aligned Contrarian Divergence">3NGS</button>
-                </div>
             </div>
             <!-- Range slider -->
             <div class="range-slider-container" style="margin-top:8px;">
@@ -1409,7 +1258,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 6.3: Flow Reactivity Intensity -->
         <div class="panel" id="flow-reactivity-panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Signed Flow Reactivity (Breakout Chasing vs Downside Capitulation): Plots bars ONLY when flow direction ALIGNS with NG's recent 5-session price move (23.3% of trading days). TOP (+σ Cyan): Bullish Breakout Chasing (flows buying into a 5d rally — empirically 67.3% 5d continuation win rate, +5.83% 21d avg return, p=0.025). BOTTOM (−σ Amber): Downside Capitulation Purge (longs puking / shorts piling in AFTER a 5d selloff — empirically followed by a +5.13% 5d mean-reversion bounce, 63.3% hit rate)." style="">Flow Reactivity Intensity (Trend Participation vs Capitulation)</div>
+                <div class="panel-title" data-tooltip="Flow Reactivity Intensity: Shows when composite flows are most reactive (aligned with NG's recent 5-session price move). Gray bars indicate the strength of the reactivity momentum. Higher intensity = flows chasing price more aggressively. This is a MEAN-REVERSION setup: crowds buying/selling on momentum. Useful for longer-term reversals (21d+). Zero bars = flows opposing price (divergence — see previous chart)." style="">Flow Reactivity Intensity (Mean-Reversion Signal)</div>
                 <div class="tab-group time-tabs" id="reactivity-time-tabs">
                     <button class="tab-btn" data-range="1m">1M</button>
                     <button class="tab-btn" data-range="3m">3M</button>
@@ -1423,21 +1272,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             </div>
             <div class="chart-wrap" style="position:relative;">
                 <canvas id="chartReactivity"></canvas>
-                <div id="reactivity-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:220px;"></div>
-            </div>
-            <!-- Source / ETF Selector -->
-            <div style="display:flex; justify-content:center; align-items:center; gap:6px; flex-wrap:wrap; margin-top:8px;">
-                <div class="tab-group" id="reactivity-source-tabs">
-                    <button class="tab-btn active" data-source="all" data-tooltip="Composite (All 6 ETFs) Signed Reactivity">COMPOSITE</button>
-                    <button class="tab-btn" data-source="long" data-tooltip="Long Side (BOIL, HNU, 3NGL) Signed Reactivity">LONGS</button>
-                    <button class="tab-btn" data-source="short" data-tooltip="Short Side (KOLD, HND, 3NGS) Gas-Aligned Reactivity">SHORTS</button>
-                    <button class="tab-btn" data-source="BOIL" data-tooltip="BOIL Trend-Aligned Reactivity">BOIL</button>
-                    <button class="tab-btn" data-source="HNU" data-tooltip="HNU Trend-Aligned Reactivity">HNU</button>
-                    <button class="tab-btn" data-source="3NGL" data-tooltip="3NGL Trend-Aligned Reactivity">3NGL</button>
-                    <button class="tab-btn" data-source="KOLD" data-tooltip="KOLD Gas-Aligned Reactivity">KOLD</button>
-                    <button class="tab-btn" data-source="HND" data-tooltip="HND Gas-Aligned Reactivity">HND</button>
-                    <button class="tab-btn" data-source="3NGS" data-tooltip="3NGS Gas-Aligned Reactivity">3NGS</button>
-                </div>
+                <div id="reactivity-tooltip" style="position:absolute; display:none; background:rgba(13,17,28,0.95); border:1px solid var(--border-primary); border-radius:6px; padding:10px 14px; font-size:0.72rem; color:var(--text-bright); pointer-events:none; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:200px;"></div>
             </div>
             <!-- Range slider -->
             <div class="range-slider-container" style="margin-top:8px;">
@@ -1456,12 +1291,10 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
             <!-- Legend -->
             <div class="chart-footer">
                 <div class="chart-legend">
-                    <div class="legend-item" data-tooltip="BULLISH BREAKOUT CHASING (+σ): Flows are bullish while NG=F rose over the prior 5 sessions. Empirically shows 67.3% 5d continuation and +5.83% 21d forward return (p=0.025)."><span class="legend-swatch" style="background:rgba(0,229,255,0.75)"></span> +σ BREAKOUT CHASING</div>
-                    <div class="legend-item" data-tooltip="DOWNSIDE CAPITULATION PURGE (−σ): Flows are bearish (long redemptions / short inflows) AFTER NG=F already fell over 5 sessions. Empirically marks capitulation, followed by +5.13% 5d mean-reversion bounce (63.3% hit rate)."><span class="legend-swatch" style="background:rgba(245,158,11,0.75)"></span> −σ CAPITULATION PURGE</div>
-                    <div class="legend-item" data-tooltip="NYMEX Henry Hub natural gas front-month futures price on the Right Y-Axis."><span class="legend-line" style="background:rgba(148,163,184,0.65); height:2px;"></span> NG=F PRICE (RIGHT AXIS)</div>
-                    <div class="legend-item" data-tooltip="Zero bar = flows opposing recent price direction (see Flow-Price Divergence Signal chart above)."><span style="width:16px; height:2px; background:rgba(255,255,255,0.15); display:inline-block; border-top: 1px solid rgba(255,255,255,0.2);"></span> ZERO = CONTRARIAN</div>
+                    <div class="legend-item" data-tooltip="Flows aligned with NG's recent 5-session move. Bar height = composite Z-Score magnitude. Higher bars = stronger momentum chasing. Mean-reversion trades execute when reactivity is extreme."><span class="legend-swatch" style="background:rgba(148,163,184,0.65)"></span> REACTIVITY INTENSITY</div>
+                    <div class="legend-item" data-tooltip="Zero bar = flows opposing recent price direction (see Divergence Signal chart for contrarian opportunities)."><span style="width:16px; height:2px; background:rgba(255,255,255,0.15); display:inline-block; border-top: 1px solid rgba(255,255,255,0.2);"></span> ZERO = CONTRARIAN</div>
                 </div>
-                <span data-tooltip="EMPIRICAL FINDING (2,705 DAYS): Because leveraged ETF flows are counter-trend (dip-buying) on 64% of days, trend-aligned reactive flows (23% of days) represent rare regime shifts: upside breakout chasing (+σ) leads to 5-21d trend continuation (+5.83% 21d, p=0.025), while downside panic selling (−σ) marks late retail capitulation (+5.13% 5d bounce)." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ TREND vs CAPITULATION EDGE</span>
+                <span data-tooltip="High reactivity + extreme magnitude = crowds acting on momentum. Mean-reversion reversal likely. Audit finding: 21-day reversals were larger when magnitude was highest, even though short-term (1-5d) directional accuracy was near-random. Pairs well with technical analysis or RSI extremes." style="font-size:0.6rem; color:rgba(255,255,255,0.45); cursor:help; letter-spacing:0.5px;">ⓘ MEAN-REVERSION SETUP</span>
             </div>
         </div>
 
@@ -1492,7 +1325,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                     <tr>
                         <th data-tooltip="Date the divergence window ends.">DATE</th>
                         <th data-tooltip="Lookback window length in trading days.">WIN</th>
-                        <th data-tooltip="LONG LEADS: longs accumulating while shorts distribute (bullish gas rotation). SHORT LEADS: shorts accumulating while longs distribute (bearish gas rotation).">TYPE</th>
+                        <th data-tooltip="LONG LEADS: longs accumulating while shorts distribute (bearish gas). SHORT LEADS: shorts distributing while longs pull back (bullish gas).">TYPE</th>
                         <th data-tooltip="Total net capital flow across BOIL + HNU + 3NGL during the window.">LONG Σ</th>
                         <th data-tooltip="Total net capital flow across KOLD + HND + 3NGS during the window.">SHORT Σ</th>
                         <th data-tooltip="Capital spread: LONG Σ − SHORT Σ. Large absolute values indicate strong side-rotation.">Δ SPR</th>
@@ -1518,18 +1351,12 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 7: Yearly Flow Frequency Matrix -->
         <div class="panel" id="yearly-matrix-panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Shows annual flow signal activity per ETF across all historical years. Toggle between Significant Events (|Z| ≥ 1.5σ), Extreme Anomalies (|Z| ≥ 2.0σ), and Net Annual Dollar Flow." style="">Yearly Flow Activity Matrix</div>
-                <div class="tab-group" id="matrix-mode-tabs">
-                    <button class="tab-btn active" style="text-transform:none;" data-matrixmode="z15" data-tooltip="Count of trading days with |Z-Score| ≥ 1.5σ and average |Z| magnitude">|Z| ≥ 1.5σ EVENTS</button>
-                    <button class="tab-btn" style="text-transform:none;" data-matrixmode="z20" data-tooltip="Count of extreme anomaly days with |Z-Score| ≥ 2.0σ and average |Z| magnitude">|Z| ≥ 2.0σ EXTREMES</button>
-                    <button class="tab-btn" data-matrixmode="usd" data-tooltip="Net cumulative dollar flow and inflow/outflow event balance per year">NET USD FLOW</button>
-                </div>
+                <div class="panel-title" data-tooltip="Shows the number of significant flow events (|Z-Score| ≥ 1.5) per year per ETF, with average Z-Score magnitude. Helps identify which years had the most active flow signals." style="">Yearly Flow Activity Matrix</div>
             </div>
             <div id="yearly-matrix-container" style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
                 <div style="color:rgba(255, 255, 255, 0.85); padding:20px; text-align:center; font-size:0.7rem; letter-spacing:1px;">Loading matrix…</div>
             </div>
         </div>
-        </div><!-- /#suite-container-institutional -->
 
 
     </main>
@@ -1667,7 +1494,6 @@ const state = {
     cache: {},
     activeTicker: 'BOIL',
     activeZTicker: 'BOIL',
-    deepDiveScale: 'auto', // 'auto' | 'log' | 'linear'
     timeRange: 'all',
     crossFilter: 'all', // all, long, short
     divTicker: 'BOIL',  // independent ETF selector for divergence panel
@@ -1702,11 +1528,6 @@ const state = {
     flowHeatOffset: 0,
     flowHeatMode: 'unified',
     flowHeatSource: 'all',
-    compZSource: 'all',
-    flowVelSource: 'all',
-    flowNGSource: 'all',
-    reactivitySource: 'all',
-    matrixMode: 'z15',
     zoomReactivity: { start: 0, end: 1 },  // reactivity chart zoom — independent
     divValsCache: [],  // [{signed, ng5d}] — built per render in drawChartFlowNG, read by hover handler
     velValsCache: [],  // [{vel1d, vel3d, longVel, shortVel, cycleState, timingStatus}] — built per render in drawChartFlowVelocity
@@ -1857,66 +1678,6 @@ async function init() {
                 b.classList.add('active');
                 state.flowHeatSource = b.dataset.source;
                 renderFlowHeatCalendar(state.flowHeatOffset);
-            });
-        });
-
-        // Deep Dive Scale selector (Auto / Log / Linear)
-        document.querySelectorAll('#dd-scale-tabs .tab-btn').forEach(b => {
-            b.addEventListener('click', () => {
-                document.querySelectorAll('#dd-scale-tabs .tab-btn').forEach(x => x.classList.remove('active'));
-                b.classList.add('active');
-                state.deepDiveScale = b.dataset.scale;
-                renderCharts();
-            });
-        });
-
-        // Composite Z Source selector
-        document.querySelectorAll('#compz-source-tabs .tab-btn').forEach(b => {
-            b.addEventListener('click', () => {
-                document.querySelectorAll('#compz-source-tabs .tab-btn').forEach(x => x.classList.remove('active'));
-                b.classList.add('active');
-                state.compZSource = b.dataset.source;
-                renderCompZChart();
-            });
-        });
-
-        // Flow Velocity Source selector
-        document.querySelectorAll('#flowvel-source-tabs .tab-btn').forEach(b => {
-            b.addEventListener('click', () => {
-                document.querySelectorAll('#flowvel-source-tabs .tab-btn').forEach(x => x.classList.remove('active'));
-                b.classList.add('active');
-                state.flowVelSource = b.dataset.source;
-                if (typeof renderFlowVelChart === 'function') renderFlowVelChart();
-            });
-        });
-
-        // Flow vs NG Source selector
-        document.querySelectorAll('#flowng-source-tabs .tab-btn').forEach(b => {
-            b.addEventListener('click', () => {
-                document.querySelectorAll('#flowng-source-tabs .tab-btn').forEach(x => x.classList.remove('active'));
-                b.classList.add('active');
-                state.flowNGSource = b.dataset.source;
-                renderFlowNGChart();
-            });
-        });
-
-        // Reactivity Source selector
-        document.querySelectorAll('#reactivity-source-tabs .tab-btn').forEach(b => {
-            b.addEventListener('click', () => {
-                document.querySelectorAll('#reactivity-source-tabs .tab-btn').forEach(x => x.classList.remove('active'));
-                b.classList.add('active');
-                state.reactivitySource = b.dataset.source;
-                renderReactivityChart();
-            });
-        });
-
-        // Yearly Matrix Mode selector
-        document.querySelectorAll('#matrix-mode-tabs .tab-btn').forEach(b => {
-            b.addEventListener('click', () => {
-                document.querySelectorAll('#matrix-mode-tabs .tab-btn').forEach(x => x.classList.remove('active'));
-                b.classList.add('active');
-                state.matrixMode = b.dataset.matrixmode;
-                renderYearlyMatrix();
             });
         });
 
@@ -2106,10 +1867,10 @@ function renderSection1() {
     // ── Short-side label ─────────────────────────────────────────────────────
     // shortFlow > 0: capital entering short ETFs (bearish for gas)
     // shortFlow < 0: capital leaving short ETFs (bullish for gas — short squeeze / conviction exit)
-    // Color is INVERTED vs flow direction: exits from shorts = bullish = green, inflows to shorts = bearish = red
+    // Color is INVERTED vs flow direction: exits from shorts = bullish = green
     const shortFlow = data.bear_flow_30d;
     el('sent-short').textContent = fmtUsd(shortFlow);
-    el('sent-short').className   = `s-val ${shortFlow <= 0 ? 'val-green' : 'val-red'}`;
+    el('sent-short').className   = `s-val ${shortFlow <= 0 ? 'val-green' : 'val-red'}`; // short outflow = bullish for gas = green
 
     let shortLabel, shortColor;
     if (shortFlow < 0) {
@@ -2145,12 +1906,9 @@ function renderSection1() {
     el('sent-pct-short').style.color = shortBarColor;
 
     // ── Overall sentiment badge ───────────────────────────────────────────────
-    const netBullishImpulse = longFlow - shortFlow;
     const status = data.sentiment;
     el('sent-status').textContent  = status;
     el('sent-status').className    = `s-status ${status === 'BULLISH' ? 'val-green' : status === 'BEARISH' ? 'val-red' : 'val-muted'}`;
-    el('sent-status').setAttribute('data-tooltip',
-        `30D Net Bullish Flow Impulse (Long Flow − Short Flow): ${fmtUsd(netBullishImpulse)}. Long 30D: ${fmtUsd(longFlow)} (avg Z ${zLong >= 0 ? '+' : ''}${zLong.toFixed(2)}σ) | Short 30D: ${fmtUsd(shortFlow)} (avg Z ${zShort >= 0 ? '+' : ''}${zShort.toFixed(2)}σ).`);
 }
 
 // Returns a REACTIVE or LEADING badge for the Z-Score cell.
@@ -2158,46 +1916,30 @@ function renderSection1() {
 // LEADING:  flow runs against recent price — the sub-signal with marginal predictive value.
 // Returns '' when |Z| < 0.5 or price context is unavailable.
 function getFlowSignalTag(tk, zscore) {
-    const d = state.summary && state.summary.tickers && state.summary.tickers[tk];
+    if (Math.abs(zscore) < 0.5) return '';
     const ng = state.summary && state.summary.ng_history;
-    if (!d || !ng || ng.length < 7) return '';
-    // Match NG price to the ETF's latest_date (prevents 1-day look-ahead bias if ng_history has a newer bar)
-    const targetDate = d.latest_date;
-    let ngIdx = ng.length - 1;
+    if (!ng || ng.length < 7) return '';
+    const targetDate = state.summary.tickers && state.summary.tickers[tk] && state.summary.tickers[tk].latest_date;
+    let recentIdx = ng.length - 1;
     if (targetDate) {
         for (let i = ng.length - 1; i >= 0; i--) {
-            if (ng[i].date <= targetDate) { ngIdx = i; break; }
+            if (ng[i].date <= targetDate) { recentIdx = i; break; }
         }
     }
-    if (ngIdx < 5) return '';
-    const recent = ng[ngIdx].close;
-    const prior5 = ng[ngIdx - 5].close;
+    const recent = ng[recentIdx].close;
+    const priorIdx = Math.max(0, recentIdx - 5);
+    const prior5 = ng[priorIdx].close;
     if (!prior5 || prior5 === 0) return '';
     const ng5dReturn = (recent - prior5) / prior5;
+    if (Math.abs(ng5dReturn) < 0.005) return ''; // < 0.5% move — too flat to classify
     const isShort = ['KOLD', 'HND', '3NGS'].includes(tk);
-    const priceBullish = ng5dReturn > 0;
-
-    // Primary check: 1-day Z-score >= 0.5
-    if (Math.abs(zscore) >= 0.5 && Math.abs(ng5dReturn) >= 0.005) {
-        const signalBullish = isShort ? zscore < 0 : zscore > 0;
-        if (signalBullish === priceBullish) {
-            return `<span class="fc-signal-tag fc-signal-reactive" data-tooltip="1D REACTIVE: Today's flow Z-Score (${zscore >= 0 ? '+' : ''}${zscore.toFixed(2)}σ) aligns with NG=F's 5-day move (${(ng5dReturn * 100 >= 0 ? '+' : '') + (ng5dReturn * 100).toFixed(1)}% as of ${ng[ngIdx].date}). Breakout chasing (+Z with +NG) shows +5.83% 21d continuation; downside capitulation (-Z with -NG) marks exhaustion (+5.13% 5d bounce).">REACTIVE</span>`;
-        } else {
-            return `<span class="fc-signal-tag fc-signal-leading" data-tooltip="1D LEADING: Today's flow Z-Score (${zscore >= 0 ? '+' : ''}${zscore.toFixed(2)}σ) opposes NG=F's 5-day move (${(ng5dReturn * 100 >= 0 ? '+' : '') + (ng5dReturn * 100).toFixed(1)}% as of ${ng[ngIdx].date}). Contrarian dip-buying / rally-selling accounts for 64% of all Nat-Gas ETF flows.">LEADING</span>`;
-        }
+    const signalBullish = isShort ? zscore < 0 : zscore > 0;
+    const priceBullish  = ng5dReturn > 0;
+    if (signalBullish === priceBullish) {
+        return `<span class="fc-signal-tag fc-signal-reactive" data-tooltip="REACTIVE: This Z-Score spike aligns with NG's recent 5-day price move — likely momentum chasing. Audit across 2,500+ trading days shows reactive flows have limited forward predictive value (hit rate ≈ coin flip).">REACTIVE</span>`;
+    } else {
+        return `<span class="fc-signal-tag fc-signal-leading" data-tooltip="LEADING: Flow direction opposes NG's recent 5-day move. Contrarian flows show marginally better 21-day forward accuracy in our audit — the strongest sub-signal found in flow data.">LEADING</span>`;
     }
-
-    // Secondary check: when 1D |Z| < 0.5, classify the 5-day rolling flow vs 5-day NG=F move so every active regime is tagged
-    const flow5d = d.flow_5d || 0;
-    if (Math.abs(flow5d) > 50000 && Math.abs(ng5dReturn) >= 0.005) {
-        const flow5dBullish = isShort ? flow5d < 0 : flow5d > 0;
-        if (flow5dBullish === priceBullish) {
-            return `<span class="fc-signal-tag fc-signal-reactive" style="opacity:0.78;" data-tooltip="5D REACTIVE: Daily Z-Score is quiet (${zscore >= 0 ? '+' : ''}${zscore.toFixed(2)}σ), but 5D net flow (${fmtUsd(flow5d)}) is trend-aligned with NG=F's 5D return (${(ng5dReturn * 100 >= 0 ? '+' : '') + (ng5dReturn * 100).toFixed(1)}%).">5D REACTIVE</span>`;
-        } else {
-            return `<span class="fc-signal-tag fc-signal-leading" style="opacity:0.78;" data-tooltip="5D LEADING: Daily Z-Score is quiet (${zscore >= 0 ? '+' : ''}${zscore.toFixed(2)}σ), but 5D net flow (${fmtUsd(flow5d)}) runs counter to NG=F's 5D return (${(ng5dReturn * 100 >= 0 ? '+' : '') + (ng5dReturn * 100).toFixed(1)}%).">5D LEADING</span>`;
-        }
-    }
-    return `<span class="fc-signal-tag" style="background:rgba(148,163,184,0.1);color:rgba(148,163,184,0.7);border:1px solid rgba(148,163,184,0.2);" data-tooltip="NEUTRAL: Both 1D Z-Score (${zscore >= 0 ? '+' : ''}${zscore.toFixed(2)}σ) and 5D flow (${fmtUsd(flow5d)}) are near equilibrium.">BALANCED</span>`;
 }
 
 function renderSection2() {
@@ -2384,8 +2126,7 @@ function getBaseVisibleData() {
     else if (state.timeRange === '3y') days = 1095;
     else if (state.timeRange === '5y') days = 1825;
 
-    const lastDateStr = allData.length ? allData[allData.length - 1].date : null;
-    const cutoffDate = lastDateStr ? new Date(lastDateStr + 'T12:00:00Z') : new Date();
+    const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
     const cutoffStr = cutoffDate.toISOString().slice(0, 10);
 
@@ -2409,8 +2150,7 @@ function getZBaseData() {
     if (state.timeRange === 'all') return allData;
     const dayMap = {'1w':7,'1m':30,'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095,'5y':1825};
     const days = dayMap[state.timeRange] || 30;
-    const lastDateStr = allData.length ? allData[allData.length - 1].date : null;
-    const cutoffDate = lastDateStr ? new Date(lastDateStr + 'T12:00:00Z') : new Date();
+    const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
     const cutoffStr = cutoffDate.toISOString().slice(0, 10);
     const idx = allData.findIndex(d => d.date >= cutoffStr);
@@ -2494,22 +2234,10 @@ function drawChartA(data) {
     
     const nMax = Math.max(...navs), nMin = Math.min(...navs);
     const nRange = Math.max(nMax - nMin, 0.01);
-    const posMin = Math.max(nMin, 0.0001);
-    const navRatio = nMax / posMin;
-    const useLogNav = state.deepDiveScale === 'log' || (state.deepDiveScale === 'auto' && navRatio > 5.0);
-    const logMin = Math.log10(posMin);
-    const logMax = Math.log10(Math.max(nMax, posMin * 1.01));
-    const logRange = Math.max(logMax - logMin, 1e-6);
     
     const getX = i => pad.left + (i / (data.length - 1)) * chartW;
     const getFY = val => pad.top + chartH - ((val - fMin) / fRange) * chartH;
-    const getNY = val => {
-        if (useLogNav) {
-            const lv = Math.log10(Math.max(val, posMin));
-            return pad.top + chartH - ((lv - logMin) / logRange) * chartH;
-        }
-        return pad.top + chartH - ((val - nMin) / nRange) * chartH;
-    };
+    const getNY = val => pad.top + chartH - ((val - nMin) / nRange) * chartH;
     
     const y0 = Math.max(pad.top, Math.min(pad.top + chartH, getFY(0)));
     
@@ -2600,33 +2328,15 @@ function drawChartA(data) {
     });
 
     // NAV Y-axis tick labels (right)
-    let navTicks = [];
-    if (useLogNav) {
-        for (let k = 0; k <= 4; k++) {
-            navTicks.push(Math.pow(10, logMin + (k / 4) * logRange));
-        }
-    } else {
-        navTicks = niceAxisTicks(nMin, nMax, 5);
-    }
+    const navTicks = niceAxisTicks(nMin, nMax, 5);
     ctxA.textAlign = 'left';
-    const fmtNavTick = (tick) => {
-        if (tick >= 1e6) return '$' + (tick / 1e6).toFixed(1) + 'M';
-        if (tick >= 1e3) return '$' + (tick / 1e3).toFixed(tick >= 1e4 ? 0 : 1) + 'K';
-        if (tick >= 100) return '$' + tick.toFixed(0);
-        if (tick >= 10)  return '$' + tick.toFixed(1);
-        return '$' + tick.toFixed(2);
-    };
     navTicks.forEach(tick => {
         const gy = getNY(tick);
         if (gy < pad.top - 2 || gy > pad.top + chartH + 2) return;
-        ctxA.fillStyle = 'rgba(74,184,216,0.78)';
-        ctxA.fillText(fmtNavTick(tick), w - pad.right + 6, gy + 3);
+        ctxA.fillStyle = 'rgba(255,255,255,0.5)';
+        const lbl = tick >= 100 ? '$' + tick.toFixed(0) : tick >= 10 ? '$' + tick.toFixed(1) : '$' + tick.toFixed(2);
+        ctxA.fillText(lbl, w - pad.right + 6, gy + 3);
     });
-    if (useLogNav) {
-        ctxA.font = 'bold 8px sans-serif';
-        ctxA.fillStyle = 'rgba(74,184,216,0.65)';
-        ctxA.fillText('LOG', w - pad.right + 6, pad.top - 7);
-    }
 
     // Adaptive X-axis for Chart A
     drawXAxis(ctxA, data.map(d => d.date), getX, chartW, pad.top + chartH + 15, pad);
@@ -2696,9 +2406,8 @@ function drawChartA(data) {
         ctxA.beginPath(); ctxA.moveTo(hx, pad.top); ctxA.lineTo(hx, pad.top + chartH);
         ctxA.strokeStyle = 'rgba(0,255,255,0.22)'; ctxA.lineWidth = 1; ctxA.setLineDash([]); ctxA.stroke();
 
-        const isHoveredPos = flows[state.hoverIdx] >= 0;
         ctxA.beginPath(); ctxA.arc(hx, getFY(flows[state.hoverIdx]), 4, 0, Math.PI*2);
-        ctxA.fillStyle = isHoveredPos ? '#3db87a' : '#ef4444'; ctxA.fill();
+        ctxA.fillStyle = isNetPos ? '#3db87a' : '#ef4444'; ctxA.fill();
 
         ctxA.beginPath(); ctxA.arc(hx, getNY(navs[state.hoverIdx]), 4, 0, Math.PI*2);
         ctxA.fillStyle = '#fff'; ctxA.fill();
@@ -2711,18 +2420,11 @@ function drawChartB(data) {
     ctxB.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctxB.clearRect(0, 0, w, h);
     
-    const pad = { top: 12, right: 60, bottom: 28, left: 60 };
+    const pad = { top: 10, right: 60, bottom: 28, left: 60 };
     const chartW = w - pad.left - pad.right;
     const chartH = h - pad.top - pad.bottom;
 
-    // Winsorized volume ceiling at P98 * 1.35 with subtle white overflow top-caps
-    const absFlows = data.map(d => Math.abs(d.usd_flow)).filter(v => v > 0).sort((a, b) => a - b);
-    let p98 = 1;
-    if (absFlows.length > 0) {
-        const idx = Math.min(absFlows.length - 1, Math.floor(absFlows.length * 0.98));
-        p98 = absFlows[idx];
-    }
-    const maxBar = Math.max(p98 * 1.35, 1);
+    const maxBar = Math.max(...data.map(d => Math.abs(d.usd_flow)), 1);
 
     const getX = i => pad.left + (i / (data.length - 1)) * chartW;
     const y0 = pad.top + chartH / 2;
@@ -2743,27 +2445,15 @@ function drawChartB(data) {
 
     for (let i = 0; i < data.length; i++) {
         const val = data[i].usd_flow;
-        const x = getX(i) - barW / 2;
-        const absVal = Math.abs(val);
-        const isCapped = absVal > maxBar;
-        const barH = Math.min((absVal / maxBar) * (chartH / 2), chartH / 2);
+        const x = getX(i) - barW/2;
+        const barH = (Math.abs(val) / maxBar) * (chartH / 2);
 
         if (val >= 0) {
-            ctxB.fillStyle = isCapped ? 'rgba(61, 220, 140, 0.95)' : 'rgba(61, 184, 122, 0.8)';
+            ctxB.fillStyle = 'rgba(61,184,122,0.8)';
             ctxB.fillRect(x, y0 - barH, barW, barH);
-            if (isCapped) {
-                // Subtle white top-cap marker indicating extreme volume extension
-                ctxB.fillStyle = '#ffffff';
-                ctxB.fillRect(x - 0.5, y0 - barH - 1, barW + 1, 2);
-            }
         } else {
-            ctxB.fillStyle = isCapped ? 'rgba(255, 80, 80, 0.95)' : 'rgba(239, 68, 68, 0.8)';
+            ctxB.fillStyle = 'rgba(239,68,68,0.8)';
             ctxB.fillRect(x, y0, barW, barH);
-            if (isCapped) {
-                // Subtle white bottom-cap marker indicating extreme outflow extension
-                ctxB.fillStyle = '#ffffff';
-                ctxB.fillRect(x - 0.5, y0 + barH - 1, barW + 1, 2);
-            }
         }
     }
 
@@ -2847,12 +2537,12 @@ function drawChartZ(data) {
     ctxZ.strokeStyle = 'rgba(255,255,255,0.2)';
     ctxZ.beginPath(); ctxZ.moveTo(pad.left, getY(0)); ctxZ.lineTo(pad.left+chartW, getY(0)); ctxZ.stroke();
 
-    // Zone labels (positioned in upper/lower threshold bands so they never collide with the 20D trend line)
-    ctxZ.font = 'bold 10px sans-serif'; ctxZ.textAlign = 'right'; ctxZ.textBaseline = 'middle';
-    ctxZ.fillStyle = 'rgba(61,184,122,0.85)';
-    ctxZ.fillText('▲ ACCUMULATION', pad.left + chartW - 6, pad.top + 12);
-    ctxZ.fillStyle = 'rgba(239,68,68,0.85)';
-    ctxZ.fillText('▼ DISTRIBUTION', pad.left + chartW - 6, pad.top + chartH - 12);
+    // Zone labels
+    ctxZ.font = 'bold 11px sans-serif'; ctxZ.textAlign = 'right'; ctxZ.textBaseline = 'middle';
+    ctxZ.fillStyle = 'rgba(61,184,122,0.9)';
+    ctxZ.fillText('▲ ACCUMULATION', pad.left + chartW - 4, getY(0.5));
+    ctxZ.fillStyle = 'rgba(239,68,68,0.9)';
+    ctxZ.fillText('▼ DISTRIBUTION', pad.left + chartW - 4, getY(-0.5));
 
     // The Z-Score line with adaptive coloring based on position
     ctxZ.beginPath();
@@ -2874,30 +2564,6 @@ function drawChartZ(data) {
     strokeGrad.addColorStop(1, 'rgba(192, 64, 64, 1)');       // bottom: deep red (negative)
     ctxZ.strokeStyle = strokeGrad;
     ctxZ.stroke();
-
-    // 20-Day Rolling Mean Z-Score Trend Line (amber) — precomputed on full ticker history so left edge never truncates
-    const fullZArr = state.cache[state.activeZTicker] && state.cache[state.activeZTicker].data;
-    if (fullZArr && fullZArr.length > 0) {
-        const zMaMap = {};
-        let rSum = 0;
-        for (let i = 0; i < fullZArr.length; i++) {
-            rSum += (fullZArr[i].flow_zscore || 0);
-            if (i >= 20) rSum -= (fullZArr[i - 20].flow_zscore || 0);
-            if (i >= 4) zMaMap[fullZArr[i].date] = rSum / Math.min(i + 1, 20);
-        }
-        ctxZ.beginPath();
-        let startedMa = false;
-        for (let i = 0; i < data.length; i++) {
-            const ma = zMaMap[data[i].date];
-            if (ma === undefined) continue;
-            const x = getX(i), y = getY(ma);
-            if (!startedMa) { ctxZ.moveTo(x, y); startedMa = true; }
-            else ctxZ.lineTo(x, y);
-        }
-        ctxZ.strokeStyle = 'rgba(245, 158, 11, 0.85)';
-        ctxZ.lineWidth = 1.6;
-        ctxZ.stroke();
-    }
 
     // Y-labels with all thresholds
     ctxZ.font = '10px monospace'; ctxZ.textAlign = 'right'; ctxZ.textBaseline = 'middle';
@@ -2970,16 +2636,10 @@ function drawChartZ(data) {
         ctxZ.fillStyle = dotColor; ctxZ.fill();
         ctxZ.strokeStyle = '#fff'; ctxZ.lineWidth = 2; ctxZ.stroke();
 
-        // Signal strength label with edge-clamping so it never clips off right/top canvas bounds
+        // Signal strength label in corner
         const signalLabel = absZ >= 2.0 ? '◆ EXTREME' : absZ >= 1.5 ? '◆ CRITICAL' : absZ >= 1.0 ? '◆ ELEVATED' : absZ >= 0.8 ? '◆ WARM' : 'NEUTRAL';
-        ctxZ.font = 'bold 9px sans-serif';
-        const lblW = ctxZ.measureText(signalLabel).width;
-        const placeLeft = (hx + dotSize + 8 + lblW) > (pad.left + chartW - 4);
-        ctxZ.textAlign = placeLeft ? 'right' : 'left';
-        ctxZ.fillStyle = dotColor;
-        const lblX = placeLeft ? (hx - dotSize - 6) : (hx + dotSize + 6);
-        const lblY = Math.max(pad.top + 10, Math.min(pad.top + chartH - 6, hy - 8));
-        ctxZ.fillText(signalLabel, lblX, lblY);
+        ctxZ.font = 'bold 9px sans-serif'; ctxZ.textAlign = 'left'; ctxZ.fillStyle = dotColor;
+        ctxZ.fillText(signalLabel, hx + dotSize + 6, hy - 8);
     }
 }
 
@@ -3014,18 +2674,14 @@ function handleHover(e) {
         const changeRow = navChg !== null
             ? `<div class="tt-row"><span class="tt-lbl">Change</span> <span class="tt-val" style="color:${navChg>=0?'var(--green)':'var(--red)'}">${navChg>=0?'+':''}${navChg.toFixed(2)} (${navChg>=0?'+':''}${navPct.toFixed(2)}%)</span></div>`
             : '';
-        const rawNavRow = (d.nav !== undefined && Math.abs(d.nav - navVal) > 0.05)
-            ? `<div class="tt-row"><span class="tt-lbl">Actual NAV</span> <span class="tt-val" style="color:#94a3b8">$${d.nav.toFixed(2)}</span></div>`
-            : '';
         tooltip.style.display = 'block';
         tooltip.innerHTML = `
             <div class="tt-date">${d.date}</div>
-            <div class="tt-row"><span class="tt-lbl">NAV (Split-Adj)</span> <span class="tt-val">$${navVal >= 1000 ? navVal.toLocaleString('en-US', {maximumFractionDigits: 0}) : navVal.toFixed(2)}</span></div>
-            ${rawNavRow}
+            <div class="tt-row"><span class="tt-lbl">NAV (Adj)</span> <span class="tt-val">$${navVal.toFixed(2)}</span></div>
             ${changeRow}
             <div class="tt-row"><span class="tt-lbl">Daily Flow</span> <span class="tt-val" style="color:${d.usd_flow>=0?'var(--green)':'var(--red)'}">${fmtUsd(d.usd_flow)}</span></div>
             <div class="tt-row"><span class="tt-lbl">Net Cumul.</span> <span class="tt-val" style="color:${(d.cumulative_flow - data[0].cumulative_flow)>=0?'var(--green)':'var(--red)'}">${fmtUsd(d.cumulative_flow - data[0].cumulative_flow)}</span></div>
-            <div class="tt-row"><span class="tt-lbl">Z-Score</span> <span class="tt-val">${d.flow_zscore >= 0 ? '+' : ''}${d.flow_zscore.toFixed(2)}σ</span></div>
+            <div class="tt-row"><span class="tt-lbl">Z-Score</span> <span class="tt-val">${d.flow_zscore.toFixed(2)}</span></div>
         `;
         
         let tx = e.clientX + 15;
@@ -3050,18 +2706,17 @@ function handleChartWheel(e) {
     e.preventDefault();
     const id = e.target.id;
     // Route to the correct zoom state based on which chart was scrolled
-    const isZ       = id === 'chartZ';
-    const isCross   = id === 'chartCross';
-    const isCompZ   = id === 'chartCompZ';
-    const isFlowVel = id === 'chartFlowVelocity';
-    const isFlowNG  = id === 'chartFlowNG';
+    const isZ     = id === 'chartZ';
+    const isCross = id === 'chartCross';
+    const isCompZ  = id === 'chartCompZ';
+    const isFlowNG = id === 'chartFlowNG';
     const isReactivity = id === 'chartReactivity';
-    const zoomKey = isZ ? 'zoomZ' : isCross ? 'zoomCross' : isCompZ ? 'zoomCompZ' : isFlowVel ? 'zoomFlowVel' : isFlowNG ? 'zoomFlowNG' : isReactivity ? 'zoomReactivity' : 'zoom';
+    const zoomKey = isZ ? 'zoomZ' : isCross ? 'zoomCross' : isCompZ ? 'zoomCompZ' : isFlowNG ? 'zoomFlowNG' : isReactivity ? 'zoomReactivity' : 'zoom';
 
     const rect   = e.target.getBoundingClientRect();
     const x      = e.clientX - rect.left;
-    const padL   = (isZ || isCompZ) ? 45 : (isFlowVel || isFlowNG || isReactivity) ? 55 : 60;
-    const padR   = (isZ || isCompZ) ? 20 : (isFlowVel || isFlowNG || isReactivity) ? 55 : 60;
+    const padL   = (isZ || isCompZ) ? 45 : (isFlowNG || isReactivity) ? 55 : 60;
+    const padR   = (isZ || isCompZ) ? 20 : (isFlowNG || isReactivity) ? 55 : 60;
     const chartW = rect.width - padL - padR;
     const frac   = Math.max(0, Math.min(1, (x - padL) / chartW));
 
@@ -3096,9 +2751,6 @@ function handleChartWheel(e) {
     } else if (isCompZ) {
         renderCompZChart();
         syncCompZSlider();
-    } else if (isFlowVel) {
-        if (typeof renderFlowVelChart === 'function') renderFlowVelChart();
-        if (typeof syncFlowVelSlider === 'function') syncFlowVelSlider();
     } else if (isFlowNG) {
         renderFlowNGChart();
         syncFlowNGSlider();
@@ -3191,7 +2843,7 @@ function initZSlider() {
 function syncZSlider() {
     const s1 = el('z-range-start'), s2 = el('z-range-end');
     if (!s1 || !s2) return;
-    const base = getZBaseData();
+    const base = getBaseVisibleData();
     const total = base.length;
     s1.max = total; s2.max = total;
     s1.value = Math.round(state.zoomZ.start * total);
@@ -3211,7 +2863,7 @@ function updateZSliderUI() {
     }
     if (lbl) {
         const z = state.zoomZ;
-        lbl.textContent = (z.start > 0.001 || z.end < 0.999) ? 'CUSTOM SELECTION' : `PRESET: ${state.timeRange.toUpperCase()}`;
+        lbl.textContent = (z.start > 0.001 || z.end < 0.999) ? 'CUSTOM' : 'ALL';
     }
 }
 
@@ -3242,17 +2894,12 @@ function syncCrossSlider() {
     if (!s1 || !s2) return;
     // Base dates from BOIL aligned to timeRange
     const baseData = state.cache['BOIL']?.data;
-    if (!baseData || !baseData.length) return;
-    let si = 0;
-    if (state.timeRange !== 'all') {
-        let days = {'1w':7,'1m':30,'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095,'5y':1825}[state.timeRange] || 9999;
-        const lastDateStr = baseData[baseData.length - 1].date;
-        const cutoff = new Date(lastDateStr + 'T12:00:00Z');
-        cutoff.setDate(cutoff.getDate() - days);
-        const cutoffStr = cutoff.toISOString().slice(0, 10);
-        si = baseData.findIndex(d => d.date >= cutoffStr);
-        if (si === -1) si = 0;
-    }
+    if (!baseData) return;
+    let days = {'1w':7,'1m':30,'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095,'5y':1825}[state.timeRange] || 9999;
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    let si = baseData.findIndex(d => d.date >= cutoffStr);
+    if (si === -1) si = 0;
     const total = baseData.length - si;
     s1.max = total; s2.max = total;
     s1.value = Math.round(state.zoomCross.start * total);
@@ -3272,7 +2919,7 @@ function updateCrossSliderUI() {
     }
     if (lbl) {
         const z = state.zoomCross;
-        lbl.textContent = (z.start > 0.001 || z.end < 0.999) ? 'CUSTOM SELECTION' : `PRESET: ${state.timeRange.toUpperCase()}`;
+        lbl.textContent = (z.start > 0.001 || z.end < 0.999) ? 'CUSTOM' : 'ALL';
     }
 }
 
@@ -3525,12 +3172,10 @@ function scanDivergences(data, thresh, lookback) {
             const zAtEnd    = cur.flow_zscore ?? 0;
             const presAtEnd = Math.round(cur.pressure ?? 0);
             const s         = i - w + 1;
-            const fullS     = dataOffset + s;
-            const fullI     = dataOffset + i;
 
-            const canPre3 = fullS >= 3;
+            const canPre3 = (s - 3) >= 0;
             const avgPre3 = canPre3
-                ? ((data[fullS-3].usd_flow||0)+(data[fullS-2].usd_flow||0)+(data[fullS-1].usd_flow||0))/3
+                ? ((recent[s-3].usd_flow||0)+(recent[s-2].usd_flow||0)+(recent[s-1].usd_flow||0))/3
                 : null;
 
             let consistentDays = 0;
@@ -3560,35 +3205,27 @@ function scanDivergences(data, thresh, lookback) {
                 wNorm*0.12*100 + cNorm*0.15*100 + eDayNorm*0.13*100
             );
 
-            const canPost3 = (fullI + 3) < data.length;
+            const canPost3 = (i + 3) < recent.length;
             const canLocal = canPre3 && canPost3;
             let avgCenter7 = null;
             if (canLocal) {
                 let sum = 0;
-                for (let k = fullS - 3; k <= fullI + 3; k++) sum += (data[k].usd_flow || 0);
+                for (let k = s - 3; k <= i + 3; k++) sum += (recent[k].usd_flow || 0);
                 avgCenter7 = sum / (w + 6);
             }
             const avgPost3 = canPost3
-                ? ((data[fullI+1].usd_flow||0)+(data[fullI+2].usd_flow||0)+(data[fullI+3].usd_flow||0))/3
+                ? ((recent[i+1].usd_flow||0)+(recent[i+2].usd_flow||0)+(recent[i+3].usd_flow||0))/3
                 : null;
             const sIdx = dataOffset + i - w;
             const avgPrePeriod = sIdx >= 30
                 ? (data[sIdx].cumulative_flow - data[sIdx-30].cumulative_flow) / 30
                 : null;
 
-            // 5-day forward ETF price return (for empirical post-signal outcome verification)
-            let fwd5d = null;
-            if (fullI + 5 < data.length) {
-                let fRet = 1;
-                for (let k = fullI + 1; k <= fullI + 5; k++) fRet *= (1 + (data[k].perf_pct || 0));
-                fwd5d = fRet - 1;
-            }
-
             results.push({
                 date: cur.date, window: w, type, isBear, priceMove, flowSum,
                 avgDaily, zAtEnd, presAtEnd, flowConsistency,
                 exactFlow, exactFlowAgreesDiv, confirmed, strength,
-                avgCenter7, avgPost3, avgPre3, avgPrePeriod, fwd5d
+                avgCenter7, avgPost3, avgPre3, avgPrePeriod
             });
             if (minMatchedWin === null || w < minMatchedWin) minMatchedWin = w;
             
@@ -3619,31 +3256,21 @@ function renderDivergence() {
     const ctxCol = (v) => v === null ? '' : (v >= 0 ? 'val-green' : 'val-red');
 
     // Summary strip
-    const isShortTk = ['KOLD', 'HND', '3NGS'].includes(state.divTicker);
     if (summaryEl) {
         if (results.length) {
             const bearish = results.filter(r => r.isBear);
             const bullish = results.filter(r => !r.isBear);
             const confirmed = results.filter(r => r.confirmed);
             const avgStr = Math.round(results.reduce((a, r) => a + r.strength, 0) / results.length);
-            const withFwd = results.filter(r => r.fwd5d !== null);
-            const hits = withFwd.filter(r => r.isBear ? r.fwd5d < 0 : r.fwd5d > 0);
-            const hitRate = withFwd.length ? Math.round((hits.length / withFwd.length) * 100) : null;
-            const bearTip = isShortTk
-                ? `${state.divTicker} ETF price rose (NG fell) while ${state.divTicker} had net outflows (shorts taking profit — bullish for Natural Gas)`
-                : `${state.divTicker} ETF price rose while net flows were negative — stealth distribution`;
-            const bullTip = isShortTk
-                ? `${state.divTicker} ETF price fell (NG rose) while ${state.divTicker} had net inflows (shorts building into rally — bearish for Natural Gas)`
-                : `${state.divTicker} ETF price fell while net flows were positive — stealth accumulation`;
             summaryEl.innerHTML = `
                 <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);letter-spacing:0.5px;" data-tooltip="Total divergence events detected for ${state.divTicker}">
                     <span style="font-weight:800;color:var(--cyan);">${results.length}</span> EVENTS
                 </div>
-                <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="${bearTip}">
-                    <span style="font-weight:800;color:#ef4444;">${bearish.length}</span> BEARISH (ETF)
+                <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Price rose but net flow negative — stealth distribution">
+                    <span style="font-weight:800;color:#ef4444;">${bearish.length}</span> BEARISH
                 </div>
-                <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="${bullTip}">
-                    <span style="font-weight:800;color:#3db87a;">${bullish.length}</span> BULLISH (ETF)
+                <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Price fell but net flow positive — stealth accumulation">
+                    <span style="font-weight:800;color:#3db87a;">${bullish.length}</span> BULLISH
                 </div>
                 <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Events where Z-Score, Pressure, Pre-3D, and consistency all agree">
                     <span style="font-weight:800;color:var(--cyan);">${confirmed.length}</span> CONFIRMED
@@ -3651,7 +3278,6 @@ function renderDivergence() {
                 <div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="Average strength score across all events">
                     AVG STR: <span style="font-weight:800;color:${avgStr >= 50 ? '#3db87a' : 'rgba(148,163,184,0.9)'};">${avgStr}</span>
                 </div>
-                ${hitRate !== null ? `<div style="font-size:0.68rem;color:rgba(255,255,255,0.85);" data-tooltip="5-day forward ${state.divTicker} price continuation rate matching divergence direction (${hits.length}/${withFwd.length} events)">5D HIT RATE: <span style="font-weight:800;color:${hitRate >= 52 ? '#3db87a' : '#94a3b8'};">${hitRate}%</span></div>` : ''}
             `;
         } else {
             summaryEl.innerHTML = '';
@@ -3671,27 +3297,15 @@ function renderDivergence() {
         const sigDot   = r.confirmed
             ? `<span style="color:${r.isBear?'var(--red)':'var(--green)'};font-size:0.65rem;">\u25c6</span>`
             : `<span style="color:${r.isBear?'var(--red)':'var(--green)'};font-size:0.55rem;">\u25b2</span>`;
-        const isCounterTrend = !r.isBear && !isShortTk && (r.priceMove < -0.15);
-        let sigLabel;
-        if (isCounterTrend) {
-            sigLabel = r.confirmed
-                ? `<span style="font-weight:900;letter-spacing:0.3px;color:#f59e0b;">COUNTER-TREND ACCUM.</span>`
-                : `<span style="font-weight:600;opacity:0.85;color:#f59e0b;">Counter-Trend Inflow</span>`;
-        } else {
-            sigLabel = r.confirmed
-                ? `<span style="font-weight:900;letter-spacing:0.3px;">${r.isBear?'CONFIRMED Dist.':'CONFIRMED Accum.'}</span>`
-                : `<span style="font-weight:600;opacity:0.85;">${r.isBear?'Distribution':'Accumulation'}</span>`;
-        }
+        const sigLabel = r.confirmed
+            ? `<span style="font-weight:900;letter-spacing:0.3px;">${r.isBear?'CONFIRMED Dist.':'CONFIRMED Accum.'}</span>`
+            : `<span style="font-weight:600;opacity:0.85;">${r.isBear?'Distribution':'Accumulation'}</span>`;
         const sigHtml  = `<span style="color:${r.isBear?'var(--red)':'var(--green)'};font-size:0.72rem;white-space:nowrap;">${sigDot} ${sigLabel}</span>`;
 
-        const ngImplication = isShortTk
-            ? (r.isBear ? ' (Bullish for NG: shorts exiting into NG drop)' : ' (Bearish for NG: shorts building into NG rally)')
-            : (r.isBear ? ' (Bearish for NG: longs exiting into rally)' : ' (Bullish for NG: longs buying dip)');
-        const fwdStr = r.fwd5d !== null ? ` | Next 5D ${state.divTicker} Return: ${fmtPct(r.fwd5d)}` : '';
         html += `<tr>
-            <td style="color:rgba(255,255,255,0.85);font-size:0.7rem;" data-tooltip="${fmtDateLong(r.date)}${fwdStr}">${fmtDateLong(r.date)}</td>
+            <td style="color:rgba(255,255,255,0.85);font-size:0.7rem;">${fmtDateLong(r.date)}</td>
             <td style="color:rgba(255,255,255,0.85);" data-tooltip="Duration of divergence window">${r.window}d</td>
-            <td><span class="div-badge ${badgeClass}" data-tooltip="ETF Signal: ${r.type}${ngImplication}${fwdStr}">${r.type}</span></td>
+            <td><span class="div-badge ${badgeClass}" data-tooltip="Signal Type: ${r.type}">${r.type}</span></td>
             <td class="${r.priceMove>=0?'val-green':'val-red'}" data-tooltip="Price change over the ${r.window}d window">${fmtPct(r.priceMove)}</td>
             <td class="${r.flowSum>=0?'val-green':'val-red'}" data-tooltip="Cumulative net flow over the ${r.window}d window">${fmtUsd(r.flowSum)}</td>
             <td style="color:rgba(255,255,255,0.85);" data-tooltip="Average daily flow (${fmtUsd(r.flowSum)} ÷ ${r.window} days)">${fmtUsd(r.avgDaily)}/d</td>
@@ -3757,11 +3371,9 @@ function renderYearlyMatrix() {
     const container = document.getElementById('yearly-matrix-container');
     if (!container) return;
 
-    const mode = state.matrixMode || 'z15';
-    const zThresh = mode === 'z20' ? 2.0 : 1.5;
     const tickers = ['BOIL', 'HNU', '3NGL', 'KOLD', 'HND', '3NGS'];
     const allYears = new Set();
-    const freq = {}; // ticker -> year -> { count, posCount, negCount, sumZ, netUsd }
+    const freq = {}; // ticker -> year -> { count, sumZ }
 
     tickers.forEach(tk => {
         freq[tk] = {};
@@ -3769,17 +3381,11 @@ function renderYearlyMatrix() {
         if (!d) return;
         d.forEach(row => {
             const yr = row.date.slice(0, 4);
-            const rawZ = row.flow_zscore || 0;
-            const z = Math.abs(rawZ);
-            const usd = row.usd_flow || 0;
-            allYears.add(yr);
-            if (!freq[tk][yr]) freq[tk][yr] = { count: 0, posCount: 0, negCount: 0, sumZ: 0, netUsd: 0, days: 0 };
-            freq[tk][yr].netUsd += usd;
-            freq[tk][yr].days++;
-            if (z >= zThresh) {
+            const z = Math.abs(row.flow_zscore || 0);
+            if (z >= 1.5) {
+                allYears.add(yr);
+                if (!freq[tk][yr]) freq[tk][yr] = { count: 0, sumZ: 0 };
                 freq[tk][yr].count++;
-                if (rawZ > 0) freq[tk][yr].posCount++;
-                else freq[tk][yr].negCount++;
                 freq[tk][yr].sumZ += z;
             }
         });
@@ -3788,17 +3394,17 @@ function renderYearlyMatrix() {
     const years = Array.from(allYears).sort((a, b) => b - a);
     if (!years.length) { container.innerHTML = '<div style="color:rgba(255, 255, 255, 0.85);padding:20px;text-align:center;font-size:0.7rem;">No flow events detected.</div>'; return; }
 
+    // Global min/max avg Z for color scaling
+    const allAvgZ = [];
+    years.forEach(yr => tickers.forEach(tk => { const s = freq[tk][yr]; if (s && s.count) allAvgZ.push(s.sumZ / s.count); }));
+    const minZ = allAvgZ.length ? Math.min(...allAvgZ) : 1.5;
+    const maxZ = allAvgZ.length ? Math.max(...allAvgZ) : 3;
+
     const tipMap = { 'BOIL':'ProShares Ultra 2× Long', 'HNU':'BetaPro 2× Bull', '3NGL':'WisdomTree 3× Long', 'KOLD':'ProShares 2× Inverse', 'HND':'BetaPro 2× Bear', '3NGS':'WisdomTree 3× Short' };
 
     // Per-column max for heat map intensity
     const colMax = {};
-    tickers.forEach(tk => {
-        if (mode === 'usd') {
-            colMax[tk] = Math.max(...years.map(yr => Math.abs(freq[tk][yr]?.netUsd || 0)), 1);
-        } else {
-            colMax[tk] = Math.max(...years.map(yr => freq[tk][yr]?.count || 0), 1);
-        }
-    });
+    tickers.forEach(tk => { colMax[tk] = Math.max(...years.map(yr => freq[tk][yr]?.count || 0), 1); });
 
     // ETF RGB for cell background heat map
     const rgbMap = { 'BOIL':'245,197,66','HNU':'232,146,74','3NGL':'196,119,58','KOLD':'74,156,245','HND':'77,212,234','3NGS':'160,122,245' };
@@ -3814,17 +3420,9 @@ function renderYearlyMatrix() {
     // Totals row
     const totals = {};
     tickers.forEach(tk => {
-        let tc = 0, tPos = 0, tNeg = 0, tz = 0, tUsd = 0;
-        years.forEach(yr => {
-            if (freq[tk][yr]) {
-                tc += freq[tk][yr].count;
-                tPos += freq[tk][yr].posCount;
-                tNeg += freq[tk][yr].negCount;
-                tz += freq[tk][yr].sumZ;
-                tUsd += freq[tk][yr].netUsd;
-            }
-        });
-        totals[tk] = { count: tc, posCount: tPos, negCount: tNeg, avgZ: tc ? tz / tc : 0, netUsd: tUsd };
+        let tc = 0, tz = 0;
+        years.forEach(yr => { if (freq[tk][yr]) { tc += freq[tk][yr].count; tz += freq[tk][yr].sumZ; } });
+        totals[tk] = { count: tc, avgZ: tc ? tz / tc : 0 };
     });
 
     let html = `<table class="matrix-table">
@@ -3841,21 +3439,11 @@ function renderYearlyMatrix() {
         html += `<tr><td class="matrix-year">${yr}</td>`;
         tickers.forEach(tk => {
             const s = freq[tk][yr];
-            if (mode === 'usd') {
-                if (s && s.days > 0) {
-                    const ratio = Math.min(Math.abs(s.netUsd) / colMax[tk], 1);
-                    const rgb = s.netUsd >= 0 ? '61,184,122' : '239,68,68';
-                    const bg = `rgba(${rgb},${(ratio * 0.24).toFixed(2)})`;
-                    const txtCol = s.netUsd >= 0 ? '#3db87a' : '#ef4444';
-                    html += `<td data-tooltip="${yr} ${tk} Net Flow: ${fmtUsd(s.netUsd)} · ${s.count} events (|Z|≥1.5σ: ▲${s.posCount} inflow / ▼${s.negCount} outflow)" style="background:${bg};"><span style="font-weight:800;font-size:0.74rem;color:${txtCol};">${fmtUsd(s.netUsd)}</span></td>`;
-                } else {
-                    html += `<td class="matrix-none">—</td>`;
-                }
-            } else if (s && s.count) {
+            if (s && s.count) {
                 const avgZ = s.sumZ / s.count;
                 const ratio = s.count / colMax[tk];
                 const bg = `rgba(${rgbMap[tk]},${(ratio * 0.22).toFixed(2)})`;
-                html += `<td data-tooltip="${s.count} events (▲${s.posCount} inflow / ▼${s.negCount} outflow) · avg |Z| ${avgZ.toFixed(2)}σ · Net Flow: ${fmtUsd(s.netUsd)}" style="background:${bg};"><span style="font-weight:800;font-size:0.8rem;">${s.count}</span><span style="font-size:0.58rem;color:${zColor(avgZ)};margin-left:3px;">(${avgZ.toFixed(1)}σ)</span></td>`;
+                html += `<td data-tooltip="${s.count} events · avg |Z| ${avgZ.toFixed(1)}" style="background:${bg};"><span style="font-weight:800;font-size:0.8rem;">${s.count}</span><span style="font-size:0.58rem;color:${zColor(avgZ)};margin-left:3px;">(${avgZ.toFixed(1)}σ)</span></td>`;
             } else {
                 html += `<td class="matrix-none">—</td>`;
             }
@@ -3867,12 +3455,7 @@ function renderYearlyMatrix() {
     html += `<tr style="border-top:1px solid rgba(255,255,255,0.1);"><td class="matrix-year" style="color:rgba(255, 255, 255, 0.85);font-size:0.75rem;letter-spacing:1px;font-weight:800;">TOTAL</td>`;
     tickers.forEach(tk => {
         const t = totals[tk];
-        if (mode === 'usd') {
-            const txtCol = t.netUsd >= 0 ? '#3db87a' : '#ef4444';
-            html += `<td style="opacity:0.85;" data-tooltip="Cumulative Net Flow for ${tk}: ${fmtUsd(t.netUsd)} (${t.count} |Z|≥1.5σ events)"><span style="font-weight:800;font-size:0.74rem;color:${txtCol};">${fmtUsd(t.netUsd)}</span></td>`;
-        } else {
-            html += `<td style="opacity:0.75;" data-tooltip="Total ${t.count} flow events for ${tk} (▲${t.posCount} inflow / ▼${t.negCount} outflow · Avg |Z|: ${t.avgZ.toFixed(2)}σ · Net Flow: ${fmtUsd(t.netUsd)})"><span style="font-weight:700;font-size:0.75rem;">${t.count}</span><span style="font-size:0.56rem;color:${zColor(t.avgZ)};margin-left:3px;">(${t.avgZ.toFixed(1)}σ)</span></td>`;
-        }
+        html += `<td style="opacity:0.6;" data-tooltip="Total ${t.count} flow events historically for ${tk} (Avg |Z|: ${t.avgZ.toFixed(1)})"><span style="font-weight:700;font-size:0.75rem;">${t.count}</span><span style="font-size:0.56rem;color:${zColor(t.avgZ)};margin-left:3px;">(${t.avgZ.toFixed(1)}σ)</span></td>`;
     });
     html += `</tr></tbody></table>`;
     container.innerHTML = html;
@@ -3889,6 +3472,9 @@ function scanCrossDivergences(lookback) {
     }
 
     const baseData = state.cache['BOIL'].data;
+    const recentCount = lookback === 'all' ? baseData.length : Math.min(lookback, baseData.length);
+    const recent = baseData.slice(-recentCount);
+
     const tickerByDate = {};
     allTickers.forEach(tk => {
         tickerByDate[tk] = {};
@@ -3896,38 +3482,28 @@ function scanCrossDivergences(lookback) {
         for (let j = 0; j < d.length; j++) tickerByDate[tk][d[j].date] = d[j];
     });
 
-    // Build full aligned history across all 6 tickers first (ensures perTicker[tk] has identical length to dates[] and preserves 30D warm-up for BASE/SENT)
     const dates = [], longCum = [], shortCum = [];
     const perTicker = {};
     allTickers.forEach(tk => { perTicker[tk] = []; });
 
-    const lastCumulativeFlow = {};
-    allTickers.forEach(tk => { lastCumulativeFlow[tk] = 0; });
-
-    for (let i = 0; i < baseData.length; i++) {
-        const date = baseData[i].date;
-        let longSum = 0, shortSum = 0;
-        let anyTickerHasData = false;
-        const dayRows = {};
+    for (let i = 0; i < recent.length; i++) {
+        const date = recent[i].date;
+        let hasAll = true;
         for (const tk of allTickers) {
-            const row = tickerByDate[tk]?.[date];
-            if (row && row.cumulative_flow != null) {
-                dayRows[tk] = row.cumulative_flow;
-                lastCumulativeFlow[tk] = row.cumulative_flow;
-                anyTickerHasData = true;
-            } else {
-                // Forward-carry foreign ETF cumulative flow on exchange holidays
-                dayRows[tk] = lastCumulativeFlow[tk];
-            }
+            if (!tickerByDate[tk] || !tickerByDate[tk][date]) { hasAll = false; break; }
         }
-        if (!anyTickerHasData) continue; // Only skip if no ETF has data on date
+        if (!hasAll) continue;
+
+        let longSum = 0, shortSum = 0;
         for (const tk of LONG_SIDE) {
-            longSum += dayRows[tk];
-            perTicker[tk].push(dayRows[tk]);
+            const val = tickerByDate[tk][date].cumulative_flow;
+            longSum += val;
+            perTicker[tk].push(val);
         }
         for (const tk of SHORT_SIDE) {
-            shortSum += dayRows[tk];
-            perTicker[tk].push(dayRows[tk]);
+            const val = tickerByDate[tk][date].cumulative_flow;
+            shortSum += val;
+            perTicker[tk].push(val);
         }
         dates.push(date);
         longCum.push(longSum);
@@ -3937,13 +3513,10 @@ function scanCrossDivergences(lookback) {
     if (dates.length < 22) return [];
 
     const windows = [21, 10, 5];
-    const minScanIdx = lookback === 'all'
-        ? Math.max(...windows)
-        : Math.max(Math.max(...windows), dates.length - lookback);
     const results = [];
 
     let maxAbsSpread = 0;
-    for (let i = minScanIdx; i < dates.length; i++) {
+    for (let i = windows[0]; i < dates.length; i++) {
         for (const w of windows) {
             if (i < w) continue;
             const spread = Math.abs((longCum[i] - longCum[i - w]) - (shortCum[i] - shortCum[i - w]));
@@ -3954,7 +3527,7 @@ function scanCrossDivergences(lookback) {
     // Helper: daily spread at index j
     const daySpreadAt = (j) => (longCum[j] - longCum[j - 1]) - (shortCum[j] - shortCum[j - 1]);
 
-    for (let i = dates.length - 1; i >= minScanIdx; i--) {
+    for (let i = dates.length - 1; i >= Math.max(...windows); i--) {
         let minMatchedWin = null;
         for (const w of windows) {
             if (i < w) continue;
@@ -3970,11 +3543,14 @@ function scanCrossDivergences(lookback) {
             const spread = longDelta - shortDelta;
             const avgDaily = spread / w;
 
-            // Breadth (perTicker[tk] is now 1:1 aligned with dates[])
+            // Breadth
             let breadth = 0;
             for (const tk of allTickers) {
                 const tkArr = perTicker[tk];
-                const delta = tkArr[i] - tkArr[i - w];
+                const idx = tkArr.length - (dates.length - i);
+                const idxPrev = idx - w;
+                if (idxPrev < 0 || idx < 0 || idx >= tkArr.length) continue;
+                const delta = tkArr[idx] - tkArr[idxPrev];
                 if (isShortLeads) {
                     if (SHORT_SIDE.includes(tk) && delta > 0) breadth++;
                     if (LONG_SIDE.includes(tk) && delta < 0) breadth++;
@@ -3984,15 +3560,13 @@ function scanCrossDivergences(lookback) {
                 }
             }
 
-            // Sentiment at window end (30-day net bullish flow impulse: Long 30d - Short 30d)
+            // Sentiment at window end (30-day)
             const sentStart = Math.max(0, i - 30);
             const sentLong = longCum[i] - longCum[sentStart];
             const sentShort = shortCum[i] - shortCum[sentStart];
-            const netSent30 = sentLong - sentShort;
             let sentiment = 'NEUTRAL';
             if (sentLong > 0 && sentShort < 0) sentiment = 'BULLISH';
             else if (sentLong < 0 && sentShort > 0) sentiment = 'BEARISH';
-            else if (Math.abs(netSent30) > 5000000) sentiment = netSent30 > 0 ? 'BULLISH' : 'BEARISH';
 
             // Consistency
             const s = i - w + 1;
@@ -4331,16 +3905,12 @@ function renderCrossChart() {
     if (isFallback) tickers = ['BOIL'];
     
     const baseData = state.cache['BOIL'].data;
-    let startIdxBase = 0;
-    if (state.timeRange !== 'all' && baseData.length > 0) {
-        let days = {'1w':7,'1m':30,'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095,'5y':1825}[state.timeRange] || 9999;
-        const lastDateStr = baseData[baseData.length - 1].date;
-        const cutoffDate = new Date(lastDateStr + 'T12:00:00Z');
-        cutoffDate.setDate(cutoffDate.getDate() - days);
-        const cutoffStr = cutoffDate.toISOString().slice(0, 10);
-        startIdxBase = baseData.findIndex(d => d.date >= cutoffStr);
-        if (startIdxBase === -1) startIdxBase = 0;
-    }
+    let days = {'1w':7,'1m':30,'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095,'5y':1825}[state.timeRange] || 9999;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    const cutoffStr = cutoffDate.toISOString().slice(0, 10);
+    let startIdxBase = baseData.findIndex(d => d.date >= cutoffStr);
+    if (startIdxBase === -1) startIdxBase = 0;
     const baseDates = baseData.slice(startIdxBase).map(d => d.date);
     const zS = Math.floor(state.zoomCross.start * baseDates.length);
     const zE = Math.ceil(state.zoomCross.end   * baseDates.length);
@@ -4420,10 +3990,6 @@ function renderCrossChart() {
                 activeShorts.forEach(tk => {
                     shortSum += (series[tk] ? series[tk][i] : 0);
                 });
-                if (isPct) {
-                    if (activeLongs.length > 0) longSum /= activeLongs.length;
-                    if (activeShorts.length > 0) shortSum /= activeShorts.length;
-                }
                 const sv = longSum - shortSum;
                 spreadSeries.push(sv);
                 if (sv > globalMax) globalMax = sv;
@@ -4610,7 +4176,7 @@ function renderCrossChart() {
         }
     }
 
-    // End-of-line ticker labels with two-pass (top-down + bottom-up) collision solver
+    // End-of-line ticker labels
     const endLabels = tickers.map(tk => {
         const vals = series[tk];
         return { tk, y: getY(vals[vals.length - 1]), color: colors[tk] };
@@ -4619,29 +4185,14 @@ function renderCrossChart() {
         endLabels.push({ tk: 'SPREAD', y: getY(spreadSeries[spreadSeries.length - 1]), color: '#00e5ff' });
     }
     endLabels.sort((a, b) => a.y - b.y);
-    const minGap = 12;
-    const minY = pad.top + 6;
-    const maxY = pad.top + chartH - 2;
-    // Pass 1: push down overlapping labels
-    for (let i = 0; i < endLabels.length; i++) {
-        if (endLabels[i].y < minY) endLabels[i].y = minY;
-        if (i > 0 && endLabels[i].y - endLabels[i - 1].y < minGap) {
-            endLabels[i].y = endLabels[i - 1].y + minGap;
-        }
-    }
-    // Pass 2: clamp bottom label to maxY and push up any lower collisions
-    if (endLabels.length > 0 && endLabels[endLabels.length - 1].y > maxY) {
-        endLabels[endLabels.length - 1].y = maxY;
-        for (let i = endLabels.length - 2; i >= 0; i--) {
-            if (endLabels[i + 1].y - endLabels[i].y < minGap) {
-                endLabels[i].y = Math.max(minY, endLabels[i + 1].y - minGap);
-            }
-        }
+    for (let i = 1; i < endLabels.length; i++) {
+        if (endLabels[i].y - endLabels[i-1].y < 13)
+            endLabels[i].y = endLabels[i-1].y + 13;
     }
     ctxCross.font = 'bold 9px monospace'; ctxCross.textAlign = 'left';
     endLabels.forEach(({ tk, y, color }) => {
         ctxCross.fillStyle = color;
-        ctxCross.fillText(tk, pad.left + chartW + 5, y + 3);
+        ctxCross.fillText(tk, pad.left + chartW + 5, Math.min(pad.top + chartH, Math.max(pad.top + 8, y + 3)));
     });
     
     // HTML legend
@@ -4788,10 +4339,10 @@ function buildSnapshotCard(date, idx) {
             <div class="snapshot-date">SNAPSHOT — ${fmtDateLong(date)}</div>
             <div class="snapshot-actions">
                 <button class="snapshot-btn snapshot-btn-copy" id="snapshot-copy-btn" data-tooltip="Copy summary to clipboard">
-                    COPY
+                     COPY
                 </button>
                 <button class="snapshot-btn snapshot-btn-close" id="snapshot-close-btn" data-tooltip="Unpin snapshot">
-                    ✕
+                    X
                 </button>
             </div>
         </div>
@@ -4816,8 +4367,8 @@ function buildSnapshotCard(date, idx) {
         lines.push(`Net Spread: ${netFormatted} | L/S Ratio: ${ratio}:1`);
         navigator.clipboard.writeText(lines.join('\n')).then(() => {
             const btn = el('snapshot-copy-btn');
-            btn.textContent = 'COPIED';
-            setTimeout(() => { btn.innerHTML = 'COPY'; }, 1500);
+            btn.textContent = ' COPIED';
+            setTimeout(() => { btn.innerHTML = ' COPY'; }, 1500);
         });
     });
 
@@ -5003,9 +4554,9 @@ function renderCorrHeatmap() {
             const isLongShort = (['BOIL','HNU','3NGL'].includes(corrTickers[ci]) && ['KOLD','HND','3NGS'].includes(corrTickers[cj])) ||
                                (['KOLD','HND','3NGS'].includes(corrTickers[ci]) && ['BOIL','HNU','3NGL'].includes(corrTickers[cj]));
             if (isLongShort && v > 0.3) {
-                interpretation = '<div style="color:#f59e0b;font-size:0.55rem;font-weight:700;margin-top:3px;">UNUSUAL: Long/Short positively correlated</div>';
+                interpretation = '<div style="color:#f59e0b;font-size:0.55rem;font-weight:700;margin-top:3px;">[!] UNUSUAL: Long/Short positively correlated</div>';
             } else if (isLongShort && v < -0.3) {
-                interpretation = '<div style="color:#3db87a;font-size:0.55rem;font-weight:700;margin-top:3px;">NORMAL: Long/Short anti-correlated</div>';
+                interpretation = '<div style="color:#3db87a;font-size:0.55rem;font-weight:700;margin-top:3px;"> NORMAL: Long/Short anti-correlated</div>';
             }
         }
         tip.innerHTML = `<div style="font-weight:800;font-size:0.62rem;color:var(--cyan);">${label}</div>
@@ -5140,189 +4691,5 @@ window.addEventListener('resize', () => {
 }());
 
 </script>
-<script>
-
-// =========================================================================
-// FLOW SUITE SWITCHER & MASTER SLIDER SYNCHRONIZATION ENGINE
-// =========================================================================
-
-function setFlowSuiteMode(mode, save = true) {
-    if (save) {
-        try { localStorage.setItem('flows_suite_mode', mode); } catch (_) {}
-    }
-    const btns = document.querySelectorAll('.flow-suite-btn');
-    btns.forEach(b => {
-        b.classList.toggle('active', b.getAttribute('data-suite') === mode);
-    });
-
-    const classicContainer = document.getElementById('suite-container-classic');
-    const institutionalContainer = document.getElementById('suite-container-institutional');
-
-    if (classicContainer && institutionalContainer) {
-        if (mode === 'classic') {
-            classicContainer.classList.remove('suite-hidden');
-            institutionalContainer.classList.add('suite-hidden');
-        } else if (mode === 'institutional') {
-            classicContainer.classList.add('suite-hidden');
-            institutionalContainer.classList.remove('suite-hidden');
-        } else {
-            // Full Desk: show both
-            classicContainer.classList.remove('suite-hidden');
-            institutionalContainer.classList.remove('suite-hidden');
-        }
-    }
-
-    // Trigger redrawing for visible charts
-    requestAnimationFrame(() => {
-        if (!state.cache || !state.activeTicker || !state.cache[state.activeTicker]?.data) return;
-        if (mode === 'classic' || mode === 'all') {
-            if (typeof renderCharts === 'function') renderCharts();
-            if (typeof renderCrossChart === 'function') renderCrossChart();
-            if (typeof renderZChart === 'function') renderZChart();
-        }
-        if (mode === 'institutional' || mode === 'all') {
-            if (typeof renderCompZChart === 'function') renderCompZChart();
-            if (typeof renderVelocityChart === 'function') renderVelocityChart();
-            if (typeof renderContrarianDivergence === 'function') renderContrarianDivergence();
-            if (typeof renderReactivityChart === 'function') renderReactivityChart();
-        }
-    });
-}
-
-function initFlowSuiteSwitcher() {
-    const nav = document.getElementById('flow-suite-tabs');
-    if (nav) {
-        nav.addEventListener('click', (e) => {
-            const btn = e.target.closest('.flow-suite-btn');
-            if (!btn) return;
-            const mode = btn.getAttribute('data-suite');
-            setFlowSuiteMode(mode);
-        });
-    }
-
-    let saved = 'classic';
-    try { saved = localStorage.getItem('flows_suite_mode') || 'classic'; } catch (_) {}
-    setFlowSuiteMode(saved, false);
-}
-
-// Master Slider Synchronization across Deep Dive, Z, Cross, and Institutional charts
-function syncMasterSliders(startFrac, endFrac, originId) {
-    const isSyncActive = document.getElementById('sync-all-sliders')?.checked ?? true;
-    if (!isSyncActive) return;
-
-    // Update global state zoom
-    state.zoom = { start: startFrac, end: endFrac };
-    state.zoomZ = { start: startFrac, end: endFrac };
-    state.zoomCross = { start: startFrac, end: endFrac };
-    if (state.zoomCompZ) state.zoomCompZ = { start: startFrac, end: endFrac };
-    if (state.zoomFlowVel) state.zoomFlowVel = { start: startFrac, end: endFrac };
-    if (state.zoomFlowNG) state.zoomFlowNG = { start: startFrac, end: endFrac };
-    if (state.zoomReactivity) state.zoomReactivity = { start: startFrac, end: endFrac };
-
-    // 1. Deep Dive Sliders (0-100)
-    const sDD1 = document.getElementById('range-start');
-    const sDD2 = document.getElementById('range-end');
-    if (sDD1 && originId !== 'range-start') sDD1.value = Math.round(startFrac * 100);
-    if (sDD2 && originId !== 'range-end') sDD2.value = Math.round(endFrac * 100);
-    const hlDD = document.getElementById('range-highlight');
-    if (hlDD) {
-        hlDD.style.left = (startFrac * 100) + '%';
-        hlDD.style.width = ((endFrac - startFrac) * 100) + '%';
-    }
-
-    // 2. Z-Score Sliders (0-100)
-    const sZ1 = document.getElementById('z-range-start');
-    const sZ2 = document.getElementById('z-range-end');
-    if (sZ1 && originId !== 'z-range-start') sZ1.value = Math.round(startFrac * 100);
-    if (sZ2 && originId !== 'z-range-end') sZ2.value = Math.round(endFrac * 100);
-    const hlZ = document.getElementById('z-range-highlight');
-    if (hlZ) {
-        hlZ.style.left = (startFrac * 100) + '%';
-        hlZ.style.width = ((endFrac - startFrac) * 100) + '%';
-    }
-
-    // 3. Cross-ETF Sliders (0-100)
-    const sC1 = document.getElementById('cross-range-start');
-    const sC2 = document.getElementById('cross-range-end');
-    if (sC1 && originId !== 'cross-range-start') sC1.value = Math.round(startFrac * 100);
-    if (sC2 && originId !== 'cross-range-end') sC2.value = Math.round(endFrac * 100);
-    const hlC = document.getElementById('cross-range-highlight');
-    if (hlC) {
-        hlC.style.left = (startFrac * 100) + '%';
-        hlC.style.width = ((endFrac - startFrac) * 100) + '%';
-    }
-
-    // 4. Institutional Sliders (0-1000)
-    const instSliders = [
-        ['compz-range-start', 'compz-range-end', 'compz-range-highlight'],
-        ['flowvel-range-start', 'flowvel-range-end', 'flowvel-range-highlight'],
-        ['flowng-range-start', 'flowng-range-end', 'flowng-range-highlight'],
-        ['reactivity-range-start', 'reactivity-range-end', 'reactivity-range-highlight']
-    ];
-    instSliders.forEach(([id1, id2, hlid]) => {
-        const el1 = document.getElementById(id1);
-        const el2 = document.getElementById(id2);
-        const elHl = document.getElementById(hlid);
-        if (el1 && originId !== id1) el1.value = Math.round(startFrac * 1000);
-        if (el2 && originId !== id2) el2.value = Math.round(endFrac * 1000);
-        if (elHl) {
-            elHl.style.left = (startFrac * 100) + '%';
-            elHl.style.width = ((endFrac - startFrac) * 100) + '%';
-        }
-    });
-
-    // Re-render currently visible charts
-    if (!state.cache || !state.activeTicker || !state.cache[state.activeTicker]?.data) return;
-    const currentMode = document.querySelector('.flow-suite-btn.active')?.getAttribute('data-suite') || 'classic';
-    if (currentMode === 'classic' || currentMode === 'all') {
-        if (typeof renderCharts === 'function') renderCharts();
-        if (typeof renderCrossChart === 'function') renderCrossChart();
-        if (typeof renderZChart === 'function') renderZChart();
-    }
-    if (currentMode === 'institutional' || currentMode === 'all') {
-        if (typeof renderCompZChart === 'function') renderCompZChart();
-        if (typeof renderVelocityChart === 'function') renderVelocityChart();
-        if (typeof renderContrarianDivergence === 'function') renderContrarianDivergence();
-        if (typeof renderReactivityChart === 'function') renderReactivityChart();
-    }
-}
-
-// Hook master sync into window load
-window.addEventListener('DOMContentLoaded', () => {
-    initFlowSuiteSwitcher();
-
-    // Attach sync to all sliders
-    const sliderDefs = [
-        { s1: 'range-start', s2: 'range-end', max: 100 },
-        { s1: 'z-range-start', s2: 'z-range-end', max: 100 },
-        { s1: 'cross-range-start', s2: 'cross-range-end', max: 100 },
-        { s1: 'compz-range-start', s2: 'compz-range-end', max: 1000 },
-        { s1: 'flowvel-range-start', s2: 'flowvel-range-end', max: 1000 },
-        { s1: 'flowng-range-start', s2: 'flowng-range-end', max: 1000 },
-        { s1: 'reactivity-range-start', s2: 'reactivity-range-end', max: 1000 },
-    ];
-
-    sliderDefs.forEach(({ s1, s2, max }) => {
-        const el1 = document.getElementById(s1);
-        const el2 = document.getElementById(s2);
-        if (el1) {
-            el1.addEventListener('input', (e) => {
-                const v1 = parseFloat(el1.value) / max;
-                const v2 = el2 ? parseFloat(el2.value) / max : 1.0;
-                syncMasterSliders(Math.min(v1, v2 - 0.01), Math.max(v1 + 0.01, v2), s1);
-            });
-        }
-        if (el2) {
-            el2.addEventListener('input', (e) => {
-                const v1 = el1 ? parseFloat(el1.value) / max : 0.0;
-                const v2 = parseFloat(el2.value) / max;
-                syncMasterSliders(Math.min(v1, v2 - 0.01), Math.max(v1 + 0.01, v2), s2);
-            });
-        }
-    });
-});
-
-</script>
-<script>if (typeof Auth !== 'undefined') Auth.attachLogoutButton();</script>
 </body>
 </html>

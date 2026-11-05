@@ -284,21 +284,7 @@
                 tpl.remove();
             }
 
-            // Dynamically load all dashboard stylesheets if deferred
-            const deferredStyles = [
-                'css/styles.css?v=20261021a',
-                'css/cards.css?v=20261024a',
-                'css/signals.css?v=20261101a',
-                'css/tail-risk.css?v=20261031a'
-            ];
-            deferredStyles.forEach(href => {
-                if (!document.querySelector(`link[href="${href}"]`)) {
-                    const l = document.createElement('link');
-                    l.rel = 'stylesheet';
-                    l.href = href;
-                    document.head.appendChild(l);
-                }
-            });
+            // Stylesheets are pre-loaded in <head> to eliminate any white flash / FOUC
 
             // Dynamically load all scripts in strict sequential order
             const scripts = [
