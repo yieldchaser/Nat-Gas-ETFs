@@ -450,6 +450,26 @@ const Signals = {
         const hn = document.getElementById('heat-next');
         const titleEl = document.getElementById('heat-calendar-title');
 
+        const startIndex = Math.max(0, series.length - (offset + 1) * days);
+        const endIndex = series.length - offset * days;
+        const visibleSlice = series.slice(startIndex, endIndex);
+
+        if (titleEl) {
+            const startDay = offset * days + 1;
+            const endDay = Math.min((offset + 1) * days, series.length);
+            const modeLabel = mode === 'dollar' ? 'DOLLAR VOL' : 'VOLUME';
+            const subjectLabel = (side === 'all') ? '' : ' [' + side.replace('.TO', '').replace('.L', '') + ']';
+            let dateRangeStr = '';
+            if (visibleSlice.length > 0) {
+                const d1 = visibleSlice[0].date;
+                const d2 = visibleSlice[visibleSlice.length - 1].date;
+                const fmt1 = typeof formatDisplayDate === 'function' ? formatDisplayDate(d1) : d1;
+                const fmt2 = typeof formatDisplayDate === 'function' ? formatDisplayDate(d2) : d2;
+                dateRangeStr = ' · ' + fmt1 + ' – ' + fmt2;
+            }
+            titleEl.innerHTML = modeLabel + ' HEAT MAP' + subjectLabel + ' <span style="font-size:0.54rem; font-weight:normal; color:rgba(255,255,255,0.45); text-transform:none; margin-left:2px;">(' + startDay + '–' + endDay + 'd' + dateRangeStr + ')</span>';
+        }
+
         if (hp) {
             const isPrevDisabled = (offset >= maxOffset);
             hp.disabled = isPrevDisabled;
@@ -458,7 +478,16 @@ const Signals = {
             } else {
                 const prevStart = (offset + 1) * days + 1;
                 const prevEnd = Math.min((offset + 2) * days, series.length);
-                hp.setAttribute('data-tooltip', 'View previous ' + days + ' days (Days ' + prevStart + '–' + prevEnd + ')');
+                const prevStartIdx = Math.max(0, series.length - (offset + 2) * days);
+                const prevEndIdx = series.length - (offset + 1) * days;
+                const prevSlice = series.slice(prevStartIdx, prevEndIdx);
+                let prevRange = '';
+                if (prevSlice.length > 0) {
+                    const pd1 = typeof formatDisplayDate === 'function' ? formatDisplayDate(prevSlice[0].date) : prevSlice[0].date;
+                    const pd2 = typeof formatDisplayDate === 'function' ? formatDisplayDate(prevSlice[prevSlice.length - 1].date) : prevSlice[prevSlice.length - 1].date;
+                    prevRange = ' (' + pd1 + ' – ' + pd2 + ')';
+                }
+                hp.setAttribute('data-tooltip', 'View older ' + days + ' days: Days ' + prevStart + '–' + prevEnd + prevRange);
             }
         }
         if (hn) {
@@ -469,21 +498,18 @@ const Signals = {
             } else {
                 const nextStart = (offset - 1) * days + 1;
                 const nextEnd = offset * days;
-                hn.setAttribute('data-tooltip', 'View recent ' + days + ' days (Days ' + nextStart + '–' + nextEnd + ')');
+                const nextStartIdx = Math.max(0, series.length - offset * days);
+                const nextEndIdx = series.length - (offset - 1) * days;
+                const nextSlice = series.slice(nextStartIdx, nextEndIdx);
+                let nextRange = '';
+                if (nextSlice.length > 0) {
+                    const nd1 = typeof formatDisplayDate === 'function' ? formatDisplayDate(nextSlice[0].date) : nextSlice[0].date;
+                    const nd2 = typeof formatDisplayDate === 'function' ? formatDisplayDate(nextSlice[nextSlice.length - 1].date) : nextSlice[nextSlice.length - 1].date;
+                    nextRange = ' (' + nd1 + ' – ' + nd2 + ')';
+                }
+                hn.setAttribute('data-tooltip', 'View newer ' + days + ' days: Days ' + nextStart + '–' + nextEnd + nextRange);
             }
         }
-
-        if (titleEl) {
-            const startDay = offset * days + 1;
-            const endDay = Math.min((offset + 1) * days, series.length);
-            const modeLabel = mode === 'dollar' ? 'DOLLAR VOL' : 'VOLUME';
-            const subjectLabel = (side === 'all') ? '' : ' [' + side.replace('.TO', '').replace('.L', '') + ']';
-            titleEl.innerHTML = modeLabel + ' HEAT MAP' + subjectLabel + ' <span style="font-size:0.54rem; font-weight:normal; color:rgba(255,255,255,0.45); text-transform:none; margin-left:2px;">(' + startDay + '–' + endDay + 'd)</span>';
-        }
-
-        const startIndex = Math.max(0, series.length - (offset + 1) * days);
-        const endIndex = series.length - offset * days;
-        const visibleSlice = series.slice(startIndex, endIndex);
 
         const spotlightCount = Charts.drawHeatCalendar(container, visibleSlice, mode, spotlightMode, peaksThreshold, globalPercentiles, side);
         const peakBadge = document.getElementById('heat-peak-count');

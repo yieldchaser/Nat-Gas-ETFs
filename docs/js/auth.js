@@ -303,7 +303,7 @@
             function loadNextScript(idx) {
                 if (idx >= scripts.length) {
                     Auth.attachLogoutButton();
-                    if (typeof App !== 'undefined' && typeof App.init === 'function') {
+                    if (typeof App !== 'undefined' && typeof App.init === 'function' && !App._initialized) {
                         App.init();
                     }
                     return;

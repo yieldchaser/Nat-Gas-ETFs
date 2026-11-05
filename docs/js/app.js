@@ -22,9 +22,16 @@ const App = {
     heatPeaksMode: false, // Backwards compatibility mirror
     heatPeaksThreshold: 95, // Spotlight threshold percentile (90, 95, or 99)
     heatGlobalPercentiles: {}, // Keyed by {mode, side}
+    _initialized: false,
+    _eventsBound: false,
 
 
     async init() {
+        if (this._initialized) {
+            console.log('[MONITOR] App already initialized, skipping duplicate init.');
+            return;
+        }
+        this._initialized = true;
         console.log('[MONITOR] Initializing...');
         this.bindEvents();
         if (typeof VolumeProfile !== 'undefined' && typeof VolumeProfile.init === 'function') {
@@ -38,6 +45,8 @@ const App = {
     },
 
     bindEvents() {
+        if (this._eventsBound) return;
+        this._eventsBound = true;
         document.getElementById('refresh-btn').addEventListener('click', () => this.refresh(true));
         window.addEventListener('resize', () => this.handleResize());
 
