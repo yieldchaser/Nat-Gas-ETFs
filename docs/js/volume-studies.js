@@ -3498,12 +3498,20 @@ const VolumeStudies = {
         tooltip.style.display = 'block';
         const m = this.state.lastMouse;
         const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
-        let left = m.x + 14;
-        if (left + tw > twrap - 4) left = m.x - tw - 14;
-        left = Math.max(4, left);
-        let top = m.y + 12;
-        if (top + th > thrap - 4) top = thrap - th - 4;
-        top = Math.max(4, top);
+
+        // Adaptive Corner Docking: Always dock in top corner opposite the mouse cursor
+        // Leaves mouse cursor, active candle, and indicators 100% unobstructed.
+        const PADDING = 12;
+        let left;
+        if (m.x < twrap * 0.5) {
+            // Mouse is on left half -> dock in top-right corner
+            left = twrap - tw - PADDING;
+        } else {
+            // Mouse is on right half -> dock in top-left corner
+            left = PADDING;
+        }
+        let top = PADDING;
+
         tooltip.style.left = left + 'px';
         tooltip.style.top = top + 'px';
     },

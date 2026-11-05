@@ -2338,17 +2338,19 @@
 .vs-tooltip {
     position: absolute;
     display: none;
-    background: rgba(16, 18, 28, 0.96);
-    border: 1px solid var(--border-primary);
-    border-radius: 6px;
+    background: rgba(10, 15, 26, 0.72);
+    border: 1px solid rgba(0, 212, 255, 0.32);
+    border-radius: 8px;
     padding: 8px 12px;
     font-size: 0.72rem;
     color: #fff;
     pointer-events: none;
     z-index: 50;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-    min-width: 180px;
-    backdrop-filter: blur(8px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75);
+    min-width: 190px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: left 0.16s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease;
 }
 .vs-tt-header {
     display: flex;
