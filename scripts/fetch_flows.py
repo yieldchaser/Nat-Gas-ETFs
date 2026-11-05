@@ -489,7 +489,7 @@ def fetch_ng_history():
                 close = quote["close"][i]
                 if close is None:
                     continue
-                date_str = datetime.utcfromtimestamp(timestamps[i]).strftime("%Y-%m-%d")
+                date_str = datetime.fromtimestamp(timestamps[i], timezone.utc).strftime("%Y-%m-%d")
                 history.append({"date": date_str, "close": round(close, 4)})
 
             # Deduplicate by date (Yahoo sometimes returns two bars for same date)

@@ -768,7 +768,7 @@ def _yahoo_fetch_one(
             timestamps = result["timestamp"]
             quote = result["indicators"]["quote"][0]
 
-            dates = [datetime.utcfromtimestamp(ts) for ts in timestamps]
+            dates = [datetime.fromtimestamp(ts, timezone.utc).replace(tzinfo=None) for ts in timestamps]
             df = pd.DataFrame({
                 "open": quote.get("open"),
                 "high": quote.get("high"),

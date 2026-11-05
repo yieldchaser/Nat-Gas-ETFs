@@ -13,7 +13,7 @@ import math
 import ssl
 import time
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -249,7 +249,7 @@ def fetch_ticker_data(ticker: str, known_splits: Dict[str, List[Tuple[str, float
                 # Volume can be None or 0, we treat it as 0
                 vol_val = int(v) if v is not None else 0
                 
-                date_str = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
+                date_str = datetime.fromtimestamp(ts, timezone.utc).strftime("%Y-%m-%d")
                 # Deduplicate: Yahoo sometimes returns two records for the same date
                 # (intraday estimate + official close). Keep the last (most up-to-date).
                 if dates and dates[-1] == date_str:

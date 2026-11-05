@@ -1223,7 +1223,9 @@ const App = {
 // Banner toggle
 function toggleBanner() {
     const banner = document.getElementById('hypothesis-banner');
-    banner.classList.toggle('collapsed');
+    if (banner) {
+        banner.classList.toggle('collapsed');
+    }
 }
 
 // Boot

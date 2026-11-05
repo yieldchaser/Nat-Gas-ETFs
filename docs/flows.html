@@ -1986,7 +1986,7 @@ function renderSection2() {
                     <div class="fc-m-val ${flowColor(tk, d.last_30d_net)}">${fmtUsd(d.last_30d_net)}</div>
                 </div>
                 <div class="fc-metric">
-                    <div class="fc-m-lbl" data-tooltip="Flow Z-Score vs 30-day avg. >+1.5 = unusual accumulation, <−1.5 = unusual distribution.">Z-SCORE</div>
+                    <div class="fc-m-lbl" data-tooltip="Flow Z-Score vs 30-day avg. &gt;+1.5 = unusual accumulation, &lt;-1.5 = unusual distribution.">Z-SCORE</div>
                     <div class="fc-m-val ${zCol}">${d.zscore >= 0 ? '+' : ''}${d.zscore.toFixed(2)}</div>
                     ${getFlowSignalTag(tk, d.zscore)}
                 </div>
@@ -2180,7 +2180,7 @@ function resizeCanvas(canvas) {
 
 function renderCharts() {
     const data = getVisibleData();
-    if (!data || data.length === 0) return;
+    if (!data || data.length < 2) return;
     drawChartA(data);
     drawChartB(data);
 
@@ -2415,6 +2415,7 @@ function drawChartA(data) {
 }
 
 function drawChartB(data) {
+    if (!data || data.length < 2) return;
     const cvs = el('chartB');
     const { w, h, dpr } = resizeCanvas(cvs);
     ctxB.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -2735,6 +2736,7 @@ function handleChartWheel(e) {
     newEnd   = Math.min(1, newEnd);
 
     const base     = getBaseVisibleData();
+    if (!base || !base.length) return;
     const minRange = Math.min(1, 20 / base.length);
     if (newEnd - newStart < minRange) return;
 

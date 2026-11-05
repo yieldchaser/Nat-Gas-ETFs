@@ -4670,7 +4670,7 @@ function simulate(inp, cfg) {
                 netProduct *= (1 + riskFraction * n);
                 grossProduct *= (1 + riskFraction * g);
             }
-            const exp = swingsPerYear / grossCaptured.length;
+            const exp = grossCaptured.length > 0 ? (swingsPerYear / grossCaptured.length) : 0;
             netMult = Math.pow(netProduct, exp) * (1 + fxDrift);
             grossMult = Math.pow(grossProduct, exp) * (1 + fxDrift);
         } else {
