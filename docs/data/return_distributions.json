@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-06T01:06:39.128355+00:00",
+  "generated_at": "2026-11-06T01:40:35.166676+00:00",
   "description": "Historical Return Distribution & Tail Risk Engine",
   "instruments": {
     "BOIL": {
@@ -47359,10 +47359,10 @@
       "latest_date": "2026-11-06",
       "latest_bar": {
         "date": "2026-11-06",
-        "close": 2.941,
+        "close": 2.957,
         "prev_close": 2.959,
-        "return_pct": -0.6083,
-        "volume": 997
+        "return_pct": -0.0676,
+        "volume": 1436
       },
       "regimes": {
         "trailing_252d": {
@@ -47378,12 +47378,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 251,
               "moments": {
-                "mean": 0.0321,
+                "mean": 0.0343,
                 "median": 0.3058,
-                "std": 5.6277,
-                "ann_volatility": 89.34,
-                "skewness": -1.576,
-                "excess_kurtosis": 26.4232
+                "std": 5.6276,
+                "ann_volatility": 89.33,
+                "skewness": -1.5773,
+                "excess_kurtosis": 26.4287
               },
               "risk_metrics": {
                 "var_95": -6.38,
@@ -48209,12 +48209,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 247,
               "moments": {
-                "mean": 0.1579,
-                "median": -0.3726,
-                "std": 14.8437,
+                "mean": 0.1601,
+                "median": -0.2161,
+                "std": 14.8436,
                 "ann_volatility": 105.38,
-                "skewness": 3.004,
-                "excess_kurtosis": 23.6438
+                "skewness": 3.0036,
+                "excess_kurtosis": 23.6422
               },
               "risk_metrics": {
                 "var_95": -15.21,
@@ -48223,7 +48223,7 @@
                 "cvar_99": -52.78,
                 "max_gain": 119.14,
                 "max_drawdown": -53.55,
-                "win_rate": 46.15
+                "win_rate": 46.56
               },
               "histogram": {
                 "bin_count": 80,
@@ -48626,9 +48626,9 @@
                     "lower": -2.9786,
                     "upper": 0.0,
                     "center": -1.4893,
-                    "count": 43,
-                    "density": 0.174089,
-                    "cumulative_pct": 52.6316,
+                    "count": 42,
+                    "density": 0.17004,
+                    "cumulative_pct": 52.2267,
                     "is_negative": true
                   },
                   {
@@ -48636,8 +48636,8 @@
                     "lower": 0.0,
                     "upper": 2.9786,
                     "center": 1.4893,
-                    "count": 41,
-                    "density": 0.165992,
+                    "count": 42,
+                    "density": 0.17004,
                     "cumulative_pct": 69.2308,
                     "is_negative": false
                   },
@@ -49040,12 +49040,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 231,
               "moments": {
-                "mean": -2.4356,
+                "mean": -2.4334,
                 "median": -2.5676,
-                "std": 16.1599,
+                "std": 16.1592,
                 "ann_volatility": 55.98,
-                "skewness": 0.1614,
-                "excess_kurtosis": 4.2477
+                "skewness": 0.161,
+                "excess_kurtosis": 4.249
               },
               "risk_metrics": {
                 "var_95": -27.64,
@@ -49981,7 +49981,7 @@
                 "edge": "Moderate Bearish Edge"
               },
               "fwd_10d": {
-                "mean": 0.33,
+                "mean": 0.34,
                 "median": -0.28,
                 "win_rate": 47.7,
                 "edge": "Neutral / Mean Reverting"
@@ -50002,12 +50002,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 967,
               "moments": {
-                "mean": 0.0911,
+                "mean": 0.0917,
                 "median": 0.0855,
                 "std": 4.8735,
                 "ann_volatility": 77.36,
-                "skewness": -0.2753,
-                "excess_kurtosis": 13.4848
+                "skewness": -0.2756,
+                "excess_kurtosis": 13.4856
               },
               "risk_metrics": {
                 "var_95": -6.62,
@@ -50833,12 +50833,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 963,
               "moments": {
-                "mean": 0.4277,
+                "mean": 0.4282,
                 "median": -0.3968,
                 "std": 11.0946,
                 "ann_volatility": 78.76,
-                "skewness": 1.9534,
-                "excess_kurtosis": 19.5179
+                "skewness": 1.9532,
+                "excess_kurtosis": 19.5177
               },
               "risk_metrics": {
                 "var_95": -14.05,
@@ -50847,7 +50847,7 @@
                 "cvar_99": -32.92,
                 "max_gain": 119.14,
                 "max_drawdown": -53.55,
-                "win_rate": 47.77
+                "win_rate": 47.87
               },
               "histogram": {
                 "bin_count": 80,
@@ -51250,9 +51250,9 @@
                     "lower": -2.9786,
                     "upper": 0.0,
                     "center": -1.4893,
-                    "count": 136,
-                    "density": 0.141225,
-                    "cumulative_pct": 51.7134,
+                    "count": 135,
+                    "density": 0.140187,
+                    "cumulative_pct": 51.6096,
                     "is_negative": true
                   },
                   {
@@ -51260,8 +51260,8 @@
                     "lower": 0.0,
                     "upper": 2.9786,
                     "center": 1.4893,
-                    "count": 118,
-                    "density": 0.122534,
+                    "count": 119,
+                    "density": 0.123572,
                     "cumulative_pct": 63.9668,
                     "is_negative": false
                   },
@@ -51664,12 +51664,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 947,
               "moments": {
-                "mean": 1.3207,
+                "mean": 1.3212,
                 "median": 1.2421,
-                "std": 17.71,
+                "std": 17.7097,
                 "ann_volatility": 61.35,
                 "skewness": 0.2399,
-                "excess_kurtosis": 1.1757
+                "excess_kurtosis": 1.1759
               },
               "risk_metrics": {
                 "var_95": -26.55,
@@ -52626,12 +52626,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 4994,
               "moments": {
-                "mean": 0.0563,
+                "mean": 0.0564,
                 "median": -0.0081,
                 "std": 3.7819,
                 "ann_volatility": 60.04,
-                "skewness": 0.4989,
-                "excess_kurtosis": 14.7093
+                "skewness": 0.4988,
+                "excess_kurtosis": 14.7094
               },
               "risk_metrics": {
                 "var_95": -5.41,
@@ -53457,11 +53457,11 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 4990,
               "moments": {
-                "mean": 0.2426,
-                "median": -0.1018,
+                "mean": 0.2427,
+                "median": -0.0992,
                 "std": 8.1053,
                 "ann_volatility": 57.54,
-                "skewness": 1.2533,
+                "skewness": 1.2532,
                 "excess_kurtosis": 15.3879
               },
               "risk_metrics": {
@@ -53471,7 +53471,7 @@
                 "cvar_99": -24.1,
                 "max_gain": 119.14,
                 "max_drawdown": -53.55,
-                "win_rate": 49.24
+                "win_rate": 49.26
               },
               "histogram": {
                 "bin_count": 80,
@@ -53874,9 +53874,9 @@
                     "lower": -2.9786,
                     "upper": 0.0,
                     "center": -1.4893,
-                    "count": 900,
-                    "density": 0.180361,
-                    "cumulative_pct": 50.501,
+                    "count": 899,
+                    "density": 0.18016,
+                    "cumulative_pct": 50.481,
                     "is_negative": true
                   },
                   {
@@ -53884,8 +53884,8 @@
                     "lower": 0.0,
                     "upper": 2.9786,
                     "center": 1.4893,
-                    "count": 886,
-                    "density": 0.177555,
+                    "count": 887,
+                    "density": 0.177756,
                     "cumulative_pct": 68.2565,
                     "is_negative": false
                   },
@@ -54288,12 +54288,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 4974,
               "moments": {
-                "mean": 0.7652,
+                "mean": 0.7653,
                 "median": -0.2301,
                 "std": 15.0246,
                 "ann_volatility": 52.05,
                 "skewness": 0.5239,
-                "excess_kurtosis": 2.0292
+                "excess_kurtosis": 2.0293
               },
               "risk_metrics": {
                 "var_95": -21.58,
