@@ -174,72 +174,141 @@ const Charts = {
     },
 
     evaluateViewportSpotlight(visibleSlice, mode, activeFilter) {
-        const N = visibleSlice.length;
+        const N = visibleSlice ? visibleSlice.length : 0;
         if (N === 0) return [];
 
-        const k99 = Math.max(1, Math.round(0.01 * N));
-        const k95 = Math.max(k99 + 1, Math.round(0.05 * N));
-        const k90 = Math.max(k95 + 1, Math.round(0.10 * N));
-
-        const sortedIndices = Array.from({ length: N }, (_, i) => i);
-        sortedIndices.sort((a, b) => {
-            const keyA = mode === 'PEAKS' ? visibleSlice[a].compositeTieKeyPeak : visibleSlice[a].compositeTieKeyValley;
-            const keyB = mode === 'PEAKS' ? visibleSlice[b].compositeTieKeyPeak : visibleSlice[b].compositeTieKeyValley;
-            return keyB - keyA;
-        });
-
-        const ranks = new Int32Array(N);
-        const baselineBins = new Uint8Array(N);
-        for (let rankZero = 0; rankZero < N; rankZero++) {
-            const origIdx = sortedIndices[rankZero];
-            ranks[origIdx] = rankZero + 1;
-            baselineBins[origIdx] = Math.min(4, Math.floor(((N - 1 - rankZero) / N) * 5));
-        }
-
-        const STRUCTURAL_FLOORS = {
-            PEAKS: { P99: 68.0, P95: 52.0, P90: 38.0 },
-            VALLEYS: { P99: 64.0, P95: 48.0, P90: 34.0 }
+        const W_LOCAL = 252;
+        const W_MACRO = 756;
+        const MIN_CAUSAL_WARMUP = 21;
+        const MACRO_TOP_PCT = 0.02;
+        const MIN_HIGHLIGHT_SCORE = {
+            PEAKS: 25.0,
+            VALLEYS: 22.0
         };
-        const floors = STRUCTURAL_FLOORS[mode] || STRUCTURAL_FLOORS.PEAKS;
+        const regime = mode === 'VALLEYS' ? 'VALLEYS' : 'PEAKS';
+        const minScore = MIN_HIGHLIGHT_SCORE[regime];
+
+        const isStrictlyHigher = (cand, candIdx, cur, curIdx) => {
+            const cScore = regime === 'PEAKS' ? (cand.peakScore ?? 0) : (cand.valleyScore ?? 0);
+            const rScore = regime === 'PEAKS' ? (cur.peakScore ?? 0) : (cur.valleyScore ?? 0);
+            if (cScore > rScore + 1e-12) return true;
+            if (cScore < rScore - 1e-12) return false;
+            if (regime === 'PEAKS') {
+                const cRv = cand.maxRvol ?? 0;
+                const rRv = cur.maxRvol ?? 0;
+                if (cRv > rRv + 1e-12) return true;
+                if (cRv < rRv - 1e-12) return false;
+            } else {
+                const cRv = cand.minRvol ?? cand.maxRvol ?? Infinity;
+                const rRv = cur.minRvol ?? cur.maxRvol ?? Infinity;
+                if (cRv < rRv - 1e-12) return true;
+                if (cRv > rRv + 1e-12) return false;
+            }
+            return candIdx > curIdx;
+        };
+
         const output = new Array(N);
 
         for (let i = 0; i < N; i++) {
             const rec = visibleSlice[i];
-            const score = mode === 'PEAKS' ? rec.peakScore : rec.valleyScore;
-            const r = ranks[i];
+            const score = regime === 'PEAKS' ? (rec.peakScore ?? 0) : (rec.valleyScore ?? 0);
+            const pre = rec.causal && rec.causal[regime] ? rec.causal[regime] : null;
 
-            let visualTier = 'NONE';
-            let isStructuralClimax = false;
+            let rank, nEff, nMacro, macroRank, macroCutoff, pctTop, visualTier, isStructuralClimax, baseDimReason;
 
-            if (r <= k99) {
-                visualTier = 'RED_P99';
-                isStructuralClimax = score >= floors.P99;
-            } else if (r <= k95) {
-                visualTier = 'ORANGE_P95';
-                isStructuralClimax = score >= floors.P95;
-            } else if (r <= k90) {
-                visualTier = 'AMBER_P90';
-                isStructuralClimax = score >= floors.P90;
+            if (pre) {
+                rank = pre.rank;
+                nEff = pre.nEff;
+                nMacro = pre.nMacro;
+                macroRank = pre.macroRank;
+                macroCutoff = pre.macroCutoff;
+                pctTop = pre.pctTop;
+                visualTier = pre.visualTier;
+                isStructuralClimax = pre.isStructuralClimax;
+                baseDimReason = pre.dimReason || null;
+            } else {
+                const wStart = Math.max(0, i - (W_LOCAL - 1));
+                nEff = i - wStart + 1;
+                rank = 1;
+                for (let j = wStart; j < i; j++) {
+                    if (isStrictlyHigher(visibleSlice[j], j, rec, i)) {
+                        rank++;
+                    }
+                }
+
+                const mStart = Math.max(0, i - (W_MACRO - 1));
+                nMacro = i - mStart + 1;
+                macroCutoff = Math.max(1, Math.floor(MACRO_TOP_PCT * nMacro));
+                macroRank = 1;
+                for (let j = mStart; j < i; j++) {
+                    if (isStrictlyHigher(visibleSlice[j], j, rec, i)) {
+                        macroRank++;
+                    }
+                }
+
+                pctTop = Math.min(100, Math.max(1, Math.ceil((rank * 100) / nEff - 1e-9)));
+
+                if (nEff < MIN_CAUSAL_WARMUP) {
+                    visualTier = 'NONE';
+                    isStructuralClimax = false;
+                    baseDimReason = 'WARMUP';
+                } else {
+                    const k99 = Math.max(1, Math.floor(0.01 * nEff));
+                    const k95 = Math.max(k99 + 1, Math.floor(0.05 * nEff));
+                    const k90 = Math.max(k95 + 1, Math.floor(0.10 * nEff));
+
+                    if (rank <= k90 && score < minScore) {
+                        visualTier = 'NONE';
+                        isStructuralClimax = false;
+                        baseDimReason = 'NOISE_FLOOR';
+                    } else if (rank <= k99) {
+                        visualTier = 'RED_P99';
+                        isStructuralClimax = macroRank <= macroCutoff;
+                        baseDimReason = null;
+                    } else if (rank <= k95) {
+                        visualTier = 'ORANGE_P95';
+                        isStructuralClimax = macroRank <= macroCutoff;
+                        baseDimReason = null;
+                    } else if (rank <= k90) {
+                        visualTier = 'AMBER_P90';
+                        isStructuralClimax = macroRank <= macroCutoff;
+                        baseDimReason = null;
+                    } else {
+                        visualTier = 'NONE';
+                        isStructuralClimax = false;
+                        baseDimReason = 'CUTOFF';
+                    }
+                }
             }
 
             let isHighlighted = true;
             if (activeFilter === 'P99') {
-                isHighlighted = r <= k99;
+                isHighlighted = visualTier === 'RED_P99';
             } else if (activeFilter === 'P95') {
-                isHighlighted = r <= k95;
+                isHighlighted = visualTier === 'RED_P99' || visualTier === 'ORANGE_P95';
             } else if (activeFilter === 'P90') {
-                isHighlighted = r <= k90;
+                isHighlighted = visualTier !== 'NONE';
             }
+
+            const dimReason = isHighlighted ? null : (baseDimReason || 'CUTOFF');
+            const baselineQuantileBin = Math.min(4, Math.floor(((nEff - rank) / nEff) * 5));
 
             output[i] = {
                 date: rec.date,
                 score,
                 maxRvol: rec.maxRvol,
-                windowRank: r,
+                rank,
+                nEff,
+                nMacro,
+                macroRank,
+                macroCutoff,
+                pctTop,
+                windowRank: rank,
                 visualTier,
                 isHighlighted,
                 isStructuralClimax,
-                baselineQuantileBin: baselineBins[i]
+                dimReason,
+                baselineQuantileBin
             };
         }
 
@@ -344,7 +413,11 @@ const Charts = {
                 '</div>';
         }
 
-        const pctTop = m.totalN > 0 ? Math.max(1, Math.round((m.windowRank / m.totalN) * 100)) : 100;
+        const nEff = m.nEff != null ? m.nEff : m.totalN;
+        const rank = m.rank != null ? m.rank : m.windowRank;
+        const pctTop = m.pctTop != null
+            ? m.pctTop
+            : (nEff > 0 ? Math.min(100, Math.max(1, Math.ceil((rank * 100) / nEff - 1e-9))) : 100);
         const fmtDd = v => (v > -0.05 && v <= 0) ? '0.0%' : (v.toFixed(1) + '%');
         const fmtRu = v => (v >= 0 && v < 0.05) ? '0.0%' : ('+' + v.toFixed(1) + '%');
         const buildDdRow = (winLabel, ddVal, ruVal) => {
@@ -374,6 +447,11 @@ const Charts = {
                 tagHtml = '<div class="hm-tt-tag ' + regimeCls + '">' +
                     this._escapeHtml(m.filterTag) + ' &middot; ' + this._escapeHtml(m.climaxTag) + basketSuffix +
                     '</div>';
+            } else if (m.dimReason === 'WARMUP') {
+                tagHtml = '<div class="hm-tt-tag is-dim">DIMMED &middot; Warm-up (' + nEff + '/21d)' + basketSuffix + '</div>';
+            } else if (m.dimReason === 'NOISE_FLOOR') {
+                const minScore = m.isValleys ? 22.0 : 25.0;
+                tagHtml = '<div class="hm-tt-tag is-dim">DIMMED &middot; Below min intensity (' + minScore.toFixed(1) + ')' + basketSuffix + '</div>';
             } else {
                 const tierNote = (m.filterTag && m.filterTag !== 'BASE') ? (' &middot; Tier ' + this._escapeHtml(m.filterTag)) : '';
                 tagHtml = '<div class="hm-tt-tag is-dim">DIMMED &middot; Below P' + m.peaksThreshold + ' cutoff' + tierNote + basketSuffix + '</div>';
@@ -382,9 +460,13 @@ const Charts = {
             tagHtml = '<div class="hm-tt-tag">Basket: ' + m.activeCount + ' ETFs &middot; ' + this._escapeHtml(m.modeWord) + '</div>';
         }
 
+        const rankHtml = nEff < 21
+            ? '<div class="hm-tt-rank">Warm-up (' + nEff + '/21d)</div>'
+            : '<div class="hm-tt-rank">' + nEff + 'D Rank #' + rank + ' / ' + nEff + ' &middot; Top ' + pctTop + '%</div>';
+
         el.innerHTML = priceRowHtml +
             '<div class="hm-tt-date">' + this._escapeHtml(m.dateFormatted) + '</div>' +
-            '<div class="hm-tt-rank">Rank #' + m.windowRank + ' / ' + m.totalN + ' &middot; Top ' + pctTop + '%</div>' +
+            rankHtml +
             '<div class="hm-tt-main"><span class="hm-tt-lbl">' + this._escapeHtml(m.metricLabel) + ':</span> <strong>' + m.scoreStr + '</strong> &middot; <span class="hm-tt-rvol">RVOL ' + m.rvolStr + '</span></div>' +
             ddRowHtml +
             tagHtml;
@@ -583,6 +665,13 @@ const Charts = {
                 modeWord: mode === 'dollar' ? 'Dollar Vol' : 'Share Vol',
                 scoreStr: score.toFixed(1),
                 rvolStr,
+                rank: state.rank,
+                nEff: state.nEff,
+                nMacro: state.nMacro,
+                macroRank: state.macroRank,
+                macroCutoff: state.macroCutoff,
+                pctTop: state.pctTop,
+                dimReason: state.dimReason,
                 windowRank: state.windowRank,
                 totalN: N,
                 dd63Pct,

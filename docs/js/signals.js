@@ -104,6 +104,12 @@ const Signals = {
             const trimMeanSpread = this.computeTrimmedMean21(scratchSpread);
 
             trimDollarTurnover[t] = trimMeanDollar;
+            if (trimMeanD <= 0.0 || turnover[t] <= 0.0) {
+                rvolArr[t] = trimMeanD > 0.0 ? 0.0 : 1.0;
+                peakScores[t] = 0.0;
+                valleyScores[t] = 0.0;
+                continue;
+            }
             const rvol = turnover[t] / (trimMeanD + EPS);
             rvolArr[t] = rvol;
 
@@ -120,12 +126,12 @@ const Signals = {
             const curL = history[t].low != null ? history[t].low : history[t].close;
             const curC = history[t].close;
             const volElasticity = Math.pow(1.0 + rvol, 0.55) - 1.0;
-            const rangePos = (maxH22 - curC) / (maxH22 - minL22 + EPS);
+            const rangePos = Math.min(1.0, Math.max(0.0, (maxH22 - curC) / (maxH22 - minL22 + EPS)));
             const rawDownShock = Math.max(0.0, typPrice[t - 1] - curL) / (trimMeanTR + EPS);
             const shockTerm = Math.tanh(0.35 * rawDownShock);
 
             const isNewLow = curL <= minL22 + EPS ? 1.0 : 0.0;
-            const lowerWickRatio = (curC - curL) / (trueRange[t] + EPS);
+            const lowerWickRatio = Math.min(1.0, Math.max(0.0, (curC - curL) / (trueRange[t] + EPS)));
             const absorptionMult = 1.0 + 0.20 * lowerWickRatio * isNewLow;
 
             const priceDrawdownFactor = (0.70 * Math.pow(rangePos, 1.25) + 0.30 * shockTerm) * absorptionMult;
@@ -195,14 +201,15 @@ const Signals = {
         const map = new Map();
         if (!etfMetric) return map;
         const hm = Array.isArray(etfMetric.heatmapData) ? etfMetric.heatmapData : [];
-        if (hm.length === 0) return map;
+        const histArr = Array.isArray(etfMetric.history) ? etfMetric.history : [];
+        if (hm.length === 0 && histArr.length === 0) return map;
 
-        const lastDate = hm[hm.length - 1] && hm[hm.length - 1].date ? hm[hm.length - 1].date : null;
-        const rawHist = (Array.isArray(etfMetric.history) && etfMetric.history.length >= hm.length)
-            ? etfMetric.history
+        const lastDate = (hm.length > 0 && hm[hm.length - 1] && hm[hm.length - 1].date) ? hm[hm.length - 1].date : null;
+        const rawHist = (histArr.length >= hm.length && histArr.length > 0)
+            ? histArr
             : hm;
 
-        const bars = [];
+        const dedup = new Map();
         for (let i = 0; i < rawHist.length; i++) {
             const row = rawHist[i];
             if (!row) continue;
@@ -210,8 +217,9 @@ const Signals = {
             const close = row.close != null ? Number(row.close) : (row[1] != null ? Number(row[1]) : null);
             if (!date) continue;
             if (lastDate && date > lastDate) continue;
-            bars.push({ date, close: (Number.isFinite(close) && close > 0) ? close : null });
+            dedup.set(date, { date, close: (Number.isFinite(close) && close > 0) ? close : null });
         }
+        const bars = Array.from(dedup.values()).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
         const source = bars.length >= hm.length
             ? bars
@@ -262,72 +270,133 @@ const Signals = {
     },
 
     computeHeatGlobalPercentiles(allMetrics, mode = 'share', side = 'all') {
-        const EPS = 1e-9;
         const WINDOW_LAG = 21;
-        const STRUCTURAL_FLOORS = {
-            PEAKS: { P99: 68.0, P95: 52.0, P90: 38.0 },
-            VALLEYS: { P99: 64.0, P95: 48.0, P90: 34.0 }
+        const W_LOCAL = 252;
+        const W_MACRO = 756;
+        const MIN_CAUSAL_WARMUP = 21;
+        const MACRO_TOP_PCT = 0.02;
+        const MIN_HIGHLIGHT_SCORE = {
+            PEAKS: 25.0,
+            VALLEYS: 22.0
         };
 
-        const allTickers = Object.keys(allMetrics).filter(t => allMetrics[t] != null);
+        const emptyResult = () => ({
+            wLocal: W_LOCAL,
+            wMacro: W_MACRO,
+            minCausalWarmup: MIN_CAUSAL_WARMUP,
+            macroTopPct: MACRO_TOP_PCT,
+            minHighlightScore: MIN_HIGHLIGHT_SCORE,
+            series: []
+        });
+
+        const allTickers = Object.keys(allMetrics || {}).filter(t => allMetrics[t] != null);
         if (allTickers.length === 0) {
-            return {
-                p90: STRUCTURAL_FLOORS.PEAKS.P90,
-                p95: STRUCTURAL_FLOORS.PEAKS.P95,
-                p99: STRUCTURAL_FLOORS.PEAKS.P99,
-                peaks: STRUCTURAL_FLOORS.PEAKS,
-                valleys: STRUCTURAL_FLOORS.VALLEYS,
-                series: []
-            };
+            return emptyResult();
         }
 
         let activeTickers = allTickers;
         if (side === 'long') {
-            activeTickers = allTickers.filter(t => CONFIG.etfs[t] && CONFIG.etfs[t].side === 'long');
+            activeTickers = allTickers.filter(t => typeof CONFIG !== 'undefined' && CONFIG.etfs && CONFIG.etfs[t] && CONFIG.etfs[t].side === 'long');
         } else if (side === 'short') {
-            activeTickers = allTickers.filter(t => CONFIG.etfs[t] && CONFIG.etfs[t].side === 'short');
+            activeTickers = allTickers.filter(t => typeof CONFIG !== 'undefined' && CONFIG.etfs && CONFIG.etfs[t] && CONFIG.etfs[t].side === 'short');
         } else if (allTickers.includes(side)) {
             activeTickers = [side];
         }
 
         if (activeTickers.length === 0) {
-            return {
-                p90: STRUCTURAL_FLOORS.PEAKS.P90,
-                p95: STRUCTURAL_FLOORS.PEAKS.P95,
-                p99: STRUCTURAL_FLOORS.PEAKS.P99,
-                peaks: STRUCTURAL_FLOORS.PEAKS,
-                valleys: STRUCTURAL_FLOORS.VALLEYS,
-                series: []
-            };
+            return emptyResult();
         }
 
+        const sources = {};
         const etfMetrics = {};
         const closeCtx = {};
         const indexMaps = {};
         let longestDates = [];
+        let displayStartDate = null;
 
         for (const t of activeTickers) {
-            const hist = allMetrics[t].heatmapData;
-            if (!hist || hist.length === 0) continue;
-            etfMetrics[t] = this.computeEtfMicrostructure(hist, mode);
-            closeCtx[t] = this._computeCloseContext(allMetrics[t]);
+            const metricObj = allMetrics[t];
+            const hm = Array.isArray(metricObj.heatmapData) ? metricObj.heatmapData : [];
+            const rawHist = Array.isArray(metricObj.history) ? metricObj.history : [];
+            const lastHmDate = (hm.length > 0 && hm[hm.length - 1] && hm[hm.length - 1].date)
+                ? hm[hm.length - 1].date
+                : null;
+            const cfgHeatDays = (typeof CONFIG !== 'undefined' && CONFIG.heatmapDays) ? CONFIG.heatmapDays : 756;
+            const maxBars = Math.max(cfgHeatDays, hm.length) + W_MACRO + WINDOW_LAG;
+
+            let src;
+            if (rawHist.length >= hm.length && rawHist.length > 0) {
+                const dedup = new Map();
+                for (let i = 0; i < rawHist.length; i++) {
+                    const h = rawHist[i];
+                    if (!h) continue;
+                    const date = h.date || h[0];
+                    if (!date) continue;
+                    if (lastHmDate && date > lastHmDate) continue;
+                    const clRaw = h.close != null ? h.close : h[1];
+                    const cl = clRaw != null ? Number(clRaw) : null;
+                    if (cl == null || !Number.isFinite(cl)) continue;
+                    const voRaw = h.volume != null ? h.volume : h[2];
+                    const vo = (voRaw != null && Number.isFinite(Number(voRaw))) ? Number(voRaw) : 0;
+                    const opRaw = h.open != null ? h.open : h[3];
+                    const hiRaw = h.high != null ? h.high : h[4];
+                    const loRaw = h.low != null ? h.low : h[5];
+                    const op = (opRaw != null && Number.isFinite(Number(opRaw))) ? Number(opRaw) : cl;
+                    const hi = (hiRaw != null && Number.isFinite(Number(hiRaw))) ? Number(hiRaw) : cl;
+                    const lo = (loRaw != null && Number.isFinite(Number(loRaw))) ? Number(loRaw) : cl;
+                    const dvRaw = h.dollarVolume != null ? h.dollarVolume : h.dollar_volume;
+                    const dv = (dvRaw != null && Number.isFinite(Number(dvRaw))) ? Number(dvRaw) : (cl * vo);
+                    dedup.set(date, {
+                        date,
+                        open: op,
+                        high: hi,
+                        low: lo,
+                        close: cl,
+                        volume: vo,
+                        dollarVolume: dv
+                    });
+                }
+                const sorted = Array.from(dedup.values()).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+                src = sorted.length > maxBars ? sorted.slice(-maxBars) : sorted;
+            } else {
+                src = hm.length > maxBars ? hm.slice(-maxBars) : hm;
+            }
+
+            if (!src || src.length === 0) continue;
+
+            sources[t] = src;
+            etfMetrics[t] = this.computeEtfMicrostructure(src, mode);
+            closeCtx[t] = this._computeCloseContext(metricObj);
+
             const map = new Map();
             const dates = [];
-            for (let i = 0; i < hist.length; i++) {
-                if (hist[i] && hist[i].date) {
-                    map.set(hist[i].date, i);
-                    dates.push(hist[i].date);
+            for (let i = 0; i < src.length; i++) {
+                if (src[i] && src[i].date) {
+                    map.set(src[i].date, i);
+                    dates.push(src[i].date);
                 }
             }
             indexMaps[t] = map;
             if (dates.length > longestDates.length) {
                 longestDates = dates;
             }
+
+            let startD = null;
+            if (hm.length > WINDOW_LAG && hm[WINDOW_LAG] && hm[WINDOW_LAG].date) {
+                startD = hm[WINDOW_LAG].date;
+            } else if (hm.length > 0 && hm[0] && hm[0].date) {
+                startD = hm[0].date;
+            } else if (src.length > WINDOW_LAG && src[WINDOW_LAG] && src[WINDOW_LAG].date) {
+                startD = src[WINDOW_LAG].date;
+            }
+            if (startD && (!displayStartDate || startD < displayStartDate)) {
+                displayStartDate = startD;
+            }
         }
 
         const T = longestDates.length;
         const LAMBDA = 0.75;
-        const records = [];
+        const fullRecords = [];
         const toLead = c => c ? {
             ticker: c.ticker,
             side: c.side,
@@ -374,10 +443,10 @@ const Signals = {
                 if (rv < minRvol) minRvol = rv;
 
                 const ctx = closeCtx[ticker] ? closeCtx[ticker].get(date) : null;
-                const hmBar = allMetrics[ticker].heatmapData ? allMetrics[ticker].heatmapData[idx] : null;
+                const srcBar = sources[ticker] ? sources[ticker][idx] : null;
                 const barClose = (ctx && ctx.close != null)
                     ? ctx.close
-                    : ((hmBar && hmBar.close != null) ? Number(hmBar.close) : null);
+                    : ((srcBar && srcBar.close != null) ? Number(srcBar.close) : null);
 
                 const cand = {
                     ticker,
@@ -430,16 +499,17 @@ const Signals = {
             const compPeak = LAMBDA * maxPeak + (1.0 - LAMBDA) * meanPeak;
             const compValley = LAMBDA * maxValley + (1.0 - LAMBDA) * meanValley;
 
+            const safeMinRvol = Number.isFinite(minRvol) ? minRvol : maxRvol;
             const tieKeyPeak = compPeak + 1e-7 * maxRvol + 1e-11 * t;
-            const tieKeyValley = compValley + 1e-7 * (1.0 / (maxRvol + EPS)) + 1e-11 * t;
+            const tieKeyValley = compValley + 1e-7 * (1.0 / Math.max(safeMinRvol, 1e-3)) + 1e-11 * t;
 
-            records.push({
+            fullRecords.push({
                 index: t,
                 date,
                 peakScore: compPeak,
                 valleyScore: compValley,
                 maxRvol,
-                minRvol: Number.isFinite(minRvol) ? minRvol : maxRvol,
+                minRvol: safeMinRvol,
                 activeCount,
                 leadPeak: toLead(bestPeak),
                 leadValley: toLead(bestValley),
@@ -448,13 +518,104 @@ const Signals = {
             });
         }
 
+        const isStrictlyHigherCausal = (cand, candIdx, cur, curIdx, regime) => {
+            const cScore = regime === 'PEAKS' ? cand.peakScore : cand.valleyScore;
+            const rScore = regime === 'PEAKS' ? cur.peakScore : cur.valleyScore;
+            if (cScore > rScore + 1e-12) return true;
+            if (cScore < rScore - 1e-12) return false;
+            if (regime === 'PEAKS') {
+                if (cand.maxRvol > cur.maxRvol + 1e-12) return true;
+                if (cand.maxRvol < cur.maxRvol - 1e-12) return false;
+            } else {
+                if (cand.minRvol < cur.minRvol - 1e-12) return true;
+                if (cand.minRvol > cur.minRvol + 1e-12) return false;
+            }
+            return candIdx > curIdx;
+        };
+
+        const evaluateRegimeAt = (i, regime) => {
+            const cur = fullRecords[i];
+            const score = regime === 'PEAKS' ? cur.peakScore : cur.valleyScore;
+            const wStart = Math.max(0, i - (W_LOCAL - 1));
+            const nEff = i - wStart + 1;
+            let rank = 1;
+            for (let j = wStart; j < i; j++) {
+                if (isStrictlyHigherCausal(fullRecords[j], j, cur, i, regime)) {
+                    rank++;
+                }
+            }
+
+            const mStart = Math.max(0, i - (W_MACRO - 1));
+            const nMacro = i - mStart + 1;
+            const macroCutoff = Math.max(1, Math.floor(MACRO_TOP_PCT * nMacro));
+            let macroRank = 1;
+            for (let j = mStart; j < i; j++) {
+                if (isStrictlyHigherCausal(fullRecords[j], j, cur, i, regime)) {
+                    macroRank++;
+                }
+            }
+
+            const pctTop = Math.min(100, Math.max(1, Math.ceil((rank * 100) / nEff - 1e-9)));
+
+            let visualTier = 'NONE';
+            let isStructuralClimax = false;
+            let dimReason = null;
+
+            if (nEff < MIN_CAUSAL_WARMUP) {
+                dimReason = 'WARMUP';
+            } else {
+                const k99 = Math.max(1, Math.floor(0.01 * nEff));
+                const k95 = Math.max(k99 + 1, Math.floor(0.05 * nEff));
+                const k90 = Math.max(k95 + 1, Math.floor(0.10 * nEff));
+
+                if (rank <= k90 && score < MIN_HIGHLIGHT_SCORE[regime]) {
+                    dimReason = 'NOISE_FLOOR';
+                } else if (rank <= k99) {
+                    visualTier = 'RED_P99';
+                    isStructuralClimax = macroRank <= macroCutoff;
+                } else if (rank <= k95) {
+                    visualTier = 'ORANGE_P95';
+                    isStructuralClimax = macroRank <= macroCutoff;
+                } else if (rank <= k90) {
+                    visualTier = 'AMBER_P90';
+                    isStructuralClimax = macroRank <= macroCutoff;
+                } else {
+                    dimReason = 'CUTOFF';
+                }
+            }
+
+            return {
+                rank,
+                nEff,
+                nMacro,
+                macroRank,
+                macroCutoff,
+                pctTop,
+                visualTier,
+                isStructuralClimax,
+                dimReason
+            };
+        };
+
+        const displayRecords = [];
+        for (let i = 0; i < fullRecords.length; i++) {
+            const rec = fullRecords[i];
+            rec.causal = {
+                PEAKS: evaluateRegimeAt(i, 'PEAKS'),
+                VALLEYS: evaluateRegimeAt(i, 'VALLEYS')
+            };
+            if (!displayStartDate || rec.date >= displayStartDate) {
+                displayRecords.push(rec);
+            }
+        }
+
         return {
-            p90: STRUCTURAL_FLOORS.PEAKS.P90,
-            p95: STRUCTURAL_FLOORS.PEAKS.P95,
-            p99: STRUCTURAL_FLOORS.PEAKS.P99,
-            peaks: STRUCTURAL_FLOORS.PEAKS,
-            valleys: STRUCTURAL_FLOORS.VALLEYS,
-            series: records
+            wLocal: W_LOCAL,
+            wMacro: W_MACRO,
+            minCausalWarmup: MIN_CAUSAL_WARMUP,
+            macroTopPct: MACRO_TOP_PCT,
+            minHighlightScore: MIN_HIGHLIGHT_SCORE,
+            series: displayRecords
         };
     },
 
