@@ -151,6 +151,84 @@ const Signals = {
         };
     },
 
+    _rollingWindowMax(values, windowLen) {
+        const n = values ? values.length : 0;
+        const out = new Array(n).fill(null);
+        const deque = [];
+        for (let i = 0; i < n; i++) {
+            const v = values[i];
+            while (deque.length > 0 && deque[0] <= i - windowLen) {
+                deque.shift();
+            }
+            if (Number.isFinite(v) && v > 0) {
+                while (deque.length > 0 && values[deque[deque.length - 1]] <= v) {
+                    deque.pop();
+                }
+                deque.push(i);
+            }
+            out[i] = deque.length > 0 ? values[deque[0]] : null;
+        }
+        return out;
+    },
+
+    _computeCloseContext(etfMetric) {
+        const map = new Map();
+        if (!etfMetric) return map;
+        const hm = Array.isArray(etfMetric.heatmapData) ? etfMetric.heatmapData : [];
+        if (hm.length === 0) return map;
+
+        const lastDate = hm[hm.length - 1] && hm[hm.length - 1].date ? hm[hm.length - 1].date : null;
+        const rawHist = (Array.isArray(etfMetric.history) && etfMetric.history.length >= hm.length)
+            ? etfMetric.history
+            : hm;
+
+        const bars = [];
+        for (let i = 0; i < rawHist.length; i++) {
+            const row = rawHist[i];
+            if (!row) continue;
+            const date = row.date || row[0];
+            const close = row.close != null ? Number(row.close) : (row[1] != null ? Number(row[1]) : null);
+            if (!date) continue;
+            if (lastDate && date > lastDate) continue;
+            bars.push({ date, close: (Number.isFinite(close) && close > 0) ? close : null });
+        }
+
+        const source = bars.length >= hm.length
+            ? bars
+            : hm.map(row => ({
+                date: row.date,
+                close: (row.close != null && Number.isFinite(Number(row.close)) && Number(row.close) > 0) ? Number(row.close) : null
+            }));
+
+        const closes = source.map(b => b.close);
+        const peak63 = this._rollingWindowMax(closes, 63);
+        const peak252 = this._rollingWindowMax(closes, 252);
+
+        for (let i = 0; i < source.length; i++) {
+            const c = closes[i];
+            const prevC = i > 0 ? closes[i - 1] : null;
+            const chg1dPct = (c != null && prevC != null && prevC > 0)
+                ? ((c - prevC) / prevC) * 100
+                : null;
+            const p63 = peak63[i];
+            const p252 = peak252[i];
+            const dd63Pct = (c != null && p63 != null && p63 > 0)
+                ? Math.min(0, ((c - p63) / p63) * 100)
+                : null;
+            const dd252Pct = (c != null && p252 != null && p252 > 0)
+                ? Math.min(0, ((c - p252) / p252) * 100)
+                : null;
+
+            map.set(source[i].date, {
+                close: c,
+                chg1dPct,
+                dd63Pct,
+                dd252Pct
+            });
+        }
+        return map;
+    },
+
     computeHeatGlobalPercentiles(allMetrics, mode = 'share', side = 'all') {
         const EPS = 1e-9;
         const WINDOW_LAG = 21;
@@ -192,6 +270,7 @@ const Signals = {
         }
 
         const etfMetrics = {};
+        const closeCtx = {};
         const indexMaps = {};
         let longestDates = [];
 
@@ -199,6 +278,7 @@ const Signals = {
             const hist = allMetrics[t].heatmapData;
             if (!hist || hist.length === 0) continue;
             etfMetrics[t] = this.computeEtfMicrostructure(hist, mode);
+            closeCtx[t] = this._computeCloseContext(allMetrics[t]);
             const map = new Map();
             const dates = [];
             for (let i = 0; i < hist.length; i++) {
@@ -216,16 +296,30 @@ const Signals = {
         const T = longestDates.length;
         const LAMBDA = 0.75;
         const records = [];
+        const toLead = c => c ? {
+            ticker: c.ticker,
+            side: c.side,
+            close: c.close,
+            chg1dPct: c.chg1dPct,
+            dd63Pct: c.dd63Pct,
+            dd252Pct: c.dd252Pct,
+            peakScore: c.peakScore,
+            valleyScore: c.valleyScore,
+            rvol: c.rvol
+        } : null;
 
         for (let t = 0; t < T; t++) {
             const date = longestDates[t];
             let maxPeak = 0.0;
             let maxValley = 0.0;
             let maxRvol = 0.0;
+            let minRvol = Infinity;
             let weightedPeakSum = 0.0;
             let weightedValleySum = 0.0;
             let weightSum = 0.0;
             let activeCount = 0;
+            let bestPeak = null;
+            let bestValley = null;
 
             for (const ticker of activeTickers) {
                 const map = indexMaps[ticker];
@@ -243,6 +337,48 @@ const Signals = {
                 if (pScore > maxPeak) maxPeak = pScore;
                 if (vScore > maxValley) maxValley = vScore;
                 if (rv > maxRvol) maxRvol = rv;
+                if (rv < minRvol) minRvol = rv;
+
+                const ctx = closeCtx[ticker] ? closeCtx[ticker].get(date) : null;
+                const hmBar = allMetrics[ticker].heatmapData ? allMetrics[ticker].heatmapData[idx] : null;
+                const barClose = (ctx && ctx.close != null)
+                    ? ctx.close
+                    : ((hmBar && hmBar.close != null) ? Number(hmBar.close) : null);
+
+                const cand = {
+                    ticker,
+                    side: (typeof CONFIG !== 'undefined' && CONFIG.etfs && CONFIG.etfs[ticker]) ? CONFIG.etfs[ticker].side : null,
+                    close: Number.isFinite(barClose) ? barClose : null,
+                    chg1dPct: ctx ? ctx.chg1dPct : null,
+                    dd63Pct: ctx ? ctx.dd63Pct : null,
+                    dd252Pct: ctx ? ctx.dd252Pct : null,
+                    peakScore: pScore,
+                    valleyScore: vScore,
+                    rvol: rv,
+                    weight: w
+                };
+
+                if (
+                    !bestPeak ||
+                    pScore > bestPeak.peakScore + 1e-12 ||
+                    (Math.abs(pScore - bestPeak.peakScore) <= 1e-12 && (
+                        rv > bestPeak.rvol + 1e-12 ||
+                        (Math.abs(rv - bestPeak.rvol) <= 1e-12 && w > bestPeak.weight)
+                    ))
+                ) {
+                    bestPeak = cand;
+                }
+
+                if (
+                    !bestValley ||
+                    vScore > bestValley.valleyScore + 1e-12 ||
+                    (Math.abs(vScore - bestValley.valleyScore) <= 1e-12 && (
+                        rv < bestValley.rvol - 1e-12 ||
+                        (Math.abs(rv - bestValley.rvol) <= 1e-12 && w > bestValley.weight)
+                    ))
+                ) {
+                    bestValley = cand;
+                }
 
                 weightedPeakSum += w * pScore;
                 weightedValleySum += w * vScore;
@@ -267,6 +403,10 @@ const Signals = {
                 peakScore: compPeak,
                 valleyScore: compValley,
                 maxRvol,
+                minRvol: Number.isFinite(minRvol) ? minRvol : maxRvol,
+                activeCount,
+                leadPeak: toLead(bestPeak),
+                leadValley: toLead(bestValley),
                 compositeTieKeyPeak: tieKeyPeak,
                 compositeTieKeyValley: tieKeyValley
             });
@@ -413,7 +553,7 @@ const Signals = {
         }).join('');
     },
 
-    renderHeatCalendar(allMetrics, offset = 0, mode = 'share', side = 'all', spotlightMode = 'off', peaksThreshold = 95, globalPercentiles = null, days = 90) {
+    renderHeatCalendar(allMetrics, offset = 0, mode = 'share', side = 'all', spotlightMode = 'off', peaksThreshold = 95, globalPercentiles = null, days = 90, ddOverlay = null) {
         const container = document.getElementById('heat-calendar');
         if (!container) return;
 
@@ -428,9 +568,22 @@ const Signals = {
                 globalPercentiles = (globalObj && globalObj[mode]) ? globalObj[mode][side] : null;
             }
             if (arguments.length < 8 && window.App) days = window.App.heatDays || 90;
+            if (arguments.length < 9 || ddOverlay == null) ddOverlay = Boolean(window.App.heatDdOverlay);
         }
+        ddOverlay = Boolean(ddOverlay);
         if (spotlightMode === true) spotlightMode = 'peaks';
         else if (!spotlightMode) spotlightMode = 'off';
+
+        const ddBtn = document.getElementById('heat-dd-toggle');
+        if (ddBtn) {
+            ddBtn.classList.toggle('active', ddOverlay);
+            ddBtn.setAttribute('aria-pressed', String(ddOverlay));
+        }
+        const ddLegend = document.getElementById('heat-dd-legend');
+        if (ddLegend) {
+            ddLegend.classList.toggle('visible', ddOverlay);
+            ddLegend.setAttribute('aria-hidden', String(!ddOverlay));
+        }
 
         if (!globalPercentiles || !globalPercentiles.series || globalPercentiles.series.length === 0) {
             globalPercentiles = this.computeHeatGlobalPercentiles(allMetrics, mode, side);
@@ -511,7 +664,7 @@ const Signals = {
             }
         }
 
-        const spotlightCount = Charts.drawHeatCalendar(container, visibleSlice, mode, spotlightMode, peaksThreshold, globalPercentiles, side);
+        const spotlightCount = Charts.drawHeatCalendar(container, visibleSlice, mode, spotlightMode, peaksThreshold, globalPercentiles, side, ddOverlay);
         const peakBadge = document.getElementById('heat-peak-count');
         if (peakBadge) {
             if (spotlightMode === 'peaks') {
@@ -1105,7 +1258,7 @@ const Signals = {
         this.renderAlertFeed(allMetrics);
         this.renderStressMatrix(allMetrics);
         this.renderSideConvergence(sideConvergence);
-        this.renderHeatCalendar(allMetrics, window.App ? window.App.heatOffset : 0, window.App ? window.App.heatMode : 'share', window.App ? window.App.heatSide : 'all', window.App ? window.App.heatSpotlightMode : 'off', window.App ? window.App.heatPeaksThreshold : 95, null, window.App ? window.App.heatDays : 90);
+        this.renderHeatCalendar(allMetrics, window.App ? window.App.heatOffset : 0, window.App ? window.App.heatMode : 'share', window.App ? window.App.heatSide : 'all', window.App ? window.App.heatSpotlightMode : 'off', window.App ? window.App.heatPeaksThreshold : 95, null, window.App ? window.App.heatDays : 90, window.App ? Boolean(window.App.heatDdOverlay) : false);
         this.renderConvergenceGauges(allMetrics);
         this.renderCorrelationBars(allMetrics);
         this.renderValidationBanner(allMetrics);

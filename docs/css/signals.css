@@ -530,7 +530,8 @@
 }
 
 #heat-days-group,
-#heat-mode-group {
+#heat-mode-group,
+#heat-dd-group {
     margin: 0;
     padding: 2px;
     display: flex;
@@ -548,10 +549,327 @@
 
 #heat-side-group .tab-btn,
 #heat-days-group .tab-btn,
-#heat-mode-group .tab-btn {
+#heat-mode-group .tab-btn,
+#heat-dd-group .tab-btn {
     padding: 2.5px 5px;
     font-size: 0.58rem;
     letter-spacing: 0.2px;
+}
+
+.tab-btn.heat-dd-btn {
+    font-weight: 800;
+    letter-spacing: 0.35px;
+    color: var(--text-secondary);
+}
+.tab-btn.heat-dd-btn:hover {
+    color: #fda4af;
+    background: rgba(244, 63, 94, 0.10);
+}
+.tab-btn.heat-dd-btn.active {
+    background: rgba(244, 63, 94, 0.20) !important;
+    color: #ff6b8b !important;
+    box-shadow: 0 0 8px 1px rgba(244, 63, 94, 0.35), 0 0 0 1px rgba(244, 63, 94, 0.42) !important;
+}
+
+/* ---- DRAWDOWN (DD%) OVERLAY ON HEAT MAP ---- */
+.heat-calendar.dd-overlay-mode .heat-cell {
+    overflow: hidden;
+}
+
+.heat-dd-track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 5px;
+    background: rgba(5, 7, 13, 0.90);
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.heat-calendar.dd-overlay-mode .heat-cell.dd-near-high .heat-dd-track {
+    border-top-color: rgba(52, 211, 153, 0.72);
+}
+
+.heat-calendar.dd-overlay-mode .heat-cell.dd-bloodbath .heat-dd-track {
+    border-top-color: rgba(255, 92, 138, 0.55);
+}
+
+.heat-dd-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    display: block;
+    border-radius: 0 1px 0 0;
+    pointer-events: none;
+}
+
+.heat-dd-fill.dd-pullback {
+    background: linear-gradient(90deg, #d97706, #f59e0b);
+}
+
+.heat-dd-fill.dd-deep {
+    background: linear-gradient(90deg, #dc2626, #f43f5e);
+}
+
+.heat-dd-fill.dd-bloodbath {
+    background: linear-gradient(90deg, #ff1e56, #ff4d79);
+    box-shadow: 0 0 6px rgba(255, 46, 99, 0.75);
+}
+
+.heat-dd-drop {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 4.5px;
+    height: 4.5px;
+    border-radius: 1px;
+    background: #ff2e63;
+    border: 1px solid rgba(5, 7, 13, 0.92);
+    box-shadow: 0 0 3px rgba(255, 46, 99, 0.75);
+    pointer-events: none;
+    z-index: 3;
+}
+
+.heat-dd-drop.severe {
+    width: 5px;
+    height: 5px;
+    background: #ff5c8a;
+    box-shadow: 0 0 5px #ff2e63;
+}
+
+.heat-dd-legend {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 5px 10px;
+    margin-top: 6px;
+    padding: 5px 8px;
+    background: rgba(16, 18, 28, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 5px;
+    font-size: 0.56rem;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.heat-dd-legend.visible {
+    display: flex;
+}
+
+.heat-dd-legend-title {
+    font-weight: 800;
+    color: #fda4af;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.heat-dd-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.heat-dd-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 5px;
+    border-radius: 1.5px;
+    background: rgba(5, 7, 13, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.heat-dd-swatch.dd-near-high {
+    border-top: 1.5px solid #34d399;
+}
+
+.heat-dd-swatch.dd-pullback {
+    background: linear-gradient(90deg, #f59e0b 50%, rgba(5, 7, 13, 0.95) 50%);
+}
+
+.heat-dd-swatch.dd-deep {
+    background: linear-gradient(90deg, #f43f5e 75%, rgba(5, 7, 13, 0.95) 75%);
+}
+
+.heat-dd-swatch.dd-bloodbath {
+    background: #ff2e63;
+    box-shadow: 0 0 5px rgba(255, 46, 99, 0.75);
+}
+
+.heat-dd-pip-sample {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 1px;
+    background: #ff2e63;
+    border: 1px solid rgba(5, 7, 13, 0.92);
+    box-shadow: 0 0 4px rgba(255, 46, 99, 0.75);
+}
+
+/* ---- DEDICATED HEAT MAP STRUCTURED TOOLTIP ---- */
+.heat-tooltip {
+    position: fixed;
+    z-index: 99999;
+    pointer-events: none;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 3px;
+    background: rgba(10, 12, 20, 0.97);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(34, 211, 238, 0.34);
+    border-radius: 7px;
+    padding: 8px 12px;
+    font-family: 'SF Mono', 'JetBrains Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.68rem;
+    color: #e4e4e7;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.85), 0 0 14px rgba(34, 211, 238, 0.10);
+    min-width: 175px;
+    max-width: min(305px, calc(100vw - 16px));
+    white-space: nowrap;
+}
+
+.hm-tt-price-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.hm-tt-asset {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.65);
+    letter-spacing: 0.4px;
+}
+
+.hm-tt-price {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #f8fafc;
+    letter-spacing: 0.2px;
+}
+
+.hm-tt-chg {
+    font-size: 0.64rem;
+    font-weight: 800;
+    padding: 0 4px;
+    border-radius: 3px;
+}
+
+.hm-tt-chg.pos {
+    color: #4ade80;
+    background: rgba(74, 222, 128, 0.12);
+}
+
+.hm-tt-chg.neg {
+    color: #fb7185;
+    background: rgba(251, 113, 133, 0.14);
+}
+
+.hm-tt-chg.flat {
+    color: #a1a1aa;
+}
+
+.hm-tt-date {
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: #22d3ee;
+}
+
+.hm-tt-rank {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: #a1a1aa;
+}
+
+.hm-tt-main {
+    font-size: 0.72rem;
+    color: #f4f4f5;
+    margin-top: 1px;
+}
+
+.hm-tt-lbl {
+    color: rgba(255, 255, 255, 0.78);
+    font-weight: 600;
+}
+
+.hm-tt-dd {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 2px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    width: 100%;
+    font-size: 0.60rem;
+    color: #cbd5e1;
+}
+
+.hm-tt-dd.overlay-active {
+    border-top-color: rgba(244, 63, 94, 0.28);
+}
+
+.hm-tt-dd-pill {
+    font-size: 0.54rem;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+}
+
+.hm-tt-dd-pill.dd-near-high {
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.14);
+    border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
+.hm-tt-dd-pill.dd-pullback {
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.14);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.hm-tt-dd-pill.dd-deep {
+    color: #fb7185;
+    background: rgba(244, 63, 94, 0.16);
+    border: 1px solid rgba(244, 63, 94, 0.40);
+}
+
+.hm-tt-dd-pill.dd-bloodbath {
+    color: #ffe4e6;
+    background: rgba(255, 46, 99, 0.34);
+    border: 1px solid rgba(255, 77, 121, 0.65);
+}
+
+.hm-tt-tag {
+    font-size: 0.58rem;
+    color: #94a3b8;
+    white-space: normal;
+    line-height: 1.3;
+    margin-top: 1px;
+}
+
+.hm-tt-tag.is-peak {
+    color: #fdba74;
+}
+
+.hm-tt-tag.is-valley {
+    color: #67e8f9;
+}
+
+.hm-tt-tag.is-dim {
+    color: #71717a;
 }
 
 .heat-filter-divider {
@@ -2411,7 +2729,7 @@
     white-space: normal;
     text-align: left;
 }
-@media (min-width: 1201px) and (max-width: 1359px) {
+@media (min-width: 1201px) and (max-width: 1580px) {
     .heat-filter-toolbar {
         flex-direction: column;
         align-items: stretch;
@@ -2512,7 +2830,8 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 8px;
+        flex-wrap: wrap;
+        gap: 6px;
     }
 }
 
@@ -2521,6 +2840,20 @@
         grid-template-columns: repeat(18, 1fr);
         gap: 1.5px;
         margin: 6px 0;
+    }
+    .heat-dd-track {
+        height: 3.5px;
+    }
+    .heat-dd-drop,
+    .heat-dd-drop.severe {
+        top: 1px;
+        right: 1px;
+        width: 3.5px;
+        height: 3.5px;
+    }
+    .heat-tooltip {
+        white-space: normal;
+        padding: 7px 10px;
     }
     .heat-legend {
         flex-wrap: wrap;

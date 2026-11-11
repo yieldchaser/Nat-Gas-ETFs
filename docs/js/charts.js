@@ -246,14 +246,234 @@ const Charts = {
         return output;
     },
 
+    _escapeHtml(str) {
+        if (str == null) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    },
+
+    formatHeatPrice(price, ticker) {
+        if (price == null || !Number.isFinite(Number(price))) return null;
+        const p = Number(price);
+        const prefix = (ticker && ticker.endsWith('.TO')) ? 'CA$' : '$';
+        let formatted;
+        if (p >= 10000) formatted = p.toFixed(0);
+        else if (p >= 1) formatted = p.toFixed(2);
+        else formatted = p.toFixed(4);
+        return prefix + formatted;
+    },
+
+    getDdSeverity(dd63Pct) {
+        if (dd63Pct == null || !Number.isFinite(dd63Pct)) {
+            return { cls: 'dd-unknown', label: 'N/A', fillPct: 0 };
+        }
+        const mag = Math.max(0, -dd63Pct);
+        if (mag < 10.0) {
+            return { cls: 'dd-near-high', label: 'NEAR HIGH', fillPct: 0 };
+        }
+        if (mag < 25.0) {
+            const pct = Math.round(25 + ((mag - 10.0) / 15.0) * 30);
+            return { cls: 'dd-pullback', label: 'PULLBACK', fillPct: pct };
+        }
+        if (mag < 40.0) {
+            const pct = Math.round(55 + ((mag - 25.0) / 15.0) * 30);
+            return { cls: 'dd-deep', label: 'DEEP DD', fillPct: pct };
+        }
+        const pct = Math.min(100, Math.round(85 + ((mag - 40.0) / 25.0) * 15));
+        return { cls: 'dd-bloodbath', label: 'BLOODBATH', fillPct: pct };
+    },
+
+    _ensureHeatTooltip() {
+        if (typeof document === 'undefined' || !document.body) return null;
+        let el = document.getElementById('heat-tooltip');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'heat-tooltip';
+            el.className = 'heat-tooltip';
+            el.setAttribute('role', 'tooltip');
+            el.setAttribute('aria-hidden', 'true');
+            document.body.appendChild(el);
+        }
+        return el;
+    },
+
+    hideHeatTooltip() {
+        if (typeof document === 'undefined' || !document.body) return;
+        const el = document.getElementById('heat-tooltip');
+        if (el) {
+            el.classList.remove('visible');
+            el.setAttribute('aria-hidden', 'true');
+            el.style.display = 'none';
+        }
+        this._activeHeatCell = null;
+    },
+
+    showHeatTooltip(cell) {
+        if (!cell || !cell._heatMeta || typeof document === 'undefined' || !document.body) return;
+        const el = this._ensureHeatTooltip();
+        if (!el) return;
+
+        const m = cell._heatMeta;
+        this._activeHeatCell = cell;
+
+        const leadLabel = m.leadTicker
+            ? (m.isBasket ? ('Lead ' + this._escapeHtml(m.leadTicker)) : this._escapeHtml(m.leadTicker))
+            : '';
+
+        let chgHtml = '';
+        if (m.chg1dPct != null && Number.isFinite(m.chg1dPct)) {
+            const dispChg = (m.chg1dPct > -0.05 && m.chg1dPct < 0.05) ? 0.0 : m.chg1dPct;
+            const sign = dispChg > 0 ? '+' : '';
+            const chgCls = dispChg > 0.05 ? 'pos' : (dispChg < -0.05 ? 'neg' : 'flat');
+            chgHtml = '<span class="hm-tt-chg ' + chgCls + '">' + sign + dispChg.toFixed(1) + '%</span>';
+        }
+
+        let priceRowHtml = '';
+        if (leadLabel || m.priceStr || chgHtml) {
+            priceRowHtml = '<div class="hm-tt-price-row">' +
+                (leadLabel ? '<span class="hm-tt-asset">' + leadLabel + '</span>' : '') +
+                (m.priceStr ? '<span class="hm-tt-price">' + this._escapeHtml(m.priceStr) + '</span>' : '') +
+                chgHtml +
+                '</div>';
+        }
+
+        const pctTop = m.totalN > 0 ? Math.max(1, Math.round((m.windowRank / m.totalN) * 100)) : 100;
+        const fmtDd = v => (v > -0.05 && v <= 0) ? '0.0%' : (v.toFixed(1) + '%');
+        let ddRowHtml = '';
+        if (m.dd63Pct != null && Number.isFinite(m.dd63Pct)) {
+            const dd252Part = (m.dd252Pct != null && Number.isFinite(m.dd252Pct))
+                ? ' &middot; DD252 ' + fmtDd(m.dd252Pct)
+                : '';
+            ddRowHtml = '<div class="hm-tt-dd ' + m.ddTierCls + (m.ddOverlay ? ' overlay-active' : '') + '">' +
+                '<span class="hm-tt-dd-vals">DD63 ' + fmtDd(m.dd63Pct) + dd252Part + '</span>' +
+                '<span class="hm-tt-dd-pill ' + m.ddTierCls + '">' + this._escapeHtml(m.ddSeverityLabel) + '</span>' +
+                '</div>';
+        }
+
+        let tagHtml = '';
+        if (m.isSpotlight) {
+            const basketSuffix = (m.isBasket && m.activeCount > 1) ? (' &middot; ' + m.activeCount + ' ETFs') : '';
+            if (m.isHighlighted) {
+                const regimeCls = m.isValleys ? 'is-valley' : 'is-peak';
+                tagHtml = '<div class="hm-tt-tag ' + regimeCls + '">' +
+                    this._escapeHtml(m.filterTag) + ' &middot; ' + this._escapeHtml(m.climaxTag) + basketSuffix +
+                    '</div>';
+            } else {
+                const tierNote = (m.filterTag && m.filterTag !== 'BASE') ? (' &middot; Tier ' + this._escapeHtml(m.filterTag)) : '';
+                tagHtml = '<div class="hm-tt-tag is-dim">DIMMED &middot; Below P' + m.peaksThreshold + ' cutoff' + tierNote + basketSuffix + '</div>';
+            }
+        } else if (m.isBasket && m.activeCount > 1) {
+            tagHtml = '<div class="hm-tt-tag">Basket: ' + m.activeCount + ' ETFs &middot; ' + this._escapeHtml(m.modeWord) + '</div>';
+        }
+
+        el.innerHTML = priceRowHtml +
+            '<div class="hm-tt-date">' + this._escapeHtml(m.dateFormatted) + '</div>' +
+            '<div class="hm-tt-rank">Rank #' + m.windowRank + ' / ' + m.totalN + ' &middot; Top ' + pctTop + '%</div>' +
+            '<div class="hm-tt-main"><span class="hm-tt-lbl">' + this._escapeHtml(m.metricLabel) + ':</span> <strong>' + m.scoreStr + '</strong> &middot; <span class="hm-tt-rvol">RVOL ' + m.rvolStr + '</span></div>' +
+            ddRowHtml +
+            tagHtml;
+
+        el.style.visibility = 'hidden';
+        el.style.display = 'flex';
+
+        const rect = cell.getBoundingClientRect();
+        const panelEl = typeof cell.closest === 'function'
+            ? (cell.closest('#heat-calendar-panel') || cell.closest('.heat-calendar'))
+            : null;
+        const panelRect = panelEl && typeof panelEl.getBoundingClientRect === 'function'
+            ? panelEl.getBoundingClientRect()
+            : null;
+        const tw = el.offsetWidth || 216;
+        const th = el.offsetHeight || 88;
+        const pad = 8;
+        const GAP = 8;
+        const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
+        const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
+
+        const minLeft = panelRect ? Math.max(pad, panelRect.left + 6) : pad;
+        const maxRight = panelRect ? Math.min(vw - pad, panelRect.right - 6) : (vw - pad);
+        const maxLeft = Math.max(minLeft, maxRight - tw);
+
+        let left = rect.left + rect.width / 2 - tw / 2;
+        left = Math.max(minLeft, Math.min(maxLeft, left));
+
+        const topMin = panelRect ? Math.max(62, panelRect.top + 4) : 62;
+        let top = rect.top - th - GAP;
+        if (top < topMin) {
+            top = rect.bottom + GAP;
+        }
+        top = Math.max(pad, Math.min(vh - th - pad, top));
+
+        el.style.left = Math.round(left) + 'px';
+        el.style.top = Math.round(top) + 'px';
+        el.style.visibility = 'visible';
+        el.classList.add('visible');
+        el.setAttribute('aria-hidden', 'false');
+    },
+
+    _bindHeatTooltipEvents(container) {
+        if (typeof document === 'undefined' || !document.body || !container || typeof container.addEventListener !== 'function') {
+            return;
+        }
+        if (!container._heatTtBound) {
+            container.addEventListener('mouseover', (e) => {
+                const target = e.target;
+                const cell = target && typeof target.closest === 'function' ? target.closest('.heat-cell') : null;
+                if (cell && container.contains(cell)) {
+                    this.showHeatTooltip(cell);
+                }
+            });
+            container.addEventListener('mouseleave', () => {
+                this.hideHeatTooltip();
+            });
+            container.addEventListener('click', (e) => {
+                if (Date.now() - (this._lastTouchAt || 0) < 450) return;
+                const target = e.target;
+                const cell = target && typeof target.closest === 'function' ? target.closest('.heat-cell') : null;
+                if (cell && container.contains(cell)) {
+                    this.showHeatTooltip(cell);
+                }
+            });
+            container._heatTtBound = true;
+        }
+        if (!this._globalHeatTtBound && typeof document.addEventListener === 'function') {
+            document.addEventListener('touchstart', (e) => {
+                this._lastTouchAt = Date.now();
+                const target = e.target;
+                const cell = target && typeof target.closest === 'function' ? target.closest('.heat-cell') : null;
+                if (cell) {
+                    if (this._activeHeatCell === cell) {
+                        this.hideHeatTooltip();
+                    } else {
+                        this.showHeatTooltip(cell);
+                    }
+                } else {
+                    this.hideHeatTooltip();
+                }
+            }, { passive: true });
+            if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+                window.addEventListener('scroll', () => this.hideHeatTooltip(), { passive: true });
+                window.addEventListener('resize', () => this.hideHeatTooltip(), { passive: true });
+            }
+            this._globalHeatTtBound = true;
+        }
+    },
+
     /* HEAT CALENDAR */
-    drawHeatCalendar(container, visibleSlice, mode = 'share', spotlightMode = false, peaksThreshold = 95, globalPercentiles = null, side = 'all') {
+    drawHeatCalendar(container, visibleSlice, mode = 'share', spotlightMode = false, peaksThreshold = 95, globalPercentiles = null, side = 'all', ddOverlay = false) {
+        this.hideHeatTooltip();
+        this._bindHeatTooltipEvents(container);
         container.innerHTML = '';
         const isPeaks = (spotlightMode === 'peaks' || spotlightMode === true);
         const isValleys = (spotlightMode === 'valleys');
         const isSpotlight = isPeaks || isValleys;
         container.classList.toggle('peaks-mode', isPeaks);
         container.classList.toggle('valleys-mode', isValleys);
+        container.classList.toggle('dd-overlay-mode', !!ddOverlay);
         if (!visibleSlice || !visibleSlice.length) return 0;
 
         const colors = [
@@ -263,10 +483,10 @@ const Charts = {
         ];
 
         const label = mode === 'dollar' ? 'DVCVI' : 'CVI';
-        const subject = (side && side !== 'all') ? (side + ' ') : '';
         const N = visibleSlice.length;
         const regimeMode = isValleys ? 'VALLEYS' : 'PEAKS';
         const activeFilter = isSpotlight ? ('P' + peaksThreshold) : 'NONE';
+        const isSingleTicker = Boolean(side && side !== 'all' && side !== 'long' && side !== 'short');
 
         const cellStates = this.evaluateViewportSpotlight(visibleSlice, regimeMode, activeFilter);
         let count = 0;
@@ -281,10 +501,24 @@ const Charts = {
             const idx = Math.min(colors.length - 1, Math.floor((score / 100) * colors.length));
             cell.style.background = colors[idx];
 
-            const dateFormatted = typeof formatDisplayDate === 'function' ? formatDisplayDate(day.date) : day.date;
-            const rvolVal = day.maxRvol != null ? day.maxRvol : 1.0;
-            const rvolText = ' · RVOL ' + rvolVal.toFixed(1) + 'x';
+            const lead = isValleys ? (day.leadValley || day.leadPeak) : (day.leadPeak || day.leadValley);
+            const leadTicker = lead && lead.ticker ? lead.ticker : (isSingleTicker ? side : null);
+            const activeCount = day.activeCount || 1;
+            const isBasket = !isSingleTicker && activeCount > 1;
 
+            const dateFormatted = typeof formatDisplayDate === 'function' ? formatDisplayDate(day.date) : day.date;
+            const rvolVal = isValleys
+                ? ((lead && lead.rvol != null) ? lead.rvol : (day.minRvol != null ? day.minRvol : (day.maxRvol != null ? day.maxRvol : 1.0)))
+                : ((lead && lead.rvol != null) ? lead.rvol : (day.maxRvol != null ? day.maxRvol : 1.0));
+            const rvolStr = rvolVal.toFixed(2) + 'x';
+            const priceStr = (lead && lead.close != null) ? this.formatHeatPrice(lead.close, lead.ticker || leadTicker) : null;
+            const chg1dPct = lead ? lead.chg1dPct : null;
+            const dd63Pct = lead ? lead.dd63Pct : null;
+            const dd252Pct = lead ? lead.dd252Pct : null;
+            const ddInfo = this.getDdSeverity(dd63Pct);
+
+            let climaxTag = '';
+            let filterTag = 'BASE';
             if (isSpotlight) {
                 if (!state.isHighlighted) {
                     cell.classList.add('heat-dim');
@@ -315,19 +549,61 @@ const Charts = {
                     }
                 }
 
-                const climaxTag = state.isStructuralClimax
+                climaxTag = state.isStructuralClimax
                     ? (isPeaks ? 'MACRO CLIMAX' : 'MACRO DROUGHT')
                     : (isPeaks ? 'LOCAL PEAK' : 'LOCAL DROUGHT');
-                const filterTag = state.visualTier === 'RED_P99' ? 'P99' : state.visualTier === 'ORANGE_P95' ? 'P95' : 'P90';
+                filterTag = state.visualTier === 'RED_P99'
+                    ? 'P99'
+                    : (state.visualTier === 'ORANGE_P95' ? 'P95' : (state.visualTier === 'AMBER_P90' ? 'P90' : 'BASE'));
+            }
 
-                if (isValleys) {
-                    cell.setAttribute('data-tooltip', dateFormatted + ': ' + subject + 'VOL DROUGHT ' + score.toFixed(1) + rvolText + ' [' + climaxTag + ' · ' + filterTag + ' #' + state.windowRank + '/' + N + ']');
-                } else {
-                    cell.setAttribute('data-tooltip', dateFormatted + ': ' + subject + label + ' ' + score.toFixed(1) + rvolText + ' [' + climaxTag + ' · ' + filterTag + ' #' + state.windowRank + '/' + N + ']');
+            const metricLabel = isValleys ? 'VOL DROUGHT' : label;
+            cell._heatMeta = {
+                dateFormatted,
+                leadTicker,
+                isBasket,
+                activeCount,
+                priceStr,
+                chg1dPct,
+                metricLabel,
+                modeWord: mode === 'dollar' ? 'Dollar Vol' : 'Share Vol',
+                scoreStr: score.toFixed(1),
+                rvolStr,
+                windowRank: state.windowRank,
+                totalN: N,
+                dd63Pct,
+                dd252Pct,
+                ddSeverityLabel: ddInfo.label,
+                ddTierCls: ddInfo.cls,
+                ddOverlay: !!ddOverlay,
+                isSpotlight,
+                isPeaks,
+                isValleys,
+                isHighlighted: state.isHighlighted,
+                isStructuralClimax: state.isStructuralClimax,
+                visualTier: state.visualTier,
+                peaksThreshold,
+                climaxTag,
+                filterTag
+            };
+
+            if (ddOverlay) {
+                if (ddInfo.cls) cell.classList.add(ddInfo.cls);
+                const track = document.createElement('span');
+                track.className = 'heat-dd-track';
+                if (ddInfo.fillPct > 0) {
+                    const fill = document.createElement('span');
+                    fill.className = 'heat-dd-fill ' + ddInfo.cls;
+                    fill.style.width = ddInfo.fillPct + '%';
+                    track.appendChild(fill);
                 }
-            } else {
-                const regimeLabel = isValleys ? (subject + 'VOL DROUGHT') : (subject + label);
-                cell.setAttribute('data-tooltip', dateFormatted + ': ' + regimeLabel + ' ' + score.toFixed(1) + rvolText + ' (Rank #' + state.windowRank + '/' + N + ')');
+                cell.appendChild(track);
+
+                if (chg1dPct != null && Number.isFinite(chg1dPct) && chg1dPct <= -5.0) {
+                    const pip = document.createElement('span');
+                    pip.className = chg1dPct <= -10.0 ? 'heat-dd-drop severe' : 'heat-dd-drop';
+                    cell.appendChild(pip);
+                }
             }
 
             container.appendChild(cell);

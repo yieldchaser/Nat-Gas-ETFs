@@ -21,6 +21,7 @@ const App = {
     heatSpotlightMode: 'off', // Spotlight mode: 'off', 'peaks', or 'valleys'
     heatPeaksMode: false, // Backwards compatibility mirror
     heatPeaksThreshold: 95, // Spotlight threshold percentile (90, 95, or 99)
+    heatDdOverlay: false, // Drawdown bloodbath overlay toggle on heat map cells
     heatGlobalPercentiles: {}, // Keyed by {mode, side}
     _initialized: false,
     _eventsBound: false,
@@ -104,6 +105,17 @@ const App = {
                 modeGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.heatMode = btn.getAttribute('data-mode');
+                this.renderHeatCalendarOnly();
+            });
+        }
+
+        // Heat Map Drawdown Bloodbath Overlay Toggle
+        const ddToggle = document.getElementById('heat-dd-toggle');
+        if (ddToggle) {
+            ddToggle.addEventListener('click', () => {
+                this.heatDdOverlay = !this.heatDdOverlay;
+                ddToggle.classList.toggle('active', this.heatDdOverlay);
+                ddToggle.setAttribute('aria-pressed', String(this.heatDdOverlay));
                 this.renderHeatCalendarOnly();
             });
         }
@@ -944,7 +956,7 @@ const App = {
     renderHeatCalendarOnly() {
         const globalObj = this.heatGlobalPercentiles[this.heatMode];
         const percentiles = globalObj ? globalObj[this.heatSide] : null;
-        Signals.renderHeatCalendar(this.allMetrics, this.heatOffset, this.heatMode, this.heatSide, this.heatSpotlightMode, this.heatPeaksThreshold, percentiles, this.heatDays);
+        Signals.renderHeatCalendar(this.allMetrics, this.heatOffset, this.heatMode, this.heatSide, this.heatSpotlightMode, this.heatPeaksThreshold, percentiles, this.heatDays, this.heatDdOverlay);
     },
 
     computeAllGlobalPercentiles() {

@@ -291,13 +291,13 @@
                 'js/config.js?v=20261025a',
                 'js/data.js?v=20261021a',
                 'js/metrics.js?v=20261024a',
-                'js/charts.js?v=20261024d',
+                'js/charts.js?v=20261111a',
                 'js/cards.js?v=20261018e',
-                'js/signals.js?v=20261024d',
+                'js/signals.js?v=20261111a',
                 'js/volume-studies.js?v=20261101a',
                 'js/volume-profile.js?v=20261030a',
                 'js/tail-risk.js?v=20261031a',
-                'js/app.js?v=20261021a'
+                'js/app.js?v=20261111a'
             ];
 
             function loadNextScript(idx) {
