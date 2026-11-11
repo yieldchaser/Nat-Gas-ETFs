@@ -167,6 +167,30 @@
     display: block;
 }
 
+.heat-legend-bar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    column-gap: 8px;
+    margin-top: 10px;
+    margin-bottom: 6px;
+}
+
+.heat-legend-bar .heat-legend {
+    grid-column: 2;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.heat-legend-bar #heat-dd-group {
+    grid-column: 3;
+    justify-self: end;
+    margin: 0;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+}
+
 .heat-legend {
     display: flex;
     align-items: center;
@@ -549,11 +573,16 @@
 
 #heat-side-group .tab-btn,
 #heat-days-group .tab-btn,
-#heat-mode-group .tab-btn,
-#heat-dd-group .tab-btn {
+#heat-mode-group .tab-btn {
     padding: 2.5px 5px;
     font-size: 0.58rem;
     letter-spacing: 0.2px;
+}
+
+#heat-dd-group .tab-btn {
+    padding: 2.5px 6px;
+    font-size: 0.58rem;
+    letter-spacing: 0.25px;
 }
 
 .tab-btn.heat-dd-btn {
@@ -2729,22 +2758,45 @@
     white-space: normal;
     text-align: left;
 }
-@media (min-width: 1201px) and (max-width: 1580px) {
+@media (min-width: 1201px) and (max-width: 1400px) {
     .heat-filter-toolbar {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 6px;
-        padding: 6px 8px;
-    }
-
-    #heat-side-group {
-        width: 100%;
-        justify-content: center;
+        padding: 5px 8px;
+        gap: 4px;
     }
 
     .heat-filter-secondary {
-        width: 100%;
-        justify-content: space-between;
+        gap: 4px;
+    }
+
+    #heat-side-group .tab-btn,
+    #heat-days-group .tab-btn,
+    #heat-mode-group .tab-btn {
+        padding: 2.5px 3.6px;
+        font-size: 0.56rem;
+        letter-spacing: 0.1px;
+    }
+
+    .heat-filter-divider {
+        margin: 0 1px;
+    }
+}
+
+@media (min-width: 1201px) and (max-width: 1270px) {
+    .heat-filter-toolbar {
+        padding: 5px 6px;
+        gap: 3px;
+    }
+
+    .heat-filter-secondary {
+        gap: 3px;
+    }
+
+    #heat-side-group .tab-btn,
+    #heat-days-group .tab-btn,
+    #heat-mode-group .tab-btn {
+        padding: 2.5px 2.8px;
+        font-size: 0.54rem;
+        letter-spacing: 0;
     }
 }
 
@@ -2866,6 +2918,18 @@
     }
     .swvc-pills {
         flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 420px) {
+    .heat-legend-bar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px 10px;
+    }
+    .heat-legend-spacer {
+        display: none;
     }
 }
 

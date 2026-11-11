@@ -16,7 +16,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='60%' r='50%' fx='50%' fy='65%'><stop offset='0%' style='stop-color:%230033ff;stop-opacity:0.5' /><stop offset='100%' style='stop-color:%23001a4d;stop-opacity:0' /></radialGradient></defs><circle cx='50' cy='60' r='40' fill='url(%23g)' /><path d='M50 92 C30 92 18 75 18 52 C18 30 50 5 50 5 C50 5 82 30 82 52 C82 75 70 92 50 92 Z' fill='%230066ff' /><path d='M50 80 C40 80 32 68 32 50 C32 35 50 18 50 18 C50 18 68 35 68 50 C68 68 60 80 50 80 Z' fill='white' /></svg>">
     <link rel="stylesheet" href="css/styles.css?v=20261021a">
     <link rel="stylesheet" href="css/cards.css?v=20261024a">
-    <link rel="stylesheet" href="css/signals.css?v=20261111a">
+    <link rel="stylesheet" href="css/signals.css?v=20261111b">
     <link rel="stylesheet" href="css/tail-risk.css?v=20261031a">
     <link rel="stylesheet" href="css/auth.css?v=20261104a">
     <script src="js/auth.js?v=20261104a"></script>
@@ -141,23 +141,26 @@
                             <button class="tab-btn active" data-mode="share" data-tooltip="CVI (Capitulation Volume Index): Bounded score (0-10,000) representing (Volume Rank 21d) &times; (1 - Price Rank 21d). Highlights share volume spikes at local bottoms/tops.">S</button>
                             <button class="tab-btn" data-mode="dollar" data-tooltip="DVCVI (Dollar-Volume CVI): Bounded score representing (Dollar Volume Rank 21d) &times; (1 - Price Rank 21d). Adjusts volume pressure for the trading value of assets.">$</button>
                         </div>
-                        <div class="tab-group" id="heat-dd-group">
-                            <button class="tab-btn heat-dd-btn" id="heat-dd-toggle" type="button" aria-pressed="false" data-tooltip="Drawdown Bloodbath Overlay: Overlays 63-day rolling peak drawdown (bottom meter bar: emerald slot near 63d high, amber pullback, red deep DD, crimson bloodbath) and -5%+ single-day selloff pips (top-right dot) directly over volume intensity.">DD%</button>
-                        </div>
                     </div>
                 </div>
                 <div class="heat-calendar" id="heat-calendar">
                     <!-- Filled dynamically -->
                 </div>
-                <div class="heat-legend">
-                    <span class="heat-label" data-tooltip="Low volume pressure relative to historical norm.">Quiet</span>
-                    <span class="heat-swatch" style="background:#1a1a28"></span>
-                    <span class="heat-swatch" style="background:#283848"></span>
-                    <span class="heat-swatch" style="background:#4a6878"></span>
-                    <span class="heat-swatch" style="background:#d4a830"></span>
-                    <span class="heat-swatch" style="background:#c04040"></span>
-                    <span class="heat-swatch" style="background:#8855bb" data-tooltip="Absolute extreme volume pressure (purple)."></span>
-                    <span class="heat-label" data-tooltip="High volume pressure (capitulation/exhaustion spike).">Extreme</span>
+                <div class="heat-legend-bar">
+                    <div class="heat-legend-spacer" aria-hidden="true"></div>
+                    <div class="heat-legend">
+                        <span class="heat-label" data-tooltip="Low volume pressure relative to historical norm.">Quiet</span>
+                        <span class="heat-swatch" style="background:#1a1a28"></span>
+                        <span class="heat-swatch" style="background:#283848"></span>
+                        <span class="heat-swatch" style="background:#4a6878"></span>
+                        <span class="heat-swatch" style="background:#d4a830"></span>
+                        <span class="heat-swatch" style="background:#c04040"></span>
+                        <span class="heat-swatch" style="background:#8855bb" data-tooltip="Absolute extreme volume pressure (purple)."></span>
+                        <span class="heat-label" data-tooltip="High volume pressure (capitulation/exhaustion spike).">Extreme</span>
+                    </div>
+                    <div class="tab-group" id="heat-dd-group">
+                        <button class="tab-btn heat-dd-btn" id="heat-dd-toggle" type="button" aria-pressed="false" data-tooltip="Drawdown Bloodbath Overlay: Overlays 63-day rolling peak drawdown (bottom meter bar: emerald slot near 63d high, amber pullback, red deep DD, crimson bloodbath) and -5%+ single-day selloff pips (top-right dot) directly over volume intensity.">DD%</button>
+                    </div>
                 </div>
                 <div class="heat-dd-legend" id="heat-dd-legend" aria-hidden="true">
                     <span class="heat-dd-legend-title">DD63 Overlay:</span>
