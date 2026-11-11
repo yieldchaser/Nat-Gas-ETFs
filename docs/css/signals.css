@@ -621,6 +621,10 @@
     border-top-color: rgba(52, 211, 153, 0.72);
 }
 
+.heat-calendar.dd-overlay-mode .heat-cell.dd-bear-high .heat-dd-track {
+    border-top-color: rgba(245, 158, 11, 0.82);
+}
+
 .heat-calendar.dd-overlay-mode .heat-cell.dd-bloodbath .heat-dd-track {
     border-top-color: rgba(255, 92, 138, 0.55);
 }
@@ -713,6 +717,10 @@
 
 .heat-dd-swatch.dd-near-high {
     border-top: 1.5px solid #34d399;
+}
+
+.heat-dd-swatch.dd-bear-high {
+    border-top: 1.5px solid #f59e0b;
 }
 
 .heat-dd-swatch.dd-pullback {
@@ -832,16 +840,52 @@
 
 .hm-tt-dd {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 5px;
+    gap: 4px;
     margin-top: 2px;
-    padding-top: 4px;
+    padding-top: 5px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     width: 100%;
     font-size: 0.60rem;
     color: #cbd5e1;
+}
+
+.hm-tt-dd-grid {
+    display: grid;
+    grid-template-columns: auto auto auto auto;
+    align-items: baseline;
+    column-gap: 6px;
+    row-gap: 2px;
+}
+
+.hm-tt-dd-win {
+    font-weight: 800;
+    color: rgba(148, 163, 184, 0.92);
+    text-align: left;
+}
+
+.hm-tt-dd-pk {
+    font-weight: 700;
+    color: #f1f5f9;
+    text-align: right;
+}
+
+.hm-tt-dd-sep {
+    color: rgba(148, 163, 184, 0.55);
+    text-align: center;
+}
+
+.hm-tt-dd-low {
+    font-weight: 700;
+    color: #f1f5f9;
+    text-align: left;
+}
+
+.hm-tt-dd-unit {
+    font-weight: 600;
+    font-size: 0.54rem;
+    color: rgba(148, 163, 184, 0.85);
 }
 
 .hm-tt-dd.overlay-active {
@@ -852,7 +896,7 @@
     font-size: 0.54rem;
     font-weight: 800;
     letter-spacing: 0.4px;
-    padding: 1px 5px;
+    padding: 1px 6px;
     border-radius: 3px;
     text-transform: uppercase;
 }
@@ -861,6 +905,12 @@
     color: #34d399;
     background: rgba(52, 211, 153, 0.14);
     border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
+.hm-tt-dd-pill.dd-bear-high {
+    color: #fcd34d;
+    background: rgba(245, 158, 11, 0.14);
+    border: 1px solid rgba(245, 158, 11, 0.42);
 }
 
 .hm-tt-dd-pill.dd-pullback {

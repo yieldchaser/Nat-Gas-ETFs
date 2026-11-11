@@ -171,6 +171,26 @@ const Signals = {
         return out;
     },
 
+    _rollingWindowMin(values, windowLen) {
+        const n = values ? values.length : 0;
+        const out = new Array(n).fill(null);
+        const deque = [];
+        for (let i = 0; i < n; i++) {
+            const v = values[i];
+            while (deque.length > 0 && deque[0] <= i - windowLen) {
+                deque.shift();
+            }
+            if (Number.isFinite(v) && v > 0) {
+                while (deque.length > 0 && values[deque[deque.length - 1]] >= v) {
+                    deque.pop();
+                }
+                deque.push(i);
+            }
+            out[i] = deque.length > 0 ? values[deque[0]] : null;
+        }
+        return out;
+    },
+
     _computeCloseContext(etfMetric) {
         const map = new Map();
         if (!etfMetric) return map;
@@ -203,6 +223,8 @@ const Signals = {
         const closes = source.map(b => b.close);
         const peak63 = this._rollingWindowMax(closes, 63);
         const peak252 = this._rollingWindowMax(closes, 252);
+        const trough63 = this._rollingWindowMin(closes, 63);
+        const trough252 = this._rollingWindowMin(closes, 252);
 
         for (let i = 0; i < source.length; i++) {
             const c = closes[i];
@@ -212,18 +234,28 @@ const Signals = {
                 : null;
             const p63 = peak63[i];
             const p252 = peak252[i];
+            const t63 = trough63[i];
+            const t252 = trough252[i];
             const dd63Pct = (c != null && p63 != null && p63 > 0)
                 ? Math.min(0, ((c - p63) / p63) * 100)
                 : null;
             const dd252Pct = (c != null && p252 != null && p252 > 0)
                 ? Math.min(0, ((c - p252) / p252) * 100)
                 : null;
+            const ru63Pct = (c != null && t63 != null && t63 > 0)
+                ? Math.max(0, ((c - t63) / t63) * 100)
+                : null;
+            const ru252Pct = (c != null && t252 != null && t252 > 0)
+                ? Math.max(0, ((c - t252) / t252) * 100)
+                : null;
 
             map.set(source[i].date, {
                 close: c,
                 chg1dPct,
                 dd63Pct,
-                dd252Pct
+                dd252Pct,
+                ru63Pct,
+                ru252Pct
             });
         }
         return map;
@@ -303,6 +335,8 @@ const Signals = {
             chg1dPct: c.chg1dPct,
             dd63Pct: c.dd63Pct,
             dd252Pct: c.dd252Pct,
+            ru63Pct: c.ru63Pct,
+            ru252Pct: c.ru252Pct,
             peakScore: c.peakScore,
             valleyScore: c.valleyScore,
             rvol: c.rvol
@@ -352,6 +386,8 @@ const Signals = {
                     chg1dPct: ctx ? ctx.chg1dPct : null,
                     dd63Pct: ctx ? ctx.dd63Pct : null,
                     dd252Pct: ctx ? ctx.dd252Pct : null,
+                    ru63Pct: ctx ? ctx.ru63Pct : null,
+                    ru252Pct: ctx ? ctx.ru252Pct : null,
                     peakScore: pScore,
                     valleyScore: vScore,
                     rvol: rv,

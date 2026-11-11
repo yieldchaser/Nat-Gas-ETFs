@@ -267,12 +267,15 @@ const Charts = {
         return prefix + formatted;
     },
 
-    getDdSeverity(dd63Pct) {
+    getDdSeverity(dd63Pct, dd252Pct = null) {
         if (dd63Pct == null || !Number.isFinite(dd63Pct)) {
             return { cls: 'dd-unknown', label: 'N/A', fillPct: 0 };
         }
         const mag = Math.max(0, -dd63Pct);
         if (mag < 10.0) {
+            if (dd252Pct != null && Number.isFinite(dd252Pct) && dd252Pct <= -40.0) {
+                return { cls: 'dd-bear-high', label: '63D HI \u00b7 252D BEAR', fillPct: 0 };
+            }
             return { cls: 'dd-near-high', label: 'NEAR HIGH', fillPct: 0 };
         }
         if (mag < 25.0) {
@@ -343,13 +346,22 @@ const Charts = {
 
         const pctTop = m.totalN > 0 ? Math.max(1, Math.round((m.windowRank / m.totalN) * 100)) : 100;
         const fmtDd = v => (v > -0.05 && v <= 0) ? '0.0%' : (v.toFixed(1) + '%');
+        const fmtRu = v => (v >= 0 && v < 0.05) ? '0.0%' : ('+' + v.toFixed(1) + '%');
+        const buildDdRow = (winLabel, ddVal, ruVal) => {
+            if (ddVal == null || !Number.isFinite(ddVal)) return '';
+            const hasRu = ruVal != null && Number.isFinite(ruVal);
+            return '<span class="hm-tt-dd-win">' + winLabel + '</span>' +
+                '<span class="hm-tt-dd-pk">' + fmtDd(ddVal) + ' <span class="hm-tt-dd-unit">pk</span></span>' +
+                (hasRu
+                    ? '<span class="hm-tt-dd-sep">&middot;</span><span class="hm-tt-dd-low">' + fmtRu(ruVal) + ' <span class="hm-tt-dd-unit">low</span></span>'
+                    : '<span class="hm-tt-dd-sep"></span><span class="hm-tt-dd-low"></span>');
+        };
         let ddRowHtml = '';
         if (m.dd63Pct != null && Number.isFinite(m.dd63Pct)) {
-            const dd252Part = (m.dd252Pct != null && Number.isFinite(m.dd252Pct))
-                ? ' &middot; DD252 ' + fmtDd(m.dd252Pct)
-                : '';
+            const row63 = buildDdRow('63D', m.dd63Pct, m.ru63Pct);
+            const row252 = buildDdRow('252D', m.dd252Pct, m.ru252Pct);
             ddRowHtml = '<div class="hm-tt-dd ' + m.ddTierCls + (m.ddOverlay ? ' overlay-active' : '') + '">' +
-                '<span class="hm-tt-dd-vals">DD63 ' + fmtDd(m.dd63Pct) + dd252Part + '</span>' +
+                '<div class="hm-tt-dd-grid">' + row63 + row252 + '</div>' +
                 '<span class="hm-tt-dd-pill ' + m.ddTierCls + '">' + this._escapeHtml(m.ddSeverityLabel) + '</span>' +
                 '</div>';
         }
@@ -515,7 +527,9 @@ const Charts = {
             const chg1dPct = lead ? lead.chg1dPct : null;
             const dd63Pct = lead ? lead.dd63Pct : null;
             const dd252Pct = lead ? lead.dd252Pct : null;
-            const ddInfo = this.getDdSeverity(dd63Pct);
+            const ru63Pct = lead ? lead.ru63Pct : null;
+            const ru252Pct = lead ? lead.ru252Pct : null;
+            const ddInfo = this.getDdSeverity(dd63Pct, dd252Pct);
 
             let climaxTag = '';
             let filterTag = 'BASE';
@@ -573,6 +587,8 @@ const Charts = {
                 totalN: N,
                 dd63Pct,
                 dd252Pct,
+                ru63Pct,
+                ru252Pct,
                 ddSeverityLabel: ddInfo.label,
                 ddTierCls: ddInfo.cls,
                 ddOverlay: !!ddOverlay,
