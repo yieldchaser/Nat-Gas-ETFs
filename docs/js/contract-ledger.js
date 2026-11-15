@@ -101,11 +101,13 @@ const ContractLedger = {
         // Memorial Day: Last Monday in May
         addYmd(year, 5, this._getLastWeekdayOfMonth(year, 4, 1));
 
-        // Juneteenth (June 19)
-        const jt = new Date(Date.UTC(year, 5, 19));
-        if (jt.getUTCDay() === 6) addYmd(year, 6, 18);
-        else if (jt.getUTCDay() === 0) addYmd(year, 6, 20);
-        else addYmd(year, 6, 19);
+        // Juneteenth (Observed from 2022 onwards)
+        if (year >= 2022) {
+            const jt = new Date(Date.UTC(year, 5, 19));
+            if (jt.getUTCDay() === 6) addYmd(year, 6, 18);
+            else if (jt.getUTCDay() === 0) addYmd(year, 6, 20);
+            else addYmd(year, 6, 19);
+        }
 
         // Independence Day (July 4)
         const id = new Date(Date.UTC(year, 6, 4));
@@ -450,6 +452,20 @@ const ContractLedger = {
 
             // Roll window date strings
             const usCfg = this.BCOM_SCHEDULE[m];
+            const startDay = bDays[0];
+            const startState = this.getHoldingForDate(year, m, startDay);
+            const startUS = startState.US.holdings[0].sym;
+            const endUS = midState.US.holdings[midState.US.holdings.length - 1].sym;
+            const usFlow = usCfg.rolls ? `${startUS} \u2192 ${endUS}` : `${startUS} (Held)`;
+
+            const startCA = startState.CA.holdings[0].sym;
+            const endCA = midState.CA.holdings[midState.CA.holdings.length - 1].sym;
+            const caFlow = `${startCA} \u2192 ${endCA}`;
+
+            const startUK = startState.UK.holdings[0].sym;
+            const endUK = midState.UK.holdings[midState.UK.holdings.length - 1].sym;
+            const ukFlow = `${startUK} \u2192 ${endUK}`;
+
             const usRoll = usCfg.rolls
                 ? `Days 6–10 (${year}-${String(m).padStart(2,'0')}-${String(bDays[5]).padStart(2,'0')} to ${year}-${String(m).padStart(2,'0')}-${String(bDays[9]).padStart(2,'0')})`
                 : 'None (Held)';
@@ -462,6 +478,7 @@ const ContractLedger = {
                 monthName: this.MONTH_NAMES[m - 1],
                 totalBdays: bDays.length,
                 rollWindows: { US: usRoll, CA: caRoll, UK: ukRoll },
+                flows: { US: usFlow, CA: caFlow, UK: ukFlow },
                 holdingsSnapshot: {
                     US: midState.US.holdings,
                     CA: midState.CA.holdings,
@@ -534,9 +551,12 @@ const ContractLedger = {
 
         const fillPct = Math.round(((curDay - 1) / Math.max(1, maxDaysInMonth - 1)) * 100);
 
-        // Build Year Options
+        // Dynamic Year Options from 2018 to max(current + 10, 2035)
+        const curUtcYear = new Date().getUTCFullYear();
+        const minYear = 2018;
+        const maxYear = Math.max(curUtcYear + 10, 2035);
         let yearOpts = '';
-        for (let y = 2022; y <= 2030; y++) {
+        for (let y = minYear; y <= maxYear; y++) {
             yearOpts += `<option value="${y}" ${y === selectedYear ? 'selected' : ''}>${y}</option>`;
         }
 
@@ -546,27 +566,42 @@ const ContractLedger = {
             monthOpts += `<option value="${m}" ${m === selectedMonth ? 'selected' : ''}>${this.MONTH_NAMES[m - 1]}</option>`;
         }
 
+        // Dynamic Roll Windows for the Selected Month
+        const bDays = this.getMonthBusinessDays(selectedYear, selectedMonth);
+        const usCfg = this.BCOM_SCHEDULE[selectedMonth];
+        const mShort = this.MONTH_NAMES[selectedMonth - 1].slice(0, 3);
+        const caRollRange = bDays.length >= 7 
+            ? `Days 4–7 (${mShort} ${bDays[3]} – ${bDays[6]})`
+            : 'Trading Days 4–7';
+        const ukRollRange = bDays.length >= 9
+            ? `Days 5–9 (${mShort} ${bDays[4]} – ${bDays[8]})`
+            : 'Business Days 5–9';
+        const usRollRange = usCfg.rolls
+            ? (bDays.length >= 10 ? `Days 6–10 (${mShort} ${bDays[5]} – ${bDays[9]})` : 'Business Days 6–10')
+            : 'Odd Month · No Roll (Held Steady)';
+
         this._root.innerHTML = `
             <div class="contract-ledger-panel" id="cl-panel">
                 <div class="cl-header">
                     <div class="cl-header-left">
                         <div class="cl-title-row">
                             <h2 class="cl-title">ETF Futures Contract Holding &amp; Roll Schedule Ledger</h2>
-                            <span class="cl-badge">Cross-Jurisdiction &middot; 3 ETF Pairs</span>
+                            <span class="cl-badge">Regulatory Benchmark Schedule</span>
                         </div>
                         <div class="cl-desc">
-                            Deterministic futures contract mapping across <strong>US (BOIL/KOLD)</strong>, <strong>Canada (HNU/HND)</strong>, and <strong>London (3NGL/3NGS)</strong>. Tracks monthly and bimonthly roll windows, active contract splits (80/20, 60/40, 75/25, 50/50), leverage factors, and NYMEX expiration dates forward into 2025&ndash;2030.
+                            Futures contract allocations and roll schedules across <strong>US (BOIL/KOLD)</strong>, <strong>Canada (HNU/HND)</strong>, and <strong>London (3NGL/3NGS)</strong>. Details contract tenors, active roll splits, and CME NYMEX settlement delivery dates.
                         </div>
                     </div>
                     <div class="cl-header-right">
                         <div class="cl-controls">
-                            <select class="cl-select" id="cl-year-select" data-tooltip="Select calendar year to explore (historical or forward into the future)">
+                            <select class="cl-select" id="cl-year-select" data-tooltip="Select calendar year">
                                 ${yearOpts}
                             </select>
                             <select class="cl-select" id="cl-month-select" data-tooltip="Select calendar month">
                                 ${monthOpts}
                             </select>
-                            <button class="cl-btn" id="cl-btn-today" data-tooltip="Jump immediately to today's date">TODAY</button>
+                            <input type="date" class="cl-input-date" id="cl-date-picker" value="${snapshot.date}" data-tooltip="Jump directly to any historical or future date">
+                            <button class="cl-btn" id="cl-btn-today" data-tooltip="Jump to today's date">TODAY</button>
                             <button class="cl-btn" id="cl-btn-export" data-tooltip="Download full day-by-day contract holdings as CSV">Download CSV</button>
                         </div>
                     </div>
@@ -574,7 +609,7 @@ const ContractLedger = {
 
                 <div class="cl-scrubber-card">
                     <div class="cl-scrubber-top">
-                        <span class="cl-scrubber-label">Interactive Day Scrubber &middot; ${this.MONTH_NAMES[selectedMonth - 1]} ${selectedYear}</span>
+                        <span class="cl-scrubber-label">Day Scrubber &middot; ${this.MONTH_NAMES[selectedMonth - 1]} ${selectedYear}</span>
                         <div class="cl-scrubber-date-display">
                             <span>${snapshot.date}</span>
                             <span class="cl-scrubber-bday-tag">
@@ -582,15 +617,31 @@ const ContractLedger = {
                             </span>
                         </div>
                     </div>
+                    <div class="cl-milestone-strip">
+                        <div class="cl-milestone-item">
+                            <span class="cl-milestone-label">CA Roll Window:</span>
+                            <span class="cl-milestone-val">${caRollRange}</span>
+                        </div>
+                        <div class="cl-milestone-item">
+                            <span class="cl-milestone-label">UK Roll Window:</span>
+                            <span class="cl-milestone-val">${ukRollRange}</span>
+                        </div>
+                        <div class="cl-milestone-item">
+                            <span class="cl-milestone-label">US Roll Window:</span>
+                            <span class="cl-milestone-val">${usRollRange}</span>
+                        </div>
+                    </div>
                     <div class="cl-slider-track-wrap">
                         <input type="range" id="cl-day-slider" min="1" max="${maxDaysInMonth}" value="${curDay}" style="--cl-fill-pct: ${fillPct}%;">
                     </div>
                     <div class="cl-slider-ticks">
                         <span>Day 1</span>
-                        <span>Day 7 (CA Roll Done)</span>
-                        <span>Day 10 (US &amp; UK Roll Done)</span>
+                        <span>Day 5</span>
+                        <span>Day 10</span>
+                        <span>Day 15</span>
                         <span>Day 20</span>
-                        <span>Day ${maxDaysInMonth} (Month End)</span>
+                        <span>Day 25</span>
+                        <span>Day ${maxDaysInMonth}</span>
                     </div>
                 </div>
 
@@ -602,8 +653,8 @@ const ContractLedger = {
 
                 <div class="cl-nav-tabs">
                     <button class="cl-tab-btn ${activeViewTab === 'schedule' ? 'active' : ''}" data-tab="schedule">Daily Schedule Table</button>
-                    <button class="cl-tab-btn ${activeViewTab === 'roadmap' ? 'active' : ''}" data-tab="roadmap">12-Month Annual Roadmap</button>
-                    <button class="cl-tab-btn ${activeViewTab === 'specs' ? 'active' : ''}" data-tab="specs">Prospectus &amp; Index Specs</button>
+                    <button class="cl-tab-btn ${activeViewTab === 'roadmap' ? 'active' : ''}" data-tab="roadmap">Annual Contract Calendar</button>
+                    <button class="cl-tab-btn ${activeViewTab === 'specs' ? 'active' : ''}" data-tab="specs">Benchmark Specifications</button>
                 </div>
 
                 <div id="cl-tab-body">
@@ -649,7 +700,6 @@ const ContractLedger = {
 
         return `
             <div class="cl-jurisdiction-card cl-card-${type}">
-                <div class="cl-card-accent-bar"></div>
                 <div class="cl-card-header">
                     <div>
                         <span class="cl-jurisdiction-name">${jur.name}</span>
@@ -760,10 +810,6 @@ const ContractLedger = {
 
         roadmap.forEach(m => {
             const isActive = (m.monthNum === selectedMonth);
-            const usHold = m.holdingsSnapshot.US[0].sym;
-            const caHold = m.holdingsSnapshot.CA[0].sym;
-            const ukHold = m.holdingsSnapshot.UK[0].sym;
-
             cardsHtml += `
                 <div class="cl-roadmap-month-card ${isActive ? 'active-month' : ''}" data-month="${m.monthNum}">
                     <div class="cl-rm-head">
@@ -772,15 +818,15 @@ const ContractLedger = {
                     </div>
                     <div class="cl-rm-pair-row">
                         <span class="cl-rm-pair-label">US (BOIL/KOLD):</span>
-                        <span class="cl-rm-contract-tag" style="color:#60a5fa">${usHold}</span>
+                        <span class="cl-rm-contract-tag">${m.flows.US}</span>
                     </div>
                     <div class="cl-rm-pair-row">
                         <span class="cl-rm-pair-label">CA (HNU/HND):</span>
-                        <span class="cl-rm-contract-tag" style="color:#facc15">${caHold}</span>
+                        <span class="cl-rm-contract-tag">${m.flows.CA}</span>
                     </div>
                     <div class="cl-rm-pair-row">
                         <span class="cl-rm-pair-label">UK (3NGL/3NGS):</span>
-                        <span class="cl-rm-contract-tag" style="color:#d8b4fe">${ukHold}</span>
+                        <span class="cl-rm-contract-tag">${m.flows.UK}</span>
                     </div>
                 </div>
             `;
@@ -796,7 +842,7 @@ const ContractLedger = {
     _renderSpecsAccordion() {
         return `
             <div class="cl-specs-accordion">
-                <div class="cl-specs-title">Regulatory Prospectus &amp; Index Methodology Specifications</div>
+                <div class="cl-specs-title">Regulatory Benchmarks &amp; Contract Specifications</div>
                 <div class="cl-specs-grid">
                     <div class="cl-spec-box">
                         <div class="cl-spec-head">US: ProShares BOIL &amp; KOLD</div>
@@ -843,6 +889,28 @@ const ContractLedger = {
         const mSel = document.getElementById('cl-month-select');
         if (mSel) {
             mSel.addEventListener('change', (e) => this.setMonth(e.target.value));
+        }
+
+        // Direct Date Picker
+        const datePick = document.getElementById('cl-date-picker');
+        if (datePick) {
+            datePick.addEventListener('change', (e) => {
+                const val = e.target.value;
+                if (val) {
+                    const parts = val.split('-');
+                    if (parts.length === 3) {
+                        const y = parseInt(parts[0], 10);
+                        const m = parseInt(parts[1], 10);
+                        const d = parseInt(parts[2], 10);
+                        if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+                            this.state.selectedYear = y;
+                            this.state.selectedMonth = m;
+                            this.state.selectedDay = d;
+                            this.render();
+                        }
+                    }
+                }
+            });
         }
 
         // Today Button
