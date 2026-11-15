@@ -2,9 +2,12 @@ name: Fetch CVOL Data
 
 on:
   schedule:
-    # 16:00 UTC = 21:30 IST, Monday–Friday
-    # Runs after CME settlement so end-of-day data is final
+    # 16:00 UTC = 21:30 IST, Monday–Friday. This is MID-SESSION (NG settles
+    # 14:30 New York = 18:30/19:30 UTC), so it writes a provisional row.
     - cron: '0 16 * * 1-5'
+    # 22:30 UTC = after the 17:00 New York Globex close in both DST regimes.
+    # fetch_cvol.py overwrites the rolling window, so this run finalises the day.
+    - cron: '30 22 * * 1-5'
   workflow_dispatch:
     # Allows manual trigger from the Actions tab at any time
 
@@ -32,13 +35,19 @@ jobs:
           CME_USERINFO: ${{ secrets.CME_USERINFO }}
         run: python scripts/fetch_cvol.py
 
+      - name: Build tradeable NG return series for the CVOL tab
+        run: python scripts/build_cvol_tradeable.py
+
       - name: Commit and push new data (if any)
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/cvol/ngvl_cvol_history.csv
           git add docs/data/cvol/ngvl_cvol_history.csv
+          git add data/cvol/ng_tradeable.csv docs/data/cvol/ng_tradeable.csv
           # Only commit if something actually changed
           git diff --staged --quiet || \
             git commit -m "chore: update CVOL data $(date -u '+%Y-%m-%d')"
+          # Pull-rebase before push so a concurrent data workflow doesn't cause rejection.
+          git pull --rebase origin main
           git push

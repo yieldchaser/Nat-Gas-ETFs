@@ -54,6 +54,12 @@ jobs:
         env:
           PYTHONUNBUFFERED: '1'
 
+      - name: Build tradeable NG return series for the CVOL tab
+        run: |
+          python scripts/build_cvol_tradeable.py
+        env:
+          PYTHONUNBUFFERED: '1'
+
       - name: Copy data to docs folder
         run: |
           cp data/dashboard_data.json docs/data/ 2>/dev/null || true

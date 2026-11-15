@@ -42,10 +42,171 @@ function renderConvictionBanner(data, comp) {
     el.style.alignItems = 'center';
     el.style.gap = '14px';
     el.style.background = 'rgba(255,255,255,0.025)';
-    el.innerHTML =
+    var edgeLead = '';
+    var edge = comp.edge, ec = edge && edge.current;
+    if (ec && ec.state !== 'NEUTRAL' && edge.states[ec.state]) {
+        var eh = edge.states[ec.state].horizons[21], eb = edge.base[21];
+        edgeLead = '<span style="font-size:0.72rem;font-weight:900;letter-spacing:2px;color:' + ec.color + ';" data-tooltip="Directional Edge model (tradeable basis). See the Directional Edge panel for the full evidence.">' + ec.label + '</span>' +
+            '<span style="font-size:0.65rem;color:rgba(255,255,255,0.85);letter-spacing:0.5px;font-weight:700;">' + (ec.bias === 'DOWNSIDE' ? 'DOWNSIDE EDGE' : 'UPSIDE EDGE') + ' · 21D up-rate ' + fmt(eh.upRate,0) + '% vs ' + fmt(eb.upRate,0) + '% base</span>' +
+            '<span style="color:rgba(255,255,255,0.25);">|</span>';
+    }
+    el.innerHTML = edgeLead +
         '<span style="font-size:0.72rem;font-weight:900;letter-spacing:2px;color:' + color + ';">' + read.label + '</span>' +
         '<span style="font-size:0.65rem;color:rgba(255,255,255,0.85);letter-spacing:0.5px;font-weight:700;">' + read.directionalRead + '</span>' +
         '<span style="font-size:0.58rem;color:rgba(255,255,255,0.65);letter-spacing:0.5px;">Confidence ' + read.confidence + ' (' + fmt(read.confidenceScore,0) + ') | ' + read.volBias + ' | ' + read.action + '</span>';
+}
+
+// ── Directional Edge Panel ────────────────────────────────────
+function renderEdgePanel(data, comp) {
+    var el = document.getElementById('cvol-edge-panel'); if (!el) return;
+    var edge = comp.edge;
+    if (!edge || !edge.current) { el.innerHTML = '<div class="cvol-loading">Directional edge model unavailable</div>'; return; }
+    var cur = edge.current, st = edge.states[cur.state], base = edge.base, f = cur.features, thr = edge.thresholds;
+    var HZ = [5, 10, 21, 42];
+    var dim = 'rgba(255,255,255,0.6)', faint = 'rgba(255,255,255,0.4)';
+    function esc(t) { return String(t).replace(/"/g, '&quot;'); }
+    function signed(v, d) { return v == null || !isFinite(v) ? '—' : (v >= 0 ? '+' : '') + v.toFixed(d == null ? 1 : d) + '%'; }
+    function pTxt(p) { return p == null ? '—' : p < 0.001 ? '<0.001' : p.toFixed(3); }
+    function retColor(v) { return v == null ? dim : v > 0 ? '#3db87a' : v < 0 ? '#ef4444' : dim; }
+
+    var badge = document.getElementById('cvol-edge-basis');
+    if (badge) {
+        badge.textContent = edge.tradeable ? 'TRADEABLE BASIS' : 'RAW FRONT-MONTH — ROLL-CONTAMINATED';
+        badge.style.color = edge.tradeable ? '' : '#f59e0b';
+        badge.setAttribute('data-tooltip', edge.tradeable
+            ? 'Forward returns use the roll-adjusted NG index implied by the BOIL/KOLD pair — the return a trader actually earns before leverage decay. The raw front-month column jumps at every contract roll and overstates upside, especially in winter contango.'
+            : 'ng_tradeable.csv did not load, so forward returns fall back to the raw front-month column. That column jumps at each contract roll; treat every hit rate on this page as overstated to the upside until the sidecar file is restored.');
+    }
+
+    // ── Hero: what the model says today ──
+    var biasTxt = cur.bias === 'DOWNSIDE' ? 'DOWNSIDE EDGE' : cur.bias === 'UPSIDE' ? 'UPSIDE EDGE' : 'NO DIRECTIONAL EDGE';
+    // Persistence matters for the two skew states: quote the subset that matches today.
+    var usePersist = (cur.state === 'BLOWOFF' || cur.state === 'UPSIDE_STRESS') && st.confirmed && st.fresh;
+    var sub = usePersist ? (cur.confirmed ? st.confirmed : st.fresh) : st;
+    var persistTxt = usePersist ? (cur.confirmed
+        ? 'CONFIRMED · on ' + cur.persist + ' of last ' + EDGE_CFG.persistWindow + ' sessions'
+        : 'FRESH · on ' + cur.persist + ' of last ' + EDGE_CFG.persistWindow + ' sessions') : '';
+    var h21 = sub.horizons[21], b21 = base[21];
+    var sentence;
+    if (cur.state === 'NEUTRAL') {
+        sentence = 'The surface is not in any of the three tested states. Expect the base rate: NG (tradeable) was higher 21 sessions later on ' + fmt(b21.upRate,0) + '% of all days, averaging ' + signed(b21.mean) + ' — the contango bleed, not a signal.';
+    } else {
+        var dirWord = cur.bias === 'DOWNSIDE' ? 'lower' : 'higher';
+        var dirRate = cur.bias === 'DOWNSIDE' ? 100 - h21.upRate : h21.upRate;
+        var baseRate = cur.bias === 'DOWNSIDE' ? 100 - b21.upRate : b21.upRate;
+        var subsetTxt = usePersist ? (cur.confirmed ? ' confirmed' : ' fresh (not yet persistent)') : '';
+        sentence = st.short + '. On the ' + h21.n + ' prior' + subsetTxt + ' days in this state, NG (tradeable) was ' + dirWord + ' 21 sessions later ' + fmt(dirRate,0) + '% of the time (all-days base ' + fmt(baseRate,0) + '%), averaging ' + signed(h21.mean) + ' vs ' + signed(b21.mean) + '. ' +
+            st.episodeCount + ' separate episodes; ' + st.right21 + ' of ' + st.done21 + ' completed ones resolved ' + dirWord + ' at 21D.';
+        if (cur.state === 'UPSIDE_STRESS' && !cur.confirmed) sentence += ' An isolated stress day has carried no edge — it needs to persist (' + EDGE_CFG.persistMin + ' of ' + EDGE_CFG.persistWindow + ' sessions) before it means anything.';
+        if (cur.state === 'PANIC_FLUSH') sentence += ' This is the weakest of the three reads: a short bounce tendency, not a trough call.';
+    }
+    var hero = '<div class="edge-hero">' +
+        '<div class="edge-hero-left">' +
+            '<div class="edge-state" style="color:' + cur.color + ';" data-tooltip="' + esc(st.short + '. State is re-evaluated every session from the skew ratio, NGVL, and the last five sessions of price and implied-vol change.') + '">' + cur.label + '</div>' +
+            '<div class="edge-bias" style="color:' + (cur.bias === 'NONE' ? dim : cur.color) + ';">' + biasTxt + '</div>' +
+            '<div class="edge-since">since ' + fmtDate(cur.since) + ' · ' + cur.streak + ' session' + (cur.streak === 1 ? '' : 's') + '</div>' +
+            (persistTxt ? '<div class="edge-since" style="color:' + (cur.confirmed ? cur.color : 'rgba(255,255,255,0.5)') + ';" data-tooltip="Persistence filter. A skew state that has been on for at least ' + EDGE_CFG.persistMin + ' of the last ' + EDGE_CFG.persistWindow + ' sessions has historically been far more reliable than a first or isolated day.">' + persistTxt + '</div>' : '') +
+        '</div>' +
+        '<div class="edge-hero-mid">' + sentence + '</div>' +
+        '<div class="edge-hero-right">';
+    HZ.forEach(function(h) {
+        var r = sub.horizons[h], b = base[h];
+        hero += '<div class="edge-cell" data-tooltip="' + esc(h + '-session forward return of the tradeable NG index from every day in this state. Mean ' + signed(r.mean) + ', median ' + signed(r.median) + ', higher on ' + fmt(r.upRate,0) + '% of ' + r.n + ' days. All-days base: mean ' + signed(b.mean) + ', higher on ' + fmt(b.upRate,0) + '%.' + (r.p != null ? ' Permutation p = ' + pTxt(r.p) + ' (share of time-shifted copies of this signal that did as well).' : '')) + '">' +
+            '<div class="edge-cell-lbl">' + h + 'D</div>' +
+            '<div class="edge-cell-val" style="color:' + retColor(r.mean) + ';">' + signed(r.mean) + '</div>' +
+            '<div class="edge-cell-sub">' + fmt(r.upRate,0) + '% up · base ' + fmt(b.upRate,0) + '%</div>' +
+        '</div>';
+    });
+    hero += '</div></div>';
+
+    // ── Inputs: how close each trigger is ──
+    function gauge(lbl, val, sub, hot, tip) {
+        return '<div class="edge-input" data-tooltip="' + esc(tip) + '"><div class="edge-input-lbl">' + lbl + '</div><div class="edge-input-val" style="color:' + (hot ? '#f59e0b' : 'var(--text-bright, #fff)') + ';">' + val + '</div><div class="edge-input-sub">' + sub + '</div></div>';
+    }
+    var inputs = '<div class="edge-inputs">' +
+        gauge('SKEW RATIO', fmt(f.skewRatio,3), fmt(f.skewPe,1) + 'th pct · blow-off ≥ ' + fmt(thr.skewBlow,2), f.skewPe >= EDGE_CFG.skewStress,
+            'Up variance divided by down variance. Percentile is against every prior session (expanding, no look-ahead), so winter does not reset the scale. Upside stress starts at the ' + EDGE_CFG.skewStress + 'th percentile (currently ' + fmt(thr.skewStress,2) + '), blow-off at the ' + EDGE_CFG.skewBlow + 'th (' + fmt(thr.skewBlow,2) + ').') +
+        gauge('NGVL', fmt(f.ngvl,1), fmt(f.ngvlPe,1) + 'th pct · gate ≥ ' + fmt(thr.ngvlGate,0), f.ngvlPe >= EDGE_CFG.volGate,
+            'Implied vol must also be extreme (' + EDGE_CFG.volGate + 'th expanding percentile, currently ' + fmt(thr.ngvlGate,1) + '). Extreme skew with ordinary vol carried no edge in the history.') +
+        gauge('5D MOVE', f.move5 == null ? '—' : (f.move5 >= 0 ? '+' : '') + f.move5.toFixed(2) + 'σ', 'flush ≤ ' + EDGE_CFG.flushSigma.toFixed(1) + 'σ', f.move5 != null && f.move5 <= EDGE_CFG.flushSigma,
+            'Five-session move of the tradeable index in units of what NGVL implied five sessions ago. A panic flush needs a drop of at least ' + Math.abs(EDGE_CFG.flushSigma) + ' implied sigmas.') +
+        gauge('5D NGVL CHANGE', f.volChg5 == null ? '—' : signed(f.volChg5 * 100), 'flush needs > +' + (EDGE_CFG.flushVolRise * 100).toFixed(0) + '%', f.volChg5 != null && f.volChg5 > EDGE_CFG.flushVolRise,
+            'Five-session log change in NGVL. A sell-off that RAISES implied vol means option buyers are paying up for protection — historically followed by a bounce. The same size of drop with flat or falling vol showed no bounce.') +
+    '</div>';
+
+    // ── Evidence table: every state against the base rate ──
+    var tbl = '<table class="scorecard-table edge-table"><thead><tr>' +
+        '<th data-tooltip="Directional state from the options surface">STATE</th>' +
+        '<th data-tooltip="Sessions spent in the state / separate episodes (a new episode starts after ' + EDGE_CFG.episodeGap + ' sessions without the state). Episodes, not days, are the independent sample.">DAYS / EPISODES</th>';
+    HZ.forEach(function(h) { tbl += '<th data-tooltip="Mean ' + h + '-session forward return of the tradeable NG index, with the share of days that finished higher">' + h + 'D MEAN (UP%)</th>'; });
+    tbl += '<th data-tooltip="Circular-shift permutation p-value at 21 sessions: the share of time-shifted copies of the signal whose mean forward return was at least as favourable. Shifting whole blocks keeps the clustering of signal days intact, which a t-test on daily rows ignores.">P (21D)</th>' +
+        '<th data-tooltip="Episodes that resolved in the direction of the read 21 sessions after their FIRST day, out of completed episodes">EPISODES RIGHT 21D</th>' +
+        '<th data-tooltip="Largest move AGAINST the read within 21 sessions of an episode\'s first day (worst episode / median episode). This is the heat a position entered on day one had to survive.">ADVERSE (WORST / MED)</th>' +
+        '</tr></thead><tbody>';
+    ['BLOWOFF', 'UPSIDE_STRESS', 'PANIC_FLUSH', 'NEUTRAL'].forEach(function(k) {
+        var s = edge.states[k]; if (!s) return;
+        var active = k === cur.state;
+        tbl += '<tr' + (active ? ' style="background:rgba(255,255,255,0.045);"' : '') + '>' +
+            '<td style="color:' + s.color + ';font-weight:800;" data-tooltip="' + esc(s.short) + '">' + s.label + (active ? ' ◀' : '') + '</td>' +
+            '<td>' + s.days + (s.episodeCount != null ? ' / ' + s.episodeCount : '') + '</td>';
+        HZ.forEach(function(h) { var r = s.horizons[h]; tbl += '<td><span style="color:' + retColor(r.mean) + ';">' + signed(r.mean) + '</span> <span style="color:' + faint + ';">(' + fmt(r.upRate,0) + '%)</span></td>'; });
+        tbl += '<td style="color:' + (s.horizons[21].p != null && s.horizons[21].p < 0.05 ? '#3db87a' : dim) + ';">' + pTxt(s.horizons[21].p) + '</td>' +
+            '<td>' + (s.done21 ? s.right21 + ' / ' + s.done21 : '—') + '</td>' +
+            '<td>' + (s.worstAdverse != null ? signed(s.worstAdverse) + ' / ' + signed(s.medianAdverse) : '—') + '</td></tr>';
+        if ((k === 'BLOWOFF' || k === 'UPSIDE_STRESS') && s.confirmed) {
+            [['confirmed', s.confirmed, '↳ confirmed (≥' + EDGE_CFG.persistMin + ' of last ' + EDGE_CFG.persistWindow + ')'], ['fresh', s.fresh, '↳ fresh / isolated']].forEach(function(x) {
+                var q = x[1];
+                tbl += '<tr style="font-size:0.92em;"><td style="color:' + dim + ';padding-left:22px;text-align:left;" data-tooltip="' + (x[0] === 'confirmed' ? 'Days when the state had already been on for at least ' + EDGE_CFG.persistMin + ' of the last ' + EDGE_CFG.persistWindow + ' sessions.' : 'First or isolated days of the state — fewer than ' + EDGE_CFG.persistMin + ' of the last ' + EDGE_CFG.persistWindow + ' sessions.') + '">' + x[2] + '</td><td style="color:' + dim + ';">' + q.days + '</td>';
+                HZ.forEach(function(h) { var r = q.horizons[h]; tbl += '<td><span style="color:' + retColor(r.mean) + ';">' + signed(r.mean) + '</span> <span style="color:' + faint + ';">(' + fmt(r.upRate,0) + '%)</span></td>'; });
+                tbl += '<td style="color:' + (q.horizons[21].p != null && q.horizons[21].p < 0.05 ? '#3db87a' : dim) + ';">' + pTxt(q.horizons[21].p) + '</td><td>—</td><td>—</td></tr>';
+            });
+        }
+    });
+    tbl += '<tr style="border-top:1px solid rgba(255,255,255,0.12);"><td style="font-weight:800;color:' + dim + ';" data-tooltip="Every session with a full year of prior history. This is what you get with no signal at all.">ALL DAYS (BASE)</td><td>' + base[21].n + '</td>';
+    HZ.forEach(function(h) { var r = base[h]; tbl += '<td><span style="color:' + retColor(r.mean) + ';">' + signed(r.mean) + '</span> <span style="color:' + faint + ';">(' + fmt(r.upRate,0) + '%)</span></td>'; });
+    tbl += '<td>—</td><td>—</td><td>—</td></tr></tbody></table>';
+
+    // ── Episode ledger ──
+    var eps = [];
+    ['BLOWOFF', 'UPSIDE_STRESS', 'PANIC_FLUSH'].forEach(function(k) {
+        (edge.states[k].episodes || []).forEach(function(e) { eps.push({ k: k, e: e }); });
+    });
+    eps.sort(function(a, b) { return b.e.startIdx - a.e.startIdx; });
+    var ledger = '<table class="scorecard-table edge-table"><thead><tr>' +
+        '<th>EPISODE START</th><th>STATE</th><th data-tooltip="Sessions the state was on during the episode">DAYS</th>' +
+        '<th data-tooltip="Skew ratio and NGVL on the first day">SKEW / NGVL</th>' +
+        '<th data-tooltip="Tradeable NG index return 10 sessions after the first day">10D</th><th data-tooltip="Tradeable NG index return 21 sessions after the first day">21D</th><th data-tooltip="Tradeable NG index return 42 sessions after the first day">42D</th>' +
+        '<th data-tooltip="Largest move against the read within 21 sessions of the first day">ADVERSE</th><th>OUTCOME 21D</th></tr></thead><tbody>';
+    eps.slice(0, 14).forEach(function(x) {
+        var e = x.e, m = edge.states[x.k];
+        var outcome = e.right21 == null ? '<span style="color:#f59e0b;">' + (e.active ? 'LIVE' : 'PENDING') + '</span>' : e.right21 ? '<span style="color:#3db87a;">RIGHT</span>' : '<span style="color:#ef4444;">WRONG</span>';
+        ledger += '<tr><td>' + fmtDate(e.start) + '</td><td style="color:' + m.color + ';font-weight:700;">' + m.label + '</td><td>' + e.days + '</td>' +
+            '<td>' + fmt(e.skewRatio,2) + ' / ' + fmt(e.ngvl,0) + '</td>' +
+            '<td style="color:' + retColor(e.fwd10) + ';">' + signed(e.fwd10) + '</td><td style="color:' + retColor(e.fwd21) + ';">' + signed(e.fwd21) + '</td><td style="color:' + retColor(e.fwd42) + ';">' + signed(e.fwd42) + '</td>' +
+            '<td>' + signed(e.adverse21) + '</td><td>' + outcome + '</td></tr>';
+    });
+    ledger += '</tbody></table>';
+
+    // ── Holding cost ──
+    var dec = comp.decay, decay = '';
+    if (dec && !dec.lowSample) {
+        var costlier = Math.abs(dec.koldMedian) >= 6;
+        decay = '<div class="edge-decay" data-tooltip="' + esc('Daily-reset leverage loses to volatility whatever the direction: roughly sigma squared times T for a 2x fund and three times that for a -2x fund. These figures are not the formula — they are the drag actually realised over the 21 sessions after each of the ' + dec.n + ' past days when NGVL was within 15% of today.') + '">' +
+            '<span class="edge-decay-lbl">HOLDING COST AT NGVL ' + fmt(dec.ngvl,0) + '</span>' +
+            '<span>BOIL <b style="color:#ef4444;">' + signed(dec.boilMedian) + '</b> <span style="color:' + faint + ';">(' + signed(dec.boilP25) + ' to ' + signed(dec.boilP75) + ')</span></span>' +
+            '<span>KOLD <b style="color:#ef4444;">' + signed(dec.koldMedian) + '</b> <span style="color:' + faint + ';">(' + signed(dec.koldP25) + ' to ' + signed(dec.koldP75) + ')</span></span>' +
+            '<span style="color:' + dim + ';">volatility drag per 21 sessions, median and interquartile range of ' + dec.n + ' analog days · typical 21D NG move ±' + fmt(dec.idxAbsMoveMedian,0) + '%</span>' +
+            (costlier ? '<span style="color:#f59e0b;">KOLD bleeds about ' + fmt(Math.abs(dec.koldMedian / dec.boilMedian),1) + '× faster than BOIL here: a bearish view is cheaper to carry as short BOIL than as long KOLD.</span>' : '') +
+        '</div>';
+    }
+
+    var foot = '<div class="edge-foot">Statistics are recomputed from the full history (' + fmtDate(data[Math.min(EDGE_CFG.minHistory, data.length - 1)].date) + ' onward) on every load. ' +
+        'Thresholds were chosen after looking at this same history, so treat the sizes as optimistic; the signs held in both halves of the sample. ' +
+        'The independent sample is episodes, not days — and one blow-off episode (Dec-2024) ran +30% against the read before anything else happened.</div>';
+
+    el.innerHTML = hero + inputs + decay +
+        '<div class="edge-sub-title">EVIDENCE BY STATE</div><div style="overflow-x:auto;">' + tbl + '</div>' +
+        '<div class="edge-sub-title">EPISODE LEDGER <span style="color:' + faint + ';font-weight:400;letter-spacing:0;">most recent first</span></div><div style="overflow-x:auto;">' + ledger + '</div>' + foot;
 }
 
 // ── KPI Cards (expanded) ─────────────────────────────────────
@@ -1479,6 +1640,7 @@ function renderAll() {
     if (!data || !data.length) return;
     renderBanner(data, comp);
     renderConvictionBanner(data, comp);
+    renderEdgePanel(data, comp);
     renderKpiCards(data, comp);
     renderRegimePanel(data, comp);
     renderMainChart();
@@ -1620,11 +1782,18 @@ function updateSignalHeatNav() {
 // ── Initialization ────────────────────────────────────────────
 (async function() {
     try {
-        var resp = await fetch('data/cvol/ngvl_cvol_history.csv');
+        var fetched = await Promise.all([
+            fetch('data/cvol/ngvl_cvol_history.csv'),
+            // Roll-adjusted return series. Optional: if it is missing the engine falls back to the
+            // raw front-month column and the Directional Edge panel says so.
+            fetch('data/cvol/ng_tradeable.csv').then(function(r) { return r.ok ? r.text() : null; }).catch(function() { return null; }),
+        ]);
+        var resp = fetched[0];
         if (!resp.ok) throw new Error('CSV fetch failed: ' + resp.status);
         var text = await resp.text();
         var data = parseCvolCsv(text);
         if (!data.length) throw new Error('No data parsed');
+        CvolState.tradeable = attachTradeable(data, fetched[1] ? parseTradeableCsv(fetched[1]) : null);
         CvolState.data = data;
         CvolState.dates = data.map(function(r){ return r.date; });
         CvolState.composites = computeComposites(data);

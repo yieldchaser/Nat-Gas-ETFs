@@ -60,9 +60,9 @@ function loadBrowserScripts() {
     const cvolJs = fs.readFileSync('docs/js/cvol.js', 'utf8');
     const uiJs = fs.readFileSync('docs/js/cvol-ui.js', 'utf8').split('(async function()')[0];
     const renderJs = fs.readFileSync('docs/js/cvol-render.js', 'utf8');
-    vm.runInContext(cvolJs + '\nthis.__cvol = { CvolState, parseCvolCsv, computeComposites, classifySurfaceDay, SURFACE_STATES, surfaceStateColor };', context, { filename: 'docs/js/cvol.js' });
+    vm.runInContext(cvolJs + '\nthis.__cvol = { CvolState, parseCvolCsv, computeComposites, classifySurfaceDay, SURFACE_STATES, surfaceStateColor, parseTradeableCsv, attachTradeable, cvolForwardReturn, expandingPercentile, EDGE_STATES, EDGE_CFG };', context, { filename: 'docs/js/cvol.js' });
     vm.runInContext(renderJs, context, { filename: 'docs/js/cvol-render.js' });
-    vm.runInContext(uiJs + '\nthis.__ui = { renderBanner, renderConvictionBanner, renderKpiCards, renderRegimePanel, renderSurfaceAnalogPanel, renderTimeline, renderMainChart };', context, { filename: 'docs/js/cvol-ui.js' });
+    vm.runInContext(uiJs + '\nthis.__ui = { renderBanner, renderConvictionBanner, renderEdgePanel, renderKpiCards, renderRegimePanel, renderSurfaceAnalogPanel, renderTimeline, renderMainChart };', context, { filename: 'docs/js/cvol-ui.js' });
     return context;
 }
 
@@ -120,10 +120,76 @@ function syntheticComp(overrides) {
 }
 
 const context = loadBrowserScripts();
-const { CvolState, parseCvolCsv, computeComposites, classifySurfaceDay, SURFACE_STATES } = context.__cvol;
+const { CvolState, parseCvolCsv, computeComposites, classifySurfaceDay, SURFACE_STATES, parseTradeableCsv, attachTradeable, cvolForwardReturn, expandingPercentile, EDGE_STATES, EDGE_CFG } = context.__cvol;
 const csv = fs.readFileSync('docs/data/cvol/ngvl_cvol_history.csv', 'utf8');
+
+// ── Raw-column fallback: engine must still run without the tradeable sidecar ──
+const rawData = parseCvolCsv(csv);
+assert.strictEqual(attachTradeable(rawData, null), false, 'attachTradeable reports failure without a sidecar');
+const rawComp = computeComposites(rawData);
+assert.strictEqual(rawComp.edge.tradeable, false, 'edge model flags the raw-column fallback');
+assert.strictEqual(rawComp.decay, null, 'holding-cost model is withheld without tradeable returns');
+assert.ok(rawComp.edge.current && EDGE_STATES[rawComp.edge.current.state], 'edge model still classifies on the raw column');
+
+// ── Parser: weekend rows (Sunday-evening Globex snapshots) are not trading days ──
+rawData.forEach((row) => {
+    const dow = new Date(row.date + 'T00:00:00Z').getUTCDay();
+    assert.ok(dow >= 1 && dow <= 5, `weekend row leaked through the parser: ${row.date}`);
+});
+assert.strictEqual(parseCvolCsv('Timestamp,a,b,c,d,e,f,g,h\n06-11-2026,1,1,1,1,1,1,1,3\n08-11-2026,1,1,1,1,1,1,1,3\n09-11-2026,1,1,1,1,1,1,1,3').length, 2, 'Sunday row is dropped');
+
+// ── Tradeable sidecar ──
 const data = parseCvolCsv(csv);
+const tradeable = parseTradeableCsv(fs.readFileSync('docs/data/cvol/ng_tradeable.csv', 'utf8'));
+assert.strictEqual(attachTradeable(data, tradeable), true, 'tradeable sidecar attaches');
+data.forEach((row) => assert.ok(row.tpx > 0 && row.fmpx > 0, `tradeable levels present on ${row.date}`));
+// Roll contamination: the raw column must show far better long-run returns than the tradeable index.
+const rawTotal = data.at(-1).underlying / data[0].underlying - 1;
+const tradeTotal = data.at(-1).tpx / data[0].tpx - 1;
+assert.ok(tradeTotal < rawTotal - 0.5, `tradeable index (${tradeTotal.toFixed(2)}) must sit far below the roll-inflated raw column (${rawTotal.toFixed(2)})`);
+// Roll-free front month: no single-day move anywhere near the +34% roll print of 2025-10-20.
+const rollIdx = data.findIndex((row) => row.date === '2025-10-20');
+assert.ok(rollIdx > 0, 'known roll day present');
+assert.ok(data[rollIdx].underlying / data[rollIdx - 1].underlying - 1 > 0.25, 'raw column shows the roll jump');
+// (the true front-month move that day was +12.9% per NG=F; the raw column printed +34%)
+assert.ok(Math.abs(data[rollIdx].fmpx / data[rollIdx - 1].fmpx - 1) < 0.15, 'roll-free series removes the roll jump');
+assert.ok(Math.abs(data[rollIdx].tpx / data[rollIdx - 1].tpx - 1) < 0.12, 'tradeable index removes the roll jump');
+// Stale sidecar: rows it does not cover are chained on with the raw daily change.
+const stale = parseCvolCsv(csv);
+const staleMap = Object.assign({}, tradeable);
+delete staleMap[stale.at(-1).date];
+assert.strictEqual(attachTradeable(stale, staleMap), true, 'stale sidecar still attaches');
+assertNear(stale.at(-1).tpx / stale.at(-2).tpx, stale.at(-1).underlying / stale.at(-2).underlying, 1e-9, 'uncovered newest row is chained with the raw daily change');
+
 const comp = computeComposites(data);
+
+// ── Directional edge model ──
+const edge = comp.edge;
+assert.strictEqual(edge.tradeable, true, 'edge model runs on the tradeable basis');
+assert.strictEqual(edge.daily.length, data.length, 'edge state covers every row');
+assert.ok(edge.current && EDGE_STATES[edge.current.state], 'current edge state is valid');
+assert.ok(edge.thresholds.skewStress < edge.thresholds.skewBlow, 'skew thresholds are ordered');
+assertNear(expandingPercentile([1, 2, 3, 2, 5, 0], 2)[3], 75, 1e-9, 'expanding percentile ranks against history up to today only');
+edge.daily.forEach((state, i) => {
+    if (i < EDGE_CFG.minHistory) { assert.strictEqual(state, 'NEUTRAL', 'no classification before a year of history'); return; }
+    if (state === 'BLOWOFF') assert.ok(edge.skewPe[i] >= EDGE_CFG.skewBlow && edge.ngvlPe[i] >= EDGE_CFG.volGate, `blow-off needs skew AND vol extreme (${data[i].date})`);
+    if (state === 'UPSIDE_STRESS') assert.ok(edge.skewPe[i] >= EDGE_CFG.skewStress && edge.skewPe[i] < EDGE_CFG.skewBlow && edge.ngvlPe[i] >= EDGE_CFG.volGate, `upside stress band (${data[i].date})`);
+    if (state === 'PANIC_FLUSH') assert.ok(edge.move5[i] <= EDGE_CFG.flushSigma && edge.volChg5[i] > EDGE_CFG.flushVolRise, `panic flush needs a drop with rising vol (${data[i].date})`);
+    if (state !== 'NEUTRAL') assert.ok(edge.persist[i] >= 1 && edge.persist[i] <= EDGE_CFG.persistWindow, 'persistence count is bounded');
+});
+[5, 10, 21, 42].forEach((h) => {
+    assert.ok(edge.base[h].n > 2500, `${h}D base sample exists`);
+    assert.ok(edge.base[h].upRate < 50, `${h}D tradeable base up-rate reflects contango bleed`);
+});
+const blow = edge.states.BLOWOFF;
+assert.strictEqual(blow.days, blow.confirmed.days + blow.fresh.days, 'confirmed and fresh partition the state');
+assert.ok(blow.episodeCount >= 8 && blow.episodes.every((e) => e.adverse21 >= 0), 'blow-off episodes carry a non-negative adverse excursion');
+assert.ok(blow.horizons[21].p != null && blow.horizons[21].p >= 0 && blow.horizons[21].p <= 1, 'permutation p-value is a probability');
+// The reported forward return must be the tradeable one, not the raw column.
+const ep0 = blow.episodes[0];
+assertNear(ep0.fwd21, (data[ep0.startIdx + 21].tpx / data[ep0.startIdx].tpx - 1) * 100, 1e-9, 'episode forward return uses the tradeable index');
+assertNear(cvolForwardReturn(data, 300, 21), (data[321].tpx / data[300].tpx - 1) * 100, 1e-9, 'forward returns use the tradeable index');
+assert.ok(comp.decay && comp.decay.n >= 20 && comp.decay.koldMedian < comp.decay.boilMedian && comp.decay.boilMedian < 0, 'KOLD drag exceeds BOIL drag and both are costs');
 
 assert.ok(data.length > 3000, 'parser loads full CVOL history');
 const latestCsv = csv.trim().split(/\r?\n/).at(-1).split(',');
@@ -186,12 +252,16 @@ CvolState.activeSeries = ['ngvl', 'underlying'];
 CvolState.markerMode = 'surface';
 context.__ui.renderBanner(data, comp);
 context.__ui.renderConvictionBanner(data, comp);
+context.__ui.renderEdgePanel(data, comp);
 context.__ui.renderKpiCards(data, comp);
 context.__ui.renderRegimePanel(data, comp);
 context.__ui.renderSurfaceAnalogPanel(comp);
 context.__ui.renderTimeline(comp, 'all');
 context.__ui.renderMainChart();
 assert.ok(context.elements['cvol-kpi-grid'].innerHTML.length > 100, 'KPI cards render');
+assert.ok(context.elements['cvol-edge-panel'].innerHTML.includes('EVIDENCE BY STATE'), 'directional edge panel renders');
+context.__ui.renderEdgePanel(rawData, rawComp);
+assert.ok(context.elements['cvol-edge-basis'].textContent.includes('ROLL-CONTAMINATED'), 'raw-column fallback is labelled');
 assert.ok(context.elements['regime-dashboard-grid'].innerHTML.length > 100, 'options market read renders');
 assert.ok(context.elements['surface-analog-panel'].innerHTML.length > 100, 'surface analog panel renders');
 assert.ok(context.elements['cvol-event-body'].innerHTML.length > 100, 'event timeline renders');

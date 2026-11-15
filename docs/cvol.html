@@ -395,6 +395,30 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 .reg-cell-sub { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.5px; margin-top: 4px; }
 
 /* ---- RESPONSIVE ---- */
+/* ── Directional Edge panel ── */
+.edge-hero { display:grid; grid-template-columns: minmax(180px, 1fr) minmax(260px, 2.2fr) minmax(320px, 2fr); gap:18px; align-items:center; padding:4px 2px 14px; }
+.edge-state { font-size:1.25rem; font-weight:900; letter-spacing:2px; cursor:help; }
+.edge-bias { font-size:0.7rem; font-weight:800; letter-spacing:1.5px; margin-top:4px; }
+.edge-since { font-size:0.6rem; color:rgba(255,255,255,0.5); margin-top:6px; letter-spacing:0.5px; }
+.edge-hero-mid { font-size:0.72rem; line-height:1.55; color:rgba(255,255,255,0.82); }
+.edge-hero-right { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
+.edge-cell { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:6px; padding:8px 6px; text-align:center; cursor:help; }
+.edge-cell-lbl { font-size:0.55rem; font-weight:800; letter-spacing:1.5px; color:rgba(255,255,255,0.5); }
+.edge-cell-val { font-family:'JetBrains Mono', monospace; font-size:0.95rem; font-weight:700; margin:3px 0; }
+.edge-cell-sub { font-size:0.52rem; color:rgba(255,255,255,0.5); }
+.edge-inputs { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:10px; }
+.edge-input { background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:6px; padding:8px 10px; cursor:help; }
+.edge-input-lbl { font-size:0.55rem; font-weight:800; letter-spacing:1.5px; color:rgba(255,255,255,0.5); }
+.edge-input-val { font-family:'JetBrains Mono', monospace; font-size:0.9rem; font-weight:700; margin:2px 0; }
+.edge-input-sub { font-size:0.55rem; color:rgba(255,255,255,0.5); }
+.edge-decay { display:flex; flex-wrap:wrap; gap:6px 16px; align-items:baseline; font-size:0.66rem; padding:9px 10px; border:1px solid rgba(255,255,255,0.05); border-radius:6px; background:rgba(255,255,255,0.02); margin-bottom:6px; cursor:help; }
+.edge-decay b { font-family:'JetBrains Mono', monospace; }
+.edge-decay-lbl { font-size:0.55rem; font-weight:800; letter-spacing:1.5px; color:rgba(255,255,255,0.5); }
+.edge-sub-title { font-size:0.58rem; font-weight:800; letter-spacing:1.5px; color:rgba(255,255,255,0.55); margin:14px 0 6px; }
+.edge-table td, .edge-table th { white-space:nowrap; }
+.edge-foot { font-size:0.6rem; line-height:1.5; color:rgba(255,255,255,0.45); margin-top:10px; }
+@media (max-width: 1100px) { .edge-hero { grid-template-columns:1fr; } }
+@media (max-width: 640px) { .edge-hero-right, .edge-inputs { grid-template-columns:repeat(2, 1fr); } }
 @media (max-width: 1200px) { .cvol-kpi-grid { grid-template-columns: repeat(2, 1fr); } .composite-grid { grid-template-columns: repeat(3, 1fr); } .two-col-grid { grid-template-columns: 1fr; } #regime-dashboard-grid { grid-template-columns: repeat(3, 1fr) !important; } }
 @media (max-width: 768px) {
     .cvol-main { padding: 14px 12px 40px; }
@@ -522,6 +546,17 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 
     <!-- PANEL 1: STATUS BANNER (populated by JS with data-tooltip on every item) -->
     <div class="cvol-status-banner" id="cvol-status-banner"></div>
+
+    <!-- PANEL 1b: DIRECTIONAL EDGE (tested on tradeable, roll-adjusted returns) -->
+    <div class="chart-container" id="cvol-edge-container">
+        <div class="chart-header">
+            <div style="flex:1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <span class="section-title-text" data-tooltip="What the options surface says about DIRECTION. Only three surface conditions carried a statistically defensible directional edge once forward returns were measured on a tradeable basis; everything else is reported as no edge. All numbers are recomputed from the full history on every load.">Directional Edge</span>
+                <span class="cvol-badge" id="cvol-edge-basis">TRADEABLE BASIS</span>
+            </div>
+        </div>
+        <div id="cvol-edge-panel"></div>
+    </div>
 
     <!-- PANEL 2: KPI CARDS (populated by JS with data-tooltip on every stat) -->
     <div class="cvol-kpi-grid" id="cvol-kpi-grid"></div>
@@ -925,9 +960,9 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 <script src="js/config.js"></script>
 <script src="js/metrics.js"></script>
 <script src="js/vol-regime.js"></script>
-<script src="js/cvol.js"></script>
-<script src="js/cvol-render.js?v=20261020a"></script>
-<script src="js/cvol-ui.js"></script>
+<script src="js/cvol.js?v=20261115a"></script>
+<script src="js/cvol-render.js?v=20261115a"></script>
+<script src="js/cvol-ui.js?v=20261115a"></script>
 <script>
     // ── Vol Regime Monitor init ──────────────────────────────────
     // Waits for both dashboard_data.json (ETF metrics) AND CvolState.data

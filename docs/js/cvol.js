@@ -26,6 +26,7 @@ const CvolState = {
     sigPeaksMode: false,
     sigPeaksThreshold: 95,
     hmPeaksMode: false,
+    tradeable: false,     // true once ng_tradeable.csv is attached (roll-adjusted returns available)
 };
 
 // ── CSV Parser ────────────────────────────────────────────────
@@ -40,7 +41,12 @@ function parseCvolCsv(text) {
         const dParts = cols[0].trim().split('-');
         if (dParts.length !== 3) continue;
         const date = `${dParts[2]}-${dParts[1]}-${dParts[0]}`;
-        if (isNaN(new Date(date).getTime())) continue;
+        const dObj = new Date(date + 'T00:00:00Z');
+        if (isNaN(dObj.getTime())) continue;
+        // Sunday-evening Globex snapshots were once written as their own rows. They are not
+        // trading days: counting them stretches every rolling window and forward horizon.
+        const dow = dObj.getUTCDay();
+        if (dow === 0 || dow === 6) continue;
         rows.push({
             date,
             ngvl:      parseFloat(cols[1]),
@@ -55,6 +61,63 @@ function parseCvolCsv(text) {
     }
     return rows;
 }
+
+// ── Tradeable return series ───────────────────────────────────
+// The CSV's UNDERLYING is the front options-month future. It switches contract around the
+// 16th-21st of each month and in contango that switch prints as a one-day gain nobody earns
+// (2025-10-20: +34% in the column, +6% in reality). Over 2013-2026 the column lost ~10% while
+// a holder of rolled futures lost ~97%. scripts/build_cvol_tradeable.py therefore publishes:
+//   idx_px - roll-adjusted unlevered NG index implied by the BOIL/KOLD pair (what a trader earns)
+//   fm_px  - roll-free front-month level (for realized vol against CVOL implied vol)
+// Every forward return in this engine uses idx_px and every realized vol uses fm_px. Without the
+// sidecar both fall back to the raw column and CvolState.tradeable stays false.
+function parseTradeableCsv(text) {
+    const map = {};
+    if (!text) return map;
+    const lines = text.trim().split('\n');
+    for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].trim().split(',');
+        if (cols.length < 3) continue;
+        const idx = parseFloat(cols[1]), fm = parseFloat(cols[2]);
+        map[cols[0].trim()] = { idx: isFinite(idx) && idx > 0 ? idx : null, fm: isFinite(fm) && fm > 0 ? fm : null };
+    }
+    return map;
+}
+
+function attachTradeable(data, map) {
+    let hits = 0;
+    for (let i = 0; i < data.length; i++) {
+        const t = map ? map[data[i].date] : null;
+        data[i].tpx = t && t.idx != null ? t.idx : null;
+        data[i].fmpx = t && t.fm != null ? t.fm : null;
+        if (data[i].tpx != null) hits++;
+    }
+    if (hits < data.length * 0.8) {
+        // Sidecar missing or badly stale: do not mix two price bases, use the raw column throughout.
+        for (let i = 0; i < data.length; i++) { data[i].tpx = null; data[i].fmpx = null; }
+        return false;
+    }
+    // Rows the sidecar does not cover yet (normally just the newest day or two) are chained on
+    // with the raw column's daily change so the level series stays continuous.
+    ['tpx', 'fmpx'].forEach(function(key) {
+        for (let i = 1; i < data.length; i++) {
+            if (data[i][key] == null && data[i - 1][key] != null && data[i].underlying > 0 && data[i - 1].underlying > 0) {
+                data[i][key] = data[i - 1][key] * data[i].underlying / data[i - 1].underlying;
+            }
+        }
+        for (let i = data.length - 2; i >= 0; i--) {
+            if (data[i][key] == null && data[i + 1][key] != null && data[i].underlying > 0 && data[i + 1].underlying > 0) {
+                data[i][key] = data[i + 1][key] * data[i].underlying / data[i + 1].underlying;
+            }
+        }
+    });
+    return true;
+}
+
+// Price used for forward returns (tradeable index when available).
+function cvolPx(row) { return row ? (row.tpx != null ? row.tpx : row.underlying) : null; }
+// Price used for realized volatility (roll-free front month when available).
+function cvolVolPx(row) { return row ? (row.fmpx != null ? row.fmpx : row.underlying) : null; }
 
 // ── Rolling Statistics ────────────────────────────────────────
 function rollingPercentile(arr, window) {
@@ -121,6 +184,23 @@ function rollingAvg(arr, window) {
     return out;
 }
 
+// Causal percentile: where today's value ranks against every value up to and including today.
+// Unlike a 252-session window this does not re-centre on the current season or regime, so an
+// extreme stays an extreme; unlike a full-sample percentile it never looks ahead.
+function expandingPercentile(arr, minN) {
+    const out = new Array(arr.length).fill(null);
+    const sorted = [];
+    for (let i = 0; i < arr.length; i++) {
+        const v = arr[i];
+        if (v == null || !isFinite(v)) continue;
+        let lo = 0, hi = sorted.length;
+        while (lo < hi) { const mid = (lo + hi) >> 1; if (sorted[mid] <= v) lo = mid + 1; else hi = mid; }
+        sorted.splice(lo, 0, v);
+        if (sorted.length >= minN) out[i] = (lo + 1) / sorted.length * 100;
+    }
+    return out;
+}
+
 function fullPercentile(arr, value) {
     if (value == null) return null;
     const valid = arr.filter(v => v != null);
@@ -168,16 +248,19 @@ function cvolLow(v, threshold) {
 }
 
 function cvolForwardReturn(data, i, days) {
-    if (i + days >= data.length || data[i].underlying == null || data[i].underlying === 0 || data[i + days].underlying == null) return null;
-    return (data[i + days].underlying - data[i].underlying) / data[i].underlying * 100;
+    if (i < 0 || i + days >= data.length) return null;
+    const p0 = cvolPx(data[i]), p1 = cvolPx(data[i + days]);
+    if (p0 == null || p0 === 0 || p1 == null) return null;
+    return (p1 - p0) / p0 * 100;
 }
 
 function cvolForwardRealizedVol(data, i, days) {
     if (i + days >= data.length) return null;
     let sumSq = 0, count = 0;
     for (let j = i + 1; j <= i + days; j++) {
-        if (data[j] && data[j - 1] && data[j].underlying != null && data[j - 1].underlying != null && data[j - 1].underlying > 0) {
-            const lr = Math.log(data[j].underlying / data[j - 1].underlying);
+        const pj = cvolVolPx(data[j]), pp = cvolVolPx(data[j - 1]);
+        if (pj != null && pp != null && pp > 0 && pj > 0) {
+            const lr = Math.log(pj / pp);
             sumSq += lr * lr;
             count++;
         }
@@ -239,7 +322,9 @@ function classifySurfaceDay(data, comp, extra, i) {
     const tailStress = (convPct != null ? convPct / 100 : 0) + (convZ != null && convZ > 0 ? Math.min(convZ / 2, 1) : 0);
     const bothWings = upZ != null && dnZ != null && upZ >= 0.85 && dnZ >= 0.85;
     const richPremium = (vrpVal != null && vrpVal >= 10) || (vrpZ != null && vrpZ >= 1.4) || cvolPct(ngvlPct, 92);
-    const cheapPremium = (vrpVal != null && vrpVal <= -5) || (vrpZ != null && vrpZ <= -1.2) || (realVol != null && row.ngvl != null && realVol > row.ngvl * 1.12);
+    // "Underpriced" has to mean realized actually exceeds implied. A low 21-day z-score of the
+    // premium on its own happens ~12% of the time by construction, whatever the level.
+    const cheapPremium = (vrpVal != null && vrpVal <= -5) || (vrpZ != null && vrpZ <= -1.2 && vrpVal != null && vrpVal < 0) || (realVol != null && row.ngvl != null && realVol > row.ngvl * 1.12);
     const compressed = cvolLow(ngvlPct, 25) && cvolLow(atmPct, 30) && !(convPct != null && convPct >= 80);
     const cooling = ngvlZ != null && ngvlZ <= -0.75 && vovFalling && !bothWings && !cheapPremium;
 
@@ -469,6 +554,7 @@ function computeComposites(data) {
     const dnVar = data.map(r => r.dnVar);
     const upVar = data.map(r => r.upVar);
     const underlying = data.map(r => r.underlying);
+    const volPx = data.map(r => cvolVolPx(r));   // roll-free front month when the sidecar is attached
 
     // Percentiles
     const ngvlPct21 = rollingPercentile(ngvl, 21);
@@ -497,8 +583,8 @@ function computeComposites(data) {
     for (let i = 21; i < n; i++) {
         let sumSq = 0, cnt = 0;
         for (let j = i - 20; j <= i; j++) {
-            if (underlying[j] != null && underlying[j-1] != null && underlying[j-1] > 0) {
-                const lr = Math.log(underlying[j] / underlying[j-1]);
+            if (volPx[j] != null && volPx[j-1] != null && volPx[j-1] > 0 && volPx[j] > 0) {
+                const lr = Math.log(volPx[j] / volPx[j-1]);
                 sumSq += lr * lr;
                 cnt++;
             }
@@ -613,10 +699,10 @@ function computeComposites(data) {
         for (const cand of candidates) {
             const recent = events.filter(e => e.signal === cand.signal && i - e.idx < 10);
             if (recent.length > 0) continue;
-            const fwd5  = i +  5 < n ? ((underlying[i +  5] - underlying[i]) / underlying[i] * 100) : null;
-            const fwd10 = i + 10 < n ? ((underlying[i + 10] - underlying[i]) / underlying[i] * 100) : null;
-            const fwd21 = i + 21 < n ? ((underlying[i + 21] - underlying[i]) / underlying[i] * 100) : null;
-            const fwd42 = i + 42 < n ? ((underlying[i + 42] - underlying[i]) / underlying[i] * 100) : null;
+            const fwd5  = cvolForwardReturn(data, i, 5);
+            const fwd10 = cvolForwardReturn(data, i, 10);
+            const fwd21 = cvolForwardReturn(data, i, 21);
+            const fwd42 = cvolForwardReturn(data, i, 42);
             events.push({
                 idx: i, date: data[i].date,
                 signal: cand.signal, direction: cand.direction,
@@ -659,8 +745,8 @@ function computeComposites(data) {
     const priceRet = new Array(n).fill(null);
     const skewChg = new Array(n).fill(null);
     for (let i = 1; i < n; i++) {
-        if (underlying[i] != null && underlying[i-1] != null && underlying[i-1] > 0)
-            priceRet[i] = (underlying[i] / underlying[i-1] - 1) * 100;
+        if (volPx[i] != null && volPx[i-1] != null && volPx[i-1] > 0)
+            priceRet[i] = (volPx[i] / volPx[i-1] - 1) * 100;
         if (skewRatio[i] != null && skewRatio[i-1] != null)
             skewChg[i] = skewRatio[i] - skewRatio[i-1];
     }
@@ -718,7 +804,263 @@ function computeComposites(data) {
         regimeTension, regimeTensionPct, convAdjWingSpread, surfaceVelocity,
         events,
     };
-    return Object.assign(base, computeSurfaceModel(data, base));
+    Object.assign(base, computeSurfaceModel(data, base));
+    base.edge = computeEdgeModel(data, base);
+    base.decay = computeDecayModel(data);
+    return base;
+}
+
+// ── Directional Edge Model ────────────────────────────────────
+// What the surface says about DIRECTION, tested on tradeable (roll-adjusted) returns.
+// Three findings survive that test (2014-2026, circular-shift permutation p < 0.05):
+//   BLOW-OFF FADE  - skew ratio >= 95th and NGVL >= 90th expanding percentile. The market is paying
+//                    record premiums for upside calls. Forward tradeable returns have been deeply
+//                    negative; the risk is a squeeze that keeps going (Dec-2024, Jan-2014).
+//   UPSIDE STRESS  - same condition one notch down (skew 90-95th). Same sign, but ONLY once it
+//                    persists: a single isolated day carried no edge, three of the last ten did.
+//   PANIC FLUSH    - NG down >= 1.5 implied sigmas in 5 sessions WHILE implied vol rises >= 5%.
+//                    A sell-off that scares option buyers has tended to bounce; the same drop
+//                    with no vol response has not. The weakest of the three: a 5-21 session
+//                    bounce tendency, not a trough call.
+// Troughs otherwise leave no signature in this data, so everything else is NO EDGE and inherits
+// the base rate - which on a tradeable basis is itself negative (contango bleed).
+// Statistics below are recomputed from the full history on every load, so they stay honest as
+// data accumulates; nothing here is a hard-coded backtest number.
+const EDGE_STATES = {
+    BLOWOFF:       { label: 'BLOW-OFF FADE', bias: 'DOWNSIDE', color: '#ef4444', short: 'Call skew and implied vol both at historic extremes' },
+    UPSIDE_STRESS: { label: 'UPSIDE STRESS', bias: 'DOWNSIDE', color: '#f59e0b', short: 'Call skew and implied vol elevated, one notch below blow-off' },
+    PANIC_FLUSH:   { label: 'PANIC FLUSH',   bias: 'UPSIDE',   color: '#3db87a', short: 'Sharp sell-off with implied vol rising' },
+    NEUTRAL:       { label: 'NO EDGE',       bias: 'NONE',     color: '#6b7280', short: 'Surface gives no directional information beyond the base rate' },
+};
+const EDGE_CFG = {
+    minHistory: 252,      // sessions before the first classification
+    skewBlow: 95,         // expanding percentile of skew ratio
+    skewStress: 90,
+    volGate: 90,          // expanding percentile of NGVL required alongside skew
+    flushSigma: -1.5,     // 5-session move in implied-sigma units
+    flushVolRise: 0.05,   // 5-session log change in NGVL
+    idxVolRatio: 0.8,     // tradeable-index vol runs ~0.8x NGVL (index holds a deferred contract)
+    horizons: [5, 10, 21, 42],
+    episodeGap: 10,       // sessions without the state before a new episode starts
+    persistWindow: 10,    // look-back for the persistence count
+    persistMin: 3,        // state on this many of the last persistWindow sessions = CONFIRMED
+};
+
+function edgeMedian(arr) {
+    if (!arr.length) return null;
+    const s = arr.slice().sort(function(a, b) { return a - b; });
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function edgeQuantile(arr, q) {
+    const s = arr.filter(function(v) { return v != null && isFinite(v); }).sort(function(a, b) { return a - b; });
+    if (!s.length) return null;
+    const pos = (s.length - 1) * q, lo = Math.floor(pos), hi = Math.ceil(pos);
+    return s[lo] + (s[hi] - s[lo]) * (pos - lo);
+}
+
+// Circular-shift permutation test: slide the signal dates through time as a block (keeping their
+// clustering intact) and ask how often a shifted copy does as well as the real one. This respects
+// the autocorrelation of both the signal and the returns, which a t-test on daily rows does not.
+function edgePermutationP(idxList, fwd, lo, hi, bias) {
+    const N = hi - lo;
+    if (idxList.length < 10 || N < 500) return null;
+    function meanAt(shift) {
+        let sum = 0, cnt = 0;
+        for (let k = 0; k < idxList.length; k++) {
+            const v = fwd[lo + ((idxList[k] - lo + shift) % N)];
+            if (v != null) { sum += v; cnt++; }
+        }
+        return cnt ? sum / cnt : null;
+    }
+    const obs = meanAt(0);
+    if (obs == null) return null;
+    let extreme = 0, total = 0;
+    const step = Math.max(1, Math.floor(N / 600));
+    for (let sh = 63; sh < N - 63; sh += step) {
+        const m = meanAt(sh);
+        if (m == null) continue;
+        total++;
+        if (bias === 'DOWNSIDE' ? m <= obs : m >= obs) extreme++;
+    }
+    return total ? extreme / total : null;
+}
+
+function computeEdgeModel(data, comp) {
+    const n = data.length, cfg = EDGE_CFG;
+    const skewPe = expandingPercentile(data.map(function(r) { return r.skewRatio; }), cfg.minHistory);
+    const ngvlPe = expandingPercentile(data.map(function(r) { return r.ngvl; }), cfg.minHistory);
+    const move5 = new Array(n).fill(null), volChg5 = new Array(n).fill(null);
+    for (let i = 5; i < n; i++) {
+        const p1 = cvolPx(data[i]), p0 = cvolPx(data[i - 5]);
+        const v1 = data[i].ngvl, v0 = data[i - 5].ngvl;
+        if (p1 > 0 && p0 > 0 && v0 > 0) move5[i] = Math.log(p1 / p0) / (cfg.idxVolRatio * v0 / 100 * Math.sqrt(5 / 252));
+        if (v1 > 0 && v0 > 0) volChg5[i] = Math.log(v1 / v0);
+    }
+
+    const daily = new Array(n);
+    for (let i = 0; i < n; i++) {
+        let state = 'NEUTRAL';
+        if (i >= cfg.minHistory && skewPe[i] != null && ngvlPe[i] != null) {
+            const volHot = ngvlPe[i] >= cfg.volGate;
+            if (volHot && skewPe[i] >= cfg.skewBlow) state = 'BLOWOFF';
+            else if (volHot && skewPe[i] >= cfg.skewStress) state = 'UPSIDE_STRESS';
+            else if (move5[i] != null && volChg5[i] != null && move5[i] <= cfg.flushSigma && volChg5[i] > cfg.flushVolRise) state = 'PANIC_FLUSH';
+        }
+        daily[i] = state;
+    }
+
+    // Persistence: how many of the last persistWindow sessions (today included) were in today's state.
+    const persist = new Array(n).fill(0);
+    for (let i = 0; i < n; i++) {
+        if (daily[i] === 'NEUTRAL') continue;
+        let c = 0;
+        for (let j = Math.max(0, i - cfg.persistWindow + 1); j <= i; j++) if (daily[j] === daily[i]) c++;
+        persist[i] = c;
+    }
+
+    const fwd = {};
+    cfg.horizons.forEach(function(h) {
+        fwd[h] = new Array(n).fill(null);
+        for (let i = cfg.minHistory; i < n; i++) fwd[h][i] = cvolForwardReturn(data, i, h);
+    });
+
+    function summarize(idxList, bias) {
+        const out = {};
+        cfg.horizons.forEach(function(h) {
+            const vals = [];
+            idxList.forEach(function(i) { if (fwd[h][i] != null) vals.push(fwd[h][i]); });
+            const up = vals.filter(function(v) { return v > 0; }).length;
+            out[h] = {
+                n: vals.length,
+                mean: vals.length ? vals.reduce(function(a, b) { return a + b; }, 0) / vals.length : null,
+                median: edgeMedian(vals),
+                upRate: vals.length ? up / vals.length * 100 : null,
+                p: bias && bias !== 'NONE' ? edgePermutationP(idxList, fwd[h], cfg.minHistory, n, bias) : null,
+            };
+        });
+        return out;
+    }
+
+    function buildEpisodes(key, bias) {
+        const eps = [];
+        let cur = null;
+        for (let i = cfg.minHistory; i < n; i++) {
+            if (daily[i] !== key) continue;
+            if (cur && i - cur.endIdx <= cfg.episodeGap) { cur.endIdx = i; cur.days++; }
+            else { cur = { startIdx: i, endIdx: i, days: 1 }; eps.push(cur); }
+        }
+        eps.forEach(function(e) {
+            const s = e.startIdx, p0 = cvolPx(data[s]);
+            e.start = data[s].date; e.end = data[e.endIdx].date;
+            e.skewRatio = data[s].skewRatio; e.ngvl = data[s].ngvl;
+            e.fwd10 = fwd[10] ? fwd[10][s] : null;
+            e.fwd21 = fwd[21] ? fwd[21][s] : null;
+            e.fwd42 = fwd[42] ? fwd[42][s] : null;
+            // Worst move AGAINST the read within 21 sessions of the first signal day - the heat a position takes.
+            let worst = 0;
+            for (let j = s + 1; j <= Math.min(n - 1, s + 21); j++) {
+                const pj = cvolPx(data[j]);
+                if (pj == null || !p0) continue;
+                const mv = (pj / p0 - 1) * 100;
+                if (bias === 'DOWNSIDE' ? mv > worst : mv < worst) worst = mv;
+            }
+            e.adverse21 = worst;
+            e.open = s + 21 >= n;
+            e.active = e.endIdx >= n - 1 - cfg.episodeGap;
+            e.right21 = e.fwd21 == null ? null : (bias === 'DOWNSIDE' ? e.fwd21 < 0 : e.fwd21 > 0);
+            e.right42 = e.fwd42 == null ? null : (bias === 'DOWNSIDE' ? e.fwd42 < 0 : e.fwd42 > 0);
+        });
+        return eps;
+    }
+
+    const allIdx = [];
+    for (let i = cfg.minHistory; i < n; i++) allIdx.push(i);
+    const base = summarize(allIdx, null);
+
+    const states = {};
+    Object.keys(EDGE_STATES).forEach(function(key) {
+        const meta = EDGE_STATES[key];
+        const idxList = allIdx.filter(function(i) { return daily[i] === key; });
+        const st = { key: key, label: meta.label, bias: meta.bias, color: meta.color, short: meta.short, days: idxList.length, horizons: summarize(idxList, meta.bias) };
+        if (key !== 'NEUTRAL') {
+            const conf = idxList.filter(function(i) { return persist[i] >= cfg.persistMin; });
+            const fresh = idxList.filter(function(i) { return persist[i] < cfg.persistMin; });
+            st.confirmed = { days: conf.length, horizons: summarize(conf, meta.bias) };
+            st.fresh = { days: fresh.length, horizons: summarize(fresh, meta.bias) };
+            st.episodes = buildEpisodes(key, meta.bias);
+            const done21 = st.episodes.filter(function(e) { return e.right21 != null; });
+            const done42 = st.episodes.filter(function(e) { return e.right42 != null; });
+            st.episodeCount = st.episodes.length;
+            st.right21 = done21.filter(function(e) { return e.right21; }).length; st.done21 = done21.length;
+            st.right42 = done42.filter(function(e) { return e.right42; }).length; st.done42 = done42.length;
+            st.medianEpisode21 = edgeMedian(done21.map(function(e) { return e.fwd21; }));
+            const adv = st.episodes.map(function(e) { return e.adverse21; });
+            st.worstAdverse = adv.length ? (meta.bias === 'DOWNSIDE' ? Math.max.apply(null, adv) : Math.min.apply(null, adv)) : null;
+            st.medianAdverse = edgeMedian(adv);
+        }
+        states[key] = st;
+    });
+
+    const last = n - 1;
+    const curKey = n ? daily[last] : 'NEUTRAL';
+    let since = last;
+    while (since > 0 && daily[since - 1] === curKey) since--;
+    const current = n ? {
+        state: curKey, label: EDGE_STATES[curKey].label, bias: EDGE_STATES[curKey].bias, color: EDGE_STATES[curKey].color,
+        short: EDGE_STATES[curKey].short, date: data[last].date, since: data[since].date, streak: last - since + 1,
+        persist: persist[last], confirmed: curKey !== 'NEUTRAL' && persist[last] >= cfg.persistMin,
+        features: { skewRatio: data[last].skewRatio, skewPe: skewPe[last], ngvl: data[last].ngvl, ngvlPe: ngvlPe[last], move5: move5[last], volChg5: volChg5[last] },
+    } : null;
+
+    return {
+        daily: daily, persist: persist, skewPe: skewPe, ngvlPe: ngvlPe, move5: move5, volChg5: volChg5,
+        base: base, states: states, current: current, tradeable: data.some(function(r) { return r.tpx != null; }),
+        thresholds: {
+            skewBlow: edgeQuantile(data.map(function(r) { return r.skewRatio; }), cfg.skewBlow / 100),
+            skewStress: edgeQuantile(data.map(function(r) { return r.skewRatio; }), cfg.skewStress / 100),
+            ngvlGate: edgeQuantile(data.map(function(r) { return r.ngvl; }), cfg.volGate / 100),
+        },
+    };
+}
+
+// ── Leveraged-ETF Holding Cost ────────────────────────────────
+// A daily-reset 2x fund loses roughly sigma^2 * T to volatility drag and a -2x fund roughly
+// 3 * sigma^2 * T, whatever the direction. NGVL is the market's forecast of that sigma, so it
+// prices the cost of holding BOIL or KOLD. Rather than trust the formula, this looks up what the
+// drag actually was over the 21 sessions following past days with NGVL within +/-15% of today.
+function computeDecayModel(data) {
+    const n = data.length;
+    if (!n || !data.some(function(r) { return r.tpx != null; })) return null;
+    const H = 21;
+    const cumI = new Array(n).fill(0), cumB = new Array(n).fill(0), cumK = new Array(n).fill(0);
+    for (let i = 1; i < n; i++) {
+        const p1 = data[i].tpx, p0 = data[i - 1].tpx;
+        let r = (p1 > 0 && p0 > 0) ? p1 / p0 - 1 : 0;
+        r = Math.max(-0.45, Math.min(0.45, r));
+        cumI[i] = cumI[i - 1] + Math.log(1 + r);
+        cumB[i] = cumB[i - 1] + Math.log(1 + 2 * r);
+        cumK[i] = cumK[i - 1] + Math.log(1 - 2 * r);
+    }
+    const cur = data[n - 1].ngvl;
+    if (!(cur > 0)) return null;
+    const boil = [], kold = [], absMove = [];
+    for (let i = EDGE_CFG.minHistory; i + H < n; i++) {
+        const v = data[i].ngvl;
+        if (!(v > 0) || Math.abs(Math.log(v / cur)) > 0.15) continue;
+        const dI = cumI[i + H] - cumI[i];
+        boil.push((Math.exp(cumB[i + H] - cumB[i] - 2 * dI) - 1) * 100);
+        kold.push((Math.exp(cumK[i + H] - cumK[i] + 2 * dI) - 1) * 100);
+        absMove.push(Math.abs(Math.exp(dI) - 1) * 100);
+    }
+    if (boil.length < 20) return { ngvl: cur, n: boil.length, lowSample: true };
+    return {
+        ngvl: cur, n: boil.length, horizon: H,
+        boilMedian: edgeMedian(boil), boilP25: edgeQuantile(boil, 0.25), boilP75: edgeQuantile(boil, 0.75),
+        koldMedian: edgeMedian(kold), koldP25: edgeQuantile(kold, 0.25), koldP75: edgeQuantile(kold, 0.75),
+        idxAbsMoveMedian: edgeMedian(absMove),
+    };
 }
 
 function getSeason(dateStr) {
@@ -1127,7 +1469,7 @@ function computeThresholdSensitivity(composites, data) {
             lastFire[cfg.name] = i;
             var dir = cfg.dirFn(i);
             var isDown = dir.indexOf('TOP') >= 0 || dir.indexOf('DOWNSIDE') >= 0;
-            var fwd21 = i + 21 < n ? ((underlying[i+21] - underlying[i]) / underlying[i] * 100) : null;
+            var fwd21 = cvolForwardReturn(data, i, 21);
             if (fwd21 != null) {
                 var hit = (isDown && fwd21 < 0) || (!isDown && fwd21 > 0);
                 events.push({ hit: hit });

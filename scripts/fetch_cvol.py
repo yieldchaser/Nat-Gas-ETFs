@@ -166,9 +166,46 @@ def build_all_series(parsed: dict) -> pd.DataFrame:
     return df
 
 
-# ── STEP 5: INCREMENTAL APPEND ────────────────────────────────────────────────
+# ── STEP 4b: COLLAPSE INTRADAY POINTS TO CME TRADE DATES ─────────────────────
+def to_trade_dates(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Collapse intraday points to one row per CME trade date.
+
+    The Globex session for trade date T opens at 18:00 New York time on T-1
+    (Sunday evening for Monday) and closes at 17:00 on T. Grouping by the UTC
+    calendar date instead — what this script used to do — has two defects:
+      * Sunday-evening points become a spurious "Sunday" row, which then
+        counts as a trading day in every rolling window downstream.
+      * A weekday row ends with the first hours of the NEXT session.
+    Shifting New York time forward 6 hours puts the 18:00 open at midnight, so
+    the shifted calendar date is the trade date.
+    """
+    idx = df.index
+    if idx.tz is None:
+        idx = idx.tz_localize("UTC")
+    shifted = idx.tz_convert("America/New_York") + pd.Timedelta(hours=6)
+    trade_date = pd.DatetimeIndex(shifted.tz_localize(None).normalize())
+    out = df.copy()
+    out.index = trade_date
+    out = out[out.index.dayofweek < 5]
+    out = out.groupby(level=0).last()
+    out.index = out.index.tz_localize("UTC")
+    out.index.name = "Timestamp"
+    return out
+
+
+# ── STEP 5: INCREMENTAL UPDATE ────────────────────────────────────────────────
 def incremental_update(new_df: pd.DataFrame, csv_path: Path) -> tuple[pd.DataFrame, int]:
-    """Append only rows newer than what's already in the CSV."""
+    """
+    Merge freshly fetched rows into the CSV.
+
+    Rows inside the fetched window REPLACE what is on disk rather than being
+    skipped. The old append-only rule froze each day at whatever the market
+    was doing when the job happened to run (often mid-session, hours before
+    the 14:30 ET settlement) and never corrected it. Re-fetching the rolling
+    window on every run lets a later run finalise an earlier partial day.
+    Rows older than the fetched window are never touched.
+    """
     if csv_path.exists():
         # Explicitly handle day-first date format (DD-MM-YYYY)
         existing = pd.read_csv(csv_path, index_col="Timestamp")
@@ -177,10 +214,14 @@ def incremental_update(new_df: pd.DataFrame, csv_path: Path) -> tuple[pd.DataFra
         if existing.index.tzinfo is None:
             existing.index = existing.index.tz_localize("UTC")
         last_date = existing.index.max()
-        new_rows  = new_df[new_df.index > last_date]
-        combined  = pd.concat([existing, new_rows]).sort_index()
+        n_new     = int((new_df.index > last_date).sum())
+        fresh     = new_df.dropna(how="all")
+        kept      = existing[~existing.index.isin(fresh.index)]
+        combined  = pd.concat([kept, fresh]).sort_index()
         combined  = combined[~combined.index.duplicated(keep="last")]
-        return combined, len(new_rows)
+        # Purge weekend rows written by the old UTC-date grouping.
+        combined  = combined[combined.index.dayofweek < 5]
+        return combined, n_new
     else:
         csv_path.parent.mkdir(parents=True, exist_ok=True)
         return new_df, len(new_df)
@@ -215,13 +256,10 @@ def main():
     print("\n[4/5] Building DataFrame (all series)…")
     df_new = build_all_series(parsed)
 
-    # Deduplicate: keep only the last intraday observation per calendar day
-    # (the new insid returns intraday granularity; we want end-of-day only)
+    # Collapse intraday points to one row per CME trade date (see to_trade_dates).
     before = len(df_new)
-    df_new = df_new.groupby(df_new.index.date).last()
-    df_new.index = pd.to_datetime(df_new.index, utc=True)
-    df_new.index.name = "Timestamp"
-    print(f"      Deduplicated: {before:,} intraday -> {len(df_new):,} daily rows")
+    df_new = to_trade_dates(df_new)
+    print(f"      Collapsed: {before:,} intraday -> {len(df_new):,} trade-date rows")
 
     print("\n[5/5] Incremental CSV update…")
     df_final, new_rows = incremental_update(df_new, OUTPUT_CSV)

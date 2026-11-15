@@ -20,7 +20,7 @@ function loadEngine() {
     };
     vm.createContext(sandbox);
     vm.runInContext(
-        cvolJs + '\nmodule.exports = { parseCvolCsv, computeComposites, SURFACE_STATES, surfaceMeta };',
+        cvolJs + '\nmodule.exports = { parseCvolCsv, computeComposites, SURFACE_STATES, surfaceMeta, parseTradeableCsv, attachTradeable };',
         sandbox,
         { filename: 'docs/js/cvol.js' }
     );
@@ -57,9 +57,13 @@ function printRows(headers, rows) {
     rows.forEach((row) => console.log(row.map((v, i) => String(v ?? '').padEnd(widths[i])).join('  ')));
 }
 
-const { parseCvolCsv, computeComposites, SURFACE_STATES } = loadEngine();
+const { parseCvolCsv, computeComposites, SURFACE_STATES, parseTradeableCsv, attachTradeable } = loadEngine();
 const csv = fs.readFileSync(csvPath, 'utf8');
 const data = parseCvolCsv(csv);
+// Attach the roll-adjusted return series the page uses; without it every hit rate below is
+// measured on the raw front-month column and overstates upside.
+const tradeablePath = path.join(path.dirname(csvPath), 'ng_tradeable.csv');
+const tradeableOk = fs.existsSync(tradeablePath) && attachTradeable(data, parseTradeableCsv(fs.readFileSync(tradeablePath, 'utf8')));
 const comp = computeComposites(data);
 const latest = data[data.length - 1];
 const read = comp.currentSurfaceRead;
@@ -73,6 +77,24 @@ console.log(`Latest date: ${latest?.date ?? 'n/a'}`);
 console.log(`Latest NGVL / ATM / Underlying: ${fmt(latest?.ngvl, 2)} / ${fmt(latest?.atm, 2)} / $${fmt(latest?.underlying, 3)}`);
 console.log(`Missing weekdays in file span: ${missingWeekdays}`);
 console.log(`Surface events: ${(comp.surfaceEvents || []).length}`);
+console.log(`Return basis: ${tradeableOk ? 'TRADEABLE (roll-adjusted, BOIL/KOLD implied)' : 'RAW FRONT-MONTH — roll-contaminated, sidecar not found'}`);
+
+const edge = comp.edge;
+if (edge && edge.current) {
+    console.log('\nDIRECTIONAL EDGE MODEL');
+    console.log('----------------------');
+    console.log(`Current: ${edge.current.label} (${edge.current.bias}) since ${edge.current.since}, on ${edge.current.persist} of last 10 sessions${edge.current.confirmed ? ' — CONFIRMED' : ''}`);
+    const edgeRows = ['BLOWOFF', 'UPSIDE_STRESS', 'PANIC_FLUSH', 'NEUTRAL'].map((k) => {
+        const s = edge.states[k], h = s.horizons;
+        return [s.label, s.days, s.episodeCount ?? '-', `${fmt(h[5].mean)}%`, `${fmt(h[10].mean)}%`, `${fmt(h[21].mean)}%`, pct(h[21].upRate), `${fmt(h[42].mean)}%`,
+            h[21].p == null ? '-' : fmt(h[21].p, 3), s.done21 ? `${s.right21}/${s.done21}` : '-', s.worstAdverse == null ? '-' : `${fmt(s.worstAdverse)}%`];
+    });
+    edgeRows.push(['ALL DAYS (BASE)', edge.base[21].n, '-', `${fmt(edge.base[5].mean)}%`, `${fmt(edge.base[10].mean)}%`, `${fmt(edge.base[21].mean)}%`, pct(edge.base[21].upRate), `${fmt(edge.base[42].mean)}%`, '-', '-', '-']);
+    printRows(['State', 'Days', 'Episodes', '5D', '10D', '21D', '21D Up', '42D', 'p(21D)', 'Ep right 21D', 'Worst adverse'], edgeRows);
+    if (comp.decay && !comp.decay.lowSample) {
+        console.log(`Holding cost at NGVL ${fmt(comp.decay.ngvl, 0)} (${comp.decay.n} analog days, 21 sessions): BOIL ${fmt(comp.decay.boilMedian)}% | KOLD ${fmt(comp.decay.koldMedian)}%`);
+    }
+}
 
 console.log('\nCURRENT OPTIONS MARKET READ');
 console.log('---------------------------');
