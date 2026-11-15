@@ -224,6 +224,29 @@ console.log('================================================================\n'
     assert(rm2025[1].flows.UK === 'NGJ25 \u2192 NGK25', '2025 Feb UK Flow: NGJ25 -> NGK25');
 }
 
+// Test 12: Target Contract & Expiry Verification for KPI Cards
+{
+    // US in Jan (no-roll odd month): holds NGH25, next target is NGK25
+    const usJan = ContractLedger.getHoldingForDate(2025, 1, 15);
+    assert(usJan.US.targetContract.sym === 'NGK25', 'US Jan next roll target is NGK25', `Got ${usJan.US.targetContract.sym}`);
+    assert(usJan.US.targetContract.expiry === '2025-04-28', 'US Jan next target expiry is 2025-04-28', `Got ${usJan.US.targetContract.expiry}`);
+
+    // US in Feb post-roll (Day 11, Feb 18): holds NGK25, next target is NGN25
+    const usFebPost = ContractLedger.getHoldingForDate(2025, 2, 18);
+    assert(usFebPost.US.targetContract.sym === 'NGN25', 'US Feb post-roll next target is NGN25', `Got ${usFebPost.US.targetContract.sym}`);
+    assert(usFebPost.US.targetContract.expiry === '2025-06-26', 'US Feb post-roll next target expiry is 2025-06-26', `Got ${usFebPost.US.targetContract.expiry}`);
+
+    // Canada in Feb post-roll (Day 7, Feb 11): holds NGJ25, next target is NGK25
+    const caFebPost = ContractLedger.getHoldingForDate(2025, 2, 11);
+    assert(caFebPost.CA.targetContract.sym === 'NGK25', 'CA Feb post-roll next target is NGK25', `Got ${caFebPost.CA.targetContract.sym}`);
+    assert(caFebPost.CA.targetContract.expiry === '2025-04-28', 'CA Feb post-roll next target expiry is 2025-04-28', `Got ${caFebPost.CA.targetContract.expiry}`);
+
+    // London in Feb post-roll (Day 10, Feb 14): holds NGK25, next target is NGM25
+    const ukFebPost = ContractLedger.getHoldingForDate(2025, 2, 14);
+    assert(ukFebPost.UK.targetContract.sym === 'NGM25', 'UK Feb post-roll next target is NGM25', `Got ${ukFebPost.UK.targetContract.sym}`);
+    assert(ukFebPost.UK.targetContract.expiry === '2025-05-28', 'UK Feb post-roll next target expiry is 2025-05-28', `Got ${ukFebPost.UK.targetContract.expiry}`);
+}
+
 console.log('\n================================================================');
 console.log(`TEST RESULTS: ${passedTests} PASSED, ${failedTests} FAILED (TOTAL: ${totalTests})`);
 console.log('================================================================');

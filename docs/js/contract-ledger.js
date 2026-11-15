@@ -299,6 +299,24 @@ const ContractLedger = {
             }
         }
 
+        let usTargetCode, usTargetYr;
+        if (usCfg.rolls && bIndex <= 9) {
+            usTargetCode = usCfg.nextCode;
+            usTargetYr = year + usCfg.nextYr;
+        } else {
+            for (let step = 1; step <= 12; step++) {
+                const tm = ((monthOne - 1 + step) % 12) + 1;
+                const ty = year + Math.floor((monthOne - 1 + step) / 12);
+                if (this.BCOM_SCHEDULE[tm].rolls) {
+                    usTargetCode = this.BCOM_SCHEDULE[tm].nextCode;
+                    usTargetYr = ty + this.BCOM_SCHEDULE[tm].nextYr;
+                    break;
+                }
+            }
+        }
+        const usTargetSym = this.formatContractSymbol(usTargetCode, usTargetYr);
+        const usTargetExp = this.getNymexContractExpiry(usTargetYr, this._codeToMonthNum(usTargetCode));
+
         // 2. Canada (HNU / HND) - CMDYNGER Schedule (Global X)
         const caCfg = this.CMDY_SCHEDULE[monthOne];
         const caLeadCode = caCfg.leadCode;
@@ -344,6 +362,19 @@ const ContractLedger = {
             caPhase = 'POST-ROLL · 100% NEXT';
             caPhaseClass = 'status-postroll';
         }
+
+        let caTargetCode, caTargetYr;
+        if (bIndex <= 6) {
+            caTargetCode = caCfg.nextCode;
+            caTargetYr = year + caCfg.nextYr;
+        } else {
+            const nm = monthOne === 12 ? 1 : monthOne + 1;
+            const ny = monthOne === 12 ? year + 1 : year;
+            caTargetCode = this.CMDY_SCHEDULE[nm].nextCode;
+            caTargetYr = ny + this.CMDY_SCHEDULE[nm].nextYr;
+        }
+        const caTargetSym = this.formatContractSymbol(caTargetCode, caTargetYr);
+        const caTargetExp = this.getNymexContractExpiry(caTargetYr, this._codeToMonthNum(caTargetCode));
 
         // 3. London (3NGL / 3NGS) - SOLWSNG2 Schedule (Solactive SFMC=2)
         const ukCfg = this.SOL_SCHEDULE[monthOne];
@@ -398,6 +429,19 @@ const ContractLedger = {
             ukPhaseClass = 'status-postroll';
         }
 
+        let ukTargetCode, ukTargetYr;
+        if (bIndex <= 8) {
+            ukTargetCode = ukCfg.nextCode;
+            ukTargetYr = year + ukCfg.nextYr;
+        } else {
+            const nm = monthOne === 12 ? 1 : monthOne + 1;
+            const ny = monthOne === 12 ? year + 1 : year;
+            ukTargetCode = this.SOL_SCHEDULE[nm].nextCode;
+            ukTargetYr = ny + this.SOL_SCHEDULE[nm].nextYr;
+        }
+        const ukTargetSym = this.formatContractSymbol(ukTargetCode, ukTargetYr);
+        const ukTargetExp = this.getNymexContractExpiry(ukTargetYr, this._codeToMonthNum(ukTargetCode));
+
         return {
             date: dateStr,
             year,
@@ -412,6 +456,7 @@ const ContractLedger = {
                 leverage: '2x / -2x',
                 benchmark: 'Bloomberg Natural Gas Subindex (BCOMNG)',
                 holdings: usHoldings,
+                targetContract: { sym: usTargetSym, code: usTargetCode, yr: usTargetYr, expiry: usTargetExp },
                 phase: usPhase,
                 phaseClass: usPhaseClass
             },
@@ -421,6 +466,7 @@ const ContractLedger = {
                 leverage: '2x / -2x',
                 benchmark: 'BetaPro Natural Gas Rolling Futures Index (CMDYNGER)',
                 holdings: caHoldings,
+                targetContract: { sym: caTargetSym, code: caTargetCode, yr: caTargetYr, expiry: caTargetExp },
                 phase: caPhase,
                 phaseClass: caPhaseClass
             },
@@ -430,6 +476,7 @@ const ContractLedger = {
                 leverage: '3x / -3x',
                 benchmark: 'Solactive Natural Gas Commodity Futures SL Index (SOLWSNG2)',
                 holdings: ukHoldings,
+                targetContract: { sym: ukTargetSym, code: ukTargetCode, yr: ukTargetYr, expiry: ukTargetExp },
                 phase: ukPhase,
                 phaseClass: ukPhaseClass
             }
@@ -717,44 +764,66 @@ const ContractLedger = {
         let allocationRowsHtml = '';
         let barTrackHtml = '';
 
-        holdings.forEach(h => {
-            const label = this.formatContractLabel(h.code, h.yr);
-            allocationRowsHtml += `
+        if (isSplit) {
+            allocationRowsHtml = `
                 <div class="cl-contract-row">
-                    <span class="cl-contract-title">${label}</span>
-                    <span class="cl-contract-pct">${h.pct}%</span>
+                    <span class="cl-contract-title">${this.formatContractLabel(holdings[0].code, holdings[0].yr)}</span>
+                    <span class="cl-contract-pct">${holdings[0].pct}%</span>
+                </div>
+                <div class="cl-contract-row">
+                    <span class="cl-contract-title">${this.formatContractLabel(holdings[1].code, holdings[1].yr)}</span>
+                    <span class="cl-contract-pct">${holdings[1].pct}%</span>
                 </div>
             `;
-        });
-
-        if (!isSplit) {
-            barTrackHtml = `<div class="cl-contract-bar-track"><div class="cl-contract-bar-next" style="width:100%;"></div></div>`;
-        } else {
             barTrackHtml = `
                 <div class="cl-contract-bar-track">
                     <div class="cl-contract-bar-lead" style="width:${holdings[0].pct}%;"></div>
                     <div class="cl-contract-bar-next" style="width:${holdings[1].pct}%;"></div>
                 </div>
             `;
+        } else {
+            const h = holdings[0] || { code: 'H', yr: 2025, pct: 100, expiry: '' };
+            const target = jur.targetContract;
+            const targetLabel = target ? `Roll Target: ${this.formatContractLabel(target.code, target.yr)}` : 'Secondary Allocation';
+            allocationRowsHtml = `
+                <div class="cl-contract-row">
+                    <span class="cl-contract-title">${this.formatContractLabel(h.code, h.yr)}</span>
+                    <span class="cl-contract-pct">${h.pct}%</span>
+                </div>
+                <div class="cl-contract-row cl-row-sub">
+                    <span class="cl-contract-title cl-muted">${targetLabel}</span>
+                    <span class="cl-contract-pct cl-muted">0%</span>
+                </div>
+            `;
+            const isPost = (jur.phaseClass && jur.phaseClass.includes('status-postroll'));
+            barTrackHtml = `
+                <div class="cl-contract-bar-track">
+                    <div class="${isPost ? 'cl-contract-bar-next' : 'cl-contract-bar-lead'}" style="width:100%;"></div>
+                </div>
+            `;
         }
 
-        // Expiration info for primary active holding
         const primaryH = holdings[0];
-        const nextH = holdings[1] || null;
+        const nextH = isSplit ? holdings[1] : jur.targetContract;
+        const primaryExp = primaryH ? primaryH.expiry : 'N/A';
+        const nextExp = nextH ? nextH.expiry : 'N/A';
+
+        const tickerLong = jur.tickers.split('/')[0].trim();
+        const tickerShort = jur.tickers.split('/')[1].trim();
 
         return `
             <div class="cl-jurisdiction-card cl-card-${type}">
                 <div class="cl-card-header">
-                    <div>
+                    <div class="cl-card-top-row">
                         <span class="cl-jurisdiction-name">${jur.name}</span>
-                        <div class="cl-etf-pair">
-                            <span class="cl-ticker-long">${jur.tickers.split('/')[0].trim()}</span>
-                            <span class="cl-ticker-sep">/</span>
-                            <span class="cl-ticker-short">${jur.tickers.split('/')[1].trim()}</span>
-                            <span class="cl-lev-badge">${jur.leverage}</span>
-                        </div>
+                        <span class="cl-status-pill ${jur.phaseClass}">${jur.phase}</span>
                     </div>
-                    <span class="cl-status-pill ${jur.phaseClass}">${jur.phase}</span>
+                    <div class="cl-etf-pair">
+                        <span class="cl-ticker-long">${tickerLong}</span>
+                        <span class="cl-ticker-sep">/</span>
+                        <span class="cl-ticker-short">${tickerShort}</span>
+                        <span class="cl-lev-badge">${jur.leverage}</span>
+                    </div>
                 </div>
 
                 <div class="cl-contract-allocation-wrap">
@@ -765,11 +834,11 @@ const ContractLedger = {
                 <div class="cl-contract-details-grid">
                     <div class="cl-detail-item">
                         <span class="cl-detail-label">Primary NYMEX Expiry</span>
-                        <span class="cl-detail-val expiry">${primaryH.expiry}</span>
+                        <span class="cl-detail-val expiry">${primaryExp}</span>
                     </div>
                     <div class="cl-detail-item">
-                        <span class="cl-detail-label">${nextH ? 'Next NYMEX Expiry' : 'Target Curve Tenor'}</span>
-                        <span class="cl-detail-val">${nextH ? nextH.expiry : 'Active Delivery'}</span>
+                        <span class="cl-detail-label">Next NYMEX Expiry</span>
+                        <span class="cl-detail-val">${nextExp}</span>
                     </div>
                 </div>
 

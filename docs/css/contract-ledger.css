@@ -306,15 +306,25 @@
     padding: 18px;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     gap: 14px;
     position: relative;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    height: 100%;
 }
 
 .cl-card-header {
     display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cl-card-top-row {
+    display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
 }
 
 .cl-jurisdiction-name {
@@ -325,17 +335,29 @@
     color: rgba(255, 255, 255, 0.55);
 }
 
+.cl-status-pill {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
 .cl-etf-pair {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 6px;
-    margin-top: 2px;
+    width: 100%;
 }
 
 .cl-ticker-long {
     font-size: 1.15rem;
     font-weight: 800;
     color: #38bdf8;
+    letter-spacing: 0.5px;
 }
 
 .cl-ticker-sep {
@@ -347,26 +369,22 @@
     font-size: 1.15rem;
     font-weight: 800;
     color: #e2e8f0;
+    letter-spacing: 0.5px;
 }
 
 .cl-lev-badge {
     font-size: 0.65rem;
     font-weight: 700;
-    padding: 2px 6px;
+    padding: 2px 7px;
     border-radius: 3px;
-    margin-left: 4px;
+    margin-left: 6px;
     background: rgba(255, 255, 255, 0.08);
     color: #cbd5e1;
-}
-
-.cl-status-pill {
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    padding: 3px 8px;
-    border-radius: 4px;
     white-space: nowrap;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .status-held {
@@ -404,32 +422,50 @@
     display: flex;
     justify-content: space-between;
     align-items: baseline;
+    min-height: 18px;
+}
+
+.cl-contract-row.cl-row-sub {
+    opacity: 0.75;
 }
 
 .cl-contract-title {
     font-size: 0.70rem;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.55);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+}
+
+.cl-contract-title.cl-muted {
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 500;
 }
 
 .cl-contract-pct {
     font-size: 0.95rem;
     font-weight: 800;
     color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+
+.cl-contract-pct.cl-muted {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.85rem;
+    font-weight: 700;
 }
 
 .cl-contract-bar-track {
     width: 100%;
-    height: 10px;
+    height: 8px;
     background: #1e2436;
-    border-radius: 5px;
+    border-radius: 4px;
     display: flex;
     overflow: hidden;
 }
 
 .cl-contract-bar-lead {
-    background: #3b82f6;
+    background: #2563eb;
     height: 100%;
     transition: width 0.3s ease;
 }
@@ -444,7 +480,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-    margin-top: 4px;
+    margin-top: 2px;
     padding-top: 8px;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -459,6 +495,7 @@
     font-size: 0.65rem;
     color: rgba(255, 255, 255, 0.45);
     text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .cl-detail-val {
@@ -468,7 +505,7 @@
 }
 
 .cl-detail-val.expiry {
-    color: #f97316;
+    color: #38bdf8;
 }
 
 .cl-index-meta {
@@ -477,6 +514,7 @@
     line-height: 1.4;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     padding-top: 8px;
+    min-height: 38px;
 }
 
 .cl-index-meta a {
