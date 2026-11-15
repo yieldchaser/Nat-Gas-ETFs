@@ -29,10 +29,10 @@ POPUP_BASE      = f"{QUIKSTRIKE_BASE}/User/ControlPopup.aspx"
 POPUP_PARAMS = {
     "ControlPath": "~/UserControls/VolIndex/HistoryChart/ViewControl.ascx",
     "insid":       "256993098",
-    "dsrc":        "Intraday",
+    "dsrc":        "Settle",
     "pcode":       "LN",
     "top":         "10",
-    "caption":     "Real-time CVOL",
+    "caption":     "Vol Index History",
     "gcode":       "Red",
 }
 
@@ -102,20 +102,18 @@ def get_fresh_qsid(cme_token: str, userinfo: str) -> tuple[str, requests.Session
 
 
 # ── STEP 2: FETCH DATA PAGE ───────────────────────────────────────────────────
-def fetch_data_page(qsid: str, session: requests.Session, use_eod: bool = False) -> str:
+def fetch_data_page(qsid: str, session: requests.Session, dsrc: str = "Settle") -> str:
     """
     Fetch the CVOL history chart page.
-    
+
     Args:
         qsid: Active QuikStrike session ID
         session: Authenticated requests session
-        use_eod: If True, use dsrc=EOD for end-of-day data (may return more history)
+        dsrc: Datasource mode ('Settle' for official end-of-day/settlement, or 'Intraday')
     """
-    params = {**POPUP_PARAMS, "qsid": qsid}
-    if use_eod:
-        params["dsrc"] = "EOD"
-        print("  Using EOD datasource for historical data")
-    
+    params = {**POPUP_PARAMS, "qsid": qsid, "dsrc": dsrc}
+    print(f"  Fetching with dsrc={dsrc} datasource for settled data")
+
     resp = session.get(POPUP_BASE, params=params, timeout=30)
     resp.raise_for_status()
     return resp.text
@@ -129,20 +127,31 @@ def extract_json_settings(html: str) -> dict:
             "Check that CME_TOKEN and CME_USERINFO secrets are current."
         )
 
-    script_pat = re.compile(
-        r'<script[^>]*>(.*?UserControls\.VolIndex\.HistoryChart\.Chart.*?)</script>',
-        re.DOTALL | re.IGNORECASE,
-    )
-    sm = script_pat.search(html)
-    if not sm:
-        raise ValueError("HistoryChart <script> block not found. Session may have expired.")
+    key = '"JSONSettings"'
+    idx = html.find(key)
+    if idx == -1:
+        raise ValueError("'JSONSettings' key not found inside page.")
 
-    js_pat = re.compile(r'"JSONSettings"\s*:\s*"((?:[^"\\]|\\.)*)"')
-    jm     = js_pat.search(sm.group(1))
-    if not jm:
-        raise ValueError("'JSONSettings' key not found inside script block.")
+    colon_idx = html.find(':', idx + len(key))
+    quote_start = html.find('"', colon_idx)
+    if quote_start == -1:
+        raise ValueError("Opening quote for JSONSettings not found.")
 
-    raw_str: str = json.loads(f'"{jm.group(1)}"')
+    i = quote_start + 1
+    html_len = len(html)
+    while i < html_len:
+        c = html[i]
+        if c == '\\':
+            i += 2
+            continue
+        if c == '"':
+            quote_end = i
+            break
+        i += 1
+    else:
+        raise ValueError("Closing quote for JSONSettings not found.")
+
+    raw_str: str = json.loads(html[quote_start:quote_end + 1])
     return json.loads(raw_str)
 
 
@@ -243,9 +252,9 @@ def main():
     print("[1/5] Activating QuikStrike session via CME SSO…")
     qsid, session = get_fresh_qsid(cme_token, userinfo)
 
-    # Try EOD datasource first for maximum historical coverage
-    print("\n[2/5] Fetching NGVL CVOL data page (trying EOD datasource)…")
-    html = fetch_data_page(qsid, session, use_eod=True)
+    # Use Settle datasource for official post-close settled metrics
+    print("\n[2/5] Fetching NGVL CVOL data page (Settle datasource)…")
+    html = fetch_data_page(qsid, session, dsrc="Settle")
     print(f"      {len(html):,} bytes received")
 
     print("\n[3/5] Parsing JSONSettings…")
