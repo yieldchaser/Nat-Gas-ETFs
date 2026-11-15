@@ -1,0 +1,715 @@
+/* ==========================================================================
+   BLUE MERIDIAN — ETF Futures Contract Holding & Roll Schedule Ledger
+   Institutional styling for Cross-Jurisdiction Natural Gas Contract Mapping
+   US (BOIL/KOLD) · CA (HNU/HND) · UK (3NGL/3NGS)
+   ========================================================================== */
+
+/* Main Panel Container */
+.contract-ledger-panel {
+    background: var(--bg-panel, #0c101d);
+    border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.08));
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+    position: relative;
+    scroll-margin-top: calc(var(--header-height, 56px) + 20px);
+}
+
+/* Panel Header */
+.cl-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cl-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cl-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.cl-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-bright, #fff);
+    margin: 0;
+}
+
+.cl-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--cyan, #00e5ff);
+    background: rgba(0, 229, 255, 0.08);
+    border: 1px solid rgba(0, 229, 255, 0.25);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.cl-desc {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.5;
+    max-width: 820px;
+}
+
+.cl-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Controls: Year/Month Selectors & Buttons */
+.cl-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cl-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cl-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.cl-btn.active {
+    background: var(--cyan, #00e5ff);
+    color: #070a12;
+    border-color: var(--cyan, #00e5ff);
+    font-weight: 700;
+}
+
+.cl-select {
+    background: #141824;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+}
+
+.cl-select:focus {
+    border-color: var(--cyan, #00e5ff);
+}
+
+.cl-input-date {
+    background: #141824;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    color-scheme: dark;
+}
+
+.cl-input-date:focus {
+    border-color: var(--cyan, #00e5ff);
+}
+
+.cl-milestone-strip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 0.68rem;
+    margin-bottom: 12px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cl-milestone-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.cl-milestone-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.cl-milestone-val {
+    font-weight: 700;
+    font-family: monospace;
+    color: #cbd5e1;
+}
+
+/* Day Scrubber Panel */
+.cl-scrubber-card {
+    background: rgba(20, 24, 38, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+}
+
+.cl-scrubber-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.cl-scrubber-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.cl-scrubber-date-display {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--cyan, #00e5ff);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cl-scrubber-bday-tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 7px;
+    border-radius: 3px;
+}
+
+.cl-slider-track-wrap {
+    position: relative;
+    padding: 4px 0;
+}
+
+#cl-day-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(to right, var(--cyan, #00e5ff) var(--cl-fill-pct, 30%), rgba(255, 255, 255, 0.15) var(--cl-fill-pct, 30%));
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    margin: 8px 0;
+}
+
+#cl-day-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--cyan, #00e5ff);
+    border: 2px solid #070a12;
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+    cursor: pointer;
+}
+
+#cl-day-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--cyan, #00e5ff);
+    border: 2px solid #070a12;
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+    cursor: pointer;
+}
+
+.cl-slider-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 4px;
+}
+
+/* 3-Card Jurisdiction Grid (Snapshot of Scrubbed Date) */
+.cl-jurisdiction-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 992px) {
+    .cl-jurisdiction-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cl-jurisdiction-card {
+    background: #0d1220;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.cl-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.cl-jurisdiction-name {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.cl-etf-pair {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.cl-ticker-long {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #38bdf8;
+}
+
+.cl-ticker-sep {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.cl-ticker-short {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #e2e8f0;
+}
+
+.cl-lev-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+}
+
+.cl-status-pill {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.status-held {
+    background: rgba(148, 163, 184, 0.08);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.status-preroll {
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-rolling {
+    background: rgba(56, 189, 248, 0.10);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.status-postroll {
+    background: rgba(148, 163, 184, 0.08);
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* Active Contract Display */
+.cl-contract-allocation-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cl-contract-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.cl-contract-title {
+    font-size: 0.70rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.cl-contract-pct {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.cl-contract-bar-track {
+    width: 100%;
+    height: 10px;
+    background: #1e2436;
+    border-radius: 5px;
+    display: flex;
+    overflow: hidden;
+}
+
+.cl-contract-bar-lead {
+    background: #3b82f6;
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.cl-contract-bar-next {
+    background: var(--cyan, #00e5ff);
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.cl-contract-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cl-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cl-detail-label {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+}
+
+.cl-detail-val {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+.cl-detail-val.expiry {
+    color: #f97316;
+}
+
+.cl-index-meta {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.4;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 8px;
+}
+
+.cl-index-meta a {
+    color: var(--cyan, #00e5ff);
+    text-decoration: none;
+}
+
+.cl-index-meta a:hover {
+    text-decoration: underline;
+}
+
+/* Tabs: Schedule Table vs Annual Roadmap vs Prospectus Specs */
+.cl-nav-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 3px;
+    border-radius: 6px;
+    width: fit-content;
+}
+
+.cl-tab-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cl-tab-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.cl-tab-btn.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--cyan, #00e5ff);
+}
+
+/* Day-by-Day Monthly Schedule Table */
+.cl-table-wrap {
+    overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    background: #0d1220;
+    margin-bottom: 20px;
+}
+
+.cl-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.cl-table th {
+    background: #141a2c;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cl-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    color: #cbd5e1;
+}
+
+.cl-table tr:hover td {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.cl-table tr.is-selected-day td {
+    background: rgba(0, 229, 255, 0.08);
+    border-top: 1px solid rgba(0, 229, 255, 0.2);
+    border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+}
+
+.cl-table-date-col {
+    font-weight: 700;
+    color: #fff !important;
+}
+
+.cl-badge-chip {
+    font-size: 0.70rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-family: monospace;
+}
+
+.chip-us, .chip-ca, .chip-uk {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* 12-Month Annual Roadmap Grid */
+.cl-roadmap-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 1200px) {
+    .cl-roadmap-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+@media (max-width: 768px) {
+    .cl-roadmap-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 480px) {
+    .cl-roadmap-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cl-roadmap-month-card {
+    background: #111628;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cl-roadmap-month-card:hover {
+    border-color: rgba(0, 229, 255, 0.35);
+    background: #141b32;
+    transform: translateY(-1px);
+}
+
+.cl-roadmap-month-card.active-month {
+    border-color: var(--cyan, #00e5ff);
+    background: rgba(0, 229, 255, 0.05);
+}
+
+.cl-rm-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 6px;
+}
+
+.cl-rm-month-name {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.cl-rm-roll-window {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.cl-rm-pair-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.72rem;
+}
+
+.cl-rm-pair-label {
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.cl-rm-contract-tag {
+    font-weight: 700;
+    font-family: monospace;
+}
+
+/* Regulatory & Prospectus Accordion */
+.cl-specs-accordion {
+    background: #0d1222;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+}
+
+.cl-specs-title {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--text-bright, #fff);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+}
+
+.cl-specs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 900px) {
+    .cl-specs-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cl-spec-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cl-spec-head {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--cyan, #00e5ff);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 6px;
+}
+
+.cl-spec-line {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.5;
+}
+
+.cl-spec-line strong {
+    color: #fff;
+}
