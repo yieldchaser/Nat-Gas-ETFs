@@ -524,8 +524,52 @@ const ContractLedger = {
     },
 
     setDay(day) {
-        this.state.selectedDay = Number(day);
-        this.render();
+        this.updateScrub(day);
+    },
+
+    updateScrub(day) {
+        const { selectedYear, selectedMonth } = this.state;
+        const maxDaysInMonth = new Date(Date.UTC(selectedYear, selectedMonth, 0)).getUTCDate();
+        const curDay = Math.min(day, maxDaysInMonth);
+        this.state.selectedDay = curDay;
+
+        const snapshot = this.getHoldingForDate(selectedYear, selectedMonth, curDay);
+        const fillPct = Math.round(((curDay - 1) / Math.max(1, maxDaysInMonth - 1)) * 100);
+
+        const slider = document.getElementById('cl-day-slider');
+        if (slider) {
+            slider.value = curDay;
+            slider.style.setProperty('--cl-fill-pct', fillPct + '%');
+        }
+
+        const dateDisplay = document.getElementById('cl-scrubber-date');
+        if (dateDisplay) dateDisplay.textContent = snapshot.date;
+
+        const bdayTag = document.getElementById('cl-scrubber-bday-tag');
+        if (bdayTag) {
+            bdayTag.textContent = snapshot.isBusinessDay
+                ? `Trading Day ${snapshot.businessDayIndex} of ${snapshot.totalBusinessDays}`
+                : 'Exchange Holiday / Weekend';
+        }
+
+        const datePick = document.getElementById('cl-date-picker');
+        if (datePick) datePick.value = snapshot.date;
+
+        const cardsWrap = document.getElementById('cl-jurisdiction-cards');
+        if (cardsWrap) {
+            cardsWrap.innerHTML = `
+                ${this._renderJurisdictionCard(snapshot.US, 'us')}
+                ${this._renderJurisdictionCard(snapshot.CA, 'ca')}
+                ${this._renderJurisdictionCard(snapshot.UK, 'uk')}
+            `;
+        }
+
+        if (this._root) {
+            const prevRow = this._root.querySelector('.cl-table tbody tr.is-selected-day');
+            if (prevRow) prevRow.classList.remove('is-selected-day');
+            const newRow = this._root.querySelector(`.cl-table tbody tr[data-day="${curDay}"]`);
+            if (newRow) newRow.classList.add('is-selected-day');
+        }
     },
 
     setTab(tab) {
@@ -611,8 +655,8 @@ const ContractLedger = {
                     <div class="cl-scrubber-top">
                         <span class="cl-scrubber-label">Day Scrubber &middot; ${this.MONTH_NAMES[selectedMonth - 1]} ${selectedYear}</span>
                         <div class="cl-scrubber-date-display">
-                            <span>${snapshot.date}</span>
-                            <span class="cl-scrubber-bday-tag">
+                            <span id="cl-scrubber-date">${snapshot.date}</span>
+                            <span class="cl-scrubber-bday-tag" id="cl-scrubber-bday-tag">
                                 ${snapshot.isBusinessDay ? `Trading Day ${snapshot.businessDayIndex} of ${snapshot.totalBusinessDays}` : 'Exchange Holiday / Weekend'}
                             </span>
                         </div>
@@ -645,7 +689,7 @@ const ContractLedger = {
                     </div>
                 </div>
 
-                <div class="cl-jurisdiction-grid">
+                <div class="cl-jurisdiction-grid" id="cl-jurisdiction-cards">
                     ${this._renderJurisdictionCard(snapshot.US, 'us')}
                     ${this._renderJurisdictionCard(snapshot.CA, 'ca')}
                     ${this._renderJurisdictionCard(snapshot.UK, 'uk')}
@@ -929,11 +973,7 @@ const ContractLedger = {
         const slider = document.getElementById('cl-day-slider');
         if (slider) {
             slider.addEventListener('input', (e) => {
-                this.state.selectedDay = Number(e.target.value);
-                const maxDaysInMonth = new Date(Date.UTC(this.state.selectedYear, this.state.selectedMonth, 0)).getUTCDate();
-                const fillPct = Math.round(((this.state.selectedDay - 1) / Math.max(1, maxDaysInMonth - 1)) * 100);
-                slider.style.setProperty('--cl-fill-pct', fillPct + '%');
-                this.render();
+                this.updateScrub(Number(e.target.value));
             });
         }
 

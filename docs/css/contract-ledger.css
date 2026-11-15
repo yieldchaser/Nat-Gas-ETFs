@@ -229,11 +229,30 @@
     appearance: none;
     width: 100%;
     height: 6px;
-    background: linear-gradient(to right, var(--cyan, #00e5ff) var(--cl-fill-pct, 30%), rgba(255, 255, 255, 0.15) var(--cl-fill-pct, 30%));
-    border-radius: 3px;
+    background: transparent;
     outline: none;
     cursor: pointer;
     margin: 8px 0;
+}
+
+#cl-day-slider::-webkit-slider-runnable-track {
+    height: 6px;
+    background: linear-gradient(to right, var(--cyan, #00e5ff) var(--cl-fill-pct, 30%), rgba(255, 255, 255, 0.15) var(--cl-fill-pct, 30%));
+    border-radius: 3px;
+    border: none;
+}
+
+#cl-day-slider::-moz-range-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+    border: none;
+}
+
+#cl-day-slider::-moz-range-progress {
+    height: 6px;
+    background: var(--cyan, #00e5ff);
+    border-radius: 3px;
 }
 
 #cl-day-slider::-webkit-slider-thumb {

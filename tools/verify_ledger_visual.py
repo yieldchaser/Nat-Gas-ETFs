@@ -66,6 +66,16 @@ with sync_playwright() as p:
     page.fill('#cl-day-slider', '11')
     page.dispatch_event('#cl-day-slider', 'input')
     time.sleep(0.3)
+    
+    # Assert smooth slider scrub invariants
+    slider_val = page.eval_on_selector('#cl-day-slider', 'el => el.value')
+    date_text = page.eval_on_selector('#cl-scrubber-date', 'el => el.textContent')
+    selected_row = page.eval_on_selector('.cl-table tr.is-selected-day', 'el => el.getAttribute("data-day")')
+    assert slider_val == '11', f"Expected slider value 11, got {slider_val}"
+    assert date_text == '2025-02-11', f"Expected date text 2025-02-11, got {date_text}"
+    assert selected_row == '11', f"Expected table row 11 to be selected, got {selected_row}"
+    print(f"Slider scrub verification passed: day={slider_val}, date={date_text}, row={selected_row}")
+
     panel.scroll_into_view_if_needed()
     shot_feb = os.path.join(ARTIFACT_DIR, 'contract_ledger_feb2025_roll.png')
     panel.screenshot(path=shot_feb)
