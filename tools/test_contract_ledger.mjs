@@ -247,6 +247,24 @@ console.log('================================================================\n'
     assert(ukFebPost.UK.targetContract.expiry === '2025-05-28', 'UK Feb post-roll next target expiry is 2025-05-28', `Got ${ukFebPost.UK.targetContract.expiry}`);
 }
 
+// Test 13: Human-Readable Month-Year Contract Codes (e.g., Jan-26, Feb-26, Mar-25)
+{
+    assert(ContractLedger.formatContractMonthYear('H', 2025) === 'Mar-25', 'H25 formats as Mar-25');
+    assert(ContractLedger.formatContractMonthYear('K', 2025) === 'May-25', 'K25 formats as May-25');
+    assert(ContractLedger.formatContractMonthYear('F', 2026) === 'Jan-26', 'F26 formats as Jan-26');
+    assert(ContractLedger.formatContractMonthYear('G', 2026) === 'Feb-26', 'G26 formats as Feb-26');
+
+    assert(ContractLedger.formatContractLabel('H', 2025) === 'Mar-25 (NGH25)', 'H25 label is Mar-25 (NGH25)');
+    assert(ContractLedger.formatContractLabel('K', 2025) === 'May-25 (NGK25)', 'K25 label is May-25 (NGK25)');
+    assert(ContractLedger.formatContractLabel('F', 2026) === 'Jan-26 (NGF26)', 'F26 label is Jan-26 (NGF26)');
+
+    const rm2025 = ContractLedger.getAnnualRoadmap(2025);
+    assert(rm2025[0].monthFlows.US === 'Mar-25 (Held)', 'Jan 2025 US monthFlow is Mar-25 (Held)');
+    assert(rm2025[1].monthFlows.US === 'Mar-25 \u2192 May-25', 'Feb 2025 US monthFlow is Mar-25 -> May-25');
+    assert(rm2025[1].monthFlows.CA === 'Mar-25 \u2192 Apr-25', 'Feb 2025 CA monthFlow is Mar-25 -> Apr-25');
+    assert(rm2025[1].monthFlows.UK === 'Apr-25 \u2192 May-25', 'Feb 2025 UK monthFlow is Apr-25 -> May-25');
+}
+
 console.log('\n================================================================');
 console.log(`TEST RESULTS: ${passedTests} PASSED, ${failedTests} FAILED (TOTAL: ${totalTests})`);
 console.log('================================================================');

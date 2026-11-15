@@ -567,30 +567,62 @@
     border-radius: 6px;
     background: #0d1220;
     margin-bottom: 20px;
+    width: 100%;
 }
 
 .cl-table {
     width: 100%;
+    table-layout: auto;
     border-collapse: collapse;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     text-align: left;
-    white-space: nowrap;
 }
 
 .cl-table th {
     background: #141a2c;
     color: rgba(255, 255, 255, 0.85);
     font-weight: 800;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
-    padding: 10px 14px;
+    padding: 8px 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+    font-size: 0.68rem;
+}
+
+.cl-table th.th-date {
+    width: 9%;
+    min-width: 82px;
+}
+
+.cl-table th.th-day {
+    width: 8%;
+    min-width: 72px;
+}
+
+.cl-table th.th-us-h,
+.cl-table th.th-ca-h,
+.cl-table th.th-uk-h {
+    width: 15%;
+    min-width: 105px;
+}
+
+.cl-table th.th-us-s,
+.cl-table th.th-uk-s {
+    width: 13%;
+    min-width: 95px;
+}
+
+.cl-table th.th-ca-s {
+    width: 12%;
+    min-width: 85px;
 }
 
 .cl-table td {
-    padding: 9px 14px;
+    padding: 7px 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     color: #cbd5e1;
+    vertical-align: middle;
 }
 
 .cl-table tr:hover td {
@@ -606,26 +638,62 @@
 .cl-table-date-col {
     font-weight: 700;
     color: #fff !important;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.cl-table-day-col {
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.cl-table-day-total {
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 400;
+}
+
+.cl-holding-cell-split {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
 }
 
 .cl-badge-chip {
-    font-size: 0.70rem;
+    font-size: 0.68rem;
     font-weight: 700;
-    padding: 2px 7px;
+    padding: 2px 6px;
     border-radius: 3px;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: rgba(255, 255, 255, 0.05);
-    color: #e2e8f0;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    font-family: monospace;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+    font-family: inherit;
 }
 
-.chip-us, .chip-ca, .chip-uk {
-    background: rgba(255, 255, 255, 0.05);
-    color: #e2e8f0;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+.chip-us {
+    background: rgba(56, 189, 248, 0.12);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.chip-ca {
+    background: rgba(0, 229, 255, 0.10);
+    color: var(--cyan, #00e5ff);
+    border: 1px solid rgba(0, 229, 255, 0.25);
+}
+
+.chip-uk {
+    background: rgba(148, 163, 184, 0.12);
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.cl-table .cl-status-pill {
+    font-size: 0.63rem;
+    padding: 2px 6px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
 }
 
 /* 12-Month Annual Roadmap Grid */

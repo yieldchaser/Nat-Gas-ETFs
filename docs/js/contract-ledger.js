@@ -217,9 +217,17 @@ const ContractLedger = {
         return `NG${code}${yr2}`;
     },
 
-    formatContractLabel(code, deliveryYear) {
+    formatContractMonthYear(code, deliveryYear) {
         const name = this.CODE_TO_MONTH_NAME[code] || code;
-        return `${this.formatContractSymbol(code, deliveryYear)} (${name} ${deliveryYear})`;
+        const shortName = name.slice(0, 3);
+        const yr2 = String(deliveryYear).slice(-2);
+        return `${shortName}-${yr2}`;
+    },
+
+    formatContractLabel(code, deliveryYear) {
+        const my = this.formatContractMonthYear(code, deliveryYear);
+        const sym = this.formatContractSymbol(code, deliveryYear);
+        return `${my} (${sym})`;
     },
 
     /* Evaluates contract holdings for any calendar date */
@@ -504,14 +512,23 @@ const ContractLedger = {
             const startUS = startState.US.holdings[0].sym;
             const endUS = midState.US.holdings[midState.US.holdings.length - 1].sym;
             const usFlow = usCfg.rolls ? `${startUS} \u2192 ${endUS}` : `${startUS} (Held)`;
+            const startUSMonth = this.formatContractMonthYear(startState.US.holdings[0].code, startState.US.holdings[0].yr);
+            const endUSMonth = this.formatContractMonthYear(midState.US.holdings[midState.US.holdings.length - 1].code, midState.US.holdings[midState.US.holdings.length - 1].yr);
+            const usMonthFlow = usCfg.rolls ? `${startUSMonth} \u2192 ${endUSMonth}` : `${startUSMonth} (Held)`;
 
             const startCA = startState.CA.holdings[0].sym;
             const endCA = midState.CA.holdings[midState.CA.holdings.length - 1].sym;
             const caFlow = `${startCA} \u2192 ${endCA}`;
+            const startCAMonth = this.formatContractMonthYear(startState.CA.holdings[0].code, startState.CA.holdings[0].yr);
+            const endCAMonth = this.formatContractMonthYear(midState.CA.holdings[midState.CA.holdings.length - 1].code, midState.CA.holdings[midState.CA.holdings.length - 1].yr);
+            const caMonthFlow = `${startCAMonth} \u2192 ${endCAMonth}`;
 
             const startUK = startState.UK.holdings[0].sym;
             const endUK = midState.UK.holdings[midState.UK.holdings.length - 1].sym;
             const ukFlow = `${startUK} \u2192 ${endUK}`;
+            const startUKMonth = this.formatContractMonthYear(startState.UK.holdings[0].code, startState.UK.holdings[0].yr);
+            const endUKMonth = this.formatContractMonthYear(midState.UK.holdings[midState.UK.holdings.length - 1].code, midState.UK.holdings[midState.UK.holdings.length - 1].yr);
+            const ukMonthFlow = `${startUKMonth} \u2192 ${endUKMonth}`;
 
             const usRoll = usCfg.rolls
                 ? `Days 6–10 (${year}-${String(m).padStart(2,'0')}-${String(bDays[5]).padStart(2,'0')} to ${year}-${String(m).padStart(2,'0')}-${String(bDays[9]).padStart(2,'0')})`
@@ -526,6 +543,7 @@ const ContractLedger = {
                 totalBdays: bDays.length,
                 rollWindows: { US: usRoll, CA: caRoll, UK: ukRoll },
                 flows: { US: usFlow, CA: caFlow, UK: ukFlow },
+                monthFlows: { US: usMonthFlow, CA: caMonthFlow, UK: ukMonthFlow },
                 holdingsSnapshot: {
                     US: midState.US.holdings,
                     CA: midState.CA.holdings,
@@ -871,25 +889,59 @@ const ContractLedger = {
 
             const formatHoldingPill = (hList, chipCls) => {
                 if (hList.length === 1) {
-                    return `<span class="cl-badge-chip ${chipCls}">${hList[0].sym} (100%)</span>`;
+                    const h = hList[0];
+                    const my = this.formatContractMonthYear(h.code, h.yr);
+                    return `<span class="cl-badge-chip ${chipCls}" title="${h.sym} · CME NYMEX">${my} (100%)</span>`;
                 }
-                return `<span class="cl-badge-chip ${chipCls}">${hList[0].sym} (${hList[0].pct}%) &middot; ${hList[1].sym} (${hList[1].pct}%)</span>`;
+                const h1 = hList[0];
+                const h2 = hList[1];
+                const my1 = this.formatContractMonthYear(h1.code, h1.yr);
+                const my2 = this.formatContractMonthYear(h2.code, h2.yr);
+                return `
+                    <div class="cl-holding-cell-split">
+                        <span class="cl-badge-chip ${chipCls}" title="${h1.sym} · CME NYMEX">${my1} (${h1.pct}%)</span>
+                        <span class="cl-badge-chip ${chipCls}" title="${h2.sym} · CME NYMEX">${my2} (${h2.pct}%)</span>
+                    </div>
+                `;
+            };
+
+            const formatTableStatus = (phase, phaseClass) => {
+                let compact = phase;
+                if (phase.startsWith('ACTIVE ROLL')) {
+                    const m = phase.match(/DAY (\d+)(?:\s+OF\s+\d+)?\s*\(([^)]+)\)/i);
+                    if (m) {
+                        compact = `Roll D${m[1]} (${m[2]})`;
+                    } else {
+                        compact = 'Rolling';
+                    }
+                } else if (phase.startsWith('PRE-ROLL')) {
+                    compact = 'Pre-Roll';
+                } else if (phase.startsWith('POST-ROLL')) {
+                    compact = 'Post-Roll';
+                } else if (phase.startsWith('HELD')) {
+                    compact = 'Held';
+                }
+                return `<span class="cl-status-pill ${phaseClass}" title="${phase}">${compact}</span>`;
             };
 
             const usPill = formatHoldingPill(state.US.holdings, 'chip-us');
             const caPill = formatHoldingPill(state.CA.holdings, 'chip-ca');
             const ukPill = formatHoldingPill(state.UK.holdings, 'chip-uk');
 
+            const usStatus = formatTableStatus(state.US.phase, state.US.phaseClass);
+            const caStatus = formatTableStatus(state.CA.phase, state.CA.phaseClass);
+            const ukStatus = formatTableStatus(state.UK.phase, state.UK.phaseClass);
+
             rowsHtml += `
                 <tr class="${isSel ? 'is-selected-day' : ''}" data-day="${d}">
                     <td class="cl-table-date-col">${state.date}</td>
-                    <td><strong>Day ${bIndex}</strong> / ${state.totalBusinessDays}</td>
+                    <td class="cl-table-day-col">Day ${bIndex} <span class="cl-table-day-total">/ ${state.totalBusinessDays}</span></td>
                     <td>${usPill}</td>
-                    <td><span class="cl-status-pill ${state.US.phaseClass}">${state.US.phase}</span></td>
+                    <td>${usStatus}</td>
                     <td>${caPill}</td>
-                    <td><span class="cl-status-pill ${state.CA.phaseClass}">${state.CA.phase}</span></td>
+                    <td>${caStatus}</td>
                     <td>${ukPill}</td>
-                    <td><span class="cl-status-pill ${state.UK.phaseClass}">${state.UK.phase}</span></td>
+                    <td>${ukStatus}</td>
                 </tr>
             `;
         });
@@ -899,14 +951,14 @@ const ContractLedger = {
                 <table class="cl-table">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Trading Day</th>
-                            <th>US (BOIL/KOLD) Holdings</th>
-                            <th>US Status</th>
-                            <th>CA (HNU/HND) Holdings</th>
-                            <th>CA Status</th>
-                            <th>UK (3NGL/3NGS) Holdings</th>
-                            <th>UK Status</th>
+                            <th class="th-date">Date</th>
+                            <th class="th-day">Trading Day</th>
+                            <th class="th-us-h">US (BOIL/KOLD)</th>
+                            <th class="th-us-s">US Status</th>
+                            <th class="th-ca-h">Canada (HNU/HND)</th>
+                            <th class="th-ca-s">CA Status</th>
+                            <th class="th-uk-h">London (3NGL/3NGS)</th>
+                            <th class="th-uk-s">UK Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -931,15 +983,15 @@ const ContractLedger = {
                     </div>
                     <div class="cl-rm-pair-row">
                         <span class="cl-rm-pair-label">US (BOIL/KOLD):</span>
-                        <span class="cl-rm-contract-tag">${m.flows.US}</span>
+                        <span class="cl-rm-contract-tag" title="${m.flows.US}">${m.monthFlows ? m.monthFlows.US : m.flows.US}</span>
                     </div>
                     <div class="cl-rm-pair-row">
                         <span class="cl-rm-pair-label">CA (HNU/HND):</span>
-                        <span class="cl-rm-contract-tag">${m.flows.CA}</span>
+                        <span class="cl-rm-contract-tag" title="${m.flows.CA}">${m.monthFlows ? m.monthFlows.CA : m.flows.CA}</span>
                     </div>
                     <div class="cl-rm-pair-row">
                         <span class="cl-rm-pair-label">UK (3NGL/3NGS):</span>
-                        <span class="cl-rm-contract-tag">${m.flows.UK}</span>
+                        <span class="cl-rm-contract-tag" title="${m.flows.UK}">${m.monthFlows ? m.monthFlows.UK : m.flows.UK}</span>
                     </div>
                 </div>
             `;
@@ -1088,9 +1140,9 @@ const ContractLedger = {
 
         bDays.forEach((d, idx) => {
             const state = this.getHoldingForDate(selectedYear, selectedMonth, d);
-            const usHold = state.US.holdings.map(h => `${h.sym}:${h.pct}%`).join(';');
-            const caHold = state.CA.holdings.map(h => `${h.sym}:${h.pct}%`).join(';');
-            const ukHold = state.UK.holdings.map(h => `${h.sym}:${h.pct}%`).join(';');
+            const usHold = state.US.holdings.map(h => `${this.formatContractMonthYear(h.code, h.yr)} (${h.sym}):${h.pct}%`).join(';');
+            const caHold = state.CA.holdings.map(h => `${this.formatContractMonthYear(h.code, h.yr)} (${h.sym}):${h.pct}%`).join(';');
+            const ukHold = state.UK.holdings.map(h => `${this.formatContractMonthYear(h.code, h.yr)} (${h.sym}):${h.pct}%`).join(';');
 
             csv += `${state.date},${idx + 1},${state.totalBusinessDays},"${usHold}","${state.US.phase}","${caHold}","${state.CA.phase}","${ukHold}","${state.UK.phase}"\n`;
         });
