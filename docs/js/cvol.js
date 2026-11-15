@@ -817,20 +817,25 @@ function computeComposites(data) {
 //                    record premiums for upside calls. Forward tradeable returns have been deeply
 //                    negative; the risk is a squeeze that keeps going (Dec-2024, Jan-2014).
 //   UPSIDE STRESS  - same condition one notch down (skew 90-95th). Same sign, but ONLY once it
-//                    persists: a single isolated day carried no edge, three of the last ten did.
+//                    persists: a single isolated day carried no edge, three of the last ten did,
+//                    and even then only over ~10 sessions.
 //   PANIC FLUSH    - NG down >= 1.5 implied sigmas in 5 sessions WHILE implied vol rises >= 5%.
 //                    A sell-off that scares option buyers has tended to bounce; the same drop
-//                    with no vol response has not. The weakest of the three: a 5-21 session
-//                    bounce tendency, not a trough call.
+//                    with no vol response has not. The first signal day is a coin flip; it
+//                    only counts from the second. A short bounce tendency, not a trough call.
+// A state is ACTIONABLE only once it has been on for `confirm` of the last `persistWindow`
+// sessions. Each state is also scored as non-overlapping TRADES (enter when actionable and flat,
+// hold `hold` sessions) against the any-day benchmark for the same side and hold - the honest
+// yardstick, because on a tradeable basis simply being short NG wins 56-58% of the time.
 // Troughs otherwise leave no signature in this data, so everything else is NO EDGE and inherits
 // the base rate - which on a tradeable basis is itself negative (contango bleed).
 // Statistics below are recomputed from the full history on every load, so they stay honest as
 // data accumulates; nothing here is a hard-coded backtest number.
 const EDGE_STATES = {
-    BLOWOFF:       { label: 'BLOW-OFF FADE', bias: 'DOWNSIDE', color: '#ef4444', short: 'Call skew and implied vol both at historic extremes' },
-    UPSIDE_STRESS: { label: 'UPSIDE STRESS', bias: 'DOWNSIDE', color: '#f59e0b', short: 'Call skew and implied vol elevated, one notch below blow-off' },
-    PANIC_FLUSH:   { label: 'PANIC FLUSH',   bias: 'UPSIDE',   color: '#3db87a', short: 'Sharp sell-off with implied vol rising' },
-    NEUTRAL:       { label: 'NO EDGE',       bias: 'NONE',     color: '#6b7280', short: 'Surface gives no directional information beyond the base rate' },
+    BLOWOFF:       { label: 'BLOW-OFF FADE', bias: 'DOWNSIDE', color: '#ef4444', tier: 'STRONG',   confirm: 1, hold: 21, short: 'Call skew and implied vol both at historic extremes' },
+    UPSIDE_STRESS: { label: 'UPSIDE STRESS', bias: 'DOWNSIDE', color: '#f59e0b', tier: 'MODERATE', confirm: 3, hold: 10, short: 'Call skew and implied vol elevated, one notch below blow-off' },
+    PANIC_FLUSH:   { label: 'PANIC FLUSH',   bias: 'UPSIDE',   color: '#3db87a', tier: 'WEAK',     confirm: 2, hold: 10, short: 'Sharp sell-off with implied vol rising' },
+    NEUTRAL:       { label: 'NO EDGE',       bias: 'NONE',     color: '#6b7280', tier: 'NONE',     confirm: 1, hold: 21, short: 'Surface gives no directional information beyond the base rate' },
 };
 const EDGE_CFG = {
     minHistory: 252,      // sessions before the first classification
@@ -842,8 +847,7 @@ const EDGE_CFG = {
     idxVolRatio: 0.8,     // tradeable-index vol runs ~0.8x NGVL (index holds a deferred contract)
     horizons: [5, 10, 21, 42],
     episodeGap: 10,       // sessions without the state before a new episode starts
-    persistWindow: 10,    // look-back for the persistence count
-    persistMin: 3,        // state on this many of the last persistWindow sessions = CONFIRMED
+    persistWindow: 10,    // look-back for the persistence count (each state sets its own `confirm`)
 };
 
 function edgeMedian(arr) {
@@ -885,6 +889,63 @@ function edgePermutationP(idxList, fwd, lo, hi, bias) {
         if (bias === 'DOWNSIDE' ? m <= obs : m >= obs) extreme++;
     }
     return total ? extreme / total : null;
+}
+
+// P(X >= k) for X ~ Binomial(n, p): how surprising a win count is against a benchmark win rate.
+function edgeBinomTail(k, n, p) {
+    if (n <= 0 || p == null) return null;
+    let logC = 0, tail = 0;
+    for (let i = 0; i <= n; i++) {
+        if (i > 0) logC += Math.log(n - i + 1) - Math.log(i);
+        if (i >= k) tail += Math.exp(logC + i * Math.log(p) + (n - i) * Math.log(1 - p));
+    }
+    return Math.min(1, tail);
+}
+
+// Non-overlapping trades: enter at the close of the first actionable day while flat, exit `hold`
+// sessions later, then look for the next entry. P&L is signed so positive = the read was right.
+function edgeBuildTrades(data, actionable, hold, bias, startIdx) {
+    const n = data.length, sgn = bias === 'DOWNSIDE' ? -1 : 1, trades = [];
+    let i = startIdx;
+    while (i < n - 1) {
+        if (!actionable[i]) { i++; continue; }
+        const j = Math.min(n - 1, i + hold), p0 = cvolPx(data[i]), p1 = cvolPx(data[j]);
+        let heat = 0;
+        for (let k = i + 1; k <= j; k++) {
+            const pk = cvolPx(data[k]);
+            if (pk == null || !p0) continue;
+            const mv = sgn * (pk / p0 - 1) * 100;
+            if (mv < heat) heat = mv;
+        }
+        trades.push({
+            entryIdx: i, exitIdx: j, entry: data[i].date, exit: data[j].date, sessions: j - i,
+            skewRatio: data[i].skewRatio, ngvl: data[i].ngvl,
+            ng: p0 && p1 != null ? (p1 / p0 - 1) * 100 : null,
+            pnl: p0 && p1 != null ? sgn * (p1 / p0 - 1) * 100 : null,
+            heat: heat, open: i + hold > n - 1,
+        });
+        i = j + 1;
+    }
+    return trades;
+}
+
+function edgeTradeStats(trades, bench) {
+    const done = trades.filter(function(t) { return !t.open && t.pnl != null; });
+    const pnl = done.map(function(t) { return t.pnl; });
+    const wins = pnl.filter(function(v) { return v > 0; });
+    const gain = wins.reduce(function(a, b) { return a + b; }, 0);
+    const loss = -pnl.filter(function(v) { return v < 0; }).reduce(function(a, b) { return a + b; }, 0);
+    return {
+        n: done.length, wins: wins.length,
+        winRate: done.length ? wins.length / done.length * 100 : null,
+        mean: done.length ? pnl.reduce(function(a, b) { return a + b; }, 0) / done.length : null,
+        median: edgeMedian(pnl),
+        profitFactor: loss > 0 ? gain / loss : (gain > 0 ? Infinity : null),
+        worst: pnl.length ? Math.min.apply(null, pnl) : null,
+        worstHeat: done.length ? Math.min.apply(null, done.map(function(t) { return t.heat; })) : null,
+        benchWinRate: bench ? bench.winRate : null, benchMean: bench ? bench.mean : null,
+        p: bench && bench.winRate != null && done.length ? edgeBinomTail(wins.length, done.length, bench.winRate / 100) : null,
+    };
 }
 
 function computeEdgeModel(data, comp) {
@@ -985,10 +1046,24 @@ function computeEdgeModel(data, comp) {
         const idxList = allIdx.filter(function(i) { return daily[i] === key; });
         const st = { key: key, label: meta.label, bias: meta.bias, color: meta.color, short: meta.short, days: idxList.length, horizons: summarize(idxList, meta.bias) };
         if (key !== 'NEUTRAL') {
-            const conf = idxList.filter(function(i) { return persist[i] >= cfg.persistMin; });
-            const fresh = idxList.filter(function(i) { return persist[i] < cfg.persistMin; });
+            st.tier = meta.tier; st.confirm = meta.confirm; st.hold = meta.hold;
+            const conf = idxList.filter(function(i) { return persist[i] >= meta.confirm; });
+            const fresh = idxList.filter(function(i) { return persist[i] < meta.confirm; });
             st.confirmed = { days: conf.length, horizons: summarize(conf, meta.bias) };
             st.fresh = { days: fresh.length, horizons: summarize(fresh, meta.bias) };
+            // Trades: the state scored the way it would actually be used.
+            const actionable = new Array(n).fill(false);
+            conf.forEach(function(i) { actionable[i] = true; });
+            const sgn = meta.bias === 'DOWNSIDE' ? -1 : 1;
+            let bw = 0, bs = 0, bn = 0;
+            for (let i = cfg.minHistory; i + meta.hold < n; i++) {
+                const r = cvolForwardReturn(data, i, meta.hold);
+                if (r == null) continue;
+                bn++; bs += sgn * r; if (sgn * r > 0) bw++;
+            }
+            st.bench = { winRate: bn ? bw / bn * 100 : null, mean: bn ? bs / bn : null, n: bn };
+            st.trades = edgeBuildTrades(data, actionable, meta.hold, meta.bias, cfg.minHistory);
+            st.tradeStats = edgeTradeStats(st.trades, st.bench);
             st.episodes = buildEpisodes(key, meta.bias);
             const done21 = st.episodes.filter(function(e) { return e.right21 != null; });
             const done42 = st.episodes.filter(function(e) { return e.right42 != null; });
@@ -1010,7 +1085,8 @@ function computeEdgeModel(data, comp) {
     const current = n ? {
         state: curKey, label: EDGE_STATES[curKey].label, bias: EDGE_STATES[curKey].bias, color: EDGE_STATES[curKey].color,
         short: EDGE_STATES[curKey].short, date: data[last].date, since: data[since].date, streak: last - since + 1,
-        persist: persist[last], confirmed: curKey !== 'NEUTRAL' && persist[last] >= cfg.persistMin,
+        persist: persist[last], tier: EDGE_STATES[curKey].tier, confirm: EDGE_STATES[curKey].confirm,
+        confirmed: curKey !== 'NEUTRAL' && persist[last] >= EDGE_STATES[curKey].confirm,
         features: { skewRatio: data[last].skewRatio, skewPe: skewPe[last], ngvl: data[last].ngvl, ngvlPe: ngvlPe[last], move5: move5[last], volChg5: volChg5[last] },
     } : null;
 

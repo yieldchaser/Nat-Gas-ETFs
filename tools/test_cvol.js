@@ -60,7 +60,7 @@ function loadBrowserScripts() {
     const cvolJs = fs.readFileSync('docs/js/cvol.js', 'utf8');
     const uiJs = fs.readFileSync('docs/js/cvol-ui.js', 'utf8').split('(async function()')[0];
     const renderJs = fs.readFileSync('docs/js/cvol-render.js', 'utf8');
-    vm.runInContext(cvolJs + '\nthis.__cvol = { CvolState, parseCvolCsv, computeComposites, classifySurfaceDay, SURFACE_STATES, surfaceStateColor, parseTradeableCsv, attachTradeable, cvolForwardReturn, expandingPercentile, EDGE_STATES, EDGE_CFG };', context, { filename: 'docs/js/cvol.js' });
+    vm.runInContext(cvolJs + '\nthis.__cvol = { CvolState, parseCvolCsv, computeComposites, classifySurfaceDay, SURFACE_STATES, surfaceStateColor, parseTradeableCsv, attachTradeable, cvolForwardReturn, expandingPercentile, EDGE_STATES, EDGE_CFG, edgeBinomTail };', context, { filename: 'docs/js/cvol.js' });
     vm.runInContext(renderJs, context, { filename: 'docs/js/cvol-render.js' });
     vm.runInContext(uiJs + '\nthis.__ui = { renderBanner, renderConvictionBanner, renderEdgePanel, renderKpiCards, renderRegimePanel, renderSurfaceAnalogPanel, renderTimeline, renderMainChart };', context, { filename: 'docs/js/cvol-ui.js' });
     return context;
@@ -184,6 +184,24 @@ edge.daily.forEach((state, i) => {
 const blow = edge.states.BLOWOFF;
 assert.strictEqual(blow.days, blow.confirmed.days + blow.fresh.days, 'confirmed and fresh partition the state');
 assert.ok(blow.episodeCount >= 8 && blow.episodes.every((e) => e.adverse21 >= 0), 'blow-off episodes carry a non-negative adverse excursion');
+// ── Trades: non-overlapping, entered only on actionable days, scored against the any-day benchmark ──
+['BLOWOFF', 'UPSIDE_STRESS', 'PANIC_FLUSH'].forEach((key) => {
+    const s = edge.states[key];
+    assert.strictEqual(s.days, s.confirmed.days + s.fresh.days, `${key}: actionable and first-day sets partition the state`);
+    assert.ok(s.trades.length >= 8, `${key}: enough trades to list`);
+    s.trades.forEach((tr, k) => {
+        assert.strictEqual(edge.daily[tr.entryIdx], key, `${key}: trade enters on a day in the state`);
+        assert.ok(edge.persist[tr.entryIdx] >= s.confirm, `${key}: trade enters only once the state is actionable`);
+        assert.ok(tr.sessions <= s.hold && tr.heat <= 0, `${key}: hold and heat are bounded`);
+        if (k > 0) assert.ok(tr.entryIdx > s.trades[k - 1].exitIdx, `${key}: trades do not overlap`);
+        if (!tr.open) assertNear(tr.pnl, (s.bias === 'DOWNSIDE' ? -1 : 1) * (data[tr.exitIdx].tpx / data[tr.entryIdx].tpx - 1) * 100, 1e-9, `${key}: trade result uses the tradeable index`);
+    });
+    const ts = s.tradeStats;
+    assert.strictEqual(ts.n, s.trades.filter((tr) => !tr.open).length, `${key}: open trades are not scored`);
+    assert.ok(ts.benchWinRate > 0 && ts.benchWinRate < 100 && ts.p >= 0 && ts.p <= 1, `${key}: benchmark and p-value are sane`);
+});
+assert.ok(edge.states.BLOWOFF.tradeStats.benchWinRate > 50, 'being short NG on any day wins more than half the time on a tradeable basis');
+assert.strictEqual(edge.states.NEUTRAL.trades, undefined, 'no trades are defined for the no-edge state');
 assert.ok(blow.horizons[21].p != null && blow.horizons[21].p >= 0 && blow.horizons[21].p <= 1, 'permutation p-value is a probability');
 // The reported forward return must be the tradeable one, not the raw column.
 const ep0 = blow.episodes[0];
@@ -259,7 +277,8 @@ context.__ui.renderSurfaceAnalogPanel(comp);
 context.__ui.renderTimeline(comp, 'all');
 context.__ui.renderMainChart();
 assert.ok(context.elements['cvol-kpi-grid'].innerHTML.length > 100, 'KPI cards render');
-assert.ok(context.elements['cvol-edge-panel'].innerHTML.includes('EVIDENCE BY STATE'), 'directional edge panel renders');
+assert.ok(context.elements['cvol-edge-panel'].innerHTML.includes('EVIDENCE BY STATE') && context.elements['cvol-edge-panel'].innerHTML.includes('TRADE LEDGER'), 'directional edge panel renders');
+assertNear(context.__cvol.edgeBinomTail(17, 20, 0.56), 0.0063, 2e-4, 'binomial tail matches a known value');
 context.__ui.renderEdgePanel(rawData, rawComp);
 assert.ok(context.elements['cvol-edge-basis'].textContent.includes('ROLL-CONTAMINATED'), 'raw-column fallback is labelled');
 assert.ok(context.elements['regime-dashboard-grid'].innerHTML.length > 100, 'options market read renders');

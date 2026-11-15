@@ -44,10 +44,10 @@ function renderConvictionBanner(data, comp) {
     el.style.background = 'rgba(255,255,255,0.025)';
     var edgeLead = '';
     var edge = comp.edge, ec = edge && edge.current;
-    if (ec && ec.state !== 'NEUTRAL' && edge.states[ec.state]) {
-        var eh = edge.states[ec.state].horizons[21], eb = edge.base[21];
+    if (ec && ec.state !== 'NEUTRAL' && ec.confirmed && edge.states[ec.state]) {
+        var es = edge.states[ec.state], et = es.tradeStats;
         edgeLead = '<span style="font-size:0.72rem;font-weight:900;letter-spacing:2px;color:' + ec.color + ';" data-tooltip="Directional Edge model (tradeable basis). See the Directional Edge panel for the full evidence.">' + ec.label + '</span>' +
-            '<span style="font-size:0.65rem;color:rgba(255,255,255,0.85);letter-spacing:0.5px;font-weight:700;">' + (ec.bias === 'DOWNSIDE' ? 'DOWNSIDE EDGE' : 'UPSIDE EDGE') + ' · 21D up-rate ' + fmt(eh.upRate,0) + '% vs ' + fmt(eb.upRate,0) + '% base</span>' +
+            '<span style="font-size:0.65rem;color:rgba(255,255,255,0.85);letter-spacing:0.5px;font-weight:700;">' + (ec.bias === 'DOWNSIDE' ? 'DOWNSIDE EDGE' : 'UPSIDE EDGE') + ' · ' + es.tier + ' · ' + et.wins + ' of ' + et.n + ' trades won vs ' + fmt(et.benchWinRate,0) + '% any-day</span>' +
             '<span style="color:rgba(255,255,255,0.25);">|</span>';
     }
     el.innerHTML = edgeLead +
@@ -57,17 +57,22 @@ function renderConvictionBanner(data, comp) {
 }
 
 // ── Directional Edge Panel ────────────────────────────────────
+function setEdgeLedger(key) { CvolState.edgeLedger = key; renderEdgePanel(CvolState.data, CvolState.composites); }
+
 function renderEdgePanel(data, comp) {
     var el = document.getElementById('cvol-edge-panel'); if (!el) return;
     var edge = comp.edge;
     if (!edge || !edge.current) { el.innerHTML = '<div class="cvol-loading">Directional edge model unavailable</div>'; return; }
     var cur = edge.current, st = edge.states[cur.state], base = edge.base, f = cur.features, thr = edge.thresholds;
-    var HZ = [5, 10, 21, 42];
+    var HZ = [5, 10, 21, 42], W = EDGE_CFG.persistWindow;
     var dim = 'rgba(255,255,255,0.6)', faint = 'rgba(255,255,255,0.4)';
+    var TIER_COLOR = { STRONG: '#3db87a', MODERATE: '#f59e0b', WEAK: 'rgba(255,255,255,0.55)', NONE: 'rgba(255,255,255,0.4)' };
     function esc(t) { return String(t).replace(/"/g, '&quot;'); }
     function signed(v, d) { return v == null || !isFinite(v) ? '—' : (v >= 0 ? '+' : '') + v.toFixed(d == null ? 1 : d) + '%'; }
     function pTxt(p) { return p == null ? '—' : p < 0.001 ? '<0.001' : p.toFixed(3); }
     function retColor(v) { return v == null ? dim : v > 0 ? '#3db87a' : v < 0 ? '#ef4444' : dim; }
+    function pfTxt(v) { return v == null ? '—' : !isFinite(v) ? '∞' : v.toFixed(1); }
+    function sideTxt(bias, hold) { return (bias === 'DOWNSIDE' ? 'short' : 'long') + ' NG for ' + hold + ' sessions'; }
 
     var badge = document.getElementById('cvol-edge-basis');
     if (badge) {
@@ -79,39 +84,46 @@ function renderEdgePanel(data, comp) {
     }
 
     // ── Hero: what the model says today ──
-    var biasTxt = cur.bias === 'DOWNSIDE' ? 'DOWNSIDE EDGE' : cur.bias === 'UPSIDE' ? 'UPSIDE EDGE' : 'NO DIRECTIONAL EDGE';
-    // Persistence matters for the two skew states: quote the subset that matches today.
-    var usePersist = (cur.state === 'BLOWOFF' || cur.state === 'UPSIDE_STRESS') && st.confirmed && st.fresh;
-    var sub = usePersist ? (cur.confirmed ? st.confirmed : st.fresh) : st;
-    var persistTxt = usePersist ? (cur.confirmed
-        ? 'CONFIRMED · on ' + cur.persist + ' of last ' + EDGE_CFG.persistWindow + ' sessions'
-        : 'FRESH · on ' + cur.persist + ' of last ' + EDGE_CFG.persistWindow + ' sessions') : '';
+    var isNeutral = cur.state === 'NEUTRAL';
+    var actionable = !isNeutral && cur.confirmed;
+    var needsConfirm = !isNeutral && st.confirm > 1;
+    var sub = isNeutral ? st : (needsConfirm ? (cur.confirmed ? st.confirmed : st.fresh) : st);
+    var biasTxt = isNeutral ? 'NO DIRECTIONAL EDGE'
+        : !actionable ? 'NOT YET ACTIONABLE'
+        : (cur.bias === 'DOWNSIDE' ? 'DOWNSIDE EDGE' : 'UPSIDE EDGE') + ' · ' + st.tier;
     var h21 = sub.horizons[21], b21 = base[21];
     var sentence;
-    if (cur.state === 'NEUTRAL') {
-        sentence = 'The surface is not in any of the three tested states. Expect the base rate: NG (tradeable) was higher 21 sessions later on ' + fmt(b21.upRate,0) + '% of all days, averaging ' + signed(b21.mean) + ' — the contango bleed, not a signal.';
+    if (isNeutral) {
+        sentence = 'The surface is not in any of the three tested states, and outside them it has no directional information: walk-forward models built on every surface feature scored no better than chance out of sample. Expect the base rate — NG (tradeable) higher 21 sessions later on ' + fmt(b21.upRate,0) + '% of all days, averaging ' + signed(b21.mean) + '. That is the contango bleed, not a signal.';
     } else {
-        var dirWord = cur.bias === 'DOWNSIDE' ? 'lower' : 'higher';
-        var dirRate = cur.bias === 'DOWNSIDE' ? 100 - h21.upRate : h21.upRate;
-        var baseRate = cur.bias === 'DOWNSIDE' ? 100 - b21.upRate : b21.upRate;
-        var subsetTxt = usePersist ? (cur.confirmed ? ' confirmed' : ' fresh (not yet persistent)') : '';
-        sentence = st.short + '. On the ' + h21.n + ' prior' + subsetTxt + ' days in this state, NG (tradeable) was ' + dirWord + ' 21 sessions later ' + fmt(dirRate,0) + '% of the time (all-days base ' + fmt(baseRate,0) + '%), averaging ' + signed(h21.mean) + ' vs ' + signed(b21.mean) + '. ' +
-            st.episodeCount + ' separate episodes; ' + st.right21 + ' of ' + st.done21 + ' completed ones resolved ' + dirWord + ' at 21D.';
-        if (cur.state === 'UPSIDE_STRESS' && !cur.confirmed) sentence += ' An isolated stress day has carried no edge — it needs to persist (' + EDGE_CFG.persistMin + ' of ' + EDGE_CFG.persistWindow + ' sessions) before it means anything.';
-        if (cur.state === 'PANIC_FLUSH') sentence += ' This is the weakest of the three reads: a short bounce tendency, not a trough call.';
+        var ts = st.tradeStats;
+        var tradeLine = 'Scored as trades (' + sideTxt(st.bias, st.hold) + ' each time the state becomes actionable, no overlap): ' + ts.wins + ' of ' + ts.n + ' won, averaging ' + signed(ts.mean) + '. Doing the same on any day wins ' + fmt(ts.benchWinRate,0) + '% and averages ' + signed(ts.benchMean) + '.';
+        if (!actionable) {
+            sentence = st.short + ', but only on ' + cur.persist + ' of the last ' + W + ' sessions. On its first or isolated days this state has been a coin flip (' + fmt(st.fresh.horizons[st.hold].upRate,0) + '% higher after ' + st.hold + ' sessions, base ' + fmt(base[st.hold].upRate,0) + '%). It becomes actionable at ' + st.confirm + ' of ' + W + '. ' + tradeLine;
+        } else {
+            var dirWord = cur.bias === 'DOWNSIDE' ? 'lower' : 'higher';
+            var dirRate = cur.bias === 'DOWNSIDE' ? 100 - h21.upRate : h21.upRate;
+            var baseRate = cur.bias === 'DOWNSIDE' ? 100 - b21.upRate : b21.upRate;
+            sentence = st.short + '. ' + tradeLine + ' Day by day, NG (tradeable) was ' + dirWord + ' 21 sessions later on ' + fmt(dirRate,0) + '% of the ' + h21.n + ' prior days like today (base ' + fmt(baseRate,0) + '%).';
+            if (st.tier === 'WEAK') sentence += ' Weakest of the three reads: the win rate is not distinguishable from the benchmark, only the average is. A reason not to chase a short, not a trough call.';
+            if (st.tier === 'MODERATE') sentence += ' A ten-session effect; held to 21 sessions it fades to the benchmark.';
+        }
     }
+    var persistTxt = isNeutral ? '' : (needsConfirm
+        ? (cur.confirmed ? 'CONFIRMED' : 'UNCONFIRMED') + ' · on ' + cur.persist + ' of last ' + W + ' (needs ' + st.confirm + ')'
+        : 'on ' + cur.persist + ' of last ' + W + ' sessions');
     var hero = '<div class="edge-hero">' +
         '<div class="edge-hero-left">' +
-            '<div class="edge-state" style="color:' + cur.color + ';" data-tooltip="' + esc(st.short + '. State is re-evaluated every session from the skew ratio, NGVL, and the last five sessions of price and implied-vol change.') + '">' + cur.label + '</div>' +
-            '<div class="edge-bias" style="color:' + (cur.bias === 'NONE' ? dim : cur.color) + ';">' + biasTxt + '</div>' +
+            '<div class="edge-state" style="color:' + (actionable || isNeutral ? cur.color : dim) + ';" data-tooltip="' + esc(st.short + '. State is re-evaluated every session from the skew ratio, NGVL, and the last five sessions of price and implied-vol change.') + '">' + cur.label + '</div>' +
+            '<div class="edge-bias" style="color:' + (actionable ? cur.color : dim) + ';" data-tooltip="' + esc('Evidence tier. STRONG: beats the any-day benchmark as trades and day by day, in both halves of the history. MODERATE: beats it over a short hold only. WEAK: better average, win rate not distinguishable from the benchmark. A state is actionable only after it has been on for its required number of the last ' + W + ' sessions.') + '">' + biasTxt + '</div>' +
             '<div class="edge-since">since ' + fmtDate(cur.since) + ' · ' + cur.streak + ' session' + (cur.streak === 1 ? '' : 's') + '</div>' +
-            (persistTxt ? '<div class="edge-since" style="color:' + (cur.confirmed ? cur.color : 'rgba(255,255,255,0.5)') + ';" data-tooltip="Persistence filter. A skew state that has been on for at least ' + EDGE_CFG.persistMin + ' of the last ' + EDGE_CFG.persistWindow + ' sessions has historically been far more reliable than a first or isolated day.">' + persistTxt + '</div>' : '') +
+            (persistTxt ? '<div class="edge-since" style="color:' + (actionable ? cur.color : 'rgba(255,255,255,0.5)') + ';">' + persistTxt + '</div>' : '') +
         '</div>' +
         '<div class="edge-hero-mid">' + sentence + '</div>' +
         '<div class="edge-hero-right">';
     HZ.forEach(function(h) {
         var r = sub.horizons[h], b = base[h];
-        hero += '<div class="edge-cell" data-tooltip="' + esc(h + '-session forward return of the tradeable NG index from every day in this state. Mean ' + signed(r.mean) + ', median ' + signed(r.median) + ', higher on ' + fmt(r.upRate,0) + '% of ' + r.n + ' days. All-days base: mean ' + signed(b.mean) + ', higher on ' + fmt(b.upRate,0) + '%.' + (r.p != null ? ' Permutation p = ' + pTxt(r.p) + ' (share of time-shifted copies of this signal that did as well).' : '')) + '">' +
+        hero += '<div class="edge-cell" data-tooltip="' + esc(h + '-session forward return of the tradeable NG index from every prior day like today. Mean ' + signed(r.mean) + ', median ' + signed(r.median) + ', higher on ' + fmt(r.upRate,0) + '% of ' + r.n + ' days. All-days base: mean ' + signed(b.mean) + ', higher on ' + fmt(b.upRate,0) + '%.' + (r.p != null ? ' Permutation p = ' + pTxt(r.p) + ' (share of time-shifted copies of this signal that did as well).' : '')) + '">' +
             '<div class="edge-cell-lbl">' + h + 'D</div>' +
             '<div class="edge-cell-val" style="color:' + retColor(r.mean) + ';">' + signed(r.mean) + '</div>' +
             '<div class="edge-cell-sub">' + fmt(r.upRate,0) + '% up · base ' + fmt(b.upRate,0) + '%</div>' +
@@ -120,8 +132,8 @@ function renderEdgePanel(data, comp) {
     hero += '</div></div>';
 
     // ── Inputs: how close each trigger is ──
-    function gauge(lbl, val, sub, hot, tip) {
-        return '<div class="edge-input" data-tooltip="' + esc(tip) + '"><div class="edge-input-lbl">' + lbl + '</div><div class="edge-input-val" style="color:' + (hot ? '#f59e0b' : 'var(--text-bright, #fff)') + ';">' + val + '</div><div class="edge-input-sub">' + sub + '</div></div>';
+    function gauge(lbl, val, sub2, hot, tip) {
+        return '<div class="edge-input" data-tooltip="' + esc(tip) + '"><div class="edge-input-lbl">' + lbl + '</div><div class="edge-input-val" style="color:' + (hot ? '#f59e0b' : 'var(--text-bright, #fff)') + ';">' + val + '</div><div class="edge-input-sub">' + sub2 + '</div></div>';
     }
     var inputs = '<div class="edge-inputs">' +
         gauge('SKEW RATIO', fmt(f.skewRatio,3), fmt(f.skewPe,1) + 'th pct · blow-off ≥ ' + fmt(thr.skewBlow,2), f.skewPe >= EDGE_CFG.skewStress,
@@ -134,58 +146,72 @@ function renderEdgePanel(data, comp) {
             'Five-session log change in NGVL. A sell-off that RAISES implied vol means option buyers are paying up for protection — historically followed by a bounce. The same size of drop with flat or falling vol showed no bounce.') +
     '</div>';
 
-    // ── Evidence table: every state against the base rate ──
+    // ── Evidence table: every state against the base rate, by day and as trades ──
+    function dayCells(hz) {
+        var out = '';
+        HZ.forEach(function(h) { var r = hz[h]; out += '<td><span style="color:' + retColor(r.mean) + ';">' + signed(r.mean) + '</span> <span style="color:' + faint + ';">(' + fmt(r.upRate,0) + '%)</span></td>'; });
+        return out;
+    }
     var tbl = '<table class="scorecard-table edge-table"><thead><tr>' +
-        '<th data-tooltip="Directional state from the options surface">STATE</th>' +
-        '<th data-tooltip="Sessions spent in the state / separate episodes (a new episode starts after ' + EDGE_CFG.episodeGap + ' sessions without the state). Episodes, not days, are the independent sample.">DAYS / EPISODES</th>';
-    HZ.forEach(function(h) { tbl += '<th data-tooltip="Mean ' + h + '-session forward return of the tradeable NG index, with the share of days that finished higher">' + h + 'D MEAN (UP%)</th>'; });
-    tbl += '<th data-tooltip="Circular-shift permutation p-value at 21 sessions: the share of time-shifted copies of the signal whose mean forward return was at least as favourable. Shifting whole blocks keeps the clustering of signal days intact, which a t-test on daily rows ignores.">P (21D)</th>' +
-        '<th data-tooltip="Episodes that resolved in the direction of the read 21 sessions after their FIRST day, out of completed episodes">EPISODES RIGHT 21D</th>' +
-        '<th data-tooltip="Largest move AGAINST the read within 21 sessions of an episode\'s first day (worst episode / median episode). This is the heat a position entered on day one had to survive.">ADVERSE (WORST / MED)</th>' +
+        '<th data-tooltip="Directional state from the options surface, with its evidence tier">STATE</th>' +
+        '<th data-tooltip="Sessions spent in the state">DAYS</th>';
+    HZ.forEach(function(h) { tbl += '<th data-tooltip="Mean ' + h + '-session forward return of the tradeable NG index from every day in the state, with the share of days that finished higher">' + h + 'D MEAN (UP%)</th>'; });
+    tbl += '<th data-tooltip="Day-level significance at 21 sessions. Circular-shift permutation: the share of time-shifted copies of the signal whose mean forward return was at least as favourable. Shifting whole blocks keeps the clustering of signal days intact, which a t-test on daily rows ignores.">P (DAYS)</th>' +
+        '<th data-tooltip="The state scored the way it would be used: enter when it becomes actionable and you are flat, hold the stated number of sessions, no overlapping positions. Shown as trades won out of trades taken, with the win rate of taking the same side for the same hold on ANY day — on a tradeable basis simply being short NG wins well over half the time, so that is the bar.">TRADES WON (ANY-DAY)</th>' +
+        '<th data-tooltip="Mean result per trade in the direction of the read, and profit factor (gains divided by losses)">AVG / PF</th>' +
+        '<th data-tooltip="Trade-level significance: probability of winning at least this many trades if each had only the any-day benchmark win rate (exact binomial)">P (TRADES)</th>' +
+        '<th data-tooltip="Worst finished trade, and the worst point any trade reached before its exit. Size positions for the second number.">WORST / HEAT</th>' +
         '</tr></thead><tbody>';
     ['BLOWOFF', 'UPSIDE_STRESS', 'PANIC_FLUSH', 'NEUTRAL'].forEach(function(k) {
         var s = edge.states[k]; if (!s) return;
-        var active = k === cur.state;
+        var active = k === cur.state, t = s.tradeStats;
         tbl += '<tr' + (active ? ' style="background:rgba(255,255,255,0.045);"' : '') + '>' +
-            '<td style="color:' + s.color + ';font-weight:800;" data-tooltip="' + esc(s.short) + '">' + s.label + (active ? ' ◀' : '') + '</td>' +
-            '<td>' + s.days + (s.episodeCount != null ? ' / ' + s.episodeCount : '') + '</td>';
-        HZ.forEach(function(h) { var r = s.horizons[h]; tbl += '<td><span style="color:' + retColor(r.mean) + ';">' + signed(r.mean) + '</span> <span style="color:' + faint + ';">(' + fmt(r.upRate,0) + '%)</span></td>'; });
-        tbl += '<td style="color:' + (s.horizons[21].p != null && s.horizons[21].p < 0.05 ? '#3db87a' : dim) + ';">' + pTxt(s.horizons[21].p) + '</td>' +
-            '<td>' + (s.done21 ? s.right21 + ' / ' + s.done21 : '—') + '</td>' +
-            '<td>' + (s.worstAdverse != null ? signed(s.worstAdverse) + ' / ' + signed(s.medianAdverse) : '—') + '</td></tr>';
-        if ((k === 'BLOWOFF' || k === 'UPSIDE_STRESS') && s.confirmed) {
-            [['confirmed', s.confirmed, '↳ confirmed (≥' + EDGE_CFG.persistMin + ' of last ' + EDGE_CFG.persistWindow + ')'], ['fresh', s.fresh, '↳ fresh / isolated']].forEach(function(x) {
-                var q = x[1];
-                tbl += '<tr style="font-size:0.92em;"><td style="color:' + dim + ';padding-left:22px;text-align:left;" data-tooltip="' + (x[0] === 'confirmed' ? 'Days when the state had already been on for at least ' + EDGE_CFG.persistMin + ' of the last ' + EDGE_CFG.persistWindow + ' sessions.' : 'First or isolated days of the state — fewer than ' + EDGE_CFG.persistMin + ' of the last ' + EDGE_CFG.persistWindow + ' sessions.') + '">' + x[2] + '</td><td style="color:' + dim + ';">' + q.days + '</td>';
-                HZ.forEach(function(h) { var r = q.horizons[h]; tbl += '<td><span style="color:' + retColor(r.mean) + ';">' + signed(r.mean) + '</span> <span style="color:' + faint + ';">(' + fmt(r.upRate,0) + '%)</span></td>'; });
-                tbl += '<td style="color:' + (q.horizons[21].p != null && q.horizons[21].p < 0.05 ? '#3db87a' : dim) + ';">' + pTxt(q.horizons[21].p) + '</td><td>—</td><td>—</td></tr>';
+            '<td style="color:' + s.color + ';font-weight:800;text-align:left;" data-tooltip="' + esc(s.short) + '">' + s.label + (active ? ' ◀' : '') +
+                (s.tier ? ' <span style="font-size:0.8em;font-weight:700;color:' + TIER_COLOR[s.tier] + ';">' + s.tier + '</span>' : '') + '</td>' +
+            '<td>' + s.days + '</td>' + dayCells(s.horizons) +
+            '<td style="color:' + (s.horizons[21].p != null && s.horizons[21].p < 0.05 ? '#3db87a' : dim) + ';">' + pTxt(s.horizons[21].p) + '</td>';
+        if (t) {
+            tbl += '<td data-tooltip="' + esc(sideTxt(s.bias, s.hold) + ', entered ' + (s.confirm > 1 ? 'once the state has been on ' + s.confirm + ' of the last ' + W + ' sessions' : 'on the first day of the state')) + '">' + t.wins + ' / ' + t.n + ' <span style="color:' + faint + ';">= ' + fmt(t.winRate,0) + '% (' + fmt(t.benchWinRate,0) + '%)</span></td>' +
+                '<td><span style="color:' + retColor(t.mean) + ';">' + signed(t.mean) + '</span> <span style="color:' + faint + ';">/ ' + pfTxt(t.profitFactor) + '</span></td>' +
+                '<td style="color:' + (t.p != null && t.p < 0.05 ? '#3db87a' : dim) + ';">' + pTxt(t.p) + '</td>' +
+                '<td>' + signed(t.worst) + ' / ' + signed(t.worstHeat) + '</td>';
+        } else tbl += '<td>—</td><td>—</td><td>—</td><td>—</td>';
+        tbl += '</tr>';
+        if (s.confirmed && s.confirm > 1) {
+            [[s.confirmed, '↳ actionable (≥' + s.confirm + ' of last ' + W + ')', 'Days when the state had already been on for at least ' + s.confirm + ' of the last ' + W + ' sessions. Trades are entered only on these days.'],
+             [s.fresh, '↳ first / isolated day', 'First or isolated days of the state. Historically indistinguishable from the base rate — do not act on these.']].forEach(function(x) {
+                var q = x[0];
+                tbl += '<tr style="font-size:0.92em;"><td style="color:' + dim + ';padding-left:22px;text-align:left;" data-tooltip="' + esc(x[2]) + '">' + x[1] + '</td><td style="color:' + dim + ';">' + q.days + '</td>' + dayCells(q.horizons) +
+                    '<td style="color:' + (q.horizons[21].p != null && q.horizons[21].p < 0.05 ? '#3db87a' : dim) + ';">' + pTxt(q.horizons[21].p) + '</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>';
             });
         }
     });
-    tbl += '<tr style="border-top:1px solid rgba(255,255,255,0.12);"><td style="font-weight:800;color:' + dim + ';" data-tooltip="Every session with a full year of prior history. This is what you get with no signal at all.">ALL DAYS (BASE)</td><td>' + base[21].n + '</td>';
-    HZ.forEach(function(h) { var r = base[h]; tbl += '<td><span style="color:' + retColor(r.mean) + ';">' + signed(r.mean) + '</span> <span style="color:' + faint + ';">(' + fmt(r.upRate,0) + '%)</span></td>'; });
-    tbl += '<td>—</td><td>—</td><td>—</td></tr></tbody></table>';
+    tbl += '<tr style="border-top:1px solid rgba(255,255,255,0.12);"><td style="font-weight:800;color:' + dim + ';text-align:left;" data-tooltip="Every session with a full year of prior history. This is what you get with no signal at all.">ALL DAYS (BASE)</td><td>' + base[21].n + '</td>' + dayCells(base) + '<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>';
 
-    // ── Episode ledger ──
-    var eps = [];
+    // ── Trade ledger: one state at a time, so a strong read is never averaged with a weak one ──
+    var ledgerKey = CvolState.edgeLedger && edge.states[CvolState.edgeLedger] && edge.states[CvolState.edgeLedger].trades ? CvolState.edgeLedger : (isNeutral ? 'BLOWOFF' : cur.state);
+    var ls = edge.states[ledgerKey], lt = ls.tradeStats;
+    var chips = '<div class="edge-chips">';
     ['BLOWOFF', 'UPSIDE_STRESS', 'PANIC_FLUSH'].forEach(function(k) {
-        (edge.states[k].episodes || []).forEach(function(e) { eps.push({ k: k, e: e }); });
+        var s = edge.states[k], on = k === ledgerKey;
+        chips += '<button class="edge-chip' + (on ? ' active' : '') + '" style="' + (on ? 'color:' + s.color + ';border-color:' + s.color + ';' : '') + '" onclick="setEdgeLedger(\'' + k + '\')" data-tooltip="' + esc('Show every ' + s.label + ' trade: ' + sideTxt(s.bias, s.hold) + '.') + '">' + s.label + ' · ' + s.tradeStats.wins + '/' + s.tradeStats.n + '</button>';
     });
-    eps.sort(function(a, b) { return b.e.startIdx - a.e.startIdx; });
+    chips += '</div>';
     var ledger = '<table class="scorecard-table edge-table"><thead><tr>' +
-        '<th>EPISODE START</th><th>STATE</th><th data-tooltip="Sessions the state was on during the episode">DAYS</th>' +
-        '<th data-tooltip="Skew ratio and NGVL on the first day">SKEW / NGVL</th>' +
-        '<th data-tooltip="Tradeable NG index return 10 sessions after the first day">10D</th><th data-tooltip="Tradeable NG index return 21 sessions after the first day">21D</th><th data-tooltip="Tradeable NG index return 42 sessions after the first day">42D</th>' +
-        '<th data-tooltip="Largest move against the read within 21 sessions of the first day">ADVERSE</th><th>OUTCOME 21D</th></tr></thead><tbody>';
-    eps.slice(0, 14).forEach(function(x) {
-        var e = x.e, m = edge.states[x.k];
-        var outcome = e.right21 == null ? '<span style="color:#f59e0b;">' + (e.active ? 'LIVE' : 'PENDING') + '</span>' : e.right21 ? '<span style="color:#3db87a;">RIGHT</span>' : '<span style="color:#ef4444;">WRONG</span>';
-        ledger += '<tr><td>' + fmtDate(e.start) + '</td><td style="color:' + m.color + ';font-weight:700;">' + m.label + '</td><td>' + e.days + '</td>' +
-            '<td>' + fmt(e.skewRatio,2) + ' / ' + fmt(e.ngvl,0) + '</td>' +
-            '<td style="color:' + retColor(e.fwd10) + ';">' + signed(e.fwd10) + '</td><td style="color:' + retColor(e.fwd21) + ';">' + signed(e.fwd21) + '</td><td style="color:' + retColor(e.fwd42) + ';">' + signed(e.fwd42) + '</td>' +
-            '<td>' + signed(e.adverse21) + '</td><td>' + outcome + '</td></tr>';
+        '<th data-tooltip="Close of the first actionable day while flat">ENTRY</th><th data-tooltip="' + ls.hold + ' sessions later">EXIT</th>' +
+        '<th data-tooltip="Skew ratio and NGVL at entry">SKEW / NGVL</th>' +
+        '<th data-tooltip="Tradeable NG index move from entry to exit">NG MOVE</th>' +
+        '<th data-tooltip="Result in the direction of the read (' + (ls.bias === 'DOWNSIDE' ? 'short' : 'long') + ' the unlevered index). A 2x ETF roughly doubles it, before volatility drag.">RESULT</th>' +
+        '<th data-tooltip="Worst point reached against the position before exit">WORST HEAT</th><th>OUTCOME</th></tr></thead><tbody>';
+    ls.trades.slice().reverse().forEach(function(t) {
+        var outcome = t.open ? '<span style="color:#f59e0b;">OPEN · ' + t.sessions + ' of ' + ls.hold + '</span>' : t.pnl > 0 ? '<span style="color:#3db87a;">WON</span>' : '<span style="color:#ef4444;">LOST</span>';
+        ledger += '<tr><td>' + fmtDate(t.entry) + '</td><td>' + (t.open ? '—' : fmtDate(t.exit)) + '</td><td>' + fmt(t.skewRatio,2) + ' / ' + fmt(t.ngvl,0) + '</td>' +
+            '<td style="color:' + retColor(t.ng) + ';">' + signed(t.ng) + '</td><td style="color:' + retColor(t.pnl) + ';font-weight:700;">' + signed(t.pnl) + '</td>' +
+            '<td>' + signed(t.heat) + '</td><td>' + outcome + '</td></tr>';
     });
     ledger += '</tbody></table>';
+    var ledgerNote = '<div class="edge-ledger-note"><b style="color:' + ls.color + ';">' + ls.label + '</b> — ' + sideTxt(ls.bias, ls.hold) + ', entered ' + (ls.confirm > 1 ? 'once the state has been on ' + ls.confirm + ' of the last ' + W + ' sessions' : 'on the first day of the state') + ': <b>' + lt.wins + ' of ' + lt.n + ' won (' + fmt(lt.winRate,0) + '%)</b>, average ' + signed(lt.mean) + ', profit factor ' + pfTxt(lt.profitFactor) + '. ' +
+        'The same side on any day: ' + fmt(lt.benchWinRate,0) + '% and ' + signed(lt.benchMean) + '. ' + (lt.p != null ? 'Chance of this many wins at the benchmark rate: ' + pTxt(lt.p) + '.' : '') + '</div>';
 
     // ── Holding cost ──
     var dec = comp.decay, decay = '';
@@ -201,12 +227,12 @@ function renderEdgePanel(data, comp) {
     }
 
     var foot = '<div class="edge-foot">Statistics are recomputed from the full history (' + fmtDate(data[Math.min(EDGE_CFG.minHistory, data.length - 1)].date) + ' onward) on every load. ' +
-        'Thresholds were chosen after looking at this same history, so treat the sizes as optimistic; the signs held in both halves of the sample. ' +
-        'The independent sample is episodes, not days — and one blow-off episode (Dec-2024) ran +30% against the read before anything else happened.</div>';
+        'Thresholds, confirmation counts and holds were chosen after looking at this same history, so treat the sizes as optimistic; the signs held in both halves of the sample. ' +
+        'Outside these states the surface carries no usable directional information — most days are, and should read as, NO EDGE.</div>';
 
     el.innerHTML = hero + inputs + decay +
         '<div class="edge-sub-title">EVIDENCE BY STATE</div><div style="overflow-x:auto;">' + tbl + '</div>' +
-        '<div class="edge-sub-title">EPISODE LEDGER <span style="color:' + faint + ';font-weight:400;letter-spacing:0;">most recent first</span></div><div style="overflow-x:auto;">' + ledger + '</div>' + foot;
+        '<div class="edge-sub-title">TRADE LEDGER <span style="color:' + faint + ';font-weight:400;letter-spacing:0;">most recent first</span></div>' + chips + ledgerNote + '<div style="overflow-x:auto;">' + ledger + '</div>' + foot;
 }
 
 // ── KPI Cards (expanded) ─────────────────────────────────────

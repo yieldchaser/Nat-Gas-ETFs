@@ -13,6 +13,8 @@ Sections
   5. What the surface looks like at actual peaks and troughs
   6. Implied vs realized vol on a roll-free series
   7. Leveraged-ETF volatility drag by NGVL level
+  8. The states scored as non-overlapping trades against the any-day benchmark
+  9. Walk-forward model: is there anything outside the three states? (needs scikit-learn)
 
 The live page (docs/js/cvol.js: computeEdgeModel) recomputes section 4 in the browser;
 tools/test_cvol.js pins the definitions. This script exists so the numbers can be
@@ -170,6 +172,76 @@ def main():
     g = pd.DataFrame({"ngvl": c.ngvl, "BOIL": drag_b, "KOLD": drag_k}).dropna().groupby(
         lambda k: pd.cut([c.ngvl[k]], [0, 40, 55, 70, 85, 100, 250])[0], observed=True)
     print(g.agg(n=("BOIL", "size"), BOIL_median=("BOIL", "median"), KOLD_median=("KOLD", "median")).round(1).to_string())
+
+    print("\n8. AS TRADES (enter when actionable and flat, fixed hold, no overlap; P&L in the direction of the read)")
+    n = len(c)
+    lpx = np.log(c.idx_px.values)
+
+    def run(mask, hold, sgn):
+        out, i = [], 252
+        while i < n - 1:
+            if mask[i] and i + hold <= n - 1:
+                out.append(sgn * (np.exp(lpx[i + hold] - lpx[i]) - 1) * 100)
+                i += hold + 1
+            elif mask[i]:
+                break
+            else:
+                i += 1
+        return np.array(out)
+
+    def persist(m, w=10):
+        return pd.Series(np.asarray(m).astype(int)).rolling(w, min_periods=1).sum().values
+
+    bl, st_, fl = blow.values, stress.values, flush.values
+    for name, mask, hold, sgn in (
+        ("BLOW-OFF FADE, first day, short 21", bl, 21, -1),
+        ("BLOW-OFF FADE, first day, short 10", bl, 10, -1),
+        ("UPSIDE STRESS, first day, short 10", st_, 10, -1),
+        ("UPSIDE STRESS, 3 of last 10, short 10", st_ & (persist(st_) >= 3), 10, -1),
+        ("UPSIDE STRESS, 3 of last 10, short 21", st_ & (persist(st_) >= 3), 21, -1),
+        ("PANIC FLUSH, first day, long 10", fl, 10, 1),
+        ("PANIC FLUSH, 2 of last 10, long 10", fl & (persist(fl) >= 2), 10, 1),
+        ("PANIC FLUSH, 2 of last 10, long 5", fl & (persist(fl) >= 2), 5, 1),
+    ):
+        t = run(mask, hold, sgn)
+        b = sgn * (np.exp(lpx[252 + hold:] - lpx[252:-hold]) - 1) * 100
+        pf = t[t > 0].sum() / max(1e-9, -t[t < 0].sum())
+        print(f"   {name:38s} trades {len(t):3d}  won {(t > 0).sum():3d} = {(t > 0).mean():4.0%}  mean {t.mean():+5.1f}%  PF {pf:4.1f}"
+              f"  worst {t.min():+6.1f}%   | any-day: {(b > 0).mean():.0%} / {b.mean():+.1f}%")
+
+    print("\n9. WALK-FORWARD: logistic model on all surface features, refit quarterly on past data only")
+    try:
+        from sklearn.linear_model import LogisticRegression
+        from sklearn.preprocessing import StandardScaler
+    except ImportError:
+        print("   (scikit-learn not installed - skipped)")
+    else:
+        X = pd.DataFrame({
+            "skew_pe": sr_pe, "ngvl_pe": vol_pe, "move5": move5, "dvol5": dvol5,
+            "sr_z63": (c.sr - c.sr.rolling(63).mean()) / c.sr.rolling(63).std(),
+            "conv_pe": expanding_pct(c.conv), "vrp": np.log(c.ngvl / rv_fm),
+        })
+        state = np.where(blow | stress | flush, "EDGE", "NEUTRAL")
+        for h in (10, 21):
+            y = (c[f"f{h}"] > 0).astype(float).where(c[f"f{h}"].notna())
+            pred = pd.Series(np.nan, index=c.index)
+            dates = c.index[c.index >= "2018-01-01"]
+            for k in range(0, len(dates), 63):
+                i0 = c.index.get_loc(dates[k])
+                tr = c.index[252:max(253, i0 - h)]
+                m = X.loc[tr].notna().all(axis=1) & y.loc[tr].notna()
+                te = c.loc[dates[k]:dates[min(len(dates) - 1, k + 62)]].index
+                mt = X.loc[te].notna().all(axis=1)
+                sc = StandardScaler().fit(X.loc[tr][m])
+                mdl = LogisticRegression(C=0.1, max_iter=500).fit(sc.transform(X.loc[tr][m]), y.loc[tr][m])
+                pred.loc[te[mt]] = mdl.predict_proba(sc.transform(X.loc[te][mt]))[:, 1]
+            x = pd.DataFrame({"p": pred, "f": c[f"f{h}"], "state": state}).dropna()
+            neutral = x[x.state == "NEUTRAL"]
+            q = neutral.p.rank(pct=True)
+            print(f"   {h}D out-of-sample (2018 on, n={len(x)}): rank IC all days {x.p.corr(x.f, method='spearman'):+.3f}"
+                  f" | NEUTRAL days only {neutral.p.corr(neutral.f, method='spearman'):+.3f};"
+                  f" model's most-bullish decile finished higher {(neutral[q >= 0.9].f > 0).mean():.0%},"
+                  f" most-bearish decile {(neutral[q <= 0.1].f > 0).mean():.0%}")
     print()
 
 

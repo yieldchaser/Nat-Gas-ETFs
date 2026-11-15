@@ -90,12 +90,13 @@ weather spike; the spike usually passes and the contango bleed resumes.
 January 2026 ran +24% against before resolving lower. The median adverse excursion is +4%, the
 worst +30%. This is an edge with a fat tail, not a free trade.
 
-### Upside stress (bearish) — only once it persists
+### Upside stress (bearish) — moderate, and only once it persists
 
 Same condition one notch down (skew 90–95th percentile). Day-weighted it looks strong (−8.5% at
 21D, p = 0.018), but an isolated day means nothing (−3.3%, 42% higher — the base rate). Once the
-state has been on for 3 of the last 10 sessions it is −10.0% with 23% higher. The panel splits
-both skew states into *confirmed* and *fresh* for this reason.
+state has been on for 3 of the last 10 sessions it is −10.0% with 23% higher. As trades it is a
+ten-session effect: 17 of 23 won against a 56% benchmark; held to 21 sessions it is 10 of 17,
+which *is* the benchmark.
 
 ### Panic flush (bullish) — weak, and the only long-side result
 
@@ -108,10 +109,50 @@ NG down ≥ 1.5 implied sigmas in 5 sessions **while NGVL rises more than 5%**.
 | NGVL falling > 5% | 51 | −0.5% | 47% |
 
 A sell-off that makes option buyers pay up has tended to bounce over 5–21 sessions; the same drop
-with no vol response has not. Permutation p = 0.03 at 21D, positive in 8 of 12 years. But at the
-level of first signal days it is 57% (n = 47), the edge is gone by 42 sessions, and most of the
-mean comes from a handful of large winners. Treat it as a reason not to chase a short, not as a
-trough call.
+with no vol response has not. But the first signal day is a coin flip (permutation p = 0.31 at 5
+sessions); it only counts from the second day (p ≈ 0.03–0.04). Even then the win rate over ten
+sessions, 13 of 24, is not distinguishable from the 44% benchmark — only the average is better
+(+5.0% vs −0.8%), carried by a few large winners. Treat it as a reason not to chase a short, not
+as a trough call.
+
+### Is it a coin toss? Scoring the states as trades
+
+Grading "was NG lower 21 sessions after the first day of an episode" mixes the three states and
+measures against zero. Both are wrong: the states differ enormously in quality, and on a tradeable
+basis simply being short NG wins 56–58% of the time. Scored as non-overlapping trades against that
+any-day benchmark:
+
+| Rule | Trades | Won | Avg | Profit factor | Any-day benchmark | p |
+|---|---|---|---|---|---|---|
+| Blow-off, first day, short 21 sessions | 13 | 11 (85%) | +9.4% | 6.0 | 58% / +1.7% | 0.041 |
+| Blow-off, first day, short 10 sessions | 20 | 17 (85%) | +5.8% | 8.6 | 56% / +0.8% | 0.006 |
+| Upside stress, first day, short 10 | 32 | 19 (59%) | +2.1% | 1.6 | 56% / +0.8% | — |
+| Upside stress, 3 of last 10, short 10 | 23 | 17 (74%) | +4.8% | 2.8 | 56% / +0.8% | 0.059 |
+| Panic flush, first day, long 10 | 37 | 19 (51%) | +1.7% | 1.6 | 44% / −0.8% | — |
+| Panic flush, 2 of last 10, long 10 | 24 | 13 (54%) | +5.0% | 3.9 | 44% / −0.8% | 0.218 |
+
+So: first-day upside stress and first-day panic flush **are** coin tosses, and the panel now says
+so and refuses to call them actionable. Blow-off is not: 85% in both halves of the history (6 of 7
+before June 2020, 11 of 13 after, on the ten-session rule). It is also rare — about one to two
+trades a year.
+
+### Is this the most the data can give? For direction, yes
+
+- **Walk-forward test.** A logistic model on every surface feature (and a gradient-boosted one
+  with momentum and seasonality added), refit each quarter on past data only, scored a rank
+  correlation of −0.02 to +0.02 with forward returns out of sample from 2018. On days outside the
+  three states its most-bullish and most-bearish deciles finished higher 51% and 49% of the time at
+  ten sessions. There is nothing in the surface on ordinary days. The information is in the tail.
+- **Fund flows (Flow Monitor data) do not rescue it.** Net KOLD-minus-BOIL flow has no stable
+  relationship with forward returns. Heavy 20-day BOIL creations preceded gains (+13% at 21
+  sessions, 77% higher) and heavy redemptions preceded losses, which is interesting, but it rests
+  on five and eight episodes and the effect halved in the second half of the sample. Worth
+  tracking; not worth a signal yet. Inside the blow-off regime, flows did not separate winners
+  from losers.
+- **What could add real information** is data this repository does not have: the futures curve
+  (M1–M2 spread and its change), EIA storage surprises, weather-model revisions, and CFTC
+  positioning. The December 2024 loss was a fundamental cold-driven repricing that the options
+  surface alone could not have distinguished from a blow-off.
 
 ### Troughs leave no signature
 
@@ -145,9 +186,12 @@ drag for today's NGVL from historical analog days.
 
 ## 5. What changed on the page
 
-- **New Directional Edge panel** at the top: current state, how close each trigger is, evidence
-  table against the base rate (with permutation p-values, episode counts and adverse excursion),
-  an episode ledger, and the holding-cost strip. The top banner now leads with this read.
+- **New Directional Edge panel** at the top: current state and evidence tier (strong / moderate /
+  weak), how close each trigger is, evidence against the base rate both day by day and as trades
+  (with a permutation p-value for the former and a binomial one against the any-day benchmark for
+  the latter), a per-state trade ledger, and the holding-cost strip. A state is shown as actionable
+  only after it has persisted long enough to have had an edge historically. The top banner leads
+  with this read when it is actionable.
 - **All forward returns on the tab** (surface analogs, scorecard, timeline, threshold sensitivity)
   are now on the tradeable basis; realized vol and VRP are on the roll-free series.
 - `VOL_UNDERPRICED` now requires realized to actually exceed implied; a low 21-day z-score of the
@@ -174,10 +218,11 @@ These are judgement calls about your page, so they are left in place:
 
 ## 7. Limits of this work
 
-- Thresholds (95/90 percentile, 1.5σ, +5%) were chosen after looking at the same history. Results
+- Thresholds (95/90 percentile, 1.5σ, +5%), confirmation counts and holds were chosen after looking
+  at the same history. Results
   are monotonic in the thresholds and stable across halves, which argues against a fluke, but the
   effect sizes are optimistic. There is no untouched hold-out sample.
-- The independent sample is episodes: 11 blow-offs, 18 stress episodes, 36 flushes in 12 years.
+- The independent sample is small: 13–20 blow-off trades, 23 stress trades, 24 flush trades in 12 years.
 - The tradeable index is built from BOIL/KOLD closes; its returns are close-to-close on US equity
   hours while CVOL rows are CME values (and since April 2026, intraday snapshots).
 - Nothing here uses storage, weather or positioning. The December 2024 failure was a fundamental

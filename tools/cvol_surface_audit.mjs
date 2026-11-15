@@ -87,10 +87,13 @@ if (edge && edge.current) {
     const edgeRows = ['BLOWOFF', 'UPSIDE_STRESS', 'PANIC_FLUSH', 'NEUTRAL'].map((k) => {
         const s = edge.states[k], h = s.horizons;
         return [s.label, s.days, s.episodeCount ?? '-', `${fmt(h[5].mean)}%`, `${fmt(h[10].mean)}%`, `${fmt(h[21].mean)}%`, pct(h[21].upRate), `${fmt(h[42].mean)}%`,
-            h[21].p == null ? '-' : fmt(h[21].p, 3), s.done21 ? `${s.right21}/${s.done21}` : '-', s.worstAdverse == null ? '-' : `${fmt(s.worstAdverse)}%`];
+            h[21].p == null ? '-' : fmt(h[21].p, 3),
+            s.tradeStats ? `${s.tradeStats.wins}/${s.tradeStats.n} (${pct(s.tradeStats.winRate)} vs ${pct(s.tradeStats.benchWinRate)})` : '-',
+            s.tradeStats ? `${fmt(s.tradeStats.mean)}% / ${fmt(s.tradeStats.profitFactor)}` : '-',
+            s.tradeStats ? fmt(s.tradeStats.p, 3) : '-', s.tradeStats ? `${fmt(s.tradeStats.worstHeat)}%` : '-'];
     });
-    edgeRows.push(['ALL DAYS (BASE)', edge.base[21].n, '-', `${fmt(edge.base[5].mean)}%`, `${fmt(edge.base[10].mean)}%`, `${fmt(edge.base[21].mean)}%`, pct(edge.base[21].upRate), `${fmt(edge.base[42].mean)}%`, '-', '-', '-']);
-    printRows(['State', 'Days', 'Episodes', '5D', '10D', '21D', '21D Up', '42D', 'p(21D)', 'Ep right 21D', 'Worst adverse'], edgeRows);
+    edgeRows.push(['ALL DAYS (BASE)', edge.base[21].n, '-', `${fmt(edge.base[5].mean)}%`, `${fmt(edge.base[10].mean)}%`, `${fmt(edge.base[21].mean)}%`, pct(edge.base[21].upRate), `${fmt(edge.base[42].mean)}%`, '-', '-', '-', '-', '-']);
+    printRows(['State', 'Days', 'Episodes', '5D', '10D', '21D', '21D Up', '42D', 'p(days)', 'Trades won (vs any-day)', 'Avg / PF', 'p(trades)', 'Worst heat'], edgeRows);
     if (comp.decay && !comp.decay.lowSample) {
         console.log(`Holding cost at NGVL ${fmt(comp.decay.ngvl, 0)} (${comp.decay.n} analog days, 21 sessions): BOIL ${fmt(comp.decay.boilMedian)}% | KOLD ${fmt(comp.decay.koldMedian)}%`);
     }
