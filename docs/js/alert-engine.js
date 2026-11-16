@@ -506,8 +506,42 @@ const AlertEngine = {
             const st = s.stats, o = s.otherStats;
             const statusTxt = s.unavailable ? 'no data' : (s.status === 'ACTIVE' ? 'ACTIVE' : (s.status === 'IN_WINDOW' ? 'IN WINDOW' : 'off'));
             const statusColor = s.status === 'ACTIVE' ? (s.side === 'short' ? 'var(--red)' : 'var(--green)') : (s.status === 'IN_WINDOW' ? '#d4a830' : 'var(--text-muted)');
-            return '<tr>' +
-                '<td class="aa-td-name" data-tooltip="' + self._esc(s.rule + '. ' + s.why) + '">' + s.label + '</td>' +
+
+            // Build trade ledger sub-table for this setup
+            let ledgerHtml = '';
+            if (s.trades && s.trades.length) {
+                const trRows = s.trades.slice().reverse().map(function(t) {
+                    const outcome = t.open ? '<span style="color:#f59e0b;font-weight:700;">OPEN · ' + t.sessions + ' of ' + s.hold + 'D</span>'
+                        : (t.pnl > 0 ? '<span style="color:var(--green);font-weight:700;">WON</span>' : '<span style="color:var(--red);font-weight:700;">LOST</span>');
+                    const ngColor = t.ng > 0 ? 'var(--green)' : (t.ng < 0 ? 'var(--red)' : 'inherit');
+                    const pnlColor = t.pnl > 0 ? 'var(--green)' : (t.pnl < 0 ? 'var(--red)' : 'inherit');
+                    const legColor = t.leg > 0 ? 'var(--green)' : (t.leg < 0 ? 'var(--red)' : 'inherit');
+                    return '<tr>' +
+                        '<td>' + t.entry + '</td>' +
+                        '<td>' + (t.open ? '—' : t.exit) + '</td>' +
+                        '<td>' + t.sessions + 'D</td>' +
+                        '<td style="color:' + ngColor + '">' + self._s(t.ng) + '</td>' +
+                        '<td style="color:' + pnlColor + ';font-weight:700;">' + self._s(t.pnl) + '</td>' +
+                        '<td style="color:' + legColor + '">' + self._s(t.leg) + '</td>' +
+                        '<td>' + self._s(t.heat) + '</td>' +
+                        '<td>' + outcome + '</td>' +
+                    '</tr>';
+                }).join('');
+                ledgerHtml = '<tr id="aa-ledger-' + s.key + '" class="aa-ledger-row" style="display:none;"><td colspan="12">' +
+                    '<div class="aa-ledger-container">' +
+                        '<div class="aa-ledger-title">' +
+                            '<span><b>' + s.label + '</b> — Trade Ledger (' + s.trades.length + ' non-overlapping trades, most recent first)</span>' +
+                            '<span>Hold: ' + s.hold + 'D · Win Rate: ' + self._f(st.winRate) + '% vs Any-Day ' + self._f(st.benchWinRate) + '%</span>' +
+                        '</div>' +
+                        '<div style="overflow-x:auto;"><table class="aa-ledger-table"><thead><tr>' +
+                            '<th>ENTRY</th><th>EXIT</th><th>SESSIONS</th><th>NG RETURN</th><th>TRADE P&L</th><th>' + (s.side === 'short' ? 'KOLD' : 'BOIL') + ' LEG</th><th>MAX HEAT</th><th>OUTCOME</th>' +
+                        '</tr></thead><tbody>' + trRows + '</tbody></table></div>' +
+                    '</div>' +
+                '</td></tr>';
+            }
+
+            return '<tr class="aa-setup-row" data-setup-key="' + s.key + '" title="Click to view full trade ledger">' +
+                '<td class="aa-td-name" data-tooltip="' + self._esc(s.rule + '. ' + s.why) + '"><span class="aa-row-toggle">▶</span> ' + s.label + '</td>' +
                 '<td style="color:' + (s.side === 'short' ? 'var(--red)' : 'var(--green)') + '">' + (s.side === 'short' ? 'SHORT' : 'LONG') + ' ' + s.hold + 'D</td>' +
                 '<td style="color:' + self._tierColor(s.tier) + '">' + s.tier + '</td>' +
                 '<td style="color:' + statusColor + '">' + statusTxt + '</td>' +
@@ -519,7 +553,7 @@ const AlertEngine = {
                 '<td data-tooltip="Win rate in the first and second half of the history (number of trades in brackets). An edge that only exists in one half is suspect.">' + self._f(st.h1Rate) + '% (' + st.h1n + ') / ' + self._f(st.h2Rate) + '% (' + st.h2n + ')</td>' +
                 '<td data-tooltip="Same setup on the other hold length.">' + (o && o.n ? self._f(o.winRate) + '% vs ' + self._f(o.benchWinRate) + '% @' + s.otherHold + 'D' : '—') + '</td>' +
                 '<td>' + (s.lastFired || '—') + '</td>' +
-            '</tr>';
+            '</tr>' + ledgerHtml;
         }).join('');
 
         el.innerHTML =
@@ -539,6 +573,25 @@ const AlertEngine = {
                     'P is the exact binomial chance of that many wins if the setup were no better than a random day on the same side. Rules and thresholds were chosen on this same history, so sizes are optimistic. ' +
                     'The former VCVI / MWCA / RVOL threshold alerts were removed: they fired on about one day in five and did not separate from the base rate. Full study: docs/alerts_research.md.</div>' +
             '</details>';
+
+        // Bind row click toggles for trade ledgers
+        if (typeof el.querySelectorAll === 'function') {
+            const setupRows = el.querySelectorAll('.aa-setup-row');
+            setupRows.forEach(function(row) {
+                row.addEventListener('click', function() {
+                    const key = this.getAttribute('data-setup-key');
+                    const sub = el.querySelector('#aa-ledger-' + key);
+                    const toggle = this.querySelector('.aa-row-toggle');
+                    if (sub) {
+                        const isHidden = sub.style.display === 'none';
+                        sub.style.display = isHidden ? 'table-row' : 'none';
+                        if (toggle) toggle.textContent = isHidden ? '▼' : '▶';
+                        if (isHidden) this.classList.add('aa-expanded');
+                        else this.classList.remove('aa-expanded');
+                    }
+                });
+            });
+        }
     },
 
     // ── page wiring ──────────────────────────────────────────────────────────

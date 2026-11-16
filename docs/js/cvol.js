@@ -79,7 +79,12 @@ function parseTradeableCsv(text) {
         const cols = lines[i].trim().split(',');
         if (cols.length < 3) continue;
         const idx = parseFloat(cols[1]), fm = parseFloat(cols[2]);
-        map[cols[0].trim()] = { idx: isFinite(idx) && idx > 0 ? idx : null, fm: isFinite(fm) && fm > 0 ? fm : null };
+        const cp = cols.length >= 4 && cols[3].trim() ? parseFloat(cols[3]) : null;
+        map[cols[0].trim()] = {
+            idx: isFinite(idx) && idx > 0 ? idx : null,
+            fm: isFinite(fm) && fm > 0 ? fm : null,
+            cp: isFinite(cp) ? cp : null,
+        };
     }
     return map;
 }
@@ -90,6 +95,7 @@ function attachTradeable(data, map) {
         const t = map ? map[data[i].date] : null;
         data[i].tpx = t && t.idx != null ? t.idx : null;
         data[i].fmpx = t && t.fm != null ? t.fm : null;
+        data[i].cpPe = t && t.cp != null ? t.cp : null;
         if (data[i].tpx != null) hits++;
     }
     if (hits < data.length * 0.8) {

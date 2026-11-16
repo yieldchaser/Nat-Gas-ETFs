@@ -95,6 +95,68 @@ def build_index_levels(boil, kold):
     return levels
 
 
+def build_closing_pressure(boil_bars, kold_bars, window=21, min_history=252):
+    """
+    Closing pressure: (CMF21_BOIL - CMF21_KOLD) / 2 on dollar volume,
+    and its expanding percentile with min_history. Matches AlertEngine.buildFrame.
+    Returns {date: cp_percentile}.
+    """
+    b_map = {b["date"]: b for b in boil_bars if b and b.get("close", 0) > 0}
+    k_map = {b["date"]: b for b in kold_bars if b and b.get("close", 0) > 0}
+    dates = sorted(set(b_map) & set(k_map))
+    if len(dates) < min_history + 30:
+        return {}
+
+    def calc_cmf(bars):
+        mfv = []
+        dv = []
+        for d in dates:
+            b = bars[d]
+            h = b.get("high", b["close"])
+            l = b.get("low", b["close"])
+            c = b["close"]
+            v = b.get("volume", 0) or 0
+            dvol = c * v
+            m = ((c - l) - (h - c)) / (h - l) * dvol if (h is not None and l is not None and h > l) else 0.0
+            mfv.append(m)
+            dv.append(dvol)
+        out = [None] * len(dates)
+        a = 0.0
+        tot_d = 0.0
+        for i in range(len(dates)):
+            a += mfv[i]
+            tot_d += dv[i]
+            if i >= window:
+                a -= mfv[i - window]
+                tot_d -= dv[i - window]
+            if i >= window - 1 and tot_d > 0:
+                out[i] = a / tot_d
+        return out
+
+    cb = calc_cmf(b_map)
+    ck = calc_cmf(k_map)
+    cp = [None if cb[i] is None or ck[i] is None else (cb[i] - ck[i]) / 2.0 for i in range(len(dates))]
+
+    cp_pe = {}
+    for i in range(min_history - 1, len(dates)):
+        v = cp[i]
+        if v is None:
+            continue
+        count = 0
+        below = 0.0
+        for j in range(i + 1):
+            u = cp[j]
+            if u is not None:
+                count += 1
+                if u < v:
+                    below += 1.0
+                elif u == v:
+                    below += 0.5
+        if count >= min_history:
+            cp_pe[dates[i]] = (below / count) * 100.0
+    return cp_pe
+
+
 def ffill_lookup(series):
     """Return f(date) giving the last value on or before date (None before first)."""
     keys = sorted(series)
@@ -135,6 +197,8 @@ def main():
     idx_levels = build_index_levels(boil, kold)
     idx_at = ffill_lookup(idx_levels)
     ngf_at = ffill_lookup(ngf)
+    cp_dict = build_closing_pressure(etfs["BOIL"].get("history", []), etfs["KOLD"].get("history", []))
+    cp_at = ffill_lookup(cp_dict)
 
     out_rows = []
     fm_level = None
@@ -142,6 +206,7 @@ def main():
     for d, und in cvol:
         idx = idx_at(d)
         nf = ngf_at(d)
+        cp_val = cp_at(d)
         if fm_level is None:
             fm_level = und
         elif prev is not None:
@@ -158,21 +223,26 @@ def main():
             else:
                 r = 0.0
             fm_level *= 1.0 + r
-        out_rows.append((d, idx, fm_level))
+        out_rows.append((d, idx, fm_level, cp_val))
         prev = (und, idx, nf)
 
     # Re-anchor the roll-free front-month level so its last value equals the last raw underlying.
     if out_rows and cvol:
         scale = cvol[-1][1] / out_rows[-1][2] if out_rows[-1][2] else 1.0
-        out_rows = [(d, idx, fm * scale) for d, idx, fm in out_rows]
+        out_rows = [(d, idx, fm * scale, cp) for d, idx, fm, cp in out_rows]
 
     for path in OUT_PATHS:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w", newline="") as fh:
             w = csv.writer(fh, lineterminator="\n")
-            w.writerow(["Date", "idx_px", "fm_px"])
-            for d, idx, fm in out_rows:
-                w.writerow([d, "" if idx is None else f"{idx:.6f}", f"{fm:.6f}"])
+            w.writerow(["Date", "idx_px", "fm_px", "cp_pe"])
+            for d, idx, fm, cp in out_rows:
+                w.writerow([
+                    d,
+                    "" if idx is None else f"{idx:.6f}",
+                    f"{fm:.6f}",
+                    "" if cp is None else f"{cp:.2f}"
+                ])
 
     have_idx = [r for r in out_rows if r[1] is not None]
     print(f"build_cvol_tradeable: {len(out_rows)} rows ({len(have_idx)} with index level), "
@@ -181,6 +251,21 @@ def main():
         tot_idx = have_idx[-1][1] / have_idx[0][1] - 1.0
         tot_raw = cvol[-1][1] / cvol[0][1] - 1.0
         print(f"  raw underlying total return {tot_raw:+.1%} | tradeable index {tot_idx:+.1%}")
+
+    # Settle sanity check: compare latest UNDERLYING with latest ng_history.json close
+    if cvol and ngf:
+        latest_cvol_date, latest_und = cvol[-1]
+        latest_ngf_close = ngf.get(latest_cvol_date)
+        if latest_ngf_close:
+            try:
+                day_num = int(latest_cvol_date.split("-")[2])
+            except Exception:
+                day_num = 1
+            diff_pct = abs(latest_und / latest_ngf_close - 1.0)
+            if (day_num < 16 or day_num > 21) and diff_pct > 0.01:
+                print(f"  warning: latest UNDERLYING ({latest_und}) differs from NG close ({latest_ngf_close}) by {diff_pct:.2%}")
+            else:
+                print(f"  sanity check: latest UNDERLYING ({latest_und}) vs NG close ({latest_ngf_close}) gap = {diff_pct * 10000:.1f} bp")
     return 0
 
 

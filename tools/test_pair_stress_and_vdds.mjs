@@ -87,7 +87,7 @@ console.log('Test 2: Volume Cancellation Solution in VDDS*...');
 
     // Create an active capitulation volume bar: price down -8%, volume 4.0x, closing at low
     const capBar = {
-        date: '2026-11-03',
+        date: baseBar.date,
         open: baseBar.close,
         high: baseBar.close * 1.01,
         low: baseBar.close * 0.91,

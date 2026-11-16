@@ -109,10 +109,10 @@ def fetch_data_page(qsid: str, session: requests.Session, dsrc: str = "Settle") 
     Args:
         qsid: Active QuikStrike session ID
         session: Authenticated requests session
-        dsrc: Datasource mode ('Settle' for official end-of-day/settlement, or 'Intraday')
+        dsrc: Datasource mode parameter (QuikStrike serves rolling intraday points collapsed to 14:30 settle)
     """
     params = {**POPUP_PARAMS, "qsid": qsid, "dsrc": dsrc}
-    print(f"  Fetching with dsrc={dsrc} datasource for settled data")
+    print(f"  Fetching QuikStrike ViewControl (dsrc={dsrc}, rolling window collapsed at 14:30 settle)")
 
     resp = session.get(POPUP_BASE, params=params, timeout=30)
     resp.raise_for_status()
@@ -267,8 +267,8 @@ def main():
     print("[1/5] Activating QuikStrike session via CME SSO…")
     qsid, session = get_fresh_qsid(cme_token, userinfo)
 
-    # Use Settle datasource for official post-close settled metrics
-    print("\n[2/5] Fetching NGVL CVOL data page (Settle datasource)…")
+    # Fetch rolling recent window and collapse at 14:30 NY settlement
+    print("\n[2/5] Fetching NGVL CVOL data page…")
     html = fetch_data_page(qsid, session, dsrc="Settle")
     print(f"      {len(html):,} bytes received")
 

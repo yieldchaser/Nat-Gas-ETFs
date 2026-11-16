@@ -1428,11 +1428,9 @@ def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
     alerts: List[dict] = []
     now_iso = datetime.now(timezone.utc).isoformat()
 
-    # VCVI alerts — message is directional based on which side fired
-    # Short-side VCVI spike = ETF price low while volume surges = gas is at a peak
-    # Long-side VCVI spike  = ETF price low while volume surges = gas is at a bottom
-    _vcvi_setup = "potential GAS TOP — short/inverse setup" if side == "short" \
-                  else "potential GAS BOTTOM — long/leveraged setup"
+    # VCVI alerts — descriptive capitulation stress based on which side fired
+    _vcvi_setup = "short-side capitulation stress (inverse ETF exhaustion)" if side == "short" \
+                  else "long-side capitulation stress (long ETF exhaustion)"
     for w_key, vcvi_val in vcvi.items():
         if vcvi_val is not None and vcvi_val >= VCVI_CRITICAL:
             alerts.append({
@@ -1488,8 +1486,8 @@ def compute_etf_metrics(df: pd.DataFrame, side: str = "long", ticker: str = "",
 
     # Fast spike alert (Feature 1) — fires before standard ATR breakout check
     if sharp_spike and vcvi_5d is not None:
-        _spike_setup = "weather GAS TOP candidate (short/inverse)" if side == "short" \
-                       else "weather GAS BOTTOM candidate (long/leveraged)"
+        _spike_setup = "short-side velocity surge (inverse ETF stress)" if side == "short" \
+                       else "long-side velocity surge (long ETF stress)"
         alerts.append({
             "type": "fast_spike_critical",
             "side": side,

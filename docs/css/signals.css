@@ -3427,6 +3427,16 @@
 .aa-table th { text-align: left; font-size: 0.56rem; letter-spacing: 0.06em; color: rgba(255, 255, 255, 0.5); padding: 4px 8px; border-bottom: 1px solid var(--border-primary); font-weight: 700; }
 .aa-table td { padding: 4px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.88); }
 .aa-td-name { font-weight: 700; color: #fff; }
+.aa-setup-row { cursor: pointer; transition: background 0.15s ease; }
+.aa-setup-row:hover { background: rgba(255, 255, 255, 0.05); }
+.aa-setup-row.aa-expanded { background: rgba(80, 144, 160, 0.12); }
+.aa-row-toggle { display: inline-block; width: 12px; font-size: 0.58rem; color: rgba(255, 255, 255, 0.5); transition: transform 0.15s ease; }
+.aa-ledger-row > td { padding: 0 !important; border-bottom: 1px solid var(--border-primary); background: rgba(14, 16, 22, 0.75); }
+.aa-ledger-container { padding: 8px 12px; border-left: 2px solid #5090a0; margin: 4px 0; }
+.aa-ledger-title { font-size: 0.64rem; font-weight: 700; color: rgba(255, 255, 255, 0.85); margin-bottom: 6px; display: flex; justify-content: space-between; }
+.aa-ledger-table { width: 100%; border-collapse: collapse; font-size: 0.62rem; }
+.aa-ledger-table th { text-align: left; padding: 3px 6px; font-size: 0.54rem; color: rgba(255, 255, 255, 0.5); border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.aa-ledger-table td { padding: 3px 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
 .aa-foot { font-size: 0.62rem; color: rgba(255, 255, 255, 0.55); line-height: 1.5; padding: 6px 2px 2px; white-space: normal; }
 @media (max-width: 600px) {
     .aa-cards { grid-template-columns: 1fr; }
