@@ -596,12 +596,6 @@ const Metrics = {
         }
         const mwca = mwcaCount === mwcaWindows.length;
 
-        // Generate alerts
-        const alerts = this.generateAlerts(etfData.ticker, {
-            cvi, vcvi, vps, rvol, zScore, volPercentile, mwca,
-            volRegimePct, vov21, atr14Pct, changePct
-        });
-
         // Decay block for 21d VCVI
         const annualDecay = (typeof CONFIG !== 'undefined' && CONFIG.etfDecayRates && CONFIG.etfDecayRates[etfData.ticker] != null)
             ? CONFIG.etfDecayRates[etfData.ticker]
@@ -660,56 +654,11 @@ const Metrics = {
             dvRvol, dvZScore, dvPercentile, dvVroc, dvcvi, dvVps, vdds, drvol, vddsRecord: latestVddsRecord,
             priceMAs, volumeMAs,
             rollingCorr,
-            alerts, alertLevel,
+            alertLevel,
             sparkData,
             history: d,
             historyLength: d.length
         };
-    },
-
-    generateAlerts(ticker, metrics) {
-        const alerts = [];
-        const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        const t = CONFIG.thresholds;
-
-        // VCVI alerts — vol-adjusted CVI (primary capitulation signal)
-        for (const [window, value] of Object.entries(metrics.vcvi || {})) {
-            if (value == null) continue;
-            if (value >= t.vcvi.extreme) {
-                alerts.push({ type: 'vcvi', level: 'extreme', ticker, time: now,
-                    message: `VCVI-${window} at ${value.toFixed(0)} — EXTREME vol-adj capitulation` });
-            } else if (value >= t.vcvi.critical) {
-                alerts.push({ type: 'vcvi', level: 'critical', ticker, time: now,
-                    message: `VCVI-${window} at ${value.toFixed(0)} — vol-adj capitulation watch` });
-            }
-        }
-
-        // MWCA
-        if (metrics.mwca) {
-            alerts.push({ type: 'mwca', level: 'extreme', ticker, time: now,
-                message: `MWCA triggered — top ${t.mwca_threshold}th pct across ALL windows` });
-        }
-
-        // RVOL
-        for (const [window, value] of Object.entries(metrics.rvol)) {
-            if (value != null && value >= t.rvol.critical) {
-                alerts.push({ type: 'rvol', level: 'critical', ticker, time: now,
-                    message: `RVOL-${window} at ${value.toFixed(1)}x — Major volume surge` });
-            }
-        }
-
-        // Flow Velocity & Acceleration Alerts
-        if (metrics.vel_z_1d != null) {
-            if (metrics.vel_z_1d >= 2.0) {
-                alerts.push({ type: 'flow_accel', level: 'critical', ticker, time: now,
-                    message: `[FLOW ACCELERATION] Vel Z at +${metrics.vel_z_1d.toFixed(2)}σ — Bull Launch Impulse` });
-            } else if (metrics.vel_z_1d <= -2.0) {
-                alerts.push({ type: 'flow_accel', level: 'critical', ticker, time: now,
-                    message: `[FLOW ACCELERATION] Vel Z at ${metrics.vel_z_1d.toFixed(2)}σ — Bear Surge Impulse` });
-            }
-        }
-
-        return alerts;
     },
 
     // ---- CROSS-INSTRUMENT METRICS & UPGRADED STRESS ENGINE ----

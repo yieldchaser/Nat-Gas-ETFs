@@ -4,16 +4,6 @@
 
 const Signals = {
 
-    // Icon/prefix for each alert type
-    _alertIcon(type) {
-        const icons = {
-            vcvi: '⚡', cvi: '🔥', mwca: '💥', rvol: '📈', vps: '📊',
-            atr_breakout: '📐', vov: '🌀', vol_regime: '🌡', ipsi_stress: '⚠',
-            fast_spike: '⚡', weather: '⛈', flow_accel: '▲'
-        };
-        return icons[type] || '●';
-    },
-
     computeTrimmedMean21(buf) {
         const sorted = Array.from(buf).sort((a, b) => a - b);
         let sum = 0.0;
@@ -619,47 +609,16 @@ const Signals = {
         };
     },
 
+    // Active Alerts: evidence-scored setups (see alert-engine.js). The old VCVI / MWCA / RVOL
+    // threshold feed was removed — it fired on ~20% of days without separating from the base rate.
     renderAlertFeed(allMetrics) {
         const feed = document.getElementById('alert-feed');
         if (!feed) return;
-
-        // Collect all alerts from all ETFs
-        const allAlerts = [];
-        for (const [ticker, m] of Object.entries(allMetrics)) {
-            if (m && m.alerts) {
-                allAlerts.push(...m.alerts);
-            }
-        }
-
-        // Sort by severity
-        const severityOrder = { extreme: 0, critical: 1, high: 2, elevated: 3 };
-        allAlerts.sort((a, b) => (severityOrder[a.level] || 4) - (severityOrder[b.level] || 4));
-
-        if (allAlerts.length === 0) {
-            feed.innerHTML = '<div class="no-alerts">No active alerts — all volumes within normal ranges</div>';
+        if (typeof AlertEngine === 'undefined') {
+            feed.innerHTML = '<div class="no-alerts">Alert engine not loaded</div>';
             return;
         }
-
-        feed.innerHTML = allAlerts.slice(0, 15).map(a => {
-            const side = a.side || CONFIG.etfs[a.ticker]?.side;
-            const tickerColor = side === 'long' ? 'var(--green)' : 'var(--red)';
-            const icon = this._alertIcon(a.type);
-            // Only show the setup badge on VCVI/CVI alerts — those are the directional ones
-            const isCapAlert = a.type?.startsWith('vcvi') || a.type?.startsWith('cvi');
-            const setupBadge = isCapAlert
-                ? (side === 'long'
-                    ? '<span class="setup-badge setup-bottom">↑ BOTTOM</span>'
-                    : '<span class="setup-badge setup-top">↓ TOP</span>')
-                : '';
-            return `
-                <div class="alert-item alert-${a.type} alert-level-${a.level}">
-                    <span class="alert-time">${a.time}</span>
-                    <span class="alert-ticker" style="color:${tickerColor}">${a.ticker}</span>
-                    ${setupBadge}
-                    <span class="alert-icon">${icon}</span>
-                    <span class="alert-message">${a.message}</span>
-                </div>`;
-        }).join('');
+        AlertEngine.mount(allMetrics);
     },
 
     renderStressMatrix(allMetrics) {
@@ -739,8 +698,8 @@ const Signals = {
                     <td class="pair-name">${pair.label}${seasonTag}</td>
                     <td style="color:${rvolColor(longRvol)}" data-tooltip="Long ETF 21d Notional Dollar RVOL: ${longRvol != null ? longRvol.toFixed(2) + 'x' : '—'} vs 21-day EWMA baseline. Split-invariant.">${longRvol != null ? longRvol.toFixed(1) + 'x' : '—'}</td>
                     <td style="color:${rvolColor(shortRvol)}" data-tooltip="Short/Inverse ETF 21d Notional Dollar RVOL: ${shortRvol != null ? shortRvol.toFixed(2) + 'x' : '—'} vs 21-day EWMA baseline. Split-invariant.">${shortRvol != null ? shortRvol.toFixed(1) + 'x' : '—'}</td>
-                    <td style="color:${lCapColor}" data-tooltip="Long-side VCVI-63d (${pair.long}) — GAS BOTTOM signal. Participation-gated. Threshold: 55 watch, 72 critical.">${longVcvi != null ? longVcvi.toFixed(0) : '—'}</td>
-                    <td style="color:${sCapColor}" data-tooltip="Short-side VCVI-63d (${pair.short}) — GAS TOP signal. Participation-gated. Threshold: 55 watch, 72 critical.">${shortVcvi != null ? shortVcvi.toFixed(0) : '—'}</td>
+                    <td style="color:${lCapColor}" data-tooltip="Long-side VCVI-63d (${pair.long}) — long-side capitulation stress. Participation-gated. Threshold: 55 watch, 72 critical. Not a tested bottom signal on its own (see ACTIVE ALERTS for the scored setups).">${longVcvi != null ? longVcvi.toFixed(0) : '—'}</td>
+                    <td style="color:${sCapColor}" data-tooltip="Short-side VCVI-63d (${pair.short}) — short-side capitulation stress. Participation-gated. Threshold: 55 watch, 72 critical. Not a tested top signal on its own (see ACTIVE ALERTS for the scored setups).">${shortVcvi != null ? shortVcvi.toFixed(0) : '—'}</td>
                     <td data-tooltip="5d fast-window VCVI — Long: ${longVcvi5!=null?longVcvi5.toFixed(0):'—'} | Short: ${shortVcvi5!=null?shortVcvi5.toFixed(0):'—'}. Threshold: 45.">${fastBadge}</td>
                     <td>${spikeBadge}</td>
                     <td style="color:${ipsiColor}" data-tooltip="${ipsiTip}">${ipsiVal != null ? ipsiVal.toFixed(1) + 'x' : '—'}</td>

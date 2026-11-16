@@ -16,10 +16,10 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='60%' r='50%' fx='50%' fy='65%'><stop offset='0%' style='stop-color:%230033ff;stop-opacity:0.5' /><stop offset='100%' style='stop-color:%23001a4d;stop-opacity:0' /></radialGradient></defs><circle cx='50' cy='60' r='40' fill='url(%23g)' /><path d='M50 92 C30 92 18 75 18 52 C18 30 50 5 50 5 C50 5 82 30 82 52 C82 75 70 92 50 92 Z' fill='%230066ff' /><path d='M50 80 C40 80 32 68 32 50 C32 35 50 18 50 18 C50 18 68 35 68 50 C68 68 60 80 50 80 Z' fill='white' /></svg>">
     <link rel="stylesheet" href="css/styles.css?v=20261021a">
     <link rel="stylesheet" href="css/cards.css?v=20261024a">
-    <link rel="stylesheet" href="css/signals.css?v=20261111c">
+    <link rel="stylesheet" href="css/signals.css?v=20261116a">
     <link rel="stylesheet" href="css/tail-risk.css?v=20261031a">
     <link rel="stylesheet" href="css/auth.css?v=20261104a">
-    <script src="js/auth.js?v=20261111b"></script>
+    <script src="js/auth.js?v=20261116a"></script>
 </head>
 <body>
     <template id="bm-dashboard-template">
@@ -78,9 +78,9 @@
 
             <!-- ALERT FEED -->
             <div class="signal-panel" id="alert-panel">
-                <h3 data-tooltip="Real-time alert feed displaying recent VCVI, CVI, and MWCA volume spikes.">ACTIVE ALERTS</h3>
+                <h3 data-tooltip="Named setups combining closing pressure (price-volume), the BOIL volume climax, the CVOL options state and BOIL fund flows. Each is scored as non-overlapping trades on the tradeable NG index against the any-day benchmark; statistics are recomputed from history on every load.">ACTIVE ALERTS</h3>
                 <div class="alert-feed" id="alert-feed">
-                    <div class="no-alerts">No active alerts</div>
+                    <div class="no-alerts">Scoring setups…</div>
                 </div>
             </div>
 
@@ -183,8 +183,8 @@
                             <th>PAIR</th>
                             <th data-tooltip="Long ETF 21-day Relative Volume">LONG RVOL</th>
                             <th data-tooltip="Short/Inverse ETF 21-day Relative Volume">SHORT RVOL</th>
-                            <th data-tooltip="Long-side VCVI-63d — spikes when long ETF has high volume AND low price. Gas is near a BOTTOM. Favors long/leveraged setup.">L-CAP</th>
-                            <th data-tooltip="Short-side VCVI-63d — spikes when short ETF has high volume AND low price (gas is HIGH). Gas is near a TOP. Favors short/inverse setup.">S-CAP</th>
+                            <th data-tooltip="Long-side VCVI-63d — spikes when the long ETF has high volume AND a low price (long-side capitulation). Read it as stress, not a buy signal: on BOIL since 2012, readings ≥ 72 saw NG higher 21 sessions later 49% of the time vs 42% on a random day, with the average still negative. The tested long setups are in ACTIVE ALERTS.">L-CAP</th>
+                            <th data-tooltip="Short-side VCVI-63d — spikes when the short ETF has high volume AND a low price (gas is HIGH; short-side capitulation). Read it as stress, not a top call: on KOLD since 2012, readings ≥ 72 saw NG higher 21 sessions later 44% of the time vs 42% on a random day — no separation. The tested short setups are in ACTIVE ALERTS.">S-CAP</th>
                             <th data-tooltip="5d fast-window VCVI (Long/Short) — catches weather event spikes before longer windows. Threshold: 45. Format: L/S">FAST-5d</th>
                             <th data-tooltip="Sharp Spike flag — fires when 5d VCVI>45 AND move>2×ATR on the same day. Weather event candidate.">SPIKE</th>
                             <th data-tooltip="Inverse Pair Stress Index — short ETF RVOL ÷ long ETF RVOL. &gt;2x indicates abnormal directional pressure.">IPSI</th>

@@ -629,29 +629,7 @@ const App = {
                 if (etfData.vol_percentile && etfData.vol_percentile[key] >= mwcaThreshold) mwcaCount++;
             }
 
-            // Map alerts from signals
-            const alerts = (data.signals || [])
-                .filter(s => s.ticker === ticker)
-                .map(s => {
-                    const tp = s.type;
-                    let type = 'rvol';
-                    if (tp.includes('vcvi'))       type = 'vcvi';
-                    else if (tp.includes('cvi'))   type = 'cvi';
-                    else if (tp.includes('mwca'))  type = 'mwca';
-                    else if (tp.includes('vov'))   type = 'vov';
-                    else if (tp.includes('atr'))   type = 'atr_breakout';
-                    else if (tp.includes('vol_regime')) type = 'vol_regime';
-                    const level = tp.includes('critical') ? 'critical'
-                        : tp.includes('extreme') ? 'extreme'
-                        : tp.includes('warning') ? 'elevated'
-                        : 'elevated';
-                    return {
-                        type, level,
-                        ticker,
-                        time: new Date(s.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-                        message: s.message
-                    };
-                });
+            // Pipeline `signals` are no longer rendered: Active Alerts is computed by alert-engine.js.
 
             // Normalise volatility block (pipeline uses snake_case)
             const vol = etfData.volatility || {};
@@ -885,7 +863,6 @@ const App = {
                 vdds:        vddsVal,
                 drvol:       drvolVal,
                 vddsRecord:  latestVddsRecord,
-                alerts: alerts,
                 alertLevel: alertLevel,
                 sparkData: sparkData,
                 heatmapData: heatmapData,
