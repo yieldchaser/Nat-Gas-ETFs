@@ -21,6 +21,14 @@ Judged that way, three things change:
 - Do not touch the trade ledger under Active Alerts.
 - No emojis. Labels in capitals follow the existing style.
 
+**The build is held to this spec by `tools/test_cycle_acceptance.mjs`, which already runs in CI.**
+
+- That test recomputes every figure from raw data with its own code and compares the site's engine with it: trigger days must match session for session, counts must match exactly, tiers and card labels are checked, and the wording list is scanned. Hard-coding numbers into the engine cannot pass it.
+- Do not edit `tools/test_cycle_acceptance.mjs` or `tools/cycle_acceptance_frozen.json`. The pull request must show no diff on either file. If a check looks wrong, stop and report it instead of changing the check.
+- The engine checks switch on when `docs/js/cycle-engine.js` exists. A pull request without that file has not implemented the spec.
+- Do not add conditions, change thresholds or windows, or add setups beyond section 4. Section 5a explains why: tuned combinations did not hold up.
+- Do not skip, weaken or delete any existing test to get green.
+
 ## 3. The cycle scorer (exact definition)
 
 Inputs: one ETF's daily bars from `docs/data/dashboard_data.json` (`etfs[T].history`, bars with a close), dates ≥ 2012-06-01.
@@ -49,12 +57,14 @@ Any-day figures to reproduce (30% cycles, about three cycles a year per ETF):
 
 `rvol(T)[i]` = dollar volume (close × volume) ÷ median dollar volume of the previous 63 sessions (today excluded).
 `SV[i]` = mean of `rvol(KOLD)` and `rvol(HND.TO)`; `LV[i]` = mean of `rvol(BOIL)` and `rvol(HNU.TO)`. Toronto values are matched by date and carried forward at most 2 sessions; if Toronto is missing or stale use the US leg alone. London tickers are excluded (3NGS has no volume on 16% of sessions, 3NGL on 38%).
+All features are computed on the full price history; only scoring is limited to sessions from 2012-06-01.
 `ipvt(T)` = running sum of `impulse` from `VolumeStudies.computeInvariantPVTEngine`. `z63(T)[i]` = (ipvt − 63-session mean) ÷ 63-session sample standard deviation.
 
 | Key | Definition | Trade |
 |---|---|---|
 | A `SHORT_ACCUMULATION` | SV ≥ 1.5 on at least 3 of the last 5 sessions AND KOLD close ≤ its close 10 sessions earlier | buy KOLD |
 | B (already live as `CROWDED_RALLY`, keep its current rule) | long-side volume climax in a rally | buy KOLD |
+| A flag `atLow` (chip on the A card, not a separate setup) | A is true AND KOLD close ≤ 1.10 × its lowest close of the last 63 sessions | buy KOLD |
 | K `SHORT_LEG_REVERSAL` | max of z63(KOLD) over the last 10 sessions ≥ +1.5 AND KOLD impulse today < −0.5 | buy BOIL |
 | PVT high marker (display only, per ETF) | max z63 over last 10 ≥ +1.5 AND z63 today ≥ +0.75 AND impulse today < −0.5 | exit prompt for holders of that ETF |
 | PVT low marker (display only, per ETF) | min z63 over last 10 ≤ −1.5 AND impulse today > +0.5 | low watch for that ETF |
@@ -83,6 +93,21 @@ Setup A by year on KOLD (worked/entries): 2013 1/4, 2014 1/2, 2015 3/3, 2016 2/4
 
 Waiting for a breakout after the zone (close above the prior 3-session high) lowered the result to 53%. The record is for entering inside the zone.
 
+**Which short-side legs to use** (volume at 1.5× on 3 of 5 sessions, KOLD lower than 10 sessions ago; any day 45%)
+
+| Volume measured on | entries / year | worked on KOLD | 2012–19 | 2019–26 | worked on HND |
+|---|---|---|---|---|---|
+| KOLD alone | 3.5 | 57% | 64% | 48% | 56% |
+| HND alone | 3.2 | 57% | 52% | 61% | 53% |
+| KOLD + HND (the setup) | 3.5 | 58% | 52% | 64% | 56% |
+| 3NGS alone | 2.5 | 39% | 33% | 40% | 42% |
+| all three averaged | 3.6 | 48% | 46% | 50% | 48% |
+| any two of the three | 2.6 | 57% | 53% | 59% | 57% |
+
+London volume makes the result worse and is left out. A single-day spike of 3× or more did not work (44%); it is the cluster over several sessions that matters.
+
+**Setup A at the low** (flag `atLow`): about 2 entries a year, 17 of 29 worked (59%; 50% in 2012–19, 67% in 2019–26; HND 55%), 28% within ten sessions of the cycle low, typical run +47%, typical heat −10%. Neighbouring settings (5–14% above a 42-, 63- or 84-session low) gave 50–64%. Being near the low without the volume cluster gave 41%, below any day.
+
 **Long-ETF entries**
 
 | Setup | ETF | entries | worked | near a low | typical run | typical heat | lows caught |
@@ -104,6 +129,16 @@ Things that did not help on the long side and must not be built: buying BOIL on 
 | 63-session low marker, buy | BOIL / KOLD / HNU / HND | 42–51 each | 22% / 29% / 24% / 24% | 41 / 52 / 46 / 48 |
 | 63-session high marker, exit | BOIL / KOLD / HNU / HND | 24–33 each | 27% / 26% / 31% / 42% (any day 10 / 11 / 9 / 12) | — |
 
+## 5a. Combinations tested, and why the list above is final
+
+For each side, 2,908 combinations were scored: every volume variant (US, Toronto, London, US + Toronto, all three, two of three; cluster, double spike, single spike) alone, with one, and with two of sixteen context conditions (direction over 10 sessions, drawdown, distance from the 63-session low, closing pressure high or low, PVT washed out or stretched, turn day, breakout, opposite-side volume). Each was scored on KOLD or BOIL, on the Toronto mirror, and separately on 2012–19 and 2019–26. Only combinations giving 1.4 to 5.2 entries a year were kept (790 short side, 565 long side).
+
+- **Short side.** The twelve best-looking combinations of 2012–19 beat any day by only 4 points in 2019–26, while the average of all 790 beat it by 9. Picking the fanciest combination loses to the plain theme. The theme that held in both periods and on both pairs is setup A, and its tighter form at the 63-session low.
+- **Long side.** The twelve best of 2012–19 beat any day by 0 points in 2019–26; the average of all 565 by 1. No volume combination finds BOIL lows. The only stable entries are K (47% in both periods, 50% on HNU, against 35–37%) and the existing CAPITULATION setup.
+- One long-side momentum pattern looked good (long-side volume cluster with closing pressure above its 90th percentile and an up-impulse day: 12 of 21 worked) but it buys strength, not a low, rests on 21 trades and its looser forms fall to 48%. Do not build it.
+
+Entries per year with the final list: A 3.5 (2.0 with the `atLow` flag), K 2.2, CAPITULATION 1.2, CLOSE_EXHAUSTION 2.6, CROWDED_RALLY 1.9. Several of these overlap in time, so the count of distinct trade zones is lower.
+
 The 63-session markers locate turns; on their own they raise the win rate only a few points, so they are shown as location and exit prompts, not as alerts.
 
 ## 6. Work items
@@ -120,7 +155,9 @@ CycleEngine.anyDay(closes, pivots)              // { worked, nearLow, run, heat 
 CycleEngine.record(closes, mask)                // { n, worked, workedPct, nearLowPct, run, heat, caughtPct, any, byYear }
 ```
 
-Tests: a hand-built price series with known pivots; an entry exactly at a trough (heat 0, run = cycle gain); episode spacing; the four any-day rows of section 3 within one point. Add the suite to `.github/workflows/test-suites.yml`. Load the script in `docs/js/auth.js` before `alert-engine.js` and bump the `?v=` strings.
+`record` returns `run` and `heat` in percent and `nearLowPct` / `workedPct` as percentages, as the acceptance test expects. `alert-engine.js` reads `CycleEngine` and `VolumeStudies` from the global scope in both the browser and Node.
+
+Tests: a hand-built price series with known pivots; an entry exactly at a trough (heat 0, run = cycle gain); episode spacing; the four any-day rows of section 3 within one point. Add the suite to `.github/workflows/test-suites.yml` (the acceptance test is already there). Load the script in `docs/js/auth.js` before `alert-engine.js` and bump the `?v=` strings.
 
 ### W2 — `docs/js/alert-engine.js`
 
@@ -133,21 +170,26 @@ Tests: a hand-built price series with known pivots; an entry exactly at a trough
    - `MODERATE`: lift ≥ 5 on both, or lift ≥ 0 on both with near-low share at least twice the any-day share on both
    - `WATCH`: anything else (listed in the table, never in the headline, no heat-map mark)
    - fewer than 20 entries on the US leg: cap at `MODERATE` and show the existing `SMALL SAMPLE` chip renamed `FEW TRADES`
+   Each entry of `model.setups` gains `cycle: { us: record, ca: record }` (the two `CycleEngine.record` results) and keeps `mask` aligned to `model.frame.dates`; `tier` holds the cycle tier.
    Expected tiers with today's data: SHORT_ACCUMULATION STRONG; CLOSE_EXHAUSTION, CROWDED_RALLY, SHORT_LEG_REVERSAL MODERATE; OPT_BLOWOFF, CAPITULATION, WASHOUT MODERATE with FEW TRADES; CHASED_RALLY WATCH. The old fixed-horizon evaluator stays only to feed the ledger.
 4. Card stat grid (`_statGrid`), six cells, replacing WIN RATE / ANY-DAY RATE / AVG RETURN / LEG / P-VALUE / WORST TRADE:
    `WORKED` "29 of 50" · `ANY DAY` "45%" · `TYPICAL RUN` "+45%" · `TYPICAL HEAT` "−9%" · `TURNS CAUGHT` "64%" · `TORONTO` "31 of 52".
    One tooltip on the grid: `Record of buying the leg at the close of the first trigger day: worked means +30% was reached before −20%.` Add the risk line under the rule line.
 5. Setup table: columns become `SETUP · SIDE · TIER · WORKED · LAST TRIGGER`. Remove the `P-VALUE` column.
 6. Active-state sentence for A: `KOLD and HND volume has run at 1.5× normal on {k} of the last 5 sessions with KOLD {x}% lower over 10 sessions.` For K: `KOLD's price-volume trend peaked {d} sessions ago and today was a heavy down session.`
-7. Add `SHORT-SIDE VOLUME` to the gauge row: value `{SV:.1f}×`, sub-label `accumulation at 1.5× on 3 of 5`, highlighted when A is true.
-8. Update `tools/test_alert_engine.mjs`: tier expectations above, A and K masks on a synthetic frame, records within tolerance of section 5.
+7. When A is active and `atLow` is true, show the chip `AT 63-SESSION LOW` on its card.
+8. Add `SHORT-SIDE VOLUME` to the gauge row: value `{SV:.1f}×`, sub-label `accumulation at 1.5× on 3 of 5`, highlighted when A is true.
+9. Update `tools/test_alert_engine.mjs`: tier expectations above, A and K masks on a synthetic frame, records within tolerance of section 5.
 
 ### W3 — remove the research surface
 
-- `docs/index.html`: delete `#vs-evidence`; reduce `.heat-evidence` to the two-dot key (`short-side setup`, `long-side setup`), no sentence, no tooltip.
-- `docs/js/volume-studies.js`: delete `_evidence`, `_evidenceRequested`, `_loadEvidence`, `evidenceHtml`, `_renderEvidence` and the call in `render()`.
-- `docs/css/signals.css`: delete `.vs-evidence`, `.vs-ev-*`, `.heat-evidence-note`.
-- Delete `docs/data/indicator_evidence.json`, `tools/indicator_evidence.mjs`, `tools/heatmap_evidence.mjs`.
+Already done on main: the evidence line under Price-Volume Studies, the heat-map sentence and tooltip, `docs/data/indicator_evidence.json`, `tools/indicator_evidence.mjs`, `tools/heatmap_evidence.mjs`.
+
+Still to do:
+
+- `docs/css/signals.css`: delete the unused `.vs-evidence`, `.vs-ev-*`, `.heat-evidence-note` rules.
+- `docs/js/alert-engine.js`: the wording in W2 items 4–5; rename `SMALL SAMPLE` to `FEW TRADES`; remove "binomial", "base rate" and "significant" from every tooltip and sentence.
+- `docs/js/signals.js`: remove "Spearman" and "base rate" from user-facing strings.
 - `docs/upgrade_backlog.md`: items E2 (evidenceHtml part), E3 and E4 are void.
 
 ### W4 — heat map
@@ -168,10 +210,29 @@ Tests: a hand-built price series with known pivots; an entry exactly at a trough
 - Draw small markers on the price pane at high-marker and low-marker sessions (reuse the existing divergence marker style, one colour each).
 - Keep the 21-session oscillator, its state machine and its labels as they are.
 
+### W7 — Options (CVOL) page wording
+
+Nothing is deleted. Wording changes, and the research panels are folded away.
+
+- Wrap everything below the `Research Layer` divider (raw surface inputs, signal filter, scorecard, event timeline) in one `<details>` element, closed by default, summary text `HISTORY AND METHODS`.
+- Replace in `docs/cvol.html`, `docs/js/cvol-ui.js`, `docs/js/cvol.js` (user-facing strings only; keys and ids stay):
+
+| Now | Becomes |
+|---|---|
+| `NO EDGE` (state label) | `NO SETUP` |
+| `BACKTEST SCORECARD`, `Backtest` | `TRACK RECORD` |
+| `hit rate`, `HIT RATE`, `SEASONAL HIT RATE` | `worked`, `WORKED`, `WORKED BY SEASON` |
+| `base rate`, `ANY-DAY` rate wording | `any day` |
+| `SIG` / `MARGINAL` / `NS` | `RELIABLE` / `MIXED` / `UNRELIABLE` |
+| `p-value`, `binomial`, `significant`, `significance`, `sample size` | remove the clause; where a count matters write `{n} trades` |
+
+- The directional panel's ledger and gauges keep their numbers; only labels change.
+
 ### W6 — verification before opening the PR
 
+- `node tools/test_cycle_acceptance.mjs` prints `PASS cycle acceptance` with no `BUILD PENDING` line, and `git diff origin/main -- tools/test_cycle_acceptance.mjs tools/cycle_acceptance_frozen.json` is empty.
 - `node tools/test_cycle_engine.mjs`, `test_alert_engine.mjs`, `test_cvol.js`, `test_contract_ledger.mjs`, `test_pair_stress_and_vdds.mjs`, `test_volume_studies.mjs`, `test_heatmap_pipeline_e2e.mjs`, `test_card_simulation.mjs` all pass.
-- Section 3 and section 5 numbers reproduce within tolerance (print them once from a throwaway script; do not commit the script).
+- Section 3 and section 5 numbers reproduce within tolerance (the acceptance test prints the two reference lines).
 - `docs/index.html` loads with no console errors at 1500px and 420px, no horizontal overflow; grep the built page text for the banned words in section 2.
 - Screenshot Active Alerts, the PVT tab and the heat map and check each against this spec.
 

@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="css/signals.css?v=20261116b">
     <link rel="stylesheet" href="css/tail-risk.css?v=20261031a">
     <link rel="stylesheet" href="css/auth.css?v=20261104a">
-    <script src="js/auth.js?v=20261116b"></script>
+    <script src="js/auth.js?v=20261116c"></script>
 </head>
 <body>
     <template id="bm-dashboard-template">
@@ -171,10 +171,9 @@
                     <span class="heat-dd-legend-item"><span class="heat-dd-swatch dd-bloodbath"></span>Severe (-40%+)</span>
                     <span class="heat-dd-legend-item"><span class="heat-dd-pip-sample"></span>-5%+ 1D Drop</span>
                 </div>
-                <div class="heat-evidence" data-tooltip="Peaks, valleys and macro events were scored with the heat map's own detection code on 2012–2026, for every ETF selection, as non-overlapping 10- and 21-session trades on the tradeable NG index. None of the 60 tests separated from the any-day rate (smallest p-value 0.12). Reproduce with tools/heatmap_evidence.mjs.">
-                    <span class="heat-setup-key"><span class="heat-setup-mark short"></span>short setup triggered</span>
-                    <span class="heat-setup-key"><span class="heat-setup-mark long"></span>long setup triggered</span>
-                    <span class="heat-evidence-note">The heat score shows where volume pressure concentrated. Tested on 2012–2026, its peaks and valleys did not change the odds for NG over the next 10 or 21 sessions; the dots mark the days a tested Active Alerts setup was triggered.</span>
+                <div class="heat-evidence">
+                    <span class="heat-setup-key"><span class="heat-setup-mark short"></span>short-side setup</span>
+                    <span class="heat-setup-key"><span class="heat-setup-mark long"></span>long-side setup</span>
                 </div>
             </div>
 
@@ -282,7 +281,6 @@
                     </div>
                 </div>
                 <div class="vs-reading" id="vs-reading"><span class="vs-reading-na">Loading…</span></div>
-                <div class="vs-evidence" id="vs-evidence"></div>
             </div>
 
             <!-- VOLUME PROFILE (volume at price) -->

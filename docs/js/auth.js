@@ -294,8 +294,8 @@
                 'js/charts.js?v=20261116b',
                 'js/cards.js?v=20261018e',
                 'js/alert-engine.js?v=20261116b',
-                'js/signals.js?v=20261116b',
-                'js/volume-studies.js?v=20261116b',
+                'js/signals.js?v=20261116c',
+                'js/volume-studies.js?v=20261116c',
                 'js/volume-profile.js?v=20261030a',
                 'js/tail-risk.js?v=20261031a',
                 'js/app.js?v=20261116a'
