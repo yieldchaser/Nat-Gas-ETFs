@@ -123,6 +123,13 @@ if (!fs.existsSync('docs/js/cycle-engine.js')) {
         'docs/js/cvol.js': ['NO EDGE', 'Backtest', 'base rate', 'hit rate'],
     };
     for (const [f, words] of Object.entries(BANNED)) { const t = text(f), hit = words.filter(w => t.includes(w)); check(`wording: ${f}`, hit.length === 0, hit.join(', ')); }
+    const REQUIRED = {
+        'docs/js/alert-engine.js': ['AT 63-SESSION LOW', 'CAUTION: QUIET MARKET', 'CAUTION: OPTIONS UPSIDE STRESS', 'LONG-SIDE DIP BUYING', 'PUT-SKEW EXTREME', 'EXIT WATCH', 'PLAN', 'FEW TRADES'],
+        'docs/js/volume-studies.js': ['63-SESSION POSITION', 'WASHED OUT', 'STRETCHED'],
+        'docs/trough-peak.html': ['CURRENT LEG'],
+        'docs/cvol.html': ['HISTORY AND METHODS'],
+    };
+    for (const [f, words] of Object.entries(REQUIRED)) { const src = fs.readFileSync(f, 'utf8'), miss = words.filter(w => !src.includes(w)); check(`present: ${f}`, miss.length === 0, miss.join(', ')); }
     check('removed: indicator_evidence.json', !fs.existsSync('docs/data/indicator_evidence.json'));
 }
 console.log(failed ? `FAILED: ${failed} check(s)` : 'PASS cycle acceptance');

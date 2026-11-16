@@ -139,6 +139,68 @@ For each side, 2,908 combinations were scored: every volume variant (US, Toronto
 
 Entries per year with the final list: A 3.5 (2.0 with the `atLow` flag), K 2.2, CAPITULATION 1.2, CLOSE_EXHAUSTION 2.6, CROWDED_RALLY 1.9. Several of these overlap in time, so the count of distinct trade zones is lower.
 
+## 5b. Second round of tests (2026-11-16): what else was tried and what it means for the build
+
+All figures are for KOLD unless stated, entry at the close of the first trigger day, with a −20% closing stop. "Any day" is the same measurement on every session.
+
+**Targets and stops for setup A.** The advantage grows with the size of the target.
+
+| Target (stop −20%) | A reached it | Any day | Average result per A trade | Any day average |
+|---|---|---|---|---|
+| +10% | 75% | 66% | — | — |
+| +20% | 62% | 52% | +3.2% | −0.6% |
+| +30% | 58% | 45% | +7.4% | +1.0% |
+| +50% | 50% | 35% | +14.2% | +3.4% |
+| +80% | 33% | 25% | +16.0% | +5.8% |
+
+Stop width at a +50% target: −10% stop averages +9.6% per trade, −15% +11.7%, −20% +14.2%, −30% +13.1%. A −20% stop is the best of the four. Winners reach +30% in a median 18 sessions (middle half 7–28); losers hit the stop in a median 22. A closing stop can be gapped: the worst single trade lost 40%.
+
+**Exit rules on the 52 setup-A trades** (stop −20% always on)
+
+| Exit | Average per trade | Share positive | Median hold |
+|---|---|---|---|
+| Sell at +30% | +10.5% | 58% | 18 sessions |
+| Sell at +50% | +16.7% | 52% | 38 |
+| Sell when the PVT high marker fires on KOLD, once the trade is up 15% | +16.8% | 54% | 33 |
+| Sell after 21 sessions | +14.7% | 69% | 21 |
+| Sell on a close below the 20-session average, once up 20% | +13.8% | 62% | 24 |
+| Trail 15–25% below the peak | +10.0% to +12.7% | 48–58% | 28–38 |
+
+The PVT high marker is as good an exit as a +50% target and adapts to the size of the move. Trailing stops were the weakest.
+
+**Options data with setup A** (2013-10 onward; A alone 60%, any day 46%)
+
+| Added condition | Trades | Reached +30% |
+|---|---|---|
+| Call skew at or above its 80th percentile in the last 10 sessions | 28 | 61% |
+| Implied volatility at or above its 70th percentile | 31 | 58% |
+| Options state UPSIDE_STRESS in the last 10 sessions | 12 | 50%, typical worst point −38% |
+| Call skew at or below its 30th percentile | 10 | 30% |
+| Implied volatility at or below its 40th percentile | 8 | 38% |
+
+Options data does not improve the setup. It gives two cautions: the setup is poor in a quiet market (low skew or low implied volatility), and risky while options show upside stress.
+
+**Fund flows with setup A** (2017-06 onward; A alone 58%, any day 43%). No flow condition improved it (50–60% across eight variants). On their own, heavy KOLD creations are a negative: buying KOLD when its five-session creations are at or above their 90th percentile reached +30% only 35% of the time. Volume in the short ETFs helps; money chasing into them does not.
+
+**Position in the cycle.** KOLD's declines from peak to trough: middle half 37–57% (median 46%) over 13–44 sessions (median 25). Its rallies: middle half +47% to +129% (median +81%) over 10–43 sessions (median 32). BOIL declines: 37–64% (median 54%) over 19–49 sessions (median 34); rallies +41% to +90% (median +60%) over 10–42 sessions (median 23). Requiring a deep decline or a long time since the high did not raise setup A (52–61%). Without the volume cluster, buying KOLD less than 20 sessions after its high worked 33%: too early.
+
+**Three venues together, and quiet volume at peaks.** Requiring 3NGS to surge with KOLD and HND gave 43–57% against 64% for the same rule on KOLD and HND only. All three going quiet near a KOLD high happened 10 times in 14 years and marked the cycle high no better than price alone. Heat-map volume valleys: buying KOLD worked 42%, selling KOLD was no better than any day, buying BOIL worked 28%. None of these is built.
+
+**A tested alternative to A that is not built:** KOLD and HND each at 1.5× on 2 of 5 sessions with KOLD 20% or more below its 63-session high: 2.6 a year, 63% (75% in 2012–19 on 12 trades, 58% after). It is close to A with the `atLow` flag and adds nothing the flag does not.
+
+**Long side** (BOIL; any day 35%)
+
+| Condition | Trades | Reached +30% |
+|---|---|---|
+| K short-leg reversal | 32 | 47% (both periods) |
+| CAPITULATION (existing) | 18 | 50% |
+| Put skew extreme (skew at or below its 10th percentile) with BOIL 30% or more below its 63-session high | 19 | 58% (44% in 2012–19, 70% after) |
+| Long-side volume cluster while BOIL is falling (dip buying) | 35 | 23–32%, typical worst point about −50% |
+| BOIL five-session creations at or above their 90th percentile | 46 | 35% |
+| BOIL heavy redemptions (at or below 10th percentile) | 55 | 42% |
+
+Heavy volume or creations into a falling BOIL is the clearest "do not buy" reading in the whole study. The put-skew reading is promising but rests on 19 trades and one good period; it is shown as a caution-free watch line, not a setup.
+
 The 63-session markers locate turns; on their own they raise the win rate only a few points, so they are shown as location and exit prompts, not as alerts.
 
 ## 6. Work items
@@ -228,6 +290,28 @@ Nothing is deleted. Wording changes, and the research panels are folded away.
 
 - The directional panel's ledger and gauges keep their numbers; only labels change.
 
+### W8 — plan, cautions and warnings on the Active Alerts cards (`docs/js/alert-engine.js`)
+
+Exact strings; the acceptance test looks for the capitalised labels.
+
+1. Under the stat grid of every short-side card add one line: `PLAN  Stop −20% on a closing basis · first target +30% · hold the rest for +50% or the PVT exit marker`. Tooltip: `On past SHORT-SIDE ACCUMULATION trades: +30% was reached 58% of the time in a median 18 sessions; +50% was reached 50% of the time. A closing stop can be gapped.` Long-side cards: `PLAN  Stop −20% on a closing basis · target +30%`.
+2. Caution chips on the SHORT_ACCUMULATION card, shown only while the setup is ACTIVE:
+   - `CAUTION: QUIET MARKET` when `f.skewPe` ≤ 30 or `f.ngvlPe` ≤ 40 on the latest session. Tooltip: `In quiet options markets this setup reached +30% in about one trade in three.`
+   - `CAUTION: OPTIONS UPSIDE STRESS` when `f.optState` was `UPSIDE_STRESS` on any of the last 10 sessions. Tooltip: `With upside stress in the options market the typical trade was down 38% at its worst.`
+   A caution never changes the tier or the mask.
+3. New headline note (same place as the existing notes), not a setup and not on the heat map: `LONG-SIDE DIP BUYING` when LV ≥ 1.5 on 3 of the last 5 sessions and BOIL's close is at or below its close 10 sessions earlier. Sentence: `Heavy volume is going into a falling BOIL. Past BOIL entries in this state reached +30% about one time in four.`
+4. New headline note `PUT-SKEW EXTREME` when `f.skewPe` ≤ 10 and BOIL is 30% or more below its 63-session high. Sentence: `Put skew is extreme with BOIL deeply off its high. Past BOIL entries here reached +30% in 11 of 19 trades.`
+5. When a SHORT_ACCUMULATION trade is open (status IN_WINDOW or ACTIVE), KOLD is 15% or more above the entry close, and the KOLD PVT high marker (section 4) is true today, show the chip `EXIT WATCH` on the card with the sentence `KOLD's price-volume trend is stretched and turning down.`
+
+### W9 — Trough-to-Peak page: where the current leg stands (`docs/trough-peak.html`)
+
+For each ticker card, using the cycles `detectCycles` already returns at the current threshold, add one line labelled `CURRENT LEG`:
+
+- If the last pivot is a peak (price is falling): `CURRENT LEG  down {x}% over {n} sessions · typical decline {med}% over {medN} sessions (middle half {q25}–{q75}%)`.
+- If the last pivot is a trough (price is rising): `CURRENT LEG  up {x}% over {n} sessions · typical rally +{med}% over {medN} sessions (middle half +{q25}–{q75}%)`.
+
+`x` is close ÷ last pivot close − 1; `n` counts sessions (rows of the price array), not calendar days; the typical figures are the median and quartiles of that ticker's completed legs of the same direction at the current threshold. With the default 30% threshold and data to 2026-11-13 the typical figures are: KOLD decline 46% over 25 sessions (37–57%), rally +81% over 32 (47–129%); BOIL decline 54% over 34 (37–64%), rally +60% over 23 (41–90%). The line recomputes when the threshold slider moves. No other change to this page. Also fix `tools/test_trough_peak_drawdown.mjs`, which fails today with `computeRollingLookbackDD is not defined`, or delete it if the function no longer exists anywhere.
+
 ### W6 — verification before opening the PR
 
 - `node tools/test_cycle_acceptance.mjs` prints `PASS cycle acceptance` with no `BUILD PENDING` line, and `git diff origin/main -- tools/test_cycle_acceptance.mjs tools/cycle_acceptance_frozen.json` is empty.
@@ -235,6 +319,21 @@ Nothing is deleted. Wording changes, and the research panels are folded away.
 - Section 3 and section 5 numbers reproduce within tolerance (the acceptance test prints the two reference lines).
 - `docs/index.html` loads with no console errors at 1500px and 420px, no horizontal overflow; grep the built page text for the banned words in section 2.
 - Screenshot Active Alerts, the PVT tab and the heat map and check each against this spec.
+
+## 6a. Order of work and definition of done
+
+Do the items in this order; each must leave all suites green before the next starts.
+
+1. W1 cycle engine and its tests.
+2. W2 alert engine (frame fields, two setups, cycle records, tiers, card grid, table).
+3. W8 plan line, cautions, notes, exit watch.
+4. W5 PVT 63-session position, markers and reading (W8 item 5 needs the high marker).
+5. W4 heat-map zone dots and tooltip.
+6. W3 remaining wording, then W7 Options page wording and the folded section.
+7. W9 Trough-to-Peak current-leg line.
+8. W6 verification.
+
+Done means: the acceptance test passes with no `BUILD PENDING` line and is unmodified; every numbered item under W1–W9 is either implemented or listed in the pull request description with the reason it could not be; no item is silently skipped; screenshots of Active Alerts, the PVT tab, the heat map, the Options page and one Trough-to-Peak card are attached to the pull request.
 
 ## 7. Limits to keep in mind (not for the site)
 
