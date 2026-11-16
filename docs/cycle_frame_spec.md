@@ -66,6 +66,7 @@ All features are computed on the full price history; only scoring is limited to 
 | B (already live as `CROWDED_RALLY`, keep its current rule) | long-side volume climax in a rally | buy KOLD |
 | A flag `atLow` (chip on the A card, not a separate setup) | A is true AND KOLD close ≤ 1.10 × its lowest close of the last 63 sessions | buy KOLD |
 | K `SHORT_LEG_REVERSAL` | max of z63(KOLD) over the last 10 sessions ≥ +1.5 AND KOLD impulse today < −0.5 | buy BOIL |
+| R `PVT_RECOVERY` | z63(KOLD) today > −1 AND z63(KOLD) yesterday ≤ −1 AND min of z63(KOLD) over the last 20 sessions (today included) ≤ −2 | buy KOLD |
 | PVT high marker (display only, per ETF) | max z63 over last 10 ≥ +1.5 AND z63 today ≥ +0.75 AND impulse today < −0.5 | exit prompt for holders of that ETF |
 | PVT low marker (display only, per ETF) | min z63 over last 10 ≤ −1.5 AND impulse today > +0.5 | low watch for that ETF |
 
@@ -213,6 +214,26 @@ The broad trend of NG and the season do not separate good trades from bad. Two t
 | BOIL five-session creations at or above their 90th percentile | 46 | 35% |
 | BOIL heavy redemptions (at or below 10th percentile) | 55 | 42% |
 
+**Price-volume trend, third pass** (KOLD any day 45%, BOIL any day 35%; target +30% before −20%)
+
+About 60 PVT readings were scored on each of KOLD and BOIL: the 21-, 42-, 63- and 126-session oscillator crossing up through low, middle and high levels, the cumulative line crossing its 21-session average, new 63-session highs in the line, and price/line divergences.
+
+| Reading on KOLD | Trades | Reached +30% |
+|---|---|---|
+| 21-session oscillator crossing up through −60, −25, 0 or +25 | 101–110 each | 44–50% |
+| Cumulative line crossing above its 21-session average | 103 | 43% |
+| 63-session oscillator crossing up through 0 | 68 | 46% |
+| 63-session oscillator crossing up through +1 (buying strength) | 57 | 33% |
+| 126-session oscillator crossing up through +1 | 37 | 24% |
+| First day the 63-session oscillator is at +1 or higher | 44 | 34% |
+| Cumulative line at a new 63-session high | 38 | 32% |
+| **63-session oscillator recovering through −1 after being at −2 or lower in the last 20 sessions (setup R)** | 31 | 65% (62% in 2012–19, 67% after; HND 63%) |
+
+- Setup R is the owner's reading made precise: deeply below the line and coming back is a good KOLD entry; above the line is a bad one. It holds across neighbouring settings (recovery level −1.25 to −0.75, depth −1.75 to −2, look-back 20 to 30 sessions: 51–65%, 36 variants, nearly all above any day). It is mostly separate from setup A: 20 of its 31 trades had no A trigger in the previous 10 sessions, and those worked 65%.
+- It is a confirmation entry, not a bottom call: only 7% of entries were within ten sessions of the cycle low, the typical run to the next peak was +50% and the typical worst point −8%.
+- The 21-session oscillator shown today does not separate anything at any level, in either direction.
+- **On BOIL none of the 60 readings worked**: 19–39% against 35%. PVT is a KOLD-side tool. On BOIL it is shown for location only.
+
 **Where the money is.** Average result per trade with a fixed plan:
 
 | Trade | Plan | Reached target | Average per trade | Any day, same plan |
@@ -255,6 +276,7 @@ Tests: a hand-built price series with known pivots; an entry exactly at a trough
 2. `SETUPS`: add
    - `SHORT_ACCUMULATION`, label `SHORT-SIDE ACCUMULATION`, side `short`, family `VOLUME`, maxTier `STRONG`, rule text `KOLD and HND dollar volume at 1.5× normal on 3 of the last 5 sessions while KOLD is lower than 10 sessions ago`, risk text `Fails when NG trends up for months (2013, 2018, 2021).`
    - `SHORT_LEG_REVERSAL`, label `SHORT-LEG REVERSAL`, side `long`, family `PRICE-VOLUME`, maxTier `MODERATE`, rule text `KOLD price-volume trend stretched above its 63-session range, followed by a heavy down session`, risk text `Catches about one low in three.`
+   - `PVT_RECOVERY`, label `PRICE-VOLUME RECOVERY`, side `short`, family `PRICE-VOLUME`, maxTier `STRONG`, rule text `KOLD's 63-session price-volume trend recovering through −1 after falling to −2 or lower in the last 20 sessions`, risk text `A confirmation entry: usually a week or more after the low.` `buildFrame` adds `f.zKmin20`. Active-state sentence: `KOLD's price-volume trend fell to {min} and has recovered through −1.`
 3. Scoring: for every setup compute `CycleEngine.record` on the traded leg (KOLD for `short`, BOIL for `long`) and on the Toronto mirror (HND.TO, HNU.TO). Tier from the two records, where `lift` = worked% − any-day worked%:
    - `STRONG`: lift ≥ 10 on both and entries ≥ 30 on both
    - `MODERATE`: lift ≥ 5 on both, or lift ≥ 0 on both with near-low share at least twice the any-day share on both
@@ -296,7 +318,11 @@ Still to do:
 - Reading sentence, one of:
   - high marker: `Stretched and turning down. Past cycle highs in {ETF} clustered here; holders should tighten stops.`
   - low marker: `Washed out and turning up. Past cycle lows in {ETF} clustered here; watch for a setup in Active Alerts.`
+  - KOLD, HND.TO or 3NGS.L selected and setup R true within the last 5 sessions: `Recovering from a deep washout. This has been one of the better KOLD entries.`
+  - KOLD, HND.TO or 3NGS.L selected and z63 ≥ +1: `Price-volume trend is high. A poor point to add; wait for a washout.`
+  - BOIL, HNU.TO or 3NGL.L selected, any state not covered above: `On the long ETFs this study shows location only; it has not timed entries.`
   - otherwise: `No turn signal. The 21-session oscillator swings between extremes most weeks and is not a timing tool on its own.`
+- Draw the 63-session oscillator as a second line in the oscillator pane (thin, neutral colour) with reference lines at −2, −1 and +1, and a marker on the price pane at each setup-R session for the short ETFs.
 - Draw small markers on the price pane at high-marker and low-marker sessions (reuse the existing divergence marker style, one colour each).
 - Keep the 21-session oscillator, its state machine and its labels as they are.
 
@@ -329,7 +355,8 @@ Exact strings; the acceptance test looks for the capitalised labels.
    A caution never changes the tier or the mask.
 3. New headline note (same place as the existing notes), not a setup and not on the heat map: `LONG-SIDE DIP BUYING` when LV ≥ 1.5 on 3 of the last 5 sessions and BOIL's close is at or below its close 10 sessions earlier. Sentence: `Heavy volume is going into a falling BOIL. Past BOIL entries in this state reached +30% about one time in four.`
 4. New headline note `PUT-SKEW EXTREME` when `f.skewPe` ≤ 10 and BOIL is 30% or more below its 63-session high. Sentence: `Put skew is extreme with BOIL deeply off its high. Past BOIL entries here reached +30% in 11 of 19 trades.`
-5. Two more chips on the SHORT_ACCUMULATION card while it is ACTIVE:
+5. New headline note `KOLD PRICE-VOLUME STRETCHED` when z63(KOLD) ≥ +1 on the latest session. Sentence: `KOLD's price-volume trend is high. Past KOLD entries in this state reached +30% about one time in three.` When this note is on and a short-side setup is also ACTIVE, the `TODAY` line (W11) uses its caution form with the text `KOLD price-volume trend is high`.
+5a. Two more chips on the SHORT_ACCUMULATION card while it is ACTIVE:
    - `CAUTION: NG AT 6-MONTH HIGH` when `f.li` equalled its 126-session maximum on any of the last 10 sessions. Tooltip: `First surges while NG is still making six-month highs were early: the typical trade was down 36% at its worst.`
    - `SECOND SURGE` when this is not the first SHORT_ACCUMULATION episode since KOLD's most recent 126-session closing high (count episodes, 10-session gap rule, whose first day falls after the session of that high; the chip shows from the second one). Tooltip: `Second and later surges in the same KOLD decline reached +30% in 10 of 14 trades.`
 6. When a SHORT_ACCUMULATION trade is open (status IN_WINDOW or ACTIVE), KOLD is 15% or more above the entry close, and the KOLD PVT high marker (section 4) is true today, show the chip `EXIT WATCH` on the card with the sentence `KOLD's price-volume trend is stretched and turning down.`
