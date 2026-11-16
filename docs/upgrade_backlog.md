@@ -111,3 +111,7 @@ as trades, relabel it as a descriptive stress reading (as was done for L-CAP / S
   it is not in CI. Test or page drifted.
 - **E7. Cache-busting**: `cvol.html` loads `config.js` and `vol-regime.js` without a version
   string; both changed this round.
+
+## Round 4 (2026-11-16) — cycle frame
+
+Signals are now judged on Trough-to-Peak cycles instead of fixed forward windows. The full implementation spec, with definitions, expected numbers and file-by-file work items W1–W6, is in `docs/cycle_frame_spec.md`. It supersedes E2 (evidence-line tests), E3 and E4 above. E1, E5, E6 and E7 are still open.

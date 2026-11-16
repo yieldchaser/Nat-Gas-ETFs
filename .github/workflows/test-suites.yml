@@ -39,3 +39,6 @@ jobs:
 
       - name: Run Pair Stress & VDDS tests
         run: node tools/test_pair_stress_and_vdds.mjs
+
+      - name: Run Cycle acceptance test
+        run: node tools/test_cycle_acceptance.mjs

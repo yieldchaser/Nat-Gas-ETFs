@@ -837,9 +837,7 @@ const Signals = {
         }
     },
 
-    // Mark the heat-map days on which a tested Active Alerts setup was triggered. The heat score
-    // itself carried no directional information when tested (tools/heatmap_evidence.mjs), so the
-    // marks are what ties the calendar to the setups that did.
+    // Dot the heat-map cells where an Active Alerts setup was true.
     markHeatSetups() {
         const last = this._heatLast;
         if (!last || !last.container || typeof AlertEngine === 'undefined') return;
