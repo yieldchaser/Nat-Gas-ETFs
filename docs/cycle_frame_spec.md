@@ -213,6 +213,20 @@ The broad trend of NG and the season do not separate good trades from bad. Two t
 | BOIL five-session creations at or above their 90th percentile | 46 | 35% |
 | BOIL heavy redemptions (at or below 10th percentile) | 55 | 42% |
 
+**Where the money is.** Average result per trade with a fixed plan:
+
+| Trade | Plan | Reached target | Average per trade | Any day, same plan |
+|---|---|---|---|---|
+| KOLD on setup A | stop −20%, target +50% | 50% | +14.2% | +3.4% |
+| KOLD on setup A | stop −20%, target +30% | 58% | +7.4% | +1.0% |
+| BOIL on setup K | stop −15%, target +30% | 47% | +4.6% | about −4% |
+| BOIL on setup K | stop −20%, target +30% | 47% | +2.9% | −4.3% |
+| BOIL on setup K | stop −20%, target +50% | 31% | +1.0% | −4.2% |
+
+BOIL loses money on an ordinary day under any of these plans, and its best setup only lifts it to a small gain. Long entries are short tactical trades with a tight stop and a +30% target; they are not held for more. The short side is where a position can be held for size.
+
+**Fund flows as an exit signal.** Heavy KOLD creations, heavy KOLD redemptions, heavy BOIL creations and heavy BOIL redemptions were each tested as a reason to sell the ETF near a high. None marked highs better than price alone or produced a better exit than an ordinary day (31–56% against 42–52%). Flows are shown as context and as the two entry warnings in W10, never as an exit prompt. The one volume reading that marks BOIL highs is the existing long-side climax (a long-side volume cluster in a rally: 25% of cases within ten sessions of the cycle high against 10% for any day).
+
 Heavy volume or creations into a falling BOIL is the clearest "do not buy" reading in the whole study. The put-skew reading is promising but rests on 19 trades and one good period; it is shown as a caution-free watch line, not a setup.
 
 The 63-session markers locate turns; on their own they raise the win rate only a few points, so they are shown as location and exit prompts, not as alerts.
@@ -308,7 +322,7 @@ Nothing is deleted. Wording changes, and the research panels are folded away.
 
 Exact strings; the acceptance test looks for the capitalised labels.
 
-1. Under the stat grid of every short-side card add one line: `PLAN  Stop −20% on a closing basis · first target +30% · hold the rest for +50% or the PVT exit marker`. Tooltip: `On past SHORT-SIDE ACCUMULATION trades: +30% was reached 58% of the time in a median 18 sessions; +50% was reached 50% of the time. A closing stop can be gapped.` Long-side cards: `PLAN  Stop −20% on a closing basis · target +30%`.
+1. Under the stat grid of every short-side card add one line: `PLAN  Stop −20% on a closing basis · first target +30% · hold the rest for +50% or the PVT exit marker`. Tooltip: `On past SHORT-SIDE ACCUMULATION trades: +30% was reached 58% of the time in a median 18 sessions; +50% was reached 50% of the time. A closing stop can be gapped.` Long-side cards: `PLAN  Stop −15% on a closing basis · target +30% · do not hold for more`. Tooltip: `BOIL trades held for larger targets gave back the gain: +4.6% average per trade with this plan, +1.0% when held for +50%.`
 2. Caution chips on the SHORT_ACCUMULATION card, shown only while the setup is ACTIVE:
    - `CAUTION: QUIET MARKET` when `f.skewPe` ≤ 30 or `f.ngvlPe` ≤ 40 on the latest session. Tooltip: `In quiet options markets this setup reached +30% in about one trade in three.`
    - `CAUTION: OPTIONS UPSIDE STRESS` when `f.optState` was `UPSIDE_STRESS` on any of the last 10 sessions. Tooltip: `With upside stress in the options market the typical trade was down 38% at its worst.`
@@ -329,6 +343,30 @@ For each ticker card, using the cycles `detectCycles` already returns at the cur
 
 `x` is close ÷ last pivot close − 1; `n` counts sessions (rows of the price array), not calendar days; the typical figures are the median and quartiles of that ticker's completed legs of the same direction at the current threshold. With the default 30% threshold and data to 2026-11-13 the typical figures are: KOLD decline 46% over 25 sessions (37–57%), rally +81% over 32 (47–129%); BOIL decline 54% over 34 (37–64%), rally +60% over 23 (41–90%). The line recomputes when the threshold slider moves. No other change to this page. Also fix `tools/test_trough_peak_drawdown.mjs`, which fails today with `computeRollingLookbackDD is not defined`, or delete it if the function no longer exists anywhere.
 
+### W10 — Flow Monitor: one reading strip (`docs/flows.html`, `docs/js/flow-composite.js`)
+
+Nothing on the page is removed or rearranged. Add one strip at the top of the page, above the first panel, labelled `FLOW READING`, with one line per condition that is true on the latest date, in this order, or `No flow warning today.` when none is true.
+
+- Inputs: `docs/data/flows/KOLD_flows.json` and `BOIL_flows.json` (`data[].date`, `data[].usd_flow`). `flow5` = sum of `usd_flow` over the last 5 rows (at least 3 present). `pct` = expanding percentile rank of today's `flow5` among all earlier and current values, defined once 252 values exist.
+- `KOLD CREATIONS HEAVY` when KOLD `pct` ≥ 90: `Money is chasing into KOLD. Past KOLD entries in this state reached +30% about one time in three.`
+- `BOIL CREATIONS HEAVY` when BOIL `pct` ≥ 90: `Money is going into BOIL. Past BOIL entries in this state reached +30% about one time in three.`
+- Each line shows the five-session figure in dollars and its percentile, for example `+$48M over 5 sessions · 93rd percentile`.
+- Replace on this page any wording covered by the table in W7 (`hit rate`, `significant`, `backtest`), strings only.
+
+### W11 — one line that says what to do today (`docs/js/alert-engine.js`)
+
+At the very top of the Active Alerts panel, above the bias headline, add a single line labelled `TODAY`. It is built from the model, first match wins:
+
+1. SHORT_ACCUMULATION is ACTIVE with no caution chip: `TODAY  Short-side accumulation is on. KOLD entry zone; stop −20%, first target +30%.` If the `SECOND SURGE` chip is on, append ` Second surge in this decline.`
+2. SHORT_ACCUMULATION is ACTIVE with a caution chip: `TODAY  Short-side accumulation is on, with a caution: {chip text without the word CAUTION}. Half size or wait for a second surge.`
+3. `EXIT WATCH` is on: `TODAY  Exit watch on the open KOLD trade.`
+4. Another MODERATE or STRONG short-side setup is ACTIVE: `TODAY  {LABEL} is on. KOLD entry zone; stop −20%, first target +30%.`
+5. A MODERATE long-side setup is ACTIVE: `TODAY  {LABEL} is on. Tactical BOIL entry; stop −15%, target +30%.`
+6. `LONG-SIDE DIP BUYING` note is on and nothing above: `TODAY  No entry. Heavy buying into a falling BOIL has a poor record.`
+7. Otherwise: `TODAY  No setup. Nothing to do.`
+
+The line is plain text in the existing panel font, no colour block, no icon.
+
 ### W6 — verification before opening the PR
 
 - `node tools/test_cycle_acceptance.mjs` prints `PASS cycle acceptance` with no `BUILD PENDING` line, and `git diff origin/main -- tools/test_cycle_acceptance.mjs tools/cycle_acceptance_frozen.json` is empty.
@@ -348,9 +386,11 @@ Do the items in this order; each must leave all suites green before the next sta
 5. W4 heat-map zone dots and tooltip.
 6. W3 remaining wording, then W7 Options page wording and the folded section.
 7. W9 Trough-to-Peak current-leg line.
-8. W6 verification.
+8. W10 Flow Monitor reading strip.
+9. W11 the TODAY line.
+10. W6 verification.
 
-Done means: the acceptance test passes with no `BUILD PENDING` line and is unmodified; every numbered item under W1–W9 is either implemented or listed in the pull request description with the reason it could not be; no item is silently skipped; screenshots of Active Alerts, the PVT tab, the heat map, the Options page and one Trough-to-Peak card are attached to the pull request.
+Done means: the acceptance test passes with no `BUILD PENDING` line and is unmodified; every numbered item under W1–W11 is either implemented or listed in the pull request description with the reason it could not be; no item is silently skipped; screenshots of Active Alerts, the PVT tab, the heat map, the Options page and one Trough-to-Peak card are attached to the pull request.
 
 ## 7. Limits to keep in mind (not for the site)
 
