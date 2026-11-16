@@ -196,7 +196,7 @@ def to_trade_dates(df: pd.DataFrame) -> pd.DataFrame:
     trade_date = pd.DatetimeIndex(shifted.tz_localize(None).normalize())
     out = df.copy()
     out.index = trade_date
-    out = out[out.index.dayofweek < 5]
+    out = out[out.index.day_of_week < 5]
     out = out.groupby(level=0).last()
     out.index = out.index.tz_localize("UTC")
     out.index.name = "Timestamp"
@@ -229,7 +229,7 @@ def incremental_update(new_df: pd.DataFrame, csv_path: Path) -> tuple[pd.DataFra
         combined  = pd.concat([kept, fresh]).sort_index()
         combined  = combined[~combined.index.duplicated(keep="last")]
         # Purge weekend rows written by the old UTC-date grouping.
-        combined  = combined[combined.index.dayofweek < 5]
+        combined  = combined[combined.index.day_of_week < 5]
         return combined, n_new
     else:
         csv_path.parent.mkdir(parents=True, exist_ok=True)
