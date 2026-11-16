@@ -188,6 +188,20 @@ Options data does not improve the setup. It gives two cautions: the setup is poo
 
 **A tested alternative to A that is not built:** KOLD and HND each at 1.5× on 2 of 5 sessions with KOLD 20% or more below its 63-session high: 2.6 a year, 63% (75% in 2012–19 on 12 trades, 58% after). It is close to A with the `atLow` flag and adds nothing the flag does not.
 
+**When setup A fails, and when it is at its best** (all 52 trades: 58%)
+
+| Split | Trades | Reached +30% | Typical worst point |
+|---|---|---|---|
+| NG made a 126-session high within the last 10 sessions | 13 | 46% | −36% |
+| NG not at a 126-session high | 50 | 60% | −15% |
+| First trigger since KOLD's latest 126-session high | 38 | 53% | −25% |
+| Second or later trigger in the same KOLD decline | 14 | 71% (57% in 2012–19, 86% after) | −7% |
+| NG above / below its 200-session average | 26 / 32 | 58% / 62% | −23% / −13% |
+| November–March / April–October | 30 / 27 | 60% / 52% | −18% / −14% |
+| Next trade after a losing trade / after a winning trade | 22 / 29 | 55% / 62% | — |
+
+The broad trend of NG and the season do not separate good trades from bad. Two things do, on small counts: a first surge while NG is still printing six-month highs is early and painful, and a second surge later in the same KOLD decline has been the best entry. A loss does not make the next trigger worse. NG here means the tradeable index the alert engine already builds (`f.li`).
+
 **Long side** (BOIL; any day 35%)
 
 | Condition | Trades | Reached +30% |
@@ -301,7 +315,10 @@ Exact strings; the acceptance test looks for the capitalised labels.
    A caution never changes the tier or the mask.
 3. New headline note (same place as the existing notes), not a setup and not on the heat map: `LONG-SIDE DIP BUYING` when LV ≥ 1.5 on 3 of the last 5 sessions and BOIL's close is at or below its close 10 sessions earlier. Sentence: `Heavy volume is going into a falling BOIL. Past BOIL entries in this state reached +30% about one time in four.`
 4. New headline note `PUT-SKEW EXTREME` when `f.skewPe` ≤ 10 and BOIL is 30% or more below its 63-session high. Sentence: `Put skew is extreme with BOIL deeply off its high. Past BOIL entries here reached +30% in 11 of 19 trades.`
-5. When a SHORT_ACCUMULATION trade is open (status IN_WINDOW or ACTIVE), KOLD is 15% or more above the entry close, and the KOLD PVT high marker (section 4) is true today, show the chip `EXIT WATCH` on the card with the sentence `KOLD's price-volume trend is stretched and turning down.`
+5. Two more chips on the SHORT_ACCUMULATION card while it is ACTIVE:
+   - `CAUTION: NG AT 6-MONTH HIGH` when `f.li` equalled its 126-session maximum on any of the last 10 sessions. Tooltip: `First surges while NG is still making six-month highs were early: the typical trade was down 36% at its worst.`
+   - `SECOND SURGE` when this is not the first SHORT_ACCUMULATION episode since KOLD's most recent 126-session closing high (count episodes, 10-session gap rule, whose first day falls after the session of that high; the chip shows from the second one). Tooltip: `Second and later surges in the same KOLD decline reached +30% in 10 of 14 trades.`
+6. When a SHORT_ACCUMULATION trade is open (status IN_WINDOW or ACTIVE), KOLD is 15% or more above the entry close, and the KOLD PVT high marker (section 4) is true today, show the chip `EXIT WATCH` on the card with the sentence `KOLD's price-volume trend is stretched and turning down.`
 
 ### W9 — Trough-to-Peak page: where the current leg stands (`docs/trough-peak.html`)
 
