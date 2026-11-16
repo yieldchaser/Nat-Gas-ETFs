@@ -4,7 +4,7 @@
    ============================================================ */
 // Note: MONTHS, fmtDate, fmt, getSeason are already declared in cvol.js
 function pctColor(v){return v>0?'#3db87a':v<0?'#ef4444':'var(--text-primary)';}
-function uiGetSeason(d){var m=parseInt(d.split('-')[1]);if(m>=11||m<=2)return{n:'WINTER',e:'❄',c:'#60a8f8'};if(m<=5)return{n:'SPRING',e:'🌱',c:'#3db87a'};if(m<=8)return{n:'SUMMER',e:'☀',c:'#f59e0b'};return{n:'FALL',e:'🍂',c:'#c07828'};}
+function uiGetSeason(d){var m=parseInt(d.split('-')[1]);if(m>=11||m<=2)return{n:'WINTER',c:'#60a8f8'};if(m<=5)return{n:'SPRING',c:'#3db87a'};if(m<=8)return{n:'SUMMER',c:'#f59e0b'};return{n:'FALL',c:'#c07828'};}
 
 // ── Status Banner ─────────────────────────────────────────────
 function renderBanner(data, comp) {
@@ -16,16 +16,16 @@ function renderBanner(data, comp) {
     var convColor = last.convexity > 1.1 ? '#f59e0b' : last.convexity > 0.95 ? '#3db87a' : '#60a8f8';
     var badges = '';
     var ci = comp.ci ? comp.ci[data.length - 1] : null;
-    if (ci != null && ci > 82) badges += '<span class="flash-badge flash-ci" data-tooltip="Fragile Calm Trigger: ATM volatility is historically suppressed (CI > 82). Historically, this is a spring-loaded setup for a violent spike in volatility.">COMPLACENCY HIGH</span>';
+    if (ci != null && ci > 82) badges += '<span class="flash-badge flash-ci" data-tooltip="Low-volatility regime: ATM volatility is historically suppressed (CI > 82). Such periods have tended to end with a sharp rise in volatility. Research input, not a tested trade signal.">COMPLACENCY HIGH</span>';
     var sad = comp.sad ? comp.sad[data.length - 1] : null;
     var sadZ = comp.sadZ ? comp.sadZ[data.length - 1] : null;
-    if (sadZ != null && Math.abs(sadZ) > 1.5) badges += '<span class="flash-badge flash-sad" data-tooltip="Stealth Skew Shift: Skew is diverging significantly from ATM volatility. Indicates \'Smart Money\' is quietly placing directional bets ahead of price.">SKEW DIVERGENCE</span>';
+    if (sadZ != null && Math.abs(sadZ) > 1.5) badges += '<span class="flash-badge flash-sad" data-tooltip="Skew divergence: Skew is diverging significantly from ATM volatility. Positioning in the wings is changing while the overall level of volatility is not. Research input.">SKEW DIVERGENCE</span>';
     var rdsZ = comp.rdsZ ? comp.rdsZ[data.length - 1] : null;
-    if (rdsZ != null && rdsZ > 1.8) badges += '<span class="flash-badge flash-rds" data-tooltip="Explosive Regime Shift: RDS Z-score > 1.8 indicates a rare trifecta of rapid skew shift, low vol, and fat tails \u2014 often seen at major trend inflections.">REGIME SHIFT</span>';
+    if (rdsZ != null && rdsZ > 1.8) badges += '<span class="flash-badge flash-rds" data-tooltip="Regime divergence: RDS Z-score > 1.8 indicates a rapid skew change, low volatility and elevated convexity at the same time. Research input.">REGIME SHIFT</span>';
     el.innerHTML =
         '<div class="sb-item" data-tooltip="CME NGVL: 30-day forward implied volatility for Natural Gas. This is the institutional benchmark for market uncertainty."><div class="sb-lbl">NGVL</div><div class="sb-val" style="color:'+ngvlReg.color+'">'+fmt(last.ngvl)+'%</div><div class="sb-sub">'+fmt(comp.ngvlPct252?comp.ngvlPct252[data.length-1]:null,0)+'th · '+ngvlReg.label+'</div></div>' +
         '<div class="sb-item" data-tooltip="Sentiment Barometer: Correlates Call vs Put demand. >1.0 means the market is pricing more upside tail-risk; <1.0 means downside fear is dominant."><div class="sb-lbl">SKEW RATIO</div><div class="sb-val">'+fmt(last.skewRatio,3)+'</div><div class="sb-sub" style="color:'+(skDir.indexOf('RISING')>=0?'#3db87a':'#ef4444')+'">Z: '+fmt(comp.skewRatioZ21?comp.skewRatioZ21[data.length-1]:null)+ ' · '+skDir+'</div></div>' +
-        '<div class="sb-item" data-tooltip="Tail Sensitivity: Measures the cost of deep OTM protection relative to ATM. >1.10 = speculators are aggressively buying \'lottery ticket\' tail hedges."><div class="sb-lbl">CONVEXITY</div><div class="sb-val" style="color:'+convColor+'">'+fmt(last.convexity,4)+'</div><div class="sb-sub" style="color:'+convColor+'">'+convLabel+'</div></div>' +
+        '<div class="sb-item" data-tooltip="Tail Sensitivity: Measures the cost of deep OTM protection relative to ATM. >1.10 = deep out-of-the-money options are expensive relative to at-the-money options."><div class="sb-lbl">CONVEXITY</div><div class="sb-val" style="color:'+convColor+'">'+fmt(last.convexity,4)+'</div><div class="sb-sub" style="color:'+convColor+'">'+convLabel+'</div></div>' +
         '<div class="sb-item" data-tooltip="Current front-month futures settlement."><div class="sb-lbl">NG PRICE</div><div class="sb-val">$'+fmt(last.underlying,3)+'</div><div class="sb-sub">'+fmtDate(last.date)+'</div></div>' +
         '<div class="sb-badges">'+badges+'</div>';
 }
@@ -46,11 +46,12 @@ function renderConvictionBanner(data, comp) {
     var edge = comp.edge, ec = edge && edge.current;
     if (ec && ec.state !== 'NEUTRAL' && ec.confirmed && edge.states[ec.state]) {
         var es = edge.states[ec.state], et = es.tradeStats;
-        edgeLead = '<span style="font-size:0.72rem;font-weight:900;letter-spacing:2px;color:' + ec.color + ';" data-tooltip="Directional Edge model (tradeable basis). See the Directional Edge panel for the full evidence.">' + ec.label + '</span>' +
+        edgeLead = '<span class="cb-kind">DIRECTION</span><span style="font-size:0.72rem;font-weight:900;letter-spacing:2px;color:' + ec.color + ';" data-tooltip="Directional Edge model (tradeable basis). See the Directional Edge panel for the full evidence.">' + ec.label + '</span>' +
             '<span style="font-size:0.65rem;color:rgba(255,255,255,0.85);letter-spacing:0.5px;font-weight:700;">' + (ec.bias === 'DOWNSIDE' ? 'DOWNSIDE EDGE' : 'UPSIDE EDGE') + ' · ' + es.tier + ' · ' + et.wins + ' of ' + et.n + ' trades won vs ' + fmt(et.benchWinRate,0) + '% any-day</span>' +
             '<span style="color:rgba(255,255,255,0.25);">|</span>';
     }
     el.innerHTML = edgeLead +
+        '<span class="cb-kind" data-tooltip="What the options surface is pricing now. This describes risk pricing and is separate from the tested directional states.">PRICING</span>' +
         '<span style="font-size:0.72rem;font-weight:900;letter-spacing:2px;color:' + color + ';">' + read.label + '</span>' +
         '<span style="font-size:0.65rem;color:rgba(255,255,255,0.85);letter-spacing:0.5px;font-weight:700;">' + read.directionalRead + '</span>' +
         '<span style="font-size:0.58rem;color:rgba(255,255,255,0.65);letter-spacing:0.5px;">Confidence ' + read.confidence + ' (' + fmt(read.confidenceScore,0) + ') | ' + read.volBias + ' | ' + read.action + '</span>';
@@ -99,14 +100,14 @@ function renderEdgePanel(data, comp) {
         var ts = st.tradeStats;
         var tradeLine = 'Scored as trades (' + sideTxt(st.bias, st.hold) + ' each time the state becomes actionable, no overlap): ' + ts.wins + ' of ' + ts.n + ' won, averaging ' + signed(ts.mean) + '. Doing the same on any day wins ' + fmt(ts.benchWinRate,0) + '% and averages ' + signed(ts.benchMean) + '.';
         if (!actionable) {
-            sentence = st.short + ', but only on ' + cur.persist + ' of the last ' + W + ' sessions. On its first or isolated days this state has been a coin flip (' + fmt(st.fresh.horizons[st.hold].upRate,0) + '% higher after ' + st.hold + ' sessions, base ' + fmt(base[st.hold].upRate,0) + '%). It becomes actionable at ' + st.confirm + ' of ' + W + '. ' + tradeLine;
+            sentence = st.short + ', but only on ' + cur.persist + ' of the last ' + W + ' sessions. On its first or isolated days this state has shown no edge (' + fmt(st.fresh.horizons[st.hold].upRate,0) + '% higher after ' + st.hold + ' sessions, base ' + fmt(base[st.hold].upRate,0) + '%). It becomes actionable at ' + st.confirm + ' of ' + W + '. ' + tradeLine;
         } else {
             var dirWord = cur.bias === 'DOWNSIDE' ? 'lower' : 'higher';
             var dirRate = cur.bias === 'DOWNSIDE' ? 100 - h21.upRate : h21.upRate;
             var baseRate = cur.bias === 'DOWNSIDE' ? 100 - b21.upRate : b21.upRate;
             sentence = st.short + '. ' + tradeLine + ' Day by day, NG (tradeable) was ' + dirWord + ' 21 sessions later on ' + fmt(dirRate,0) + '% of the ' + h21.n + ' prior days like today (base ' + fmt(baseRate,0) + '%).';
-            if (st.tier === 'WEAK') sentence += ' Weakest of the three reads: the win rate is not distinguishable from the benchmark, only the average is. A reason not to chase a short, not a trough call.';
-            if (st.tier === 'MODERATE') sentence += ' A ten-session effect; held to 21 sessions it fades to the benchmark.';
+            if (st.tier === 'WEAK') sentence += ' This is the weakest of the three states: the win rate is not distinguishable from the any-day rate; only the average return is. It argues against adding to a short position, not for calling a low.';
+            if (st.tier === 'MODERATE') sentence += ' The effect lasts about ten sessions; held for 21 it converges to the any-day rate.';
         }
     }
     var persistTxt = isNeutral ? '' : (needsConfirm
@@ -135,15 +136,18 @@ function renderEdgePanel(data, comp) {
     function gauge(lbl, val, sub2, hot, tip) {
         return '<div class="edge-input" data-tooltip="' + esc(tip) + '"><div class="edge-input-lbl">' + lbl + '</div><div class="edge-input-val" style="color:' + (hot ? '#f59e0b' : 'var(--text-bright, #fff)') + ';">' + val + '</div><div class="edge-input-sub">' + sub2 + '</div></div>';
     }
+    var cpNow = data.length ? data[data.length - 1].cpPe : null;
     var inputs = '<div class="edge-inputs">' +
-        gauge('SKEW RATIO', fmt(f.skewRatio,3), fmt(f.skewPe,1) + 'th pct · blow-off ≥ ' + fmt(thr.skewBlow,2), f.skewPe >= EDGE_CFG.skewStress,
-            'Up variance divided by down variance. Percentile is against every prior session (expanding, no look-ahead), so winter does not reset the scale. Upside stress starts at the ' + EDGE_CFG.skewStress + 'th percentile (currently ' + fmt(thr.skewStress,2) + '), blow-off at the ' + EDGE_CFG.skewBlow + 'th (' + fmt(thr.skewBlow,2) + ').') +
+        gauge('SKEW RATIO', fmt(f.skewRatio,3), fmt(f.skewPe,1) + 'th pct · extreme ≥ ' + fmt(thr.skewBlow,2), f.skewPe >= EDGE_CFG.skewStress,
+            'Up variance divided by down variance. Percentile is against every prior session (expanding, no look-ahead), so winter does not reset the scale. Upside stress starts at the ' + EDGE_CFG.skewStress + 'th percentile (currently ' + fmt(thr.skewStress,2) + '), the call-skew extreme at the ' + EDGE_CFG.skewBlow + 'th (' + fmt(thr.skewBlow,2) + ').') +
         gauge('NGVL', fmt(f.ngvl,1), fmt(f.ngvlPe,1) + 'th pct · gate ≥ ' + fmt(thr.ngvlGate,0), f.ngvlPe >= EDGE_CFG.volGate,
             'Implied vol must also be extreme (' + EDGE_CFG.volGate + 'th expanding percentile, currently ' + fmt(thr.ngvlGate,1) + '). Extreme skew with ordinary vol carried no edge in the history.') +
-        gauge('5D MOVE', f.move5 == null ? '—' : (f.move5 >= 0 ? '+' : '') + f.move5.toFixed(2) + 'σ', 'flush ≤ ' + EDGE_CFG.flushSigma.toFixed(1) + 'σ', f.move5 != null && f.move5 <= EDGE_CFG.flushSigma,
-            'Five-session move of the tradeable index in units of what NGVL implied five sessions ago. A panic flush needs a drop of at least ' + Math.abs(EDGE_CFG.flushSigma) + ' implied sigmas.') +
-        gauge('5D NGVL CHANGE', f.volChg5 == null ? '—' : signed(f.volChg5 * 100), 'flush needs > +' + (EDGE_CFG.flushVolRise * 100).toFixed(0) + '%', f.volChg5 != null && f.volChg5 > EDGE_CFG.flushVolRise,
-            'Five-session log change in NGVL. A sell-off that RAISES implied vol means option buyers are paying up for protection — historically followed by a bounce. The same size of drop with flat or falling vol showed no bounce.') +
+        gauge('5D MOVE', f.move5 == null ? '—' : (f.move5 >= 0 ? '+' : '') + f.move5.toFixed(2) + 'σ', 'selloff ≤ ' + EDGE_CFG.flushSigma.toFixed(1) + 'σ', f.move5 != null && f.move5 <= EDGE_CFG.flushSigma,
+            'Five-session move of the tradeable index in units of what NGVL implied five sessions ago. A vol-spike selloff requires a decline of at least ' + Math.abs(EDGE_CFG.flushSigma) + ' implied sigmas.') +
+        gauge('5D NGVL CHANGE', f.volChg5 == null ? '—' : signed(f.volChg5 * 100), 'selloff requires > +' + (EDGE_CFG.flushVolRise * 100).toFixed(0) + '%', f.volChg5 != null && f.volChg5 > EDGE_CFG.flushVolRise,
+            'Five-session log change in NGVL. A sell-off that RAISES implied vol means option buyers are paying more for protection, which has historically been followed by a recovery. The same size of drop with flat or falling vol showed no bounce.') +
+        (cpNow == null ? '' : gauge('CLOSING PRESSURE', fmt(cpNow,0) + 'th pct', 'capitulation ≤ 20th', cpNow <= 20,
+            'Closing pressure from the BOIL / KOLD pair: where the ETFs have been closing within their daily range, weighted by dollar volume, ranked against all history. A vol-spike selloff with closing pressure at or below its 20th percentile is the CAPITULATION setup in Active Alerts on the Volume Monitor, which won about three trades in four; the same selloff without weak closes recovered only 38% of the time.')) +
     '</div>';
 
     // ── Evidence table: every state against the base rate, by day and as trades ──
@@ -160,7 +164,7 @@ function renderEdgePanel(data, comp) {
         '<th data-tooltip="The state scored the way it would be used: enter when it becomes actionable and you are flat, hold the stated number of sessions, no overlapping positions. Shown as trades won out of trades taken, with the win rate of taking the same side for the same hold on ANY day — on a tradeable basis simply being short NG wins well over half the time, so that is the bar.">TRADES WON (ANY-DAY)</th>' +
         '<th data-tooltip="Mean result per trade in the direction of the read, and profit factor (gains divided by losses)">AVG / PF</th>' +
         '<th data-tooltip="Trade-level significance: probability of winning at least this many trades if each had only the any-day benchmark win rate (exact binomial)">P (TRADES)</th>' +
-        '<th data-tooltip="Worst finished trade, and the worst point any trade reached before its exit. Size positions for the second number.">WORST / HEAT</th>' +
+        '<th data-tooltip="Worst finished trade, and the worst point any trade reached before its exit. Size positions for the second number.">WORST / MAX ADVERSE</th>' +
         '</tr></thead><tbody>';
     ['BLOWOFF', 'UPSIDE_STRESS', 'PANIC_FLUSH', 'NEUTRAL'].forEach(function(k) {
         var s = edge.states[k]; if (!s) return;
@@ -202,7 +206,7 @@ function renderEdgePanel(data, comp) {
         '<th data-tooltip="Skew ratio and NGVL at entry">SKEW / NGVL</th>' +
         '<th data-tooltip="Tradeable NG index move from entry to exit">NG MOVE</th>' +
         '<th data-tooltip="Result in the direction of the read (' + (ls.bias === 'DOWNSIDE' ? 'short' : 'long') + ' the unlevered index). A 2x ETF roughly doubles it, before volatility drag.">RESULT</th>' +
-        '<th data-tooltip="Worst point reached against the position before exit">WORST HEAT</th><th>OUTCOME</th></tr></thead><tbody>';
+        '<th data-tooltip="Worst point reached against the position before exit">MAX ADVERSE</th><th>OUTCOME</th></tr></thead><tbody>';
     ls.trades.slice().reverse().forEach(function(t) {
         var outcome = t.open ? '<span style="color:#f59e0b;">OPEN · ' + t.sessions + ' of ' + ls.hold + '</span>' : t.pnl > 0 ? '<span style="color:#3db87a;">WON</span>' : '<span style="color:#ef4444;">LOST</span>';
         ledger += '<tr><td>' + fmtDate(t.entry) + '</td><td>' + (t.open ? '—' : fmtDate(t.exit)) + '</td><td>' + fmt(t.skewRatio,2) + ' / ' + fmt(t.ngvl,0) + '</td>' +
@@ -222,7 +226,7 @@ function renderEdgePanel(data, comp) {
             '<span>BOIL <b style="color:#ef4444;">' + signed(dec.boilMedian) + '</b> <span style="color:' + faint + ';">(' + signed(dec.boilP25) + ' to ' + signed(dec.boilP75) + ')</span></span>' +
             '<span>KOLD <b style="color:#ef4444;">' + signed(dec.koldMedian) + '</b> <span style="color:' + faint + ';">(' + signed(dec.koldP25) + ' to ' + signed(dec.koldP75) + ')</span></span>' +
             '<span style="color:' + dim + ';">volatility drag per 21 sessions, median and interquartile range of ' + dec.n + ' analog days · typical 21D NG move ±' + fmt(dec.idxAbsMoveMedian,0) + '%</span>' +
-            (costlier ? '<span style="color:#f59e0b;">KOLD bleeds about ' + fmt(Math.abs(dec.koldMedian / dec.boilMedian),1) + '× faster than BOIL here: a bearish view is cheaper to carry as short BOIL than as long KOLD.</span>' : '') +
+            (costlier ? '<span style="color:#f59e0b;">KOLD loses about ' + fmt(Math.abs(dec.koldMedian / dec.boilMedian),1) + '× as much as BOIL to volatility drag at this level, so a bearish view costs less to hold as short BOIL than as long KOLD.</span>' : '') +
         '</div>';
     }
 
@@ -232,7 +236,7 @@ function renderEdgePanel(data, comp) {
 
     el.innerHTML = hero + inputs + decay +
         '<div class="edge-sub-title">EVIDENCE BY STATE</div><div style="overflow-x:auto;">' + tbl + '</div>' +
-        '<div class="edge-sub-title">TRADE LEDGER <span style="color:' + faint + ';font-weight:400;letter-spacing:0;">most recent first</span></div>' + chips + ledgerNote + '<div style="overflow-x:auto;">' + ledger + '</div>' + foot;
+        '<div class="edge-sub-title">TRADE LEDGER <span style="color:' + faint + ';font-weight:400;letter-spacing:0;">most recent first</span></div>' + chips + ledgerNote + '<div class="edge-ledger-scroll">' + ledger + '</div>' + foot;
 }
 
 // ── KPI Cards (expanded) ─────────────────────────────────────
@@ -300,9 +304,9 @@ function renderKpiCards(data, comp) {
         '<div class="cvol-kpi-stat" data-tooltip="Day-over-Day Absolute Change in volatility points."><div class="cvol-kpi-slbl">Δ 1D</div><div class="cvol-kpi-sval" style="color:'+pctColor(d1)+'">'+((d1!=null&&d1>0)?'+':'')+fmt(d1)+'</div></div>' +
     '</div>' +
     '<div class="cvol-kpi-micro">' +
-        '<div class="cvol-micro-line" data-tooltip="5-day Volatility Momentum: Measures how fast the options market is repricing risk. Rapid expansion often precedes a violent price move."><span class="cvol-micro-lbl">5D ROC</span><span class="cvol-micro-val" style="color:'+pctColor(roc5)+'">'+((roc5!=null&&roc5>0)?'+':'')+fmt(roc5)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="5-day Volatility Momentum: Measures how fast the options market is repricing risk. Rapid expansion has often preceded a large price move."><span class="cvol-micro-lbl">5D ROC</span><span class="cvol-micro-val" style="color:'+pctColor(roc5)+'">'+((roc5!=null&&roc5>0)?'+':'')+fmt(roc5)+'%</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="The distance to the 1-year volatility ceiling. Proximity to 0% means the market is in a state of maximum historical uncertainty."><span class="cvol-micro-lbl">↓ 252D HIGH</span><span class="cvol-micro-val" style="color:'+(distHi!=null&&distHi>-10?'#ef4444':'var(--text-bright)')+'">'+fmt(distHi)+'%</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="The cushion above the 1-year volatility floor. Proximity to 0% indicates suppressed, spring-loaded market conditions."><span class="cvol-micro-lbl">↑ 252D LOW</span><span class="cvol-micro-val" style="color:'+(distLo!=null&&distLo<10?'#3db87a':'var(--text-bright)')+'">+'+fmt(distLo)+'%</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="The cushion above the 1-year volatility floor. Proximity to 0% indicates compressed volatility."><span class="cvol-micro-lbl">↑ 252D LOW</span><span class="cvol-micro-val" style="color:'+(distLo!=null&&distLo<10?'#3db87a':'var(--text-bright)')+'">+'+fmt(distLo)+'%</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="Vol Risk Premium: Implied (NGVL) minus 21D Realized Vol. Positive = market overpricing fear (mean-reversion setup). Negative = market underpricing actual risk (breakout imminent). This is THE classic vol trade."><span class="cvol-micro-lbl">VRP</span><span class="cvol-micro-val" style="color:'+vrpLabelColor+'">'+((vrpVal!=null&&vrpVal>0)?'+':'')+fmt(vrpVal)+' <span style="font-size:0.55rem;opacity:0.85">'+vrpLabel+'</span></span></div>' +
         '<div class="cvol-micro-line" data-tooltip="VRP Z-Score (21D): How unusual is the current vol risk premium vs. recent history. Extreme readings (|z| > 2) precede the largest directional moves."><span class="cvol-micro-lbl">VRP Z</span><span class="cvol-micro-val" style="color:'+(vrpZ!=null?(Math.abs(vrpZ)>1.5?'#f59e0b':'var(--text-bright)'):'rgba(255, 255, 255, 0.85)')+'">'+fmt(vrpZ)+'σ</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="21-Day Realized Volatility: Annualized standard deviation of NG log returns over the last month. Compare to NGVL (implied) above to gauge the vol risk premium."><span class="cvol-micro-lbl">REAL VOL</span><span class="cvol-micro-val" style="color:#a78bfa">'+fmt(rvVal)+'%</span></div>' +
@@ -322,7 +326,7 @@ function renderKpiCards(data, comp) {
     '<div class="cvol-kpi-micro">' +
         '<div class="cvol-micro-line" data-tooltip="Bullish Demand (UpVar): The volatility premium for upside Natural Gas calls."><span class="cvol-micro-lbl">UP VAR</span><span class="cvol-micro-val" style="color:#3db87a">'+fmt(last.upVar)+'%</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="Bearish Fear (DnVar): The volatility premium for downside Natural Gas puts."><span class="cvol-micro-lbl">DN VAR</span><span class="cvol-micro-val" style="color:#ef4444">'+fmt(last.dnVar)+'%</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="Stealth Skew Check: Divergence between Skew and ATM vol. Signal Active = Institutions placing directional bets."><span class="cvol-micro-lbl">SAD</span><span class="cvol-micro-val">'+(sadActive?'<span style="color:#8b5cf6">ACTIVE</span>':'<span style="color:rgba(255, 255, 255, 0.85)">NEUTRAL</span>')+'</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Skew divergence check: Divergence between Skew and ATM vol. Signal Active = Institutions placing directional bets."><span class="cvol-micro-lbl">SAD</span><span class="cvol-micro-val">'+(sadActive?'<span style="color:#8b5cf6">ACTIVE</span>':'<span style="color:rgba(255, 255, 255, 0.85)">NEUTRAL</span>')+'</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="Relational Check: Does price normally follow skew? Positive correlation means price typically rises when skew rises."><span class="cvol-micro-lbl">NG CORR</span><span class="cvol-micro-val">'+fmt(skCorr,2)+'</span></div>' +
     '</div></div>' +
  
@@ -343,7 +347,7 @@ function renderKpiCards(data, comp) {
     '</div></div>' +
  
     // COMPLACENCY Card
-    '<div class="cvol-kpi-card" style="--card-accent:#60a8f8"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#60a8f8" data-tooltip="Fragile Calm Gauge: Measures how \'cheap\' volatility is relative to its structural 1-year history. Higher = more complacent market.">COMPLACENCY</span><span class="cvol-kpi-regime" style="color:'+(ci>82?'#f59e0b':ci>60?'#60a8f8':'#3db87a')+'" data-tooltip="HIGH (>82) signals a spring-loaded setup for a volatility spike. MODERATE is typical. LOW signals a market that is appropriately fearful.">'+(ci>82?'▲ HIGH':ci>60?'MODERATE':'LOW')+'</span></div>' +
+    '<div class="cvol-kpi-card" style="--card-accent:#60a8f8"><div class="cvol-kpi-head"><span class="cvol-kpi-ticker" style="color:#60a8f8" data-tooltip="Fragile Calm Gauge: Measures how \'cheap\' volatility is relative to its structural 1-year history. Higher = more complacent market.">COMPLACENCY</span><span class="cvol-kpi-regime" style="color:'+(ci>82?'#f59e0b':ci>60?'#60a8f8':'#3db87a')+'" data-tooltip="HIGH (>82) has tended to precede a rise in volatility. MODERATE is typical. LOW signals a market that is appropriately fearful.">'+(ci>82?'▲ HIGH':ci>60?'MODERATE':'LOW')+'</span></div>' +
     '<div class="cvol-kpi-main" data-tooltip="Scale of 0 (Extreme Fear) to 100 (Extreme Complacency). Based on inverse ATM percentile."><div class="cvol-kpi-lbl">INDEX (0-100)</div><div class="cvol-kpi-val" style="color:'+(ci>82?'#f59e0b':'#60a8f8')+'">'+fmt(ci,0)+'</div></div>' +
     '<div class="cvol-kpi-stats">' +
         '<div class="cvol-kpi-stat" data-tooltip="Annual Ranking of ATM volatility. Structural baseline for current pricing."><div class="cvol-kpi-slbl">ATM PCT</div><div class="cvol-kpi-sval">'+fmt(comp.atmPct252?comp.atmPct252[n-1]:null,0)+'th</div></div>' +
@@ -352,7 +356,7 @@ function renderKpiCards(data, comp) {
         '<div class="cvol-kpi-stat" data-tooltip="Latest Natural Gas front-month settlement price."><div class="cvol-kpi-slbl">NG PRICE</div><div class="cvol-kpi-sval">$'+fmt(last.underlying,2)+'</div></div>' +
     '</div>' +
     '<div class="cvol-kpi-micro">' +
-        '<div class="cvol-micro-line" data-tooltip="The longevity of the current tranquil regime. Extended periods above 82 often end with violent volatility gap-ups."><span class="cvol-micro-lbl">DAYS >82</span><span class="cvol-micro-val">'+(daysSinceCI!=null?daysSinceCI+'D':'—')+'</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="The longevity of the current tranquil regime. Extended periods above 82 have often ended with an abrupt rise in volatility."><span class="cvol-micro-lbl">DAYS >82</span><span class="cvol-micro-val">'+(daysSinceCI!=null?daysSinceCI+'D':'—')+'</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="Intermediate momentum in baseline volatility."><span class="cvol-micro-lbl">ATM 5D</span><span class="cvol-micro-val" style="color:'+(atm5dir.indexOf('RISING')>=0?'#ef4444':'#3db87a')+'">'+atm5dir+'</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="Current options-surface state from the regime-first model. NO EDGE means the surface is context only, not a trade call."><span class="cvol-micro-lbl">SURFACE STATE</span><span class="cvol-micro-val" style="color:#fff;opacity:0.85;font-size:0.65rem;">'+(comp.currentSurfaceRead?comp.currentSurfaceRead.label:'NO EDGE')+'</span></div>' +
     '</div></div>';
@@ -407,11 +411,11 @@ function renderCompStats(compKey, values, events) {
     var seasonHtml = '';
     if (wPct != null || sPct != null) {
         seasonHtml = '<div class="cvol-micro-line" data-tooltip="Predictive Seasonality Check: Winning probability in Winter (Nov-Feb) vs. Summer (Jun-Aug). Natural Gas is profoundly seasonal \u2014 a signal with a 75% edge in winter may fail during the summer shoulder months.">' +
-            '<span class="cvol-micro-lbl">S. WIN RATE</span>' +
+            '<span class="cvol-micro-lbl">SEASONAL HIT RATE</span>' +
             '<span class="cvol-micro-val" style="font-size:0.65rem;">' +
-            (wPct != null ? '<span style="color:' + (wPct > 55 ? '#3db87a' : '#ef4444') + '">❄:' + wPct + '%</span>' : '') +
+            (wPct != null ? '<span style="color:' + (wPct > 55 ? '#3db87a' : '#ef4444') + '">Winter ' + wPct + '%</span>' : '') +
             (wPct != null && sPct != null ? ' · ' : '') +
-            (sPct != null ? '<span style="color:' + (sPct > 55 ? '#3db87a' : '#ef4444') + '">☀:' + sPct + '%</span>' : '') +
+            (sPct != null ? '<span style="color:' + (sPct > 55 ? '#3db87a' : '#ef4444') + '">Summer ' + sPct + '%</span>' : '') +
             '</span></div>';
     }
     // Replace flat grid with micro-analytics layout
@@ -473,7 +477,7 @@ function renderSignalHeatCalendar(data, comp) {
         'UPSIDE_TAIL_BID':   'Call wing above put side — market pricing upside tail risk',
         'DOWNSIDE_TAIL_BID': 'Put wing above call side — market pricing downside tail risk',
         'TWO_SIDED_STRESS':  'Both tails bid simultaneously — uncertainty high, move could go either way',
-        'PANIC_PREMIUM':     'Extreme vol spike — options are expensive, risk already priced in',
+        'PANIC_PREMIUM':     'Extreme implied volatility: options are expensive and risk is already priced',
         'VOL_UNDERPRICED':   'Realized vol outruns implied — surface historically cheap here',
         'NORMALIZATION':     'Stressed surface cooling — prior premium is deflating'
     };
@@ -534,9 +538,9 @@ function renderSignalHeatCalendar(data, comp) {
                     if (se.state === surfDay.state) {
                         if (se.fwd21 != null) {
                             var fc = se.fwd21 >= 0 ? '#3db87a' : '#ef4444';
-                            tt += '<br><span style="color:rgba(200,210,220,0.7);">⚡ Signal fire · 21D: <b style="color:' + fc + ';">' + (se.fwd21 >= 0 ? '+' : '') + se.fwd21.toFixed(1) + '%</b></span>';
+                            tt += '<br><span style="color:rgba(200,210,220,0.7);">Signal fire · 21D: <b style="color:' + fc + ';">' + (se.fwd21 >= 0 ? '+' : '') + se.fwd21.toFixed(1) + '%</b></span>';
                         } else if (recentCutoff2 && se.date > recentCutoff2) {
-                            tt += '<br><span style="color:rgba(200,210,220,0.7);">⚡ Signal fire · 21D: <b style="color:#f59e0b;">PENDING</b></span>';
+                            tt += '<br><span style="color:rgba(200,210,220,0.7);">Signal fire · 21D: <b style="color:#f59e0b;">PENDING</b></span>';
                         }
                     } else {
                         // Different state on same day — show separately with description
@@ -563,7 +567,7 @@ function renderSignalHeatCalendar(data, comp) {
                 ? (ev.fwd21 >= 0 ? '+' : '') + ev.fwd21.toFixed(1) + '%'
                 : (recentCutoff && ev.date > recentCutoff ? 'PENDING' : '');
             var sigColor = sigColors[ev.signal] || '#fff';
-            tt += '<br><span style="color:' + sigColor + '; font-weight:600;">⚡ ' + ev.signal + ' — ' + ev.direction + (fwdStr ? ' (' + fwdStr + ')' : '') + '</span>';
+            tt += '<br><span style="color:' + sigColor + '; font-weight:600;">' + ev.signal + ' — ' + ev.direction + (fwdStr ? ' (' + fwdStr + ')' : '') + '</span>';
         }
 
         var fgColor = parseFloat(alpha) > 0.42 ? '#fff' : regime.color;
@@ -623,7 +627,7 @@ function renderSignalHeatCalendar(data, comp) {
     var startDate = data[start].date;
     var endDate = data[daysEnd - 1].date;
     var elevatedPct = Math.round((windowElevatedDays / 90) * 100);
-    var levelLabel = elevatedPct > 65 ? '▲ ELEVATED' : elevatedPct > 40 ? '⚬ MODERATE' : '○ QUIET';
+    var levelLabel = elevatedPct > 65 ? 'ELEVATED' : elevatedPct > 40 ? 'MODERATE' : 'QUIET';
 
     html += '<div class="sig-heat-stats-bar">' +
             '<span style="font-size:0.55rem;color:#a3e7ff;font-weight:600;">' + startDate + ' → ' + endDate + '</span>' +
@@ -658,7 +662,7 @@ function renderSignalHeatCalendar(data, comp) {
         });
     }
 
-    html += '<span style="font-size:0.55rem;color:#fff;opacity:0.85;margin-left:12px;letter-spacing:0.3px;">Percentiles ranked within 252D. Dots mark signal fires. Badge (⬜) shows SkewZ strength.</span>';
+    html += '<span style="font-size:0.55rem;color:#fff;opacity:0.85;margin-left:12px;letter-spacing:0.3px;">Percentiles ranked within 252D. Dots mark signal fires. The corner badge shows SkewZ strength.</span>';
     html += '</div>';
 
     el.innerHTML = html;
@@ -882,9 +886,9 @@ function renderScorecard(composites) {
     function confBadge(hits, n) {
         if (n < 3 || hits == null) return '<span style="color:rgba(255, 255, 255, 0.85)">—</span>';
         var p = binomPval(hits, n);
-        if (p < 0.05) return '<span style="color:#3db87a" data-tooltip="p < 0.05 — statistically significant at 95% confidence. This hit rate is very unlikely due to chance alone.">★★★</span>';
-        if (p < 0.10) return '<span style="color:#f59e0b" data-tooltip="p < 0.10 — marginally significant. Suggestive but not conclusive.">★★</span>';
-        return '<span style="color:rgba(255, 255, 255, 0.85)" data-tooltip="p ≥ 0.10 — not statistically significant. Hit rate could be due to chance.">★</span>';
+        if (p < 0.05) return '<span style="color:#3db87a" data-tooltip="p < 0.05 — statistically significant at 95% confidence. This hit rate is very unlikely due to chance alone.">SIG</span>';
+        if (p < 0.10) return '<span style="color:#f59e0b" data-tooltip="p < 0.10 — marginally significant. Suggestive but not conclusive.">MARGINAL</span>';
+        return '<span style="color:rgba(255, 255, 255, 0.85)" data-tooltip="p ≥ 0.10 — not statistically significant. Hit rate could be due to chance.">NS</span>';
     }
     var html = '<table class="scorecard-table"><thead><tr>' +
         '<th data-tooltip="Aggregate Composite Signal: SAD, CI, CVC, or RDS.">SIGNAL</th>' +
@@ -898,7 +902,7 @@ function renderScorecard(composites) {
         '<th data-tooltip="Best 21D signal outcome (direction-adjusted): the largest NG move in the predicted direction across all events. Positive = biggest win.">BEST 21D</th>' +
         '<th data-tooltip="Worst 21D signal outcome (direction-adjusted): the largest adverse NG move against the predicted direction. Should not exceed -100% for unlevered NG.">WORST 21D</th>' +
         '<th data-tooltip="Consistency Score: Annualized Sharpe measures the risk-adjusted return of the signal. >0.50 is the institutional benchmark for a scalable edge.">SHARPE</th>' +
-        '<th data-tooltip="Statistical Confidence: Binomial test of 21D hit rate vs 50% null. ★★★ = p<0.05 (significant), ★★ = p<0.10 (marginal), ★ = not significant.">CONF</th>' +
+        '<th data-tooltip="Statistical Confidence: Binomial test of 21D hit rate vs 50% null. SIG = p<0.05 (significant), MARGINAL = p<0.10, NS = not significant.">CONF</th>' +
         '<th data-tooltip="Optimal Holding Period: The forward-return window (5D/10D/21D/42D) with the best risk-adjusted return (Sharpe) for this signal. Signals may degrade or improve significantly at different time horizons — see the Multi-Horizon table below.">OPT HZ</th>' +
         '</tr></thead><tbody>';
     var bestSharpe = -Infinity, worstSharpe = Infinity, bestSig = '', worstSig = '';
@@ -906,7 +910,7 @@ function renderScorecard(composites) {
     // Current season for seasonal badge
     var curMonth = new Date().getMonth() + 1;
     var curSeason = curMonth >= 11 || curMonth <= 2 ? 'winter' : curMonth <= 5 ? 'spring' : curMonth <= 8 ? 'summer' : 'fall';
-    var seasonEmoji = {winter:'❄️',spring:'🌱',summer:'☀️',fall:'🍂'};
+    var seasonAbbr = {winter:'WIN',spring:'SPR',summer:'SUM',fall:'FALL'};
     rows.forEach(function(r) {
         var sc = r.isEnsemble ? '#00e5ff' : (sigColors[r.signal] || 'var(--text-primary)');
         var hr21 = r.hitRate21; var hrColor = hr21 != null ? (hr21 > 55 ? '#3db87a' : hr21 < 45 ? '#ef4444' : 'var(--text-primary)') : 'rgba(255, 255, 255, 0.85)';
@@ -919,11 +923,11 @@ function renderScorecard(composites) {
             var sh = r.seasonalHit21[curSeason];
             var shr = (sh.hits / sh.total * 100);
             var shrColor = shr > 55 ? '#3db87a' : shr < 45 ? '#ef4444' : 'rgba(255, 255, 255, 0.85)';
-            seaBadge = '<div style="font-size:0.58rem;font-weight:600;color:'+shrColor+';margin-top:2px;" data-tooltip="'+curSeason.toUpperCase()+' hit rate: '+Math.round(shr)+'% (n='+sh.total+')">'+(seasonEmoji[curSeason]||'')+' '+Math.round(shr)+'%</div>';
+            seaBadge = '<div style="font-size:0.58rem;font-weight:600;color:'+shrColor+';margin-top:2px;" data-tooltip="'+curSeason.toUpperCase()+' hit rate: '+Math.round(shr)+'% (n='+sh.total+')">'+(seasonAbbr[curSeason]||'')+' '+Math.round(shr)+'%</div>';
         }
         // Low-sample warning badge
         var countCell = r.count < 20
-            ? '<span style="color:#f59e0b;font-weight:700;" data-tooltip="⚠ LOW SAMPLE: n=' + r.count + '. Fewer than 20 events. Sharpe and hit rates are statistically unreliable — extreme readings are likely noise, not signal. Do not use these metrics for sizing decisions.">⚠ ' + r.count + '</span>'
+            ? '<span style="color:#f59e0b;font-weight:700;" data-tooltip="LOW SAMPLE: n=' + r.count + '. Fewer than 20 events. Sharpe and hit rates are statistically unreliable — extreme readings are likely noise, not signal. Do not use these metrics for sizing decisions.">' + r.count + '</span>'
             : String(r.count);
         // Optimal horizon badge
         var optCell = r.optHorizon
@@ -940,7 +944,7 @@ function renderScorecard(composites) {
         var sharpeTT = annSharpe != null ? `Annualized Sharpe Ratio of ${fmt(annSharpe, 2)}. (>0.5 is good, >1.0 is excellent).` : 'Insufficient data to calculate Sharpe.';
 
         html += '<tr' + (r.isEnsemble ? ' style="background:rgba(0,229,255,0.04);border-top:2px solid rgba(0,229,255,0.15);"' : '') + '>' +
-            '<td style="color:'+sc+';font-weight:800;"' + (r.isEnsemble ? ' data-tooltip="Ensemble: combined performance for ALL events where '+r.signal.replace('CONF ','')+' other signals also fired within ±5 sessions. Higher confluence = higher conviction."' : '') + '>' + (r.isEnsemble ? '🔗 ' : '') + r.signal + seaBadge + '</td>' +
+            '<td style="color:'+sc+';font-weight:800;"' + (r.isEnsemble ? ' data-tooltip="Ensemble: combined performance for ALL events where '+r.signal.replace('CONF ','')+' other signals also fired within ±5 sessions. Higher confluence = higher conviction."' : '') + '>' + r.signal + seaBadge + '</td>' +
             '<td>' + countCell + '</td>' +
             '<td data-tooltip="'+hit5TT+'" style="color:'+(r.hitRate5!=null?(r.hitRate5>55?'#3db87a':'#ef4444'):'rgba(255, 255, 255, 0.85)')+'">'+fmt(r.hitRate5,0)+'%</td>' +
             '<td data-tooltip="'+hit21TT+'" style="color:'+hrColor+'">'+fmt(r.hitRate21,0)+'%<span class="score-bar" style="width:'+barW+'px;background:'+hrColor+';"></span></td>' +
@@ -961,9 +965,9 @@ function renderScorecard(composites) {
         html += '<tr class="scorecard-summary">' +
             '<td style="text-align:left; letter-spacing:2px; font-size:0.75rem;">SUMMARY</td>' +
             '<td colspan="11" style="font-size:0.65rem; text-align:center; letter-spacing:1px; vertical-align:middle;">' +
-                'BEST: <span style="color:'+(sigColors[bestSig]||'')+'">'+(bestSig.indexOf('CONF')>=0?'🔗 ':'')+bestSig+' ('+fmt(bestSharpe,2)+')</span>' +
+                'BEST: <span style="color:'+(sigColors[bestSig]||'')+'">'+bestSig+' ('+fmt(bestSharpe,2)+')</span>' +
                 '<span style="margin:0 24px; opacity:0.3">|</span>' +
-                'WORST: <span style="color:'+(sigColors[worstSig]||'')+'">'+(worstSig.indexOf('CONF')>=0?'🔗 ':'')+worstSig+' ('+fmt(worstSharpe,2)+')</span>' +
+                'WORST: <span style="color:'+(sigColors[worstSig]||'')+'">'+worstSig+' ('+fmt(worstSharpe,2)+')</span>' +
             '</td>' +
             '<td style="text-align:center; font-size:0.75rem; color:'+(combinedSharpe!=null&&combinedSharpe>0?'#3db87a':'#ef4444')+'" data-tooltip="Combined institutional Sharpe for the active signal regime.">'+fmt(combinedSharpe,2)+'</td>' +
             '</tr>';
@@ -1077,13 +1081,13 @@ function renderLegacyTimeline(composites, filter) {
         var pct = composites.ngvlPct252 ? composites.ngvlPct252[e.idx] : null;
         if (pct != null && (pct > 75 || pct < 25)) cw++;
         cw = Math.min(cw, 3);
-        var cwHtml = '<span style="color:'+(cw>=3?'#f59e0b':cw>=2?'#60a8f8':'rgba(255, 255, 255, 0.85)')+'" data-tooltip="Conviction: '+cw+'/3. Based on confluence ('+conf+'), regime ('+fmt(pct,0)+'th pct)">'+'★'.repeat(cw)+'</span>';
+        var cwHtml = '<span style="color:'+(cw>=3?'#f59e0b':cw>=2?'#60a8f8':'rgba(255, 255, 255, 0.85)')+'" data-tooltip="Conviction: '+cw+'/3. Based on confluence ('+conf+'), regime ('+fmt(pct,0)+'th pct)">'+cw+' / 3</span>';
         // PENDING state for recent events where forward returns aren't measurable yet
         var isRecent = recentCutoffDate && e.date > recentCutoffDate;
         var fwd5Html = e.fwd5 != null ? '<span style="color:' + pctColor(e.fwd5) + '">' + ((e.fwd5>0?'+':'') + fmt(e.fwd5) + '%') + '</span>'
             : isRecent ? '<span class="pending-label" data-tooltip="Market Validation Pending: This signal fired less than 5 sessions ago. Volatility signals often require 3-5 days of \'digestion\' before price reflects the options-market bias.">PENDING</span>' : '—';
         var fwd21Html = e.fwd21 != null ? '<span style="color:' + pctColor(e.fwd21) + '">' + ((e.fwd21>0?'+':'') + fmt(e.fwd21) + '%') + '</span>'
-            : isRecent ? '<span class="pending-label" data-tooltip="Institutional Alpha Window Pending: This signal fired less than 21 sessions ago. We use a full trading month (21 days) as the Gold Standard for validating options-surface predictive power.">PENDING</span>' : '—';
+            : isRecent ? '<span class="pending-label" data-tooltip="Forward window pending: This signal fired less than 21 sessions ago. We use a full trading month (21 days) as the Gold Standard for validating options-surface predictive power.">PENDING</span>' : '—';
         var valTT = `Raw signal value on ${fmtDate(e.date)}: ${fmt(e.value, 3)}`;
         var priceTT = `Closing price of NG=F on ${fmtDate(e.date)}: $${fmt(e.underlying, 2)}`;
         var fwd5TT = e.fwd5 != null ? `5-day return from $${fmt(e.underlying, 2)} was ${fmt(e.fwd5)}%.` : '5-day return is pending.';
@@ -1098,7 +1102,7 @@ function renderLegacyTimeline(composites, filter) {
             '<td data-tooltip="'+fwd5TT+'">'+fwd5Html+'</td>' +
             '<td data-tooltip="'+fwd21TT+'">'+fwd21Html+'</td>' +
             '<td>'+confHtml+' '+cwHtml+'</td>' +
-            '<td><span style="color:'+s.c+'" data-tooltip="'+s.n+' season">'+s.e+' '+s.n+'</span></td>' +
+            '<td><span style="color:'+s.c+'" data-tooltip="'+s.n+' season">'+s.n+'</span></td>' +
             '</tr>';
     });
     body.innerHTML = html || '<tr><td colspan="9" style="text-align:center;color:rgba(255, 255, 255, 0.85);">No events in range</td></tr>';
@@ -1243,7 +1247,7 @@ function renderTimeline(composites, filter) {
             '<td>'+fwd5Html+'</td>' +
             '<td>'+fwd21Html+'</td>' +
             '<td>'+confHtml+'</td>' +
-            '<td><span style="color:'+s.c+'" data-tooltip="'+s.n+' season">'+s.e+' '+s.n+'</span></td>' +
+            '<td><span style="color:'+s.c+'" data-tooltip="'+s.n+' season">'+s.n+'</span></td>' +
             '</tr>';
     });
     body.innerHTML = html || '<tr><td colspan="9" style="text-align:center;color:rgba(255,255,255,0.85);">No events in range</td></tr>';
@@ -1606,7 +1610,7 @@ function renderSurfaceAnalogPanel(comp) {
             ? fmt(h.dirHitRate,0) + '% vs base ' + fmt(h.baseRate,0) + '%' + (h.directionalEdge ? ' EDGE' : ' no edge')
             : 'not directional';
         var nCell = lowSample
-            ? '<span style="color:#f59e0b;font-weight:700;" data-tooltip="⚠ LOW SAMPLE: n=' + hn + '. Fewer than 30 sessions with measurable 21D forward returns — hit rates and move averages are statistically unreliable.">⚠ ' + hn + '</span>'
+            ? '<span style="color:#f59e0b;font-weight:700;" data-tooltip="LOW SAMPLE: n=' + hn + '. Fewer than 30 sessions with measurable 21D forward returns — hit rates and move averages are statistically unreliable.">' + hn + '</span>'
             : String(hn);
         var impliedBeatStr = fmt(h.impliedBeatRate, 0) + '%';
         if (baseImpliedBeat21 != null && h.impliedBeatRate != null) {
@@ -1622,7 +1626,7 @@ function renderSurfaceAnalogPanel(comp) {
             '<td>'+fmt(h.avgAbsMove,1)+'%</td>' +
             '<td>' + impliedBeatStr + '</td>' +
             '<td>'+fmt(h.volExpansionRate,0)+'%</td>' +
-            '<td style="color:'+(h.directionalEdge?'#3db87a':'rgba(255,255,255,0.85)')+(h.lowSample?' font-style:italic;':'')+'">'+dir+(h.lowSample?' ⚠':'')+'</td>' +
+            '<td style="color:'+(h.directionalEdge?'#3db87a':'rgba(255,255,255,0.85)')+(h.lowSample?' font-style:italic;':'')+'">'+dir+(h.lowSample?' (low sample)':'')+'</td>' +
             '</tr>';
     });
     html += '</tbody></table>';
@@ -1737,7 +1741,7 @@ function renderSeriesChips() {
             ngvl: 'NGVL (CME Natural Gas Volatility Index): 30-day forward implied volatility for NG options. The primary benchmark for market uncertainty — rising NGVL = growing fear/hedging demand.',
             atm: 'ATM (At-The-Money Implied Vol): The linear, non-skew component of implied volatility. Tracks the "core" price of options without directional bias. Divergence from NGVL reveals skew-driven positioning.',
             realVol: 'Realized Volatility (21D): Annualized standard deviation of actual NG log-returns over 21 trading days. Compare vs NGVL to identify the Vol Risk Premium — when implied significantly exceeds realized, options are overpriced.',
-            convexity: 'Convexity (Tail Sensitivity): Measures the cost of deep OTM protection relative to ATM. >1.10 = speculators aggressively buying tail hedges. <0.95 = complacency, potential spring-loaded setup.',
+            convexity: 'Convexity (Tail Sensitivity): Measures the cost of deep OTM protection relative to ATM. >1.10 = tail options are expensive relative to at-the-money options. <0.95 = tail options are cheap.',
             underlying: 'NG Price (Front-Month Futures): Henry Hub Natural Gas settlement price. Overlaid for correlation context — identifies whether vol signals are leading or lagging absolute price pivots.',
             skew: 'Skew (pts): Raw put-call skew in volatility points. Positive = puts more expensive (downside fear). Negative = calls more expensive (upside speculation). Use alongside Skew Ratio for directional reads.'
         };

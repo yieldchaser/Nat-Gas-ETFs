@@ -684,7 +684,7 @@ const Signals = {
             const sw = longM?.seasonality?.weight;
             const seasonCfg = season ? (CONFIG.seasonDisplay[season] || {}) : null;
             const seasonTag = seasonCfg
-                ? ` <span class="matrix-season" style="color:${seasonCfg.color}" data-tooltip="Season: ${season} ×${sw?.toFixed(2)||'1.00'}">${seasonCfg.emoji}</span>`
+                ? ` <span class="matrix-season" style="color:${seasonCfg.color}" data-tooltip="Season: ${season} ×${sw?.toFixed(2)||'1.00'}">${seasonCfg.abbr}</span>`
                 : '';
 
             const fastBadge = `<span style="color:${fastColor(longVcvi5)}">${longVcvi5 != null ? longVcvi5.toFixed(0) : '—'}</span><span style="opacity:0.35">/</span><span style="color:${fastColor(shortVcvi5)}">${shortVcvi5 != null ? shortVcvi5.toFixed(0) : '—'}</span>`;
@@ -821,6 +821,8 @@ const Signals = {
         }
 
         const spotlightCount = Charts.drawHeatCalendar(container, visibleSlice, mode, spotlightMode, peaksThreshold, globalPercentiles, side, ddOverlay);
+        this._heatLast = { container: container, slice: visibleSlice };
+        this.markHeatSetups();
         const peakBadge = document.getElementById('heat-peak-count');
         if (peakBadge) {
             if (spotlightMode === 'peaks') {
@@ -832,6 +834,30 @@ const Signals = {
             } else {
                 peakBadge.className = 'heat-peak-count';
             }
+        }
+    },
+
+    // Mark the heat-map days on which a tested Active Alerts setup was triggered. The heat score
+    // itself carried no directional information when tested (tools/heatmap_evidence.mjs), so the
+    // marks are what ties the calendar to the setups that did.
+    markHeatSetups() {
+        const last = this._heatLast;
+        if (!last || !last.container || typeof AlertEngine === 'undefined') return;
+        if (!AlertEngine.onModel) AlertEngine.onModel = () => this.markHeatSetups();
+        const cells = last.container.children;
+        if (!cells || cells.length !== last.slice.length) return;
+        for (let i = 0; i < cells.length; i++) {
+            const cell = cells[i], day = last.slice[i];
+            const old = cell.querySelector ? cell.querySelector('.heat-setup-marks') : null;
+            if (old) old.remove();
+            const hits = day && day.date ? AlertEngine.setupsOn(day.date) : null;
+            if (cell._heatMeta) cell._heatMeta.setups = hits;
+            if (!hits || !hits.length) continue;
+            const wrap = document.createElement('span');
+            wrap.className = 'heat-setup-marks';
+            if (hits.some(h => h.side === 'short')) { const d = document.createElement('span'); d.className = 'heat-setup-mark short'; wrap.appendChild(d); }
+            if (hits.some(h => h.side === 'long')) { const d = document.createElement('span'); d.className = 'heat-setup-mark long'; wrap.appendChild(d); }
+            cell.appendChild(wrap);
         }
     },
 
@@ -1263,32 +1289,32 @@ const Signals = {
             if (isHigh) {
                 el.innerHTML = `
                     <div class="convergence-flash-inner flash-dual-top">
-                        <span class="flash-icon">[CLIMAX]</span>
+                        <span class="flash-icon">CLIMAX</span>
                         <span class="flash-body">
-                            <strong>DUAL LEVERAGED CLIMAX: PARABOLIC BLOW-OFF TOP WATCH</strong> — Both Long & Short ETFs Spiked Across All Exchanges (Spread: ${maxSpread}d)
-                            <span class="flash-etfs">Empirical 15-yr edge: Long ETFs drop −19.7% over 63d (win rate 27.4%), Short ETFs (KOLD) gain +13.9% (t=+2.36, p=0.02). Natural Gas blow-off climax in progress.</span>
+                            <strong>TWO-SIDED VOLUME CLIMAX AT ELEVATED PRICES</strong> — long and short ETFs spiked on every exchange (Spread: ${maxSpread}d)
+                            <span class="flash-etfs">Empirical 15-yr edge: Long ETFs drop −19.7% over 63d (win rate 27.4%), Short ETFs (KOLD) gain +13.9% (t=+2.36, p=0.02).</span>
                         </span>
-                        <span class="flash-setup">EXTREME GAS TOP PROBABILITY</span>
+                        <span class="flash-setup">ELEVATED RISK OF A PRICE HIGH</span>
                     </div>`;
             } else if (isLow) {
                 el.innerHTML = `
                     <div class="convergence-flash-inner flash-dual-waterfall">
-                        <span class="flash-icon">[CRITICAL]</span>
+                        <span class="flash-icon">CAUTION</span>
                         <span class="flash-body">
-                            <strong>DUAL VOLUME TURNOVER: LIQUIDATION WATERFALL (FALSE BOTTOM WARNING)</strong> — High Churn at Cycle Lows Across All Exchanges (Spread: ${maxSpread}d)
-                            <span class="flash-etfs">Empirical 15-yr edge: Dual climaxes at lows have an 85.7% failure rate for Longs (−31.7% avg 63d drop). Downside cascade ongoing; do NOT buy bottom dip.</span>
+                            <strong>TWO-SIDED VOLUME CLIMAX AT DEPRESSED PRICES</strong> — heavy turnover near cycle lows on every exchange (Spread: ${maxSpread}d)
+                            <span class="flash-etfs">Empirical 15-yr edge: Dual climaxes at lows have an 85.7% failure rate for Longs (−31.7% avg 63d drop). Long entries have a poor record in this condition.</span>
                         </span>
-                        <span class="flash-setup">CASCADE WARNING — AVOID LONGS</span>
+                        <span class="flash-setup">POOR RECORD FOR LONG ENTRIES</span>
                     </div>`;
             } else {
                 el.innerHTML = `
                     <div class="convergence-flash-inner flash-neutral">
-                        <span class="flash-icon">[WATCH]</span>
+                        <span class="flash-icon">WATCH</span>
                         <span class="flash-body">
-                            <strong>BILATERAL LIQUIDITY EXPANSION: TWO-SIDED CHURN</strong> — Long and Short ETFs active simultaneously (Spread: ${maxSpread}d)
-                            <span class="flash-etfs">Institutional position rebalancing / calendar roll turnover. Two-sided volume without directional consensus. Await confirmed directional break.</span>
+                            <strong>TWO-SIDED VOLUME EXPANSION</strong> — long and short ETFs active at the same time (Spread: ${maxSpread}d)
+                            <span class="flash-etfs">Consistent with position rebalancing or roll turnover. Two-sided volume without a directional consensus.</span>
                         </span>
-                        <span class="flash-setup">BALANCED TURNOVER — NO BIAS</span>
+                        <span class="flash-setup">BALANCED TURNOVER, NO BIAS</span>
                     </div>`;
             }
             el.style.display = 'block';

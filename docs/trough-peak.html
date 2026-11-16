@@ -1230,7 +1230,7 @@ select.calc-input { cursor: pointer; }
             <div class="calc-howto-modal" id="calc-howto-modal">
                 <div class="calc-howto-head">
                     <span class="calc-howto-head-title"> How to Use This Calculator</span>
-                    <button class="calc-howto-close" id="calc-howto-close" title="Close">✕</button>
+                    <button class="calc-howto-close" id="calc-howto-close" title="Close">CLOSE</button>
                 </div>
                 <div class="calc-howto-body">
 
@@ -1246,7 +1246,7 @@ select.calc-input { cursor: pointer; }
                         <p class="howto-p">First decision: <strong>where do your numbers come from?</strong></p>
                         <div class="howto-callout" style="border-color:var(--cyan)">
                             <strong> Seed from detected cycles (Auto):</strong> The calculator reads actual trough-to-peak cycles detected for your ticker and auto-fills Gross Return and Cycles/Year. Most grounded-in-reality starting point.<br><br>
-                            <strong>️ Manual override:</strong> Every number is yours to set freely. Ticker history is ignored. Use when you have your own return target in mind.
+                            <strong>Manual override:</strong> Every number is yours to set freely. Ticker history is ignored. Use when you have your own return target in mind.
                         </div>
                         <p class="howto-p"> <strong>Start in Auto mode</strong>, then override specific fields as you get more opinionated about your strategy.</p>
                     </div>
@@ -1260,7 +1260,7 @@ select.calc-input { cursor: pointer; }
                             Formula: <strong>Gross Return = Historical Median × Capture %</strong><br><br>
                             Example: KOLD has an 86% median cycle. Set Capture = 60%.<br>
                             → Gross return = 86% × 60% = <strong>51.7% per cycle</strong> — not 60%.<br><br>
-                            ️ Most common misunderstanding. The slider multiplies the historical median — it doesn't set your return directly.
+                            Most common misunderstanding. The slider multiplies the historical median — it doesn't set your return directly.
                         </div>
                         <div class="howto-callout" style="border-color:var(--cyan); margin-bottom:10px;">
                             <strong style="color:var(--cyan)">SINGLE — "I'm targeting exactly X% per trade"</strong><br><br>
@@ -4979,7 +4979,7 @@ function renderCalc() {
     }
 
     if (state.fetchErr[activeSym]) {
-        statsEl.innerHTML = `<div class="calc-empty" style="grid-column:1/-1">️ Failed to load data for ${state.activeTab}. Check internet connection or Yahoo Finance access.</div>`;
+        statsEl.innerHTML = `<div class="calc-empty" style="grid-column:1/-1">Failed to load data for ${state.activeTab}. Check internet connection or Yahoo Finance access.</div>`;
         const canvas = document.getElementById('calc-canvas');
         if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }
         calcRenderCompliance(null);

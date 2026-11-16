@@ -63,3 +63,51 @@ as trades, relabel it as a descriptive stress reading (as was done for L-CAP / S
 - **D1. Fix test_pair_stress_and_vdds.mjs — FIXED.** Dynamically anchors synthetic bar dates to `baseBar.date` instead of a hardcoded past date. All 139,407 mathematical assertions pass.
 - **D2. Scraper logging — FIXED.** Clarified log messages in `scripts/fetch_cvol.py` regarding the rolling intraday window collapsed at 14:30 NY settlement.
 - **D3. CI workflow on pull requests and pushes — FIXED.** Added `.github/workflows/test-suites.yml` running all 4 test suites (Alert Engine, CVOL, Contract Ledger, Pair Stress & VDDS) automatically on push and PR.
+
+---
+
+## Round 3 (2026-11-16) — status for the next session
+
+### Done in this round
+- **Active Alerts**: setups renamed in formal language (keys unchanged): CLOSING-PRESSURE EXTREME
+  (was Close Exhaustion), CALL-SKEW EXTREME (Options Blow-off), LONG-SIDE VOLUME CLIMAX (Crowded
+  Rally), INFLOW SURGE (Chased Rally), CAPITULATION, OVERSOLD DRAWDOWN (Washout). Evidence shown
+  as labelled figures; accent bars removed; the NG=F strip no longer sits flush on the panel.
+  Toronto cross-check gauge added (same closing-pressure measure on HNU / HND; correlation with
+  the US reading about 0.91; context only, not a rule input).
+- **Twelve Price-Volume Studies scored** (`tools/indicator_evidence.mjs` →
+  `docs/data/indicator_evidence.json`, shown under each study). Only the plain 21-session CMF on
+  dollar volume is directional (same sign in both halves on BOIL, KOLD, HNU, HND; mean |IC| 0.14).
+  Net volume, OBV z-score, ESVD and TKVF are weak; Volume, Vol Osc, PVT z-score, VPIN, ILLIQ,
+  LMSW and VWAP-Z show nothing stable. The adaptive ACMF-14 drawn on the CMF tab carries about
+  half the information of the plain CMF-21. London bars (3NGL / 3NGS) are unusable for these
+  studies: 38% / 16% of sessions report no volume. An LMSW tail result on BOIL (7 of 39) was
+  rejected because it does not repeat on KOLD, HNU or HND. The OBV position model lost money in
+  position on KOLD and HND; the PVT model is not distinguishable from chance on any ETF.
+- **Heat map scored** (`tools/heatmap_evidence.mjs`): peaks, valleys and macro events carry no
+  directional information (60 tests, smallest p 0.12). The panel now says so and marks the days
+  on which a MODERATE or STRONG Active Alerts setup was triggered.
+- **CVOL tab**: emojis removed; sections reordered (Directional Edge → Options Market Read → KPIs
+  → charts → heatmaps → analogs → Vol Regime → Research Layer); event log capped at 560px (the
+  page was 35,000px tall); states renamed CALL-SKEW EXTREME / VOL-SPIKE SELLOFF, legacy PANIC
+  PREMIUM → STRESS PREMIUM; closing-pressure gauge added to the edge panel (uses `cp_pe`).
+- Overstated wording replaced in the convergence banner, heat-map legend, studies statuses and
+  CVOL tooltips.
+
+### Not done — pick up here
+- **E1. Flow Monitor (`docs/flows.html`) and Trough-to-Peak (`docs/trough-peak.html`) were not
+  reviewed** beyond removing three stray characters. Still to do: language pass, section order,
+  and scoring the flow-page states (`flow-composite.js:1234`, B5) the same way as the studies.
+- **E2. Tests for this round's additions**: Toronto cross-check (`pairClosingPressure`,
+  `crossCheckStats`), `setupsOn`, `VolumeStudies.evidenceHtml`. Existing suites pass unchanged.
+- **E3. Regenerate `docs/data/indicator_evidence.json`** on a schedule (monthly is enough): add
+  `node tools/indicator_evidence.mjs` to a workflow.
+- **E4. CMF tab**: consider drawing the plain CMF-21 on dollar volume (the tested series) in place
+  of, or alongside, ACMF-14, and stop colouring high readings green: the tested relationship is
+  contrarian.
+- **E5. Convergence banner statistics** in `signals.js` (−19.7%, 27.4%, 85.7% …) are still
+  hard-coded and unverified (B2). Wording was toned down; the numbers were not re-tested.
+- **E6. `tools/test_trough_peak_drawdown.mjs` fails** (`computeRollingLookbackDD is not defined`);
+  it is not in CI. Test or page drifted.
+- **E7. Cache-busting**: `cvol.html` loads `config.js` and `vol-regime.js` without a version
+  string; both changed this round.

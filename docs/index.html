@@ -16,10 +16,10 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='60%' r='50%' fx='50%' fy='65%'><stop offset='0%' style='stop-color:%230033ff;stop-opacity:0.5' /><stop offset='100%' style='stop-color:%23001a4d;stop-opacity:0' /></radialGradient></defs><circle cx='50' cy='60' r='40' fill='url(%23g)' /><path d='M50 92 C30 92 18 75 18 52 C18 30 50 5 50 5 C50 5 82 30 82 52 C82 75 70 92 50 92 Z' fill='%230066ff' /><path d='M50 80 C40 80 32 68 32 50 C32 35 50 18 50 18 C50 18 68 35 68 50 C68 68 60 80 50 80 Z' fill='white' /></svg>">
     <link rel="stylesheet" href="css/styles.css?v=20261021a">
     <link rel="stylesheet" href="css/cards.css?v=20261024a">
-    <link rel="stylesheet" href="css/signals.css?v=20261116a">
+    <link rel="stylesheet" href="css/signals.css?v=20261116b">
     <link rel="stylesheet" href="css/tail-risk.css?v=20261031a">
     <link rel="stylesheet" href="css/auth.css?v=20261104a">
-    <script src="js/auth.js?v=20261116a"></script>
+    <script src="js/auth.js?v=20261116b"></script>
 </head>
 <body>
     <template id="bm-dashboard-template">
@@ -159,7 +159,7 @@
                         <span class="heat-label" data-tooltip="High volume pressure (capitulation/exhaustion spike).">Extreme</span>
                     </div>
                     <div class="tab-group" id="heat-dd-group">
-                        <button class="tab-btn heat-dd-btn" id="heat-dd-toggle" type="button" aria-pressed="false" data-tooltip="Drawdown Overlay: Overlays causal 63-day rolling peak drawdown (emerald near high when 252D &gt; -40%, amber 63D Hi / 252D Bear, amber pullback bar, red deep DD, crimson bloodbath) and -5%+ 1D selloff pips. Hover any cell for causal 63D &amp; 252D peak DD (pk) and % above rolling trough (low).">DD%</button>
+                        <button class="tab-btn heat-dd-btn" id="heat-dd-toggle" type="button" aria-pressed="false" data-tooltip="Drawdown Overlay: Overlays causal 63-day rolling peak drawdown (emerald near high when 252D &gt; -40%, amber 63D Hi / 252D Bear, amber pullback bar, red deep DD, crimson severe drawdown) and -5%+ 1D selloff pips. Hover any cell for causal 63D &amp; 252D peak DD (pk) and % above rolling trough (low).">DD%</button>
                     </div>
                 </div>
                 <div class="heat-dd-legend" id="heat-dd-legend" aria-hidden="true">
@@ -168,8 +168,13 @@
                     <span class="heat-dd-legend-item"><span class="heat-dd-swatch dd-bear-high"></span>63D Hi &middot; 252D Bear</span>
                     <span class="heat-dd-legend-item"><span class="heat-dd-swatch dd-pullback"></span>Pullback (-10% to -25%)</span>
                     <span class="heat-dd-legend-item"><span class="heat-dd-swatch dd-deep"></span>Deep DD (-25% to -40%)</span>
-                    <span class="heat-dd-legend-item"><span class="heat-dd-swatch dd-bloodbath"></span>Bloodbath (-40%+)</span>
+                    <span class="heat-dd-legend-item"><span class="heat-dd-swatch dd-bloodbath"></span>Severe (-40%+)</span>
                     <span class="heat-dd-legend-item"><span class="heat-dd-pip-sample"></span>-5%+ 1D Drop</span>
+                </div>
+                <div class="heat-evidence" data-tooltip="Peaks, valleys and macro events were scored with the heat map's own detection code on 2012–2026, for every ETF selection, as non-overlapping 10- and 21-session trades on the tradeable NG index. None of the 60 tests separated from the any-day rate (smallest p-value 0.12). Reproduce with tools/heatmap_evidence.mjs.">
+                    <span class="heat-setup-key"><span class="heat-setup-mark short"></span>short setup triggered</span>
+                    <span class="heat-setup-key"><span class="heat-setup-mark long"></span>long setup triggered</span>
+                    <span class="heat-evidence-note">The heat score shows where volume pressure concentrated. Tested on 2012–2026, its peaks and valleys did not change the odds for NG over the next 10 or 21 sessions; the dots mark the days a tested Active Alerts setup was triggered.</span>
                 </div>
             </div>
 
@@ -277,6 +282,7 @@
                     </div>
                 </div>
                 <div class="vs-reading" id="vs-reading"><span class="vs-reading-na">Loading…</span></div>
+                <div class="vs-evidence" id="vs-evidence"></div>
             </div>
 
             <!-- VOLUME PROFILE (volume at price) -->

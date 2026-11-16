@@ -281,7 +281,7 @@ const VolRegime = {
         // elevated vs this instrument's own history (≥90th = unreliable, ≥75th = noisy).
         // Pure absolute thresholds fire permanently on nat gas ETFs and carry no information.
         const signalQuality = vovPct != null && vovPct >= 90
-            ? { label: '⚠ SIGNALS UNRELIABLE', cls: 'sqw-unstable',
+            ? { label: 'SIGNALS UNRELIABLE', cls: 'sqw-unstable',
                 tip: `VoV-21 is at its ${vovPct.toFixed(0)}th percentile (${vov.toFixed(1)}%) — volatility of volatility is higher than ${vovPct.toFixed(0)}% of all recorded sessions for ${ticker}. Regime signals and TR readings are unreliable. Avoid structural positions based solely on current classification.` }
             : vovPct != null && vovPct >= 75
             ? { label: '~ SIGNALS NOISY', cls: 'sqw-shifting',
@@ -328,7 +328,7 @@ const VolRegime = {
                     </span>
                     ${regSignal ? `<span class="vrm-regime-signal ${regSignal.cls}" data-tooltip="${regSignal.tip}">${regSignal.label}</span>` : ''}
                     ${spikeEvt ? `<span class="vrm-spike-badge"
-                        data-tooltip="SPIKE EVENT in ${ticker} — 5D HV (${hv['5d'].toFixed(1)}%) exceeds 2× the 252D baseline (${hv['252d'].toFixed(1)}%). Near-term vol has completely broken from the annual norm.">⚡ SPIKE EVENT</span>` : ''}
+                        data-tooltip="SPIKE EVENT in ${ticker} — 5D HV (${hv['5d'].toFixed(1)}%) exceeds 2× the 252D baseline (${hv['252d'].toFixed(1)}%). Near-term vol has completely broken from the annual norm.">SPIKE EVENT</span>` : ''}
                     ${signalQuality ? `<span class="vrm-sqw ${signalQuality.cls}" data-tooltip="${signalQuality.tip}">${signalQuality.label}</span>` : ''}
                 </div>
 
@@ -348,7 +348,7 @@ const VolRegime = {
                                 data-tooltip="Show historical Vol-of-Vol (VoV-21) as an amber line overlay. High VoV = regime instability — signals are less reliable.">VoV</button>
                         <button class="vrm-overlay-btn ov-signals${ao.includes('signals')?' active':''}"
                                 onclick="VolRegime._toggleOverlay('${ticker}','signals')"
-                                data-tooltip="Show composite regime signal timeline at chart bottom. ⚡ Surge=red · → Trending=green · ↔ Choppy=amber · ↗ Quiet Trend=cyan · ◎ Coiling=gray">SIGNALS</button>
+                                data-tooltip="Show composite regime signal timeline at chart bottom. Surge = red, Trending = green, Choppy = amber, Quiet Trend = cyan, Coiling = gray">SIGNALS</button>
                         <button class="vrm-overlay-btn ov-price${ao.includes('price')?' active':''}"
                                 onclick="VolRegime._toggleOverlay('${ticker}','price')"
                                 data-tooltip="Show ${ticker} historical price as a white line overlay. Secondary right Y-axis. Helps see how price action correlates with vol regime changes.">PRICE</button>
@@ -1512,7 +1512,7 @@ const VolRegime = {
         const surge    = ts != null && ts >= 1.35;
 
         if (surge && highHV)
-            return { label: '⚡ VOL SURGE',    cls: 'rs-surge',
+            return { label: 'VOL SURGE',    cls: 'rs-surge',
                      tip: 'Near-term vol (5D HV) is accelerating at >1.35× the 63D seasonal baseline. Sustained high-vol move underway — sizing risk is elevated.' };
         if (highHV && trending)
             return { label: '→ TRENDING VOL',  cls: 'rs-trending',

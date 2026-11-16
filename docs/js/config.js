@@ -146,10 +146,10 @@ const CONFIG = {
 
     // Season display config
     seasonDisplay: {
-        winter: { emoji: '❄', label: 'WINTER', color: '#60a8f8' },
-        spring: { emoji: '✿', label: 'SPRING', color: '#6ddc8b' },
-        summer: { emoji: '☀', label: 'SUMMER', color: '#f5c542' },
-        fall:   { emoji: '◈', label: 'FALL',   color: '#f5a742' }
+        winter: { abbr: 'WIN', label: 'WINTER', color: '#60a8f8' },
+        spring: { abbr: 'SPR', label: 'SPRING', color: '#6ddc8b' },
+        summer: { abbr: 'SUM', label: 'SUMMER', color: '#f5c542' },
+        fall:   { abbr: 'FALL', label: 'FALL',   color: '#f5a742' }
     },
 
     // Data source

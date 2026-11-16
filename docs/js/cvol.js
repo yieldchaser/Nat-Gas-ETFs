@@ -224,7 +224,7 @@ const SURFACE_STATES = {
     UPSIDE_TAIL_BID: { label: 'UPSIDE TAIL BID', color: '#3db87a', bias: 'UPSIDE', volBias: 'EXPANSION RISK', action: 'Upside risk bid', horizon: '2-10D' },
     DOWNSIDE_TAIL_BID: { label: 'DOWNSIDE TAIL BID', color: '#ef4444', bias: 'DOWNSIDE', volBias: 'EXPANSION RISK', action: 'Downside risk bid', horizon: '2-10D' },
     TWO_SIDED_STRESS: { label: 'TWO-SIDED STRESS', color: '#f59e0b', bias: 'TWO_WAY', volBias: 'RANGE EXPANSION', action: 'Respect two-way risk', horizon: '2-21D' },
-    PANIC_PREMIUM: { label: 'PANIC PREMIUM', color: '#c04040', bias: 'NONE', volBias: 'RICH IMPLIED', action: 'Risk already expensive', horizon: '5-21D' },
+    PANIC_PREMIUM: { label: 'STRESS PREMIUM', color: '#c04040', bias: 'NONE', volBias: 'RICH IMPLIED', action: 'Risk already expensive', horizon: '5-21D' },
     VOL_UNDERPRICED: { label: 'VOL UNDERPRICED', color: '#a78bfa', bias: 'NONE', volBias: 'CHEAP IMPLIED', action: 'Realized outruns implied', horizon: '5-21D' },
     NORMALIZATION: { label: 'NORMALIZATION', color: '#94a3b8', bias: 'NONE', volBias: 'COOLING', action: 'Stress cooling', horizon: '5-21D' },
     NO_EDGE: { label: 'NO EDGE', color: '#6b7280', bias: 'NONE', volBias: 'NEUTRAL', action: 'Stand down', horizon: 'WAIT' },
@@ -838,9 +838,9 @@ function computeComposites(data) {
 // Statistics below are recomputed from the full history on every load, so they stay honest as
 // data accumulates; nothing here is a hard-coded backtest number.
 const EDGE_STATES = {
-    BLOWOFF:       { label: 'BLOW-OFF FADE', bias: 'DOWNSIDE', color: '#ef4444', tier: 'STRONG',   confirm: 1, hold: 21, short: 'Call skew and implied vol both at historic extremes' },
-    UPSIDE_STRESS: { label: 'UPSIDE STRESS', bias: 'DOWNSIDE', color: '#f59e0b', tier: 'MODERATE', confirm: 3, hold: 10, short: 'Call skew and implied vol elevated, one notch below blow-off' },
-    PANIC_FLUSH:   { label: 'PANIC FLUSH',   bias: 'UPSIDE',   color: '#3db87a', tier: 'WEAK',     confirm: 2, hold: 10, short: 'Sharp sell-off with implied vol rising' },
+    BLOWOFF:       { label: 'CALL-SKEW EXTREME', bias: 'DOWNSIDE', color: '#ef4444', tier: 'STRONG',   confirm: 1, hold: 21, short: 'Call skew and implied volatility both at historic extremes' },
+    UPSIDE_STRESS: { label: 'UPSIDE STRESS', bias: 'DOWNSIDE', color: '#f59e0b', tier: 'MODERATE', confirm: 3, hold: 10, short: 'Call skew and implied volatility elevated, below the extreme threshold' },
+    PANIC_FLUSH:   { label: 'VOL-SPIKE SELLOFF', bias: 'UPSIDE',   color: '#3db87a', tier: 'WEAK',     confirm: 2, hold: 10, short: 'Sharp decline with implied volatility rising' },
     NEUTRAL:       { label: 'NO EDGE',       bias: 'NONE',     color: '#6b7280', tier: 'NONE',     confirm: 1, hold: 21, short: 'Surface gives no directional information beyond the base rate' },
 };
 const EDGE_CFG = {
@@ -1168,10 +1168,10 @@ function fmtPct(n) { return n != null && isFinite(n) ? n.toFixed(0) + 'th' : '�
 function fmtSign(n, d = 1) { return n != null && isFinite(n) ? (n >= 0 ? '+' : '') + n.toFixed(d) + '%' : '—'; }
 
 const SEASON_CFG = {
-    winter: { emoji: '❄', color: '#60a8f8' },
-    spring: { emoji: '✿', color: '#6ddc8b' },
-    summer: { emoji: '☀', color: '#f5c542' },
-    fall:   { emoji: '◈', color: '#f5a742' },
+    winter: { abbr: 'WIN', color: '#60a8f8' },
+    spring: { abbr: 'SPR', color: '#6ddc8b' },
+    summer: { abbr: 'SUM', color: '#f5c542' },
+    fall:   { abbr: 'FALL', color: '#f5a742' },
 };
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1194,14 +1194,14 @@ const SERIES_CFG = {
 };
 
 const VAR_SERIES_CFG = {
-    upVar:     { label: 'UP VAR',     color: '#3db87a', key: 'upVar',  desc: 'Bullish Demand Check: Measures the premium paid for upside protection (OTM calls). Rising green area signals aggressive institutional buying often seen before explosive short-gamma breakouts.' },
-    dnVar:     { label: 'DN VAR',     color: '#ef4444', key: 'dnVar',  desc: 'Bearish Fear Check: Tracks the cost of downside tail-risk insurance. When the red area expands, the market is bracing for a violent gap-down or capitulation event.' },
+    upVar:     { label: 'UP VAR',     color: '#3db87a', key: 'upVar',  desc: 'Bullish Demand Check: Measures the premium paid for upside protection (OTM calls). Rising green area reflects heavy demand for upside options.' },
+    dnVar:     { label: 'DN VAR',     color: '#ef4444', key: 'dnVar',  desc: 'Bearish Fear Check: Tracks the cost of downside tail-risk insurance. When the red area expands, the market is pricing a higher probability of a sharp decline.' },
     skewRatio: { label: 'SKEW RATIO', color: '#f59e0b', key: 'skewRatio', desc: 'Directional Pressure Gauge: Up variance divided by down variance. >1.0 means upside variance is richer; <1.0 means downside variance is richer.' },
     underlying:{ label: 'NG PRICE',   color: '#94a3b8', key: 'underlying', desc: 'Price Correlation Context: Overlays the absolute front-month Natural Gas settlement price. Vital for identifying if directional volatility spikes are leading or lagging absolute price pivots.' },
     skewRoc5:  { label: 'SKEW MOM',   color: '#818cf8', key: 'skewRoc5', desc: 'Skew Momentum (5D ROC): Rate of change in skew ratio over 5 sessions. Positive = skew accelerating bullish. Negative = skew accelerating bearish. Sharp moves precede directional breakouts.' },
     varSpread: { label: 'VAR SPREAD', color: '#2dd4bf', key: 'varSpread', desc: 'Net Directional Imbalance: UpVar minus DnVar. Positive = call-side richer (bullish demand), negative = put-side richer (downside hedging). The Z-score filters seasonal noise to isolate genuine conviction shifts.' },
     wingDiv:   { label: 'WING DIV',   color: '#fb923c', key: 'wingDiv', desc: 'Wing Divergence Index: |UpVarZ - DnVarZ|. When variance wings diverge, the market is picking a side. High values signal directional conviction; low values signal two-way uncertainty or complacency.' },
-    regimeTension: { label: 'TENSION', color: '#fbbf24', key: 'regimeTension', desc: 'Regime Tension Score: ConvexityZ × |VarSpreadZ| × SkewAccel. Composite pressure gauge — elevated tension precedes explosive directional moves or vol expansions. Think of it as the spring being compressed.' },
+    regimeTension: { label: 'TENSION', color: '#fbbf24', key: 'regimeTension', desc: 'Regime Tension Score: ConvexityZ × |VarSpreadZ| × SkewAccel. Composite pressure gauge — elevated readings have preceded large directional moves or volatility expansions.' },
 };
 
 // ── X-Axis engine (reused from flows.html pattern) ────────────

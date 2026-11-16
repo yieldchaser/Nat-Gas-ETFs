@@ -359,6 +359,11 @@ table.scorecard-table { width: 100%; border-collapse: separate; border-spacing: 
 
 /* ---- EVENT TIMELINE ---- */
 .event-panel { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
+.event-scroll { overflow: auto; -webkit-overflow-scrolling: touch; max-height: 560px; }
+.event-scroll .event-table thead th { position: sticky; top: 0; z-index: 1; background: var(--bg-panel); }
+.cvol-layer-divider { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; margin: 40px 0 20px; padding-top: 20px; border-top: 1px solid var(--border-primary); }
+.cvol-layer-title { font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-bright); }
+.cvol-layer-note { font-size: 0.66rem; color: rgba(255, 255, 255, 0.6); }
 .event-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .event-title { font-size: 0.85rem; font-weight: 800; letter-spacing: 1.5px; color: var(--text-bright); text-transform: uppercase; }
 .event-count { font-size: 0.6rem; color: var(--cyan); font-weight: 700; letter-spacing: 1px; }
@@ -406,7 +411,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 .edge-cell-lbl { font-size:0.55rem; font-weight:800; letter-spacing:1.5px; color:rgba(255,255,255,0.5); }
 .edge-cell-val { font-family:'JetBrains Mono', monospace; font-size:0.95rem; font-weight:700; margin:3px 0; }
 .edge-cell-sub { font-size:0.52rem; color:rgba(255,255,255,0.5); }
-.edge-inputs { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:10px; }
+.edge-inputs { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:8px; margin-bottom:10px; }
 .edge-input { background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:6px; padding:8px 10px; cursor:help; }
 .edge-input-lbl { font-size:0.55rem; font-weight:800; letter-spacing:1.5px; color:rgba(255,255,255,0.5); }
 .edge-input-val { font-family:'JetBrains Mono', monospace; font-size:0.9rem; font-weight:700; margin:2px 0; }
@@ -421,6 +426,9 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 .edge-chip:hover { background:rgba(255,255,255,0.07); }
 .edge-chip.active { background:rgba(255,255,255,0.06); }
 .edge-ledger-note { font-size:0.68rem; line-height:1.55; color:rgba(255,255,255,0.75); margin-bottom:8px; }
+.edge-ledger-scroll { overflow:auto; max-height:336px; }
+.edge-ledger-scroll .edge-table thead th { position:sticky; top:0; z-index:1; background:var(--bg-panel); }
+.cb-kind { font-size:0.52rem; font-weight:700; letter-spacing:1.5px; color:rgba(255,255,255,0.5); }
 .edge-foot { font-size:0.6rem; line-height:1.5; color:rgba(255,255,255,0.45); margin-top:10px; }
 @media (max-width: 1100px) { .edge-hero { grid-template-columns:1fr; } }
 @media (max-width: 640px) { .edge-hero-right, .edge-inputs { grid-template-columns:repeat(2, 1fr); } }
@@ -511,7 +519,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
                 <button class="horizon-btn active" data-range="ALL" data-tooltip="Full historical lookback.">ALL</button>
             </div>
         </div>
-        <button class="comp-modal-close" id="comp-modal-close">CLOSE ✕</button>
+        <button class="comp-modal-close" id="comp-modal-close">CLOSE</button>
     </div>
     <div class="comp-modal-desc" id="comp-modal-desc" style="font-size:0.7rem;color:rgba(255, 255, 255, 0.85);margin-bottom:24px;line-height:1.5;"></div>
     <div id="comp-modal-stats" style="font-size:0.7rem;color:var(--text-primary);margin-bottom:24px;"></div>
@@ -563,6 +571,15 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <div id="cvol-edge-panel"></div>
     </div>
 
+    <!-- PANEL 4.5: OPTIONS MARKET READ -->
+    <div class="chart-container" id="regime-dashboard-panel" style="padding:20px 24px;">
+        <div class="section-title-bar" style="margin-bottom:14px;">
+            <span class="section-title-text" data-tooltip="Options Market Read: the current surface state, confidence, directional bias if earned, volatility bias, evidence stack, contradictions, and invalidation logic.">Options Market Read</span>
+            <span style="font-size:0.5rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1.5px;font-weight:700;">WHAT THE SURFACE IS PRICING</span>
+        </div>
+        <div id="regime-dashboard-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;"></div>
+    </div>
+
     <!-- PANEL 2: KPI CARDS (populated by JS with data-tooltip on every stat) -->
     <div class="cvol-kpi-grid" id="cvol-kpi-grid"></div>
 
@@ -607,7 +624,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
         <div style="display:flex;justify-content:center;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05);">
             <div class="chart-legend">
-                <div class="legend-item" data-tooltip="NGVL ≤ 25th percentile: Volatility is historically 'cheap'. This is often a precursor to violent, explosive price moves after a period of consolidation."><span class="legend-line" style="background:rgba(74,128,184,0.3)"></span> LOW (≤25th)</div>
+                <div class="legend-item" data-tooltip="NGVL ≤ 25th percentile: Volatility is historically 'cheap'. Low-volatility periods have often been followed by large price moves."><span class="legend-line" style="background:rgba(74,128,184,0.3)"></span> LOW (≤25th)</div>
                 <div class="legend-item" data-tooltip="Typical volatility environment for the trailing 252-day period."><span class="legend-line" style="background:rgba(61,184,122,0.3)"></span> NORMAL</div>
                 <div class="legend-item" data-tooltip="NGVL ≥ 75th percentile: Above-average options activity. Market is pricing high uncertainty or significant upcoming event risk."><span class="legend-line" style="background:rgba(192,120,40,0.3)"></span> ELEVATED (≥75th)</div>
                 <div class="legend-item" data-tooltip="NGVL ≥ 90th percentile: historically rare implied-volatility pricing. Treat as expensive uncertainty until realized movement or surface transitions confirm otherwise."><span class="legend-line" style="background:rgba(192,64,64,0.3)"></span> EXTREME (≥90th)</div>
@@ -649,102 +666,6 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <div class="range-labels">
                 <span id="var-range-label" style="color:var(--text-bright);text-transform:uppercase;letter-spacing:2px;">ALL DATA</span>
             </div>
-        </div>
-    </div>
-
-    <!-- VOL REGIME MONITOR -->
-    <div class="chart-container" id="vol-regime-panel" style="margin-bottom:24px;">
-        <div class="chart-header">
-            <div style="flex:1">
-                <span style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);">Vol Regime Monitor</span>
-                <span style="font-size:0.65rem;color:rgba(255, 255, 255, 0.85);margin-left:10px;">— 5D · 21D · 63D · 252D historical volatility</span>
-            </div>
-        </div>
-        <div id="vrm-selector"></div>
-        <div id="vrm-content">
-            <div class="vrm-loading">Loading volatility data…</div>
-        </div>
-    </div>
-
-    <!-- PANEL 4.5: OPTIONS MARKET READ -->
-    <div class="chart-container" id="regime-dashboard-panel" style="padding:20px 24px;">
-        <div class="section-title-bar" style="margin-bottom:14px;">
-            <span class="section-title-text" data-tooltip="Options Market Read: the current surface state, confidence, directional bias if earned, volatility bias, evidence stack, contradictions, and invalidation logic.">Options Market Read</span>
-            <span style="font-size:0.5rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1.5px;font-weight:700;">SURFACE STATE MACHINE</span>
-        </div>
-        <div id="regime-dashboard-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;"></div>
-    </div>
-
-    <!-- PANEL 5: RAW SURFACE INPUTS (expanded with axes, hover, stats) -->
-    <div style="margin-bottom:16px;">
-        <span class="section-title-text" data-tooltip="Research input layer: SAD, CI, CVC, and RDS are explanatory transforms from the CME aggregate surface. They support the surface read; they are not direct directional calls. Click any card for the full interactive timeline.">Raw Surface Inputs</span>
-        <span style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1px;font-weight:700;">RESEARCH LAYER · CLICK TO EXPAND</span>
-    </div>
-    <div class="composite-grid">
-        <div class="composite-card" data-comp="sad">
-            <span class="comp-expand-icon">⤢ EXPAND</span>
-            <div class="comp-head">
-                <span class="comp-name" data-tooltip="Skew-ATM Divergence: skew ratio diverges from the ATM volatility baseline. Positive = directional wing pressure rising faster than broad vol. Z > 1.5 = research fire.">SAD</span>
-                <span class="comp-val" style="color:#f59e0b" id="sad-current">—</span>
-            </div>
-            <div class="comp-spark-wrap">
-                <canvas class="comp-spark" id="spark-sad"></canvas>
-                <div class="comp-spark-tt" id="spark-sad-tt"></div>
-            </div>
-            <div class="comp-footer" data-tooltip="63-day Z-score of SAD — measures how unusual current divergence is vs. recent history"><span>Z-SCORE</span><span id="sad-zscore">—</span></div>
-            <div class="comp-stats" id="sad-stats"></div>
-        </div>
-        <div class="composite-card" data-comp="ci">
-            <span class="comp-expand-icon">⤢ EXPAND</span>
-            <div class="comp-head">
-                <span class="comp-name" data-tooltip="Complacency Index: 100 − ATM_252d_percentile. Higher = market more complacent about vol. > 82 = historically fragile calm — vol is cheap relative to its own history, but NG can snap violently from these levels.">CI</span>
-                <span class="comp-val" style="color:#60a8f8" id="ci-current">—</span>
-            </div>
-            <div class="comp-spark-wrap">
-                <canvas class="comp-spark" id="spark-ci"></canvas>
-                <div class="comp-spark-tt" id="spark-ci-tt"></div>
-            </div>
-            <div class="comp-footer" data-tooltip="Signal fires when CI exceeds 82 — historically a fragile-calm precursor"><span>THRESHOLD</span><span>82</span></div>
-            <div class="comp-stats" id="ci-stats"></div>
-        </div>
-        <div class="composite-card" data-comp="cvcDown">
-            <span class="comp-expand-icon">⤢ EXPAND</span>
-            <div class="comp-head">
-                <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Downside): ConvPct63 × max(0, DnVarZ21). High convexity plus downside variance means the surface is paying up for downside tail risk. > 1.20 = research fire.">CVC ↓</span>
-                <span class="comp-val" style="color:#ef4444" id="cvc-down-current">—</span>
-            </div>
-            <div class="comp-spark-wrap">
-                <canvas class="comp-spark" id="spark-cvc-down"></canvas>
-                <div class="comp-spark-tt" id="spark-cvc-down-tt"></div>
-            </div>
-            <div class="comp-footer" data-tooltip="Research fire when CVC↓ exceeds 1.20 — downside tail demand is elevated."><span>THRESHOLD</span><span>1.20</span></div>
-            <div class="comp-stats" id="cvcDown-stats"></div>
-        </div>
-        <div class="composite-card" data-comp="cvcUp">
-            <span class="comp-expand-icon">⤢ EXPAND</span>
-            <div class="comp-head">
-                <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Upside): ConvPct63 × max(0, UpVarZ21). High convexity plus upside variance means the surface is paying up for upside tail risk. > 1.20 = research fire.">CVC ↑</span>
-                <span class="comp-val" style="color:#3db87a" id="cvc-up-current">—</span>
-            </div>
-            <div class="comp-spark-wrap">
-                <canvas class="comp-spark" id="spark-cvc-up"></canvas>
-                <div class="comp-spark-tt" id="spark-cvc-up-tt"></div>
-            </div>
-            <div class="comp-footer" data-tooltip="Research fire when CVC↑ exceeds 1.20 — upside tail demand is elevated."><span>THRESHOLD</span><span>1.20</span></div>
-            <div class="comp-stats" id="cvcUp-stats"></div>
-        </div>
-        <div class="composite-card" data-comp="rds">
-            <span class="comp-expand-icon">⤢ EXPAND</span>
-            <div class="comp-head">
-                <span class="comp-name" data-tooltip="Regime Divergence Score: |ΔSkewRatio_5d| × Convexity × (1 − ATM_pctile/100). Rapid skew shift plus fat tails plus low ATM vol = surface instability and expansion risk. Z > 1.8 = research fire.">RDS</span>
-                <span class="comp-val" style="color:#ec4899" id="rds-current">—</span>
-            </div>
-            <div class="comp-spark-wrap">
-                <canvas class="comp-spark" id="spark-rds"></canvas>
-                <div class="comp-spark-tt" id="spark-rds-tt"></div>
-            </div>
-            <div class="comp-footer" data-tooltip="63-day Z-score of RDS — measures how extreme current regime divergence is"><span>Z-SCORE</span><span id="rds-zscore">—</span></div>
-            <div class="comp-stats" id="rds-stats"></div>
         </div>
     </div>
 
@@ -795,16 +716,6 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <div id="cvol-signal-heat"></div>
     </div>
 
-    <!-- SIGNAL TYPE FILTER (shared between scorecard + timeline) -->
-    <div class="signal-type-chips" id="cvol-signal-type-filter">
-        <button class="signal-chip active" data-signal="all" style="border-color:var(--cyan);color:var(--cyan);" data-tooltip="Show all signal types">ALL SIGNALS</button>
-        <button class="signal-chip" data-signal="SAD" style="border-color:#f59e0b;color:#f59e0b;" data-tooltip="Skew-ATM Divergence — skew pressure versus baseline vol">SAD</button>
-        <button class="signal-chip" data-signal="CI" style="border-color:#60a8f8;color:#60a8f8;" data-tooltip="Complacency Index — fragile calm warning">CI</button>
-        <button class="signal-chip" data-signal="CVC↓" style="border-color:#ef4444;color:#ef4444;" data-tooltip="Convexity-Variance down — downside tail demand input">CVC ↓</button>
-        <button class="signal-chip" data-signal="CVC↑" style="border-color:#3db87a;color:#3db87a;" data-tooltip="Convexity-Variance up — upside tail demand input">CVC ↑</button>
-        <button class="signal-chip" data-signal="RDS" style="border-color:#ec4899;color:#ec4899;" data-tooltip="Regime Divergence Score — explosive setup signal">RDS</button>
-    </div>
-
     <!-- PANEL 7.5: SURFACE STATE ANALOGS -->
     <div class="scorecard-panel">
         <div class="section-title-bar">
@@ -812,6 +723,109 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <span style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1px;font-weight:700;">OPTIONS-NATIVE AUDIT</span>
         </div>
         <div id="surface-analog-panel" style="overflow-x:auto; -webkit-overflow-scrolling:touch;"></div>
+    </div>
+
+    <!-- VOL REGIME MONITOR -->
+    <div class="chart-container" id="vol-regime-panel" style="margin-bottom:24px;">
+        <div class="chart-header">
+            <div style="flex:1">
+                <span style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);">Vol Regime Monitor</span>
+                <span style="font-size:0.65rem;color:rgba(255, 255, 255, 0.85);margin-left:10px;">— 5D · 21D · 63D · 252D historical volatility</span>
+            </div>
+        </div>
+        <div id="vrm-selector"></div>
+        <div id="vrm-content">
+            <div class="vrm-loading">Loading volatility data…</div>
+        </div>
+    </div>
+
+    <!-- RESEARCH LAYER DIVIDER -->
+    <div class="cvol-layer-divider" data-tooltip="Everything below is explanatory. SAD, CI, CVC and RDS are transforms of the CME surface that describe what the market is pricing. Their own directional record is in the scorecard below and is not strong enough to trade; the tested directional states are in the Directional Edge panel at the top.">
+        <span class="cvol-layer-title">Research Layer</span>
+        <span class="cvol-layer-note">Explanatory inputs and their record. The tested directional states are in Directional Edge above.</span>
+    </div>
+
+    <!-- PANEL 5: RAW SURFACE INPUTS (expanded with axes, hover, stats) -->
+    <div style="margin-bottom:16px;">
+        <span class="section-title-text" data-tooltip="Research input layer: SAD, CI, CVC, and RDS are explanatory transforms from the CME aggregate surface. They support the surface read; they are not direct directional calls. Click any card for the full interactive timeline.">Raw Surface Inputs</span>
+        <span style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1px;font-weight:700;">SELECT A CARD TO EXPAND</span>
+    </div>
+    <div class="composite-grid">
+        <div class="composite-card" data-comp="sad">
+            <span class="comp-expand-icon">⤢ EXPAND</span>
+            <div class="comp-head">
+                <span class="comp-name" data-tooltip="Skew-ATM Divergence: skew ratio diverges from the ATM volatility baseline. Positive = directional wing pressure rising faster than broad vol. Z > 1.5 = research fire.">SAD</span>
+                <span class="comp-val" style="color:#f59e0b" id="sad-current">—</span>
+            </div>
+            <div class="comp-spark-wrap">
+                <canvas class="comp-spark" id="spark-sad"></canvas>
+                <div class="comp-spark-tt" id="spark-sad-tt"></div>
+            </div>
+            <div class="comp-footer" data-tooltip="63-day Z-score of SAD — measures how unusual current divergence is vs. recent history"><span>Z-SCORE</span><span id="sad-zscore">—</span></div>
+            <div class="comp-stats" id="sad-stats"></div>
+        </div>
+        <div class="composite-card" data-comp="ci">
+            <span class="comp-expand-icon">⤢ EXPAND</span>
+            <div class="comp-head">
+                <span class="comp-name" data-tooltip="Complacency Index: 100 − ATM_252d_percentile. Higher = market more complacent about vol. > 82 = historically fragile calm — vol is cheap relative to its own history, and NG has moved sharply out of such periods.">CI</span>
+                <span class="comp-val" style="color:#60a8f8" id="ci-current">—</span>
+            </div>
+            <div class="comp-spark-wrap">
+                <canvas class="comp-spark" id="spark-ci"></canvas>
+                <div class="comp-spark-tt" id="spark-ci-tt"></div>
+            </div>
+            <div class="comp-footer" data-tooltip="Signal fires when CI exceeds 82 — historically a fragile-calm precursor"><span>THRESHOLD</span><span>82</span></div>
+            <div class="comp-stats" id="ci-stats"></div>
+        </div>
+        <div class="composite-card" data-comp="cvcDown">
+            <span class="comp-expand-icon">⤢ EXPAND</span>
+            <div class="comp-head">
+                <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Downside): ConvPct63 × max(0, DnVarZ21). High convexity plus downside variance means the surface is pricing a premium for downside tail risk. > 1.20 = research fire.">CVC ↓</span>
+                <span class="comp-val" style="color:#ef4444" id="cvc-down-current">—</span>
+            </div>
+            <div class="comp-spark-wrap">
+                <canvas class="comp-spark" id="spark-cvc-down"></canvas>
+                <div class="comp-spark-tt" id="spark-cvc-down-tt"></div>
+            </div>
+            <div class="comp-footer" data-tooltip="Research fire when CVC↓ exceeds 1.20 — downside tail demand is elevated."><span>THRESHOLD</span><span>1.20</span></div>
+            <div class="comp-stats" id="cvcDown-stats"></div>
+        </div>
+        <div class="composite-card" data-comp="cvcUp">
+            <span class="comp-expand-icon">⤢ EXPAND</span>
+            <div class="comp-head">
+                <span class="comp-name" data-tooltip="Convexity-Variance Confirmation (Upside): ConvPct63 × max(0, UpVarZ21). High convexity plus upside variance means the surface is pricing a premium for upside tail risk. > 1.20 = research fire.">CVC ↑</span>
+                <span class="comp-val" style="color:#3db87a" id="cvc-up-current">—</span>
+            </div>
+            <div class="comp-spark-wrap">
+                <canvas class="comp-spark" id="spark-cvc-up"></canvas>
+                <div class="comp-spark-tt" id="spark-cvc-up-tt"></div>
+            </div>
+            <div class="comp-footer" data-tooltip="Research fire when CVC↑ exceeds 1.20 — upside tail demand is elevated."><span>THRESHOLD</span><span>1.20</span></div>
+            <div class="comp-stats" id="cvcUp-stats"></div>
+        </div>
+        <div class="composite-card" data-comp="rds">
+            <span class="comp-expand-icon">⤢ EXPAND</span>
+            <div class="comp-head">
+                <span class="comp-name" data-tooltip="Regime Divergence Score: |ΔSkewRatio_5d| × Convexity × (1 − ATM_pctile/100). Rapid skew shift plus fat tails plus low ATM vol = surface instability and expansion risk. Z > 1.8 = research fire.">RDS</span>
+                <span class="comp-val" style="color:#ec4899" id="rds-current">—</span>
+            </div>
+            <div class="comp-spark-wrap">
+                <canvas class="comp-spark" id="spark-rds"></canvas>
+                <div class="comp-spark-tt" id="spark-rds-tt"></div>
+            </div>
+            <div class="comp-footer" data-tooltip="63-day Z-score of RDS — measures how extreme current regime divergence is"><span>Z-SCORE</span><span id="rds-zscore">—</span></div>
+            <div class="comp-stats" id="rds-stats"></div>
+        </div>
+    </div>
+
+    <!-- SIGNAL TYPE FILTER (shared between scorecard + timeline) -->
+    <div class="signal-type-chips" id="cvol-signal-type-filter">
+        <button class="signal-chip active" data-signal="all" style="border-color:var(--cyan);color:var(--cyan);" data-tooltip="Show all signal types">ALL SIGNALS</button>
+        <button class="signal-chip" data-signal="SAD" style="border-color:#f59e0b;color:#f59e0b;" data-tooltip="Skew-ATM Divergence — skew pressure versus baseline vol">SAD</button>
+        <button class="signal-chip" data-signal="CI" style="border-color:#60a8f8;color:#60a8f8;" data-tooltip="Complacency Index — fragile calm warning">CI</button>
+        <button class="signal-chip" data-signal="CVC↓" style="border-color:#ef4444;color:#ef4444;" data-tooltip="Convexity-Variance down — downside tail demand input">CVC ↓</button>
+        <button class="signal-chip" data-signal="CVC↑" style="border-color:#3db87a;color:#3db87a;" data-tooltip="Convexity-Variance up — upside tail demand input">CVC ↑</button>
+        <button class="signal-chip" data-signal="RDS" style="border-color:#ec4899;color:#ec4899;" data-tooltip="Regime Divergence Score — divergence input">RDS</button>
     </div>
 
     <!-- PANEL 8: BACKTEST SCORECARD -->
@@ -822,7 +836,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </div>
         <div class="signal-type-chips" id="cvol-regime-filter" style="margin-bottom:12px;">
             <button class="signal-chip active" data-regime="all" style="border-color:var(--cyan);color:var(--cyan);" data-tooltip="Show signal performance across ALL vol regimes">ALL REGIMES</button>
-            <button class="signal-chip" data-regime="low" style="border-color:#4a80b8;color:#4a80b8;" data-tooltip="NGVL &lt;25th percentile: Low-vol, complacent regime. Signals firing here often precede explosive breakouts from compressed ranges.">LOW (&lt;25th)</button>
+            <button class="signal-chip" data-regime="low" style="border-color:#4a80b8;color:#4a80b8;" data-tooltip="NGVL &lt;25th percentile: Low-vol, complacent regime. Signals firing here have often preceded large moves out of compressed ranges.">LOW (&lt;25th)</button>
             <button class="signal-chip" data-regime="normal" style="border-color:#3db87a;color:#3db87a;" data-tooltip="NGVL 25th-75th percentile: Normal vol regime. Standard signal behavior — baseline hit rates.">NORMAL</button>
             <button class="signal-chip" data-regime="high" style="border-color:#c07828;color:#c07828;" data-tooltip="NGVL &ge;75th percentile: Elevated/Extreme vol. Signal behavior may invert — historical patterns less reliable in panic regimes.">HIGH (&ge;75th)</button>
         </div>
@@ -855,7 +869,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
                 <button class="tab-btn" data-filter="6m" data-tooltip="Show only events from the last 6 months">6 MONTHS</button>
             </div>
         </div>
-        <div id="event-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <div id="event-scroll" class="event-scroll">
         <table class="event-table">
             <thead>
                 <tr>
@@ -965,9 +979,9 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 <script src="js/config.js"></script>
 <script src="js/metrics.js"></script>
 <script src="js/vol-regime.js"></script>
-<script src="js/cvol.js?v=20261115b"></script>
-<script src="js/cvol-render.js?v=20261115b"></script>
-<script src="js/cvol-ui.js?v=20261115b"></script>
+<script src="js/cvol.js?v=20261116b"></script>
+<script src="js/cvol-render.js?v=20261116b"></script>
+<script src="js/cvol-ui.js?v=20261116b"></script>
 <script>
     // ── Vol Regime Monitor init ──────────────────────────────────
     // Waits for both dashboard_data.json (ETF metrics) AND CvolState.data

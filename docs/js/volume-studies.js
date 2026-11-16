@@ -33,7 +33,7 @@ const VolumeStudies = {
             { key: 'pvt', label: 'PVT', tip: 'Invariant Price-Volume Trend (IPVT): Split-invariant Kyle-Bouchaud flow kernel with Dual Zero-Lag EMA ribbon, stationary bounded Z-score oscillator, and regime-asymmetric execution engine.' },
         ],
         micro: [
-            { key: 'vpin', label: 'BVC-VPIN', tip: 'Bulk Volume Classification Imbalance (OFI) & Order-Flow Toxicity (VPIN): tracks institutional adverse selection; extreme peaks signal panic capitulation bottoms or blow-off tops.' },
+            { key: 'vpin', label: 'BVC-VPIN', tip: 'Bulk Volume Classification Imbalance (OFI) & Order-Flow Toxicity (VPIN): tracks institutional adverse selection; extreme readings mark one-sided order flow.' },
             { key: 'illiq', label: 'ILLIQ-Z', tip: 'Range-Adjusted Amihud Illiquidity Z-score & Liquidity Absorption Index (LAI = Z_vol - Z_illiq) isolating institutional limit walls.' },
             { key: 'esvd', label: 'ESVD', tip: 'Abdi-Ranaldo Effective Spread-Volume Divergence: detects market maker liquidity withdrawal before volatility regime shifts.' },
             { key: 'lmsw', label: 'LMSW-ρ', tip: 'Llorente-Michaely-Saar-Wang Return-Volume Serial Correlation: separates informed continuation (rho > 0.25) from liquidity reversal (rho < -0.25).' },
@@ -535,7 +535,7 @@ const VolumeStudies = {
                         posActive = false;
                         inPosition[i] = false;
                         actions[i] = 'CRASH BREAKER EJECTION';
-                        statuses[i] = `Emergency Day-1 cash exit: violent negative flow shock (f_t = ${fCurr.toFixed(2)} <= -2.0)`;
+                        statuses[i] = `Emergency Day-1 cash exit: large negative flow shock (f_t = ${fCurr.toFixed(2)} <= -2.0)`;
                     } else if (l <= activeStop || c <= activeStop) {
                         posActive = false;
                         inPosition[i] = false;
@@ -581,7 +581,7 @@ const VolumeStudies = {
                         posActive = false;
                         inPosition[i] = false;
                         actions[i] = 'CLIMAX EXHAUSTION EXIT';
-                        statuses[i] = `Parabolic climax profit taken: Z-OBV ${zObvCurr.toFixed(1)} or ACMF ${acmfCurr.toFixed(2)}`;
+                        statuses[i] = `Climax exit: Z-OBV ${zObvCurr.toFixed(1)} or ACMF ${acmfCurr.toFixed(2)}`;
                     } else if (l <= activeStop || c <= activeStop) {
                         posActive = false;
                         inPosition[i] = false;
@@ -1017,7 +1017,7 @@ const VolumeStudies = {
                         posActive = false;
                         inPosition[i] = false;
                         actions[i] = 'CRASH BREAKER EJECTION';
-                        statuses[i] = `Emergency Day-1 cash exit: violent negative flow shock (f_t = ${fCurr.toFixed(2)} <= -2.2)`;
+                        statuses[i] = `Emergency Day-1 cash exit: large negative flow shock (f_t = ${fCurr.toFixed(2)} <= -2.2)`;
                     // 2. Trailing Stop Volatility Exit
                     } else if (l <= stopPrice || c <= stopPrice) {
                         posActive = false;
@@ -1074,7 +1074,7 @@ const VolumeStudies = {
                         posActive = false;
                         inPosition[i] = false;
                         actions[i] = 'CLIMAX EXHAUSTION EXIT';
-                        statuses[i] = `Parabolic climax profit taken: stationary Z-score ${zCurr.toFixed(1)} >= 72`;
+                        statuses[i] = `Climax exit: stationary Z-score ${zCurr.toFixed(1)} >= 72`;
                     // 2. Trailing Stop Volatility Exit
                     } else if (l <= stopPrice || c <= stopPrice) {
                         posActive = false;
@@ -2085,7 +2085,85 @@ const VolumeStudies = {
         }
         this._draw();
         this._updateReading(metrics, payload, null);
+        this._renderEvidence();
         this.updateCardSelection();
+    },
+
+    // ── Evidence line ────────────────────────────────────────────────────────
+    // States how the selected study has related to the next 21 sessions of NG on the selected
+    // ETF. The numbers come from docs/data/indicator_evidence.json, written by
+    // tools/indicator_evidence.mjs with this file's own study code.
+    _evidence: null,
+    _evidenceRequested: false,
+
+    _loadEvidence() {
+        if (this._evidenceRequested || typeof fetch !== 'function') return;
+        this._evidenceRequested = true;
+        fetch('data/indicator_evidence.json')
+            .then(r => (r.ok ? r.json() : null))
+            .then(j => { this._evidence = j; this._renderEvidence(); })
+            .catch(() => {});
+    },
+
+    evidenceHtml(ev, study, ticker) {
+        const key = study === 'bvc' ? 'vpin' : study;
+        const st = ev && ev.studies ? ev.studies[key] : null;
+        if (!st) return '';
+        const sgn = v => (v == null ? 'n/a' : (v >= 0 ? '+' : '') + v.toFixed(2));
+        const q = (ev.quality || {})[ticker] || {}, r = (st.etf || {})[ticker];
+        const side = (typeof CONFIG !== 'undefined' && CONFIG.etfs && CONFIG.etfs[ticker]) ? CONFIG.etfs[ticker].side : 'long';
+        const name = ticker.replace('.TO', '').replace('.L', '');
+        const hz = ev.horizonSessions || 21;
+        const parts = [];
+        let tag, cls;
+
+        if (q.reliable === false) {
+            tag = 'UNRELIABLE BARS'; cls = 'warn';
+            parts.push(`${name} bars are not usable for this study: ${q.zeroVolumePct}% of sessions in the last ten years report no volume and ${(q.flatRangePct + q.pinnedClosePct).toFixed(1)}% have no range or close exactly at the high or low. The assessment below comes from the New York and Toronto pairs.`);
+        }
+        const verdict = st.verdict || 'NONE';
+        if (!tag) { tag = verdict === 'DIRECTIONAL' ? 'TESTED · DIRECTIONAL' : (verdict === 'WEAK' ? 'TESTED · WEAK' : 'TESTED · NO EDGE'); cls = verdict === 'DIRECTIONAL' ? 'yes' : (verdict === 'WEAK' ? 'weak' : 'none'); }
+
+        const usable = ev.usableEtfs || [];
+        const pv = v => (v < 0.01 ? 'p < 0.01' : 'p = ' + v.toFixed(2));
+        const ics = r && q.reliable !== false ? ` (rank correlation with NG ${sgn(r.ic)}; first half ${sgn(r.h1)}, second half ${sgn(r.h2)})` : '';
+        if (verdict === 'NONE') {
+            parts.push(`${st.label} has shown no stable relationship with the next ${hz} sessions of NG${q.reliable !== false ? ' on ' + name : ''}${ics}. Read it as a description of current conditions, not as a signal.`);
+        } else if (r && q.reliable !== false && r.ic != null && r.stable) {
+            const etfDir = (r.ic >= 0 ? 1 : -1) * (side === 'short' ? -1 : 1);
+            parts.push(`High readings of ${st.label.charAt(0).toLowerCase() + st.label.slice(1)} on ${name} have preceded a ${etfDir > 0 ? 'stronger' : 'weaker'} ${name} over the next ${hz} sessions${ics}. ` +
+                (verdict === 'WEAK' ? 'The effect is small; treat it as supporting context.' : 'The effect has the same sign in both halves of the history on every usable ETF.'));
+        } else if (r && q.reliable !== false) {
+            parts.push(`${st.label} has a small, stable relationship with forward NG returns on ${st.stableOn} of ${st.of} usable ETFs, but not on ${name}${ics}.`);
+        } else {
+            parts.push(`${st.label} has a ${verdict === 'WEAK' ? 'small' : 'consistent'} relationship with the next ${hz} sessions of NG on the New York and Toronto pairs.`);
+        }
+        // the tail test is shown when the study has a verdict to support, or when it needs explaining away
+        if (r && q.reliable !== false && r.high && r.high.up != null && (verdict !== 'NONE' || r.high.p < 0.05)) {
+            parts.push(`With the reading at or above its 90th percentile, NG was higher ${hz} sessions later in ${r.high.up} of ${r.high.n} non-overlapping trades (${Math.round(r.high.upRate)}%), against ${Math.round(r.baseUpRate)}% on any day (${pv(r.high.p)}).`);
+            if (r.high.p < 0.05) {
+                const repeats = usable.filter(t => t !== ticker && st.etf[t] && st.etf[t].high && st.etf[t].high.p != null && st.etf[t].high.p < 0.05).length;
+                if (!repeats) parts.push(`That result does not repeat on the other ${usable.length - 1} usable ETFs, which track the same commodity, so it is treated as chance.`);
+            }
+        }
+        if (st.alt && st.alt.etf && st.alt.etf[ticker] && q.reliable !== false && key === 'cmf') {
+            parts.push(`The plain 21-session CMF on dollar volume carries more information than the adaptive line drawn here (rank correlation ${sgn(st.alt.etf[ticker].ic)} on ${name}); it is the input to the closing-pressure setups in Active Alerts.`);
+        }
+        const eng = (key === 'obv' || key === 'pvt') && ev.engines && ev.engines[key] ? ev.engines[key][ticker] : null;
+        if (eng && q.reliable !== false) {
+            parts.push(eng.t == null
+                ? `Position model on ${name}: in a position on only ${eng.inPositionPct}% of sessions, too few to score.`
+                : `Position model on ${name}: in a position on ${eng.inPositionPct}% of sessions, with an average daily return of ${sgn(eng.meanInPct)}% in position against ${sgn(eng.meanOutPct)}% out of it (t = ${eng.t.toFixed(1)}), ${Math.abs(eng.t) >= 2 ? 'a difference unlikely to be chance' : 'which is not distinguishable from chance'}.`);
+        }
+        return `<span class="vs-ev-tag vs-ev-${cls}" data-tooltip="Each study is scored against the unlevered, roll-adjusted NG return over the next ${hz} sessions. DIRECTIONAL: same sign in both halves of the history on every ETF with usable bars, average rank correlation of at least 0.10. WEAK: stable on all but one, at least 0.05. NO EDGE: neither. Scored through ${ev.asOf || 'n/a'} by tools/indicator_evidence.mjs.">${tag}</span>` +
+            `<span class="vs-ev-text">${parts.join(' ')}</span>`;
+    },
+
+    _renderEvidence() {
+        const el = (typeof document !== 'undefined') ? document.getElementById('vs-evidence') : null;
+        if (!el) return;
+        if (!this._evidence) { el.innerHTML = ''; this._loadEvidence(); return; }
+        el.innerHTML = this.evidenceHtml(this._evidence, this.state.study, this.state.ticker);
     },
 
     _bind() {
@@ -2942,11 +3020,11 @@ const VolumeStudies = {
                 if (vpin >= 0.45 && ofi <= -0.40) {
                     badgeText = 'SELLING CLIMAX (BOTTOM)';
                     badgeColor = this.COLORS.up;
-                    regimeDesc = 'Extreme panic selling exhaustion into bids — historical capitulation bottom buy zone';
+                    regimeDesc = 'Extreme one-sided selling; a condition that has accompanied price lows';
                 } else if (vpin >= 0.45 && ofi >= 0.40) {
                     badgeText = 'BUYING CLIMAX (TOP)';
                     badgeColor = '#d4a830';
-                    regimeDesc = 'Extreme aggressive buying exhaustion into offers — historical blow-off top risk';
+                    regimeDesc = 'Extreme one-sided buying; elevated risk of a price high';
                 } else if (ofi >= 0.25) {
                     badgeText = 'INFORMED BUYING';
                     badgeColor = this.COLORS.up;
@@ -3562,7 +3640,7 @@ const VolumeStudies = {
             let flowColor = this.COLORS.label;
             if (ofi != null && vpin != null) {
                 if (vpin >= 0.45 && ofi <= -0.40) { flowText = 'PANIC SELLING CLIMAX'; flowColor = this.COLORS.up; }
-                else if (vpin >= 0.45 && ofi >= 0.40) { flowText = 'BLOW-OFF BUYING CLIMAX'; flowColor = '#d4a830'; }
+                else if (vpin >= 0.45 && ofi >= 0.40) { flowText = 'BUYING CLIMAX'; flowColor = '#d4a830'; }
                 else if (ofi >= 0.25) { flowText = 'INFORMED BUY'; flowColor = this.COLORS.up; }
                 else if (ofi <= -0.25) { flowText = 'INFORMED SELL'; flowColor = this.COLORS.down; }
                 else if (vpin >= 0.40) { flowText = 'ELEVATED TOXICITY'; flowColor = '#d4a830'; }

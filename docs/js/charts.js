@@ -356,7 +356,7 @@ const Charts = {
             return { cls: 'dd-deep', label: 'DEEP DD', fillPct: pct };
         }
         const pct = Math.min(100, Math.round(85 + ((mag - 40.0) / 25.0) * 15));
-        return { cls: 'dd-bloodbath', label: 'BLOODBATH', fillPct: pct };
+        return { cls: 'dd-bloodbath', label: 'SEVERE DD', fillPct: pct };
     },
 
     _ensureHeatTooltip() {
@@ -469,7 +469,11 @@ const Charts = {
             rankHtml +
             '<div class="hm-tt-main"><span class="hm-tt-lbl">' + this._escapeHtml(m.metricLabel) + ':</span> <strong>' + m.scoreStr + '</strong> &middot; <span class="hm-tt-rvol">RVOL ' + m.rvolStr + '</span></div>' +
             ddRowHtml +
-            tagHtml;
+            tagHtml +
+            (m.setups && m.setups.length
+                ? '<div class="hm-tt-setups">' + m.setups.map(s => '<span class="' + (s.side === 'short' ? 'is-short' : 'is-long') + '">' +
+                    this._escapeHtml(s.label) + ' &middot; ' + (s.side === 'short' ? 'short' : 'long') + ' &middot; ' + this._escapeHtml(s.tier.toLowerCase()) + '</span>').join('') + '</div>'
+                : '');
 
         el.style.visibility = 'hidden';
         el.style.display = 'flex';
