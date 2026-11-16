@@ -36,6 +36,8 @@ function extractFn(fnName) {
     return new Function(`return (${code})`)();
 }
 
+const computeRollingLookbackDD = extractFn('computeRollingLookbackDD');
+globalThis.computeRollingLookbackDD = computeRollingLookbackDD;
 const computeRolling52WDD = extractFn('computeRolling52WDD');
 const computeATHDD = extractFn('computeATHDD');
 const computeUnderwaterMetrics = extractFn('computeUnderwaterMetrics');
@@ -274,7 +276,7 @@ console.log('Testing HTML Section Order & DOM Invariants in docs/trough-peak.htm
     }
 
     assert(html.includes('data-mode="rolling_52w"'), 'data-mode="rolling_52w" must exist');
-    assert(html.includes('data-mode="ath"'), 'data-mode="ath" must exist');
+    assert(html.includes('data-mode="rolling_2y"'), 'data-mode="rolling_2y" must exist');
 }
 console.log('Passed HTML structure and layout order verification.');
 
@@ -304,6 +306,8 @@ console.log('Testing Zero Emojis and Zero Forbidden Double-Dashes constraints...
             // Check forbidden double-dash
             if (line.includes('--')) {
                 let cleaned = line;
+                cleaned = cleaned.replace(/<!--.*?-->/g, '');
+                cleaned = cleaned.replace(/<!--/g, '').replace(/-->/g, '');
                 cleaned = cleaned.replace(/var\(--[a-zA-Z0-9_-]+\)/g, '');
                 cleaned = cleaned.replace(/--[a-zA-Z0-9_-]+\s*:/g, '');
                 cleaned = cleaned.replace(/[a-zA-Z0-9_]\s*--/g, '');

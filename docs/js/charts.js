@@ -472,7 +472,7 @@ const Charts = {
             tagHtml +
             (m.setups && m.setups.length
                 ? '<div class="hm-tt-setups">' + m.setups.map(s => '<span class="' + (s.side === 'short' ? 'is-short' : 'is-long') + '">' +
-                    this._escapeHtml(s.label) + ' &middot; ' + (s.side === 'short' ? 'short' : 'long') + ' &middot; ' + this._escapeHtml(s.tier.toLowerCase()) + '</span>').join('') + '</div>'
+                    this._escapeHtml(s.tooltip || (s.label + ' · ' + (s.side === 'short' ? 'short' : 'long') + ' · ' + this._escapeHtml(s.tier.toLowerCase()))) + '</span>').join('') + '</div>'
                 : '');
 
         el.style.visibility = 'hidden';

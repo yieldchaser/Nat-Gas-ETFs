@@ -934,13 +934,13 @@ const Signals = {
                 ? (corr < -0.2 ? 'var(--green)' : corr < -0.1 ? 'rgba(255, 255, 255, 0.85)' : corr > 0.1 ? 'var(--red)' : 'rgba(255,255,255,0.85)')
                 : 'rgba(255,255,255,0.85)';
             const tickerColor = side === 'long' ? 'var(--green)' : 'var(--red)';
-            const tipText = `${t} tracking validation card. 30-day Spearman correlation to NG spot is ${corr != null ? corr.toFixed(3) : 'N/A'}. ${side === 'short' ? 'Inverse ETF requires negative correlation to be effective.' : 'Long ETF requires positive correlation to be effective.'}`;
+            const tipText = `${t} tracking validation card. 30-day rank correlation to NG spot is ${corr != null ? corr.toFixed(3) : 'N/A'}. ${side === 'short' ? 'Inverse ETF requires negative correlation to be effective.' : 'Long ETF requires positive correlation to be effective.'}`;
 
             return `
                 <div class="validation-card" data-tooltip="${tipText}">
                     <div class="ticker" style="color:${tickerColor}">${t}</div>
                     <div class="corr-value" style="color:${color}">${corr != null ? corr.toFixed(3) : '—'}</div>
-                    <div class="corr-label">30d Spearman</div>
+                    <div class="corr-label">30d Rank Corr</div>
                     <div class="pvalue ${corr != null && corr < -0.2 ? 'pv-confirmed' : corr != null && corr < 0 ? 'pv-weak' : 'pv-none'}">${corr != null && corr < -0.2 ? 'INVERSE' : corr != null && corr < 0 ? 'WEAK' : '—'}</div>
                 </div>`;
         }).join('');

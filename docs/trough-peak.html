@@ -1691,6 +1691,7 @@ function detectCycles(dates, prices, pct) {
             }
         }
     }
+    const confirmedPivots = [...pivots];
     if (dir !== null)
         pivots.push({ i: pIdx, price: prices[pIdx], date: dates[pIdx], type: dir === 'up' ? 'peak' : 'trough' });
 
@@ -1707,6 +1708,7 @@ function detectCycles(dates, prices, pct) {
             });
         }
     }
+    cycles.pivots = confirmedPivots;
     return cycles;
 }
 
@@ -1857,6 +1859,48 @@ function renderCards() {
             rngStr = `<span data-tooltip="30-day Range Compression: (30D Max - 30D Min) / 30D Min. Context for recent price expansion or contraction.">Rng: ${Math.round(((rMax - rMin) / rMin) * 100)}%</span>`;
         }
 
+        // 5. Current Leg (W9)
+        let currentLegHtml = '';
+        const pivs = cycles.pivots || [];
+        if (pivs.length >= 2 && d.closes.length > 0) {
+            const lastPiv = pivs[pivs.length - 1];
+            const lastClose = d.closes[d.closes.length - 1];
+            const n = d.closes.length - 1 - lastPiv.i;
+            const x = (lastClose / lastPiv.price - 1);
+            const isFalling = lastPiv.type === 'peak';
+            const legMoves = [], legLens = [];
+            for (let i = 0; i < pivs.length - 1; i++) {
+                const a = pivs[i], b = pivs[i+1];
+                const len = b.i - a.i;
+                if (isFalling && a.type === 'peak' && b.type === 'trough') {
+                    legMoves.push((a.price - b.price) / a.price * 100);
+                    legLens.push(len);
+                } else if (!isFalling && a.type === 'trough' && b.type === 'peak') {
+                    legMoves.push((b.price - a.price) / a.price * 100);
+                    legLens.push(len);
+                }
+            }
+            if (legMoves.length > 0) {
+                const quantile = (arr, q) => {
+                    const s = [...arr].sort((a,b)=>a-b);
+                    const pos = (s.length - 1) * q;
+                    const base = Math.floor(pos);
+                    const rest = pos - base;
+                    return s[base + 1] !== undefined ? s[base] + rest * (s[base + 1] - s[base]) : s[base];
+                };
+                const med = Math.round(quantile(legMoves, 0.5));
+                const medN = Math.round(quantile(legLens, 0.5));
+                const q25 = Math.round(quantile(legMoves, 0.25));
+                const q75 = Math.round(quantile(legMoves, 0.75));
+                const xPct = Math.round(Math.abs(x * 100));
+                if (isFalling) {
+                    currentLegHtml = `<div class="current-leg" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);font-size:0.58rem;line-height:1.4;color:rgba(255,255,255,0.85);"><span style="font-weight:800;letter-spacing:1px;color:var(--text-bright);">CURRENT LEG</span> &nbsp;down ${xPct}% over ${n} sessions &middot; typical decline ${med}% over ${medN} sessions (middle half ${q25}–${q75}%)</div>`;
+                } else {
+                    currentLegHtml = `<div class="current-leg" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);font-size:0.58rem;line-height:1.4;color:rgba(255,255,255,0.85);"><span style="font-weight:800;letter-spacing:1px;color:var(--text-bright);">CURRENT LEG</span> &nbsp;up ${xPct}% over ${n} sessions &middot; typical rally +${med}% over ${medN} sessions (middle half +${q25}–${q75}%)</div>`;
+                }
+            }
+        }
+
         return `<div class="kpi-card" style="--card-color:${t.color};">
             <div class="kpi-header">
                 <span class="kpi-ticker" style="color:${t.color}">${t.label}</span>
@@ -1914,6 +1958,7 @@ function renderCards() {
                     <span style="flex:1;text-align:center;">${distTr}</span>
                     <span style="flex:1;text-align:right;">${rngStr}</span>
                 </div>
+                ${currentLegHtml}
             </div>
         </div>`;
     }).join('');

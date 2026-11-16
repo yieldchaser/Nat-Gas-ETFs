@@ -107,8 +107,7 @@ as trades, relabel it as a descriptive stress reading (as was done for L-CAP / S
   contrarian.
 - **E5. Convergence banner statistics** in `signals.js` (−19.7%, 27.4%, 85.7% …) are still
   hard-coded and unverified (B2). Wording was toned down; the numbers were not re-tested.
-- **E6. `tools/test_trough_peak_drawdown.mjs` fails** (`computeRollingLookbackDD is not defined`);
-  it is not in CI. Test or page drifted.
+- **E6. Fix `tools/test_trough_peak_drawdown.mjs` — FIXED.** Brought `computeRollingLookbackDD` into scope in test runner, updated mode expectation to `rolling_2y`, and stripped comment tags in double-dash lint. Added test suite to GitHub Actions CI workflow. All assertions pass.
 - **E7. Cache-busting**: `cvol.html` loads `config.js` and `vol-regime.js` without a version
   string; both changed this round.
 

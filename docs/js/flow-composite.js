@@ -66,6 +66,68 @@ function computeCompositeZ() {
         };
     });
     updateCompZReading();
+    renderFlowReading();
+}
+
+function renderFlowReading() {
+    const el = document.getElementById('flow-reading-content');
+    if (!el) return;
+    const kold = (typeof state !== 'undefined' && state.cache && state.cache.KOLD && state.cache.KOLD.data) || [];
+    const boil = (typeof state !== 'undefined' && state.cache && state.cache.BOIL && state.cache.BOIL.data) || [];
+
+    function flow5Stats(data) {
+        if (!data || data.length === 0) return null;
+        const flow5 = [];
+        for (let i = 0; i < data.length; i++) {
+            const w = data.slice(Math.max(0, i - 4), i + 1).map(r => r.usd_flow).filter(v => v != null && !isNaN(v));
+            if (w.length >= 3) {
+                flow5.push(w.reduce((a, b) => a + b, 0));
+            } else {
+                flow5.push(null);
+            }
+        }
+        const validVals = [];
+        const results = [];
+        for (let i = 0; i < flow5.length; i++) {
+            const v = flow5[i];
+            if (v != null) validVals.push(v);
+            if (validVals.length >= 252 && v != null) {
+                const countBelow = validVals.filter(x => x <= v).length;
+                const pct = (countBelow / validVals.length) * 100;
+                results.push({ val: v, pct });
+            }
+        }
+        return results.length ? results[results.length - 1] : null;
+    }
+
+    const kRes = flow5Stats(kold);
+    const bRes = flow5Stats(boil);
+
+    function ordinal(n) {
+        const s = ['th', 'st', 'nd', 'rd'];
+        const v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    function fmtM(v) {
+        const m = v / 1e6;
+        const sign = m >= 0 ? '+' : '−';
+        return sign + '$' + Math.abs(Math.round(m)) + 'M';
+    }
+
+    const lines = [];
+    if (kRes && kRes.pct >= 90) {
+        lines.push('<div><b style="color:#ef4444;">KOLD CREATIONS HEAVY</b> (' + fmtM(kRes.val) + ' over 5 sessions · ' + ordinal(Math.round(kRes.pct)) + ' percentile): Money is chasing into KOLD. Past KOLD entries in this state reached +30% about one time in three.</div>');
+    }
+    if (bRes && bRes.pct >= 90) {
+        lines.push('<div><b style="color:#3db87a;">BOIL CREATIONS HEAVY</b> (' + fmtM(bRes.val) + ' over 5 sessions · ' + ordinal(Math.round(bRes.pct)) + ' percentile): Money is going into BOIL. Past BOIL entries in this state reached +30% about one time in three.</div>');
+    }
+
+    if (lines.length > 0) {
+        el.innerHTML = lines.join('');
+    } else {
+        el.innerHTML = 'No flow warning today.';
+    }
 }
 
 function computeFlowHeatGlobalPercentiles() {
@@ -960,7 +1022,7 @@ function renderFlowHeatCalendar(offset = 0) {
                 if (absV >= p99Cutoff) {
                     cellPeaksClass = ' heat-peak-extreme';
                 } else if (absV >= p95Cutoff) {
-                    cellPeaksClass = ' heat-peak-significant';
+                    cellPeaksClass = ' heat-peak-elevated';
                 } else {
                     cellPeaksClass = ' heat-peak-notable';
                 }

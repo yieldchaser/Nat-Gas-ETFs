@@ -2733,15 +2733,7 @@
 }
 .vs-reading-na { color: rgba(255, 255, 255, 0.45); }
 
-/* Evidence line under the reading: what the selected study has predicted, if anything */
-.vs-evidence { margin-top: 6px; padding: 8px 12px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; display: flex; gap: 12px; align-items: baseline; font-size: 0.68rem; line-height: 1.55; color: rgba(255, 255, 255, 0.78); }
-.vs-evidence:empty { display: none; }
-.vs-ev-tag { flex-shrink: 0; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.08em; white-space: nowrap; }
-.vs-ev-yes { color: var(--green); }
-.vs-ev-weak { color: #d4a830; }
-.vs-ev-none { color: #8a8a9a; }
-.vs-ev-warn { color: #d4a830; }
-@media (max-width: 600px) { .vs-evidence { flex-direction: column; gap: 4px; } }
+
 
 .vs-tooltip {
     position: absolute;
@@ -3468,7 +3460,6 @@
 .heat-setup-mark.long { background: #4fd08c; }
 .heat-evidence { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-top: 8px; font-size: 0.6rem; line-height: 1.5; color: rgba(255, 255, 255, 0.6); }
 .heat-setup-key { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; color: rgba(255, 255, 255, 0.8); }
-.heat-evidence-note { flex: 1 1 320px; }
 .hm-tt-setups { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.03em; }
 .hm-tt-setups .is-short { color: #e06060; }
 .hm-tt-setups .is-long { color: #4fd08c; }

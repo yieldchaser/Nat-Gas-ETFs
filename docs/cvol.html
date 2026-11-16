@@ -229,13 +229,13 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
     transform: scale(1.45);
     box-shadow: 0 0 10px 3px rgba(200, 146, 42, 0.80) !important;
 }
-.heatmap-cell.heat-peak-significant {
+.heatmap-cell.heat-peak-elevated {
     opacity: 1 !important;
     background: #d96030 !important;
     box-shadow: 0 0 8px 2px rgba(217, 96, 48, 0.70) !important;
     animation: hpeak-in 0.44s cubic-bezier(.22,.68,0,1.22) both;
 }
-.heatmap-cell.heat-peak-significant:hover {
+.heatmap-cell.heat-peak-elevated:hover {
     transform: scale(1.45);
     box-shadow: 0 0 14px 4px rgba(217, 96, 48, 0.85) !important;
 }
@@ -293,13 +293,13 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
     transform: scale(1.45);
     box-shadow: 0 0 10px 3px rgba(200, 146, 42, 0.80) !important;
 }
-.sig-heat-cell.heat-peak-significant {
+.sig-heat-cell.heat-peak-elevated {
     opacity: 1 !important;
     background: #d96030 !important;
     box-shadow: 0 0 8px 2px rgba(217, 96, 48, 0.70) !important;
     animation: hpeak-in 0.44s cubic-bezier(.22,.68,0,1.22) both;
 }
-.sig-heat-cell.heat-peak-significant:hover {
+.sig-heat-cell.heat-peak-elevated:hover {
     transform: scale(1.45);
     box-shadow: 0 0 14px 4px rgba(217, 96, 48, 0.85) !important;
 }
@@ -340,7 +340,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
 .corr-grad-swatch { height: 8px; flex: 1; border-radius: 3px; }
 .corr-leg-label { font-size: 0.55rem; color: #fff; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; white-space: nowrap; opacity: 0.85; }
 
-/* ---- BACKTEST SCORECARD ---- */
+/* ---- TRACK RECORD SCORECARD ---- */
 .scorecard-panel { background: var(--bg-panel); border: 1px solid var(--border-primary); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
 table.scorecard-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.75rem; }
 .scorecard-table th { text-align: center; padding: 10px 12px; font-size: 0.55rem; letter-spacing: 2px; color: rgba(255, 255, 255, 0.85); font-weight: 700; border-bottom: 2px solid var(--bg-secondary); text-transform: uppercase; }
@@ -626,7 +626,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <div class="chart-legend">
                 <div class="legend-item" data-tooltip="NGVL ≤ 25th percentile: Volatility is historically 'cheap'. Low-volatility periods have often been followed by large price moves."><span class="legend-line" style="background:rgba(74,128,184,0.3)"></span> LOW (≤25th)</div>
                 <div class="legend-item" data-tooltip="Typical volatility environment for the trailing 252-day period."><span class="legend-line" style="background:rgba(61,184,122,0.3)"></span> NORMAL</div>
-                <div class="legend-item" data-tooltip="NGVL ≥ 75th percentile: Above-average options activity. Market is pricing high uncertainty or significant upcoming event risk."><span class="legend-line" style="background:rgba(192,120,40,0.3)"></span> ELEVATED (≥75th)</div>
+                <div class="legend-item" data-tooltip="NGVL ≥ 75th percentile: Above-average options activity. Market is pricing high uncertainty or large upcoming event risk."><span class="legend-line" style="background:rgba(192,120,40,0.3)"></span> ELEVATED (≥75th)</div>
                 <div class="legend-item" data-tooltip="NGVL ≥ 90th percentile: historically rare implied-volatility pricing. Treat as expensive uncertainty until realized movement or surface transitions confirm otherwise."><span class="legend-line" style="background:rgba(192,64,64,0.3)"></span> EXTREME (≥90th)</div>
             </div>
         </div>
@@ -677,7 +677,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
                     <span class="section-title-text" data-tooltip="Monthly NGVL regime heatmap — color-coded by Global Historical Percentiles of monthly averages across the entire 5+ year history. Reveals seasonal volatility patterns: winter typically elevated, shoulder months complacent. Hover for details.">Regime Heatmap</span>
                     <span class="heat-peak-count" id="cvol-hm-peak-count">0 PEAKS</span>
                 </div>
-                <button class="peaks-toggle-btn" id="cvol-hm-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all months except those in the top 10% of historical volatility (Notable, Significant, and Extreme, i.e. ≥90th percentile of all monthly averages globally).">PEAKS</button>
+                <button class="peaks-toggle-btn" id="cvol-hm-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all months except those in the top 10% of historical volatility (Notable, Elevated, and Extreme, i.e. ≥90th percentile of all monthly averages globally).">PEAKS</button>
             </div>
             <div id="cvol-heatmap"></div>
         </div>
@@ -699,10 +699,10 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
             <div style="display:flex; gap:12px; align-items:center; margin-left:auto;">
                 <!-- PEAKS Toggle -->
                 <div style="display:flex; gap:6px; align-items:center;">
-                    <button class="peaks-toggle-btn" id="cvol-sig-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all cells except key NGVL statistical outliers. Uses the Rolling 252-Day Percentile baseline to highlight days with significant volatility expansion.">PEAKS</button>
+                    <button class="peaks-toggle-btn" id="cvol-sig-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all cells except key NGVL statistical outliers. Uses the Rolling 252-Day Percentile baseline to highlight days with large volatility expansion.">PEAKS</button>
                     <div class="tab-group heat-peaks-sub" id="cvol-sig-peaks-threshold-group" style="margin: 0; padding: 2px; display: none;">
                         <button class="tab-btn" data-threshold="90" data-tooltip="Notable+ Outliers: Filter to days where NGVL exceeds the 90th percentile of its trailing 252-day history.">p90</button>
-                        <button class="tab-btn active" data-threshold="95" data-tooltip="Significant+ Outliers: Filter to days where NGVL exceeds the 95th percentile of its trailing 252-day history (Default).">p95</button>
+                        <button class="tab-btn active" data-threshold="95" data-tooltip="Elevated+ Outliers: Filter to days where NGVL exceeds the 95th percentile of its trailing 252-day history (Default).">p95</button>
                         <button class="tab-btn" data-threshold="99" data-tooltip="Extreme Outliers: Filter to days where NGVL exceeds the 99th percentile of its trailing 252-day history.">p99</button>
                     </div>
                 </div>
@@ -719,7 +719,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     <!-- PANEL 7.5: SURFACE STATE ANALOGS -->
     <div class="scorecard-panel">
         <div class="section-title-bar">
-            <span class="section-title-text" data-tooltip="Historical analogs for the options-surface state machine. It checks whether each surface regime led to realized volatility expansion, implied-move beats, and directional edge versus the same-horizon base rate.">Surface State Analogs</span>
+            <span class="section-title-text" data-tooltip="Historical analogs for the options-surface state machine. It checks whether each surface regime led to realized volatility expansion, implied-move beats, and directional edge versus the same-horizon any-day rate.">Surface State Analogs</span>
             <span style="font-size:0.55rem;color:rgba(255, 255, 255, 0.85);margin-left:12px;letter-spacing:1px;font-weight:700;">OPTIONS-NATIVE AUDIT</span>
         </div>
         <div id="surface-analog-panel" style="overflow-x:auto; -webkit-overflow-scrolling:touch;"></div>
@@ -744,6 +744,9 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <span class="cvol-layer-title">Research Layer</span>
         <span class="cvol-layer-note">Explanatory inputs and their record. The tested directional states are in Directional Edge above.</span>
     </div>
+
+    <details id="cvol-research-details" style="margin-top:16px;">
+        <summary style="font-size:0.75rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-bright);cursor:pointer;padding:12px 0 20px;user-select:none;">HISTORY AND METHODS</summary>
 
     <!-- PANEL 5: RAW SURFACE INPUTS (expanded with axes, hover, stats) -->
     <div style="margin-bottom:16px;">
@@ -828,7 +831,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <button class="signal-chip" data-signal="RDS" style="border-color:#ec4899;color:#ec4899;" data-tooltip="Regime Divergence Score — divergence input">RDS</button>
     </div>
 
-    <!-- PANEL 8: BACKTEST SCORECARD -->
+    <!-- PANEL 8: TRACK RECORD SCORECARD -->
 
     <div class="scorecard-panel">
         <div class="section-title-bar">
@@ -837,7 +840,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <div class="signal-type-chips" id="cvol-regime-filter" style="margin-bottom:12px;">
             <button class="signal-chip active" data-regime="all" style="border-color:var(--cyan);color:var(--cyan);" data-tooltip="Show signal performance across ALL vol regimes">ALL REGIMES</button>
             <button class="signal-chip" data-regime="low" style="border-color:#4a80b8;color:#4a80b8;" data-tooltip="NGVL &lt;25th percentile: Low-vol, complacent regime. Signals firing here have often preceded large moves out of compressed ranges.">LOW (&lt;25th)</button>
-            <button class="signal-chip" data-regime="normal" style="border-color:#3db87a;color:#3db87a;" data-tooltip="NGVL 25th-75th percentile: Normal vol regime. Standard signal behavior — baseline hit rates.">NORMAL</button>
+            <button class="signal-chip" data-regime="normal" style="border-color:#3db87a;color:#3db87a;" data-tooltip="NGVL 25th-75th percentile: Normal vol regime. Standard signal behavior — baseline worked rates.">NORMAL</button>
             <button class="signal-chip" data-regime="high" style="border-color:#c07828;color:#c07828;" data-tooltip="NGVL &ge;75th percentile: Elevated/Extreme vol. Signal behavior may invert — historical patterns less reliable in panic regimes.">HIGH (&ge;75th)</button>
         </div>
         <div id="cvol-scorecard" style="overflow-x:auto; -webkit-overflow-scrolling:touch;"></div>
@@ -845,7 +848,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
             <div id="tsa-header" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;padding:4px 0;" onclick="var b=document.getElementById('tsa-body');b.style.display=b.style.display==='none'?'block':'none';this.querySelector('.tsa-arrow').textContent=b.style.display==='none'?'▶':'▼';">
                 <div style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:0.68rem;letter-spacing:2px;font-weight:700;color:rgba(255, 255, 255, 0.85);" data-tooltip="Shows how hit rate and event count change if signal thresholds are tightened or loosened. Helps identify whether current thresholds are too loose (too many low-quality fires) or too tight (missing valid setups).">THRESHOLD SENSITIVITY</span>
+                    <span style="font-size:0.68rem;letter-spacing:2px;font-weight:700;color:rgba(255, 255, 255, 0.85);" data-tooltip="Shows how worked rate and event count change if signal thresholds are tightened or loosened. Helps identify whether current thresholds are too loose (too many low-quality fires) or too tight (missing valid setups).">THRESHOLD SENSITIVITY</span>
                     <span style="font-size:0.58rem;color:rgba(255, 255, 255, 0.85);letter-spacing:1px;">Are triggers too loose? Does tightening improve quality?</span>
                 </div>
                 <span class="tsa-arrow" style="font-size:0.68rem;color:rgba(255, 255, 255, 0.85);">▶</span>
@@ -890,6 +893,8 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
         </table>
         </div>
     </div>
+
+    </details>
 
 </main>
 

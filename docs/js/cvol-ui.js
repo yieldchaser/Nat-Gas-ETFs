@@ -19,7 +19,7 @@ function renderBanner(data, comp) {
     if (ci != null && ci > 82) badges += '<span class="flash-badge flash-ci" data-tooltip="Low-volatility regime: ATM volatility is historically suppressed (CI > 82). Such periods have tended to end with a sharp rise in volatility. Research input, not a tested trade signal.">COMPLACENCY HIGH</span>';
     var sad = comp.sad ? comp.sad[data.length - 1] : null;
     var sadZ = comp.sadZ ? comp.sadZ[data.length - 1] : null;
-    if (sadZ != null && Math.abs(sadZ) > 1.5) badges += '<span class="flash-badge flash-sad" data-tooltip="Skew divergence: Skew is diverging significantly from ATM volatility. Positioning in the wings is changing while the overall level of volatility is not. Research input.">SKEW DIVERGENCE</span>';
+    if (sadZ != null && Math.abs(sadZ) > 1.5) badges += '<span class="flash-badge flash-sad" data-tooltip="Skew divergence: Skew is diverging sharply from ATM volatility. Positioning in the wings is changing while the overall level of volatility is not. Research input.">SKEW DIVERGENCE</span>';
     var rdsZ = comp.rdsZ ? comp.rdsZ[data.length - 1] : null;
     if (rdsZ != null && rdsZ > 1.8) badges += '<span class="flash-badge flash-rds" data-tooltip="Regime divergence: RDS Z-score > 1.8 indicates a rapid skew change, low volatility and elevated convexity at the same time. Research input.">REGIME SHIFT</span>';
     el.innerHTML =
@@ -81,7 +81,7 @@ function renderEdgePanel(data, comp) {
         badge.style.color = edge.tradeable ? '' : '#f59e0b';
         badge.setAttribute('data-tooltip', edge.tradeable
             ? 'Forward returns use the roll-adjusted NG index implied by the BOIL/KOLD pair — the return a trader actually earns before leverage decay. The raw front-month column jumps at every contract roll and overstates upside, especially in winter contango.'
-            : 'ng_tradeable.csv did not load, so forward returns fall back to the raw front-month column. That column jumps at each contract roll; treat every hit rate on this page as overstated to the upside until the sidecar file is restored.');
+            : 'ng_tradeable.csv did not load, so forward returns fall back to the raw front-month column. That column jumps at each contract roll; treat every worked rate on this page as overstated to the upside until the sidecar file is restored.');
     }
 
     // ── Hero: what the model says today ──
@@ -95,7 +95,7 @@ function renderEdgePanel(data, comp) {
     var h21 = sub.horizons[21], b21 = base[21];
     var sentence;
     if (isNeutral) {
-        sentence = 'The surface is not in any of the three tested states, and outside them it has no directional information: walk-forward models built on every surface feature scored no better than chance out of sample. Expect the base rate — NG (tradeable) higher 21 sessions later on ' + fmt(b21.upRate,0) + '% of all days, averaging ' + signed(b21.mean) + '. That is the contango bleed, not a signal.';
+        sentence = 'The surface is not in any of the three tested states, and outside them it has no directional information: walk-forward models built on every surface feature scored no better than chance out of sample. Expect the any-day rate — NG (tradeable) higher 21 sessions later on ' + fmt(b21.upRate,0) + '% of all days, averaging ' + signed(b21.mean) + '. That is the contango bleed, not a signal.';
     } else {
         var ts = st.tradeStats;
         var tradeLine = 'Scored as trades (' + sideTxt(st.bias, st.hold) + ' each time the state becomes actionable, no overlap): ' + ts.wins + ' of ' + ts.n + ' won, averaging ' + signed(ts.mean) + '. Doing the same on any day wins ' + fmt(ts.benchWinRate,0) + '% and averages ' + signed(ts.benchMean) + '.';
@@ -160,10 +160,10 @@ function renderEdgePanel(data, comp) {
         '<th data-tooltip="Directional state from the options surface, with its evidence tier">STATE</th>' +
         '<th data-tooltip="Sessions spent in the state">DAYS</th>';
     HZ.forEach(function(h) { tbl += '<th data-tooltip="Mean ' + h + '-session forward return of the tradeable NG index from every day in the state, with the share of days that finished higher">' + h + 'D MEAN (UP%)</th>'; });
-    tbl += '<th data-tooltip="Day-level significance at 21 sessions. Circular-shift permutation: the share of time-shifted copies of the signal whose mean forward return was at least as favourable. Shifting whole blocks keeps the clustering of signal days intact, which a t-test on daily rows ignores.">P (DAYS)</th>' +
-        '<th data-tooltip="The state scored the way it would be used: enter when it becomes actionable and you are flat, hold the stated number of sessions, no overlapping positions. Shown as trades won out of trades taken, with the win rate of taking the same side for the same hold on ANY day — on a tradeable basis simply being short NG wins well over half the time, so that is the bar.">TRADES WON (ANY-DAY)</th>' +
+    tbl += '<th data-tooltip="Day-level permutation test at 21 sessions. Circular-shift permutation: the share of time-shifted copies of the signal whose mean forward return was at least as favourable. Shifting whole blocks keeps the clustering of signal days intact, which a t-test on daily rows ignores.">P (DAYS)</th>' +
+        '<th data-tooltip="The state scored the way it would be used: enter when it becomes actionable and you are flat, hold the stated number of sessions, no overlapping positions. Shown as trades won out of trades taken, with the win rate of taking the same side for the same hold on any day — on a tradeable basis simply being short NG wins well over half the time, so that is the bar.">TRADES WON (ANY DAY)</th>' +
         '<th data-tooltip="Mean result per trade in the direction of the read, and profit factor (gains divided by losses)">AVG / PF</th>' +
-        '<th data-tooltip="Trade-level significance: probability of winning at least this many trades if each had only the any-day benchmark win rate (exact binomial)">P (TRADES)</th>' +
+        '<th data-tooltip="Trade-level test: probability of winning at least this many trades if each had only the any-day benchmark win rate">P (TRADES)</th>' +
         '<th data-tooltip="Worst finished trade, and the worst point any trade reached before its exit. Size positions for the second number.">WORST / MAX ADVERSE</th>' +
         '</tr></thead><tbody>';
     ['BLOWOFF', 'UPSIDE_STRESS', 'PANIC_FLUSH', 'NEUTRAL'].forEach(function(k) {
@@ -183,7 +183,7 @@ function renderEdgePanel(data, comp) {
         tbl += '</tr>';
         if (s.confirmed && s.confirm > 1) {
             [[s.confirmed, '↳ actionable (≥' + s.confirm + ' of last ' + W + ')', 'Days when the state had already been on for at least ' + s.confirm + ' of the last ' + W + ' sessions. Trades are entered only on these days.'],
-             [s.fresh, '↳ first / isolated day', 'First or isolated days of the state. Historically indistinguishable from the base rate — do not act on these.']].forEach(function(x) {
+             [s.fresh, '↳ first / isolated day', 'First or isolated days of the state. Historically indistinguishable from any day — do not act on these.']].forEach(function(x) {
                 var q = x[0];
                 tbl += '<tr style="font-size:0.92em;"><td style="color:' + dim + ';padding-left:22px;text-align:left;" data-tooltip="' + esc(x[2]) + '">' + x[1] + '</td><td style="color:' + dim + ';">' + q.days + '</td>' + dayCells(q.horizons) +
                     '<td style="color:' + (q.horizons[21].p != null && q.horizons[21].p < 0.05 ? '#3db87a' : dim) + ';">' + pTxt(q.horizons[21].p) + '</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>';
@@ -232,7 +232,7 @@ function renderEdgePanel(data, comp) {
 
     var foot = '<div class="edge-foot">Statistics are recomputed from the full history (' + fmtDate(data[Math.min(EDGE_CFG.minHistory, data.length - 1)].date) + ' onward) on every load. ' +
         'Thresholds, confirmation counts and holds were chosen after looking at this same history, so treat the sizes as optimistic; the signs held in both halves of the sample. ' +
-        'Outside these states the surface carries no usable directional information — most days are, and should read as, NO EDGE.</div>';
+        'Outside these states the surface carries no usable directional information — most days are, and should read as, NO SETUP.</div>';
 
     el.innerHTML = hero + inputs + decay +
         '<div class="edge-sub-title">EVIDENCE BY STATE</div><div style="overflow-x:auto;">' + tbl + '</div>' +
@@ -358,7 +358,7 @@ function renderKpiCards(data, comp) {
     '<div class="cvol-kpi-micro">' +
         '<div class="cvol-micro-line" data-tooltip="The longevity of the current tranquil regime. Extended periods above 82 have often ended with an abrupt rise in volatility."><span class="cvol-micro-lbl">DAYS >82</span><span class="cvol-micro-val">'+(daysSinceCI!=null?daysSinceCI+'D':'—')+'</span></div>' +
         '<div class="cvol-micro-line" data-tooltip="Intermediate momentum in baseline volatility."><span class="cvol-micro-lbl">ATM 5D</span><span class="cvol-micro-val" style="color:'+(atm5dir.indexOf('RISING')>=0?'#ef4444':'#3db87a')+'">'+atm5dir+'</span></div>' +
-        '<div class="cvol-micro-line" data-tooltip="Current options-surface state from the regime-first model. NO EDGE means the surface is context only, not a trade call."><span class="cvol-micro-lbl">SURFACE STATE</span><span class="cvol-micro-val" style="color:#fff;opacity:0.85;font-size:0.65rem;">'+(comp.currentSurfaceRead?comp.currentSurfaceRead.label:'NO EDGE')+'</span></div>' +
+        '<div class="cvol-micro-line" data-tooltip="Current options-surface state from the regime-first model. NO SETUP means the surface is context only, not a trade call."><span class="cvol-micro-lbl">SURFACE STATE</span><span class="cvol-micro-val" style="color:#fff;opacity:0.85;font-size:0.65rem;">'+(comp.currentSurfaceRead?comp.currentSurfaceRead.label:'NO SETUP')+'</span></div>' +
     '</div></div>';
 }
 
@@ -411,7 +411,7 @@ function renderCompStats(compKey, values, events) {
     var seasonHtml = '';
     if (wPct != null || sPct != null) {
         seasonHtml = '<div class="cvol-micro-line" data-tooltip="Predictive Seasonality Check: Winning probability in Winter (Nov-Feb) vs. Summer (Jun-Aug). Natural Gas is profoundly seasonal \u2014 a signal with a 75% edge in winter may fail during the summer shoulder months.">' +
-            '<span class="cvol-micro-lbl">SEASONAL HIT RATE</span>' +
+            '<span class="cvol-micro-lbl">WORKED BY SEASON</span>' +
             '<span class="cvol-micro-val" style="font-size:0.65rem;">' +
             (wPct != null ? '<span style="color:' + (wPct > 55 ? '#3db87a' : '#ef4444') + '">Winter ' + wPct + '%</span>' : '') +
             (wPct != null && sPct != null ? ' · ' : '') +
@@ -595,7 +595,7 @@ function renderSignalHeatCalendar(data, comp) {
                 if (pct >= 99) {
                     sigClass += ' heat-peak-extreme';
                 } else if (pct >= 95) {
-                    sigClass += ' heat-peak-significant';
+                    sigClass += ' heat-peak-elevated';
                 } else {
                     sigClass += ' heat-peak-notable';
                 }
@@ -731,7 +731,7 @@ function renderHeatmap(data) {
                         if (pct >= 99) {
                             cellClass += ' heat-peak-extreme';
                         } else if (pct >= 95) {
-                            cellClass += ' heat-peak-significant';
+                            cellClass += ' heat-peak-elevated';
                         } else {
                             cellClass += ' heat-peak-notable';
                         }
@@ -886,15 +886,15 @@ function renderScorecard(composites) {
     function confBadge(hits, n) {
         if (n < 3 || hits == null) return '<span style="color:rgba(255, 255, 255, 0.85)">—</span>';
         var p = binomPval(hits, n);
-        if (p < 0.05) return '<span style="color:#3db87a" data-tooltip="p < 0.05 — statistically significant at 95% confidence. This hit rate is very unlikely due to chance alone.">SIG</span>';
-        if (p < 0.10) return '<span style="color:#f59e0b" data-tooltip="p < 0.10 — marginally significant. Suggestive but not conclusive.">MARGINAL</span>';
-        return '<span style="color:rgba(255, 255, 255, 0.85)" data-tooltip="p ≥ 0.10 — not statistically significant. Hit rate could be due to chance.">NS</span>';
+        if (p < 0.05) return '<span style="color:#3db87a" data-tooltip="Consistent record. This worked rate is unlikely due to chance alone.">RELIABLE</span>';
+        if (p < 0.10) return '<span style="color:#f59e0b" data-tooltip="Mixed record. Suggestive but not conclusive.">MIXED</span>';
+        return '<span style="color:rgba(255, 255, 255, 0.85)" data-tooltip="Worked rate is indistinguishable from chance.">UNRELIABLE</span>';
     }
     var html = '<table class="scorecard-table"><thead><tr>' +
         '<th data-tooltip="Aggregate Composite Signal: SAD, CI, CVC, or RDS.">SIGNAL</th>' +
-        '<th data-tooltip="Sample Size: Total number of validated signals in the lookback period.">COUNT</th>' +
-        '<th data-tooltip="Short-Term Hit Rate: Probability that NG moves in the predicted direction within 5 trading sessions.">HIT 5D</th>' +
-        '<th data-tooltip="Medium-Term Hit Rate (Gold Standard): Probability that NG moves in the predicted direction within 21 trading sessions (1 month). The primary benchmark for option-based signaling.">HIT 21D</th>' +
+        '<th data-tooltip="Trades: Total number of validated signals in the lookback period.">COUNT</th>' +
+        '<th data-tooltip="Short-Term Worked Rate: Probability that NG moves in the predicted direction within 5 trading sessions.">WORKED 5D</th>' +
+        '<th data-tooltip="Medium-Term Worked Rate: Probability that NG moves in the predicted direction within 21 trading sessions (1 month). The primary benchmark for option-based signaling.">WORKED 21D</th>' +
         '<th data-tooltip="Tactical Signal Return (direction-adjusted): average return 5 days after signal, where positive = NG moved in the predicted direction. For bearish signals, NG falling counts as positive.">AVG 5D</th>' +
         '<th data-tooltip="Strategic Signal Return (direction-adjusted): average return 21 days after signal, where positive = NG moved in the predicted direction. For bearish signals, NG falling counts as positive.">AVG 21D</th>' +
         '<th data-tooltip="Reliability Check: Median direction-adjusted 21D return. Compared to Average, shows whether performance is driven by consistency or rare outliers.">MED 21D</th>' +
@@ -902,8 +902,8 @@ function renderScorecard(composites) {
         '<th data-tooltip="Best 21D signal outcome (direction-adjusted): the largest NG move in the predicted direction across all events. Positive = biggest win.">BEST 21D</th>' +
         '<th data-tooltip="Worst 21D signal outcome (direction-adjusted): the largest adverse NG move against the predicted direction. Should not exceed -100% for unlevered NG.">WORST 21D</th>' +
         '<th data-tooltip="Consistency Score: Annualized Sharpe measures the risk-adjusted return of the signal. >0.50 is the institutional benchmark for a scalable edge.">SHARPE</th>' +
-        '<th data-tooltip="Statistical Confidence: Binomial test of 21D hit rate vs 50% null. SIG = p<0.05 (significant), MARGINAL = p<0.10, NS = not significant.">CONF</th>' +
-        '<th data-tooltip="Optimal Holding Period: The forward-return window (5D/10D/21D/42D) with the best risk-adjusted return (Sharpe) for this signal. Signals may degrade or improve significantly at different time horizons — see the Multi-Horizon table below.">OPT HZ</th>' +
+        '<th data-tooltip="Confidence: RELIABLE = consistent edge, MIXED = suggestive, UNRELIABLE = indistinguishable from chance.">CONF</th>' +
+        '<th data-tooltip="Optimal Holding Period: The forward-return window (5D/10D/21D/42D) with the best risk-adjusted return (Sharpe) for this signal. Signals may degrade or improve at different time horizons — see the Multi-Horizon table below.">OPT HZ</th>' +
         '</tr></thead><tbody>';
     var bestSharpe = -Infinity, worstSharpe = Infinity, bestSig = '', worstSig = '';
     var totalWeightedSharpe = 0, totalWeightCount = 0;
@@ -923,16 +923,16 @@ function renderScorecard(composites) {
             var sh = r.seasonalHit21[curSeason];
             var shr = (sh.hits / sh.total * 100);
             var shrColor = shr > 55 ? '#3db87a' : shr < 45 ? '#ef4444' : 'rgba(255, 255, 255, 0.85)';
-            seaBadge = '<div style="font-size:0.58rem;font-weight:600;color:'+shrColor+';margin-top:2px;" data-tooltip="'+curSeason.toUpperCase()+' hit rate: '+Math.round(shr)+'% (n='+sh.total+')">'+(seasonAbbr[curSeason]||'')+' '+Math.round(shr)+'%</div>';
+            seaBadge = '<div style="font-size:0.58rem;font-weight:600;color:'+shrColor+';margin-top:2px;" data-tooltip="'+curSeason.toUpperCase()+' worked rate: '+Math.round(shr)+'% (n='+sh.total+')">'+(seasonAbbr[curSeason]||'')+' '+Math.round(shr)+'%</div>';
         }
         // Low-sample warning badge
         var countCell = r.count < 20
-            ? '<span style="color:#f59e0b;font-weight:700;" data-tooltip="LOW SAMPLE: n=' + r.count + '. Fewer than 20 events. Sharpe and hit rates are statistically unreliable — extreme readings are likely noise, not signal. Do not use these metrics for sizing decisions.">' + r.count + '</span>'
+            ? '<span style="color:#f59e0b;font-weight:700;" data-tooltip="FEW TRADES: ' + r.count + ' trades. Fewer than 20 events. Sharpe and worked rates are unreliable on few trades — extreme readings are likely noise, not signal. Do not use these metrics for sizing decisions.">' + r.count + '</span>'
             : String(r.count);
         // Optimal horizon badge
         var optCell = r.optHorizon
-            ? '<span style="color:#f59e0b;font-weight:800;letter-spacing:0.5px;" data-tooltip="Optimal Holding Period: ' + r.optHorizon.label + ' (Sharpe ' + fmt(r.optHorizon.sharpe * annFactor, 2) + ', Hit ' + Math.round(r.optHorizon.hr) + '%, n=' + r.optHorizon.n + '). This is the window where this signal has historically produced the best risk-adjusted return.">' + r.optHorizon.label + '</span>'
-            : (r.count > 0 ? '<span style="color:#ef4444;font-weight:800;" data-tooltip="No directional edge detected at any measured timeframe (5D/10D/21D/42D) for this regime. Hit rates are \u226450% or Sharpe \u22640. Do not rely on this signal for trend-following entries.">NONE</span>' : '<span style="color:rgba(255, 255, 255, 0.85)">\u2014</span>');
+            ? '<span style="color:#f59e0b;font-weight:800;letter-spacing:0.5px;" data-tooltip="Optimal Holding Period: ' + r.optHorizon.label + ' (Sharpe ' + fmt(r.optHorizon.sharpe * annFactor, 2) + ', Worked ' + Math.round(r.optHorizon.hr) + '%, n=' + r.optHorizon.n + '). This is the window where this signal has historically produced the best risk-adjusted return.">' + r.optHorizon.label + '</span>'
+            : (r.count > 0 ? '<span style="color:#ef4444;font-weight:800;" data-tooltip="No directional edge detected at any measured timeframe (5D/10D/21D/42D) for this regime. Worked rates are \u226450% or Sharpe \u22640. Do not rely on this signal for trend-following entries.">NONE</span>' : '<span style="color:rgba(255, 255, 255, 0.85)">\u2014</span>');
         var hit5TT = r.hitRate5 != null ? `Historically, ${Math.round(r.hitRate5)}% of ${r.signal} signals were profitable after 5 days.` : 'No 5D data available.';
         var hit21TT = r.hitRate21 != null ? `Historically, ${Math.round(r.hitRate21)}% of ${r.signal} signals were profitable after 21 days (1 month).` : 'No 21D data available.';
         var avg5TT = r.avgRet5 != null ? `Average return 5 days after a ${r.signal} event is ${fmt(r.avgRet5)}%.` : 'No 5D return data.';
@@ -981,10 +981,10 @@ function renderScorecard(composites) {
             '<span style="font-size:0.62rem;font-weight:400;color:rgba(255, 255, 255, 0.85);letter-spacing:1px;">Optimal window highlighted in gold \u2014 signals may have edge at a different horizon than 21D</span></div>' +
             '<table class="scorecard-table" style="font-size:0.72rem;"><thead><tr>' +
             '<th>SIGNAL</th>' +
-            '<th data-tooltip="5-day forward return hit rate and annualized Sharpe">5D HIT / SHARPE</th>' +
-            '<th data-tooltip="10-day forward return hit rate and annualized Sharpe">10D HIT / SHARPE</th>' +
-            '<th data-tooltip="21-day forward return hit rate and annualized Sharpe">21D HIT / SHARPE</th>' +
-            '<th data-tooltip="42-day forward return hit rate and annualized Sharpe">42D HIT / SHARPE</th>' +
+            '<th data-tooltip="5-day forward return worked rate and annualized Sharpe">5D WORKED / SHARPE</th>' +
+            '<th data-tooltip="10-day forward return worked rate and annualized Sharpe">10D WORKED / SHARPE</th>' +
+            '<th data-tooltip="21-day forward return worked rate and annualized Sharpe">21D WORKED / SHARPE</th>' +
+            '<th data-tooltip="42-day forward return worked rate and annualized Sharpe">42D WORKED / SHARPE</th>' +
             '</tr></thead><tbody>';
         horizonRows.forEach(function(r) {
             var sc = sigColors[r.signal] || 'var(--text-primary)';
@@ -1300,13 +1300,13 @@ function openCompModal(compKey) {
             '<div style="font-size:1.1rem;font-weight:800;color:'+(valColor||'var(--text-bright)')+';">'+val+'</div></div>';
     };
     stHtml += mkStat('TOTAL FIRES', totalFires, 'Total times this signal fired', meta.color);
-    stHtml += mkStat('21D HIT RATE', hitRate + '%', 'Directional hit rate over 21 days', hitRate > 55 ? '#3db87a' : (hitRate < 45 ? '#ef4444' : 'var(--text-bright)'));
+    stHtml += mkStat('21D WORKED', hitRate + '%', 'Directional worked rate over 21 days', hitRate > 55 ? '#3db87a' : (hitRate < 45 ? '#ef4444' : 'var(--text-bright)'));
     stHtml += mkStat('MEDIAN 21D', fmtSign(med21), 'Median direction-adjusted 21D signal return (positive = signal was right)', pctColor(med21));
     stHtml += mkStat('MAGNITUDE 21D', fmt(mag21) + '%', 'Average absolute 21-day NG move', 'var(--text-bright)');
     stHtml += mkStat('BEST 21D', fmtSign(best21), 'Best direction-adjusted 21D outcome (largest win)', pctColor(best21));
     stHtml += mkStat('WORST 21D', fmtSign(worst21), 'Worst direction-adjusted 21D outcome (largest adverse move)', pctColor(worst21));
     stHtml += mkStat('AVG CONFLUENCE', avgConf, 'Average number of other signals firing within ±5 days', 'var(--text-bright)');
-    stHtml += mkStat('SEASON (W / S)', '<span style="color:'+(wPct.indexOf('N/A')<0&&(parseInt(wPct)>55)?'#3db87a':'rgba(255, 255, 255, 0.85)')+'">'+wPct+'</span> <span style="color:rgba(255, 255, 255, 0.85);font-weight:400;">/</span> <span style="color:'+(sPct.indexOf('N/A')<0&&(parseInt(sPct)>55)?'#3db87a':'rgba(255, 255, 255, 0.85)')+'">'+sPct+'</span>', 'Winter vs Summer hit rate', '');
+    stHtml += mkStat('SEASON (W / S)', '<span style="color:'+(wPct.indexOf('N/A')<0&&(parseInt(wPct)>55)?'#3db87a':'rgba(255, 255, 255, 0.85)')+'">'+wPct+'</span> <span style="color:rgba(255, 255, 255, 0.85);font-weight:400;">/</span> <span style="color:'+(sPct.indexOf('N/A')<0&&(parseInt(sPct)>55)?'#3db87a':'rgba(255, 255, 255, 0.85)')+'">'+sPct+'</span>', 'Winter vs Summer worked rate', '');
     stHtml += '</div>';
     statsEl.innerHTML = stHtml;
 
@@ -1571,8 +1571,8 @@ function renderRegimePanel(data, comp) {
             'Regime-first classification from NGVL, ATM, variance wings, skew, convexity, VRP, and realized volatility.') +
         cell('CONFIDENCE', read.confidence, color, fmt(read.confidenceScore,0) + '/100', color,
             'Confidence measures surface alignment. Contradictions lower the score; low confidence means stand down or treat as context only.') +
-        cell('DIRECTIONAL READ', read.directionalRead, read.directionalEdge ? '#3db87a' : '#f59e0b', read.directionalEdge ? 'History beats base rate' : 'Risk pricing, not trade signal', read.directionalEdge ? '#3db87a' : '#f59e0b',
-            'Directional edge is only shown when historical analogs beat the same-horizon base rate with sufficient sample size.') +
+        cell('DIRECTIONAL READ', read.directionalRead, read.directionalEdge ? '#3db87a' : '#f59e0b', read.directionalEdge ? 'History beats any day' : 'Risk pricing, not trade signal', read.directionalEdge ? '#3db87a' : '#f59e0b',
+            'Directional edge is only shown when historical analogs beat the same-horizon any day with enough trades.') +
         cell('VOL BIAS', read.volBias, color, read.horizon, color,
             'What the options surface says about future volatility: expansion risk, rich implied premium, cheap implied premium, or cooling stress.') +
         cell('VARIANCE BALANCE', 'UP ' + fmt(f.upZ,2) + ' / DN ' + fmt(f.dnZ,2), f.upZ > f.dnZ ? '#3db87a' : '#ef4444', 'Spread Z ' + fmt(f.spreadZ,2), f.upZ > f.dnZ ? '#3db87a' : '#ef4444',
@@ -1581,7 +1581,7 @@ function renderRegimePanel(data, comp) {
             'Vol risk premium = implied NGVL minus realized volatility. Negative means actual movement is outrunning what options priced.') +
         cell('EVIDENCE', (read.evidence || []).slice(0, 2).join(' | ') || 'Quiet', 'rgba(255,255,255,0.9)', (read.contradictions || []).length ? read.contradictions[0] : 'No major contradiction', color,
             'Plain-English evidence stack and the most important caveat for the current state.') +
-        cell('HISTORICAL ANALOGS', analogSub, analog && analog.directionalEdge ? '#3db87a' : 'rgba(255,255,255,0.85)', analog && analog.dirHitRate != null ? 'Dir hit ' + fmt(analog.dirHitRate,0) + '% vs base ' + fmt(analog.baseRate,0) + '%' : 'Vol/realized move focus', color,
+        cell('HISTORICAL ANALOGS', analogSub, analog && analog.directionalEdge ? '#3db87a' : 'rgba(255,255,255,0.85)', analog && analog.dirHitRate != null ? 'Dir worked ' + fmt(analog.dirHitRate,0) + '% vs base ' + fmt(analog.baseRate,0) + '%' : 'Vol/realized move focus', color,
             'Options-native analogs: forward realized movement, implied move beat rate, and directional edge only where statistically defensible.');
 }
 
@@ -1593,13 +1593,13 @@ function renderSurfaceAnalogPanel(comp) {
     var baseImpliedBeat21 = analogs.base && analogs.base[21] ? analogs.base[21].impliedBeatRate : null;
     var html = '<table class="scorecard-table"><thead><tr>' +
         '<th data-tooltip="Options-surface state detected from CME NGVL components">STATE</th>' +
-        '<th data-tooltip="Sessions with complete 21D forward return data — the sample actually used to compute every metric in this row. n < 30 = LOW SAMPLE, treat with caution.">N (FWD DATA)</th>' +
+        '<th data-tooltip="Sessions with complete 21D forward return data — the sample actually used to compute every metric in this row. n < 30 = FEW TRADES, treat with caution.">N (FWD DATA)</th>' +
         '<th data-tooltip="Average absolute NG move over the next 5 sessions — shows how quickly each state begins to resolve">5D ABS</th>' +
         '<th data-tooltip="Average absolute NG move over the next 10 sessions">10D ABS</th>' +
         '<th data-tooltip="Average absolute NG move over the next 21 sessions">21D ABS</th>' +
-        '<th data-tooltip="How often actual 21D NG movement exceeded the NGVL-implied expected move. Delta in parentheses vs the unconditional base rate across all sessions.">IMPLIED BEAT</th>' +
+        '<th data-tooltip="How often actual 21D NG movement exceeded the NGVL-implied expected move. Delta in parentheses vs the unconditional any-day rate across all sessions.">IMPLIED BEAT</th>' +
         '<th data-tooltip="How often forward realized vol exceeded current realized vol">VOL EXPAND</th>' +
-        '<th data-tooltip="Directional hit rate only applies to directional surface states">DIRECTION</th>' +
+        '<th data-tooltip="Directional worked rate only applies to directional surface states">DIRECTION</th>' +
         '</tr></thead><tbody>';
     states.forEach(function(state) {
         var s = analogs.states[state];
@@ -1607,16 +1607,16 @@ function renderSurfaceAnalogPanel(comp) {
         var hn = h.n != null ? h.n : 0;
         var lowSample = hn < 30;
         var dir = h.dirHitRate != null
-            ? fmt(h.dirHitRate,0) + '% vs base ' + fmt(h.baseRate,0) + '%' + (h.directionalEdge ? ' EDGE' : ' no edge')
+            ? fmt(h.dirHitRate,0) + '% vs any-day ' + fmt(h.baseRate,0) + '%' + (h.directionalEdge ? ' EDGE' : ' no edge')
             : 'not directional';
         var nCell = lowSample
-            ? '<span style="color:#f59e0b;font-weight:700;" data-tooltip="LOW SAMPLE: n=' + hn + '. Fewer than 30 sessions with measurable 21D forward returns — hit rates and move averages are statistically unreliable.">' + hn + '</span>'
+            ? '<span style="color:#f59e0b;font-weight:700;" data-tooltip="FEW TRADES: n=' + hn + '. Fewer than 30 sessions with measurable 21D forward returns — worked rates and move averages are statistically unreliable.">' + hn + '</span>'
             : String(hn);
         var impliedBeatStr = fmt(h.impliedBeatRate, 0) + '%';
         if (baseImpliedBeat21 != null && h.impliedBeatRate != null) {
             var delta = h.impliedBeatRate - baseImpliedBeat21;
             var deltaColor = delta > 5 ? '#3db87a' : delta < -5 ? '#ef4444' : 'rgba(255,255,255,0.65)';
-            impliedBeatStr += ' <span style="font-size:0.6rem;color:' + deltaColor + ';" data-tooltip="Unconditional base rate (all sessions): ' + fmt(baseImpliedBeat21,0) + '%. This state is ' + (delta >= 0 ? '+' : '') + fmt(delta,0) + '% vs base.">' + (delta >= 0 ? '(+' : '(') + fmt(delta,0) + '%)</span>';
+            impliedBeatStr += ' <span style="font-size:0.6rem;color:' + deltaColor + ';" data-tooltip="Unconditional any-day rate (all sessions): ' + fmt(baseImpliedBeat21,0) + '%. This state is ' + (delta >= 0 ? '+' : '') + fmt(delta,0) + '% vs base.">' + (delta >= 0 ? '(+' : '(') + fmt(delta,0) + '%)</span>';
         }
         html += '<tr>' +
             '<td style="color:'+s.color+';font-weight:800;" data-tooltip="'+surfaceMeta(state).action+'">'+s.label+'</td>' +
@@ -1644,7 +1644,7 @@ function renderSensitivityPanel(sensitivity) {
         '<th data-tooltip="Threshold level: TIGHTER = higher bar for firing (fewer events, higher quality). BASELINE = current threshold. LOOSER = lower bar (more events, potentially lower quality).">LEVEL</th>' +
         '<th data-tooltip="The threshold value used for this test">THRESHOLD</th>' +
         '<th data-tooltip="Number of events detected at this threshold across full history">N EVENTS</th>' +
-        '<th data-tooltip="21D directional hit rate at this threshold">HIT 21D</th>' +
+        '<th data-tooltip="21D directional worked rate at this threshold">WORKED 21D</th>' +
         '</tr></thead><tbody>';
     sensitivity.forEach(function(sig) {
         var sc = sigColors[sig.signal] || 'var(--text-primary)';
@@ -1740,7 +1740,7 @@ function renderSeriesChips() {
         var seriesDescs = {
             ngvl: 'NGVL (CME Natural Gas Volatility Index): 30-day forward implied volatility for NG options. The primary benchmark for market uncertainty — rising NGVL = growing fear/hedging demand.',
             atm: 'ATM (At-The-Money Implied Vol): The linear, non-skew component of implied volatility. Tracks the "core" price of options without directional bias. Divergence from NGVL reveals skew-driven positioning.',
-            realVol: 'Realized Volatility (21D): Annualized standard deviation of actual NG log-returns over 21 trading days. Compare vs NGVL to identify the Vol Risk Premium — when implied significantly exceeds realized, options are overpriced.',
+            realVol: 'Realized Volatility (21D): Annualized standard deviation of actual NG log-returns over 21 trading days. Compare vs NGVL to identify the Vol Risk Premium — when implied heavily exceeds realized, options are overpriced.',
             convexity: 'Convexity (Tail Sensitivity): Measures the cost of deep OTM protection relative to ATM. >1.10 = tail options are expensive relative to at-the-money options. <0.95 = tail options are cheap.',
             underlying: 'NG Price (Front-Month Futures): Henry Hub Natural Gas settlement price. Overlaid for correlation context — identifies whether vol signals are leading or lagging absolute price pivots.',
             skew: 'Skew (pts): Raw put-call skew in volatility points. Positive = puts more expensive (downside fear). Negative = calls more expensive (upside speculation). Use alongside Skew Ratio for directional reads.'

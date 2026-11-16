@@ -31,6 +31,9 @@ jobs:
       - name: Run Alert Engine tests
         run: node tools/test_alert_engine.mjs
 
+      - name: Run Cycle Engine unit tests
+        run: node tools/test_cycle_engine.mjs
+
       - name: Run CVOL tests
         run: node tools/test_cvol.js
 
@@ -39,6 +42,9 @@ jobs:
 
       - name: Run Pair Stress & VDDS tests
         run: node tools/test_pair_stress_and_vdds.mjs
+
+      - name: Run Trough-Peak Drawdown tests
+        run: node tools/test_trough_peak_drawdown.mjs
 
       - name: Run Cycle acceptance test
         run: node tools/test_cycle_acceptance.mjs

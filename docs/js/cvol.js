@@ -227,7 +227,7 @@ const SURFACE_STATES = {
     PANIC_PREMIUM: { label: 'STRESS PREMIUM', color: '#c04040', bias: 'NONE', volBias: 'RICH IMPLIED', action: 'Risk already expensive', horizon: '5-21D' },
     VOL_UNDERPRICED: { label: 'VOL UNDERPRICED', color: '#a78bfa', bias: 'NONE', volBias: 'CHEAP IMPLIED', action: 'Realized outruns implied', horizon: '5-21D' },
     NORMALIZATION: { label: 'NORMALIZATION', color: '#94a3b8', bias: 'NONE', volBias: 'COOLING', action: 'Stress cooling', horizon: '5-21D' },
-    NO_EDGE: { label: 'NO EDGE', color: '#6b7280', bias: 'NONE', volBias: 'NEUTRAL', action: 'Stand down', horizon: 'WAIT' },
+    NO_EDGE: { label: 'NO SETUP', color: '#6b7280', bias: 'NONE', volBias: 'NEUTRAL', action: 'Stand down', horizon: 'WAIT' },
 };
 
 function surfaceMeta(state) {
@@ -541,8 +541,8 @@ function computeSurfaceModel(data, comp) {
         d.directionalEdge = !!(analog && analog.hasDirectionalEdge);
         d.directionalRead = surfaceBiasText(d.directionalBias, d.directionalEdge);
         if ((d.directionalBias === 'UPSIDE' || d.directionalBias === 'DOWNSIDE') && !d.directionalEdge) {
-            if (d.contradictions.indexOf('Historical direction has not beaten base rate; treat this as risk pricing, not a trade call') < 0) {
-                d.contradictions.push('Historical direction has not beaten base rate; treat this as risk pricing, not a trade call');
+            if (d.contradictions.indexOf('Historical direction has not beaten any day; treat this as risk pricing, not a trade call') < 0) {
+                d.contradictions.push('Historical direction has not beaten any day; treat this as risk pricing, not a trade call');
             }
         }
     });
@@ -841,7 +841,7 @@ const EDGE_STATES = {
     BLOWOFF:       { label: 'CALL-SKEW EXTREME', bias: 'DOWNSIDE', color: '#ef4444', tier: 'STRONG',   confirm: 1, hold: 21, short: 'Call skew and implied volatility both at historic extremes' },
     UPSIDE_STRESS: { label: 'UPSIDE STRESS', bias: 'DOWNSIDE', color: '#f59e0b', tier: 'MODERATE', confirm: 3, hold: 10, short: 'Call skew and implied volatility elevated, below the extreme threshold' },
     PANIC_FLUSH:   { label: 'VOL-SPIKE SELLOFF', bias: 'UPSIDE',   color: '#3db87a', tier: 'WEAK',     confirm: 2, hold: 10, short: 'Sharp decline with implied volatility rising' },
-    NEUTRAL:       { label: 'NO EDGE',       bias: 'NONE',     color: '#6b7280', tier: 'NONE',     confirm: 1, hold: 21, short: 'Surface gives no directional information beyond the base rate' },
+    NEUTRAL:       { label: 'NO SETUP',       bias: 'NONE',     color: '#6b7280', tier: 'NONE',     confirm: 1, hold: 21, short: 'Surface gives no directional information beyond any day' },
 };
 const EDGE_CFG = {
     minHistory: 252,      // sessions before the first classification

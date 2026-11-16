@@ -919,6 +919,55 @@ const VolumeStudies = {
             }
         }
 
+        // 63-session standard deviation of IPVT (spec section 4)
+        const z63 = new Float64Array(n);
+        z63.fill(NaN);
+        for (let i = 62; i < n; i++) {
+            let sum = 0, sumSq = 0;
+            for (let j = i - 62; j <= i; j++) {
+                sum += ipvt[j];
+                sumSq += ipvt[j] * ipvt[j];
+            }
+            const mu = sum / 63;
+            const variance = (sumSq - sum * sum / 63) / 62;
+            const sd = Math.sqrt(Math.max(0, variance));
+            if (sd > 1e-6) z63[i] = (ipvt[i] - mu) / sd;
+        }
+
+        const highMarker = new Array(n).fill(false);
+        for (let i = 71; i < n; i++) {
+            let mx = -Infinity, ok = true;
+            for (let j = i - 9; j <= i; j++) {
+                if (isNaN(z63[j])) ok = false;
+                else mx = Math.max(mx, z63[j]);
+            }
+            if (ok && mx >= 1.5 && z63[i] >= 0.75 && impulse[i] < -0.5) highMarker[i] = true;
+        }
+
+        const lowMarker = new Array(n).fill(false);
+        for (let i = 71; i < n; i++) {
+            let mn = Infinity, ok = true;
+            for (let j = i - 9; j <= i; j++) {
+                if (isNaN(z63[j])) ok = false;
+                else mn = Math.min(mn, z63[j]);
+            }
+            if (ok && mn <= -1.5 && impulse[i] > 0.5) lowMarker[i] = true;
+        }
+
+        const setupR = new Array(n).fill(false);
+        for (let i = 82; i < n; i++) {
+            let mn = Infinity, ok = true;
+            for (let j = i - 19; j <= i; j++) {
+                if (isNaN(z63[j])) ok = false;
+                else mn = Math.min(mn, z63[j]);
+            }
+            if (ok && z63[i] > -1 && z63[i - 1] <= -1 && mn <= -2) setupR[i] = true;
+        }
+        const setupRRecent = new Array(n).fill(false);
+        for (let i = 0; i < n; i++) {
+            for (let j = Math.max(0, i - 4); j <= i; j++) if (setupR[j]) { setupRRecent[i] = true; break; }
+        }
+
         // 9. 14-bar stochastic divergence detector (Bullish & Bearish)
         const bullishDiv = new Array(n).fill(false);
         const bearishDiv = new Array(n).fill(false);
@@ -1150,6 +1199,11 @@ const VolumeStudies = {
             kama14,
             er10,
             zScore: Array.from(zScore),
+            z63: Array.from(z63),
+            highMarker,
+            lowMarker,
+            setupR,
+            setupRRecent,
             bullishDiv,
             bearishDiv,
             crossPair: Array.from(crossPair),
@@ -1716,6 +1770,11 @@ const VolumeStudies = {
                 hybridReturn: engine.hybridReturn,
                 sigmaTrim: engine.sigmaTrim,
                 zScore: engine.zScore,
+                z63: engine.z63,
+                highMarker: engine.highMarker,
+                lowMarker: engine.lowMarker,
+                setupR: engine.setupR,
+                setupRRecent: engine.setupRRecent,
                 crossPair: engine.crossPair,
                 sisterConfirmed: engine.sisterConfirmed,
                 actions: engine.actions,
@@ -1724,9 +1783,9 @@ const VolumeStudies = {
                 trailingStops: engine.trailingStops,
                 bullishDiv: engine.bullishDiv,
                 bearishDiv: engine.bearishDiv,
+                ticker: ticker,
                 etfSide: engine.side,
-                regime: engine.regime,
-                ticker
+                regime: engine.regime
             }
         });
     },
@@ -3761,76 +3820,45 @@ const VolumeStudies = {
             }
         } else if (study === 'pvt') {
             const extra = payload.extraData || {};
-            const side = extra.etfSide || 'long';
-            const zScore = extra.zScore ? extra.zScore[last] : null;
-            const zl8 = extra.zl8 ? extra.zl8[last] : null;
-            const zl21 = extra.zl21 ? extra.zl21[last] : null;
-            const crossPair = extra.crossPair ? extra.crossPair[last] : null;
-            const sisterConf = extra.sisterConfirmed ? extra.sisterConfirmed[last] : null;
-            const action = extra.actions ? extra.actions[last] : 'NEUTRAL / CASH';
+            const ticker = extra.ticker || payload.ticker || this.state.ticker || 'BOIL';
+            const isShort = ['KOLD', 'HND.TO', '3NGS.L'].includes(ticker);
+            const isLong = ['BOIL', 'HNU.TO', '3NGL.L'].includes(ticker);
+            const z63 = extra.z63 ? extra.z63[last] : null;
+            const highMarker = extra.highMarker ? extra.highMarker[last] : false;
+            const lowMarker = extra.lowMarker ? extra.lowMarker[last] : false;
+            const setupRRecent = extra.setupRRecent ? extra.setupRRecent[last] : false;
 
-            // 1. REGIME
-            const regimeLabel = side === 'short' ? 'INVERSE CARRY' : 'LONG SQUEEZE';
-            const regimeColor = side === 'short' ? '#38bdf8' : '#e06c75';
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">REGIME</span> <span style="color:${regimeColor};font-weight:700;">${regimeLabel}</span></span>`);
-
-            // 2. Z-SCORE
-            let zZone = 'NEUTRAL';
-            let zColor = this.COLORS.label;
-            if (zScore != null) {
-                if (zScore >= 72) { zZone = 'CLIMAX'; zColor = '#d4a830'; }
-                else if (zScore >= 25) { zZone = 'ACCUMULATION'; zColor = this.COLORS.up; }
-                else if (zScore <= -25) { zZone = 'DISTRIBUTION'; zColor = this.COLORS.down; }
+            let posLabel = 'NEUTRAL';
+            let posColor = this.COLORS.label;
+            if (z63 != null && !isNaN(z63)) {
+                if (z63 <= -1.5) { posLabel = 'WASHED OUT'; posColor = '#38bdf8'; }
+                else if (z63 <= -0.75) { posLabel = 'LOW'; posColor = '#5090a0'; }
+                else if (z63 >= 1.5) { posLabel = 'STRETCHED'; posColor = '#ef4444'; }
+                else if (z63 >= 0.75) { posLabel = 'HIGH'; posColor = '#d4a830'; }
             }
-            const zStr = zScore != null ? `${zScore >= 0 ? '+' : ''}${zScore.toFixed(1)} (${zZone})` : 'n/a';
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">Z-SCORE</span> <span style="color:${zColor};font-weight:700;">${zStr}</span></span>`);
+            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">63-SESSION POSITION</span> <span style="color:${posColor};font-weight:700;">${posLabel}</span></span>`);
 
-            // 3. DUAL ZLEMA
-            let zlemaStr = 'n/a';
-            let zlemaColor = 'inherit';
-            if (zl8 != null && zl21 != null) {
-                const spread = zl8 - zl21;
-                const isBull = spread >= 0;
-                zlemaColor = isBull ? this.COLORS.up : this.COLORS.down;
-                zlemaStr = `${isBull ? 'BULLISH' : 'BEARISH'} (${spread >= 0 ? '+' : ''}${spread.toFixed(1)})`;
+            if (highMarker || lowMarker) {
+                const turnLabel = lowMarker ? 'UP' : 'DOWN';
+                const turnColor = lowMarker ? this.COLORS.up : this.COLORS.down;
+                parts.push(`<span class="vs-reading-item"><span class="vs-lbl">TURN</span> <span style="color:${turnColor};font-weight:700;">${turnLabel}</span></span>`);
             }
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">DUAL ZLEMA</span> <span style="color:${zlemaColor};">${zlemaStr}</span></span>`);
 
-            // 4. CONFIRMATION
-            let confStr = 'n/a';
-            let confColor = this.COLORS.label;
-            if (crossPair != null) {
-                const isAligned = sisterConf === 'CONFIRMED' || (side === 'short' && crossPair >= 25) || (side === 'long' && crossPair >= 20);
-                confColor = isAligned ? this.COLORS.up : (crossPair < 0 ? this.COLORS.down : '#d4a830');
-                const tag = isAligned ? 'ALIGNED' : (sisterConf || 'DIVERGENT');
-                confStr = `${crossPair >= 0 ? '+' : ''}${crossPair.toFixed(1)} · ${tag}`;
+            let sentence = '';
+            if (highMarker) {
+                sentence = `Stretched and turning down. Past cycle highs in ${ticker} clustered here; holders should tighten stops.`;
+            } else if (lowMarker) {
+                sentence = `Washed out and turning up. Past cycle lows in ${ticker} clustered here; watch for a setup in Active Alerts.`;
+            } else if (isShort && setupRRecent) {
+                sentence = 'Recovering from a deep washout. This has been one of the better KOLD entries.';
+            } else if (isShort && z63 != null && z63 >= 1.0) {
+                sentence = 'Price-volume trend is high. A poor point to add; wait for a washout.';
+            } else if (isLong) {
+                sentence = 'On the long ETFs this study shows location only; it has not timed entries.';
             } else {
-                confStr = 'STANDALONE';
+                sentence = 'No turn signal. The 21-session oscillator swings between extremes most weeks and is not a timing tool on its own.';
             }
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">CONFIRMATION</span> <span style="color:${confColor};">${confStr}</span></span>`);
-
-            // 5. ACTION (Pill badge)
-            let actionBg = 'rgba(255,255,255,0.06)';
-            let actionColor = this.COLORS.label;
-            let actionBorder = 'rgba(255,255,255,0.15)';
-            if (action.includes('TRIGGER') || action.includes('ENTRY')) {
-                actionBg = 'rgba(61, 184, 122, 0.20)';
-                actionColor = this.COLORS.up;
-                actionBorder = 'rgba(61, 184, 122, 0.50)';
-            } else if (action.includes('CRASH BREAKER')) {
-                actionBg = 'rgba(239, 68, 68, 0.25)';
-                actionColor = '#ef4444';
-                actionBorder = 'rgba(239, 68, 68, 0.70)';
-            } else if (action.includes('EXIT')) {
-                actionBg = 'rgba(245, 158, 11, 0.20)';
-                actionColor = '#f59e0b';
-                actionBorder = 'rgba(245, 158, 11, 0.50)';
-            } else if (action.includes('ACCUMULATION') || action.includes('HOLDING')) {
-                actionBg = 'rgba(56, 189, 248, 0.20)';
-                actionColor = '#38bdf8';
-                actionBorder = 'rgba(56, 189, 248, 0.50)';
-            }
-            parts.push(`<span class="vs-reading-item"><span class="vs-lbl">ACTION</span> <span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:0.64rem;font-weight:700;background:${actionBg};color:${actionColor};border:1px solid ${actionBorder};">${action}</span></span>`);
+            parts.push(`<span class="vs-reading-item vs-reading-sentence" style="display:block;width:100%;margin-top:4px;font-size:0.75rem;color:var(--text-muted);font-style:italic;">${sentence}</span>`);
         }
         el.innerHTML = parts.join('');
     }

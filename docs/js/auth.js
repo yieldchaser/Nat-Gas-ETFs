@@ -288,14 +288,15 @@
 
             // Dynamically load all scripts in strict sequential order
             const scripts = [
-                'js/config.js?v=20261116b',
+                'js/config.js?v=20261116c',
                 'js/data.js?v=20261021a',
                 'js/metrics.js?v=20261116a',
-                'js/charts.js?v=20261116b',
+                'js/charts.js?v=20261116c',
                 'js/cards.js?v=20261018e',
-                'js/alert-engine.js?v=20261116b',
-                'js/signals.js?v=20261116c',
-                'js/volume-studies.js?v=20261116c',
+                'js/cycle-engine.js?v=20261116a',
+                'js/alert-engine.js?v=20261116c',
+                'js/signals.js?v=20261116d',
+                'js/volume-studies.js?v=20261116d',
                 'js/volume-profile.js?v=20261030a',
                 'js/tail-risk.js?v=20261031a',
                 'js/app.js?v=20261116a'

@@ -555,7 +555,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
     transform: scale(1.45);
     box-shadow: 0 0 10px 3px rgba(200, 146, 42, 0.80) !important;
 }
-.flow-heat-cell.heat-peak-significant {
+.flow-heat-cell.heat-peak-elevated {
     opacity: 1 !important;
     background: #d96030 !important;
     box-shadow: 0 0 8px 2px rgba(217, 96, 48, 0.70) !important;
@@ -563,7 +563,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
     color: #fff !important;
     border-color: rgba(217, 96, 48, 0.4) !important;
 }
-.flow-heat-cell.heat-peak-significant:hover {
+.flow-heat-cell.heat-peak-elevated:hover {
     transform: scale(1.45);
     box-shadow: 0 0 14px 4px rgba(217, 96, 48, 0.85) !important;
 }
@@ -708,6 +708,12 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <div id="loading-overlay" style="display:flex; position:fixed; top:56px; left:0; width:100%; height:calc(100vh - 56px); background:rgba(10,10,16,0.7); z-index:100; justify-content:center; align-items:center; color:var(--signal-accent); font-weight:bold; letter-spacing:2px; font-size:1.2rem; backdrop-filter:blur(2px);">
             LOADING...
         </div>
+        <!-- FLOW READING STRIP (W10) -->
+        <div class="flow-reading-strip" id="flow-reading-strip" style="background:var(--bg-panel);border:1px solid var(--border-primary);border-radius:8px;padding:12px 20px;margin-bottom:20px;">
+            <div style="font-size:0.65rem;font-weight:800;letter-spacing:1.5px;color:var(--text-bright);text-transform:uppercase;margin-bottom:6px;">FLOW READING</div>
+            <div id="flow-reading-content" style="font-size:0.75rem;color:rgba(255,255,255,0.85);font-family:'JetBrains Mono',monospace;line-height:1.5;">No flow warning today.</div>
+        </div>
+
         <!-- Section 1 -->
         <div class="sentiment-banner" id="sentiment-banner">
             <div class="sentiment-side left" data-tooltip="Net 30-day capital flow into LONG ETFs (BOIL, HNU, 3NGL). Positive = smart money going bullish on Nat Gas.">
@@ -1155,7 +1161,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
                         <button class="peaks-toggle-btn" id="flow-heat-peaks-toggle" data-tooltip="Outlier Spotlight: Dim all cells except key statistical flow pressure outliers. Compares daily absolute Composite Z-scores to Global Historical Percentiles (full 5+ year history) to locate true extreme flow events.">PEAKS</button>
                         <div class="tab-group heat-peaks-sub" id="flow-heat-peaks-threshold-group" style="margin: 0; padding: 2px; display: none; align-items: center;">
                             <button class="tab-btn" data-threshold="90" data-tooltip="Notable+ Outliers: Filter to days where absolute flow pressure exceeds the 90th percentile of its global history.">p90</button>
-                            <button class="tab-btn active" data-threshold="95" data-tooltip="Significant+ Outliers: Filter to days where absolute flow pressure exceeds the 95th percentile of its global history (Default).">p95</button>
+                            <button class="tab-btn active" data-threshold="95" data-tooltip="Elevated+ Outliers: Filter to days where absolute flow pressure exceeds the 95th percentile of its global history (Default).">p95</button>
                             <button class="tab-btn" data-threshold="99" data-tooltip="Extreme Outliers: Filter to days where absolute flow pressure exceeds the 99th percentile of its global history.">p99</button>
                         </div>
                     </div>
@@ -1351,7 +1357,7 @@ input[type=range]:hover::-moz-range-thumb { background: var(--cyan); border-colo
         <!-- Section 7: Yearly Flow Frequency Matrix -->
         <div class="panel" id="yearly-matrix-panel">
             <div class="panel-header">
-                <div class="panel-title" data-tooltip="Shows the number of significant flow events (|Z-Score| ≥ 1.5) per year per ETF, with average Z-Score magnitude. Helps identify which years had the most active flow signals." style="">Yearly Flow Activity Matrix</div>
+                <div class="panel-title" data-tooltip="Shows the number of large flow events (|Z-Score| ≥ 1.5) per year per ETF, with average Z-Score magnitude. Helps identify which years had the most active flow signals." style="">Yearly Flow Activity Matrix</div>
             </div>
             <div id="yearly-matrix-container" style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
                 <div style="color:rgba(255, 255, 255, 0.85); padding:20px; text-align:center; font-size:0.7rem; letter-spacing:1px;">Loading matrix…</div>
@@ -1936,7 +1942,7 @@ function getFlowSignalTag(tk, zscore) {
     const signalBullish = isShort ? zscore < 0 : zscore > 0;
     const priceBullish  = ng5dReturn > 0;
     if (signalBullish === priceBullish) {
-        return `<span class="fc-signal-tag fc-signal-reactive" data-tooltip="REACTIVE: This Z-Score spike aligns with NG's recent 5-day price move — likely momentum chasing. Audit across 2,500+ trading days shows reactive flows have limited forward predictive value (hit rate ≈ coin flip).">REACTIVE</span>`;
+        return `<span class="fc-signal-tag fc-signal-reactive" data-tooltip="REACTIVE: This Z-Score spike aligns with NG's recent 5-day price move — likely momentum chasing. Audit across 2,500+ trading days shows reactive flows have limited forward predictive value (worked rate ≈ coin flip).">REACTIVE</span>`;
     } else {
         return `<span class="fc-signal-tag fc-signal-leading" data-tooltip="LEADING: Flow direction opposes NG's recent 5-day move. Contrarian flows show marginally better 21-day forward accuracy in our audit — the strongest sub-signal found in flow data.">LEADING</span>`;
     }
@@ -3325,7 +3331,7 @@ function renderDivergence() {
 
     if (!html) {
         const pct = (DIV_LEVERAGE[state.divTicker] || 1).toFixed(0);
-        tbody.innerHTML = `<tr><td colspan="15" style="text-align:center;color:rgba(255,255,255,0.85);padding:20px;">No significant price-flow divergences detected.<br><span style="font-size:0.65rem;color:rgba(255,255,255,0.85);">Requires a split-adjusted price move &gt; ${pct}% alongside opposing net flows within a 3, 5, or 10 day window.</span></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="15" style="text-align:center;color:rgba(255,255,255,0.85);padding:20px;">No large price-flow divergences detected.<br><span style="font-size:0.65rem;color:rgba(255,255,255,0.85);">Requires a split-adjusted price move &gt; ${pct}% alongside opposing net flows within a 3, 5, or 10 day window.</span></td></tr>`;
     } else {
         tbody.innerHTML = html;
     }
@@ -3338,7 +3344,7 @@ function downloadDivCSV() {
     const thresh   = (DIV_LEVERAGE[tk] || 1) * 0.01;
     const lookback = state.divRange === 'all' ? data.length : Math.min(state.divRange, data.length);
     const results  = scanDivergences(data, thresh, lookback);
-    if (!results.length) return alert('No significant divergences found.');
+    if (!results.length) return alert('No large divergences found.');
 
     const fmtN  = (v) => v !== null ? v.toFixed(2) : 'N/A';
     const sigStr = (r) => r.confirmed
