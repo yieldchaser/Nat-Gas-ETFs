@@ -175,6 +175,11 @@ def build_all_series(parsed: dict) -> pd.DataFrame:
     return df
 
 
+# 14:30 New York settlement on the shifted clock used by to_trade_dates (14:30 + 6h),
+# with a one-minute grace for the settlement print itself.
+SETTLE_SHIFTED_SECONDS = 20 * 3600 + 31 * 60
+
+
 # ── STEP 4b: COLLAPSE INTRADAY POINTS TO CME TRADE DATES ─────────────────────
 def to_trade_dates(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -196,6 +201,16 @@ def to_trade_dates(df: pd.DataFrame) -> pd.DataFrame:
     trade_date = pd.DatetimeIndex(shifted.tz_localize(None).normalize())
     out = df.copy()
     out.index = trade_date
+    # Keep points up to the 14:30 New York settlement (20:30 on the shifted clock).
+    # The 2013-2026 history is settlement-based (its UNDERLYING equals the NG settle
+    # on non-roll days), and NG can move 1-2% between the settle and the 17:00 close,
+    # so taking the last print of the session would mix two conventions. A session
+    # with no point yet at or before the settle (a run before 14:30) keeps its latest
+    # point as a provisional value; the post-close run then replaces it.
+    secs = shifted.hour * 3600 + shifted.minute * 60 + shifted.second
+    at_or_before_settle = pd.Series(secs <= SETTLE_SHIFTED_SECONDS, index=out.index)
+    has_settle = at_or_before_settle.groupby(level=0).transform("any")
+    out = out[(at_or_before_settle | ~has_settle).values]
     out = out[out.index.day_of_week < 5]
     out = out.groupby(level=0).last()
     out.index = out.index.tz_localize("UTC")
