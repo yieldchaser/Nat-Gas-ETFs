@@ -1014,7 +1014,7 @@ const ContractLedger = {
                         <div class="cl-spec-line"><strong>Issuer:</strong> ProShares Trust II (CIK: 0001415311)</div>
                         <div class="cl-spec-line"><strong>Benchmark:</strong> Bloomberg Natural Gas Subindex (BCOMNG)</div>
                         <div class="cl-spec-line"><strong>Leverage:</strong> 2x Daily Long (BOIL) / -2x Daily Short (KOLD)</div>
-                        <div class="cl-spec-line"><strong>Roll Schedule:</strong> Bimonthly in even months (Feb, Apr, Jun, Aug, Oct, Dec) across <strong>Business Days 6 through 10</strong> at 20% per day.</div>
+                        <div class="cl-spec-line"><strong>Roll Schedule:</strong> Bimonthly in even months (Feb, Apr, Jun, Aug, Oct, Dec) executed at close of Business Days 5–9 (effective return weights across <strong>Business Days 6 through 10</strong> at 20% per day).</div>
                         <div class="cl-spec-line"><strong>Odd Months:</strong> No roll occurs. Position held 100% in designated lead future.</div>
                         <div class="cl-spec-line"><strong>Regulatory Filing:</strong> SEC Form 10-K &amp; Form 424B3 Prospectus.</div>
                     </div>
@@ -1024,17 +1024,17 @@ const ContractLedger = {
                         <div class="cl-spec-line"><strong>Issuer:</strong> Global X Investments Canada Inc. (TSX)</div>
                         <div class="cl-spec-line"><strong>Benchmark:</strong> BetaPro Natural Gas Rolling Futures Index (CMDYNGER)</div>
                         <div class="cl-spec-line"><strong>Leverage:</strong> 2x Daily Bull (HNU) / -2x Daily Bear (HND)</div>
-                        <div class="cl-spec-line"><strong>Roll Schedule:</strong> Monthly roll across <strong>Trading Days 4 through 7</strong> at 25% per day (75/25, 50/50, 25/75, 100%).</div>
-                        <div class="cl-spec-line"><strong>Curve Tenor:</strong> Tracks prompt/front-month contract, rolling into next month right before front expiry.</div>
+                        <div class="cl-spec-line"><strong>Roll Schedule:</strong> Monthly roll across <strong>Trading Days 4 through 7</strong> at 25% per day (effective weights: 75/25, 50/50, 25/75, 100% on Day 7).</div>
+                        <div class="cl-spec-line"><strong>Curve Tenor:</strong> Tracks prompt/front-month NYMEX contract at month-start, rolling into the 2nd month across Trading Days 4–7 (~2.5 weeks prior to front NYMEX expiry).</div>
                         <div class="cl-spec-line"><strong>Governing Document:</strong> Global X Index Methodology (Effective Aug 15, 2024).</div>
                     </div>
 
                     <div class="cl-spec-box">
                         <div class="cl-spec-head">London: WisdomTree 3NGL &amp; 3NGS</div>
-                        <div class="cl-spec-line"><strong>Issuer:</strong> WisdomTree Commodity Securities Limited (LSE)</div>
+                        <div class="cl-spec-line"><strong>Issuer:</strong> WisdomTree Multi Asset Issuer PLC (Ireland / LSE)</div>
                         <div class="cl-spec-line"><strong>Benchmark:</strong> Solactive Natural Gas Commodity Futures SL Index (SOLWSNG2)</div>
                         <div class="cl-spec-line"><strong>Leverage:</strong> 3x Daily Leveraged (3NGL) / -3x Daily Short (3NGS)</div>
-                        <div class="cl-spec-line"><strong>Roll Schedule:</strong> Monthly roll across <strong>Business Days 5 through 9</strong> at 20% per day (SFMC = 2).</div>
+                        <div class="cl-spec-line"><strong>Roll Schedule:</strong> Monthly roll across <strong>Business Days 5 through 9</strong> at 20% per day (SFMC = 2; effective weights: 80/20, 60/40, 40/60, 20/80, 100% on Day 9).</div>
                         <div class="cl-spec-line"><strong>Curve Tenor:</strong> Tracks the 2nd front-month NYMEX contract, maintaining longer duration along the curve.</div>
                         <div class="cl-spec-line"><strong>Governing Document:</strong> Solactive Commodity Futures Guideline (ISIN: DE000SL0BLN2).</div>
                     </div>
