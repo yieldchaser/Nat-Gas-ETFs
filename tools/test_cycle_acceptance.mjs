@@ -65,19 +65,27 @@ function maskK(kold, boil) {
     for (let i = 71; i < n; i++) { let mx = -Infinity, okAll = true; for (let j = i - 9; j <= i; j++) { if (isNaN(z[j])) okAll = false; else mx = Math.max(mx, z[j]); } byDate.set(kold[i].date, okAll && mx >= 1.5 && imp[i] < -0.5); }
     return boil.map(b => !!byDate.get(b.date));
 }
+function maskR(kold, boil) {
+    const imp = VS.computeInvariantPVTEngine(kold, 'KOLD', boil).impulse, n = kold.length, ip = new Array(n), z = new Array(n).fill(NaN), m = new Array(n).fill(false); let acc = 0;
+    for (let i = 0; i < n; i++) { acc += imp[i] || 0; ip[i] = acc; }
+    for (let i = 62; i < n; i++) { const w = ip.slice(i - 62, i + 1), mu = w.reduce((a, b) => a + b, 0) / 63, sd = Math.sqrt(w.reduce((a, b) => a + (b - mu) ** 2, 0) / 62); if (sd > 0) z[i] = (ip[i] - mu) / sd; }
+    for (let i = 82; i < n; i++) { let mn = Infinity, okAll = true; for (let j = i - 19; j <= i; j++) { if (isNaN(z[j])) okAll = false; else mn = Math.min(mn, z[j]); } m[i] = okAll && z[i] > -1 && z[i - 1] <= -1 && mn <= -2; }
+    return m;
+}
 const windowOf = (b, m) => { const s = b.findIndex(x => x.date >= START); return { c: b.slice(s).map(x => x.close), m: m.slice(s), dates: b.slice(s).map(x => x.date) }; };
 
 const B = { BOIL: bars('BOIL'), KOLD: bars('KOLD'), HNU: bars('HNU.TO'), HND: bars('HND.TO') };
 const mA = maskA(B.KOLD, B.HND), mK = maskK(B.KOLD, B.BOIL);
-const wA = windowOf(B.KOLD, mA), wK = windowOf(B.BOIL, mK);
-const refA = record(wA.c, wA.m), refK = record(wK.c, wK.m);
+const mR = maskR(B.KOLD, B.BOIL);
+const wA = windowOf(B.KOLD, mA), wK = windowOf(B.BOIL, mK), wR = windowOf(B.KOLD, mR);
+const refA = record(wA.c, wA.m), refK = record(wK.c, wK.m), refR = record(wR.c, wR.m);
 const fmt = r => `${r.worked}/${r.n} worked (${r.workedPct.toFixed(0)}% vs any day ${r.any.workedPct.toFixed(0)}%), near low ${r.nearLowPct.toFixed(0)}%, run ${r.run.toFixed(0)}%, heat ${r.heat.toFixed(0)}%`;
-console.log('reference A on KOLD: ' + fmt(refA)); console.log('reference K on BOIL: ' + fmt(refK));
+console.log('reference A on KOLD: ' + fmt(refA)); console.log('reference K on BOIL: ' + fmt(refK)); console.log('reference R on KOLD: ' + fmt(refR));
 
 // ── Part 1: the reference must still produce the spec's figures ─────────────────────────────
 const FROZEN = JSON.parse(fs.readFileSync(new URL('./cycle_acceptance_frozen.json', import.meta.url), 'utf8'));
 check('reference: data reaches the frozen date', B.KOLD[B.KOLD.length - 1].date === ASOF);
-for (const [k, r] of [['A', refA], ['K', refK]]) {
+for (const [k, r] of [['A', refA], ['K', refK], ['R', refR]]) {
     check(`reference ${k}: entries`, r.n === FROZEN[k].n, `${r.n} vs ${FROZEN[k].n}`);
     check(`reference ${k}: worked`, r.worked === FROZEN[k].worked, `${r.worked} vs ${FROZEN[k].worked}`);
     check(`reference ${k}: any-day worked %`, Math.abs(r.any.workedPct - FROZEN[k].anyPct) < 0.6, r.any.workedPct.toFixed(2));
@@ -98,14 +106,14 @@ if (!fs.existsSync('docs/js/cycle-engine.js')) {
     const fl = AE.flowMap(JSON.parse(fs.readFileSync('docs/data/flows/BOIL_flows.json', 'utf8')));
     const model = AE.compute(B.BOIL, B.KOLD, cvol, fl, B.HNU, B.HND);
     const by = Object.fromEntries(model.setups.map(s => [s.key, s]));
-    for (const [key, ref, mask, dates, tier] of [['SHORT_ACCUMULATION', refA, wA.m, wA.dates, 'STRONG'], ['SHORT_LEG_REVERSAL', refK, wK.m, wK.dates, 'MODERATE']]) {
+    for (const [key, ref, mask, dates, tier] of [['SHORT_ACCUMULATION', refA, wA.m, wA.dates, 'STRONG'], ['SHORT_LEG_REVERSAL', refK, wK.m, wK.dates, 'MODERATE'], ['PVT_RECOVERY', refR, wR.m, wR.dates, null]]) {
         const s = by[key]; check(`${key}: setup exists`, !!s); if (!s) continue;
         const live = new Map(model.frame.dates.map((d, i) => [d, !!s.mask[i]])); let diff = 0;
         dates.forEach((d, i) => { if (i >= 60 && live.has(d) && live.get(d) !== !!mask[i]) diff++; });
         check(`${key}: trigger days equal the reference`, diff === 0, diff + ' sessions differ');
         check(`${key}: cycle record equals the reference`, s.cycle && s.cycle.us && s.cycle.us.n === ref.n && s.cycle.us.worked === ref.worked, s.cycle ? JSON.stringify(s.cycle.us) : 'no cycle field');
         check(`${key}: Toronto record present`, !!(s.cycle && s.cycle.ca && s.cycle.ca.n > 0));
-        check(`${key}: tier ${tier}`, s.tier === tier, String(s.tier));
+        if (tier) check(`${key}: tier ${tier}`, s.tier === tier, String(s.tier)); else check(`${key}: tier is MODERATE or STRONG`, s.tier === 'MODERATE' || s.tier === 'STRONG', String(s.tier));
     }
     for (const s of model.setups) check(`${s.key}: has a cycle record`, !!(s.cycle && s.cycle.us && typeof s.cycle.us.n === 'number'));
     check('CLOSE_EXHAUSTION: tier MODERATE', by.CLOSE_EXHAUSTION && by.CLOSE_EXHAUSTION.tier === 'MODERATE');
@@ -124,7 +132,7 @@ if (!fs.existsSync('docs/js/cycle-engine.js')) {
     };
     for (const [f, words] of Object.entries(BANNED)) { const t = text(f), hit = words.filter(w => t.includes(w)); check(`wording: ${f}`, hit.length === 0, hit.join(', ')); }
     const REQUIRED = {
-        'docs/js/alert-engine.js': ['AT 63-SESSION LOW', 'CAUTION: QUIET MARKET', 'CAUTION: OPTIONS UPSIDE STRESS', 'CAUTION: NG AT 6-MONTH HIGH', 'SECOND SURGE', 'LONG-SIDE DIP BUYING', 'PUT-SKEW EXTREME', 'EXIT WATCH', 'PLAN', 'TODAY', 'do not hold for more', 'FEW TRADES'],
+        'docs/js/alert-engine.js': ['AT 63-SESSION LOW', 'CAUTION: QUIET MARKET', 'CAUTION: OPTIONS UPSIDE STRESS', 'CAUTION: NG AT 6-MONTH HIGH', 'SECOND SURGE', 'LONG-SIDE DIP BUYING', 'PUT-SKEW EXTREME', 'EXIT WATCH', 'PLAN', 'TODAY', 'PRICE-VOLUME RECOVERY', 'KOLD PRICE-VOLUME STRETCHED', 'do not hold for more', 'FEW TRADES'],
         'docs/js/volume-studies.js': ['63-SESSION POSITION', 'WASHED OUT', 'STRETCHED'],
         'docs/trough-peak.html': ['CURRENT LEG'],
         'docs/flows.html': ['FLOW READING'],
