@@ -77,8 +77,10 @@
     }
 
     const CONFIG_SALT = 'BM_SALT_2026_NATGAS';
-    const VALID_USER_HASH = '8ac39fdb6c621d5627e6783639cec0add66653560ec5ab5df495dae9c86aa236';
-    const VALID_PASS_HASH = '854e961763a5f6b4805ba50174816092bd8df67307109dec8b0400adabca661d';
+    const VALID_CREDENTIALS = [
+        { user: '8ac39fdb6c621d5627e6783639cec0add66653560ec5ab5df495dae9c86aa236', pass: '854e961763a5f6b4805ba50174816092bd8df67307109dec8b0400adabca661d' },
+        { user: '80f7f46a6688673f0716e949d96722f0658475a4f412fe619d9da37b4a40f788', pass: '4f7e4c93a71e5c85593d2aafd037ae60a98af98d99dcc8c2729d25612ae2e905' },
+    ];
     const VALID_SESSION_TOKEN = 'afb7e506684308d8a03f01396765b6222b3b417438ad7e5f923302f92bde7b8b';
     const SESSION_KEY = 'bm_session_token';
 
@@ -103,7 +105,8 @@
             const uHash = sha256(username.trim().toLowerCase() + ':' + CONFIG_SALT);
             const pHash = sha256(password.trim() + ':' + CONFIG_SALT);
 
-            if (uHash === VALID_USER_HASH && pHash === VALID_PASS_HASH) {
+            const ok = VALID_CREDENTIALS.some(c => c.user === uHash && c.pass === pHash);
+            if (ok) {
                 try {
                     sessionStorage.setItem(SESSION_KEY, VALID_SESSION_TOKEN);
                     if (remember) {
