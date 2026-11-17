@@ -326,13 +326,17 @@ const App = {
                     this.allMetrics[ticker].current.volume = liveETF.regularMarketVolume;
                     this.allMetrics[ticker].current.dollarVolume =
                         livePrice * liveETF.regularMarketVolume;
+                    // Stamp the volume with its session date and read time so live metrics can
+                    // scale a partial session to a full-day estimate (Cards.projectVolume).
+                    this.allMetrics[ticker].current.volumeDate = (typeof Cards !== 'undefined') ? Cards._sessionDate(ticker) : null;
+                    this.allMetrics[ticker].current.volumeAt = Date.now();
                 }
 
                 // Client-side incremental live recalculations of RVOL, Z-score, and percentiles
                 const m = this.allMetrics[ticker];
-                const hist = m.history || [];
-                const liveVol = m.current.volume;
-                const liveDVol = m.current.dollarVolume;
+                const hist = (typeof Cards !== 'undefined' && Cards.settledHistory) ? Cards.settledHistory(ticker, m.history || []) : (m.history || []);
+                const liveVol = (typeof Cards !== 'undefined' && Cards.projectVolume) ? Cards.projectVolume(ticker, m.current.volume, m.current.volumeDate, m.current.volumeAt) : m.current.volume;
+                const liveDVol = (typeof Cards !== 'undefined' && Cards.projectVolume) ? Cards.projectVolume(ticker, m.current.dollarVolume, m.current.volumeDate, m.current.volumeAt) : m.current.dollarVolume;
                 if (hist.length >= 21 && typeof Metrics !== 'undefined') {
                     const prevVols = hist.map(h => (h.volume != null ? h.volume : h[2])).filter(v => v != null && v > 0);
                     if (liveVol != null && liveVol > 0 && prevVols.length >= 21) {
@@ -518,7 +522,11 @@ const App = {
             if (hasWarmCache && warmCache.quotes[ticker]) {
                 const wq = warmCache.quotes[ticker];
                 if (wq.price != null) current.price = wq.price;
-                if (wq.volume != null) current.volume = wq.volume;
+                if (wq.volume != null) {
+                    current.volume = wq.volume;
+                    current.volumeDate = warmCache.dateStr || null;
+                    current.volumeAt = wq.timestamp || warmCache.timestamp || null;
+                }
                 if (wq.dollarVolume != null) current.dollarVolume = wq.dollarVolume;
                 if (wq.changePct != null) current.changePct = wq.changePct;
                 if (wq.regularMarketTime != null) current.regularMarketTime = wq.regularMarketTime;
@@ -709,12 +717,18 @@ const App = {
 
             // If warm cached volume exists OR current snapshot is a newer session than hist[-1],
             // perform full incremental recalculation so all card metrics match current price & volume
-            if ((hasWarmCache && warmCache.quotes[ticker]) || isSnapshotNewerSession) {
-                const liveVol = current.volume;
-                const liveDVol = current.dollarVolume;
+            if ((hasWarmCache && warmCache.quotes[ticker]) || isSnapshotNewerSession || isTodayIncomplete) {
+                // Compare today's partial bar (if the pipeline stored one) with full days only.
+                const baseHist = isTodayIncomplete ? confirmedHist : hist;
+                if (isTodayIncomplete && current.volumeDate == null) {
+                    current.volumeDate = lastBarDate;
+                    current.volumeAt = data.last_updated ? Date.parse(data.last_updated) : null;
+                }
+                const liveVol = (typeof Cards !== 'undefined' && Cards.projectVolume) ? Cards.projectVolume(ticker, current.volume, current.volumeDate, current.volumeAt) : current.volume;
+                const liveDVol = (typeof Cards !== 'undefined' && Cards.projectVolume) ? Cards.projectVolume(ticker, current.dollarVolume, current.volumeDate, current.volumeAt) : current.dollarVolume;
                 const livePrice = current.price;
-                if (hist.length >= 21 && typeof Metrics !== 'undefined') {
-                    const prevVols = hist.map(h => (h.volume != null ? h.volume : h[2])).filter(v => v != null && v > 0);
+                if (baseHist.length >= 21 && typeof Metrics !== 'undefined') {
+                    const prevVols = baseHist.map(h => (h.volume != null ? h.volume : h[2])).filter(v => v != null && v > 0);
                     if (liveVol != null && liveVol > 0 && prevVols.length >= 21) {
                         const lookback21 = prevVols.slice(-21);
                         const mean21 = Metrics.mean(lookback21);
@@ -734,7 +748,7 @@ const App = {
                         mwca = (mwcaCount === windows.length);
                     }
 
-                    const prevDVols = hist.map(h => {
+                    const prevDVols = baseHist.map(h => {
                         const cl = h.close != null ? h.close : h[1];
                         const vo = h.volume != null ? h.volume : h[2];
                         return (cl != null && vo != null) ? cl * vo : null;
@@ -754,7 +768,7 @@ const App = {
                         }
                     }
 
-                    const prevCloses = hist.map(h => (h.close != null ? h.close : h[1])).filter(v => v != null && v > 0);
+                    const prevCloses = baseHist.map(h => (h.close != null ? h.close : h[1])).filter(v => v != null && v > 0);
                     if (livePrice != null && livePrice > 0 && prevCloses.length >= 21) {
                         const windows = [5, 10, 21, 63, 126, 252];
                         for (const w of windows) {

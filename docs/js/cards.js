@@ -532,9 +532,9 @@ const Cards = {
                 }
 
                 // Live incremental metric calculations using m.history
-                const hist = m.history || [];
+                const hist = this.settledHistory(ticker, m.history || []);
                 if (hist.length >= 5 && typeof Metrics !== 'undefined') {
-                    const liveVol = c.volume;
+                    const liveVol = this.projectVolume(ticker, c.volume, c.volumeDate, c.volumeAt);
                     const prevVols = hist.map(h => (h.volume != null ? h.volume : h[2])).filter(v => v != null && v > 0);
 
                     if (liveVol != null && liveVol > 0 && prevVols.length >= 21) {
@@ -608,7 +608,7 @@ const Cards = {
                         }
                     }
 
-                    const liveDVol = c.dollarVolume;
+                    const liveDVol = this.projectVolume(ticker, c.dollarVolume, c.volumeDate, c.volumeAt);
                     const prevDVols = hist.map(h => {
                         const cl = h.close != null ? h.close : h[1];
                         const vo = h.volume != null ? h.volume : h[2];
@@ -942,6 +942,29 @@ const Cards = {
             d.rvolDollar = md ? dv / (md * k) : null;
             if (d.partial && pace < 0.10) { d.rvolShare = null; d.rvolDollar = null; }
         }
+    },
+
+    // Today's volume scaled up to a full-day estimate while the session is still trading, so
+    // RVOL, Z, VROC and percentiles compare like with like (a half-finished day against full
+    // days always reads as 0th percentile). It scales only a volume stamped with today's session
+    // date, using the session pace at the time the volume was read (`at`, ms; default now).
+    // Early in the session (pace < 10%) the estimate uses 10%, which errs on the low side.
+    projectVolume(ticker, vol, date, at) {
+        if (vol == null || !isFinite(vol) || !date) return vol;
+        if (date !== Cards._sessionDate(ticker, at)) return vol;
+        const pace = Cards.sessionPace(ticker, at);
+        if (pace == null || pace >= 1) return vol;
+        return vol / Math.max(pace, 0.10);
+    },
+
+    // History without a bar for the session still trading (the data pipeline can store today's
+    // partial bar when it runs during market hours). Live metrics compare against full days only.
+    settledHistory(ticker, hist) {
+        if (!hist || !hist.length) return hist || [];
+        const last = hist[hist.length - 1];
+        const d = last && (last.date || last[0]);
+        if (d && d === Cards._sessionDate(ticker) && Cards.sessionPace(ticker) != null) return hist.slice(0, -1);
+        return hist;
     },
 
     _sessionDate(ticker, now) {

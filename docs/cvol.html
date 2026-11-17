@@ -14,11 +14,11 @@ html, body {
 }
 </style>
 <link rel="stylesheet" href="css/auth.css?v=20261104a">
-<script src="js/auth.js?v=20261117f"></script>
+<script src="js/auth.js?v=20261117g"></script>
 <script>if (typeof Auth !== 'undefined' && !Auth.requireAuth()) { document.documentElement.style.display = 'none'; throw new Error('Auth required'); }</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='60%' r='50%' fx='50%' fy='65%'><stop offset='0%' style='stop-color:%230033ff;stop-opacity:0.5' /><stop offset='100%' style='stop-color:%23001a4d;stop-opacity:0' /></radialGradient></defs><circle cx='50' cy='60' r='40' fill='url(%23g)' /><path d='M50 92 C30 92 18 75 18 52 C18 30 50 5 50 5 C50 5 82 30 82 52 C82 75 70 92 50 92 Z' fill='%230066ff' /><path d='M50 80 C40 80 32 68 32 50 C32 35 50 18 50 18 C50 18 68 35 68 50 C68 68 60 80 50 80 Z' fill='white' /></svg>">
-<link rel="stylesheet" href="css/styles.css">
-<link rel="stylesheet" href="css/signals.css">
+<link rel="stylesheet" href="css/styles.css?v=20261117g">
+<link rel="stylesheet" href="css/signals.css?v=20261117g">
 <style>
 /* ---- CVOL PAGE LAYOUT ---- */
 :root { --text-dim: #444455; }
@@ -432,7 +432,7 @@ table.event-table { width: 100%; border-collapse: separate; border-spacing: 0; f
 .edge-foot { font-size:0.6rem; line-height:1.5; color:rgba(255,255,255,0.45); margin-top:10px; }
 @media (max-width: 1100px) { .edge-hero { grid-template-columns:1fr; } }
 @media (max-width: 640px) { .edge-hero-right, .edge-inputs { grid-template-columns:repeat(2, 1fr); } }
-@media (max-width: 1200px) { .cvol-kpi-grid { grid-template-columns: repeat(2, 1fr); } .composite-grid { grid-template-columns: repeat(3, 1fr); } .two-col-grid { grid-template-columns: 1fr; } #regime-dashboard-grid { grid-template-columns: repeat(3, 1fr) !important; } }
+@media (max-width: 1200px) { .cvol-kpi-grid { grid-template-columns: repeat(2, 1fr); } .composite-grid { grid-template-columns: repeat(3, 1fr); } .two-col-grid { grid-template-columns: minmax(0, 1fr); } .two-col-grid > * { min-width: 0; } #regime-dashboard-grid { grid-template-columns: repeat(3, 1fr) !important; } }
 @media (max-width: 768px) {
     .cvol-main { padding: 14px 12px 40px; }
     .cvol-title { font-size: 1.2rem; }

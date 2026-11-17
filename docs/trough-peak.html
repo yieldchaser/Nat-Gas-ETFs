@@ -14,12 +14,12 @@ html, body {
 }
 </style>
 <link rel="stylesheet" href="css/auth.css?v=20261104a">
-<script src="js/auth.js?v=20261117f"></script>
+<script src="js/auth.js?v=20261117g"></script>
 <script>if (typeof Auth !== 'undefined' && !Auth.requireAuth()) { document.documentElement.style.display = 'none'; throw new Error('Auth required'); }</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='60%' r='50%' fx='50%' fy='65%'><stop offset='0%' style='stop-color:%230033ff;stop-opacity:0.5' /><stop offset='100%' style='stop-color:%23001a4d;stop-opacity:0' /></radialGradient></defs><circle cx='50' cy='60' r='40' fill='url(%23g)' /><path d='M50 92 C30 92 18 75 18 52 C18 30 50 5 50 5 C50 5 82 30 82 52 C82 75 70 92 50 92 Z' fill='%230066ff' /><path d='M50 80 C40 80 32 68 32 50 C32 35 50 18 50 18 C50 18 68 35 68 50 C68 68 60 80 50 80 Z' fill='white' /></svg>">
-<link rel="stylesheet" href="css/styles.css">
-<link rel="stylesheet" href="css/signals.css">
-<link rel="stylesheet" href="css/contract-ledger.css?v=20261115a">
+<link rel="stylesheet" href="css/styles.css?v=20261117g">
+<link rel="stylesheet" href="css/signals.css?v=20261117g">
+<link rel="stylesheet" href="css/contract-ledger.css?v=20261117g">
 <style>
 /* ---- TP PAGE LAYOUT ---- */
 .tp-main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
@@ -498,6 +498,25 @@ table.cycle-table { width: 100%; border-collapse: separate; border-spacing: 0; f
     .tp-title { font-size: 1rem; letter-spacing: 0.5px; }
     .slider-label { display: none; } /* value display is enough on very small screens */
     table.cycle-table { min-width: 460px; font-size: 0.65rem; }
+}
+
+.cycle-table .m-on { display: none; }
+
+/* ---- PHONE (<= 600px): keep every section inside the screen ---- */
+@media (max-width: 600px) {
+    /* Calculator header: title on its own row, the three buttons share the row below */
+    .calc-head-actions { flex-wrap: wrap; gap: 8px; }
+    .calc-head-actions .calc-toggle { flex: 1 1 100% !important; }
+    .calc-head-actions .calc-share,
+    .calc-head-actions .calc-howto-btn { flex: 1 1 0; text-align: center; white-space: nowrap; }
+    /* Cycle table: price folded under each date and GAP dropped, so % GAIN and DAYS fit on screen */
+    table.cycle-table { min-width: 0 !important; width: 100%; font-size: 0.66rem !important; }
+    .cycle-table th, .cycle-table td { white-space: nowrap; padding: 8px 4px !important; }
+    .cycle-table .m-hide, .cycle-table .m-off { display: none; }
+    .cycle-table .m-on { display: inline; }
+    .cycle-table .m-px { display: block; font-size: 0.6rem; margin-top: 2px; opacity: 0.9; }
+    #table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table-header .tab-group { flex-wrap: wrap; }
 }
 
 /* ---- ETF CHIPS ---- */
@@ -1515,6 +1534,13 @@ LTCG (&gt;24 months):  12.5% base + surcharge capped at 15% + 4% cess  →  up t
 
 <!-- Custom scripts only - No external charting libraries -->
 <script>
+// Compact date for the phone cycle table: "11 Jun 24"
+function shortDate(iso) {
+    if (!iso || typeof iso !== 'string' || iso.length < 10) return iso || '—';
+    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(iso.slice(5, 7), 10) - 1];
+    return m ? `${parseInt(iso.slice(8, 10), 10)} ${m} ${iso.slice(2, 4)}` : iso;
+}
+
 function formatDisplayDate(iso) {
     if (!iso || typeof iso !== 'string') return iso || '—';
     const parts = iso.split('-');
@@ -2549,13 +2575,13 @@ function renderTable() {
     container.innerHTML = `<table class="cycle-table">
         <thead><tr>
             <th data-tooltip="Cycle number in chronological order">#</th>
-            <th data-tooltip="Date of the confirmed cycle low">TROUGH DATE</th>
-            <th data-tooltip="Adjusted closing price at the trough">TROUGH $</th>
-            <th data-tooltip="Date of the confirmed cycle high">PEAK DATE</th>
-            <th data-tooltip="Adjusted closing price at the peak">PEAK $</th>
+            <th data-tooltip="Date of the confirmed cycle low"><span class="m-off">TROUGH DATE</span><span class="m-on">TROUGH</span></th>
+            <th class="m-hide" data-tooltip="Adjusted closing price at the trough">TROUGH $</th>
+            <th data-tooltip="Date of the confirmed cycle high"><span class="m-off">PEAK DATE</span><span class="m-on">PEAK</span></th>
+            <th class="m-hide" data-tooltip="Adjusted closing price at the peak">PEAK $</th>
             <th data-tooltip="Percentage gain from trough price to peak price">% GAIN</th>
             <th data-tooltip="Calendar days elapsed from trough to peak">DAYS</th>
-            <th data-tooltip="Wait time (idle days) from previous cycle peak to current cycle trough">GAP</th>
+            <th class="m-hide" data-tooltip="Wait time (idle days) from previous cycle peak to current cycle trough">GAP</th>
         </tr></thead>
         <tbody>
         ${filtered.slice().reverse().map(c => {
@@ -2586,13 +2612,13 @@ function renderTable() {
 
             return `<tr>
                 <td style="color:rgba(255,255,255,0.85);">${c.num}</td>
-                <td style="color:var(--cyan);">${formatDisplayDate(c.troughDate)}</td>
-                <td style="color:rgba(239,100,100,0.75);">$${fmt(c.troughPrice)}</td>
-                <td style="color:#3db87a;">${formatDisplayDate(c.peakDate)}</td>
-                <td style="color:rgba(61,184,122,0.8);">$${fmt(c.peakPrice)}</td>
+                <td style="color:var(--cyan);"><span class="m-off">${formatDisplayDate(c.troughDate)}</span><span class="m-on">${shortDate(c.troughDate)}<span class="m-px" style="color:rgba(239,100,100,0.75);">$${fmt(c.troughPrice)}</span></span></td>
+                <td class="m-hide" style="color:rgba(239,100,100,0.75);">$${fmt(c.troughPrice)}</td>
+                <td style="color:#3db87a;"><span class="m-off">${formatDisplayDate(c.peakDate)}</span><span class="m-on">${shortDate(c.peakDate)}<span class="m-px" style="color:rgba(61,184,122,0.8);">$${fmt(c.peakPrice)}</span></span></td>
+                <td class="m-hide" style="color:rgba(61,184,122,0.8);">$${fmt(c.peakPrice)}</td>
                 <td style="color:${gainColor};font-weight:800;background:${gainBg};">${fmtPct(c.gain)}</td>
                 <td style="color:rgba(255,255,255,0.85);background:${dayBg};">${c.days}D</td>
-                <td style="color:${gapColor};font-weight:700;">${gapStr}</td>
+                <td class="m-hide" style="color:${gapColor};font-weight:700;">${gapStr}</td>
             </tr>`;
         }).join('')}
         </tbody>
@@ -2610,10 +2636,11 @@ function renderTable() {
             }
             const avgGap = allGaps.length ? Math.round(allGaps.reduce((a,b) => a+b,0) / allGaps.length) : null;
             return `<tr style="border-top:2px solid rgba(255,255,255,0.12);">
-                <td style="color:rgba(255,255,255,0.85);font-weight:800;letter-spacing:1px;" colspan="5">${n} CYCLES</td>
+                <td style="color:rgba(255,255,255,0.85);font-weight:800;letter-spacing:1px;" colspan="2">${n} CYCLES</td>
+                <td class="m-hide"></td><td></td><td class="m-hide"></td>
                 <td style="color:#3db87a;font-weight:800;" data-tooltip="Avg: ${Math.round(avgG)}% | Median: ${Math.round(medG)}%">~${Math.round(avgG)}%</td>
                 <td style="color:rgba(255,255,255,0.85);font-weight:700;" data-tooltip="Average cycle duration">${Math.round(avgD)}D</td>
-                <td style="color:rgba(255,255,255,0.55);font-weight:700;" data-tooltip="Average gap between cycles">${avgGap ? avgGap + 'D' : '—'}</td>
+                <td class="m-hide" style="color:rgba(255,255,255,0.55);font-weight:700;" data-tooltip="Average gap between cycles">${avgGap ? avgGap + 'D' : '—'}</td>
             </tr>`;
         })()}
         </tfoot>
