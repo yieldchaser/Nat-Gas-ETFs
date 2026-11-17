@@ -17,6 +17,12 @@ on:
 permissions:
   contents: write
 
+# All data workflows commit to main; run them one at a time so overlapping
+# scheduled runs queue instead of failing on rebase conflicts.
+concurrency:
+  group: data-commit-main
+  cancel-in-progress: false
+
 jobs:
   update-flows:
     runs-on: ubuntu-latest

@@ -252,6 +252,40 @@ Heavy volume or creations into a falling BOIL is the clearest "do not buy" readi
 
 The 63-session markers locate turns; on their own they raise the win rate only a few points, so they are shown as location and exit prompts, not as alerts.
 
+## 5c. All twelve Price-Volume Studies, and a chance test for every setup (2026-11-17)
+
+**Sweep.** Every numeric output of the twelve studies (VOLUME, VOL OSC, NET VOL, CMF, OBV, PVT; BVC-VPIN, ILLIQ-Z, ESVD, LMSW, VWAP-Z, TKVF, plus the engine states) was turned into six signals from its rolling 252-session percentile rank: ≤5th, ≤10th, ≥90th, ≥95th, and the turn back out of the bottom or top decile. Each was scored with the cycle scorer (section 3) as an entry on its own ETF, an entry on the mirror ETF, and an exit, on BOIL/KOLD and again on HNU.TO/HND.TO. 1,242 signals in all. Scripts: scratch `sweep12.py`, `esvd.py` (not in the repo; the rule that came out of them is fully specified below).
+
+**Chance control.** The whole sweep was rerun with each signal shifted in time by 397, 911 and 1,500 sessions (keeps the signal's clustering, breaks any link to price). Under the filter "≥30 trades, lift ≥10 on US and Toronto, both halves ≥ any day +5": real 7, shifted 2 / 3 / 4. Most single-study signals are therefore noise.
+
+| Study | Best lift (min of US, Toronto) | Best lift by chance (3 shifts) | Verdict |
+|---|---|---|---|
+| ESVD (effective spread) | +16 | none / none / +2 | real; wired as SPREAD_BLOWOUT |
+| VWAP-Z (slope of 21-day VWAP) | +12 | +1 / +6 / +6 | 55% vs 45% on KOLD, but a shifted copy matches it 9.5% of the time and it repeats SHORT_ACCUMULATION; not wired |
+| ILLIQ-Z | +9 | −3 / +4 / +3 | same liquidity-stress family as ESVD; adds nothing beyond it |
+| PVT (21-session forms) | +9 | +7 / +8 / +8 | chance level. Only the 63-session washout recovery (PVT_RECOVERY) beats chance |
+| OBV, NET VOL, VOLUME, VOL OSC, VPIN, LMSW, TKVF | +2 to +10 | similar or higher | chance level |
+| CMF | — | — | CMF-21 on BOIL in its bottom decile: buying BOIL worked 27% (any day 35%), Toronto 33% (37%). Used as a warning note only |
+
+**SPREAD_BLOWOUT.** ESVD `zSpread` (Abdi-Ranaldo spread, 10-session estimate, z-scored over 21) on BOIL **or** KOLD at or above its 95th percentile of the last 252 sessions (at least 126 values) → buy BOIL. 66 entries since 2012 (4.6 a year): worked 48% vs 35% any day; HNU 54% vs 37%; run to next peak +31% vs +21%. 2012–2019 +7 points, 2019–2026 +19. A plain 10-day volatility spike at the same percentile gives 35% vs 35% (nothing), and only 22% of spread days are volatility-spike days, so this is not volatility in disguise. 37% of its episodes fall within 5 sessions of SHORT_ACCUMULATION; in those conflicts BOIL did better (46%) than KOLD (40%, heat −24%). As a KOLD exit: KOLD fell 25% before rising 20% after 58% of signals (any day 42%), HND 63% (43%). Capped at MODERATE.
+
+**Chance test of every setup.** Each setup's own mask was shifted to 200 random offsets; the share of shifts reaching its worked% is below. A setup at or above 10% is capped at WATCH (listed in the table; no card, no headline, no TODAY line, no heat-map dot).
+
+| Setup | Trades | Worked | Any day | Shifts ≥ this | Tier |
+|---|---|---|---|---|---|
+| PVT_RECOVERY | 28 | 64% | 45% | 0% | MODERATE |
+| SPREAD_BLOWOUT | 66 | 48% | 35% | 0% | MODERATE |
+| SHORT_ACCUMULATION | 50 | 58% | 45% | 2.5% | STRONG |
+| SHORT_LEG_REVERSAL | 32 | 47% | 35% | 5.5% | MODERATE |
+| CROWDED_RALLY | 28 | 57% | 45% | 9.5% | MODERATE |
+| OPT_BLOWOFF | 8 | 62% | 45% | 11% | WATCH |
+| CAPITULATION | 18 | 50% | 35% | 14.5% | WATCH |
+| CLOSE_EXHAUSTION | 38 | 50% | 45% | 24% | WATCH |
+| CHASED_RALLY | 21 | 48% | 45% | 39% | WATCH |
+| WASHOUT | 16 | 38% | 35% | 53.5% | WATCH |
+
+Rerun this table whenever a setup is added or its rule changes; a new setup must clear 10% to show as a card.
+
 ## 6. Work items
 
 ### W1 — `docs/js/cycle-engine.js` (new) and `tools/test_cycle_engine.mjs` (new)

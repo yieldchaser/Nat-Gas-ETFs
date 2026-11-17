@@ -894,6 +894,7 @@ const Cards = {
                 const volCanvas = volContainer ? volContainer.querySelector('canvas') : null;
                 const color = CONFIG.etfs[t].side === 'long' ? '#3db87a' : '#c04040';
                 const data = allMetrics[t].sparkData;
+                Cards.attachRvol(data, allMetrics[t].history);
                 const card = wrap ? wrap.closest('.etf-card') : null;
                 const mode = (card && card.dataset.mode) || 'share';
 
@@ -909,6 +910,41 @@ const Cards = {
                 }
             }
         });
+    },
+
+    // Relative volume for each card bar: that day's volume divided by the median of the
+    // previous 63 sessions (shares and dollars). Same definition as the alert engine.
+    attachRvol(data, history) {
+        if (!data || !data.length || !history || !history.length) return;
+        const idx = {};
+        history.forEach((b, i) => { if (b && b.date) idx[b.date] = i; });
+        const med = (arr) => {
+            const s = arr.filter(v => v > 0).sort((a, b) => a - b);
+            if (s.length < 20) return null;
+            const m = s.length >> 1;
+            return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+        };
+        for (const d of data) {
+            let i = idx[d.date];
+            d.partial = false;
+            if (i == null) { i = history.length; d.partial = true; }
+            const prev = history.slice(Math.max(0, i - 63), i);
+            const ms = med(prev.map(b => b.volume || 0));
+            const md = med(prev.map(b => (b.close || 0) * (b.volume || 0)));
+            const dv = d.dollarVolume != null ? d.dollarVolume : (d.close || 0) * (d.volume || 0);
+            d.rvolShare = ms ? (d.volume || 0) / ms : null;
+            d.rvolDollar = md ? dv / md : null;
+        }
+    },
+
+    rvolBand(r) {
+        if (r == null || !isFinite(r)) return null;
+        if (r >= 3) return { label: 'EXTREME SPIKE', color: '#bf80ff', bar: '#8855bb' };
+        if (r >= 2) return { label: 'HEAVY SURGE', color: '#ff6b6b', bar: '#c04040' };
+        if (r >= 1.5) return { label: 'ELEVATED', color: '#f59e0b', bar: '#c07828' };
+        if (r >= 0.8) return { label: 'NORMAL', color: '#60a5fa', bar: '#385e88' };
+        if (r >= 0.4) return { label: 'QUIET', color: 'rgba(255,255,255,0.55)', bar: '#1e2438' };
+        return { label: 'DEAD CALM', color: '#38bdf8', bar: '#121422' };
     },
 
     bindCardHover(wrap, sparkCanvas, volCanvas, data, color, ticker) {
@@ -967,19 +1003,14 @@ const Cards = {
             const activeVol = getBarVol(d);
             const ratio = activeVol / colorMaxVol;
 
-            let volTag = '';
-            if (ratio > 0.90) {
-                volTag = '<span style="color:#bf80ff;font-weight:800">● EXTREME SPIKE</span>';
-            } else if (ratio > 0.75) {
-                volTag = '<span style="color:#ff6b6b;font-weight:700">● HEAVY SURGE</span>';
-            } else if (ratio > 0.50) {
-                volTag = '<span style="color:#f59e0b;font-weight:700">● NOTABLE VOLUME</span>';
-            } else if (ratio > 0.30) {
-                volTag = '<span style="color:#60a5fa;font-weight:600">● MODERATE</span>';
-            } else if (ratio > 0.15) {
-                volTag = '<span style="color:rgba(255,255,255,0.45)">● QUIET</span>';
+            const rv = mode === 'dollar' ? d.rvolDollar : d.rvolShare;
+            const band = Cards.rvolBand(rv);
+            let volTag;
+            if (band) {
+                volTag = `<span style="color:${band.color};font-weight:700">● ${band.label}</span> <span style="color:rgba(255,255,255,0.6)">${rv.toFixed(1)}× normal${d.partial ? ' · session in progress' : ''}</span>`;
             } else {
-                volTag = '<span style="color:#38bdf8;font-weight:700">● DEAD CALM</span>';
+                const ratio = activeVol / colorMaxVol;
+                volTag = `<span style="color:rgba(255,255,255,0.6)">${(ratio * 100).toFixed(0)}% of window high</span>`;
             }
 
             const changeHtml = diff != null
