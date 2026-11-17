@@ -1014,51 +1014,6 @@ const Cards = {
         return m ? `${parseInt(iso.slice(8, 10), 10)} ${m} ${iso.slice(2, 4)}` : iso;
     },
 
-    // Scrub overlay for touch screens. While a finger is on the chart, the card header
-    // (ticker, name, price) is covered by a panel showing the touched day, so nothing
-    // floats over the chart and nothing below it moves. Styles are injected from here,
-    // not cards.css, so a stale cached stylesheet cannot leave it unstyled.
-    _ensureScrubStyles() {
-        if (document.getElementById('card-scrub-styles')) return;
-        const st = document.createElement('style');
-        st.id = 'card-scrub-styles';
-        st.textContent = `
-.card-scrub{position:absolute;z-index:6;display:flex;flex-direction:column;justify-content:center;gap:6px;
- padding:0 14px;box-sizing:border-box;background:var(--bg-card,#12141c);border-bottom:1px solid rgba(255,255,255,.08);
- border-radius:var(--card-radius,10px) var(--card-radius,10px) 0 0;font-family:'JetBrains Mono',monospace;
- opacity:0;pointer-events:none;transition:opacity .12s ease}
-.card-scrub.on{opacity:1}
-.card-scrub .cs-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;min-width:0}
-.card-scrub .cs-date{color:var(--cyan,#5ec8e5);font-size:.78rem;font-weight:700;letter-spacing:.4px;white-space:nowrap}
-.card-scrub .cs-px{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
-.card-scrub .cs-price{color:var(--text-bright,#f0f4fc);font-size:1.05rem;font-weight:700}
-.card-scrub .cs-chg{font-size:.72rem;font-weight:700}
-.card-scrub .cs-bot{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.62rem;
- color:rgba(255,255,255,.55);white-space:nowrap}
-.card-scrub .cs-bot b{color:rgba(255,255,255,.85);font-weight:700}
-.card-scrub .cs-mid{overflow:hidden;text-overflow:ellipsis;font-weight:700;letter-spacing:.4px}`;
-        document.head.appendChild(st);
-    },
-
-    _scrubFor(card) {
-        let el = card.querySelector(':scope > .card-scrub');
-        if (!el) {
-            Cards._ensureScrubStyles();
-            el = document.createElement('div');
-            el.className = 'card-scrub';
-            card.appendChild(el);
-        }
-        // Cover exactly the header block, measured each time (it wraps differently per card)
-        const header = card.querySelector('.card-header');
-        if (header) {
-            el.style.left = '0px';
-            el.style.right = '0px';
-            el.style.top = '0px';
-            el.style.height = `${header.offsetTop + header.offsetHeight + 2}px`;
-        }
-        return el;
-    },
-
     bindCardHover(wrap, sparkCanvas, volCanvas, data, color, ticker) {
         const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
         let tooltipEl = document.getElementById('card-chart-tooltip');
@@ -1128,34 +1083,17 @@ const Cards = {
                 volTag = `<span style="color:rgba(255,255,255,0.6)">${(ratio * 100).toFixed(0)}% of window high</span>`;
             }
 
+            // Touch only: the neighbouring sessions, so the day before and after read in one glance
+            let neighboursHtml = '';
             if (fromTouch) {
-                const card = wrap.closest('.etf-card');
-                if (!card) return;
-                const sc = Cards._scrubFor(card);
                 const pb = idx > 0 ? data[idx - 1] : null;
                 const nb = idx < data.length - 1 ? data[idx + 1] : null;
-                const up = diff != null && diff >= 0;
-                const chgTxt = diff != null && pct != null ? `${up ? '+' : ''}${pct.toFixed(2)}%` : '';
-                const chgCol = up ? 'var(--green)' : 'var(--red)';
-                const dayMonth = (b) => Cards._shortDay(b.date).replace(/ \d\d$/, '');
-                const side = (b, before) => {
-                    if (!b) return '';
-                    return before
-                        ? `‹ ${dayMonth(b)} <b>$${Cards.formatPrice(b.close)}</b>`
-                        : `${dayMonth(b)} <b>$${Cards.formatPrice(b.close)}</b> ›`;
-                };
-                const mid = band
-                    ? `<span class="cs-mid" style="color:${band.color}">${band.label} ${rv.toFixed(1)}×</span>`
-                    : `<span class="cs-mid">VOL ${Cards.formatNumber(vol, 1)}</span>`;
-                sc.innerHTML = `
-                    <div class="cs-top">
-                        <span class="cs-date">${Cards._shortDay(d.date)}</span>
-                        <span class="cs-px"><span class="cs-price">$${Cards.formatPrice(d.close)}</span><span class="cs-chg" style="color:${chgCol}">${chgTxt}</span></span>
-                    </div>
-                    <div class="cs-bot"><span>${side(pb, true)}</span>${mid}<span>${side(nb, false)}</span></div>`;
-                sc.classList.add('on');
-                tooltipEl.style.display = 'none';
-                return;
+                const dm = (b) => Cards._shortDay(b.date).replace(/ \d\d$/, '');
+                neighboursHtml = `
+                <div class="tt-row" style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);">
+                    <span class="tt-val" style="color:rgba(255,255,255,0.6)">${pb ? `‹ ${dm(pb)} <span style="color:var(--text-bright)">$${Cards.formatPrice(pb.close)}</span>` : ''}</span>
+                    <span class="tt-val" style="color:rgba(255,255,255,0.6)">${nb ? `${dm(nb)} <span style="color:var(--text-bright)">$${Cards.formatPrice(nb.close)}</span> ›` : ''}</span>
+                </div>`;
             }
 
             const changeHtml = diff != null
@@ -1187,11 +1125,25 @@ const Cards = {
                     <span class="tt-lbl">Activity</span>
                     <span class="tt-val">${volTag}</span>
                 </div>
+                ${neighboursHtml}
             `;
 
             tooltipEl.style.display = 'block';
             const tw = tooltipEl.offsetWidth || 170;
             const th = tooltipEl.offsetHeight || 135;
+
+            if (fromTouch) {
+                // Phones: dock the card ABOVE the chart (over the card header, which is not
+                // needed while scrubbing), never beside the finger where it hides the bars.
+                // If the chart is too close to the top of the screen, drop it just below.
+                const wr = wrap.getBoundingClientRect();
+                const tLeft = Math.min(Math.max(8, clientX - tw / 2), window.innerWidth - tw - 8);
+                let tTop = wr.top - th - 8;
+                if (tTop < 8) tTop = Math.min(wr.bottom + 8, window.innerHeight - th - 8);
+                tooltipEl.style.left = `${Math.max(8, tLeft)}px`;
+                tooltipEl.style.top = `${tTop}px`;
+                return;
+            }
 
             let left = clientX + 16;
             if (left + tw > window.innerWidth - 10) {
@@ -1215,8 +1167,6 @@ const Cards = {
             Charts.drawSparkline(sparkCanvas, data, color, 0.1, null);
             Charts.drawVolumeBars(volCanvas, data, null, null, mode);
             if (tooltipEl) tooltipEl.style.display = 'none';
-            const sc = card && card.querySelector(':scope > .card-scrub');
-            if (sc) sc.classList.remove('on');
         };
 
         // On touch screens iOS can fire synthetic mouse events after a tap; ignore them so
