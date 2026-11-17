@@ -54,7 +54,7 @@ const AlertEngine = {
             },
         },
         {
-            key: 'SPREAD_BLOWOUT', label: 'SPREAD BLOWOUT', side: 'long', hold: 21, family: 'MICROSTRUCTURE', maxTier: 'MODERATE',
+            key: 'SPREAD_BLOWOUT', label: 'SPREAD BLOWOUT', side: 'long', hold: 21, family: 'MICROSTRUCTURE', maxTier: 'WATCH',
             rule: 'Effective spread (ESVD study) on BOIL or KOLD in its top 5% of the last year',
             why: 'Days of closes far from the middle of the daily range mark disorderly trading, and NG has tended to turn up afterwards. A plain volatility spike does not do this.',
             risk: 'Weaker before 2019. When it fires next to SHORT-SIDE ACCUMULATION the two point opposite ways; the BOIL side has done better.',
@@ -1023,16 +1023,24 @@ const AlertEngine = {
     mount(allMetrics) {
         const el = document.getElementById('alert-feed');
         if (!el) return;
-        const boil = allMetrics && allMetrics.BOIL ? allMetrics.BOIL.history : null;
-        const kold = allMetrics && allMetrics.KOLD ? allMetrics.KOLD.history : null;
+        // Setups are end-of-day rules: score only settled sessions. If the newest bar is today's
+        // and that exchange is still trading, it is a partial day and is left out until the close.
+        const settled = function(t) {
+            const h = allMetrics && allMetrics[t] ? allMetrics[t].history : null;
+            if (!h || !h.length || typeof Cards === 'undefined' || !Cards.sessionPace || !Cards._sessionDate) return h;
+            const last = h[h.length - 1];
+            return (last && last.date === Cards._sessionDate(t) && Cards.sessionPace(t) != null) ? h.slice(0, -1) : h;
+        };
+        const boil = settled('BOIL');
+        const kold = settled('KOLD');
         if (!boil || !kold) { this.render(null, el); return; }
         const self = this;
         const key = boil.length + ':' + kold.length + ':' + (boil.length ? boil[boil.length - 1].date + boil[boil.length - 1].close : '');
         const draw = function() {
             if (self._lastKey === key && self._lastAux === self._aux && self._model) { self.render(self._model, el); return; }
             const aux = self._aux || {};
-            const hnu = allMetrics['HNU.TO'] ? allMetrics['HNU.TO'].history : null;
-            const hnd = allMetrics['HND.TO'] ? allMetrics['HND.TO'].history : null;
+            const hnu = settled('HNU.TO');
+            const hnd = settled('HND.TO');
             self._model = self.compute(boil, kold, aux.cvol || null, aux.flows || null, hnu, hnd);
             self._lastKey = key; self._lastAux = self._aux;
             self.render(self._model, el);

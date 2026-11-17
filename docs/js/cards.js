@@ -894,7 +894,7 @@ const Cards = {
                 const volCanvas = volContainer ? volContainer.querySelector('canvas') : null;
                 const color = CONFIG.etfs[t].side === 'long' ? '#3db87a' : '#c04040';
                 const data = allMetrics[t].sparkData;
-                Cards.attachRvol(data, allMetrics[t].history);
+                Cards.attachRvol(data, allMetrics[t].history, t);
                 const card = wrap ? wrap.closest('.etf-card') : null;
                 const mode = (card && card.dataset.mode) || 'share';
 
@@ -914,7 +914,7 @@ const Cards = {
 
     // Relative volume for each card bar: that day's volume divided by the median of the
     // previous 63 sessions (shares and dollars). Same definition as the alert engine.
-    attachRvol(data, history) {
+    attachRvol(data, history, ticker) {
         if (!data || !data.length || !history || !history.length) return;
         const idx = {};
         history.forEach((b, i) => { if (b && b.date) idx[b.date] = i; });
@@ -924,17 +924,54 @@ const Cards = {
             const m = s.length >> 1;
             return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
         };
+        // Is the newest bar a session still in progress? Then compare it with the volume a normal
+        // day has traded by this time of the session, not with a full day.
+        const last = data[data.length - 1];
+        const pace = Cards.sessionPace(ticker);
         for (const d of data) {
             let i = idx[d.date];
-            d.partial = false;
-            if (i == null) { i = history.length; d.partial = true; }
-            const prev = history.slice(Math.max(0, i - 63), i);
+            if (i == null) i = history.length;
+            const prev = history.slice(Math.max(0, i - 63), i).filter(b => b.date !== d.date);
             const ms = med(prev.map(b => b.volume || 0));
             const md = med(prev.map(b => (b.close || 0) * (b.volume || 0)));
             const dv = d.dollarVolume != null ? d.dollarVolume : (d.close || 0) * (d.volume || 0);
-            d.rvolShare = ms ? (d.volume || 0) / ms : null;
-            d.rvolDollar = md ? dv / md : null;
+            d.partial = d === last && pace != null && pace < 1 && d.date === Cards._sessionDate(ticker);
+            d.pace = d.partial ? pace : 1;
+            const k = d.partial ? Math.max(pace, 1e-6) : 1;
+            d.rvolShare = ms ? (d.volume || 0) / (ms * k) : null;
+            d.rvolDollar = md ? dv / (md * k) : null;
+            if (d.partial && pace < 0.10) { d.rvolShare = null; d.rvolDollar = null; }
         }
+    },
+
+    _sessionDate(ticker, now) {
+        const tz = ticker && ticker.endsWith('.L') ? 'Europe/London' : 'America/New_York';
+        try { return new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now ? new Date(now) : new Date()); }
+        catch (e) { return null; }
+    },
+
+    // Share of a normal day's volume traded by now in the ticker's regular session (U-shaped
+    // intraday curve, 13 half-hour buckets). Returns null when the session is closed.
+    sessionPace(ticker, now) {
+        const cfg = (typeof CONFIG !== 'undefined' && CONFIG.etfs && CONFIG.etfs[ticker]) || {};
+        const sess = Cards.getExchangeSession(cfg.exchange, ticker, null, now);
+        if (!sess || !/open/.test(sess.cls)) return null;
+        const d = now ? new Date(now) : new Date();
+        let etMin;
+        try {
+            const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d).map(p => [p.type, p.value]));
+            etMin = parseInt(parts.hour, 10) * 60 + parseInt(parts.minute, 10);
+        } catch (e) { return null; }
+        const lse = ticker && ticker.endsWith('.L');
+        const open = lse ? 180 : 570, len = lse ? 510 : 390;
+        const f = Math.max(0, Math.min(1, (etMin - open) / len));
+        const w = [0.12, 0.08, 0.07, 0.06, 0.06, 0.055, 0.055, 0.055, 0.06, 0.065, 0.07, 0.085, 0.135];
+        const tot = w.reduce((a, b) => a + b, 0);
+        const x = f * w.length, k = Math.floor(x);
+        let cum = 0;
+        for (let j = 0; j < Math.min(k, w.length); j++) cum += w[j];
+        if (k < w.length) cum += w[k] * (x - k);
+        return cum / tot;
     },
 
     rvolBand(r) {
@@ -1007,7 +1044,9 @@ const Cards = {
             const band = Cards.rvolBand(rv);
             let volTag;
             if (band) {
-                volTag = `<span style="color:${band.color};font-weight:700">● ${band.label}</span> <span style="color:rgba(255,255,255,0.6)">${rv.toFixed(1)}× normal${d.partial ? ' · session in progress' : ''}</span>`;
+                volTag = `<span style="color:${band.color};font-weight:700">● ${band.label}</span> <span style="color:rgba(255,255,255,0.6)">${rv.toFixed(1)}× normal${d.partial ? ' pace · session in progress' : ''}</span>`;
+            } else if (d.partial) {
+                volTag = '<span style="color:rgba(255,255,255,0.6)">Session just opened; too early to judge</span>';
             } else {
                 const ratio = activeVol / colorMaxVol;
                 volTag = `<span style="color:rgba(255,255,255,0.6)">${(ratio * 100).toFixed(0)}% of window high</span>`;
