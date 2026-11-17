@@ -286,6 +286,32 @@ The 63-session markers locate turns; on their own they raise the win rate only a
 
 Rerun this table whenever a setup is added or its rule changes; a new setup must clear 10% to show as a card.
 
+**London.** 3NGL.L / 3NGS.L volume is not usable: median daily dollar volume over the last year is $0.38M / $0.33M (BOIL $145M, KOLD $96M), and 56% / 36% of all sessions show zero volume. That is why London is left out of every volume measure. London *prices* are a valid third check. US signals were mapped to the first London close after the US signal day (London closes before New York), with target and stop scaled for 3× leverage (+45% before −30%):
+
+| Setup | London leg | Worked | Any day | Halves |
+|---|---|---|---|---|
+| SHORT_ACCUMULATION | 3NGS | 61% | 46% | 67 / 56 |
+| PVT_RECOVERY | 3NGS | 57% | 46% | 57 / 57 |
+| CROWDED_RALLY | 3NGS | 55% | 46% | 64 / 47 |
+| SPREAD_BLOWOUT | 3NGL | 42% | 35% | 34 / 48 |
+| SHORT_LEG_REVERSAL | 3NGL | 41% | 35% | 43 / 40 |
+
+**Money per trade under the card plans** (short side: −20% stop, +30% target; long side: −15% stop, +30% target; closing basis; 250-session cap):
+
+| Setup | Leg | Avg per trade | Any day | Losing trades |
+|---|---|---|---|---|
+| PVT_RECOVERY | KOLD / HND | +14.0% / +12.8% | +3.2% / +1.4% | 35% / 37% |
+| SHORT_ACCUMULATION | KOLD / HND | +11.0% / +9.1% | +3.2% / +1.4% | 42% / 43% |
+| SHORT_LEG_REVERSAL | BOIL / HNU | +7.1% / +9.8% | −1.8% / −0.9% | 53% / 50% |
+| CROWDED_RALLY | KOLD / HND | +8.8% / +5.1% | +3.2% / +1.4% | 43% / 50% |
+| SPREAD_BLOWOUT | BOIL / HNU | +3.2% / +4.8% | −1.8% / −0.9% | 60% / 57% |
+
+SPREAD_BLOWOUT beats chance on worked% but pays +3.2% a trade with the median trade stopped out, and is weak before 2019 and on London. As an entry it is capped at WATCH (listed, no card). Its KOLD exit warning (`EXIT WATCH: SPREAD BLOWOUT`) stays.
+
+**Flows × options × studies.** 27 conditions (BOIL and KOLD five-session flow percentile ≥90 / ≤10; skew and implied-vol percentile ≥90 / ≤10; options states; closing pressure; realised vol; BOIL 63-session drawdown; short- and long-side volume 3 of 5; KOLD 10-session direction; ESVD; VWAP slope; BOIL CMF; the passing setups), singly and in every pair within 5 sessions, as BOIL and KOLD entries. Filter: ≥20 trades, +12 on US and Toronto, both halves ≥ any day +5. Real 17 pass; the same search on data shifted by 397 / 911 / 1,500 sessions: 10 / 5 / 3. The best real combination (+20.6) is no better than the best shifted one (+21.6), and no pair beat the setups it contained. No combination is wired.
+
+**Alerts score settled sessions only.** The data job writes today's partial bar into history when it runs mid-session. The alert engine drops that bar while the exchange is still open, so setups cannot switch on and off within a session. Card volume tooltips stay live and compare a live bar with a normal day's volume traded by the same time of the session (U-shaped intraday curve).
+
 ## 6. Work items
 
 ### W1 — `docs/js/cycle-engine.js` (new) and `tools/test_cycle_engine.mjs` (new)

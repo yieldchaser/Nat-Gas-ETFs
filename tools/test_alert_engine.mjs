@@ -87,7 +87,9 @@ assert.strictEqual(sb.side, 'long', 'SPREAD_BLOWOUT is a long-side setup');
 assert(sb.cycle && sb.cycle.us && sb.cycle.us.n >= 60, 'SPREAD_BLOWOUT has at least 60 BOIL entries');
 assert(sb.cycle.us.workedPct - sb.cycle.us.any.workedPct >= 8, 'SPREAD_BLOWOUT beats any day by 8+ points on BOIL');
 assert(sb.cycle.ca.workedPct - sb.cycle.ca.any.workedPct >= 8, 'SPREAD_BLOWOUT beats any day by 8+ points on Toronto');
-assert(sb.tier === 'MODERATE', 'SPREAD_BLOWOUT capped at MODERATE');
+// As an entry it averages +3.2% per BOIL trade with 60% of trades losing and is weak on London
+// prices, so it is listed but never shown as a card. Its KOLD exit warning stays.
+assert(sb.tier === 'WATCH', 'SPREAD_BLOWOUT capped at WATCH');
 assert.strictEqual(AE.SETUPS.find(s => s.key === 'SPREAD_BLOWOUT').test({ esvdHi: [false, true] }, 1), true, 'Synthetic spread test');
 assert.strictEqual(AE.SETUPS.find(s => s.key === 'SPREAD_BLOWOUT').test({ esvdHi: null }, 1), false, 'Spread test off without data');
 

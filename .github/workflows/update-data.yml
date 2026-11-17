@@ -14,6 +14,11 @@ on:
     - cron: '25 21 * * 1-5'
     # 22:00 UTC: Final EOD settlement & clearinghouse reconciliation
     - cron: '5 22 * * 1-5'
+    # Fallback settlement runs. GitHub drops or delays many scheduled runs at busy times;
+    # the job is idempotent, so these only matter when the earlier ones did not run.
+    - cron: '41 23 * * 1-5'
+    - cron: '19 2 * * 2-6'
+    - cron: '53 5 * * 2-6'
   workflow_dispatch: # Allow manual triggers
 
 permissions:
