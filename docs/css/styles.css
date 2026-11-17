@@ -672,3 +672,50 @@ footer {
         transition: none !important;
     }
 }
+
+/* ---- PHONE HEADER (<= 600px): brand + status on row one, all four pages on row two ----
+   The single-row header clipped page names ("TROUGH-TO-…", "FLOW MONIT…") on iPhone widths. */
+@media (max-width: 600px) {
+    #top-bar {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 8px 12px 0;
+        row-gap: 8px;
+        column-gap: 8px;
+    }
+    .top-bar-left { flex: 1 1 auto; min-width: 0; }
+    .top-bar-left h1 { font-size: 0.78rem; letter-spacing: 1.5px; }
+    .top-bar-right { display: contents; }
+    .top-bar-right > .market-status,
+    .top-bar-right > .refresh-btn,
+    .top-bar-right > .bm-logout-btn { flex: 0 0 auto; }
+    .bm-logout-btn { margin-left: 0; padding: 5px 10px; font-size: 0.6rem; }
+    .page-nav {
+        order: 10;
+        flex: 1 1 100%;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        margin: 0 -12px;
+        max-width: none;
+        overflow: visible;
+        border-top: 1px solid var(--border-primary);
+    }
+    .page-nav .nav-link,
+    .nav-link {
+        text-align: center;
+        padding: 10px 2px 9px;
+        font-size: 0.58rem;
+        letter-spacing: 0.2px;
+        border: none;
+        border-radius: 0;
+        border-bottom: 2px solid transparent;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .page-nav .nav-link.active {
+        border-bottom-color: var(--cyan, #00e5ff);
+        background: rgba(0, 229, 255, 0.06);
+    }
+}

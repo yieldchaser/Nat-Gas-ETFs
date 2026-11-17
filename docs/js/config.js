@@ -162,7 +162,7 @@ const CONFIG = {
     refreshIntervalClosed: 1800000, // 30 minutes when closed, weekend, or holiday
 
     // History length for charts
-    sparklineDays: 30,
+    sparklineDays: 63,   // one quarter: 90% of 30% swing legs finish within ~47 sessions, so the current leg and its start fit
     volumeBarDays: 30,
     heatmapDays: 756,
 

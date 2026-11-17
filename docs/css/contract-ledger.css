@@ -838,3 +838,10 @@
 .cl-spec-line strong {
     color: #fff;
 }
+
+/* Phone: the header buttons wrap instead of running off the screen */
+@media (max-width: 600px) {
+    .cl-header-right { width: 100%; }
+    .cl-controls { flex-wrap: wrap; width: 100%; }
+    .cl-table th, .cl-table td { white-space: nowrap; }
+}
