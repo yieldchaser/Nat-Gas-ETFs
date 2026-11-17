@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-17T02:59:11.346236+00:00",
+  "generated_at": "2026-11-17T04:00:35.068229+00:00",
   "description": "Historical Return Distribution & Tail Risk Engine",
   "instruments": {
     "BOIL": {
@@ -47354,21 +47354,21 @@
       "side": "benchmark",
       "leverage": "1x",
       "exchange": "NYMEX",
-      "total_bars": 5002,
+      "total_bars": 5003,
       "earliest_date": "2007-01-02",
       "latest_date": "2026-11-17",
       "latest_bar": {
         "date": "2026-11-17",
-        "close": 3.107,
-        "prev_close": 3.23,
-        "return_pct": -3.808,
-        "volume": 1440
+        "close": 3.097,
+        "prev_close": 3.122,
+        "return_pct": -0.8008,
+        "volume": 2236
       },
       "regimes": {
         "trailing_252d": {
           "key": "trailing_252d",
           "label": "Trailing 252D (1 Year)",
-          "start_date": "2025-11-14",
+          "start_date": "2025-11-17",
           "end_date": "2026-11-17",
           "bars": 252,
           "horizons": {
@@ -47378,12 +47378,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 251,
               "moments": {
-                "mean": 0.025,
+                "mean": 0.0415,
                 "median": 0.3058,
-                "std": 5.6497,
-                "ann_volatility": 89.69,
-                "skewness": -1.5497,
-                "excess_kurtosis": 25.9689
+                "std": 5.6416,
+                "ann_volatility": 89.56,
+                "skewness": -1.5628,
+                "excess_kurtosis": 26.1542
               },
               "risk_metrics": {
                 "var_95": -6.38,
@@ -47765,9 +47765,9 @@
                     "lower": -4.748,
                     "upper": -3.561,
                     "center": -4.1545,
-                    "count": 9,
-                    "density": 0.035857,
-                    "cumulative_pct": 11.5538,
+                    "count": 7,
+                    "density": 0.027888,
+                    "cumulative_pct": 10.757,
                     "is_negative": true
                   },
                   {
@@ -47775,9 +47775,9 @@
                     "lower": -3.561,
                     "upper": -2.374,
                     "center": -2.9675,
-                    "count": 32,
-                    "density": 0.12749,
-                    "cumulative_pct": 24.3028,
+                    "count": 33,
+                    "density": 0.131474,
+                    "cumulative_pct": 23.9044,
                     "is_negative": true
                   },
                   {
@@ -47787,7 +47787,7 @@
                     "center": -1.7805,
                     "count": 28,
                     "density": 0.111554,
-                    "cumulative_pct": 35.4582,
+                    "cumulative_pct": 35.0598,
                     "is_negative": true
                   },
                   {
@@ -47795,8 +47795,8 @@
                     "lower": -1.187,
                     "upper": 0.0,
                     "center": -0.5935,
-                    "count": 26,
-                    "density": 0.103586,
+                    "count": 27,
+                    "density": 0.10757,
                     "cumulative_pct": 45.8167,
                     "is_negative": true
                   },
@@ -48209,12 +48209,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 247,
               "moments": {
-                "mean": 0.3358,
-                "median": -0.1829,
-                "std": 14.9129,
-                "ann_volatility": 105.87,
-                "skewness": 2.9352,
-                "excess_kurtosis": 23.0166
+                "mean": 0.312,
+                "median": -0.2161,
+                "std": 14.9179,
+                "ann_volatility": 105.91,
+                "skewness": 2.9367,
+                "excess_kurtosis": 23.0004
               },
               "risk_metrics": {
                 "var_95": -15.21,
@@ -48223,7 +48223,7 @@
                 "cvar_99": -52.78,
                 "max_gain": 119.14,
                 "max_drawdown": -53.55,
-                "win_rate": 46.56
+                "win_rate": 46.15
               },
               "histogram": {
                 "bin_count": 80,
@@ -48606,9 +48606,9 @@
                     "lower": -8.9358,
                     "upper": -5.9572,
                     "center": -7.4465,
-                    "count": 15,
-                    "density": 0.060729,
-                    "cumulative_pct": 18.6235,
+                    "count": 16,
+                    "density": 0.064777,
+                    "cumulative_pct": 19.0283,
                     "is_negative": true
                   },
                   {
@@ -48618,7 +48618,7 @@
                     "center": -4.4679,
                     "count": 40,
                     "density": 0.161943,
-                    "cumulative_pct": 34.8178,
+                    "cumulative_pct": 35.2227,
                     "is_negative": true
                   },
                   {
@@ -48628,7 +48628,7 @@
                     "center": -1.4893,
                     "count": 43,
                     "density": 0.174089,
-                    "cumulative_pct": 52.2267,
+                    "cumulative_pct": 52.6316,
                     "is_negative": true
                   },
                   {
@@ -48636,8 +48636,8 @@
                     "lower": 0.0,
                     "upper": 2.9786,
                     "center": 1.4893,
-                    "count": 39,
-                    "density": 0.157895,
+                    "count": 38,
+                    "density": 0.153846,
                     "cumulative_pct": 68.0162,
                     "is_negative": false
                   },
@@ -49040,12 +49040,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 231,
               "moments": {
-                "mean": -2.5165,
-                "median": -2.3256,
-                "std": 15.9965,
-                "ann_volatility": 55.41,
-                "skewness": 0.1572,
-                "excess_kurtosis": 4.5095
+                "mean": -2.4444,
+                "median": -2.1283,
+                "std": 15.9778,
+                "ann_volatility": 55.35,
+                "skewness": 0.1463,
+                "excess_kurtosis": 4.5405
               },
               "risk_metrics": {
                 "var_95": -27.64,
@@ -49054,7 +49054,7 @@
                 "cvar_99": -59.12,
                 "max_gain": 70.87,
                 "max_drawdown": -61.68,
-                "win_rate": 43.29
+                "win_rate": 44.16
               },
               "histogram": {
                 "bin_count": 80,
@@ -49377,9 +49377,9 @@
                     "lower": -15.945,
                     "upper": -14.1733,
                     "center": -15.0591,
-                    "count": 7,
-                    "density": 0.030303,
-                    "cumulative_pct": 17.7489,
+                    "count": 6,
+                    "density": 0.025974,
+                    "cumulative_pct": 17.316,
                     "is_negative": true
                   },
                   {
@@ -49389,7 +49389,7 @@
                     "center": -13.2875,
                     "count": 7,
                     "density": 0.030303,
-                    "cumulative_pct": 20.7792,
+                    "cumulative_pct": 20.3463,
                     "is_negative": true
                   },
                   {
@@ -49399,7 +49399,7 @@
                     "center": -11.5158,
                     "count": 9,
                     "density": 0.038961,
-                    "cumulative_pct": 24.6753,
+                    "cumulative_pct": 24.2424,
                     "is_negative": true
                   },
                   {
@@ -49409,7 +49409,7 @@
                     "center": -9.7441,
                     "count": 10,
                     "density": 0.04329,
-                    "cumulative_pct": 29.0043,
+                    "cumulative_pct": 28.5714,
                     "is_negative": true
                   },
                   {
@@ -49419,7 +49419,7 @@
                     "center": -7.9725,
                     "count": 11,
                     "density": 0.047619,
-                    "cumulative_pct": 33.7662,
+                    "cumulative_pct": 33.3333,
                     "is_negative": true
                   },
                   {
@@ -49429,7 +49429,7 @@
                     "center": -6.2008,
                     "count": 16,
                     "density": 0.069264,
-                    "cumulative_pct": 40.6926,
+                    "cumulative_pct": 40.2597,
                     "is_negative": true
                   },
                   {
@@ -49439,7 +49439,7 @@
                     "center": -4.4292,
                     "count": 11,
                     "density": 0.047619,
-                    "cumulative_pct": 45.4545,
+                    "cumulative_pct": 45.0216,
                     "is_negative": true
                   },
                   {
@@ -49449,7 +49449,7 @@
                     "center": -2.6575,
                     "count": 14,
                     "density": 0.060606,
-                    "cumulative_pct": 51.5152,
+                    "cumulative_pct": 51.0823,
                     "is_negative": true
                   },
                   {
@@ -49457,9 +49457,9 @@
                     "lower": -1.7717,
                     "upper": 0.0,
                     "center": -0.8858,
-                    "count": 12,
-                    "density": 0.051948,
-                    "cumulative_pct": 56.71,
+                    "count": 11,
+                    "density": 0.047619,
+                    "cumulative_pct": 55.8442,
                     "is_negative": true
                   },
                   {
@@ -49467,8 +49467,8 @@
                     "lower": 0.0,
                     "upper": 1.7717,
                     "center": 0.8858,
-                    "count": 11,
-                    "density": 0.047619,
+                    "count": 13,
+                    "density": 0.056277,
                     "cumulative_pct": 61.4719,
                     "is_negative": false
                   },
@@ -49969,7 +49969,7 @@
               "definition": "|Z| < 1.5\u03c3 (Normal)",
               "count": 193,
               "fwd_1d": {
-                "mean": -0.17,
+                "mean": -0.18,
                 "median": 0.31,
                 "win_rate": 53.9,
                 "edge": "Neutral / Mean Reverting"
@@ -49981,9 +49981,9 @@
                 "edge": "Neutral / Mean Reverting"
               },
               "fwd_10d": {
-                "mean": 0.78,
-                "median": -0.03,
-                "win_rate": 49.2,
+                "mean": 0.84,
+                "median": 0.0,
+                "win_rate": 49.7,
                 "edge": "Neutral / Mean Reverting"
               }
             }
@@ -49994,29 +49994,29 @@
           "label": "Modern LNG Era (2023 - Present)",
           "start_date": "2023-01-03",
           "end_date": "2026-11-17",
-          "bars": 975,
+          "bars": 976,
           "horizons": {
             "1d": {
               "horizon_key": "1d",
               "horizon_days": 1,
               "horizon_label": "1-Day Daily Return",
-              "n_observations": 974,
+              "n_observations": 975,
               "moments": {
-                "mean": 0.0966,
-                "median": 0.1003,
-                "std": 4.8674,
-                "ann_volatility": 77.27,
-                "skewness": -0.2747,
-                "excess_kurtosis": 13.4559
+                "mean": 0.0962,
+                "median": 0.0855,
+                "std": 4.8646,
+                "ann_volatility": 77.22,
+                "skewness": -0.2745,
+                "excess_kurtosis": 13.4762
               },
               "risk_metrics": {
                 "var_95": -6.62,
                 "cvar_95": -9.61,
-                "var_99": -9.13,
+                "var_99": -9.12,
                 "cvar_99": -18.03,
                 "max_gain": 28.91,
                 "max_drawdown": -47.48,
-                "win_rate": 50.51
+                "win_rate": 50.46
               },
               "histogram": {
                 "bin_count": 80,
@@ -50030,8 +50030,8 @@
                     "upper": -46.2934,
                     "center": -46.8869,
                     "count": 1,
-                    "density": 0.001027,
-                    "cumulative_pct": 0.1027,
+                    "density": 0.001026,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50041,7 +50041,7 @@
                     "center": -45.6999,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50051,7 +50051,7 @@
                     "center": -44.5128,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50061,7 +50061,7 @@
                     "center": -43.3258,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50071,7 +50071,7 @@
                     "center": -42.1388,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50081,7 +50081,7 @@
                     "center": -40.9518,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50091,7 +50091,7 @@
                     "center": -39.7648,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50101,7 +50101,7 @@
                     "center": -38.5778,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50111,7 +50111,7 @@
                     "center": -37.3908,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50121,7 +50121,7 @@
                     "center": -36.2038,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50131,7 +50131,7 @@
                     "center": -35.0168,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50141,7 +50141,7 @@
                     "center": -33.8298,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50151,7 +50151,7 @@
                     "center": -32.6428,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50161,7 +50161,7 @@
                     "center": -31.4557,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50171,7 +50171,7 @@
                     "center": -30.2687,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50181,7 +50181,7 @@
                     "center": -29.0817,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50191,7 +50191,7 @@
                     "center": -27.8947,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50201,7 +50201,7 @@
                     "center": -26.7077,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.1027,
+                    "cumulative_pct": 0.1026,
                     "is_negative": true
                   },
                   {
@@ -50210,8 +50210,8 @@
                     "upper": -24.9272,
                     "center": -25.5207,
                     "count": 1,
-                    "density": 0.001027,
-                    "cumulative_pct": 0.2053,
+                    "density": 0.001026,
+                    "cumulative_pct": 0.2051,
                     "is_negative": true
                   },
                   {
@@ -50221,7 +50221,7 @@
                     "center": -24.3337,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.2053,
+                    "cumulative_pct": 0.2051,
                     "is_negative": true
                   },
                   {
@@ -50231,7 +50231,7 @@
                     "center": -23.1467,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.2053,
+                    "cumulative_pct": 0.2051,
                     "is_negative": true
                   },
                   {
@@ -50241,7 +50241,7 @@
                     "center": -21.9597,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.2053,
+                    "cumulative_pct": 0.2051,
                     "is_negative": true
                   },
                   {
@@ -50251,7 +50251,7 @@
                     "center": -20.7727,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.2053,
+                    "cumulative_pct": 0.2051,
                     "is_negative": true
                   },
                   {
@@ -50261,7 +50261,7 @@
                     "center": -19.5857,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.2053,
+                    "cumulative_pct": 0.2051,
                     "is_negative": true
                   },
                   {
@@ -50271,7 +50271,7 @@
                     "center": -18.3986,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.2053,
+                    "cumulative_pct": 0.2051,
                     "is_negative": true
                   },
                   {
@@ -50281,7 +50281,7 @@
                     "center": -17.2116,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.2053,
+                    "cumulative_pct": 0.2051,
                     "is_negative": true
                   },
                   {
@@ -50290,8 +50290,8 @@
                     "upper": -15.4311,
                     "center": -16.0246,
                     "count": 1,
-                    "density": 0.001027,
-                    "cumulative_pct": 0.308,
+                    "density": 0.001026,
+                    "cumulative_pct": 0.3077,
                     "is_negative": true
                   },
                   {
@@ -50300,8 +50300,8 @@
                     "upper": -14.2441,
                     "center": -14.8376,
                     "count": 2,
-                    "density": 0.002053,
-                    "cumulative_pct": 0.5133,
+                    "density": 0.002051,
+                    "cumulative_pct": 0.5128,
                     "is_negative": true
                   },
                   {
@@ -50310,8 +50310,8 @@
                     "upper": -13.0571,
                     "center": -13.6506,
                     "count": 2,
-                    "density": 0.002053,
-                    "cumulative_pct": 0.7187,
+                    "density": 0.002051,
+                    "cumulative_pct": 0.7179,
                     "is_negative": true
                   },
                   {
@@ -50320,8 +50320,8 @@
                     "upper": -11.8701,
                     "center": -12.4636,
                     "count": 1,
-                    "density": 0.001027,
-                    "cumulative_pct": 0.8214,
+                    "density": 0.001026,
+                    "cumulative_pct": 0.8205,
                     "is_negative": true
                   },
                   {
@@ -50330,8 +50330,8 @@
                     "upper": -10.6831,
                     "center": -11.2766,
                     "count": 1,
-                    "density": 0.001027,
-                    "cumulative_pct": 0.924,
+                    "density": 0.001026,
+                    "cumulative_pct": 0.9231,
                     "is_negative": true
                   },
                   {
@@ -50340,8 +50340,8 @@
                     "upper": -9.4961,
                     "center": -10.0896,
                     "count": 1,
-                    "density": 0.001027,
-                    "cumulative_pct": 1.0267,
+                    "density": 0.001026,
+                    "cumulative_pct": 1.0256,
                     "is_negative": true
                   },
                   {
@@ -50350,8 +50350,8 @@
                     "upper": -8.3091,
                     "center": -8.9026,
                     "count": 4,
-                    "density": 0.004107,
-                    "cumulative_pct": 1.4374,
+                    "density": 0.004103,
+                    "cumulative_pct": 1.4359,
                     "is_negative": true
                   },
                   {
@@ -50360,8 +50360,8 @@
                     "upper": -7.1221,
                     "center": -7.7156,
                     "count": 21,
-                    "density": 0.021561,
-                    "cumulative_pct": 3.5934,
+                    "density": 0.021538,
+                    "cumulative_pct": 3.5897,
                     "is_negative": true
                   },
                   {
@@ -50370,8 +50370,8 @@
                     "upper": -5.935,
                     "center": -6.5286,
                     "count": 31,
-                    "density": 0.031828,
-                    "cumulative_pct": 6.7762,
+                    "density": 0.031795,
+                    "cumulative_pct": 6.7692,
                     "is_negative": true
                   },
                   {
@@ -50380,8 +50380,8 @@
                     "upper": -4.748,
                     "center": -5.3415,
                     "count": 44,
-                    "density": 0.045175,
-                    "cumulative_pct": 11.2936,
+                    "density": 0.045128,
+                    "cumulative_pct": 11.2821,
                     "is_negative": true
                   },
                   {
@@ -50389,9 +50389,9 @@
                     "lower": -4.748,
                     "upper": -3.561,
                     "center": -4.1545,
-                    "count": 61,
-                    "density": 0.062628,
-                    "cumulative_pct": 17.5565,
+                    "count": 60,
+                    "density": 0.061538,
+                    "cumulative_pct": 17.4359,
                     "is_negative": true
                   },
                   {
@@ -50399,9 +50399,9 @@
                     "lower": -3.561,
                     "upper": -2.374,
                     "center": -2.9675,
-                    "count": 107,
-                    "density": 0.109856,
-                    "cumulative_pct": 28.5421,
+                    "count": 108,
+                    "density": 0.110769,
+                    "cumulative_pct": 28.5128,
                     "is_negative": true
                   },
                   {
@@ -50410,8 +50410,8 @@
                     "upper": -1.187,
                     "center": -1.7805,
                     "count": 93,
-                    "density": 0.095483,
-                    "cumulative_pct": 38.0903,
+                    "density": 0.095385,
+                    "cumulative_pct": 38.0513,
                     "is_negative": true
                   },
                   {
@@ -50419,9 +50419,9 @@
                     "lower": -1.187,
                     "upper": 0.0,
                     "center": -0.5935,
-                    "count": 111,
-                    "density": 0.113963,
-                    "cumulative_pct": 49.4867,
+                    "count": 112,
+                    "density": 0.114872,
+                    "cumulative_pct": 49.5385,
                     "is_negative": true
                   },
                   {
@@ -50430,8 +50430,8 @@
                     "upper": 1.187,
                     "center": 0.5935,
                     "count": 124,
-                    "density": 0.12731,
-                    "cumulative_pct": 62.2177,
+                    "density": 0.127179,
+                    "cumulative_pct": 62.2564,
                     "is_negative": false
                   },
                   {
@@ -50440,8 +50440,8 @@
                     "upper": 2.374,
                     "center": 1.7805,
                     "count": 114,
-                    "density": 0.117043,
-                    "cumulative_pct": 73.922,
+                    "density": 0.116923,
+                    "cumulative_pct": 73.9487,
                     "is_negative": false
                   },
                   {
@@ -50450,8 +50450,8 @@
                     "upper": 3.561,
                     "center": 2.9675,
                     "count": 83,
-                    "density": 0.085216,
-                    "cumulative_pct": 82.4435,
+                    "density": 0.085128,
+                    "cumulative_pct": 82.4615,
                     "is_negative": false
                   },
                   {
@@ -50460,8 +50460,8 @@
                     "upper": 4.748,
                     "center": 4.1545,
                     "count": 52,
-                    "density": 0.053388,
-                    "cumulative_pct": 87.7823,
+                    "density": 0.053333,
+                    "cumulative_pct": 87.7949,
                     "is_negative": false
                   },
                   {
@@ -50470,8 +50470,8 @@
                     "upper": 5.935,
                     "center": 5.3415,
                     "count": 46,
-                    "density": 0.047228,
-                    "cumulative_pct": 92.5051,
+                    "density": 0.047179,
+                    "cumulative_pct": 92.5128,
                     "is_negative": false
                   },
                   {
@@ -50480,8 +50480,8 @@
                     "upper": 7.1221,
                     "center": 6.5286,
                     "count": 22,
-                    "density": 0.022587,
-                    "cumulative_pct": 94.7639,
+                    "density": 0.022564,
+                    "cumulative_pct": 94.7692,
                     "is_negative": false
                   },
                   {
@@ -50490,8 +50490,8 @@
                     "upper": 8.3091,
                     "center": 7.7156,
                     "count": 20,
-                    "density": 0.020534,
-                    "cumulative_pct": 96.8172,
+                    "density": 0.020513,
+                    "cumulative_pct": 96.8205,
                     "is_negative": false
                   },
                   {
@@ -50500,8 +50500,8 @@
                     "upper": 9.4961,
                     "center": 8.9026,
                     "count": 7,
-                    "density": 0.007187,
-                    "cumulative_pct": 97.5359,
+                    "density": 0.007179,
+                    "cumulative_pct": 97.5385,
                     "is_negative": false
                   },
                   {
@@ -50510,8 +50510,8 @@
                     "upper": 10.6831,
                     "center": 10.0896,
                     "count": 5,
-                    "density": 0.005133,
-                    "cumulative_pct": 98.0493,
+                    "density": 0.005128,
+                    "cumulative_pct": 98.0513,
                     "is_negative": false
                   },
                   {
@@ -50520,8 +50520,8 @@
                     "upper": 11.8701,
                     "center": 11.2766,
                     "count": 6,
-                    "density": 0.00616,
-                    "cumulative_pct": 98.6653,
+                    "density": 0.006154,
+                    "cumulative_pct": 98.6667,
                     "is_negative": false
                   },
                   {
@@ -50530,8 +50530,8 @@
                     "upper": 13.0571,
                     "center": 12.4636,
                     "count": 4,
-                    "density": 0.004107,
-                    "cumulative_pct": 99.076,
+                    "density": 0.004103,
+                    "cumulative_pct": 99.0769,
                     "is_negative": false
                   },
                   {
@@ -50541,7 +50541,7 @@
                     "center": 13.6506,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.076,
+                    "cumulative_pct": 99.0769,
                     "is_negative": false
                   },
                   {
@@ -50550,8 +50550,8 @@
                     "upper": 15.4311,
                     "center": 14.8376,
                     "count": 2,
-                    "density": 0.002053,
-                    "cumulative_pct": 99.2813,
+                    "density": 0.002051,
+                    "cumulative_pct": 99.2821,
                     "is_negative": false
                   },
                   {
@@ -50561,7 +50561,7 @@
                     "center": 16.0246,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.2813,
+                    "cumulative_pct": 99.2821,
                     "is_negative": false
                   },
                   {
@@ -50570,8 +50570,8 @@
                     "upper": 17.8051,
                     "center": 17.2116,
                     "count": 2,
-                    "density": 0.002053,
-                    "cumulative_pct": 99.4867,
+                    "density": 0.002051,
+                    "cumulative_pct": 99.4872,
                     "is_negative": false
                   },
                   {
@@ -50581,7 +50581,7 @@
                     "center": 18.3986,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.4867,
+                    "cumulative_pct": 99.4872,
                     "is_negative": false
                   },
                   {
@@ -50591,7 +50591,7 @@
                     "center": 19.5857,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.4867,
+                    "cumulative_pct": 99.4872,
                     "is_negative": false
                   },
                   {
@@ -50600,8 +50600,8 @@
                     "upper": 21.3662,
                     "center": 20.7727,
                     "count": 1,
-                    "density": 0.001027,
-                    "cumulative_pct": 99.5893,
+                    "density": 0.001026,
+                    "cumulative_pct": 99.5897,
                     "is_negative": false
                   },
                   {
@@ -50611,7 +50611,7 @@
                     "center": 21.9597,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.5893,
+                    "cumulative_pct": 99.5897,
                     "is_negative": false
                   },
                   {
@@ -50621,7 +50621,7 @@
                     "center": 23.1467,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.5893,
+                    "cumulative_pct": 99.5897,
                     "is_negative": false
                   },
                   {
@@ -50630,8 +50630,8 @@
                     "upper": 24.9272,
                     "center": 24.3337,
                     "count": 1,
-                    "density": 0.001027,
-                    "cumulative_pct": 99.692,
+                    "density": 0.001026,
+                    "cumulative_pct": 99.6923,
                     "is_negative": false
                   },
                   {
@@ -50640,8 +50640,8 @@
                     "upper": 26.1142,
                     "center": 25.5207,
                     "count": 2,
-                    "density": 0.002053,
-                    "cumulative_pct": 99.8973,
+                    "density": 0.002051,
+                    "cumulative_pct": 99.8974,
                     "is_negative": false
                   },
                   {
@@ -50651,7 +50651,7 @@
                     "center": 26.7077,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8973,
+                    "cumulative_pct": 99.8974,
                     "is_negative": false
                   },
                   {
@@ -50661,7 +50661,7 @@
                     "center": 27.8947,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8973,
+                    "cumulative_pct": 99.8974,
                     "is_negative": false
                   },
                   {
@@ -50670,7 +50670,7 @@
                     "upper": 29.6752,
                     "center": 29.0817,
                     "count": 1,
-                    "density": 0.001027,
+                    "density": 0.001026,
                     "cumulative_pct": 100.0,
                     "is_negative": false
                   },
@@ -50831,23 +50831,23 @@
               "horizon_key": "5d",
               "horizon_days": 5,
               "horizon_label": "5-Day Swing Cycle",
-              "n_observations": 970,
+              "n_observations": 971,
               "moments": {
-                "mean": 0.4828,
-                "median": -0.2404,
-                "std": 11.0843,
-                "ann_volatility": 78.69,
-                "skewness": 1.9353,
-                "excess_kurtosis": 19.4054
+                "mean": 0.4765,
+                "median": -0.2648,
+                "std": 11.0804,
+                "ann_volatility": 78.66,
+                "skewness": 1.9368,
+                "excess_kurtosis": 19.4182
               },
               "risk_metrics": {
-                "var_95": -14.05,
+                "var_95": -14.04,
                 "cvar_95": -20.08,
                 "var_99": -22.34,
                 "cvar_99": -32.92,
                 "max_gain": 119.14,
                 "max_drawdown": -53.55,
-                "win_rate": 48.04
+                "win_rate": 47.99
               },
               "histogram": {
                 "bin_count": 80,
@@ -51081,8 +51081,8 @@
                     "upper": -50.6362,
                     "center": -52.1255,
                     "count": 3,
-                    "density": 0.003093,
-                    "cumulative_pct": 0.3093,
+                    "density": 0.00309,
+                    "cumulative_pct": 0.309,
                     "is_negative": true
                   },
                   {
@@ -51092,7 +51092,7 @@
                     "center": -49.1469,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.3093,
+                    "cumulative_pct": 0.309,
                     "is_negative": true
                   },
                   {
@@ -51102,7 +51102,7 @@
                     "center": -46.1683,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.3093,
+                    "cumulative_pct": 0.309,
                     "is_negative": true
                   },
                   {
@@ -51112,7 +51112,7 @@
                     "center": -43.1897,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.3093,
+                    "cumulative_pct": 0.309,
                     "is_negative": true
                   },
                   {
@@ -51122,7 +51122,7 @@
                     "center": -40.2111,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.3093,
+                    "cumulative_pct": 0.309,
                     "is_negative": true
                   },
                   {
@@ -51132,7 +51132,7 @@
                     "center": -37.2325,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.3093,
+                    "cumulative_pct": 0.309,
                     "is_negative": true
                   },
                   {
@@ -51142,7 +51142,7 @@
                     "center": -34.2539,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.3093,
+                    "cumulative_pct": 0.309,
                     "is_negative": true
                   },
                   {
@@ -51152,7 +51152,7 @@
                     "center": -31.2753,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.3093,
+                    "cumulative_pct": 0.309,
                     "is_negative": true
                   },
                   {
@@ -51161,8 +51161,8 @@
                     "upper": -26.8074,
                     "center": -28.2967,
                     "count": 2,
-                    "density": 0.002062,
-                    "cumulative_pct": 0.5155,
+                    "density": 0.00206,
+                    "cumulative_pct": 0.5149,
                     "is_negative": true
                   },
                   {
@@ -51171,8 +51171,8 @@
                     "upper": -23.8288,
                     "center": -25.3181,
                     "count": 1,
-                    "density": 0.001031,
-                    "cumulative_pct": 0.6186,
+                    "density": 0.00103,
+                    "cumulative_pct": 0.6179,
                     "is_negative": true
                   },
                   {
@@ -51181,8 +51181,8 @@
                     "upper": -20.8502,
                     "center": -22.3395,
                     "count": 7,
-                    "density": 0.007216,
-                    "cumulative_pct": 1.3402,
+                    "density": 0.007209,
+                    "cumulative_pct": 1.3388,
                     "is_negative": true
                   },
                   {
@@ -51191,8 +51191,8 @@
                     "upper": -17.8716,
                     "center": -19.3609,
                     "count": 9,
-                    "density": 0.009278,
-                    "cumulative_pct": 2.268,
+                    "density": 0.009269,
+                    "cumulative_pct": 2.2657,
                     "is_negative": true
                   },
                   {
@@ -51201,8 +51201,8 @@
                     "upper": -14.893,
                     "center": -16.3823,
                     "count": 18,
-                    "density": 0.018557,
-                    "cumulative_pct": 4.1237,
+                    "density": 0.018538,
+                    "cumulative_pct": 4.1195,
                     "is_negative": true
                   },
                   {
@@ -51211,8 +51211,8 @@
                     "upper": -11.9144,
                     "center": -13.4037,
                     "count": 35,
-                    "density": 0.036082,
-                    "cumulative_pct": 7.732,
+                    "density": 0.036045,
+                    "cumulative_pct": 7.724,
                     "is_negative": true
                   },
                   {
@@ -51221,8 +51221,8 @@
                     "upper": -8.9358,
                     "center": -10.4251,
                     "count": 68,
-                    "density": 0.070103,
-                    "cumulative_pct": 14.7423,
+                    "density": 0.070031,
+                    "cumulative_pct": 14.7271,
                     "is_negative": true
                   },
                   {
@@ -51230,9 +51230,9 @@
                     "lower": -8.9358,
                     "upper": -5.9572,
                     "center": -7.4465,
-                    "count": 88,
-                    "density": 0.090722,
-                    "cumulative_pct": 23.8144,
+                    "count": 89,
+                    "density": 0.091658,
+                    "cumulative_pct": 23.8929,
                     "is_negative": true
                   },
                   {
@@ -51241,8 +51241,8 @@
                     "upper": -2.9786,
                     "center": -4.4679,
                     "count": 132,
-                    "density": 0.136082,
-                    "cumulative_pct": 37.4227,
+                    "density": 0.135942,
+                    "cumulative_pct": 37.4871,
                     "is_negative": true
                   },
                   {
@@ -51251,8 +51251,8 @@
                     "upper": 0.0,
                     "center": -1.4893,
                     "count": 136,
-                    "density": 0.140206,
-                    "cumulative_pct": 51.4433,
+                    "density": 0.140062,
+                    "cumulative_pct": 51.4933,
                     "is_negative": true
                   },
                   {
@@ -51261,8 +51261,8 @@
                     "upper": 2.9786,
                     "center": 1.4893,
                     "count": 118,
-                    "density": 0.121649,
-                    "cumulative_pct": 63.6082,
+                    "density": 0.121524,
+                    "cumulative_pct": 63.6457,
                     "is_negative": false
                   },
                   {
@@ -51271,8 +51271,8 @@
                     "upper": 5.9572,
                     "center": 4.4679,
                     "count": 116,
-                    "density": 0.119588,
-                    "cumulative_pct": 75.567,
+                    "density": 0.119464,
+                    "cumulative_pct": 75.5922,
                     "is_negative": false
                   },
                   {
@@ -51281,8 +51281,8 @@
                     "upper": 8.9358,
                     "center": 7.4465,
                     "count": 71,
-                    "density": 0.073196,
-                    "cumulative_pct": 82.8866,
+                    "density": 0.07312,
+                    "cumulative_pct": 82.9042,
                     "is_negative": false
                   },
                   {
@@ -51291,8 +51291,8 @@
                     "upper": 11.9144,
                     "center": 10.4251,
                     "count": 61,
-                    "density": 0.062887,
-                    "cumulative_pct": 89.1753,
+                    "density": 0.062822,
+                    "cumulative_pct": 89.1864,
                     "is_negative": false
                   },
                   {
@@ -51301,8 +51301,8 @@
                     "upper": 14.893,
                     "center": 13.4037,
                     "count": 46,
-                    "density": 0.047423,
-                    "cumulative_pct": 93.9175,
+                    "density": 0.047374,
+                    "cumulative_pct": 93.9238,
                     "is_negative": false
                   },
                   {
@@ -51311,8 +51311,8 @@
                     "upper": 17.8716,
                     "center": 16.3823,
                     "count": 22,
-                    "density": 0.02268,
-                    "cumulative_pct": 96.1856,
+                    "density": 0.022657,
+                    "cumulative_pct": 96.1895,
                     "is_negative": false
                   },
                   {
@@ -51321,8 +51321,8 @@
                     "upper": 20.8502,
                     "center": 19.3609,
                     "count": 15,
-                    "density": 0.015464,
-                    "cumulative_pct": 97.732,
+                    "density": 0.015448,
+                    "cumulative_pct": 97.7343,
                     "is_negative": false
                   },
                   {
@@ -51331,8 +51331,8 @@
                     "upper": 23.8288,
                     "center": 22.3395,
                     "count": 7,
-                    "density": 0.007216,
-                    "cumulative_pct": 98.4536,
+                    "density": 0.007209,
+                    "cumulative_pct": 98.4552,
                     "is_negative": false
                   },
                   {
@@ -51341,8 +51341,8 @@
                     "upper": 26.8074,
                     "center": 25.3181,
                     "count": 5,
-                    "density": 0.005155,
-                    "cumulative_pct": 98.9691,
+                    "density": 0.005149,
+                    "cumulative_pct": 98.9701,
                     "is_negative": false
                   },
                   {
@@ -51351,8 +51351,8 @@
                     "upper": 29.786,
                     "center": 28.2967,
                     "count": 1,
-                    "density": 0.001031,
-                    "cumulative_pct": 99.0722,
+                    "density": 0.00103,
+                    "cumulative_pct": 99.0731,
                     "is_negative": false
                   },
                   {
@@ -51361,8 +51361,8 @@
                     "upper": 32.7646,
                     "center": 31.2753,
                     "count": 3,
-                    "density": 0.003093,
-                    "cumulative_pct": 99.3814,
+                    "density": 0.00309,
+                    "cumulative_pct": 99.3821,
                     "is_negative": false
                   },
                   {
@@ -51372,7 +51372,7 @@
                     "center": 34.2539,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.3814,
+                    "cumulative_pct": 99.3821,
                     "is_negative": false
                   },
                   {
@@ -51382,7 +51382,7 @@
                     "center": 37.2325,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.3814,
+                    "cumulative_pct": 99.3821,
                     "is_negative": false
                   },
                   {
@@ -51392,7 +51392,7 @@
                     "center": 40.2111,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.3814,
+                    "cumulative_pct": 99.3821,
                     "is_negative": false
                   },
                   {
@@ -51401,8 +51401,8 @@
                     "upper": 44.679,
                     "center": 43.1897,
                     "count": 1,
-                    "density": 0.001031,
-                    "cumulative_pct": 99.4845,
+                    "density": 0.00103,
+                    "cumulative_pct": 99.4851,
                     "is_negative": false
                   },
                   {
@@ -51412,7 +51412,7 @@
                     "center": 46.1683,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.4845,
+                    "cumulative_pct": 99.4851,
                     "is_negative": false
                   },
                   {
@@ -51422,7 +51422,7 @@
                     "center": 49.1469,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.4845,
+                    "cumulative_pct": 99.4851,
                     "is_negative": false
                   },
                   {
@@ -51431,8 +51431,8 @@
                     "upper": 53.6148,
                     "center": 52.1255,
                     "count": 1,
-                    "density": 0.001031,
-                    "cumulative_pct": 99.5876,
+                    "density": 0.00103,
+                    "cumulative_pct": 99.5881,
                     "is_negative": false
                   },
                   {
@@ -51442,7 +51442,7 @@
                     "center": 55.1041,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.5876,
+                    "cumulative_pct": 99.5881,
                     "is_negative": false
                   },
                   {
@@ -51452,7 +51452,7 @@
                     "center": 58.0827,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.5876,
+                    "cumulative_pct": 99.5881,
                     "is_negative": false
                   },
                   {
@@ -51461,8 +51461,8 @@
                     "upper": 62.5506,
                     "center": 61.0613,
                     "count": 1,
-                    "density": 0.001031,
-                    "cumulative_pct": 99.6907,
+                    "density": 0.00103,
+                    "cumulative_pct": 99.691,
                     "is_negative": false
                   },
                   {
@@ -51472,7 +51472,7 @@
                     "center": 64.0399,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.6907,
+                    "cumulative_pct": 99.691,
                     "is_negative": false
                   },
                   {
@@ -51482,7 +51482,7 @@
                     "center": 67.0185,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.6907,
+                    "cumulative_pct": 99.691,
                     "is_negative": false
                   },
                   {
@@ -51491,8 +51491,8 @@
                     "upper": 71.4864,
                     "center": 69.9971,
                     "count": 1,
-                    "density": 0.001031,
-                    "cumulative_pct": 99.7938,
+                    "density": 0.00103,
+                    "cumulative_pct": 99.794,
                     "is_negative": false
                   },
                   {
@@ -51502,7 +51502,7 @@
                     "center": 72.9757,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.7938,
+                    "cumulative_pct": 99.794,
                     "is_negative": false
                   },
                   {
@@ -51512,7 +51512,7 @@
                     "center": 75.9543,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.7938,
+                    "cumulative_pct": 99.794,
                     "is_negative": false
                   },
                   {
@@ -51521,8 +51521,8 @@
                     "upper": 80.4222,
                     "center": 78.9329,
                     "count": 1,
-                    "density": 0.001031,
-                    "cumulative_pct": 99.8969,
+                    "density": 0.00103,
+                    "cumulative_pct": 99.897,
                     "is_negative": false
                   },
                   {
@@ -51532,7 +51532,7 @@
                     "center": 81.9115,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8969,
+                    "cumulative_pct": 99.897,
                     "is_negative": false
                   },
                   {
@@ -51542,7 +51542,7 @@
                     "center": 84.8901,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8969,
+                    "cumulative_pct": 99.897,
                     "is_negative": false
                   },
                   {
@@ -51552,7 +51552,7 @@
                     "center": 87.8687,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8969,
+                    "cumulative_pct": 99.897,
                     "is_negative": false
                   },
                   {
@@ -51562,7 +51562,7 @@
                     "center": 90.8473,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8969,
+                    "cumulative_pct": 99.897,
                     "is_negative": false
                   },
                   {
@@ -51572,7 +51572,7 @@
                     "center": 93.8259,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8969,
+                    "cumulative_pct": 99.897,
                     "is_negative": false
                   },
                   {
@@ -51582,7 +51582,7 @@
                     "center": 96.8045,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8969,
+                    "cumulative_pct": 99.897,
                     "is_negative": false
                   },
                   {
@@ -51592,7 +51592,7 @@
                     "center": 99.7831,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8969,
+                    "cumulative_pct": 99.897,
                     "is_negative": false
                   },
                   {
@@ -51602,7 +51602,7 @@
                     "center": 102.7617,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8969,
+                    "cumulative_pct": 99.897,
                     "is_negative": false
                   },
                   {
@@ -51612,7 +51612,7 @@
                     "center": 105.7403,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8969,
+                    "cumulative_pct": 99.897,
                     "is_negative": false
                   },
                   {
@@ -51622,7 +51622,7 @@
                     "center": 108.7189,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8969,
+                    "cumulative_pct": 99.897,
                     "is_negative": false
                   },
                   {
@@ -51632,7 +51632,7 @@
                     "center": 111.6975,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8969,
+                    "cumulative_pct": 99.897,
                     "is_negative": false
                   },
                   {
@@ -51642,7 +51642,7 @@
                     "center": 114.6761,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8969,
+                    "cumulative_pct": 99.897,
                     "is_negative": false
                   },
                   {
@@ -51651,7 +51651,7 @@
                     "upper": 119.144,
                     "center": 117.6547,
                     "count": 1,
-                    "density": 0.001031,
+                    "density": 0.00103,
                     "cumulative_pct": 100.0,
                     "is_negative": false
                   }
@@ -51662,23 +51662,23 @@
               "horizon_key": "21d",
               "horizon_days": 21,
               "horizon_label": "21-Day Monthly Cycle",
-              "n_observations": 954,
+              "n_observations": 955,
               "moments": {
-                "mean": 1.3118,
-                "median": 1.2191,
-                "std": 17.6471,
-                "ann_volatility": 61.13,
-                "skewness": 0.2422,
-                "excess_kurtosis": 1.2049
+                "mean": 1.3123,
+                "median": 1.2406,
+                "std": 17.6378,
+                "ann_volatility": 61.1,
+                "skewness": 0.2423,
+                "excess_kurtosis": 1.2093
               },
               "risk_metrics": {
-                "var_95": -26.37,
+                "var_95": -26.35,
                 "cvar_95": -36.16,
                 "var_99": -40.63,
                 "cvar_99": -48.65,
                 "max_gain": 70.87,
                 "max_drawdown": -61.68,
-                "win_rate": 53.04
+                "win_rate": 53.19
               },
               "histogram": {
                 "bin_count": 80,
@@ -51742,8 +51742,8 @@
                     "upper": -60.2365,
                     "center": -61.1223,
                     "count": 1,
-                    "density": 0.001048,
-                    "cumulative_pct": 0.1048,
+                    "density": 0.001047,
+                    "cumulative_pct": 0.1047,
                     "is_negative": true
                   },
                   {
@@ -51752,8 +51752,8 @@
                     "upper": -58.4649,
                     "center": -59.3507,
                     "count": 1,
-                    "density": 0.001048,
-                    "cumulative_pct": 0.2096,
+                    "density": 0.001047,
+                    "cumulative_pct": 0.2094,
                     "is_negative": true
                   },
                   {
@@ -51763,7 +51763,7 @@
                     "center": -57.579,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.2096,
+                    "cumulative_pct": 0.2094,
                     "is_negative": true
                   },
                   {
@@ -51772,8 +51772,8 @@
                     "upper": -54.9215,
                     "center": -55.8074,
                     "count": 1,
-                    "density": 0.001048,
-                    "cumulative_pct": 0.3145,
+                    "density": 0.001047,
+                    "cumulative_pct": 0.3141,
                     "is_negative": true
                   },
                   {
@@ -51783,7 +51783,7 @@
                     "center": -54.0357,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.3145,
+                    "cumulative_pct": 0.3141,
                     "is_negative": true
                   },
                   {
@@ -51793,7 +51793,7 @@
                     "center": -52.264,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.3145,
+                    "cumulative_pct": 0.3141,
                     "is_negative": true
                   },
                   {
@@ -51803,7 +51803,7 @@
                     "center": -50.4924,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.3145,
+                    "cumulative_pct": 0.3141,
                     "is_negative": true
                   },
                   {
@@ -51812,8 +51812,8 @@
                     "upper": -47.8349,
                     "center": -48.7207,
                     "count": 1,
-                    "density": 0.001048,
-                    "cumulative_pct": 0.4193,
+                    "density": 0.001047,
+                    "cumulative_pct": 0.4188,
                     "is_negative": true
                   },
                   {
@@ -51823,7 +51823,7 @@
                     "center": -46.949,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.4193,
+                    "cumulative_pct": 0.4188,
                     "is_negative": true
                   },
                   {
@@ -51832,8 +51832,8 @@
                     "upper": -44.2916,
                     "center": -45.1774,
                     "count": 3,
-                    "density": 0.003145,
-                    "cumulative_pct": 0.7338,
+                    "density": 0.003141,
+                    "cumulative_pct": 0.733,
                     "is_negative": true
                   },
                   {
@@ -51842,8 +51842,8 @@
                     "upper": -42.5199,
                     "center": -43.4057,
                     "count": 1,
-                    "density": 0.001048,
-                    "cumulative_pct": 0.8386,
+                    "density": 0.001047,
+                    "cumulative_pct": 0.8377,
                     "is_negative": true
                   },
                   {
@@ -51852,8 +51852,8 @@
                     "upper": -40.7482,
                     "center": -41.6341,
                     "count": 2,
-                    "density": 0.002096,
-                    "cumulative_pct": 1.0482,
+                    "density": 0.002094,
+                    "cumulative_pct": 1.0471,
                     "is_negative": true
                   },
                   {
@@ -51862,8 +51862,8 @@
                     "upper": -38.9766,
                     "center": -39.8624,
                     "count": 5,
-                    "density": 0.005241,
-                    "cumulative_pct": 1.5723,
+                    "density": 0.005236,
+                    "cumulative_pct": 1.5707,
                     "is_negative": true
                   },
                   {
@@ -51872,8 +51872,8 @@
                     "upper": -37.2049,
                     "center": -38.0907,
                     "count": 4,
-                    "density": 0.004193,
-                    "cumulative_pct": 1.9916,
+                    "density": 0.004188,
+                    "cumulative_pct": 1.9895,
                     "is_negative": true
                   },
                   {
@@ -51882,8 +51882,8 @@
                     "upper": -35.4332,
                     "center": -36.3191,
                     "count": 2,
-                    "density": 0.002096,
-                    "cumulative_pct": 2.2013,
+                    "density": 0.002094,
+                    "cumulative_pct": 2.199,
                     "is_negative": true
                   },
                   {
@@ -51892,8 +51892,8 @@
                     "upper": -33.6616,
                     "center": -34.5474,
                     "count": 5,
-                    "density": 0.005241,
-                    "cumulative_pct": 2.7254,
+                    "density": 0.005236,
+                    "cumulative_pct": 2.7225,
                     "is_negative": true
                   },
                   {
@@ -51902,8 +51902,8 @@
                     "upper": -31.8899,
                     "center": -32.7758,
                     "count": 2,
-                    "density": 0.002096,
-                    "cumulative_pct": 2.935,
+                    "density": 0.002094,
+                    "cumulative_pct": 2.9319,
                     "is_negative": true
                   },
                   {
@@ -51912,8 +51912,8 @@
                     "upper": -30.1183,
                     "center": -31.0041,
                     "count": 8,
-                    "density": 0.008386,
-                    "cumulative_pct": 3.7736,
+                    "density": 0.008377,
+                    "cumulative_pct": 3.7696,
                     "is_negative": true
                   },
                   {
@@ -51922,8 +51922,8 @@
                     "upper": -28.3466,
                     "center": -29.2324,
                     "count": 7,
-                    "density": 0.007338,
-                    "cumulative_pct": 4.5073,
+                    "density": 0.00733,
+                    "cumulative_pct": 4.5026,
                     "is_negative": true
                   },
                   {
@@ -51932,8 +51932,8 @@
                     "upper": -26.5749,
                     "center": -27.4608,
                     "count": 5,
-                    "density": 0.005241,
-                    "cumulative_pct": 5.0314,
+                    "density": 0.005236,
+                    "cumulative_pct": 5.0262,
                     "is_negative": true
                   },
                   {
@@ -51942,8 +51942,8 @@
                     "upper": -24.8033,
                     "center": -25.6891,
                     "count": 12,
-                    "density": 0.012579,
-                    "cumulative_pct": 6.2893,
+                    "density": 0.012565,
+                    "cumulative_pct": 6.2827,
                     "is_negative": true
                   },
                   {
@@ -51952,8 +51952,8 @@
                     "upper": -23.0316,
                     "center": -23.9174,
                     "count": 13,
-                    "density": 0.013627,
-                    "cumulative_pct": 7.652,
+                    "density": 0.013613,
+                    "cumulative_pct": 7.644,
                     "is_negative": true
                   },
                   {
@@ -51962,8 +51962,8 @@
                     "upper": -21.2599,
                     "center": -22.1458,
                     "count": 8,
-                    "density": 0.008386,
-                    "cumulative_pct": 8.4906,
+                    "density": 0.008377,
+                    "cumulative_pct": 8.4817,
                     "is_negative": true
                   },
                   {
@@ -51972,8 +51972,8 @@
                     "upper": -19.4883,
                     "center": -20.3741,
                     "count": 18,
-                    "density": 0.018868,
-                    "cumulative_pct": 10.3774,
+                    "density": 0.018848,
+                    "cumulative_pct": 10.3665,
                     "is_negative": true
                   },
                   {
@@ -51982,8 +51982,8 @@
                     "upper": -17.7166,
                     "center": -18.6025,
                     "count": 21,
-                    "density": 0.022013,
-                    "cumulative_pct": 12.5786,
+                    "density": 0.02199,
+                    "cumulative_pct": 12.5654,
                     "is_negative": true
                   },
                   {
@@ -51992,8 +51992,8 @@
                     "upper": -15.945,
                     "center": -16.8308,
                     "count": 19,
-                    "density": 0.019916,
-                    "cumulative_pct": 14.5702,
+                    "density": 0.019895,
+                    "cumulative_pct": 14.555,
                     "is_negative": true
                   },
                   {
@@ -52002,8 +52002,8 @@
                     "upper": -14.1733,
                     "center": -15.0591,
                     "count": 17,
-                    "density": 0.01782,
-                    "cumulative_pct": 16.3522,
+                    "density": 0.017801,
+                    "cumulative_pct": 16.3351,
                     "is_negative": true
                   },
                   {
@@ -52012,8 +52012,8 @@
                     "upper": -12.4016,
                     "center": -13.2875,
                     "count": 18,
-                    "density": 0.018868,
-                    "cumulative_pct": 18.239,
+                    "density": 0.018848,
+                    "cumulative_pct": 18.2199,
                     "is_negative": true
                   },
                   {
@@ -52022,8 +52022,8 @@
                     "upper": -10.63,
                     "center": -11.5158,
                     "count": 29,
-                    "density": 0.030398,
-                    "cumulative_pct": 21.2788,
+                    "density": 0.030366,
+                    "cumulative_pct": 21.2565,
                     "is_negative": true
                   },
                   {
@@ -52032,8 +52032,8 @@
                     "upper": -8.8583,
                     "center": -9.7441,
                     "count": 33,
-                    "density": 0.034591,
-                    "cumulative_pct": 24.7379,
+                    "density": 0.034555,
+                    "cumulative_pct": 24.712,
                     "is_negative": true
                   },
                   {
@@ -52042,8 +52042,8 @@
                     "upper": -7.0866,
                     "center": -7.9725,
                     "count": 42,
-                    "density": 0.044025,
-                    "cumulative_pct": 29.1405,
+                    "density": 0.043979,
+                    "cumulative_pct": 29.1099,
                     "is_negative": true
                   },
                   {
@@ -52052,8 +52052,8 @@
                     "upper": -5.315,
                     "center": -6.2008,
                     "count": 43,
-                    "density": 0.045073,
-                    "cumulative_pct": 33.6478,
+                    "density": 0.045026,
+                    "cumulative_pct": 33.6126,
                     "is_negative": true
                   },
                   {
@@ -52062,8 +52062,8 @@
                     "upper": -3.5433,
                     "center": -4.4292,
                     "count": 38,
-                    "density": 0.039832,
-                    "cumulative_pct": 37.631,
+                    "density": 0.039791,
+                    "cumulative_pct": 37.5916,
                     "is_negative": true
                   },
                   {
@@ -52072,8 +52072,8 @@
                     "upper": -1.7717,
                     "center": -2.6575,
                     "count": 40,
-                    "density": 0.041929,
-                    "cumulative_pct": 41.8239,
+                    "density": 0.041885,
+                    "cumulative_pct": 41.7801,
                     "is_negative": true
                   },
                   {
@@ -52081,9 +52081,9 @@
                     "lower": -1.7717,
                     "upper": 0.0,
                     "center": -0.8858,
-                    "count": 49,
-                    "density": 0.051363,
-                    "cumulative_pct": 46.9602,
+                    "count": 48,
+                    "density": 0.050262,
+                    "cumulative_pct": 46.8063,
                     "is_negative": true
                   },
                   {
@@ -52091,9 +52091,9 @@
                     "lower": 0.0,
                     "upper": 1.7717,
                     "center": 0.8858,
-                    "count": 42,
-                    "density": 0.044025,
-                    "cumulative_pct": 51.3627,
+                    "count": 44,
+                    "density": 0.046073,
+                    "cumulative_pct": 51.4136,
                     "is_negative": false
                   },
                   {
@@ -52102,8 +52102,8 @@
                     "upper": 3.5433,
                     "center": 2.6575,
                     "count": 49,
-                    "density": 0.051363,
-                    "cumulative_pct": 56.499,
+                    "density": 0.051309,
+                    "cumulative_pct": 56.5445,
                     "is_negative": false
                   },
                   {
@@ -52112,8 +52112,8 @@
                     "upper": 5.315,
                     "center": 4.4292,
                     "count": 67,
-                    "density": 0.070231,
-                    "cumulative_pct": 63.522,
+                    "density": 0.070157,
+                    "cumulative_pct": 63.5602,
                     "is_negative": false
                   },
                   {
@@ -52122,8 +52122,8 @@
                     "upper": 7.0866,
                     "center": 6.2008,
                     "count": 36,
-                    "density": 0.037736,
-                    "cumulative_pct": 67.2956,
+                    "density": 0.037696,
+                    "cumulative_pct": 67.3298,
                     "is_negative": false
                   },
                   {
@@ -52132,8 +52132,8 @@
                     "upper": 8.8583,
                     "center": 7.9725,
                     "count": 42,
-                    "density": 0.044025,
-                    "cumulative_pct": 71.6981,
+                    "density": 0.043979,
+                    "cumulative_pct": 71.7277,
                     "is_negative": false
                   },
                   {
@@ -52142,8 +52142,8 @@
                     "upper": 10.63,
                     "center": 9.7441,
                     "count": 31,
-                    "density": 0.032495,
-                    "cumulative_pct": 74.9476,
+                    "density": 0.032461,
+                    "cumulative_pct": 74.9738,
                     "is_negative": false
                   },
                   {
@@ -52152,8 +52152,8 @@
                     "upper": 12.4016,
                     "center": 11.5158,
                     "count": 37,
-                    "density": 0.038784,
-                    "cumulative_pct": 78.826,
+                    "density": 0.038743,
+                    "cumulative_pct": 78.8482,
                     "is_negative": false
                   },
                   {
@@ -52162,8 +52162,8 @@
                     "upper": 14.1733,
                     "center": 13.2875,
                     "count": 22,
-                    "density": 0.023061,
-                    "cumulative_pct": 81.1321,
+                    "density": 0.023037,
+                    "cumulative_pct": 81.1518,
                     "is_negative": false
                   },
                   {
@@ -52172,8 +52172,8 @@
                     "upper": 15.945,
                     "center": 15.0591,
                     "count": 19,
-                    "density": 0.019916,
-                    "cumulative_pct": 83.1237,
+                    "density": 0.019895,
+                    "cumulative_pct": 83.1414,
                     "is_negative": false
                   },
                   {
@@ -52182,8 +52182,8 @@
                     "upper": 17.7166,
                     "center": 16.8308,
                     "count": 26,
-                    "density": 0.027254,
-                    "cumulative_pct": 85.8491,
+                    "density": 0.027225,
+                    "cumulative_pct": 85.8639,
                     "is_negative": false
                   },
                   {
@@ -52192,8 +52192,8 @@
                     "upper": 19.4883,
                     "center": 18.6025,
                     "count": 18,
-                    "density": 0.018868,
-                    "cumulative_pct": 87.7358,
+                    "density": 0.018848,
+                    "cumulative_pct": 87.7487,
                     "is_negative": false
                   },
                   {
@@ -52202,8 +52202,8 @@
                     "upper": 21.2599,
                     "center": 20.3741,
                     "count": 15,
-                    "density": 0.015723,
-                    "cumulative_pct": 89.3082,
+                    "density": 0.015707,
+                    "cumulative_pct": 89.3194,
                     "is_negative": false
                   },
                   {
@@ -52212,8 +52212,8 @@
                     "upper": 23.0316,
                     "center": 22.1458,
                     "count": 7,
-                    "density": 0.007338,
-                    "cumulative_pct": 90.0419,
+                    "density": 0.00733,
+                    "cumulative_pct": 90.0524,
                     "is_negative": false
                   },
                   {
@@ -52222,8 +52222,8 @@
                     "upper": 24.8033,
                     "center": 23.9174,
                     "count": 11,
-                    "density": 0.01153,
-                    "cumulative_pct": 91.195,
+                    "density": 0.011518,
+                    "cumulative_pct": 91.2042,
                     "is_negative": false
                   },
                   {
@@ -52232,8 +52232,8 @@
                     "upper": 26.5749,
                     "center": 25.6891,
                     "count": 11,
-                    "density": 0.01153,
-                    "cumulative_pct": 92.348,
+                    "density": 0.011518,
+                    "cumulative_pct": 92.356,
                     "is_negative": false
                   },
                   {
@@ -52242,8 +52242,8 @@
                     "upper": 28.3466,
                     "center": 27.4608,
                     "count": 9,
-                    "density": 0.009434,
-                    "cumulative_pct": 93.2914,
+                    "density": 0.009424,
+                    "cumulative_pct": 93.2984,
                     "is_negative": false
                   },
                   {
@@ -52252,8 +52252,8 @@
                     "upper": 30.1183,
                     "center": 29.2324,
                     "count": 10,
-                    "density": 0.010482,
-                    "cumulative_pct": 94.3396,
+                    "density": 0.010471,
+                    "cumulative_pct": 94.3455,
                     "is_negative": false
                   },
                   {
@@ -52262,8 +52262,8 @@
                     "upper": 31.8899,
                     "center": 31.0041,
                     "count": 7,
-                    "density": 0.007338,
-                    "cumulative_pct": 95.0734,
+                    "density": 0.00733,
+                    "cumulative_pct": 95.0785,
                     "is_negative": false
                   },
                   {
@@ -52272,8 +52272,8 @@
                     "upper": 33.6616,
                     "center": 32.7758,
                     "count": 6,
-                    "density": 0.006289,
-                    "cumulative_pct": 95.7023,
+                    "density": 0.006283,
+                    "cumulative_pct": 95.7068,
                     "is_negative": false
                   },
                   {
@@ -52282,8 +52282,8 @@
                     "upper": 35.4332,
                     "center": 34.5474,
                     "count": 6,
-                    "density": 0.006289,
-                    "cumulative_pct": 96.3312,
+                    "density": 0.006283,
+                    "cumulative_pct": 96.3351,
                     "is_negative": false
                   },
                   {
@@ -52292,8 +52292,8 @@
                     "upper": 37.2049,
                     "center": 36.3191,
                     "count": 6,
-                    "density": 0.006289,
-                    "cumulative_pct": 96.9602,
+                    "density": 0.006283,
+                    "cumulative_pct": 96.9634,
                     "is_negative": false
                   },
                   {
@@ -52302,8 +52302,8 @@
                     "upper": 38.9766,
                     "center": 38.0907,
                     "count": 5,
-                    "density": 0.005241,
-                    "cumulative_pct": 97.4843,
+                    "density": 0.005236,
+                    "cumulative_pct": 97.4869,
                     "is_negative": false
                   },
                   {
@@ -52312,8 +52312,8 @@
                     "upper": 40.7482,
                     "center": 39.8624,
                     "count": 2,
-                    "density": 0.002096,
-                    "cumulative_pct": 97.6939,
+                    "density": 0.002094,
+                    "cumulative_pct": 97.6963,
                     "is_negative": false
                   },
                   {
@@ -52323,7 +52323,7 @@
                     "center": 41.6341,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 97.6939,
+                    "cumulative_pct": 97.6963,
                     "is_negative": false
                   },
                   {
@@ -52332,8 +52332,8 @@
                     "upper": 44.2916,
                     "center": 43.4057,
                     "count": 4,
-                    "density": 0.004193,
-                    "cumulative_pct": 98.1132,
+                    "density": 0.004188,
+                    "cumulative_pct": 98.1152,
                     "is_negative": false
                   },
                   {
@@ -52342,8 +52342,8 @@
                     "upper": 46.0632,
                     "center": 45.1774,
                     "count": 2,
-                    "density": 0.002096,
-                    "cumulative_pct": 98.3229,
+                    "density": 0.002094,
+                    "cumulative_pct": 98.3246,
                     "is_negative": false
                   },
                   {
@@ -52352,8 +52352,8 @@
                     "upper": 47.8349,
                     "center": 46.949,
                     "count": 1,
-                    "density": 0.001048,
-                    "cumulative_pct": 98.4277,
+                    "density": 0.001047,
+                    "cumulative_pct": 98.4293,
                     "is_negative": false
                   },
                   {
@@ -52362,8 +52362,8 @@
                     "upper": 49.6065,
                     "center": 48.7207,
                     "count": 3,
-                    "density": 0.003145,
-                    "cumulative_pct": 98.7421,
+                    "density": 0.003141,
+                    "cumulative_pct": 98.7435,
                     "is_negative": false
                   },
                   {
@@ -52372,8 +52372,8 @@
                     "upper": 51.3782,
                     "center": 50.4924,
                     "count": 2,
-                    "density": 0.002096,
-                    "cumulative_pct": 98.9518,
+                    "density": 0.002094,
+                    "cumulative_pct": 98.9529,
                     "is_negative": false
                   },
                   {
@@ -52383,7 +52383,7 @@
                     "center": 52.264,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 98.9518,
+                    "cumulative_pct": 98.9529,
                     "is_negative": false
                   },
                   {
@@ -52392,8 +52392,8 @@
                     "upper": 54.9215,
                     "center": 54.0357,
                     "count": 3,
-                    "density": 0.003145,
-                    "cumulative_pct": 99.2662,
+                    "density": 0.003141,
+                    "cumulative_pct": 99.267,
                     "is_negative": false
                   },
                   {
@@ -52402,8 +52402,8 @@
                     "upper": 56.6932,
                     "center": 55.8074,
                     "count": 1,
-                    "density": 0.001048,
-                    "cumulative_pct": 99.3711,
+                    "density": 0.001047,
+                    "cumulative_pct": 99.3717,
                     "is_negative": false
                   },
                   {
@@ -52412,8 +52412,8 @@
                     "upper": 58.4649,
                     "center": 57.579,
                     "count": 2,
-                    "density": 0.002096,
-                    "cumulative_pct": 99.5807,
+                    "density": 0.002094,
+                    "cumulative_pct": 99.5812,
                     "is_negative": false
                   },
                   {
@@ -52423,7 +52423,7 @@
                     "center": 59.3507,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.5807,
+                    "cumulative_pct": 99.5812,
                     "is_negative": false
                   },
                   {
@@ -52432,8 +52432,8 @@
                     "upper": 62.0082,
                     "center": 61.1223,
                     "count": 2,
-                    "density": 0.002096,
-                    "cumulative_pct": 99.7904,
+                    "density": 0.002094,
+                    "cumulative_pct": 99.7906,
                     "is_negative": false
                   },
                   {
@@ -52443,7 +52443,7 @@
                     "center": 62.894,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.7904,
+                    "cumulative_pct": 99.7906,
                     "is_negative": false
                   },
                   {
@@ -52452,8 +52452,8 @@
                     "upper": 65.5515,
                     "center": 64.6657,
                     "count": 1,
-                    "density": 0.001048,
-                    "cumulative_pct": 99.8952,
+                    "density": 0.001047,
+                    "cumulative_pct": 99.8953,
                     "is_negative": false
                   },
                   {
@@ -52463,7 +52463,7 @@
                     "center": 66.4373,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8952,
+                    "cumulative_pct": 99.8953,
                     "is_negative": false
                   },
                   {
@@ -52473,7 +52473,7 @@
                     "center": 68.209,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8952,
+                    "cumulative_pct": 99.8953,
                     "is_negative": false
                   },
                   {
@@ -52482,7 +52482,7 @@
                     "upper": 70.8665,
                     "center": 69.9807,
                     "count": 1,
-                    "density": 0.001048,
+                    "density": 0.001047,
                     "cumulative_pct": 100.0,
                     "is_negative": false
                   }
@@ -52591,22 +52591,22 @@
               "condition_key": "stationary_range",
               "label": "Stationary Range",
               "definition": "|Z| < 1.5\u03c3 (Normal)",
-              "count": 839,
+              "count": 840,
               "fwd_1d": {
                 "mean": 0.11,
-                "median": 0.09,
-                "win_rate": 50.5,
+                "median": 0.1,
+                "win_rate": 50.6,
                 "edge": "Neutral / Mean Reverting"
               },
               "fwd_5d": {
-                "mean": 0.75,
+                "mean": 0.76,
                 "median": -0.16,
-                "win_rate": 48.6,
+                "win_rate": 48.7,
                 "edge": "Neutral / Mean Reverting"
               },
               "fwd_10d": {
-                "mean": 1.53,
-                "median": 0.86,
+                "mean": 1.54,
+                "median": 0.87,
                 "win_rate": 52.7,
                 "edge": "Neutral / Mean Reverting"
               }
@@ -52618,20 +52618,20 @@
           "label": "Full Inception History",
           "start_date": "2007-01-02",
           "end_date": "2026-11-17",
-          "bars": 5002,
+          "bars": 5003,
           "horizons": {
             "1d": {
               "horizon_key": "1d",
               "horizon_days": 1,
               "horizon_label": "1-Day Daily Return",
-              "n_observations": 5001,
+              "n_observations": 5002,
               "moments": {
-                "mean": 0.0574,
-                "median": 0.0,
-                "std": 3.7821,
-                "ann_volatility": 60.04,
-                "skewness": 0.4985,
-                "excess_kurtosis": 14.6832
+                "mean": 0.0573,
+                "median": -0.0081,
+                "std": 3.7817,
+                "ann_volatility": 60.03,
+                "skewness": 0.4987,
+                "excess_kurtosis": 14.688
               },
               "risk_metrics": {
                 "var_95": -5.41,
@@ -52640,7 +52640,7 @@
                 "cvar_99": -12.6,
                 "max_gain": 46.48,
                 "max_drawdown": -47.48,
-                "win_rate": 49.53
+                "win_rate": 49.52
               },
               "histogram": {
                 "bin_count": 80,
@@ -52915,7 +52915,7 @@
                     "center": -16.0246,
                     "count": 4,
                     "density": 0.0008,
-                    "cumulative_pct": 0.14,
+                    "cumulative_pct": 0.1399,
                     "is_negative": true
                   },
                   {
@@ -52925,7 +52925,7 @@
                     "center": -14.8376,
                     "count": 2,
                     "density": 0.0004,
-                    "cumulative_pct": 0.18,
+                    "cumulative_pct": 0.1799,
                     "is_negative": true
                   },
                   {
@@ -52935,7 +52935,7 @@
                     "center": -13.6506,
                     "count": 3,
                     "density": 0.0006,
-                    "cumulative_pct": 0.24,
+                    "cumulative_pct": 0.2399,
                     "is_negative": true
                   },
                   {
@@ -52954,8 +52954,8 @@
                     "upper": -10.6831,
                     "center": -11.2766,
                     "count": 12,
-                    "density": 0.0024,
-                    "cumulative_pct": 0.5799,
+                    "density": 0.002399,
+                    "cumulative_pct": 0.5798,
                     "is_negative": true
                   },
                   {
@@ -52964,8 +52964,8 @@
                     "upper": -9.4961,
                     "center": -10.0896,
                     "count": 11,
-                    "density": 0.0022,
-                    "cumulative_pct": 0.7998,
+                    "density": 0.002199,
+                    "cumulative_pct": 0.7997,
                     "is_negative": true
                   },
                   {
@@ -52974,8 +52974,8 @@
                     "upper": -8.3091,
                     "center": -8.9026,
                     "count": 22,
-                    "density": 0.004399,
-                    "cumulative_pct": 1.2398,
+                    "density": 0.004398,
+                    "cumulative_pct": 1.2395,
                     "is_negative": true
                   },
                   {
@@ -52984,8 +52984,8 @@
                     "upper": -7.1221,
                     "center": -7.7156,
                     "count": 48,
-                    "density": 0.009598,
-                    "cumulative_pct": 2.1996,
+                    "density": 0.009596,
+                    "cumulative_pct": 2.1991,
                     "is_negative": true
                   },
                   {
@@ -52994,8 +52994,8 @@
                     "upper": -5.935,
                     "center": -6.5286,
                     "count": 91,
-                    "density": 0.018196,
-                    "cumulative_pct": 4.0192,
+                    "density": 0.018193,
+                    "cumulative_pct": 4.0184,
                     "is_negative": true
                   },
                   {
@@ -53004,8 +53004,8 @@
                     "upper": -4.748,
                     "center": -5.3415,
                     "count": 133,
-                    "density": 0.026595,
-                    "cumulative_pct": 6.6787,
+                    "density": 0.026589,
+                    "cumulative_pct": 6.6773,
                     "is_negative": true
                   },
                   {
@@ -53013,9 +53013,9 @@
                     "lower": -4.748,
                     "upper": -3.561,
                     "center": -4.1545,
-                    "count": 264,
-                    "density": 0.052789,
-                    "cumulative_pct": 11.9576,
+                    "count": 263,
+                    "density": 0.052579,
+                    "cumulative_pct": 11.9352,
                     "is_negative": true
                   },
                   {
@@ -53023,9 +53023,9 @@
                     "lower": -3.561,
                     "upper": -2.374,
                     "center": -2.9675,
-                    "count": 452,
-                    "density": 0.090382,
-                    "cumulative_pct": 20.9958,
+                    "count": 453,
+                    "density": 0.090564,
+                    "cumulative_pct": 20.9916,
                     "is_negative": true
                   },
                   {
@@ -53034,8 +53034,8 @@
                     "upper": -1.187,
                     "center": -1.7805,
                     "count": 649,
-                    "density": 0.129774,
-                    "cumulative_pct": 33.9732,
+                    "density": 0.129748,
+                    "cumulative_pct": 33.9664,
                     "is_negative": true
                   },
                   {
@@ -53043,9 +53043,9 @@
                     "lower": -1.187,
                     "upper": 0.0,
                     "center": -0.5935,
-                    "count": 801,
-                    "density": 0.160168,
-                    "cumulative_pct": 49.99,
+                    "count": 802,
+                    "density": 0.160336,
+                    "cumulative_pct": 50.0,
                     "is_negative": true
                   },
                   {
@@ -53054,8 +53054,8 @@
                     "upper": 1.187,
                     "center": 0.5935,
                     "count": 822,
-                    "density": 0.164367,
-                    "cumulative_pct": 66.4267,
+                    "density": 0.164334,
+                    "cumulative_pct": 66.4334,
                     "is_negative": false
                   },
                   {
@@ -53064,8 +53064,8 @@
                     "upper": 2.374,
                     "center": 1.7805,
                     "count": 685,
-                    "density": 0.136973,
-                    "cumulative_pct": 80.124,
+                    "density": 0.136945,
+                    "cumulative_pct": 80.1279,
                     "is_negative": false
                   },
                   {
@@ -53074,8 +53074,8 @@
                     "upper": 3.561,
                     "center": 2.9675,
                     "count": 376,
-                    "density": 0.075185,
-                    "cumulative_pct": 87.6425,
+                    "density": 0.07517,
+                    "cumulative_pct": 87.6449,
                     "is_negative": false
                   },
                   {
@@ -53084,8 +53084,8 @@
                     "upper": 4.748,
                     "center": 4.1545,
                     "count": 235,
-                    "density": 0.046991,
-                    "cumulative_pct": 92.3415,
+                    "density": 0.046981,
+                    "cumulative_pct": 92.3431,
                     "is_negative": false
                   },
                   {
@@ -53094,8 +53094,8 @@
                     "upper": 5.935,
                     "center": 5.3415,
                     "count": 155,
-                    "density": 0.030994,
-                    "cumulative_pct": 95.4409,
+                    "density": 0.030988,
+                    "cumulative_pct": 95.4418,
                     "is_negative": false
                   },
                   {
@@ -53104,8 +53104,8 @@
                     "upper": 7.1221,
                     "center": 6.5286,
                     "count": 75,
-                    "density": 0.014997,
-                    "cumulative_pct": 96.9406,
+                    "density": 0.014994,
+                    "cumulative_pct": 96.9412,
                     "is_negative": false
                   },
                   {
@@ -53114,8 +53114,8 @@
                     "upper": 8.3091,
                     "center": 7.7156,
                     "count": 51,
-                    "density": 0.010198,
-                    "cumulative_pct": 97.9604,
+                    "density": 0.010196,
+                    "cumulative_pct": 97.9608,
                     "is_negative": false
                   },
                   {
@@ -53124,8 +53124,8 @@
                     "upper": 9.4961,
                     "center": 8.9026,
                     "count": 29,
-                    "density": 0.005799,
-                    "cumulative_pct": 98.5403,
+                    "density": 0.005798,
+                    "cumulative_pct": 98.5406,
                     "is_negative": false
                   },
                   {
@@ -53134,8 +53134,8 @@
                     "upper": 10.6831,
                     "center": 10.0896,
                     "count": 22,
-                    "density": 0.004399,
-                    "cumulative_pct": 98.9802,
+                    "density": 0.004398,
+                    "cumulative_pct": 98.9804,
                     "is_negative": false
                   },
                   {
@@ -53145,7 +53145,7 @@
                     "center": 11.2766,
                     "count": 18,
                     "density": 0.003599,
-                    "cumulative_pct": 99.3401,
+                    "cumulative_pct": 99.3403,
                     "is_negative": false
                   },
                   {
@@ -53155,7 +53155,7 @@
                     "center": 12.4636,
                     "count": 6,
                     "density": 0.0012,
-                    "cumulative_pct": 99.4601,
+                    "cumulative_pct": 99.4602,
                     "is_negative": false
                   },
                   {
@@ -53165,7 +53165,7 @@
                     "center": 13.6506,
                     "count": 3,
                     "density": 0.0006,
-                    "cumulative_pct": 99.5201,
+                    "cumulative_pct": 99.5202,
                     "is_negative": false
                   },
                   {
@@ -53174,7 +53174,7 @@
                     "upper": 15.4311,
                     "center": 14.8376,
                     "count": 7,
-                    "density": 0.0014,
+                    "density": 0.001399,
                     "cumulative_pct": 99.6601,
                     "is_negative": false
                   },
@@ -53195,7 +53195,7 @@
                     "center": 17.2116,
                     "count": 3,
                     "density": 0.0006,
-                    "cumulative_pct": 99.78,
+                    "cumulative_pct": 99.7801,
                     "is_negative": false
                   },
                   {
@@ -53205,7 +53205,7 @@
                     "center": 18.3986,
                     "count": 3,
                     "density": 0.0006,
-                    "cumulative_pct": 99.84,
+                    "cumulative_pct": 99.8401,
                     "is_negative": false
                   },
                   {
@@ -53215,7 +53215,7 @@
                     "center": 19.5857,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.84,
+                    "cumulative_pct": 99.8401,
                     "is_negative": false
                   },
                   {
@@ -53225,7 +53225,7 @@
                     "center": 20.7727,
                     "count": 1,
                     "density": 0.0002,
-                    "cumulative_pct": 99.86,
+                    "cumulative_pct": 99.8601,
                     "is_negative": false
                   },
                   {
@@ -53455,23 +53455,23 @@
               "horizon_key": "5d",
               "horizon_days": 5,
               "horizon_label": "5-Day Swing Cycle",
-              "n_observations": 4997,
+              "n_observations": 4998,
               "moments": {
-                "mean": 0.2535,
-                "median": -0.0962,
-                "std": 8.1078,
+                "mean": 0.2524,
+                "median": -0.0969,
+                "std": 8.1074,
                 "ann_volatility": 57.56,
-                "skewness": 1.2492,
-                "excess_kurtosis": 15.3373
+                "skewness": 1.2494,
+                "excess_kurtosis": 15.3377
               },
               "risk_metrics": {
-                "var_95": -11.75,
+                "var_95": -11.74,
                 "cvar_95": -16.16,
                 "var_99": -18.67,
                 "cvar_99": -24.1,
                 "max_gain": 119.14,
                 "max_drawdown": -53.55,
-                "win_rate": 49.29
+                "win_rate": 49.28
               },
               "histogram": {
                 "bin_count": 80,
@@ -53796,7 +53796,7 @@
                     "center": -25.3181,
                     "count": 7,
                     "density": 0.001401,
-                    "cumulative_pct": 0.2802,
+                    "cumulative_pct": 0.2801,
                     "is_negative": true
                   },
                   {
@@ -53805,8 +53805,8 @@
                     "upper": -20.8502,
                     "center": -22.3395,
                     "count": 23,
-                    "density": 0.004603,
-                    "cumulative_pct": 0.7404,
+                    "density": 0.004602,
+                    "cumulative_pct": 0.7403,
                     "is_negative": true
                   },
                   {
@@ -53816,7 +53816,7 @@
                     "center": -19.3609,
                     "count": 20,
                     "density": 0.004002,
-                    "cumulative_pct": 1.1407,
+                    "cumulative_pct": 1.1405,
                     "is_negative": true
                   },
                   {
@@ -53825,8 +53825,8 @@
                     "upper": -14.893,
                     "center": -16.3823,
                     "count": 55,
-                    "density": 0.011007,
-                    "cumulative_pct": 2.2413,
+                    "density": 0.011004,
+                    "cumulative_pct": 2.2409,
                     "is_negative": true
                   },
                   {
@@ -53835,8 +53835,8 @@
                     "upper": -11.9144,
                     "center": -13.4037,
                     "count": 131,
-                    "density": 0.026216,
-                    "cumulative_pct": 4.8629,
+                    "density": 0.02621,
+                    "cumulative_pct": 4.8619,
                     "is_negative": true
                   },
                   {
@@ -53845,8 +53845,8 @@
                     "upper": -8.9358,
                     "center": -10.4251,
                     "count": 216,
-                    "density": 0.043226,
-                    "cumulative_pct": 9.1855,
+                    "density": 0.043217,
+                    "cumulative_pct": 9.1837,
                     "is_negative": true
                   },
                   {
@@ -53854,9 +53854,9 @@
                     "lower": -8.9358,
                     "upper": -5.9572,
                     "center": -7.4465,
-                    "count": 424,
-                    "density": 0.084851,
-                    "cumulative_pct": 17.6706,
+                    "count": 425,
+                    "density": 0.085034,
+                    "cumulative_pct": 17.6871,
                     "is_negative": true
                   },
                   {
@@ -53865,8 +53865,8 @@
                     "upper": -2.9786,
                     "center": -4.4679,
                     "count": 738,
-                    "density": 0.147689,
-                    "cumulative_pct": 32.4395,
+                    "density": 0.147659,
+                    "cumulative_pct": 32.453,
                     "is_negative": true
                   },
                   {
@@ -53875,8 +53875,8 @@
                     "upper": 0.0,
                     "center": -1.4893,
                     "count": 900,
-                    "density": 0.180108,
-                    "cumulative_pct": 50.4503,
+                    "density": 0.180072,
+                    "cumulative_pct": 50.4602,
                     "is_negative": true
                   },
                   {
@@ -53885,8 +53885,8 @@
                     "upper": 2.9786,
                     "center": 1.4893,
                     "count": 886,
-                    "density": 0.177306,
-                    "cumulative_pct": 68.1809,
+                    "density": 0.177271,
+                    "cumulative_pct": 68.1873,
                     "is_negative": false
                   },
                   {
@@ -53895,8 +53895,8 @@
                     "upper": 5.9572,
                     "center": 4.4679,
                     "count": 658,
-                    "density": 0.131679,
-                    "cumulative_pct": 81.3488,
+                    "density": 0.131653,
+                    "cumulative_pct": 81.3525,
                     "is_negative": false
                   },
                   {
@@ -53905,8 +53905,8 @@
                     "upper": 8.9358,
                     "center": 7.4465,
                     "count": 390,
-                    "density": 0.078047,
-                    "cumulative_pct": 89.1535,
+                    "density": 0.078031,
+                    "cumulative_pct": 89.1557,
                     "is_negative": false
                   },
                   {
@@ -53915,8 +53915,8 @@
                     "upper": 11.9144,
                     "center": 10.4251,
                     "count": 210,
-                    "density": 0.042025,
-                    "cumulative_pct": 93.356,
+                    "density": 0.042017,
+                    "cumulative_pct": 93.3573,
                     "is_negative": false
                   },
                   {
@@ -53925,8 +53925,8 @@
                     "upper": 14.893,
                     "center": 13.4037,
                     "count": 150,
-                    "density": 0.030018,
-                    "cumulative_pct": 96.3578,
+                    "density": 0.030012,
+                    "cumulative_pct": 96.3585,
                     "is_negative": false
                   },
                   {
@@ -53935,8 +53935,8 @@
                     "upper": 17.8716,
                     "center": 16.3823,
                     "count": 69,
-                    "density": 0.013808,
-                    "cumulative_pct": 97.7386,
+                    "density": 0.013806,
+                    "cumulative_pct": 97.7391,
                     "is_negative": false
                   },
                   {
@@ -53945,8 +53945,8 @@
                     "upper": 20.8502,
                     "center": 19.3609,
                     "count": 51,
-                    "density": 0.010206,
-                    "cumulative_pct": 98.7593,
+                    "density": 0.010204,
+                    "cumulative_pct": 98.7595,
                     "is_negative": false
                   },
                   {
@@ -53955,8 +53955,8 @@
                     "upper": 23.8288,
                     "center": 22.3395,
                     "count": 27,
-                    "density": 0.005403,
-                    "cumulative_pct": 99.2996,
+                    "density": 0.005402,
+                    "cumulative_pct": 99.2997,
                     "is_negative": false
                   },
                   {
@@ -53965,7 +53965,7 @@
                     "upper": 26.8074,
                     "center": 25.3181,
                     "count": 15,
-                    "density": 0.003002,
+                    "density": 0.003001,
                     "cumulative_pct": 99.5998,
                     "is_negative": false
                   },
@@ -53975,8 +53975,8 @@
                     "upper": 29.786,
                     "center": 28.2967,
                     "count": 5,
-                    "density": 0.001001,
-                    "cumulative_pct": 99.6998,
+                    "density": 0.001,
+                    "cumulative_pct": 99.6999,
                     "is_negative": false
                   },
                   {
@@ -54026,7 +54026,7 @@
                     "center": 43.1897,
                     "count": 1,
                     "density": 0.0002,
-                    "cumulative_pct": 99.8799,
+                    "cumulative_pct": 99.88,
                     "is_negative": false
                   },
                   {
@@ -54036,7 +54036,7 @@
                     "center": 46.1683,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8799,
+                    "cumulative_pct": 99.88,
                     "is_negative": false
                   },
                   {
@@ -54046,7 +54046,7 @@
                     "center": 49.1469,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8799,
+                    "cumulative_pct": 99.88,
                     "is_negative": false
                   },
                   {
@@ -54056,7 +54056,7 @@
                     "center": 52.1255,
                     "count": 1,
                     "density": 0.0002,
-                    "cumulative_pct": 99.8999,
+                    "cumulative_pct": 99.9,
                     "is_negative": false
                   },
                   {
@@ -54066,7 +54066,7 @@
                     "center": 55.1041,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8999,
+                    "cumulative_pct": 99.9,
                     "is_negative": false
                   },
                   {
@@ -54076,7 +54076,7 @@
                     "center": 58.0827,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8999,
+                    "cumulative_pct": 99.9,
                     "is_negative": false
                   },
                   {
@@ -54286,14 +54286,14 @@
               "horizon_key": "21d",
               "horizon_days": 21,
               "horizon_label": "21-Day Monthly Cycle",
-              "n_observations": 4981,
+              "n_observations": 4982,
               "moments": {
-                "mean": 0.7642,
-                "median": -0.2282,
-                "std": 15.0145,
+                "mean": 0.7644,
+                "median": -0.2182,
+                "std": 15.013,
                 "ann_volatility": 52.01,
-                "skewness": 0.5244,
-                "excess_kurtosis": 2.0358
+                "skewness": 0.5245,
+                "excess_kurtosis": 2.0368
               },
               "risk_metrics": {
                 "var_95": -21.58,
@@ -54302,7 +54302,7 @@
                 "cvar_99": -41.53,
                 "max_gain": 98.84,
                 "max_drawdown": -61.68,
-                "win_rate": 49.13
+                "win_rate": 49.16
               },
               "histogram": {
                 "bin_count": 80,
@@ -54466,8 +54466,8 @@
                     "upper": -59.3068,
                     "center": -60.5424,
                     "count": 2,
-                    "density": 0.000402,
-                    "cumulative_pct": 0.0402,
+                    "density": 0.000401,
+                    "cumulative_pct": 0.0401,
                     "is_negative": true
                   },
                   {
@@ -54477,7 +54477,7 @@
                     "center": -58.0713,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 0.0402,
+                    "cumulative_pct": 0.0401,
                     "is_negative": true
                   },
                   {
@@ -54506,8 +54506,8 @@
                     "upper": -49.4223,
                     "center": -50.6579,
                     "count": 2,
-                    "density": 0.000402,
-                    "cumulative_pct": 0.1205,
+                    "density": 0.000401,
+                    "cumulative_pct": 0.1204,
                     "is_negative": true
                   },
                   {
@@ -54536,8 +54536,8 @@
                     "upper": -42.009,
                     "center": -43.2446,
                     "count": 6,
-                    "density": 0.001205,
-                    "cumulative_pct": 0.3614,
+                    "density": 0.001204,
+                    "cumulative_pct": 0.3613,
                     "is_negative": true
                   },
                   {
@@ -54547,7 +54547,7 @@
                     "center": -40.7734,
                     "count": 8,
                     "density": 0.001606,
-                    "cumulative_pct": 0.522,
+                    "cumulative_pct": 0.5219,
                     "is_negative": true
                   },
                   {
@@ -54557,7 +54557,7 @@
                     "center": -38.3023,
                     "count": 11,
                     "density": 0.002208,
-                    "cumulative_pct": 0.7428,
+                    "cumulative_pct": 0.7427,
                     "is_negative": true
                   },
                   {
@@ -54567,7 +54567,7 @@
                     "center": -35.8312,
                     "count": 15,
                     "density": 0.003011,
-                    "cumulative_pct": 1.044,
+                    "cumulative_pct": 1.0438,
                     "is_negative": true
                   },
                   {
@@ -54576,8 +54576,8 @@
                     "upper": -32.1245,
                     "center": -33.3601,
                     "count": 18,
-                    "density": 0.003614,
-                    "cumulative_pct": 1.4053,
+                    "density": 0.003613,
+                    "cumulative_pct": 1.4051,
                     "is_negative": true
                   },
                   {
@@ -54586,8 +54586,8 @@
                     "upper": -29.6534,
                     "center": -30.889,
                     "count": 31,
-                    "density": 0.006224,
-                    "cumulative_pct": 2.0277,
+                    "density": 0.006222,
+                    "cumulative_pct": 2.0273,
                     "is_negative": true
                   },
                   {
@@ -54596,8 +54596,8 @@
                     "upper": -27.1823,
                     "center": -28.4178,
                     "count": 24,
-                    "density": 0.004818,
-                    "cumulative_pct": 2.5095,
+                    "density": 0.004817,
+                    "cumulative_pct": 2.509,
                     "is_negative": true
                   },
                   {
@@ -54606,8 +54606,8 @@
                     "upper": -24.7112,
                     "center": -25.9467,
                     "count": 47,
-                    "density": 0.009436,
-                    "cumulative_pct": 3.4531,
+                    "density": 0.009434,
+                    "cumulative_pct": 3.4524,
                     "is_negative": true
                   },
                   {
@@ -54616,8 +54616,8 @@
                     "upper": -22.2401,
                     "center": -23.4756,
                     "count": 63,
-                    "density": 0.012648,
-                    "cumulative_pct": 4.7179,
+                    "density": 0.012646,
+                    "cumulative_pct": 4.717,
                     "is_negative": true
                   },
                   {
@@ -54626,8 +54626,8 @@
                     "upper": -19.7689,
                     "center": -21.0045,
                     "count": 63,
-                    "density": 0.012648,
-                    "cumulative_pct": 5.9827,
+                    "density": 0.012646,
+                    "cumulative_pct": 5.9815,
                     "is_negative": true
                   },
                   {
@@ -54636,8 +54636,8 @@
                     "upper": -17.2978,
                     "center": -18.5334,
                     "count": 136,
-                    "density": 0.027304,
-                    "cumulative_pct": 8.7131,
+                    "density": 0.027298,
+                    "cumulative_pct": 8.7114,
                     "is_negative": true
                   },
                   {
@@ -54646,8 +54646,8 @@
                     "upper": -14.8267,
                     "center": -16.0623,
                     "count": 144,
-                    "density": 0.02891,
-                    "cumulative_pct": 11.6041,
+                    "density": 0.028904,
+                    "cumulative_pct": 11.6018,
                     "is_negative": true
                   },
                   {
@@ -54656,8 +54656,8 @@
                     "upper": -12.3556,
                     "center": -13.5911,
                     "count": 219,
-                    "density": 0.043967,
-                    "cumulative_pct": 16.0008,
+                    "density": 0.043958,
+                    "cumulative_pct": 15.9976,
                     "is_negative": true
                   },
                   {
@@ -54666,8 +54666,8 @@
                     "upper": -9.8845,
                     "center": -11.12,
                     "count": 256,
-                    "density": 0.051395,
-                    "cumulative_pct": 21.1403,
+                    "density": 0.051385,
+                    "cumulative_pct": 21.1361,
                     "is_negative": true
                   },
                   {
@@ -54676,8 +54676,8 @@
                     "upper": -7.4134,
                     "center": -8.6489,
                     "count": 314,
-                    "density": 0.06304,
-                    "cumulative_pct": 27.4443,
+                    "density": 0.063027,
+                    "cumulative_pct": 27.4388,
                     "is_negative": true
                   },
                   {
@@ -54686,8 +54686,8 @@
                     "upper": -4.9422,
                     "center": -6.1778,
                     "count": 384,
-                    "density": 0.077093,
-                    "cumulative_pct": 35.1536,
+                    "density": 0.077077,
+                    "cumulative_pct": 35.1465,
                     "is_negative": true
                   },
                   {
@@ -54696,8 +54696,8 @@
                     "upper": -2.4711,
                     "center": -3.7067,
                     "count": 427,
-                    "density": 0.085726,
-                    "cumulative_pct": 43.7262,
+                    "density": 0.085709,
+                    "cumulative_pct": 43.7174,
                     "is_negative": true
                   },
                   {
@@ -54705,9 +54705,9 @@
                     "lower": -2.4711,
                     "upper": 0.0,
                     "center": -1.2356,
-                    "count": 350,
-                    "density": 0.070267,
-                    "cumulative_pct": 50.7529,
+                    "count": 349,
+                    "density": 0.070052,
+                    "cumulative_pct": 50.7226,
                     "is_negative": true
                   },
                   {
@@ -54715,9 +54715,9 @@
                     "lower": 0.0,
                     "upper": 2.4711,
                     "center": 1.2356,
-                    "count": 363,
-                    "density": 0.072877,
-                    "cumulative_pct": 58.0406,
+                    "count": 365,
+                    "density": 0.073264,
+                    "cumulative_pct": 58.049,
                     "is_negative": false
                   },
                   {
@@ -54726,8 +54726,8 @@
                     "upper": 4.9422,
                     "center": 3.7067,
                     "count": 388,
-                    "density": 0.077896,
-                    "cumulative_pct": 65.8302,
+                    "density": 0.07788,
+                    "cumulative_pct": 65.837,
                     "is_negative": false
                   },
                   {
@@ -54736,8 +54736,8 @@
                     "upper": 7.4134,
                     "center": 6.1778,
                     "count": 316,
-                    "density": 0.063441,
-                    "cumulative_pct": 72.1743,
+                    "density": 0.063428,
+                    "cumulative_pct": 72.1798,
                     "is_negative": false
                   },
                   {
@@ -54746,8 +54746,8 @@
                     "upper": 9.8845,
                     "center": 8.6489,
                     "count": 250,
-                    "density": 0.050191,
-                    "cumulative_pct": 77.1933,
+                    "density": 0.050181,
+                    "cumulative_pct": 77.1979,
                     "is_negative": false
                   },
                   {
@@ -54756,8 +54756,8 @@
                     "upper": 12.3556,
                     "center": 11.12,
                     "count": 209,
-                    "density": 0.041959,
-                    "cumulative_pct": 81.3893,
+                    "density": 0.041951,
+                    "cumulative_pct": 81.393,
                     "is_negative": false
                   },
                   {
@@ -54766,8 +54766,8 @@
                     "upper": 14.8267,
                     "center": 13.5911,
                     "count": 179,
-                    "density": 0.035937,
-                    "cumulative_pct": 84.9829,
+                    "density": 0.035929,
+                    "cumulative_pct": 84.9859,
                     "is_negative": false
                   },
                   {
@@ -54776,8 +54776,8 @@
                     "upper": 17.2978,
                     "center": 16.0623,
                     "count": 164,
-                    "density": 0.032925,
-                    "cumulative_pct": 88.2754,
+                    "density": 0.032919,
+                    "cumulative_pct": 88.2778,
                     "is_negative": false
                   },
                   {
@@ -54786,8 +54786,8 @@
                     "upper": 19.7689,
                     "center": 18.5334,
                     "count": 134,
-                    "density": 0.026902,
-                    "cumulative_pct": 90.9657,
+                    "density": 0.026897,
+                    "cumulative_pct": 90.9675,
                     "is_negative": false
                   },
                   {
@@ -54796,8 +54796,8 @@
                     "upper": 22.2401,
                     "center": 21.0045,
                     "count": 97,
-                    "density": 0.019474,
-                    "cumulative_pct": 92.9131,
+                    "density": 0.01947,
+                    "cumulative_pct": 92.9145,
                     "is_negative": false
                   },
                   {
@@ -54806,8 +54806,8 @@
                     "upper": 24.7112,
                     "center": 23.4756,
                     "count": 56,
-                    "density": 0.011243,
-                    "cumulative_pct": 94.0373,
+                    "density": 0.01124,
+                    "cumulative_pct": 94.0385,
                     "is_negative": false
                   },
                   {
@@ -54816,8 +54816,8 @@
                     "upper": 27.1823,
                     "center": 25.9467,
                     "count": 56,
-                    "density": 0.011243,
-                    "cumulative_pct": 95.1616,
+                    "density": 0.01124,
+                    "cumulative_pct": 95.1626,
                     "is_negative": false
                   },
                   {
@@ -54826,8 +54826,8 @@
                     "upper": 29.6534,
                     "center": 28.4178,
                     "count": 43,
-                    "density": 0.008633,
-                    "cumulative_pct": 96.0249,
+                    "density": 0.008631,
+                    "cumulative_pct": 96.0257,
                     "is_negative": false
                   },
                   {
@@ -54836,8 +54836,8 @@
                     "upper": 32.1245,
                     "center": 30.889,
                     "count": 39,
-                    "density": 0.00783,
-                    "cumulative_pct": 96.8079,
+                    "density": 0.007828,
+                    "cumulative_pct": 96.8085,
                     "is_negative": false
                   },
                   {
@@ -54846,8 +54846,8 @@
                     "upper": 34.5956,
                     "center": 33.3601,
                     "count": 39,
-                    "density": 0.00783,
-                    "cumulative_pct": 97.5908,
+                    "density": 0.007828,
+                    "cumulative_pct": 97.5913,
                     "is_negative": false
                   },
                   {
@@ -54856,8 +54856,8 @@
                     "upper": 37.0668,
                     "center": 35.8312,
                     "count": 30,
-                    "density": 0.006023,
-                    "cumulative_pct": 98.1931,
+                    "density": 0.006022,
+                    "cumulative_pct": 98.1935,
                     "is_negative": false
                   },
                   {
@@ -54866,8 +54866,8 @@
                     "upper": 39.5379,
                     "center": 38.3023,
                     "count": 18,
-                    "density": 0.003614,
-                    "cumulative_pct": 98.5545,
+                    "density": 0.003613,
+                    "cumulative_pct": 98.5548,
                     "is_negative": false
                   },
                   {
@@ -54876,8 +54876,8 @@
                     "upper": 42.009,
                     "center": 40.7734,
                     "count": 10,
-                    "density": 0.002008,
-                    "cumulative_pct": 98.7553,
+                    "density": 0.002007,
+                    "cumulative_pct": 98.7555,
                     "is_negative": false
                   },
                   {
@@ -54886,8 +54886,8 @@
                     "upper": 44.4801,
                     "center": 43.2446,
                     "count": 13,
-                    "density": 0.00261,
-                    "cumulative_pct": 99.0163,
+                    "density": 0.002609,
+                    "cumulative_pct": 99.0165,
                     "is_negative": false
                   },
                   {
@@ -54897,7 +54897,7 @@
                     "center": 45.7157,
                     "count": 11,
                     "density": 0.002208,
-                    "cumulative_pct": 99.2371,
+                    "cumulative_pct": 99.2373,
                     "is_negative": false
                   },
                   {
@@ -54907,7 +54907,7 @@
                     "center": 48.1868,
                     "count": 8,
                     "density": 0.001606,
-                    "cumulative_pct": 99.3977,
+                    "cumulative_pct": 99.3978,
                     "is_negative": false
                   },
                   {
@@ -54917,7 +54917,7 @@
                     "center": 50.6579,
                     "count": 4,
                     "density": 0.000803,
-                    "cumulative_pct": 99.478,
+                    "cumulative_pct": 99.4781,
                     "is_negative": false
                   },
                   {
@@ -54926,8 +54926,8 @@
                     "upper": 54.3646,
                     "center": 53.129,
                     "count": 6,
-                    "density": 0.001205,
-                    "cumulative_pct": 99.5985,
+                    "density": 0.001204,
+                    "cumulative_pct": 99.5986,
                     "is_negative": false
                   },
                   {
@@ -54937,7 +54937,7 @@
                     "center": 55.6001,
                     "count": 3,
                     "density": 0.000602,
-                    "cumulative_pct": 99.6587,
+                    "cumulative_pct": 99.6588,
                     "is_negative": false
                   },
                   {
@@ -54947,7 +54947,7 @@
                     "center": 58.0713,
                     "count": 4,
                     "density": 0.000803,
-                    "cumulative_pct": 99.739,
+                    "cumulative_pct": 99.7391,
                     "is_negative": false
                   },
                   {
@@ -54957,7 +54957,7 @@
                     "center": 60.5424,
                     "count": 3,
                     "density": 0.000602,
-                    "cumulative_pct": 99.7992,
+                    "cumulative_pct": 99.7993,
                     "is_negative": false
                   },
                   {
@@ -54966,7 +54966,7 @@
                     "upper": 64.249,
                     "center": 63.0135,
                     "count": 2,
-                    "density": 0.000402,
+                    "density": 0.000401,
                     "cumulative_pct": 99.8394,
                     "is_negative": false
                   },
@@ -54976,8 +54976,8 @@
                     "upper": 66.7202,
                     "center": 65.4846,
                     "count": 2,
-                    "density": 0.000402,
-                    "cumulative_pct": 99.8795,
+                    "density": 0.000401,
+                    "cumulative_pct": 99.8796,
                     "is_negative": false
                   },
                   {
@@ -54987,7 +54987,7 @@
                     "center": 67.9557,
                     "count": 0,
                     "density": 0.0,
-                    "cumulative_pct": 99.8795,
+                    "cumulative_pct": 99.8796,
                     "is_negative": false
                   },
                   {
@@ -55016,8 +55016,8 @@
                     "upper": 76.6046,
                     "center": 75.3691,
                     "count": 2,
-                    "density": 0.000402,
-                    "cumulative_pct": 99.9598,
+                    "density": 0.000401,
+                    "cumulative_pct": 99.9599,
                     "is_negative": false
                   },
                   {
@@ -55215,7 +55215,7 @@
               "condition_key": "stationary_range",
               "label": "Stationary Range",
               "definition": "|Z| < 1.5\u03c3 (Normal)",
-              "count": 4383,
+              "count": 4384,
               "fwd_1d": {
                 "mean": 0.09,
                 "median": 0.0,
@@ -55229,7 +55229,7 @@
                 "edge": "Neutral / Mean Reverting"
               },
               "fwd_10d": {
-                "mean": 0.43,
+                "mean": 0.44,
                 "median": -0.08,
                 "win_rate": 49.6,
                 "edge": "Neutral / Mean Reverting"
