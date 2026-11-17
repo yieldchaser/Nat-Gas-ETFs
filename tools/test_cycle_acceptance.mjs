@@ -116,7 +116,8 @@ if (!fs.existsSync('docs/js/cycle-engine.js')) {
         if (tier) check(`${key}: tier ${tier}`, s.tier === tier, String(s.tier)); else check(`${key}: tier is MODERATE or STRONG`, s.tier === 'MODERATE' || s.tier === 'STRONG', String(s.tier));
     }
     for (const s of model.setups) check(`${s.key}: has a cycle record`, !!(s.cycle && s.cycle.us && typeof s.cycle.us.n === 'number'));
-    check('CLOSE_EXHAUSTION: tier MODERATE', by.CLOSE_EXHAUSTION && by.CLOSE_EXHAUSTION.tier === 'MODERATE');
+    // 2026-11-17: capped at WATCH after the chance test (spec section 5c): a time-shifted copy of its mask matched its record 24% of the time.
+    check('CLOSE_EXHAUSTION: tier WATCH', by.CLOSE_EXHAUSTION && by.CLOSE_EXHAUSTION.tier === 'WATCH');
     const grid = AE._statGrid(by.SHORT_ACCUMULATION || model.setups[0]);
     for (const lab of ['WORKED', 'ANY DAY', 'TYPICAL RUN', 'TYPICAL HEAT', 'TURNS CAUGHT', 'TORONTO']) check(`card shows ${lab}`, grid.includes(lab));
     // Wording: user-facing text only (comment lines are skipped).

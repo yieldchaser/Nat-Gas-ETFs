@@ -54,14 +54,23 @@ const AlertEngine = {
             },
         },
         {
-            key: 'CLOSE_EXHAUSTION', label: 'CLOSING-PRESSURE EXTREME', side: 'short', hold: 21, family: 'PRICE-VOLUME', maxTier: 'STRONG',
+            key: 'SPREAD_BLOWOUT', label: 'SPREAD BLOWOUT', side: 'long', hold: 21, family: 'MICROSTRUCTURE', maxTier: 'MODERATE',
+            rule: 'Effective spread (ESVD study) on BOIL or KOLD in its top 5% of the last year',
+            why: 'Days of closes far from the middle of the daily range mark disorderly trading, and NG has tended to turn up afterwards. A plain volatility spike does not do this.',
+            risk: 'Weaker before 2019. When it fires next to SHORT-SIDE ACCUMULATION the two point opposite ways; the BOIL side has done better.',
+            test: function(f, i) {
+                return !!(f.esvdHi && f.esvdHi[i]);
+            },
+        },
+        {
+            key: 'CLOSE_EXHAUSTION', label: 'CLOSING-PRESSURE EXTREME', side: 'short', hold: 21, family: 'PRICE-VOLUME', maxTier: 'WATCH',
             rule: 'Closing pressure at or above its 90th percentile',
             why: 'NG has closed near its daily highs on volume for a month. When closing pressure is extreme the advance has usually been exhausted.',
             risk: 'Can persist in strong bull trends.',
             test: function(f, i) { return f.cpPe[i] != null && f.cpPe[i] >= 90; },
         },
         {
-            key: 'OPT_BLOWOFF', label: 'CALL-SKEW EXTREME', side: 'short', hold: 21, family: 'OPTIONS', maxTier: 'STRONG',
+            key: 'OPT_BLOWOFF', label: 'CALL-SKEW EXTREME', side: 'short', hold: 21, family: 'OPTIONS', maxTier: 'WATCH',
             rule: 'Call skew at or above its 95th percentile with implied volatility at or above its 90th',
             why: 'The options market is paying a premium for upside while implied volatility is already extreme.',
             risk: 'Small number of historical trades.',
@@ -82,14 +91,14 @@ const AlertEngine = {
             test: function(f, i) { return f.flowPe[i] != null && f.flowPe[i] >= 90 && f.rvPe[i] != null && f.rvPe[i] >= 70; },
         },
         {
-            key: 'CAPITULATION', label: 'CAPITULATION', side: 'long', hold: 21, family: 'OPTIONS + PRICE-VOLUME', maxTier: 'MODERATE',
+            key: 'CAPITULATION', label: 'CAPITULATION', side: 'long', hold: 21, family: 'OPTIONS + PRICE-VOLUME', maxTier: 'WATCH',
             rule: 'Options vol-spike selloff with closing pressure at or below its 20th percentile',
             why: 'A sharp decline with an implied volatility spike after a month of weak closes.',
             risk: 'Catches about one low in three.',
             test: function(f, i) { return f.optState[i] === 'PANIC_FLUSH' && f.cpPe[i] != null && f.cpPe[i] <= 20; },
         },
         {
-            key: 'WASHOUT', label: 'OVERSOLD DRAWDOWN', side: 'long', hold: 10, family: 'PRICE-VOLUME', maxTier: 'MODERATE',
+            key: 'WASHOUT', label: 'OVERSOLD DRAWDOWN', side: 'long', hold: 10, family: 'PRICE-VOLUME', maxTier: 'WATCH',
             rule: 'Closing pressure at or below its 10th percentile with NG 25% or more below its 63-session high',
             why: 'Weak closes after a deep drawdown. Short-term rebound opportunity.',
             risk: 'Does not mark major cycle turns reliably.',
@@ -268,6 +277,41 @@ const AlertEngine = {
             f.zKmax10 = null;
             f.zKmin20 = null;
             f.impK = null;
+        }
+
+        // ESVD effective-spread z (Abdi-Ranaldo, 10/21) on BOIL and KOLD, ranked over the last 252 sessions;
+        // CMF-21 on BOIL ranked the same way.
+        f.esvdHi = null; f.esvdB = null; f.esvdK = null; f.cmfBLo = null;
+        if (VS && typeof VS.abdiRanaldoEsvd === 'function') {
+            const rank = (arr) => {
+                const out = new Array(n).fill(null);
+                for (let i = 0; i < n; i++) {
+                    const v = arr[i];
+                    if (v == null || !isFinite(v)) continue;
+                    let le = 0, cnt = 0;
+                    for (let j = Math.max(0, i - 251); j <= i; j++) {
+                        const x = arr[j];
+                        if (x == null || !isFinite(x)) continue;
+                        cnt++; if (x <= v) le++;
+                    }
+                    if (cnt >= 126) out[i] = le / cnt;
+                }
+                return out;
+            };
+            const ohlc = (H) => ({
+                o: H.map(b => b.open || b.close), h: H.map(b => b.high || b.close), l: H.map(b => b.low || b.close),
+                c: H.map(b => b.close), dv: H.map(b => b.close * (b.volume || 0)),
+            });
+            const ob = ohlc(B), ok = ohlc(K);
+            const rB = rank(VS.abdiRanaldoEsvd(ob.o, ob.h, ob.l, ob.c, ob.dv, 10, 21).zSpread);
+            const rK = rank(VS.abdiRanaldoEsvd(ok.o, ok.h, ok.l, ok.c, ok.dv, 10, 21).zSpread);
+            f.esvdB = rB.map(v => v != null && v >= 0.95);
+            f.esvdK = rK.map(v => v != null && v >= 0.95);
+            f.esvdHi = f.esvdB.map((v, i) => v || f.esvdK[i]);
+            if (typeof VS.cmf === 'function') {
+                const rC = rank(VS.cmf(ob.h, ob.l, ob.c, ob.dv, 21));
+                f.cmfBLo = rC.map(v => v != null && v <= 0.10);
+            }
         }
 
         const rv = new Array(n).fill(null), w = cfg.rvWindow;
@@ -602,6 +646,11 @@ const AlertEngine = {
             if (gainFromEntry >= 0.15 && pvtHighToday) exitWatch = true;
         }
 
+        const spreadToday = !!(f.esvdHi && f.esvdHi[last]);
+        const shortOpen = model.setups.some(s => s.side === 'short' && s.tier !== 'WATCH' && (s.status === 'ACTIVE' || s.status === 'IN_WINDOW'));
+        const spreadExit = spreadToday && shortOpen;
+        const boilFlowLow = !!(f.cmfBLo && f.cmfBLo[last]);
+
         model.inputs = {
             sv: f.sv ? f.sv[last] : null,
             lv: f.lv ? f.lv[last] : null,
@@ -614,6 +663,9 @@ const AlertEngine = {
             putSkewExtreme: putSkewExtreme,
             koldPvtStretched: koldPvtStretched,
             exitWatch: exitWatch,
+            spreadExit: spreadExit,
+            spreadB: !!(f.esvdB && f.esvdB[last]), spreadK: !!(f.esvdK && f.esvdK[last]),
+            boilFlowLow: boilFlowLow,
             cpPe: f.cpPe[last], cp: f.cp[last], rvPe: f.rvPe[last], rv: f.rv[last] != null ? f.rv[last] * Math.sqrt(252) * 100 : null,
             dd63: f.dd63[last], boilClimax: f.boilClimax[last], boilRvolMax: f.boilRvolMax[last], boilMwca: f.boilMwca[last],
             optState: f.optState[last], optDate: f.optLastDate, skewPe: f.skewPe[last], ngvlPe: f.ngvlPe[last],
@@ -708,6 +760,9 @@ const AlertEngine = {
                     d = f.n - 1 - mxIdx;
                 }
                 sentence = '<div class="aa-status-sent">KOLD\'s price-volume trend peaked ' + d + ' sessions ago and today was a heavy down session.</div>';
+            } else if (s.key === 'SPREAD_BLOWOUT') {
+                const who = inp.spreadB && inp.spreadK ? 'BOIL and KOLD' : (inp.spreadB ? 'BOIL' : 'KOLD');
+                sentence = '<div class="aa-status-sent">The effective spread on ' + who + ' is in its top 5% of the last year.</div>';
             } else if (s.key === 'PVT_RECOVERY') {
                 const mn = f.zKmin20 && f.zKmin20[f.n - 1] != null ? f.zKmin20[f.n - 1].toFixed(1) : '−2';
                 sentence = '<div class="aa-status-sent">KOLD\'s price-volume trend fell to ' + mn + ' and has recovered through −1.</div>';
@@ -729,6 +784,9 @@ const AlertEngine = {
             chips.push('<span class="aa-chip aa-chip-alert" data-tooltip="KOLD\'s price-volume trend is stretched and turning down.">EXIT WATCH</span>');
         }
 
+        if (s.side === 'short' && inp.spreadExit && (s.status === 'ACTIVE' || s.status === 'IN_WINDOW')) {
+            chips.push('<span class="aa-chip aa-chip-alert" data-tooltip="After a spread blowout KOLD fell 25% before rising 20% in 58% of cases (any day 42%).">EXIT WATCH: SPREAD BLOWOUT</span>');
+        }
         const chipsHtml = chips.length ? '<div class="aa-chips">' + chips.join(' ') + '</div>' : '';
 
         const planLine = s.side === 'short'
@@ -809,8 +867,8 @@ const AlertEngine = {
             } else {
                 todayText = 'TODAY  Short-side accumulation is on. KOLD entry zone; stop −20%, first target +30%.' + (inp.secondSurge ? ' Second surge in this decline.' : '');
             }
-        } else if (inp.exitWatch) {
-            todayText = 'TODAY  Exit watch on the open KOLD trade.';
+        } else if (inp.exitWatch || inp.spreadExit) {
+            todayText = 'TODAY  Exit watch on the open KOLD trade.' + (inp.spreadExit ? ' Spread blowout: KOLD has tended to fall from here.' : '');
         } else if (anyModStrongShort) {
             const few = anyModStrongShort.cycle && anyModStrongShort.cycle.us && anyModStrongShort.cycle.us.n < 20;
             todayText = inp.koldPvtStretched
@@ -821,11 +879,16 @@ const AlertEngine = {
             todayText = 'TODAY  ' + anyModLong.label + ' is on. Tactical BOIL entry; stop −15%, target +30%.' + (fewL ? ' Few past trades; half size.' : '');
         } else if (inp.longDipBuying) {
             todayText = 'TODAY  No entry. Heavy buying into a falling BOIL has a poor record.';
+        } else if (inp.boilFlowLow) {
+            todayText = 'TODAY  No entry. BOIL money flow is at a one-year low; BOIL has tended to keep falling.';
         }
 
         const notes = [], xc = this._crossCheck(inp);
         if (inp.longDipBuying) {
             notes.push('LONG-SIDE DIP BUYING: Heavy volume is going into a falling BOIL. Past BOIL entries in this state reached +30% about one time in four');
+        }
+        if (inp.boilFlowLow) {
+            notes.push('BOIL MONEY FLOW AT 1-YEAR LOW: BOIL money flow (CMF) is in its bottom 10% of the last year. Past BOIL entries in this state reached +30% about one time in four');
         }
         if (inp.putSkewExtreme) {
             notes.push('PUT-SKEW EXTREME: Put skew is extreme with BOIL deeply off its high. Past BOIL entries here reached +30% in 11 of 19 trades');
@@ -914,7 +977,7 @@ const AlertEngine = {
                 (notes.length ? '<div class="aa-head-note">' + notes.join('. ') + '.</div>' : '') +
                 '<div class="aa-head-basis">Data through ' + model.asOf + ' · trade cycles basis</div>' +
             '</div>' +
-            (live.length ? '<div class="aa-cards">' + live.map(function(s) { return self._card(s, model.frame, inp); }).join('') + '</div>' : '') +
+            (live.filter(function(s) { return s.tier !== 'WATCH'; }).length ? '<div class="aa-cards">' + live.filter(function(s) { return s.tier !== 'WATCH'; }).map(function(s) { return self._card(s, model.frame, inp); }).join('') + '</div>' : '') +
             '<div class="aa-inputs">' + gauges + '</div>' +
             '<details class="aa-details"><summary>All setups: status and cycle record</summary>' +
                 '<div class="aa-table-wrap"><table class="aa-table"><thead><tr>' +

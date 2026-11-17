@@ -35,17 +35,17 @@ const f = m.frame;
 assert(m.ready && f.n > 3500, 'model ready');
 assert.strictEqual(m.setups.length, AE.SETUPS.length);
 
-// Verify expected tiers from spec W2 item 3:
-// SHORT_ACCUMULATION STRONG; CLOSE_EXHAUSTION, CROWDED_RALLY, SHORT_LEG_REVERSAL MODERATE;
-// OPT_BLOWOFF, CAPITULATION, WASHOUT MODERATE; CHASED_RALLY WATCH.
+// Expected tiers. Setups whose record a time-shifted copy of their own mask matches more than
+// 10% of the time are capped at WATCH (chance test, docs/cycle_frame_spec.md section 5c):
+// CLOSE_EXHAUSTION, OPT_BLOWOFF, CAPITULATION, WASHOUT, CHASED_RALLY.
 const byKey = Object.fromEntries(m.setups.map(s => [s.key, s]));
 assert.strictEqual(byKey.SHORT_ACCUMULATION.tier, 'STRONG', 'SHORT_ACCUMULATION tier STRONG');
-assert.strictEqual(byKey.CLOSE_EXHAUSTION.tier, 'MODERATE', 'CLOSE_EXHAUSTION tier MODERATE');
+assert.strictEqual(byKey.CLOSE_EXHAUSTION.tier, 'WATCH', 'CLOSE_EXHAUSTION tier WATCH');
 assert.strictEqual(byKey.CROWDED_RALLY.tier, 'MODERATE', 'CROWDED_RALLY tier MODERATE');
 assert.strictEqual(byKey.SHORT_LEG_REVERSAL.tier, 'MODERATE', 'SHORT_LEG_REVERSAL tier MODERATE');
-assert.strictEqual(byKey.OPT_BLOWOFF.tier, 'MODERATE', 'OPT_BLOWOFF tier MODERATE');
-assert.strictEqual(byKey.CAPITULATION.tier, 'MODERATE', 'CAPITULATION tier MODERATE');
-assert.strictEqual(byKey.WASHOUT.tier, 'MODERATE', 'WASHOUT tier MODERATE');
+assert.strictEqual(byKey.OPT_BLOWOFF.tier, 'WATCH', 'OPT_BLOWOFF tier WATCH');
+assert.strictEqual(byKey.CAPITULATION.tier, 'WATCH', 'CAPITULATION tier WATCH');
+assert.strictEqual(byKey.WASHOUT.tier, 'WATCH', 'WASHOUT tier WATCH');
 assert.strictEqual(byKey.CHASED_RALLY.tier, 'WATCH', 'CHASED_RALLY tier WATCH');
 
 // Cycle records within Section 5 tolerances
@@ -78,6 +78,18 @@ const synthFrame = {
 };
 assert.strictEqual(AE.SETUPS.find(s => s.key === 'SHORT_ACCUMULATION').test(synthFrame, 15), true, 'Synthetic A test');
 assert.strictEqual(AE.SETUPS.find(s => s.key === 'SHORT_LEG_REVERSAL').test(synthFrame, 75), true, 'Synthetic K test');
+
+// SPREAD_BLOWOUT (ESVD spread on BOIL or KOLD at its one-year 95th percentile -> buy BOIL).
+// Reference from the 12-study sweep (2026-11-17): 33 of 68 worked on BOIL (any day 35%), 33 of 67 on HNU.
+const sb = m.setups.find(s => s.key === 'SPREAD_BLOWOUT');
+assert(sb, 'SPREAD_BLOWOUT exists');
+assert.strictEqual(sb.side, 'long', 'SPREAD_BLOWOUT is a long-side setup');
+assert(sb.cycle && sb.cycle.us && sb.cycle.us.n >= 60, 'SPREAD_BLOWOUT has at least 60 BOIL entries');
+assert(sb.cycle.us.workedPct - sb.cycle.us.any.workedPct >= 8, 'SPREAD_BLOWOUT beats any day by 8+ points on BOIL');
+assert(sb.cycle.ca.workedPct - sb.cycle.ca.any.workedPct >= 8, 'SPREAD_BLOWOUT beats any day by 8+ points on Toronto');
+assert(sb.tier === 'MODERATE', 'SPREAD_BLOWOUT capped at MODERATE');
+assert.strictEqual(AE.SETUPS.find(s => s.key === 'SPREAD_BLOWOUT').test({ esvdHi: [false, true] }, 1), true, 'Synthetic spread test');
+assert.strictEqual(AE.SETUPS.find(s => s.key === 'SPREAD_BLOWOUT').test({ esvdHi: null }, 1), false, 'Spread test off without data');
 
 // Render verification
 const el = { innerHTML: '', querySelectorAll: () => [] };

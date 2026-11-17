@@ -136,8 +136,11 @@ const Charts = {
 
             // Color by regime-anchored magnitude
             const ratio = volumes[i] / colorMax;
+            const rv = data[i] ? (mode === 'dollar' ? data[i].rvolDollar : data[i].rvolShare) : null;
+            const band = (rv != null && typeof Cards !== 'undefined' && Cards.rvolBand) ? Cards.rvolBand(rv) : null;
             let color;
-            if (ratio > 0.9) color = '#8855bb';
+            if (band) color = band.bar;
+            else if (ratio > 0.9) color = '#8855bb';
             else if (ratio > 0.75) color = '#c04040';
             else if (ratio > 0.5) color = '#c07828';
             else if (ratio > 0.3) color = '#385e88';
