@@ -1007,7 +1007,33 @@ const Cards = {
         return { label: 'DEAD CALM', color: '#38bdf8', bar: '#121422' };
     },
 
+    // "Wed 5 Oct 26" style label for the touch readout (compact on phones)
+    _shortDay(iso) {
+        if (!iso || typeof iso !== 'string' || iso.length < 10) return iso || '—';
+        const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(iso.slice(5, 7), 10) - 1];
+        return m ? `${parseInt(iso.slice(8, 10), 10)} ${m} ${iso.slice(2, 4)}` : iso;
+    },
+
+    // Docked readout shown above the chart on touch screens. It sits in normal page flow,
+    // so it never covers the bars or the neighbouring prices the way the floating tooltip does.
+    _touchReadoutFor(wrap) {
+        let el = wrap.previousElementSibling;
+        if (!el || !el.classList.contains('card-touch-readout')) {
+            el = document.createElement('div');
+            el.className = 'card-touch-readout';
+            el.innerHTML = '<span class="crd-hint">Touch the chart: day before · day · day after</span>';
+            wrap.parentNode.insertBefore(el, wrap);
+        }
+        return el;
+    },
+
+    _readoutCell(bar, cls) {
+        if (!bar) return `<div class="crd-cell ${cls}"><span class="crd-d">—</span><span class="crd-p">—</span></div>`;
+        return `<div class="crd-cell ${cls}"><span class="crd-d">${Cards._shortDay(bar.date)}</span><span class="crd-p">$${Cards.formatPrice(bar.close)}</span></div>`;
+    },
+
     bindCardHover(wrap, sparkCanvas, volCanvas, data, color, ticker) {
+        const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
         let tooltipEl = document.getElementById('card-chart-tooltip');
         if (!tooltipEl) {
             tooltipEl = document.createElement('div');
@@ -1028,7 +1054,7 @@ const Cards = {
         tooltipEl.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.65)';
         tooltipEl.style.minWidth = '160px';
 
-        const onMove = (clientX, clientY) => {
+        const onMove = (clientX, clientY, fromTouch) => {
             const rect = wrap.getBoundingClientRect();
             const mouseX = clientX - rect.left;
             const w = rect.width;
@@ -1073,6 +1099,28 @@ const Cards = {
             } else {
                 const ratio = activeVol / colorMaxVol;
                 volTag = `<span style="color:rgba(255,255,255,0.6)">${(ratio * 100).toFixed(0)}% of window high</span>`;
+            }
+
+            if (fromTouch) {
+                // Phones: fill the docked readout with the bar before, the bar itself and the bar after.
+                // The floating tooltip is hidden so it cannot cover the chart.
+                const readout = Cards._touchReadoutFor(wrap);
+                const pb = idx > 0 ? data[idx - 1] : null;
+                const nb = idx < data.length - 1 ? data[idx + 1] : null;
+                const chgTxt = diff != null && pct != null
+                    ? `${diff >= 0 ? '+' : ''}${pct.toFixed(2)}%`
+                    : '—';
+                const chgCol = diff == null ? 'rgba(255,255,255,0.6)' : (diff >= 0 ? 'var(--green)' : 'var(--red)');
+                readout.innerHTML =
+                    Cards._readoutCell(pb, 'crd-prev') +
+                    `<div class="crd-cell crd-cur">
+                        <span class="crd-d">${Cards._shortDay(d.date)}</span>
+                        <span class="crd-p">$${Cards.formatPrice(d.close)}</span>
+                        <span class="crd-chg" style="color:${chgCol}">${chgTxt}</span>
+                     </div>` +
+                    Cards._readoutCell(nb, 'crd-next');
+                tooltipEl.style.display = 'none';
+                return;
             }
 
             const changeHtml = diff != null
@@ -1134,14 +1182,18 @@ const Cards = {
             if (tooltipEl) tooltipEl.style.display = 'none';
         };
 
-        wrap.onmousemove = (e) => onMove(e.clientX, e.clientY);
+        // On touch screens iOS can fire synthetic mouse events after a tap; ignore them so
+        // the floating tooltip never appears on a phone.
+        wrap.onmousemove = (e) => { if (!coarsePointer) onMove(e.clientX, e.clientY, false); };
         wrap.onmouseleave = onLeave;
 
-        wrap.ontouchmove = (e) => {
+        const onTouch = (e) => {
             if (e.touches && e.touches[0]) {
-                onMove(e.touches[0].clientX, e.touches[0].clientY);
+                onMove(e.touches[0].clientX, e.touches[0].clientY, true);
             }
         };
+        wrap.ontouchstart = onTouch;
+        wrap.ontouchmove = onTouch;
         wrap.ontouchend = onLeave;
         wrap.ontouchcancel = onLeave;
     }
