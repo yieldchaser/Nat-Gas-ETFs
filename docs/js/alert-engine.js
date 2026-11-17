@@ -690,7 +690,7 @@ const AlertEngine = {
             if (s.openTrade && s.openTrade.entry !== s.since) status += '. Holding window opened ' + s.openTrade.entry;
         } else {
             const t = s.openTrade;
-            status = 'Holding window: triggered ' + t.entry + ', session ' + t.sessions + ' of ' + s.hold + ', NG ' + this._s(t.ng) + ' since entry';
+            status = 'Holding window: triggered ' + t.entry + ', session ' + t.sessions + ' of ' + s.hold + ', ' + (s.side === 'short' ? 'KOLD ' : 'BOIL ') + this._s(t.leg) + ' since entry';
         }
 
         let sentence = '';
@@ -812,9 +812,13 @@ const AlertEngine = {
         } else if (inp.exitWatch) {
             todayText = 'TODAY  Exit watch on the open KOLD trade.';
         } else if (anyModStrongShort) {
-            todayText = 'TODAY  ' + anyModStrongShort.label + ' is on. KOLD entry zone; stop −20%, first target +30%.';
+            const few = anyModStrongShort.cycle && anyModStrongShort.cycle.us && anyModStrongShort.cycle.us.n < 20;
+            todayText = inp.koldPvtStretched
+                ? 'TODAY  ' + anyModStrongShort.label + ' is on, with a caution: KOLD price-volume trend is high. Half size or wait.'
+                : 'TODAY  ' + anyModStrongShort.label + ' is on. KOLD entry zone; stop −20%, first target +30%.' + (few ? ' Few past trades; half size.' : '');
         } else if (anyModLong) {
-            todayText = 'TODAY  ' + anyModLong.label + ' is on. Tactical BOIL entry; stop −15%, target +30%.';
+            const fewL = anyModLong.cycle && anyModLong.cycle.us && anyModLong.cycle.us.n < 20;
+            todayText = 'TODAY  ' + anyModLong.label + ' is on. Tactical BOIL entry; stop −15%, target +30%.' + (fewL ? ' Few past trades; half size.' : '');
         } else if (inp.longDipBuying) {
             todayText = 'TODAY  No entry. Heavy buying into a falling BOIL has a poor record.';
         }

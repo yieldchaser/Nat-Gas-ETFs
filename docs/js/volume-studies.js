@@ -2795,6 +2795,52 @@ const VolumeStudies = {
 
             // Render Viewport-Anchored IPVT Curve (Cyan, width 1.8)
             drawPath(line, '#38bdf8', 1.8, null);
+
+            // 63-session position strip along the bottom of the pane, and turn markers on the line
+            const ex = payload.extraData || {};
+            const tk = ex.ticker || this.state.ticker || 'BOIL';
+            const shortEtf = ['KOLD', 'HND.TO', '3NGS.L'].includes(tk);
+            if (ex.z63) {
+                const colW = chartW / n, stripH = 5, sy = pad.top + chartH - stripH;
+                for (let i = 0; i < n; i++) {
+                    const z = ex.z63[i];
+                    if (z == null || !isFinite(z)) continue;
+                    let c = null;
+                    if (z <= -1.5) c = 'rgba(56,189,248,0.85)';
+                    else if (z <= -0.75) c = 'rgba(80,144,160,0.55)';
+                    else if (z >= 1.5) c = 'rgba(239,68,68,0.85)';
+                    else if (z >= 0.75) c = 'rgba(212,168,48,0.6)';
+                    if (!c) continue;
+                    ctx.fillStyle = c;
+                    ctx.fillRect(pad.left + i * colW, sy, Math.max(1, colW), stripH);
+                }
+            }
+            const tri = (x, y, up, color) => {
+                const s = 5;
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                if (up) { ctx.moveTo(x, y - s); ctx.lineTo(x - s, y + s); ctx.lineTo(x + s, y + s); }
+                else { ctx.moveTo(x, y + s); ctx.lineTo(x - s, y - s); ctx.lineTo(x + s, y - s); }
+                ctx.closePath();
+                ctx.fill();
+            };
+            // Episode starts only (no marker of the same kind in the previous 10 sessions), as counted in the research
+            const fresh = (arr, i) => {
+                if (!arr || !arr[i]) return false;
+                for (let j = Math.max(0, i - 10); j < i; j++) if (arr[j]) return false;
+                return true;
+            };
+            for (let i = 0; i < n; i++) {
+                const v = line[i];
+                if (v == null || !isFinite(v)) continue;
+                const x = getX(i), y = clampY(mapY(v));
+                if (fresh(ex.highMarker, i)) tri(x, y - 10, false, '#ef4444');
+                if (fresh(ex.lowMarker, i)) tri(x, y + 10, true, '#3db87a');
+                if (shortEtf && fresh(ex.setupR, i)) {
+                    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.arc(x, y, 5.5, 0, Math.PI * 2); ctx.stroke();
+                }
+            }
         } else if (line && payload.study === 'obv') {
             const extra = payload.extraData || {};
             const ema5Arr = extra.ema5 || payload.secondaryLine;
@@ -3859,6 +3905,7 @@ const VolumeStudies = {
                 sentence = 'No turn signal. The 21-session oscillator swings between extremes most weeks and is not a timing tool on its own.';
             }
             parts.push(`<span class="vs-reading-item vs-reading-sentence" style="display:block;width:100%;margin-top:4px;font-size:0.75rem;color:var(--text-muted);font-style:italic;">${sentence}</span>`);
+            parts.push(`<span class="vs-reading-item vs-reading-sentence" style="display:block;width:100%;font-size:0.62rem;font-weight:500;color:rgba(255,255,255,0.55);"><span style="color:#ef4444;">▼</span> stretched, turning down &nbsp;<span style="color:#3db87a;">▲</span> washed out, turning up${isShort ? ' &nbsp;○ washout recovery entry' : ''} &nbsp;· bottom strip: 63-session position (<span style="color:#38bdf8;">washed out</span> / <span style="color:#ef4444;">stretched</span>)</span>`);
         }
         el.innerHTML = parts.join('');
     }

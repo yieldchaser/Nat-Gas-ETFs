@@ -1893,10 +1893,22 @@ function renderCards() {
                 const q25 = Math.round(quantile(legMoves, 0.25));
                 const q75 = Math.round(quantile(legMoves, 0.75));
                 const xPct = Math.round(Math.abs(x * 100));
+                // Extreme reached so far in this leg, and how it ranks against completed legs
+                let exI = lastPiv.i;
+                for (let k = lastPiv.i; k < d.closes.length; k++) {
+                    if (isFalling ? d.closes[k] < d.closes[exI] : d.closes[k] > d.closes[exI]) exI = k;
+                }
+                const exMove = Math.abs(d.closes[exI] / lastPiv.price - 1) * 100;
+                const beyond = legMoves.filter(v => v < exMove).length;
+                const backPct = Math.round(Math.abs(lastClose / d.closes[exI] - 1) * 100);
+                const exDate = new Date(d.dates[exI] + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+                const legExtreme = exI !== d.closes.length - 1
+                    ? ` &middot; <b style="color:var(--text-bright);">${isFalling ? 'low' : 'high'} of this leg ${isFalling ? '−' : '+'}${Math.round(exMove)}% on ${exDate}</b>, now ${backPct}% ${isFalling ? 'above' : 'below'} it; larger than ${beyond} of ${legMoves.length} past ${isFalling ? 'declines' : 'rallies'}`
+                    : ` &middot; at the ${isFalling ? 'low' : 'high'} of this leg; larger than ${beyond} of ${legMoves.length} past ${isFalling ? 'declines' : 'rallies'}`;
                 if (isFalling) {
-                    currentLegHtml = `<div class="current-leg" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);font-size:0.58rem;line-height:1.4;color:rgba(255,255,255,0.85);"><span style="font-weight:800;letter-spacing:1px;color:var(--text-bright);">CURRENT LEG</span> &nbsp;down ${xPct}% over ${n} sessions &middot; typical decline ${med}% over ${medN} sessions (middle half ${q25}–${q75}%)</div>`;
+                    currentLegHtml = `<div class="current-leg" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);font-size:0.58rem;line-height:1.4;color:rgba(255,255,255,0.85);"><span style="font-weight:800;letter-spacing:1px;color:var(--text-bright);">CURRENT LEG</span> &nbsp;down ${xPct}% over ${n} sessions &middot; typical decline ${med}% over ${medN} sessions (middle half ${q25}–${q75}%)${legExtreme}</div>`;
                 } else {
-                    currentLegHtml = `<div class="current-leg" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);font-size:0.58rem;line-height:1.4;color:rgba(255,255,255,0.85);"><span style="font-weight:800;letter-spacing:1px;color:var(--text-bright);">CURRENT LEG</span> &nbsp;up ${xPct}% over ${n} sessions &middot; typical rally +${med}% over ${medN} sessions (middle half +${q25}–${q75}%)</div>`;
+                    currentLegHtml = `<div class="current-leg" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);font-size:0.58rem;line-height:1.4;color:rgba(255,255,255,0.85);"><span style="font-weight:800;letter-spacing:1px;color:var(--text-bright);">CURRENT LEG</span> &nbsp;up ${xPct}% over ${n} sessions &middot; typical rally +${med}% over ${medN} sessions (middle half +${q25}–${q75}%)${legExtreme}</div>`;
                 }
             }
         }
