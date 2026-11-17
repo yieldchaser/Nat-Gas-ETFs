@@ -1014,22 +1014,49 @@ const Cards = {
         return m ? `${parseInt(iso.slice(8, 10), 10)} ${m} ${iso.slice(2, 4)}` : iso;
     },
 
-    // Docked readout shown above the chart on touch screens. It sits in normal page flow,
-    // so it never covers the bars or the neighbouring prices the way the floating tooltip does.
-    _touchReadoutFor(wrap) {
-        let el = wrap.previousElementSibling;
-        if (!el || !el.classList.contains('card-touch-readout')) {
-            el = document.createElement('div');
-            el.className = 'card-touch-readout';
-            el.innerHTML = '<span class="crd-hint">Touch the chart: day before · day · day after</span>';
-            wrap.parentNode.insertBefore(el, wrap);
-        }
-        return el;
+    // Scrub overlay for touch screens. While a finger is on the chart, the card header
+    // (ticker, name, price) is covered by a panel showing the touched day, so nothing
+    // floats over the chart and nothing below it moves. Styles are injected from here,
+    // not cards.css, so a stale cached stylesheet cannot leave it unstyled.
+    _ensureScrubStyles() {
+        if (document.getElementById('card-scrub-styles')) return;
+        const st = document.createElement('style');
+        st.id = 'card-scrub-styles';
+        st.textContent = `
+.card-scrub{position:absolute;z-index:6;display:flex;flex-direction:column;justify-content:center;gap:6px;
+ padding:0 14px;box-sizing:border-box;background:var(--bg-card,#12141c);border-bottom:1px solid rgba(255,255,255,.08);
+ border-radius:var(--card-radius,10px) var(--card-radius,10px) 0 0;font-family:'JetBrains Mono',monospace;
+ opacity:0;pointer-events:none;transition:opacity .12s ease}
+.card-scrub.on{opacity:1}
+.card-scrub .cs-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;min-width:0}
+.card-scrub .cs-date{color:var(--cyan,#5ec8e5);font-size:.78rem;font-weight:700;letter-spacing:.4px;white-space:nowrap}
+.card-scrub .cs-px{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.card-scrub .cs-price{color:var(--text-bright,#f0f4fc);font-size:1.05rem;font-weight:700}
+.card-scrub .cs-chg{font-size:.72rem;font-weight:700}
+.card-scrub .cs-bot{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.62rem;
+ color:rgba(255,255,255,.55);white-space:nowrap}
+.card-scrub .cs-bot b{color:rgba(255,255,255,.85);font-weight:700}
+.card-scrub .cs-mid{overflow:hidden;text-overflow:ellipsis;font-weight:700;letter-spacing:.4px}`;
+        document.head.appendChild(st);
     },
 
-    _readoutCell(bar, cls) {
-        if (!bar) return `<div class="crd-cell ${cls}"><span class="crd-d">—</span><span class="crd-p">—</span></div>`;
-        return `<div class="crd-cell ${cls}"><span class="crd-d">${Cards._shortDay(bar.date)}</span><span class="crd-p">$${Cards.formatPrice(bar.close)}</span></div>`;
+    _scrubFor(card) {
+        let el = card.querySelector(':scope > .card-scrub');
+        if (!el) {
+            Cards._ensureScrubStyles();
+            el = document.createElement('div');
+            el.className = 'card-scrub';
+            card.appendChild(el);
+        }
+        // Cover exactly the header block, measured each time (it wraps differently per card)
+        const header = card.querySelector('.card-header');
+        if (header) {
+            el.style.left = '0px';
+            el.style.right = '0px';
+            el.style.top = '0px';
+            el.style.height = `${header.offsetTop + header.offsetHeight + 2}px`;
+        }
+        return el;
     },
 
     bindCardHover(wrap, sparkCanvas, volCanvas, data, color, ticker) {
@@ -1102,23 +1129,31 @@ const Cards = {
             }
 
             if (fromTouch) {
-                // Phones: fill the docked readout with the bar before, the bar itself and the bar after.
-                // The floating tooltip is hidden so it cannot cover the chart.
-                const readout = Cards._touchReadoutFor(wrap);
+                const card = wrap.closest('.etf-card');
+                if (!card) return;
+                const sc = Cards._scrubFor(card);
                 const pb = idx > 0 ? data[idx - 1] : null;
                 const nb = idx < data.length - 1 ? data[idx + 1] : null;
-                const chgTxt = diff != null && pct != null
-                    ? `${diff >= 0 ? '+' : ''}${pct.toFixed(2)}%`
-                    : '—';
-                const chgCol = diff == null ? 'rgba(255,255,255,0.6)' : (diff >= 0 ? 'var(--green)' : 'var(--red)');
-                readout.innerHTML =
-                    Cards._readoutCell(pb, 'crd-prev') +
-                    `<div class="crd-cell crd-cur">
-                        <span class="crd-d">${Cards._shortDay(d.date)}</span>
-                        <span class="crd-p">$${Cards.formatPrice(d.close)}</span>
-                        <span class="crd-chg" style="color:${chgCol}">${chgTxt}</span>
-                     </div>` +
-                    Cards._readoutCell(nb, 'crd-next');
+                const up = diff != null && diff >= 0;
+                const chgTxt = diff != null && pct != null ? `${up ? '+' : ''}${pct.toFixed(2)}%` : '';
+                const chgCol = up ? 'var(--green)' : 'var(--red)';
+                const dayMonth = (b) => Cards._shortDay(b.date).replace(/ \d\d$/, '');
+                const side = (b, before) => {
+                    if (!b) return '';
+                    return before
+                        ? `‹ ${dayMonth(b)} <b>$${Cards.formatPrice(b.close)}</b>`
+                        : `${dayMonth(b)} <b>$${Cards.formatPrice(b.close)}</b> ›`;
+                };
+                const mid = band
+                    ? `<span class="cs-mid" style="color:${band.color}">${band.label} ${rv.toFixed(1)}×</span>`
+                    : `<span class="cs-mid">VOL ${Cards.formatNumber(vol, 1)}</span>`;
+                sc.innerHTML = `
+                    <div class="cs-top">
+                        <span class="cs-date">${Cards._shortDay(d.date)}</span>
+                        <span class="cs-px"><span class="cs-price">$${Cards.formatPrice(d.close)}</span><span class="cs-chg" style="color:${chgCol}">${chgTxt}</span></span>
+                    </div>
+                    <div class="cs-bot"><span>${side(pb, true)}</span>${mid}<span>${side(nb, false)}</span></div>`;
+                sc.classList.add('on');
                 tooltipEl.style.display = 'none';
                 return;
             }
@@ -1180,6 +1215,8 @@ const Cards = {
             Charts.drawSparkline(sparkCanvas, data, color, 0.1, null);
             Charts.drawVolumeBars(volCanvas, data, null, null, mode);
             if (tooltipEl) tooltipEl.style.display = 'none';
+            const sc = card && card.querySelector(':scope > .card-scrub');
+            if (sc) sc.classList.remove('on');
         };
 
         // On touch screens iOS can fire synthetic mouse events after a tap; ignore them so
