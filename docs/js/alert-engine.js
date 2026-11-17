@@ -650,6 +650,11 @@ const AlertEngine = {
         const shortOpen = model.setups.some(s => s.side === 'short' && s.tier !== 'WATCH' && (s.status === 'ACTIVE' || s.status === 'IN_WINDOW'));
         const spreadExit = spreadToday && shortOpen;
         const boilFlowLow = !!(f.cmfBLo && f.cmfBLo[last]);
+        // Counter-signal for open BOIL trades: PVT_RECOVERY (a KOLD entry) firing today. After it, BOIL fell 25%
+        // before rising 20% in 68% of cases (any day 52%); HNU 68% (50%). Spec section 5c.
+        const pvtR = model.setups.find(s => s.key === 'PVT_RECOVERY');
+        const longOpen = model.setups.some(s => s.side === 'long' && s.tier !== 'WATCH' && (s.status === 'ACTIVE' || s.status === 'IN_WINDOW'));
+        const boilExit = !!(pvtR && pvtR.mask && pvtR.mask[last]) && longOpen;
 
         model.inputs = {
             sv: f.sv ? f.sv[last] : null,
@@ -664,6 +669,7 @@ const AlertEngine = {
             koldPvtStretched: koldPvtStretched,
             exitWatch: exitWatch,
             spreadExit: spreadExit,
+            boilExit: boilExit,
             spreadB: !!(f.esvdB && f.esvdB[last]), spreadK: !!(f.esvdK && f.esvdK[last]),
             boilFlowLow: boilFlowLow,
             cpPe: f.cpPe[last], cp: f.cp[last], rvPe: f.rvPe[last], rv: f.rv[last] != null ? f.rv[last] * Math.sqrt(252) * 100 : null,
@@ -787,11 +793,17 @@ const AlertEngine = {
         if (s.side === 'short' && inp.spreadExit && (s.status === 'ACTIVE' || s.status === 'IN_WINDOW')) {
             chips.push('<span class="aa-chip aa-chip-alert" data-tooltip="After a spread blowout KOLD fell 25% before rising 20% in 58% of cases (any day 42%).">EXIT WATCH: SPREAD BLOWOUT</span>');
         }
+        if (s.side === 'long' && inp.boilExit && (s.status === 'ACTIVE' || s.status === 'IN_WINDOW')) {
+            chips.push('<span class="aa-chip aa-chip-alert" data-tooltip="After PRICE-VOLUME RECOVERY fired, BOIL fell 25% before rising 20% in 68% of cases (any day 52%).">EXIT WATCH: KOLD RECOVERY SETUP</span>');
+        }
         const chipsHtml = chips.length ? '<div class="aa-chips">' + chips.join(' ') + '</div>' : '';
 
+        const rec = s.cycle && s.cycle.us && s.cycle.us.n ? s.cycle.us : null;
+        const planTip = (rec ? 'On past ' + s.label + ' trades, +30% came before −20% in ' + rec.worked + ' of ' + rec.n + ' (any day ' + this._f(rec.any ? rec.any.workedPct : null) + '%). ' : '') +
+            (s.side === 'short' ? 'A closing stop can be gapped.' : 'BOIL trades held for larger targets gave back the gain.');
         const planLine = s.side === 'short'
-            ? '<div class="aa-plan" data-tooltip="On past SHORT-SIDE ACCUMULATION trades: +30% was reached 58% of the time in a median 18 sessions; +50% was reached 50% of the time. A closing stop can be gapped.">PLAN  Stop −20% on a closing basis · first target +30% · hold the rest for +50% or the PVT exit marker</div>'
-            : '<div class="aa-plan" data-tooltip="BOIL trades held for larger targets gave back the gain: +4.6% average per trade with this plan, +1.0% when held for +50%.">PLAN  Stop −15% on a closing basis · target +30% · do not hold for more</div>';
+            ? '<div class="aa-plan" data-tooltip="' + this._esc(planTip) + '">PLAN  Stop −20% on a closing basis · first target +30% · hold the rest for +50% or the PVT exit marker</div>'
+            : '<div class="aa-plan" data-tooltip="' + this._esc(planTip) + '">PLAN  Stop −15% on a closing basis · target +30% · do not hold for more</div>';
 
         const riskLine = s.risk ? '<div class="aa-risk">Risk: ' + this._esc(s.risk) + '</div>' : '';
 
@@ -867,6 +879,9 @@ const AlertEngine = {
             } else {
                 todayText = 'TODAY  Short-side accumulation is on. KOLD entry zone; stop −20%, first target +30%.' + (inp.secondSurge ? ' Second surge in this decline.' : '');
             }
+            if (inp.exitWatch) todayText += ' Exit watch on the open KOLD trade from this setup.';
+        } else if (inp.boilExit) {
+            todayText = 'TODAY  PRICE-VOLUME RECOVERY is on. KOLD entry zone; exit watch on the open BOIL trade.';
         } else if (inp.exitWatch || inp.spreadExit) {
             todayText = 'TODAY  Exit watch on the open KOLD trade.' + (inp.spreadExit ? ' Spread blowout: KOLD has tended to fall from here.' : '');
         } else if (anyModStrongShort) {

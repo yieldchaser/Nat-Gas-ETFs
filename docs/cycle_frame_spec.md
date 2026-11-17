@@ -1,6 +1,26 @@
 # Cycle-frame upgrade — implementation spec
 
-Written 2026-11-16 for the agent that will implement it. Everything needed is in this file; no further research is required. Delete this file once the work is merged.
+Written 2026-11-16 for the agent that implemented it (W1–W11 merged 2026-11-16). Keep this file: it is the record of what was tested and why the site shows what it shows.
+
+## 0. Current state (2026-11-17) — read this first
+
+**Rules every alert must pass before it shows as a card** (section 5c):
+1. Scored on the cycle frame (+30% before −20%, ZigZag 30% pivots), on the US leg and the Toronto mirror, both halves of history.
+2. Chance test: the setup's own mask shifted to 200 random offsets; fewer than 10% may match its worked%.
+3. Money per trade under the card's plan must clearly beat a random entry; London prices (3× leverage, +45%/−30%) as a third check.
+Anything failing is capped at WATCH: listed in the "All setups" table only, no card, no TODAY line, no heat-map dot. No alert is shown for the sake of showing one.
+
+**Cards that can show today:** SHORT_ACCUMULATION (STRONG; +11.0% per KOLD trade vs +3.2% any day), PVT_RECOVERY (+14.0%), SHORT_LEG_REVERSAL (BOIL, +7.1% vs −1.8%), CROWDED_RALLY (KOLD, +8.8%). **WATCH:** SPREAD_BLOWOUT (+3.2%/trade, 60% losers), CLOSE_EXHAUSTION, OPT_BLOWOFF, CAPITULATION, WASHOUT, CHASED_RALLY.
+
+**Exit warnings (counter-signals) wired:** `EXIT WATCH` (KOLD +15% and PVT high marker), `EXIT WATCH: SPREAD BLOWOUT` on open KOLD trades (KOLD fell 25% before rising 20% in 58% vs 42%), `EXIT WATCH: KOLD RECOVERY SETUP` on open BOIL trades (68% vs 52%; HNU 68% vs 50%). All 27 conditions were tested as exits with a chance control: real 4 pass vs shifted 2 / 2 / 0; only these two coherent ones are wired.
+
+**Notes (not entries):** LONG-SIDE DIP BUYING, PUT-SKEW EXTREME (11 of 19, chance 2.5%), KOLD PRICE-VOLUME STRETCHED, BOIL MONEY FLOW AT 1-YEAR LOW.
+
+**Tested and rejected:** 10 of the 12 Price-Volume Studies at chance level (ESVD real; VWAP-Z repeats SHORT_ACCUMULATION); every flows × options × studies pair (best real no better than best shifted); London volume (36–56% zero-volume days); three-venue and quiet-at-peak volume ideas; drawdown filters.
+
+**Live vs end of day:** card prices and volume tooltips are live (browser quotes; a session still trading is compared with a normal day's volume by the same time, U-shaped curve). Alerts, heat-map setup dots and records use settled sessions only (today's bar is dropped while its exchange trades). Data jobs share one concurrency group; dashboard data has fallback end-of-day runs because GitHub drops many scheduled runs. Flows come from TrackInsight and can lag by days; the Flow Monitor marks that STALE.
+
+**When changing a setup:** rerun the chance table and money-per-trade table (section 5c), update `tools/test_alert_engine.mjs` tiers, and keep `tools/test_cycle_acceptance.mjs` passing.
 
 ## 1. What changes and why
 

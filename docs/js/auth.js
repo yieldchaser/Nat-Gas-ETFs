@@ -294,7 +294,7 @@
                 'js/charts.js?v=20261117a',
                 'js/cards.js?v=20261117c',
                 'js/cycle-engine.js?v=20261116a',
-                'js/alert-engine.js?v=20261117c',
+                'js/alert-engine.js?v=20261117d',
                 'js/signals.js?v=20261116d',
                 'js/volume-studies.js?v=20261117a',
                 'js/volume-profile.js?v=20261030a',
