@@ -1,82 +1,109 @@
 {
-  "last_updated": "2026-11-17T04:26:32.197245+00:00",
-  "market_status": "closed",
+  "last_updated": "2026-11-17T21:41:07.181950+00:00",
+  "market_status": "after_hours",
   "signals": [
     {
       "type": "vcvi_warning",
       "side": "long",
-      "message": "VCVI (126d) = 58.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-17T04:26:29.598365+00:00",
-      "ticker": "3NGL.L"
+      "message": "VCVI (126d) = 64.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-17T21:41:04.530275+00:00",
+      "ticker": "BOIL"
     },
     {
       "type": "vcvi_warning",
       "side": "long",
-      "message": "VCVI (252d) = 70.4 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-17T04:26:29.598365+00:00",
-      "ticker": "3NGL.L"
+      "message": "VCVI (252d) = 62.6 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-17T21:41:04.530275+00:00",
+      "ticker": "BOIL"
     },
     {
       "type": "vcvi_warning",
       "side": "short",
-      "message": "VCVI (10d) = 67.4 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-17T04:26:31.906877+00:00",
+      "message": "VCVI (21d) = 62.7 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-17T21:41:06.535007+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "short",
+      "message": "CVI (21d) = 60.0 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-17T21:41:06.535007+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "vps_elevated",
+      "message": "VPS = 63.2 \u2014 elevated volume pressure",
+      "timestamp": "2026-11-17T21:41:06.535007+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "short",
+      "message": "VCVI (10d) = 67.8 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-17T21:41:07.002039+00:00",
+      "ticker": "3NGS.L"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "short",
+      "message": "VCVI (21d) = 62.4 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-17T21:41:07.002039+00:00",
       "ticker": "3NGS.L"
     }
   ],
   "pair_status": {
     "BOIL_KOLD": "quiet",
-    "HNU.TO_HND.TO": "quiet",
+    "HNU.TO_HND.TO": "elevated",
     "3NGL.L_3NGS.L": "elevated"
   },
   "etf_summary": {
     "BOIL": {
-      "price": 17.44,
-      "change_pct": -5.832,
-      "vps": 24.215474,
+      "price": 18.14,
+      "change_pct": 4.014,
+      "vps": 34.473644,
       "mwca": false,
-      "vol_regime_pct": 19.123506,
-      "hv_term_structure": 1.106491
+      "vol_regime_pct": 25.498008,
+      "hv_term_structure": 1.119784
     },
     "HNU.TO": {
-      "price": 6.83,
-      "change_pct": -5.923,
-      "vps": 20.636856,
+      "price": 7.11,
+      "change_pct": 4.1,
+      "vps": 21.064668,
       "mwca": false,
-      "vol_regime_pct": 42.231076,
-      "hv_term_structure": 1.140662
+      "vol_regime_pct": 45.418327,
+      "hv_term_structure": 1.15744
     },
     "3NGL.L": {
-      "price": 0.4638,
-      "change_pct": -6.9329,
-      "vps": 28.450145,
+      "price": 0.4807,
+      "change_pct": 3.6438,
+      "vps": 20.920499,
       "mwca": false,
-      "vol_regime_pct": 17.928287,
-      "hv_term_structure": 0.917096
+      "vol_regime_pct": 8.76494,
+      "hv_term_structure": 1.007419
     },
     "KOLD": {
-      "price": 30.38,
-      "change_pct": 6.112,
-      "vps": 20.837359,
+      "price": 29.06,
+      "change_pct": -4.345,
+      "vps": 34.025365,
       "mwca": false,
-      "vol_regime_pct": 28.286853,
-      "hv_term_structure": 1.121361
+      "vol_regime_pct": 34.661355,
+      "hv_term_structure": 1.139403
     },
     "HND.TO": {
-      "price": 25.52,
-      "change_pct": 5.804,
-      "vps": 45.743062,
+      "price": 24.44,
+      "change_pct": -4.232,
+      "vps": 63.231281,
       "mwca": false,
-      "vol_regime_pct": 43.027888,
-      "hv_term_structure": 1.157531
+      "vol_regime_pct": 45.418327,
+      "hv_term_structure": 1.173759
     },
     "3NGS.L": {
-      "price": 21.32,
-      "change_pct": 6.894,
-      "vps": 43.871651,
+      "price": 20.52,
+      "change_pct": -3.752,
+      "vps": 53.293002,
       "mwca": false,
-      "vol_regime_pct": 19.920319,
-      "hv_term_structure": 0.948172
+      "vol_regime_pct": 12.749004,
+      "hv_term_structure": 1.028993
     }
   }
 }
