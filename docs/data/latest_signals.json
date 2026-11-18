@@ -1,109 +1,282 @@
 {
-  "last_updated": "2026-11-18T14:37:09.960360+00:00",
-  "market_status": "open",
+  "last_updated": "2026-11-18T21:20:01.823071+00:00",
+  "market_status": "after_hours",
   "signals": [
     {
+      "type": "vcvi_warning",
+      "side": "long",
+      "message": "VCVI (252d) = 71.1 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-18T21:19:58.739200+00:00",
+      "ticker": "BOIL"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "long",
+      "message": "CVI (252d) = 68.2 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-18T21:19:58.739200+00:00",
+      "ticker": "BOIL"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "long",
+      "message": "VCVI (252d) = 61.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-18T21:19:59.377458+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "long",
+      "message": "CVI (252d) = 72.7 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-18T21:19:59.377458+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
       "type": "vcvi_critical",
       "side": "long",
-      "message": "VCVI (63d) = 78.9 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-18T14:37:08.116391+00:00",
+      "message": "VCVI (63d) = 77.4 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-18T21:19:59.911748+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
-      "message": "VCVI (126d) = 102.4 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-18T14:37:08.116391+00:00",
+      "message": "VCVI (126d) = 98.5 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-18T21:19:59.911748+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
-      "message": "VCVI (252d) = 115.0 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-18T14:37:08.116391+00:00",
+      "message": "VCVI (252d) = 110.0 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-18T21:19:59.911748+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "cvi_warning",
       "side": "long",
-      "message": "CVI (63d) = 60.7 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-18T14:37:08.116391+00:00",
-      "ticker": "3NGL.L"
-    },
-    {
-      "type": "cvi_warning",
-      "side": "long",
-      "message": "CVI (126d) = 78.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-18T14:37:08.116391+00:00",
+      "message": "CVI (63d) = 63.0 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-18T21:19:59.911748+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "cvi_critical",
       "side": "long",
-      "message": "CVI (252d) = 88.4 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-18T14:37:08.116391+00:00",
+      "message": "CVI (126d) = 80.1 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-18T21:19:59.911748+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "cvi_critical",
+      "side": "long",
+      "message": "CVI (252d) = 89.5 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-18T21:19:59.911748+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vps_elevated",
-      "message": "VPS = 72.2 \u2014 elevated volume pressure",
-      "timestamp": "2026-11-18T14:37:08.116391+00:00",
+      "message": "VPS = 73.7 \u2014 elevated volume pressure",
+      "timestamp": "2026-11-18T21:19:59.911748+00:00",
       "ticker": "3NGL.L"
+    },
+    {
+      "type": "vcvi_critical",
+      "side": "short",
+      "message": "VCVI (5d) = 100.6 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:00.440406+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "vcvi_critical",
+      "side": "short",
+      "message": "VCVI (10d) = 100.6 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:00.440406+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "vcvi_critical",
+      "side": "short",
+      "message": "VCVI (21d) = 100.6 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:00.440406+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "vcvi_critical",
+      "side": "short",
+      "message": "VCVI (63d) = 74.9 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:00.440406+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "short",
+      "message": "VCVI (126d) = 60.4 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:00.440406+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "cvi_critical",
+      "side": "short",
+      "message": "CVI (5d) = 100.0 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:00.440406+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "cvi_critical",
+      "side": "short",
+      "message": "CVI (10d) = 100.0 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:00.440406+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "cvi_critical",
+      "side": "short",
+      "message": "CVI (21d) = 100.0 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:00.440406+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "short",
+      "message": "CVI (63d) = 74.5 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:00.440406+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "vps_elevated",
+      "message": "VPS = 70.2 \u2014 elevated volume pressure",
+      "timestamp": "2026-11-18T21:20:00.440406+00:00",
+      "ticker": "KOLD"
+    },
+    {
+      "type": "vcvi_critical",
+      "side": "short",
+      "message": "VCVI (5d) = 85.1 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:01.090681+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "vcvi_critical",
+      "side": "short",
+      "message": "VCVI (10d) = 85.1 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:01.090681+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "vcvi_critical",
+      "side": "short",
+      "message": "VCVI (21d) = 85.1 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:01.090681+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "short",
+      "message": "VCVI (63d) = 62.2 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:01.090681+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "cvi_critical",
+      "side": "short",
+      "message": "CVI (5d) = 100.0 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:01.090681+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "cvi_critical",
+      "side": "short",
+      "message": "CVI (10d) = 100.0 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:01.090681+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "cvi_critical",
+      "side": "short",
+      "message": "CVI (21d) = 100.0 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:01.090681+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "short",
+      "message": "CVI (63d) = 73.1 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:01.090681+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "short",
+      "message": "CVI (126d) = 63.0 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:01.090681+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "vps_elevated",
+      "message": "VPS = 74.3 \u2014 elevated volume pressure",
+      "timestamp": "2026-11-18T21:20:01.090681+00:00",
+      "ticker": "HND.TO"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "short",
+      "message": "VCVI (5d) = 57.7 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
+      "timestamp": "2026-11-18T21:20:01.614159+00:00",
+      "ticker": "3NGS.L"
     }
   ],
   "pair_status": {
     "BOIL_KOLD": "quiet",
-    "HNU.TO_HND.TO": "quiet",
+    "HNU.TO_HND.TO": "elevated",
     "3NGL.L_3NGS.L": "quiet"
   },
   "etf_summary": {
     "BOIL": {
-      "price": 18.78,
-      "change_pct": 3.589,
-      "vps": 14.137581,
+      "price": 20.25,
+      "change_pct": 11.632,
+      "vps": 52.490753,
       "mwca": false,
-      "vol_regime_pct": 29.482072,
-      "hv_term_structure": 1.129197
+      "vol_regime_pct": 45.816733,
+      "hv_term_structure": 1.277697
     },
     "HNU.TO": {
-      "price": 7.37,
-      "change_pct": 3.657,
-      "vps": 10.517928,
+      "price": 7.94,
+      "change_pct": 11.674,
+      "vps": 44.878905,
       "mwca": false,
-      "vol_regime_pct": 47.410359,
-      "hv_term_structure": 1.155854
+      "vol_regime_pct": 64.940239,
+      "hv_term_structure": 1.270544
     },
     "3NGL.L": {
-      "price": 0.5298,
-      "change_pct": 10.2143,
-      "vps": 72.173271,
+      "price": 0.5408,
+      "change_pct": 12.5026,
+      "vps": 73.690365,
       "mwca": false,
-      "vol_regime_pct": 19.920319,
-      "hv_term_structure": 1.096315
+      "vol_regime_pct": 27.091633,
+      "hv_term_structure": 1.135576
     },
     "KOLD": {
-      "price": 28.09,
-      "change_pct": -3.438,
-      "vps": 12.679328,
+      "price": 25.83,
+      "change_pct": -11.115,
+      "vps": 70.16724,
       "mwca": false,
-      "vol_regime_pct": 37.450199,
-      "hv_term_structure": 1.145407
+      "vol_regime_pct": 49.40239,
+      "hv_term_structure": 1.301152
     },
     "HND.TO": {
-      "price": 23.59,
-      "change_pct": -3.482,
-      "vps": 11.897299,
+      "price": 21.69,
+      "change_pct": -11.252,
+      "vps": 74.264266,
       "mwca": false,
-      "vol_regime_pct": 48.207171,
-      "hv_term_structure": 1.171561
+      "vol_regime_pct": 64.940239,
+      "hv_term_structure": 1.289543
     },
     "3NGS.L": {
-      "price": 18.5,
-      "change_pct": -9.844,
-      "vps": 25.344739,
+      "price": 18.055,
+      "change_pct": -12.013,
+      "vps": 34.659737,
       "mwca": false,
-      "vol_regime_pct": 21.115538,
-      "hv_term_structure": 1.115667
+      "vol_regime_pct": 34.661355,
+      "hv_term_structure": 1.159434
     }
   }
 }
