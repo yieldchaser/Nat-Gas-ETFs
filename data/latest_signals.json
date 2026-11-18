@@ -1,69 +1,41 @@
 {
-  "last_updated": "2026-11-17T21:43:47.713262+00:00",
-  "market_status": "after_hours",
+  "last_updated": "2026-11-18T02:28:30.972088+00:00",
+  "market_status": "closed",
   "signals": [
-    {
-      "type": "vcvi_warning",
-      "side": "long",
-      "message": "VCVI (126d) = 64.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-17T21:43:45.055348+00:00",
-      "ticker": "BOIL"
-    },
-    {
-      "type": "vcvi_warning",
-      "side": "long",
-      "message": "VCVI (252d) = 62.6 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-17T21:43:45.055348+00:00",
-      "ticker": "BOIL"
-    },
     {
       "type": "vcvi_warning",
       "side": "short",
       "message": "VCVI (21d) = 62.7 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-17T21:43:47.059296+00:00",
+      "timestamp": "2026-11-18T02:28:30.429344+00:00",
       "ticker": "HND.TO"
     },
     {
       "type": "cvi_warning",
       "side": "short",
       "message": "CVI (21d) = 60.0 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-17T21:43:47.059296+00:00",
+      "timestamp": "2026-11-18T02:28:30.429344+00:00",
       "ticker": "HND.TO"
     },
     {
       "type": "vps_elevated",
       "message": "VPS = 63.2 \u2014 elevated volume pressure",
-      "timestamp": "2026-11-17T21:43:47.059296+00:00",
+      "timestamp": "2026-11-18T02:28:30.429344+00:00",
       "ticker": "HND.TO"
-    },
-    {
-      "type": "vcvi_warning",
-      "side": "short",
-      "message": "VCVI (10d) = 67.8 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-17T21:43:47.528662+00:00",
-      "ticker": "3NGS.L"
-    },
-    {
-      "type": "vcvi_warning",
-      "side": "short",
-      "message": "VCVI (21d) = 62.4 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-17T21:43:47.528662+00:00",
-      "ticker": "3NGS.L"
     }
   ],
   "pair_status": {
     "BOIL_KOLD": "quiet",
     "HNU.TO_HND.TO": "elevated",
-    "3NGL.L_3NGS.L": "elevated"
+    "3NGL.L_3NGS.L": "quiet"
   },
   "etf_summary": {
     "BOIL": {
       "price": 18.14,
       "change_pct": 4.014,
-      "vps": 34.473644,
+      "vps": 24.288063,
       "mwca": false,
-      "vol_regime_pct": 25.498008,
-      "hv_term_structure": 1.119784
+      "vol_regime_pct": 19.123506,
+      "hv_term_structure": 1.106491
     },
     "HNU.TO": {
       "price": 7.11,
@@ -76,18 +48,18 @@
     "3NGL.L": {
       "price": 0.4807,
       "change_pct": 3.6438,
-      "vps": 20.920499,
+      "vps": 22.469469,
       "mwca": false,
-      "vol_regime_pct": 8.76494,
-      "hv_term_structure": 1.007419
+      "vol_regime_pct": 5.577689,
+      "hv_term_structure": 1.016697
     },
     "KOLD": {
       "price": 29.06,
       "change_pct": -4.345,
-      "vps": 34.025365,
+      "vps": 20.837359,
       "mwca": false,
-      "vol_regime_pct": 34.661355,
-      "hv_term_structure": 1.139403
+      "vol_regime_pct": 28.286853,
+      "hv_term_structure": 1.121361
     },
     "HND.TO": {
       "price": 24.44,
@@ -100,10 +72,10 @@
     "3NGS.L": {
       "price": 20.52,
       "change_pct": -3.752,
-      "vps": 53.293002,
+      "vps": 23.820153,
       "mwca": false,
-      "vol_regime_pct": 12.749004,
-      "hv_term_structure": 1.028993
+      "vol_regime_pct": 9.960159,
+      "hv_term_structure": 1.046025
     }
   }
 }
