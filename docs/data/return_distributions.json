@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-19T14:44:35.582765+00:00",
+  "generated_at": "2026-11-19T21:22:51.369752+00:00",
   "description": "Historical Return Distribution & Tail Risk Engine",
   "instruments": {
     "BOIL": {
@@ -13,10 +13,10 @@
       "latest_date": "2026-11-19",
       "latest_bar": {
         "date": "2026-11-19",
-        "close": 20.06,
+        "close": 18.97,
         "prev_close": 20.25,
-        "return_pct": -0.9383,
-        "volume": 691439
+        "return_pct": -6.321,
+        "volume": 5300852
       },
       "regimes": {
         "trailing_252d": {
@@ -32,12 +32,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 251,
               "moments": {
-                "mean": -0.2438,
+                "mean": -0.2652,
                 "median": -0.1037,
-                "std": 6.922,
-                "ann_volatility": 109.88,
-                "skewness": -0.6707,
-                "excess_kurtosis": 13.9074
+                "std": 6.9325,
+                "ann_volatility": 110.05,
+                "skewness": -0.661,
+                "excess_kurtosis": 13.7991
               },
               "risk_metrics": {
                 "var_95": -9.49,
@@ -399,9 +399,9 @@
                     "lower": -7.5794,
                     "upper": -6.3161,
                     "center": -6.9478,
-                    "count": 11,
-                    "density": 0.043825,
-                    "cumulative_pct": 13.9442,
+                    "count": 12,
+                    "density": 0.047809,
+                    "cumulative_pct": 14.3426,
                     "is_negative": true
                   },
                   {
@@ -411,7 +411,7 @@
                     "center": -5.6845,
                     "count": 13,
                     "density": 0.051793,
-                    "cumulative_pct": 19.1235,
+                    "cumulative_pct": 19.5219,
                     "is_negative": true
                   },
                   {
@@ -421,7 +421,7 @@
                     "center": -4.4213,
                     "count": 11,
                     "density": 0.043825,
-                    "cumulative_pct": 23.506,
+                    "cumulative_pct": 23.9044,
                     "is_negative": true
                   },
                   {
@@ -431,7 +431,7 @@
                     "center": -3.1581,
                     "count": 22,
                     "density": 0.087649,
-                    "cumulative_pct": 32.2709,
+                    "cumulative_pct": 32.6693,
                     "is_negative": true
                   },
                   {
@@ -441,7 +441,7 @@
                     "center": -1.8948,
                     "count": 21,
                     "density": 0.083665,
-                    "cumulative_pct": 40.6375,
+                    "cumulative_pct": 41.0359,
                     "is_negative": true
                   },
                   {
@@ -449,8 +449,8 @@
                     "lower": -1.2632,
                     "upper": 0.0,
                     "center": -0.6316,
-                    "count": 24,
-                    "density": 0.095618,
+                    "count": 23,
+                    "density": 0.091633,
                     "cumulative_pct": 50.1992,
                     "is_negative": true
                   },
@@ -863,12 +863,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 247,
               "moments": {
-                "mean": -1.5226,
-                "median": -2.5,
-                "std": 15.1087,
+                "mean": -1.545,
+                "median": -2.5344,
+                "std": 15.1083,
                 "ann_volatility": 107.26,
-                "skewness": 1.8302,
-                "excess_kurtosis": 9.6766
+                "skewness": 1.8347,
+                "excess_kurtosis": 9.6891
               },
               "risk_metrics": {
                 "var_95": -23.04,
@@ -877,7 +877,7 @@
                 "cvar_99": -40.12,
                 "max_gain": 93.61,
                 "max_drawdown": -45.83,
-                "win_rate": 40.49
+                "win_rate": 40.08
               },
               "histogram": {
                 "bin_count": 80,
@@ -1270,9 +1270,9 @@
                     "lower": -4.6803,
                     "upper": -2.3402,
                     "center": -3.5102,
-                    "count": 21,
-                    "density": 0.08502,
-                    "cumulative_pct": 51.0121,
+                    "count": 22,
+                    "density": 0.089069,
+                    "cumulative_pct": 51.417,
                     "is_negative": true
                   },
                   {
@@ -1282,7 +1282,7 @@
                     "center": -1.1701,
                     "count": 21,
                     "density": 0.08502,
-                    "cumulative_pct": 59.5142,
+                    "cumulative_pct": 59.919,
                     "is_negative": true
                   },
                   {
@@ -1290,8 +1290,8 @@
                     "lower": 0.0,
                     "upper": 2.3402,
                     "center": 1.1701,
-                    "count": 19,
-                    "density": 0.076923,
+                    "count": 18,
+                    "density": 0.072874,
                     "cumulative_pct": 67.2065,
                     "is_negative": false
                   },
@@ -1694,12 +1694,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 231,
               "moments": {
-                "mean": -9.2655,
+                "mean": -9.2911,
                 "median": -8.6247,
-                "std": 18.1895,
-                "ann_volatility": 63.01,
-                "skewness": -0.1149,
-                "excess_kurtosis": 0.2981
+                "std": 18.1681,
+                "ann_volatility": 62.94,
+                "skewness": -0.1141,
+                "excess_kurtosis": 0.3098
               },
               "risk_metrics": {
                 "var_95": -41.79,
@@ -2141,9 +2141,9 @@
                     "lower": 2.8423,
                     "upper": 4.2634,
                     "center": 3.5529,
-                    "count": 2,
-                    "density": 0.008658,
-                    "cumulative_pct": 75.7576,
+                    "count": 3,
+                    "density": 0.012987,
+                    "cumulative_pct": 76.1905,
                     "is_negative": false
                   },
                   {
@@ -2153,7 +2153,7 @@
                     "center": 4.974,
                     "count": 12,
                     "density": 0.051948,
-                    "cumulative_pct": 80.9524,
+                    "cumulative_pct": 81.3853,
                     "is_negative": false
                   },
                   {
@@ -2163,7 +2163,7 @@
                     "center": 6.3952,
                     "count": 2,
                     "density": 0.008658,
-                    "cumulative_pct": 81.8182,
+                    "cumulative_pct": 82.2511,
                     "is_negative": false
                   },
                   {
@@ -2173,7 +2173,7 @@
                     "center": 7.8163,
                     "count": 5,
                     "density": 0.021645,
-                    "cumulative_pct": 83.9827,
+                    "cumulative_pct": 84.4156,
                     "is_negative": false
                   },
                   {
@@ -2181,8 +2181,8 @@
                     "lower": 8.5269,
                     "upper": 9.948,
                     "center": 9.2375,
-                    "count": 6,
-                    "density": 0.025974,
+                    "count": 5,
+                    "density": 0.021645,
                     "cumulative_pct": 86.5801,
                     "is_negative": false
                   },
@@ -2635,7 +2635,7 @@
                 "edge": "Moderate Bearish Edge"
               },
               "fwd_10d": {
-                "mean": -1.8,
+                "mean": -1.83,
                 "median": -3.92,
                 "win_rate": 38.9,
                 "edge": "Strong Bearish Edge"
@@ -2656,12 +2656,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 974,
               "moments": {
-                "mean": -0.2808,
+                "mean": -0.2863,
                 "median": -0.3465,
-                "std": 6.6526,
-                "ann_volatility": 105.61,
-                "skewness": -0.1092,
-                "excess_kurtosis": 4.1655
+                "std": 6.6553,
+                "ann_volatility": 105.65,
+                "skewness": -0.1073,
+                "excess_kurtosis": 4.1539
               },
               "risk_metrics": {
                 "var_95": -10.64,
@@ -3023,9 +3023,9 @@
                     "lower": -7.5794,
                     "upper": -6.3161,
                     "center": -6.9478,
-                    "count": 54,
-                    "density": 0.055441,
-                    "cumulative_pct": 17.4538,
+                    "count": 55,
+                    "density": 0.056468,
+                    "cumulative_pct": 17.5565,
                     "is_negative": true
                   },
                   {
@@ -3035,7 +3035,7 @@
                     "center": -5.6845,
                     "count": 46,
                     "density": 0.047228,
-                    "cumulative_pct": 22.1766,
+                    "cumulative_pct": 22.2793,
                     "is_negative": true
                   },
                   {
@@ -3045,7 +3045,7 @@
                     "center": -4.4213,
                     "count": 55,
                     "density": 0.056468,
-                    "cumulative_pct": 27.8234,
+                    "cumulative_pct": 27.9261,
                     "is_negative": true
                   },
                   {
@@ -3055,7 +3055,7 @@
                     "center": -3.1581,
                     "count": 85,
                     "density": 0.087269,
-                    "cumulative_pct": 36.5503,
+                    "cumulative_pct": 36.653,
                     "is_negative": true
                   },
                   {
@@ -3065,7 +3065,7 @@
                     "center": -1.8948,
                     "count": 70,
                     "density": 0.071869,
-                    "cumulative_pct": 43.7372,
+                    "cumulative_pct": 43.8398,
                     "is_negative": true
                   },
                   {
@@ -3073,8 +3073,8 @@
                     "lower": -1.2632,
                     "upper": 0.0,
                     "center": -0.6316,
-                    "count": 76,
-                    "density": 0.078029,
+                    "count": 75,
+                    "density": 0.077002,
                     "cumulative_pct": 51.54,
                     "is_negative": true
                   },
@@ -3487,12 +3487,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 970,
               "moments": {
-                "mean": -1.5224,
-                "median": -2.928,
-                "std": 14.3444,
-                "ann_volatility": 101.84,
-                "skewness": 0.8785,
-                "excess_kurtosis": 3.0783
+                "mean": -1.5281,
+                "median": -2.973,
+                "std": 14.3443,
+                "ann_volatility": 101.83,
+                "skewness": 0.8797,
+                "excess_kurtosis": 3.0799
               },
               "risk_metrics": {
                 "var_95": -22.79,
@@ -3501,7 +3501,7 @@
                 "cvar_99": -34.79,
                 "max_gain": 93.61,
                 "max_drawdown": -45.83,
-                "win_rate": 41.24
+                "win_rate": 41.13
               },
               "histogram": {
                 "bin_count": 80,
@@ -3894,9 +3894,9 @@
                     "lower": -4.6803,
                     "upper": -2.3402,
                     "center": -3.5102,
-                    "count": 69,
-                    "density": 0.071134,
-                    "cumulative_pct": 51.8557,
+                    "count": 70,
+                    "density": 0.072165,
+                    "cumulative_pct": 51.9588,
                     "is_negative": true
                   },
                   {
@@ -3906,7 +3906,7 @@
                     "center": -1.1701,
                     "count": 65,
                     "density": 0.06701,
-                    "cumulative_pct": 58.5567,
+                    "cumulative_pct": 58.6598,
                     "is_negative": true
                   },
                   {
@@ -3914,8 +3914,8 @@
                     "lower": 0.0,
                     "upper": 2.3402,
                     "center": 1.1701,
-                    "count": 55,
-                    "density": 0.056701,
+                    "count": 54,
+                    "density": 0.05567,
                     "cumulative_pct": 64.2268,
                     "is_negative": false
                   },
@@ -4318,12 +4318,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 954,
               "moments": {
-                "mean": -6.8867,
+                "mean": -6.8929,
                 "median": -8.2774,
-                "std": 23.6662,
-                "ann_volatility": 81.98,
-                "skewness": 0.4609,
-                "excess_kurtosis": 0.6486
+                "std": 23.6628,
+                "ann_volatility": 81.97,
+                "skewness": 0.4617,
+                "excess_kurtosis": 0.651
               },
               "risk_metrics": {
                 "var_95": -45.96,
@@ -4755,9 +4755,9 @@
                     "lower": 2.3034,
                     "upper": 4.6068,
                     "center": 3.4551,
-                    "count": 34,
-                    "density": 0.035639,
-                    "cumulative_pct": 71.5933,
+                    "count": 35,
+                    "density": 0.036688,
+                    "cumulative_pct": 71.6981,
                     "is_negative": false
                   },
                   {
@@ -4767,7 +4767,7 @@
                     "center": 5.7585,
                     "count": 32,
                     "density": 0.033543,
-                    "cumulative_pct": 74.9476,
+                    "cumulative_pct": 75.0524,
                     "is_negative": false
                   },
                   {
@@ -4775,8 +4775,8 @@
                     "lower": 6.9102,
                     "upper": 9.2137,
                     "center": 8.062,
-                    "count": 28,
-                    "density": 0.02935,
+                    "count": 27,
+                    "density": 0.028302,
                     "cumulative_pct": 77.8826,
                     "is_negative": false
                   },
@@ -5259,7 +5259,7 @@
                 "edge": "Moderate Bearish Edge"
               },
               "fwd_10d": {
-                "mean": -2.33,
+                "mean": -2.34,
                 "median": -4.41,
                 "win_rate": 40.6,
                 "edge": "Moderate Bearish Edge"
@@ -5280,12 +5280,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 3802,
               "moments": {
-                "mean": -0.1631,
+                "mean": -0.1646,
                 "median": -0.2611,
-                "std": 5.8757,
-                "ann_volatility": 93.27,
-                "skewness": 0.0521,
-                "excess_kurtosis": 4.3496
+                "std": 5.8765,
+                "ann_volatility": 93.29,
+                "skewness": 0.0525,
+                "excess_kurtosis": 4.3458
               },
               "risk_metrics": {
                 "var_95": -9.04,
@@ -5647,9 +5647,9 @@
                     "lower": -7.5794,
                     "upper": -6.3161,
                     "center": -6.9478,
-                    "count": 140,
-                    "density": 0.036823,
-                    "cumulative_pct": 11.757,
+                    "count": 141,
+                    "density": 0.037086,
+                    "cumulative_pct": 11.7833,
                     "is_negative": true
                   },
                   {
@@ -5659,7 +5659,7 @@
                     "center": -5.6845,
                     "count": 174,
                     "density": 0.045765,
-                    "cumulative_pct": 16.3335,
+                    "cumulative_pct": 16.3598,
                     "is_negative": true
                   },
                   {
@@ -5669,7 +5669,7 @@
                     "center": -4.4213,
                     "count": 247,
                     "density": 0.064966,
-                    "cumulative_pct": 22.8301,
+                    "cumulative_pct": 22.8564,
                     "is_negative": true
                   },
                   {
@@ -5679,7 +5679,7 @@
                     "center": -3.1581,
                     "count": 333,
                     "density": 0.087585,
-                    "cumulative_pct": 31.5886,
+                    "cumulative_pct": 31.6149,
                     "is_negative": true
                   },
                   {
@@ -5689,7 +5689,7 @@
                     "center": -1.8948,
                     "count": 380,
                     "density": 0.099947,
-                    "cumulative_pct": 41.5834,
+                    "cumulative_pct": 41.6097,
                     "is_negative": true
                   },
                   {
@@ -5697,8 +5697,8 @@
                     "lower": -1.2632,
                     "upper": 0.0,
                     "center": -0.6316,
-                    "count": 372,
-                    "density": 0.097843,
+                    "count": 371,
+                    "density": 0.09758,
                     "cumulative_pct": 51.3677,
                     "is_negative": true
                   },
@@ -6111,12 +6111,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 3798,
               "moments": {
-                "mean": -0.8455,
-                "median": -1.1499,
+                "mean": -0.847,
+                "median": -1.1606,
                 "std": 12.9919,
                 "ann_volatility": 92.23,
-                "skewness": 0.6133,
-                "excess_kurtosis": 2.9649
+                "skewness": 0.6137,
+                "excess_kurtosis": 2.9651
               },
               "risk_metrics": {
                 "var_95": -20.78,
@@ -6125,7 +6125,7 @@
                 "cvar_99": -36.55,
                 "max_gain": 93.61,
                 "max_drawdown": -47.02,
-                "win_rate": 45.39
+                "win_rate": 45.37
               },
               "histogram": {
                 "bin_count": 80,
@@ -6518,9 +6518,9 @@
                     "lower": -4.6803,
                     "upper": -2.3402,
                     "center": -3.5102,
-                    "count": 300,
-                    "density": 0.078989,
-                    "cumulative_pct": 45.9979,
+                    "count": 301,
+                    "density": 0.079252,
+                    "cumulative_pct": 46.0242,
                     "is_negative": true
                   },
                   {
@@ -6530,7 +6530,7 @@
                     "center": -1.1701,
                     "count": 317,
                     "density": 0.083465,
-                    "cumulative_pct": 54.3444,
+                    "cumulative_pct": 54.3707,
                     "is_negative": true
                   },
                   {
@@ -6538,8 +6538,8 @@
                     "lower": 0.0,
                     "upper": 2.3402,
                     "center": 1.1701,
-                    "count": 308,
-                    "density": 0.081095,
+                    "count": 307,
+                    "density": 0.080832,
                     "cumulative_pct": 62.4539,
                     "is_negative": false
                   },
@@ -6942,12 +6942,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 3782,
               "moments": {
-                "mean": -3.693,
+                "mean": -3.6946,
                 "median": -6.0691,
-                "std": 25.1597,
-                "ann_volatility": 87.16,
-                "skewness": 0.7455,
-                "excess_kurtosis": 1.7918
+                "std": 25.1591,
+                "ann_volatility": 87.15,
+                "skewness": 0.7457,
+                "excess_kurtosis": 1.7925
               },
               "risk_metrics": {
                 "var_95": -40.53,
@@ -7369,9 +7369,9 @@
                     "lower": 0.0,
                     "upper": 3.4889,
                     "center": 1.7445,
-                    "count": 210,
-                    "density": 0.055526,
-                    "cumulative_pct": 66.605,
+                    "count": 211,
+                    "density": 0.055791,
+                    "cumulative_pct": 66.6314,
                     "is_negative": false
                   },
                   {
@@ -7381,7 +7381,7 @@
                     "center": 5.2334,
                     "count": 194,
                     "density": 0.051296,
-                    "cumulative_pct": 71.7345,
+                    "cumulative_pct": 71.761,
                     "is_negative": false
                   },
                   {
@@ -7389,8 +7389,8 @@
                     "lower": 6.9778,
                     "upper": 10.4668,
                     "center": 8.7223,
-                    "count": 160,
-                    "density": 0.042306,
+                    "count": 159,
+                    "density": 0.042041,
                     "cumulative_pct": 75.9651,
                     "is_negative": false
                   },
@@ -7904,10 +7904,10 @@
       "latest_date": "2026-11-19",
       "latest_bar": {
         "date": "2026-11-19",
-        "close": 26.07,
+        "close": 27.5,
         "prev_close": 25.83,
-        "return_pct": 0.9292,
-        "volume": 627584
+        "return_pct": 6.4654,
+        "volume": 3142546
       },
       "regimes": {
         "trailing_252d": {
@@ -7923,12 +7923,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 251,
               "moments": {
-                "mean": 0.2328,
+                "mean": 0.2549,
                 "median": 0.0427,
-                "std": 6.8978,
-                "ann_volatility": 109.5,
-                "skewness": 0.4523,
-                "excess_kurtosis": 12.9869
+                "std": 6.9089,
+                "ann_volatility": 109.68,
+                "skewness": 0.4434,
+                "excess_kurtosis": 12.8813
               },
               "risk_metrics": {
                 "var_95": -9.1,
@@ -8350,9 +8350,9 @@
                     "lower": 0.0,
                     "upper": 1.2132,
                     "center": 0.6066,
-                    "count": 25,
-                    "density": 0.099602,
-                    "cumulative_pct": 59.3625,
+                    "count": 24,
+                    "density": 0.095618,
+                    "cumulative_pct": 58.9641,
                     "is_negative": false
                   },
                   {
@@ -8362,7 +8362,7 @@
                     "center": 1.8198,
                     "count": 20,
                     "density": 0.079681,
-                    "cumulative_pct": 67.3307,
+                    "cumulative_pct": 66.9323,
                     "is_negative": false
                   },
                   {
@@ -8372,7 +8372,7 @@
                     "center": 3.033,
                     "count": 21,
                     "density": 0.083665,
-                    "cumulative_pct": 75.6972,
+                    "cumulative_pct": 75.2988,
                     "is_negative": false
                   },
                   {
@@ -8382,7 +8382,7 @@
                     "center": 4.2462,
                     "count": 11,
                     "density": 0.043825,
-                    "cumulative_pct": 80.0797,
+                    "cumulative_pct": 79.6813,
                     "is_negative": false
                   },
                   {
@@ -8392,7 +8392,7 @@
                     "center": 5.4594,
                     "count": 13,
                     "density": 0.051793,
-                    "cumulative_pct": 85.259,
+                    "cumulative_pct": 84.8606,
                     "is_negative": false
                   },
                   {
@@ -8400,8 +8400,8 @@
                     "lower": 6.066,
                     "upper": 7.2792,
                     "center": 6.6726,
-                    "count": 11,
-                    "density": 0.043825,
+                    "count": 12,
+                    "density": 0.047809,
                     "cumulative_pct": 89.6414,
                     "is_negative": false
                   },
@@ -8754,12 +8754,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 247,
               "moments": {
-                "mean": 1.0597,
-                "median": 1.2012,
-                "std": 13.5847,
-                "ann_volatility": 96.44,
-                "skewness": -0.6305,
-                "excess_kurtosis": 3.87
+                "mean": 1.0812,
+                "median": 1.2413,
+                "std": 13.5819,
+                "ann_volatility": 96.42,
+                "skewness": -0.6355,
+                "excess_kurtosis": 3.8797
               },
               "risk_metrics": {
                 "var_95": -18.37,
@@ -8768,7 +8768,7 @@
                 "cvar_99": -54.01,
                 "max_gain": 52.67,
                 "max_drawdown": -59.08,
-                "win_rate": 54.66
+                "win_rate": 55.06
               },
               "histogram": {
                 "bin_count": 80,
@@ -9151,9 +9151,9 @@
                     "lower": -4.4314,
                     "upper": -2.9543,
                     "center": -3.6928,
-                    "count": 13,
-                    "density": 0.052632,
-                    "cumulative_pct": 34.8178,
+                    "count": 12,
+                    "density": 0.048583,
+                    "cumulative_pct": 34.413,
                     "is_negative": true
                   },
                   {
@@ -9163,7 +9163,7 @@
                     "center": -2.2157,
                     "count": 11,
                     "density": 0.044534,
-                    "cumulative_pct": 39.2713,
+                    "cumulative_pct": 38.8664,
                     "is_negative": true
                   },
                   {
@@ -9173,7 +9173,7 @@
                     "center": -0.7386,
                     "count": 15,
                     "density": 0.060729,
-                    "cumulative_pct": 45.3441,
+                    "cumulative_pct": 44.9393,
                     "is_negative": true
                   },
                   {
@@ -9183,7 +9183,7 @@
                     "center": 0.7386,
                     "count": 15,
                     "density": 0.060729,
-                    "cumulative_pct": 51.417,
+                    "cumulative_pct": 51.0121,
                     "is_negative": false
                   },
                   {
@@ -9191,8 +9191,8 @@
                     "lower": 1.4771,
                     "upper": 2.9543,
                     "center": 2.2157,
-                    "count": 11,
-                    "density": 0.044534,
+                    "count": 12,
+                    "density": 0.048583,
                     "cumulative_pct": 55.8704,
                     "is_negative": false
                   },
@@ -9585,12 +9585,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 231,
               "moments": {
-                "mean": 4.3905,
+                "mean": 4.4115,
                 "median": 4.0881,
-                "std": 25.7295,
-                "ann_volatility": 89.13,
-                "skewness": 0.1165,
-                "excess_kurtosis": 1.3847
+                "std": 25.7183,
+                "ann_volatility": 89.09,
+                "skewness": 0.1148,
+                "excess_kurtosis": 1.3915
               },
               "risk_metrics": {
                 "var_95": -46.91,
@@ -9952,9 +9952,9 @@
                     "lower": -13.9107,
                     "upper": -11.5922,
                     "center": -12.7514,
-                    "count": 10,
-                    "density": 0.04329,
-                    "cumulative_pct": 21.2121,
+                    "count": 9,
+                    "density": 0.038961,
+                    "cumulative_pct": 20.7792,
                     "is_negative": true
                   },
                   {
@@ -9964,7 +9964,7 @@
                     "center": -10.433,
                     "count": 7,
                     "density": 0.030303,
-                    "cumulative_pct": 24.2424,
+                    "cumulative_pct": 23.8095,
                     "is_negative": true
                   },
                   {
@@ -9974,7 +9974,7 @@
                     "center": -8.1146,
                     "count": 13,
                     "density": 0.056277,
-                    "cumulative_pct": 29.8701,
+                    "cumulative_pct": 29.4372,
                     "is_negative": true
                   },
                   {
@@ -9982,8 +9982,8 @@
                     "lower": -6.9553,
                     "upper": -4.6369,
                     "center": -5.7961,
-                    "count": 14,
-                    "density": 0.060606,
+                    "count": 15,
+                    "density": 0.064935,
                     "cumulative_pct": 35.9307,
                     "is_negative": true
                   },
@@ -10526,7 +10526,7 @@
                 "edge": "Neutral / Mean Reverting"
               },
               "fwd_10d": {
-                "mean": 0.9,
+                "mean": 0.93,
                 "median": 1.48,
                 "win_rate": 52.3,
                 "edge": "Neutral / Mean Reverting"
@@ -10547,12 +10547,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 974,
               "moments": {
-                "mean": 0.273,
+                "mean": 0.2786,
                 "median": 0.3448,
-                "std": 6.675,
-                "ann_volatility": 105.96,
-                "skewness": 0.0364,
-                "excess_kurtosis": 3.7959
+                "std": 6.6779,
+                "ann_volatility": 106.01,
+                "skewness": 0.0346,
+                "excess_kurtosis": 3.7847
               },
               "risk_metrics": {
                 "var_95": -10.28,
@@ -10974,9 +10974,9 @@
                     "lower": 0.0,
                     "upper": 1.2132,
                     "center": 0.6066,
-                    "count": 71,
-                    "density": 0.072895,
-                    "cumulative_pct": 55.5441,
+                    "count": 70,
+                    "density": 0.071869,
+                    "cumulative_pct": 55.4415,
                     "is_negative": false
                   },
                   {
@@ -10986,7 +10986,7 @@
                     "center": 1.8198,
                     "count": 74,
                     "density": 0.075975,
-                    "cumulative_pct": 63.1417,
+                    "cumulative_pct": 63.039,
                     "is_negative": false
                   },
                   {
@@ -10996,7 +10996,7 @@
                     "center": 3.033,
                     "count": 77,
                     "density": 0.079055,
-                    "cumulative_pct": 71.0472,
+                    "cumulative_pct": 70.9446,
                     "is_negative": false
                   },
                   {
@@ -11006,7 +11006,7 @@
                     "center": 4.2462,
                     "count": 57,
                     "density": 0.058522,
-                    "cumulative_pct": 76.8994,
+                    "cumulative_pct": 76.7967,
                     "is_negative": false
                   },
                   {
@@ -11016,7 +11016,7 @@
                     "center": 5.4594,
                     "count": 48,
                     "density": 0.049281,
-                    "cumulative_pct": 81.8275,
+                    "cumulative_pct": 81.7248,
                     "is_negative": false
                   },
                   {
@@ -11024,8 +11024,8 @@
                     "lower": 6.066,
                     "upper": 7.2792,
                     "center": 6.6726,
-                    "count": 49,
-                    "density": 0.050308,
+                    "count": 50,
+                    "density": 0.051335,
                     "cumulative_pct": 86.8583,
                     "is_negative": false
                   },
@@ -11378,12 +11378,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 970,
               "moments": {
-                "mean": 1.2782,
-                "median": 1.248,
-                "std": 14.0791,
+                "mean": 1.2837,
+                "median": 1.2694,
+                "std": 14.0783,
                 "ann_volatility": 99.95,
-                "skewness": -0.0417,
-                "excess_kurtosis": 0.71
+                "skewness": -0.0429,
+                "excess_kurtosis": 0.7108
               },
               "risk_metrics": {
                 "var_95": -20.79,
@@ -11392,7 +11392,7 @@
                 "cvar_99": -41.15,
                 "max_gain": 52.67,
                 "max_drawdown": -59.08,
-                "win_rate": 53.71
+                "win_rate": 53.81
               },
               "histogram": {
                 "bin_count": 80,
@@ -11775,9 +11775,9 @@
                     "lower": -4.4314,
                     "upper": -2.9543,
                     "center": -3.6928,
-                    "count": 35,
-                    "density": 0.036082,
-                    "cumulative_pct": 37.4227,
+                    "count": 34,
+                    "density": 0.035052,
+                    "cumulative_pct": 37.3196,
                     "is_negative": true
                   },
                   {
@@ -11787,7 +11787,7 @@
                     "center": -2.2157,
                     "count": 40,
                     "density": 0.041237,
-                    "cumulative_pct": 41.5464,
+                    "cumulative_pct": 41.4433,
                     "is_negative": true
                   },
                   {
@@ -11797,7 +11797,7 @@
                     "center": -0.7386,
                     "count": 45,
                     "density": 0.046392,
-                    "cumulative_pct": 46.1856,
+                    "cumulative_pct": 46.0825,
                     "is_negative": true
                   },
                   {
@@ -11807,7 +11807,7 @@
                     "center": 0.7386,
                     "count": 42,
                     "density": 0.043299,
-                    "cumulative_pct": 50.5155,
+                    "cumulative_pct": 50.4124,
                     "is_negative": false
                   },
                   {
@@ -11815,8 +11815,8 @@
                     "lower": 1.4771,
                     "upper": 2.9543,
                     "center": 2.2157,
-                    "count": 36,
-                    "density": 0.037113,
+                    "count": 37,
+                    "density": 0.038144,
                     "cumulative_pct": 54.2268,
                     "is_negative": false
                   },
@@ -12209,12 +12209,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 954,
               "moments": {
-                "mean": 4.6431,
+                "mean": 4.6481,
                 "median": 0.4422,
-                "std": 28.9826,
-                "ann_volatility": 100.4,
-                "skewness": 0.8668,
-                "excess_kurtosis": 1.2844
+                "std": 28.9801,
+                "ann_volatility": 100.39,
+                "skewness": 0.8666,
+                "excess_kurtosis": 1.2852
               },
               "risk_metrics": {
                 "var_95": -37.29,
@@ -12596,9 +12596,9 @@
                     "lower": -12.0295,
                     "upper": -9.0221,
                     "center": -10.5258,
-                    "count": 40,
-                    "density": 0.041929,
-                    "cumulative_pct": 32.7044,
+                    "count": 39,
+                    "density": 0.040881,
+                    "cumulative_pct": 32.5996,
                     "is_negative": true
                   },
                   {
@@ -12606,8 +12606,8 @@
                     "lower": -9.0221,
                     "upper": -6.0147,
                     "center": -7.5184,
-                    "count": 44,
-                    "density": 0.046122,
+                    "count": 45,
+                    "density": 0.04717,
                     "cumulative_pct": 37.3166,
                     "is_negative": true
                   },
@@ -13171,12 +13171,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 3802,
               "moments": {
-                "mean": 0.1238,
+                "mean": 0.1252,
                 "median": 0.2345,
-                "std": 5.8746,
-                "ann_volatility": 93.26,
-                "skewness": -0.0771,
-                "excess_kurtosis": 4.2374
+                "std": 5.8755,
+                "ann_volatility": 93.27,
+                "skewness": -0.0775,
+                "excess_kurtosis": 4.2334
               },
               "risk_metrics": {
                 "var_95": -9.25,
@@ -13598,9 +13598,9 @@
                     "lower": 0.0,
                     "upper": 1.2132,
                     "center": 0.6066,
-                    "count": 372,
-                    "density": 0.097843,
-                    "cumulative_pct": 58.2062,
+                    "count": 371,
+                    "density": 0.09758,
+                    "cumulative_pct": 58.1799,
                     "is_negative": false
                   },
                   {
@@ -13610,7 +13610,7 @@
                     "center": 1.8198,
                     "count": 374,
                     "density": 0.098369,
-                    "cumulative_pct": 68.0431,
+                    "cumulative_pct": 68.0168,
                     "is_negative": false
                   },
                   {
@@ -13620,7 +13620,7 @@
                     "center": 3.033,
                     "count": 306,
                     "density": 0.080484,
-                    "cumulative_pct": 76.0915,
+                    "cumulative_pct": 76.0652,
                     "is_negative": false
                   },
                   {
@@ -13630,7 +13630,7 @@
                     "center": 4.2462,
                     "count": 255,
                     "density": 0.06707,
-                    "cumulative_pct": 82.7985,
+                    "cumulative_pct": 82.7722,
                     "is_negative": false
                   },
                   {
@@ -13640,7 +13640,7 @@
                     "center": 5.4594,
                     "count": 183,
                     "density": 0.048133,
-                    "cumulative_pct": 87.6118,
+                    "cumulative_pct": 87.5855,
                     "is_negative": false
                   },
                   {
@@ -13648,8 +13648,8 @@
                     "lower": 6.066,
                     "upper": 7.2792,
                     "center": 6.6726,
-                    "count": 137,
-                    "density": 0.036034,
+                    "count": 138,
+                    "density": 0.036297,
                     "cumulative_pct": 91.2151,
                     "is_negative": false
                   },
@@ -14002,11 +14002,11 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 3798,
               "moments": {
-                "mean": 0.6099,
-                "median": 0.0362,
-                "std": 13.0574,
+                "mean": 0.6113,
+                "median": 0.0545,
+                "std": 13.0572,
                 "ann_volatility": 92.7,
-                "skewness": 0.2508,
+                "skewness": 0.2505,
                 "excess_kurtosis": 1.8143
               },
               "risk_metrics": {
@@ -14016,7 +14016,7 @@
                 "cvar_99": -38.62,
                 "max_gain": 72.03,
                 "max_drawdown": -59.08,
-                "win_rate": 50.08
+                "win_rate": 50.11
               },
               "histogram": {
                 "bin_count": 80,
@@ -14409,9 +14409,9 @@
                     "lower": -3.6017,
                     "upper": -1.8009,
                     "center": -2.7013,
-                    "count": 250,
-                    "density": 0.065824,
-                    "cumulative_pct": 43.207,
+                    "count": 249,
+                    "density": 0.065561,
+                    "cumulative_pct": 43.1806,
                     "is_negative": true
                   },
                   {
@@ -14421,7 +14421,7 @@
                     "center": -0.9004,
                     "count": 250,
                     "density": 0.065824,
-                    "cumulative_pct": 49.7894,
+                    "cumulative_pct": 49.763,
                     "is_negative": true
                   },
                   {
@@ -14431,7 +14431,7 @@
                     "center": 0.9004,
                     "count": 229,
                     "density": 0.060295,
-                    "cumulative_pct": 55.8189,
+                    "cumulative_pct": 55.7925,
                     "is_negative": false
                   },
                   {
@@ -14439,8 +14439,8 @@
                     "lower": 1.8009,
                     "upper": 3.6017,
                     "center": 2.7013,
-                    "count": 222,
-                    "density": 0.058452,
+                    "count": 223,
+                    "density": 0.058715,
                     "cumulative_pct": 61.664,
                     "is_negative": false
                   },
@@ -14833,12 +14833,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 3782,
               "moments": {
-                "mean": 2.6359,
+                "mean": 2.6372,
                 "median": 0.6508,
-                "std": 27.8216,
-                "ann_volatility": 96.38,
+                "std": 27.8211,
+                "ann_volatility": 96.37,
                 "skewness": 0.9914,
-                "excess_kurtosis": 3.4574
+                "excess_kurtosis": 3.4577
               },
               "risk_metrics": {
                 "var_95": -38.14,
@@ -15230,9 +15230,9 @@
                     "lower": -15.1188,
                     "upper": -10.0792,
                     "center": -12.599,
-                    "count": 294,
-                    "density": 0.077737,
-                    "cumulative_pct": 31.5442,
+                    "count": 293,
+                    "density": 0.077472,
+                    "cumulative_pct": 31.5177,
                     "is_negative": true
                   },
                   {
@@ -15240,8 +15240,8 @@
                     "lower": -10.0792,
                     "upper": -5.0396,
                     "center": -7.5594,
-                    "count": 320,
-                    "density": 0.084611,
+                    "count": 321,
+                    "density": 0.084876,
                     "cumulative_pct": 40.0053,
                     "is_negative": true
                   },
@@ -15795,10 +15795,10 @@
       "latest_date": "2026-11-19",
       "latest_bar": {
         "date": "2026-11-19",
-        "close": 7.88,
+        "close": 7.44,
         "prev_close": 7.94,
-        "return_pct": -0.7557,
-        "volume": 224961
+        "return_pct": -6.2972,
+        "volume": 2773518
       },
       "regimes": {
         "trailing_252d": {
@@ -15814,12 +15814,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 251,
               "moments": {
-                "mean": -0.1817,
+                "mean": -0.2037,
                 "median": 0.0,
-                "std": 6.9001,
-                "ann_volatility": 109.54,
-                "skewness": -1.1724,
-                "excess_kurtosis": 11.7297
+                "std": 6.9108,
+                "ann_volatility": 109.71,
+                "skewness": -1.1601,
+                "excess_kurtosis": 11.6258
               },
               "risk_metrics": {
                 "var_95": -9.14,
@@ -16191,9 +16191,9 @@
                     "lower": -6.3616,
                     "upper": -5.0893,
                     "center": -5.7254,
-                    "count": 11,
-                    "density": 0.043825,
-                    "cumulative_pct": 19.1235,
+                    "count": 12,
+                    "density": 0.047809,
+                    "cumulative_pct": 19.5219,
                     "is_negative": true
                   },
                   {
@@ -16203,7 +16203,7 @@
                     "center": -4.4531,
                     "count": 15,
                     "density": 0.059761,
-                    "cumulative_pct": 25.0996,
+                    "cumulative_pct": 25.498,
                     "is_negative": true
                   },
                   {
@@ -16213,7 +16213,7 @@
                     "center": -3.1808,
                     "count": 19,
                     "density": 0.075697,
-                    "cumulative_pct": 32.6693,
+                    "cumulative_pct": 33.0677,
                     "is_negative": true
                   },
                   {
@@ -16223,7 +16223,7 @@
                     "center": -1.9085,
                     "count": 22,
                     "density": 0.087649,
-                    "cumulative_pct": 41.4343,
+                    "cumulative_pct": 41.8327,
                     "is_negative": true
                   },
                   {
@@ -16231,8 +16231,8 @@
                     "lower": -1.2723,
                     "upper": 0.0,
                     "center": -0.6362,
-                    "count": 21,
-                    "density": 0.083665,
+                    "count": 20,
+                    "density": 0.079681,
                     "cumulative_pct": 49.8008,
                     "is_negative": true
                   },
@@ -16645,12 +16645,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 247,
               "moments": {
-                "mean": -1.2007,
-                "median": -2.0808,
-                "std": 15.0601,
+                "mean": -1.2236,
+                "median": -2.1395,
+                "std": 15.0604,
                 "ann_volatility": 106.92,
-                "skewness": 1.2529,
-                "excess_kurtosis": 5.452
+                "skewness": 1.2573,
+                "excess_kurtosis": 5.4591
               },
               "risk_metrics": {
                 "var_95": -21.81,
@@ -16659,7 +16659,7 @@
                 "cvar_99": -41.01,
                 "max_gain": 71.31,
                 "max_drawdown": -46.66,
-                "win_rate": 42.91
+                "win_rate": 42.51
               },
               "histogram": {
                 "bin_count": 80,
@@ -17042,9 +17042,9 @@
                     "lower": -5.3485,
                     "upper": -3.5656,
                     "center": -4.4571,
-                    "count": 20,
-                    "density": 0.080972,
-                    "cumulative_pct": 46.1538,
+                    "count": 21,
+                    "density": 0.08502,
+                    "cumulative_pct": 46.5587,
                     "is_negative": true
                   },
                   {
@@ -17054,7 +17054,7 @@
                     "center": -2.6742,
                     "count": 13,
                     "density": 0.052632,
-                    "cumulative_pct": 51.417,
+                    "cumulative_pct": 51.8219,
                     "is_negative": true
                   },
                   {
@@ -17064,7 +17064,7 @@
                     "center": -0.8914,
                     "count": 14,
                     "density": 0.05668,
-                    "cumulative_pct": 57.085,
+                    "cumulative_pct": 57.4899,
                     "is_negative": true
                   },
                   {
@@ -17072,8 +17072,8 @@
                     "lower": 0.0,
                     "upper": 1.7828,
                     "center": 0.8914,
-                    "count": 16,
-                    "density": 0.064777,
+                    "count": 15,
+                    "density": 0.060729,
                     "cumulative_pct": 63.5628,
                     "is_negative": false
                   },
@@ -17476,12 +17476,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 231,
               "moments": {
-                "mean": -8.1004,
+                "mean": -8.1265,
                 "median": -8.4996,
-                "std": 19.407,
-                "ann_volatility": 67.23,
-                "skewness": 0.3226,
-                "excess_kurtosis": 1.5204
+                "std": 19.3896,
+                "ann_volatility": 67.17,
+                "skewness": 0.3257,
+                "excess_kurtosis": 1.5368
               },
               "risk_metrics": {
                 "var_95": -38.23,
@@ -17903,9 +17903,9 @@
                     "lower": 0.0,
                     "upper": 2.1411,
                     "center": 1.0706,
-                    "count": 11,
-                    "density": 0.047619,
-                    "cumulative_pct": 67.0996,
+                    "count": 12,
+                    "density": 0.051948,
+                    "cumulative_pct": 67.5325,
                     "is_negative": false
                   },
                   {
@@ -17915,7 +17915,7 @@
                     "center": 3.2117,
                     "count": 14,
                     "density": 0.060606,
-                    "cumulative_pct": 73.1602,
+                    "cumulative_pct": 73.5931,
                     "is_negative": false
                   },
                   {
@@ -17925,7 +17925,7 @@
                     "center": 5.3528,
                     "count": 10,
                     "density": 0.04329,
-                    "cumulative_pct": 77.4892,
+                    "cumulative_pct": 77.9221,
                     "is_negative": false
                   },
                   {
@@ -17933,8 +17933,8 @@
                     "lower": 6.4234,
                     "upper": 8.5645,
                     "center": 7.4939,
-                    "count": 10,
-                    "density": 0.04329,
+                    "count": 9,
+                    "density": 0.038961,
                     "cumulative_pct": 81.8182,
                     "is_negative": false
                   },
@@ -18417,7 +18417,7 @@
                 "edge": "Moderate Bearish Edge"
               },
               "fwd_10d": {
-                "mean": -1.18,
+                "mean": -1.21,
                 "median": -2.3,
                 "win_rate": 40.0,
                 "edge": "Strong Bearish Edge"
@@ -18438,12 +18438,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 975,
               "moments": {
-                "mean": -0.2233,
+                "mean": -0.229,
                 "median": -0.1968,
-                "std": 6.9714,
-                "ann_volatility": 110.67,
-                "skewness": -0.1822,
-                "excess_kurtosis": 3.0738
+                "std": 6.9741,
+                "ann_volatility": 110.71,
+                "skewness": -0.1802,
+                "excess_kurtosis": 3.0644
               },
               "risk_metrics": {
                 "var_95": -10.97,
@@ -18815,9 +18815,9 @@
                     "lower": -6.3616,
                     "upper": -5.0893,
                     "center": -5.7254,
-                    "count": 53,
-                    "density": 0.054359,
-                    "cumulative_pct": 23.3846,
+                    "count": 54,
+                    "density": 0.055385,
+                    "cumulative_pct": 23.4872,
                     "is_negative": true
                   },
                   {
@@ -18827,7 +18827,7 @@
                     "center": -4.4531,
                     "count": 59,
                     "density": 0.060513,
-                    "cumulative_pct": 29.4359,
+                    "cumulative_pct": 29.5385,
                     "is_negative": true
                   },
                   {
@@ -18837,7 +18837,7 @@
                     "center": -3.1808,
                     "count": 70,
                     "density": 0.071795,
-                    "cumulative_pct": 36.6154,
+                    "cumulative_pct": 36.7179,
                     "is_negative": true
                   },
                   {
@@ -18847,7 +18847,7 @@
                     "center": -1.9085,
                     "count": 73,
                     "density": 0.074872,
-                    "cumulative_pct": 44.1026,
+                    "cumulative_pct": 44.2051,
                     "is_negative": true
                   },
                   {
@@ -18855,8 +18855,8 @@
                     "lower": -1.2723,
                     "upper": 0.0,
                     "center": -0.6362,
-                    "count": 66,
-                    "density": 0.067692,
+                    "count": 65,
+                    "density": 0.066667,
                     "cumulative_pct": 50.8718,
                     "is_negative": true
                   },
@@ -19269,12 +19269,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 971,
               "moments": {
-                "mean": -1.2507,
-                "median": -2.8638,
-                "std": 15.0005,
+                "mean": -1.2565,
+                "median": -2.963,
+                "std": 15.0006,
                 "ann_volatility": 106.49,
-                "skewness": 0.6942,
-                "excess_kurtosis": 1.4765
+                "skewness": 0.6954,
+                "excess_kurtosis": 1.4775
               },
               "risk_metrics": {
                 "var_95": -23.31,
@@ -19283,7 +19283,7 @@
                 "cvar_99": -35.06,
                 "max_gain": 71.31,
                 "max_drawdown": -46.66,
-                "win_rate": 42.12
+                "win_rate": 42.02
               },
               "histogram": {
                 "bin_count": 80,
@@ -19666,9 +19666,9 @@
                     "lower": -5.3485,
                     "upper": -3.5656,
                     "center": -4.4571,
-                    "count": 59,
-                    "density": 0.060762,
-                    "cumulative_pct": 48.3007,
+                    "count": 60,
+                    "density": 0.061792,
+                    "cumulative_pct": 48.4037,
                     "is_negative": true
                   },
                   {
@@ -19678,7 +19678,7 @@
                     "center": -2.6742,
                     "count": 46,
                     "density": 0.047374,
-                    "cumulative_pct": 53.0381,
+                    "cumulative_pct": 53.1411,
                     "is_negative": true
                   },
                   {
@@ -19688,7 +19688,7 @@
                     "center": -0.8914,
                     "count": 45,
                     "density": 0.046344,
-                    "cumulative_pct": 57.6725,
+                    "cumulative_pct": 57.7755,
                     "is_negative": true
                   },
                   {
@@ -19696,8 +19696,8 @@
                     "lower": 0.0,
                     "upper": 1.7828,
                     "center": 0.8914,
-                    "count": 39,
-                    "density": 0.040165,
+                    "count": 38,
+                    "density": 0.039135,
                     "cumulative_pct": 61.689,
                     "is_negative": false
                   },
@@ -20100,12 +20100,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 955,
               "moments": {
-                "mean": -5.9395,
+                "mean": -5.9458,
                 "median": -7.4806,
-                "std": 25.2979,
+                "std": 25.2953,
                 "ann_volatility": 87.63,
-                "skewness": 0.5424,
-                "excess_kurtosis": 0.5995
+                "skewness": 0.5431,
+                "excess_kurtosis": 0.6015
               },
               "risk_metrics": {
                 "var_95": -46.65,
@@ -20527,9 +20527,9 @@
                     "lower": 0.0,
                     "upper": 2.3729,
                     "center": 1.1865,
-                    "count": 39,
-                    "density": 0.040838,
-                    "cumulative_pct": 66.0733,
+                    "count": 40,
+                    "density": 0.041885,
+                    "cumulative_pct": 66.178,
                     "is_negative": false
                   },
                   {
@@ -20539,7 +20539,7 @@
                     "center": 3.5594,
                     "count": 39,
                     "density": 0.040838,
-                    "cumulative_pct": 70.1571,
+                    "cumulative_pct": 70.2618,
                     "is_negative": false
                   },
                   {
@@ -20549,7 +20549,7 @@
                     "center": 5.9323,
                     "count": 35,
                     "density": 0.036649,
-                    "cumulative_pct": 73.822,
+                    "cumulative_pct": 73.9267,
                     "is_negative": false
                   },
                   {
@@ -20557,8 +20557,8 @@
                     "lower": 7.1187,
                     "upper": 9.4916,
                     "center": 8.3052,
-                    "count": 32,
-                    "density": 0.033508,
+                    "count": 31,
+                    "density": 0.032461,
                     "cumulative_pct": 77.1728,
                     "is_negative": false
                   },
@@ -21041,7 +21041,7 @@
                 "edge": "Moderate Bearish Edge"
               },
               "fwd_10d": {
-                "mean": -1.9,
+                "mean": -1.91,
                 "median": -3.64,
                 "win_rate": 41.7,
                 "edge": "Moderate Bearish Edge"
@@ -21062,12 +21062,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 4729,
               "moments": {
-                "mean": -0.196,
+                "mean": -0.1971,
                 "median": -0.2732,
-                "std": 6.0712,
-                "ann_volatility": 96.38,
-                "skewness": 0.1209,
-                "excess_kurtosis": 3.5038
+                "std": 6.0719,
+                "ann_volatility": 96.39,
+                "skewness": 0.1212,
+                "excess_kurtosis": 3.5013
               },
               "risk_metrics": {
                 "var_95": -9.61,
@@ -21439,9 +21439,9 @@
                     "lower": -6.3616,
                     "upper": -5.0893,
                     "center": -5.7254,
-                    "count": 235,
-                    "density": 0.049693,
-                    "cumulative_pct": 17.6359,
+                    "count": 236,
+                    "density": 0.049905,
+                    "cumulative_pct": 17.657,
                     "is_negative": true
                   },
                   {
@@ -21451,7 +21451,7 @@
                     "center": -4.4531,
                     "count": 339,
                     "density": 0.071685,
-                    "cumulative_pct": 24.8044,
+                    "cumulative_pct": 24.8255,
                     "is_negative": true
                   },
                   {
@@ -21461,7 +21461,7 @@
                     "center": -3.1808,
                     "count": 375,
                     "density": 0.079298,
-                    "cumulative_pct": 32.7342,
+                    "cumulative_pct": 32.7553,
                     "is_negative": true
                   },
                   {
@@ -21471,7 +21471,7 @@
                     "center": -1.9085,
                     "count": 470,
                     "density": 0.099387,
-                    "cumulative_pct": 42.6729,
+                    "cumulative_pct": 42.694,
                     "is_negative": true
                   },
                   {
@@ -21479,8 +21479,8 @@
                     "lower": -1.2723,
                     "upper": 0.0,
                     "center": -0.6362,
-                    "count": 415,
-                    "density": 0.087756,
+                    "count": 414,
+                    "density": 0.087545,
                     "cumulative_pct": 51.4485,
                     "is_negative": true
                   },
@@ -21893,12 +21893,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 4725,
               "moments": {
-                "mean": -1.0153,
-                "median": -1.5152,
-                "std": 13.3201,
+                "mean": -1.0165,
+                "median": -1.5198,
+                "std": 13.3202,
                 "ann_volatility": 94.56,
-                "skewness": 0.5398,
-                "excess_kurtosis": 2.0391
+                "skewness": 0.5401,
+                "excess_kurtosis": 2.0392
               },
               "risk_metrics": {
                 "var_95": -21.42,
@@ -21907,7 +21907,7 @@
                 "cvar_99": -36.48,
                 "max_gain": 84.12,
                 "max_drawdown": -46.95,
-                "win_rate": 44.68
+                "win_rate": 44.66
               },
               "histogram": {
                 "bin_count": 80,
@@ -22290,9 +22290,9 @@
                     "lower": -6.3094,
                     "upper": -4.2062,
                     "center": -5.2578,
-                    "count": 336,
-                    "density": 0.071111,
-                    "cumulative_pct": 41.545,
+                    "count": 337,
+                    "density": 0.071323,
+                    "cumulative_pct": 41.5661,
                     "is_negative": true
                   },
                   {
@@ -22302,7 +22302,7 @@
                     "center": -3.1547,
                     "count": 315,
                     "density": 0.066667,
-                    "cumulative_pct": 48.2116,
+                    "cumulative_pct": 48.2328,
                     "is_negative": true
                   },
                   {
@@ -22312,7 +22312,7 @@
                     "center": -1.0516,
                     "count": 307,
                     "density": 0.064974,
-                    "cumulative_pct": 54.709,
+                    "cumulative_pct": 54.7302,
                     "is_negative": true
                   },
                   {
@@ -22320,8 +22320,8 @@
                     "lower": 0.0,
                     "upper": 2.1031,
                     "center": 1.0516,
-                    "count": 338,
-                    "density": 0.071534,
+                    "count": 337,
+                    "density": 0.071323,
                     "cumulative_pct": 61.8624,
                     "is_negative": false
                   },
@@ -22724,12 +22724,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 4709,
               "moments": {
-                "mean": -4.418,
+                "mean": -4.4193,
                 "median": -7.0042,
-                "std": 25.6805,
+                "std": 25.68,
                 "ann_volatility": 88.96,
-                "skewness": 0.7484,
-                "excess_kurtosis": 1.5794
+                "skewness": 0.7486,
+                "excess_kurtosis": 1.5798
               },
               "risk_metrics": {
                 "var_95": -42.32,
@@ -23151,9 +23151,9 @@
                     "lower": 0.0,
                     "upper": 3.4637,
                     "center": 1.7319,
-                    "count": 246,
-                    "density": 0.05224,
-                    "cumulative_pct": 67.1905,
+                    "count": 247,
+                    "density": 0.052453,
+                    "cumulative_pct": 67.2117,
                     "is_negative": false
                   },
                   {
@@ -23163,7 +23163,7 @@
                     "center": 5.1956,
                     "count": 215,
                     "density": 0.045657,
-                    "cumulative_pct": 71.7562,
+                    "cumulative_pct": 71.7774,
                     "is_negative": false
                   },
                   {
@@ -23171,8 +23171,8 @@
                     "lower": 6.9275,
                     "upper": 10.3912,
                     "center": 8.6594,
-                    "count": 181,
-                    "density": 0.038437,
+                    "count": 180,
+                    "density": 0.038225,
                     "cumulative_pct": 75.5999,
                     "is_negative": false
                   },
@@ -23665,7 +23665,7 @@
                 "edge": "Moderate Bearish Edge"
               },
               "fwd_10d": {
-                "mean": -2.21,
+                "mean": -2.22,
                 "median": -3.31,
                 "win_rate": 41.2,
                 "edge": "Moderate Bearish Edge"
@@ -23686,10 +23686,10 @@
       "latest_date": "2026-11-19",
       "latest_bar": {
         "date": "2026-11-19",
-        "close": 21.91,
+        "close": 23.15,
         "prev_close": 21.69,
-        "return_pct": 1.0143,
-        "volume": 37460
+        "return_pct": 6.7312,
+        "volume": 1118080
       },
       "regimes": {
         "trailing_252d": {
@@ -23705,12 +23705,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 251,
               "moments": {
-                "mean": 0.1042,
+                "mean": 0.127,
                 "median": 0.0,
-                "std": 6.9802,
-                "ann_volatility": 110.81,
-                "skewness": 0.9095,
-                "excess_kurtosis": 10.4111
+                "std": 6.9925,
+                "ann_volatility": 111.0,
+                "skewness": 0.8983,
+                "excess_kurtosis": 10.3081
               },
               "risk_metrics": {
                 "var_95": -10.75,
@@ -24132,9 +24132,9 @@
                     "lower": 0.0,
                     "upper": 1.2363,
                     "center": 0.6181,
-                    "count": 24,
-                    "density": 0.095618,
-                    "cumulative_pct": 59.3625,
+                    "count": 23,
+                    "density": 0.091633,
+                    "cumulative_pct": 58.9641,
                     "is_negative": false
                   },
                   {
@@ -24144,7 +24144,7 @@
                     "center": 1.8544,
                     "count": 20,
                     "density": 0.079681,
-                    "cumulative_pct": 67.3307,
+                    "cumulative_pct": 66.9323,
                     "is_negative": false
                   },
                   {
@@ -24154,7 +24154,7 @@
                     "center": 3.0907,
                     "count": 21,
                     "density": 0.083665,
-                    "cumulative_pct": 75.6972,
+                    "cumulative_pct": 75.2988,
                     "is_negative": false
                   },
                   {
@@ -24164,7 +24164,7 @@
                     "center": 4.327,
                     "count": 13,
                     "density": 0.051793,
-                    "cumulative_pct": 80.8765,
+                    "cumulative_pct": 80.4781,
                     "is_negative": false
                   },
                   {
@@ -24174,7 +24174,7 @@
                     "center": 5.5632,
                     "count": 10,
                     "density": 0.039841,
-                    "cumulative_pct": 84.8606,
+                    "cumulative_pct": 84.4622,
                     "is_negative": false
                   },
                   {
@@ -24182,8 +24182,8 @@
                     "lower": 6.1814,
                     "upper": 7.4177,
                     "center": 6.7995,
-                    "count": 11,
-                    "density": 0.043825,
+                    "count": 12,
+                    "density": 0.047809,
                     "cumulative_pct": 89.243,
                     "is_negative": false
                   },
@@ -24536,12 +24536,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 247,
               "moments": {
-                "mean": 0.4409,
-                "median": 0.8757,
-                "std": 13.8872,
-                "ann_volatility": 98.59,
-                "skewness": -0.4059,
-                "excess_kurtosis": 2.9647
+                "mean": 0.4631,
+                "median": 1.0305,
+                "std": 13.8854,
+                "ann_volatility": 98.58,
+                "skewness": -0.4108,
+                "excess_kurtosis": 2.9705
               },
               "risk_metrics": {
                 "var_95": -19.02,
@@ -24550,7 +24550,7 @@
                 "cvar_99": -51.05,
                 "max_gain": 54.79,
                 "max_drawdown": -52.57,
-                "win_rate": 53.85
+                "win_rate": 54.25
               },
               "histogram": {
                 "bin_count": 80,
@@ -24933,9 +24933,9 @@
                     "lower": -4.109,
                     "upper": -2.7393,
                     "center": -3.4242,
-                    "count": 9,
-                    "density": 0.036437,
-                    "cumulative_pct": 38.4615,
+                    "count": 8,
+                    "density": 0.032389,
+                    "cumulative_pct": 38.0567,
                     "is_negative": true
                   },
                   {
@@ -24945,7 +24945,7 @@
                     "center": -2.0545,
                     "count": 9,
                     "density": 0.036437,
-                    "cumulative_pct": 42.1053,
+                    "cumulative_pct": 41.7004,
                     "is_negative": true
                   },
                   {
@@ -24955,7 +24955,7 @@
                     "center": -0.6848,
                     "count": 10,
                     "density": 0.040486,
-                    "cumulative_pct": 46.1538,
+                    "cumulative_pct": 45.749,
                     "is_negative": true
                   },
                   {
@@ -24965,7 +24965,7 @@
                     "center": 0.6848,
                     "count": 15,
                     "density": 0.060729,
-                    "cumulative_pct": 52.2267,
+                    "cumulative_pct": 51.8219,
                     "is_negative": false
                   },
                   {
@@ -24973,8 +24973,8 @@
                     "lower": 1.3697,
                     "upper": 2.7393,
                     "center": 2.0545,
-                    "count": 13,
-                    "density": 0.052632,
+                    "count": 14,
+                    "density": 0.05668,
                     "cumulative_pct": 57.4899,
                     "is_negative": false
                   },
@@ -25367,12 +25367,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 231,
               "moments": {
-                "mean": 1.7333,
+                "mean": 1.7547,
                 "median": 0.393,
-                "std": 24.5867,
-                "ann_volatility": 85.17,
-                "skewness": -0.2262,
-                "excess_kurtosis": 0.5452
+                "std": 24.5762,
+                "ann_volatility": 85.13,
+                "skewness": -0.2285,
+                "excess_kurtosis": 0.5517
               },
               "risk_metrics": {
                 "var_95": -49.2,
@@ -25724,9 +25724,9 @@
                     "lower": -13.4726,
                     "upper": -11.548,
                     "center": -12.5103,
-                    "count": 7,
-                    "density": 0.030303,
-                    "cumulative_pct": 24.2424,
+                    "count": 6,
+                    "density": 0.025974,
+                    "cumulative_pct": 23.8095,
                     "is_negative": true
                   },
                   {
@@ -25736,7 +25736,7 @@
                     "center": -10.5856,
                     "count": 9,
                     "density": 0.038961,
-                    "cumulative_pct": 28.1385,
+                    "cumulative_pct": 27.7056,
                     "is_negative": true
                   },
                   {
@@ -25744,8 +25744,8 @@
                     "lower": -9.6233,
                     "upper": -7.6987,
                     "center": -8.661,
-                    "count": 12,
-                    "density": 0.051948,
+                    "count": 13,
+                    "density": 0.056277,
                     "cumulative_pct": 33.3333,
                     "is_negative": true
                   },
@@ -26308,7 +26308,7 @@
                 "edge": "Neutral / Mean Reverting"
               },
               "fwd_10d": {
-                "mean": -0.24,
+                "mean": -0.22,
                 "median": -0.77,
                 "win_rate": 47.2,
                 "edge": "Neutral / Mean Reverting"
@@ -26329,12 +26329,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 975,
               "moments": {
-                "mean": 0.1796,
+                "mean": 0.1854,
                 "median": 0.2252,
-                "std": 7.0148,
-                "ann_volatility": 111.36,
-                "skewness": 0.1027,
-                "excess_kurtosis": 2.8352
+                "std": 7.0179,
+                "ann_volatility": 111.41,
+                "skewness": 0.1009,
+                "excess_kurtosis": 2.8254
               },
               "risk_metrics": {
                 "var_95": -11.49,
@@ -26756,9 +26756,9 @@
                     "lower": 0.0,
                     "upper": 1.2363,
                     "center": 0.6181,
-                    "count": 71,
-                    "density": 0.072821,
-                    "cumulative_pct": 56.0,
+                    "count": 70,
+                    "density": 0.071795,
+                    "cumulative_pct": 55.8974,
                     "is_negative": false
                   },
                   {
@@ -26768,7 +26768,7 @@
                     "center": 1.8544,
                     "count": 71,
                     "density": 0.072821,
-                    "cumulative_pct": 63.2821,
+                    "cumulative_pct": 63.1795,
                     "is_negative": false
                   },
                   {
@@ -26778,7 +26778,7 @@
                     "center": 3.0907,
                     "count": 73,
                     "density": 0.074872,
-                    "cumulative_pct": 70.7692,
+                    "cumulative_pct": 70.6667,
                     "is_negative": false
                   },
                   {
@@ -26788,7 +26788,7 @@
                     "center": 4.327,
                     "count": 51,
                     "density": 0.052308,
-                    "cumulative_pct": 76.0,
+                    "cumulative_pct": 75.8974,
                     "is_negative": false
                   },
                   {
@@ -26798,7 +26798,7 @@
                     "center": 5.5632,
                     "count": 51,
                     "density": 0.052308,
-                    "cumulative_pct": 81.2308,
+                    "cumulative_pct": 81.1282,
                     "is_negative": false
                   },
                   {
@@ -26806,8 +26806,8 @@
                     "lower": 6.1814,
                     "upper": 7.4177,
                     "center": 6.7995,
-                    "count": 49,
-                    "density": 0.050256,
+                    "count": 50,
+                    "density": 0.051282,
                     "cumulative_pct": 86.2564,
                     "is_negative": false
                   },
@@ -27160,12 +27160,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 971,
               "moments": {
-                "mean": 0.7983,
-                "median": 0.9365,
-                "std": 14.7625,
+                "mean": 0.8039,
+                "median": 0.9488,
+                "std": 14.762,
                 "ann_volatility": 104.8,
-                "skewness": 0.0057,
-                "excess_kurtosis": 0.3434
+                "skewness": 0.0046,
+                "excess_kurtosis": 0.3439
               },
               "risk_metrics": {
                 "var_95": -22.06,
@@ -27174,7 +27174,7 @@
                 "cvar_99": -41.85,
                 "max_gain": 54.79,
                 "max_drawdown": -52.57,
-                "win_rate": 52.63
+                "win_rate": 52.73
               },
               "histogram": {
                 "bin_count": 80,
@@ -27557,9 +27557,9 @@
                     "lower": -4.109,
                     "upper": -2.7393,
                     "center": -3.4242,
-                    "count": 28,
-                    "density": 0.028836,
-                    "cumulative_pct": 40.3708,
+                    "count": 27,
+                    "density": 0.027806,
+                    "cumulative_pct": 40.2678,
                     "is_negative": true
                   },
                   {
@@ -27569,7 +27569,7 @@
                     "center": -2.0545,
                     "count": 27,
                     "density": 0.027806,
-                    "cumulative_pct": 43.1514,
+                    "cumulative_pct": 43.0484,
                     "is_negative": true
                   },
                   {
@@ -27579,7 +27579,7 @@
                     "center": -0.6848,
                     "count": 40,
                     "density": 0.041195,
-                    "cumulative_pct": 47.2709,
+                    "cumulative_pct": 47.1679,
                     "is_negative": true
                   },
                   {
@@ -27589,7 +27589,7 @@
                     "center": 0.6848,
                     "count": 40,
                     "density": 0.041195,
-                    "cumulative_pct": 51.3903,
+                    "cumulative_pct": 51.2873,
                     "is_negative": false
                   },
                   {
@@ -27597,8 +27597,8 @@
                     "lower": 1.3697,
                     "upper": 2.7393,
                     "center": 2.0545,
-                    "count": 35,
-                    "density": 0.036045,
+                    "count": 36,
+                    "density": 0.037075,
                     "cumulative_pct": 54.9949,
                     "is_negative": false
                   },
@@ -27991,12 +27991,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 955,
               "moments": {
-                "mean": 2.6678,
+                "mean": 2.673,
                 "median": -1.5113,
-                "std": 29.8562,
+                "std": 29.8539,
                 "ann_volatility": 103.42,
-                "skewness": 0.7851,
-                "excess_kurtosis": 0.9858
+                "skewness": 0.7848,
+                "excess_kurtosis": 0.9864
               },
               "risk_metrics": {
                 "var_95": -42.27,
@@ -28368,9 +28368,9 @@
                     "lower": -14.2168,
                     "upper": -11.3735,
                     "center": -12.7952,
-                    "count": 47,
-                    "density": 0.049215,
-                    "cumulative_pct": 32.5654,
+                    "count": 46,
+                    "density": 0.048168,
+                    "cumulative_pct": 32.4607,
                     "is_negative": true
                   },
                   {
@@ -28380,7 +28380,7 @@
                     "center": -9.9518,
                     "count": 41,
                     "density": 0.042932,
-                    "cumulative_pct": 36.8586,
+                    "cumulative_pct": 36.7539,
                     "is_negative": true
                   },
                   {
@@ -28388,8 +28388,8 @@
                     "lower": -8.5301,
                     "upper": -5.6867,
                     "center": -7.1084,
-                    "count": 60,
-                    "density": 0.062827,
+                    "count": 61,
+                    "density": 0.063874,
                     "cumulative_pct": 43.1414,
                     "is_negative": true
                   },
@@ -28932,7 +28932,7 @@
                 "edge": "Neutral / Mean Reverting"
               },
               "fwd_10d": {
-                "mean": 0.86,
+                "mean": 0.87,
                 "median": -0.41,
                 "win_rate": 49.3,
                 "edge": "Neutral / Mean Reverting"
@@ -28953,12 +28953,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 4729,
               "moments": {
-                "mean": 0.1436,
+                "mean": 0.1448,
                 "median": 0.2433,
-                "std": 6.1985,
-                "ann_volatility": 98.4,
-                "skewness": -0.039,
-                "excess_kurtosis": 6.1407
+                "std": 6.1992,
+                "ann_volatility": 98.41,
+                "skewness": -0.0394,
+                "excess_kurtosis": 6.1368
               },
               "risk_metrics": {
                 "var_95": -9.74,
@@ -29380,9 +29380,9 @@
                     "lower": 0.0,
                     "upper": 1.5639,
                     "center": 0.7819,
-                    "count": 575,
-                    "density": 0.12159,
-                    "cumulative_pct": 60.055,
+                    "count": 574,
+                    "density": 0.121379,
+                    "cumulative_pct": 60.0338,
                     "is_negative": false
                   },
                   {
@@ -29392,7 +29392,7 @@
                     "center": 2.3458,
                     "count": 545,
                     "density": 0.115246,
-                    "cumulative_pct": 71.5796,
+                    "cumulative_pct": 71.5585,
                     "is_negative": false
                   },
                   {
@@ -29402,7 +29402,7 @@
                     "center": 3.9097,
                     "count": 419,
                     "density": 0.088602,
-                    "cumulative_pct": 80.4398,
+                    "cumulative_pct": 80.4187,
                     "is_negative": false
                   },
                   {
@@ -29412,7 +29412,7 @@
                     "center": 5.4736,
                     "count": 318,
                     "density": 0.067245,
-                    "cumulative_pct": 87.1643,
+                    "cumulative_pct": 87.1432,
                     "is_negative": false
                   },
                   {
@@ -29420,8 +29420,8 @@
                     "lower": 6.2555,
                     "upper": 7.8194,
                     "center": 7.0374,
-                    "count": 213,
-                    "density": 0.045041,
+                    "count": 214,
+                    "density": 0.045253,
                     "cumulative_pct": 91.6684,
                     "is_negative": false
                   },
@@ -29784,12 +29784,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 4725,
               "moments": {
-                "mean": 0.6784,
-                "median": 0.2303,
-                "std": 13.5873,
+                "mean": 0.6796,
+                "median": 0.2319,
+                "std": 13.5871,
                 "ann_volatility": 96.46,
-                "skewness": 0.2321,
-                "excess_kurtosis": 1.6405
+                "skewness": 0.2318,
+                "excess_kurtosis": 1.6406
               },
               "risk_metrics": {
                 "var_95": -20.35,
@@ -29798,7 +29798,7 @@
                 "cvar_99": -40.06,
                 "max_gain": 73.0,
                 "max_drawdown": -66.94,
-                "win_rate": 50.41
+                "win_rate": 50.43
               },
               "histogram": {
                 "bin_count": 80,
@@ -30191,9 +30191,9 @@
                     "lower": -3.6503,
                     "upper": -1.8251,
                     "center": -2.7377,
-                    "count": 294,
-                    "density": 0.062222,
-                    "cumulative_pct": 43.3228,
+                    "count": 293,
+                    "density": 0.062011,
+                    "cumulative_pct": 43.3016,
                     "is_negative": true
                   },
                   {
@@ -30203,7 +30203,7 @@
                     "center": -0.9126,
                     "count": 282,
                     "density": 0.059683,
-                    "cumulative_pct": 49.291,
+                    "cumulative_pct": 49.2698,
                     "is_negative": true
                   },
                   {
@@ -30213,7 +30213,7 @@
                     "center": 0.9126,
                     "count": 283,
                     "density": 0.059894,
-                    "cumulative_pct": 55.2804,
+                    "cumulative_pct": 55.2593,
                     "is_negative": false
                   },
                   {
@@ -30221,8 +30221,8 @@
                     "lower": 1.8251,
                     "upper": 3.6503,
                     "center": 2.7377,
-                    "count": 260,
-                    "density": 0.055026,
+                    "count": 261,
+                    "density": 0.055238,
                     "cumulative_pct": 60.7831,
                     "is_negative": false
                   },
@@ -30615,12 +30615,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 4709,
               "moments": {
-                "mean": 2.8891,
+                "mean": 2.8901,
                 "median": 0.4992,
-                "std": 28.8003,
+                "std": 28.7999,
                 "ann_volatility": 99.77,
                 "skewness": 0.9661,
-                "excess_kurtosis": 3.0952
+                "excess_kurtosis": 3.0955
               },
               "risk_metrics": {
                 "var_95": -38.75,
@@ -31012,9 +31012,9 @@
                     "lower": -15.5318,
                     "upper": -10.3545,
                     "center": -12.9432,
-                    "count": 365,
-                    "density": 0.077511,
-                    "cumulative_pct": 32.2999,
+                    "count": 364,
+                    "density": 0.077299,
+                    "cumulative_pct": 32.2786,
                     "is_negative": true
                   },
                   {
@@ -31022,8 +31022,8 @@
                     "lower": -10.3545,
                     "upper": -5.1773,
                     "center": -7.7659,
-                    "count": 401,
-                    "density": 0.085156,
+                    "count": 402,
+                    "density": 0.085368,
                     "cumulative_pct": 40.8155,
                     "is_negative": true
                   },
@@ -31556,7 +31556,7 @@
                 "edge": "Neutral / Mean Reverting"
               },
               "fwd_10d": {
-                "mean": 1.5,
+                "mean": 1.51,
                 "median": 0.4,
                 "win_rate": 50.8,
                 "edge": "Neutral / Mean Reverting"
@@ -31577,10 +31577,10 @@
       "latest_date": "2026-11-19",
       "latest_bar": {
         "date": "2026-11-19",
-        "close": 0.5726,
+        "close": 0.5635,
         "prev_close": 0.5408,
-        "return_pct": 5.8802,
-        "volume": 835430
+        "return_pct": 4.1975,
+        "volume": 1229182
       },
       "regimes": {
         "trailing_252d": {
@@ -31596,12 +31596,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 251,
               "moments": {
-                "mean": -0.5445,
+                "mean": -0.5512,
                 "median": 0.3984,
-                "std": 9.1876,
-                "ann_volatility": 145.85,
-                "skewness": -0.3875,
-                "excess_kurtosis": 4.4221
+                "std": 9.1835,
+                "ann_volatility": 145.78,
+                "skewness": -0.3867,
+                "excess_kurtosis": 4.4335
               },
               "risk_metrics": {
                 "var_95": -13.64,
@@ -32053,9 +32053,9 @@
                     "lower": 3.8728,
                     "upper": 5.1637,
                     "center": 4.5183,
-                    "count": 17,
-                    "density": 0.067729,
-                    "cumulative_pct": 78.4861,
+                    "count": 18,
+                    "density": 0.071713,
+                    "cumulative_pct": 78.8845,
                     "is_negative": false
                   },
                   {
@@ -32063,8 +32063,8 @@
                     "lower": 5.1637,
                     "upper": 6.4547,
                     "center": 5.8092,
-                    "count": 11,
-                    "density": 0.043825,
+                    "count": 10,
+                    "density": 0.039841,
                     "cumulative_pct": 82.8685,
                     "is_negative": false
                   },
@@ -32427,12 +32427,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 247,
               "moments": {
-                "mean": -2.9413,
+                "mean": -2.948,
                 "median": -4.509,
-                "std": 20.8535,
-                "ann_volatility": 148.04,
-                "skewness": 1.6715,
-                "excess_kurtosis": 8.1131
+                "std": 20.8512,
+                "ann_volatility": 148.03,
+                "skewness": 1.6729,
+                "excess_kurtosis": 8.12
               },
               "risk_metrics": {
                 "var_95": -33.84,
@@ -33258,12 +33258,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 231,
               "moments": {
-                "mean": -17.0259,
+                "mean": -17.0334,
                 "median": -14.7985,
-                "std": 21.6112,
-                "ann_volatility": 74.86,
-                "skewness": -0.4256,
-                "excess_kurtosis": 0.1757
+                "std": 21.6023,
+                "ann_volatility": 74.83,
+                "skewness": -0.4265,
+                "excess_kurtosis": 0.178
               },
               "risk_metrics": {
                 "var_95": -61.84,
@@ -34199,7 +34199,7 @@
                 "edge": "Strong Bearish Edge"
               },
               "fwd_10d": {
-                "mean": -3.79,
+                "mean": -3.8,
                 "median": -6.11,
                 "win_rate": 36.9,
                 "edge": "Strong Bearish Edge"
@@ -34220,12 +34220,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 982,
               "moments": {
-                "mean": -0.5265,
+                "mean": -0.5282,
                 "median": -0.4355,
-                "std": 9.058,
-                "ann_volatility": 143.79,
-                "skewness": 0.1049,
-                "excess_kurtosis": 1.8178
+                "std": 9.057,
+                "ann_volatility": 143.77,
+                "skewness": 0.1053,
+                "excess_kurtosis": 1.8199
               },
               "risk_metrics": {
                 "var_95": -14.35,
@@ -34677,9 +34677,9 @@
                     "lower": 3.8728,
                     "upper": 5.1637,
                     "center": 4.5183,
-                    "count": 62,
-                    "density": 0.063136,
-                    "cumulative_pct": 76.6802,
+                    "count": 63,
+                    "density": 0.064155,
+                    "cumulative_pct": 76.7821,
                     "is_negative": false
                   },
                   {
@@ -34687,8 +34687,8 @@
                     "lower": 5.1637,
                     "upper": 6.4547,
                     "center": 5.8092,
-                    "count": 42,
-                    "density": 0.04277,
+                    "count": 41,
+                    "density": 0.041752,
                     "cumulative_pct": 80.9572,
                     "is_negative": false
                   },
@@ -35051,12 +35051,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 978,
               "moments": {
-                "mean": -2.7188,
+                "mean": -2.7205,
                 "median": -5.2164,
-                "std": 19.7419,
+                "std": 19.7413,
                 "ann_volatility": 140.15,
-                "skewness": 0.8683,
-                "excess_kurtosis": 2.5236
+                "skewness": 0.8686,
+                "excess_kurtosis": 2.5246
               },
               "risk_metrics": {
                 "var_95": -32.31,
@@ -35882,12 +35882,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 962,
               "moments": {
-                "mean": -12.0259,
+                "mean": -12.0277,
                 "median": -14.1623,
-                "std": 32.2068,
-                "ann_volatility": 111.57,
-                "skewness": 0.8929,
-                "excess_kurtosis": 1.611
+                "std": 32.2056,
+                "ann_volatility": 111.56,
+                "skewness": 0.8931,
+                "excess_kurtosis": 1.6118
               },
               "risk_metrics": {
                 "var_95": -59.94,
@@ -36329,9 +36329,9 @@
                     "lower": 6.032,
                     "upper": 9.048,
                     "center": 7.54,
-                    "count": 24,
-                    "density": 0.024948,
-                    "cumulative_pct": 79.9376,
+                    "count": 25,
+                    "density": 0.025988,
+                    "cumulative_pct": 80.0416,
                     "is_negative": false
                   },
                   {
@@ -36339,8 +36339,8 @@
                     "lower": 9.048,
                     "upper": 12.064,
                     "center": 10.556,
-                    "count": 27,
-                    "density": 0.028067,
+                    "count": 26,
+                    "density": 0.027027,
                     "cumulative_pct": 82.7443,
                     "is_negative": false
                   },
@@ -36844,12 +36844,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 3515,
               "moments": {
-                "mean": -0.2582,
+                "mean": -0.2587,
                 "median": -0.1966,
-                "std": 8.6569,
+                "std": 8.6567,
                 "ann_volatility": 137.42,
-                "skewness": 0.1692,
-                "excess_kurtosis": 2.8657
+                "skewness": 0.1693,
+                "excess_kurtosis": 2.8665
               },
               "risk_metrics": {
                 "var_95": -13.74,
@@ -37301,9 +37301,9 @@
                     "lower": 3.8728,
                     "upper": 5.1637,
                     "center": 4.5183,
-                    "count": 182,
-                    "density": 0.051778,
-                    "cumulative_pct": 78.0654,
+                    "count": 183,
+                    "density": 0.052063,
+                    "cumulative_pct": 78.0939,
                     "is_negative": false
                   },
                   {
@@ -37311,8 +37311,8 @@
                     "lower": 5.1637,
                     "upper": 6.4547,
                     "center": 5.8092,
-                    "count": 155,
-                    "density": 0.044097,
+                    "count": 154,
+                    "density": 0.043812,
                     "cumulative_pct": 82.4751,
                     "is_negative": false
                   },
@@ -37675,12 +37675,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 3511,
               "moments": {
-                "mean": -1.319,
+                "mean": -1.3195,
                 "median": -2.4713,
-                "std": 19.1348,
+                "std": 19.1347,
                 "ann_volatility": 135.84,
                 "skewness": 0.6076,
-                "excess_kurtosis": 2.1227
+                "excess_kurtosis": 2.1229
               },
               "risk_metrics": {
                 "var_95": -30.16,
@@ -38506,12 +38506,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 3495,
               "moments": {
-                "mean": -5.6071,
+                "mean": -5.6076,
                 "median": -10.3068,
-                "std": 37.0101,
+                "std": 37.0099,
                 "ann_volatility": 128.21,
-                "skewness": 1.0964,
-                "excess_kurtosis": 2.729
+                "skewness": 1.0965,
+                "excess_kurtosis": 2.7291
               },
               "risk_metrics": {
                 "var_95": -58.5,
@@ -39468,10 +39468,10 @@
       "latest_date": "2026-11-19",
       "latest_bar": {
         "date": "2026-11-19",
-        "close": 16.8794,
+        "close": 17.61,
         "prev_close": 18.055,
-        "return_pct": -6.5115,
-        "volume": 16474
+        "return_pct": -2.4647,
+        "volume": 24981
       },
       "regimes": {
         "trailing_252d": {
@@ -39487,12 +39487,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 251,
               "moments": {
-                "mean": 0.4435,
+                "mean": 0.4597,
                 "median": -0.4499,
-                "std": 9.2282,
-                "ann_volatility": 146.49,
-                "skewness": 0.2448,
-                "excess_kurtosis": 2.9578
+                "std": 9.2196,
+                "ann_volatility": 146.36,
+                "skewness": 0.2418,
+                "excess_kurtosis": 2.9774
               },
               "risk_metrics": {
                 "var_95": -13.34,
@@ -39844,9 +39844,9 @@
                     "lower": -7.5726,
                     "upper": -6.4908,
                     "center": -7.0317,
-                    "count": 11,
-                    "density": 0.043825,
-                    "cumulative_pct": 17.5299,
+                    "count": 10,
+                    "density": 0.039841,
+                    "cumulative_pct": 17.1315,
                     "is_negative": true
                   },
                   {
@@ -39856,7 +39856,7 @@
                     "center": -5.9499,
                     "count": 7,
                     "density": 0.027888,
-                    "cumulative_pct": 20.3187,
+                    "cumulative_pct": 19.9203,
                     "is_negative": true
                   },
                   {
@@ -39866,7 +39866,7 @@
                     "center": -4.8681,
                     "count": 11,
                     "density": 0.043825,
-                    "cumulative_pct": 24.7012,
+                    "cumulative_pct": 24.3028,
                     "is_negative": true
                   },
                   {
@@ -39876,7 +39876,7 @@
                     "center": -3.7863,
                     "count": 22,
                     "density": 0.087649,
-                    "cumulative_pct": 33.4661,
+                    "cumulative_pct": 33.0677,
                     "is_negative": true
                   },
                   {
@@ -39884,8 +39884,8 @@
                     "lower": -3.2454,
                     "upper": -2.1636,
                     "center": -2.7045,
-                    "count": 14,
-                    "density": 0.055777,
+                    "count": 15,
+                    "density": 0.059761,
                     "cumulative_pct": 39.0438,
                     "is_negative": true
                   },
@@ -40318,12 +40318,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 247,
               "moments": {
-                "mean": 2.2062,
+                "mean": 2.2222,
                 "median": 1.3619,
-                "std": 19.3078,
-                "ann_volatility": 137.07,
-                "skewness": 0.117,
-                "excess_kurtosis": 3.4137
+                "std": 19.3005,
+                "ann_volatility": 137.02,
+                "skewness": 0.1151,
+                "excess_kurtosis": 3.4228
               },
               "risk_metrics": {
                 "var_95": -24.58,
@@ -40705,9 +40705,9 @@
                     "lower": -9.1462,
                     "upper": -6.8597,
                     "center": -8.0029,
-                    "count": 10,
-                    "density": 0.040486,
-                    "cumulative_pct": 27.1255,
+                    "count": 9,
+                    "density": 0.036437,
+                    "cumulative_pct": 26.7206,
                     "is_negative": true
                   },
                   {
@@ -40715,8 +40715,8 @@
                     "lower": -6.8597,
                     "upper": -4.5731,
                     "center": -5.7164,
-                    "count": 10,
-                    "density": 0.040486,
+                    "count": 11,
+                    "density": 0.044534,
                     "cumulative_pct": 31.1741,
                     "is_negative": true
                   },
@@ -41149,12 +41149,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 231,
               "moments": {
-                "mean": 8.7319,
+                "mean": 8.7476,
                 "median": 4.1081,
-                "std": 37.7027,
-                "ann_volatility": 130.61,
+                "std": 37.693,
+                "ann_volatility": 130.57,
                 "skewness": 1.0239,
-                "excess_kurtosis": 3.8264
+                "excess_kurtosis": 3.8313
               },
               "risk_metrics": {
                 "var_95": -57.02,
@@ -41536,9 +41536,9 @@
                     "lower": -19.7915,
                     "upper": -14.8436,
                     "center": -17.3175,
-                    "count": 14,
-                    "density": 0.060606,
-                    "cumulative_pct": 19.0476,
+                    "count": 13,
+                    "density": 0.056277,
+                    "cumulative_pct": 18.6147,
                     "is_negative": true
                   },
                   {
@@ -41546,8 +41546,8 @@
                     "lower": -14.8436,
                     "upper": -9.8957,
                     "center": -12.3697,
-                    "count": 25,
-                    "density": 0.108225,
+                    "count": 26,
+                    "density": 0.112554,
                     "cumulative_pct": 29.8701,
                     "is_negative": true
                   },
@@ -42090,7 +42090,7 @@
                 "edge": "Moderate Bullish Edge"
               },
               "fwd_10d": {
-                "mean": 2.6,
+                "mean": 2.61,
                 "median": 1.86,
                 "win_rate": 53.6,
                 "edge": "Neutral / Mean Reverting"
@@ -42111,12 +42111,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 982,
               "moments": {
-                "mean": 0.4214,
+                "mean": 0.4255,
                 "median": 0.2984,
-                "std": 9.1372,
-                "ann_volatility": 145.05,
-                "skewness": 0.0381,
-                "excess_kurtosis": 1.4872
+                "std": 9.135,
+                "ann_volatility": 145.01,
+                "skewness": 0.0372,
+                "excess_kurtosis": 1.4911
               },
               "risk_metrics": {
                 "var_95": -14.42,
@@ -42468,9 +42468,9 @@
                     "lower": -7.5726,
                     "upper": -6.4908,
                     "center": -7.0317,
-                    "count": 41,
-                    "density": 0.041752,
-                    "cumulative_pct": 20.1629,
+                    "count": 40,
+                    "density": 0.040733,
+                    "cumulative_pct": 20.0611,
                     "is_negative": true
                   },
                   {
@@ -42480,7 +42480,7 @@
                     "center": -5.9499,
                     "count": 32,
                     "density": 0.032587,
-                    "cumulative_pct": 23.4216,
+                    "cumulative_pct": 23.3198,
                     "is_negative": true
                   },
                   {
@@ -42490,7 +42490,7 @@
                     "center": -4.8681,
                     "count": 47,
                     "density": 0.047862,
-                    "cumulative_pct": 28.2077,
+                    "cumulative_pct": 28.1059,
                     "is_negative": true
                   },
                   {
@@ -42500,7 +42500,7 @@
                     "center": -3.7863,
                     "count": 59,
                     "density": 0.060081,
-                    "cumulative_pct": 34.2159,
+                    "cumulative_pct": 34.1141,
                     "is_negative": true
                   },
                   {
@@ -42508,8 +42508,8 @@
                     "lower": -3.2454,
                     "upper": -2.1636,
                     "center": -2.7045,
-                    "count": 42,
-                    "density": 0.04277,
+                    "count": 43,
+                    "density": 0.043788,
                     "cumulative_pct": 38.4929,
                     "is_negative": true
                   },
@@ -42942,12 +42942,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 978,
               "moments": {
-                "mean": 2.0077,
+                "mean": 2.0117,
                 "median": 1.9344,
-                "std": 19.6764,
-                "ann_volatility": 139.69,
-                "skewness": 0.208,
-                "excess_kurtosis": 0.6946
+                "std": 19.6746,
+                "ann_volatility": 139.68,
+                "skewness": 0.2076,
+                "excess_kurtosis": 0.6957
               },
               "risk_metrics": {
                 "var_95": -29.01,
@@ -43329,9 +43329,9 @@
                     "lower": -9.1462,
                     "upper": -6.8597,
                     "center": -8.0029,
-                    "count": 34,
-                    "density": 0.034765,
-                    "cumulative_pct": 31.3906,
+                    "count": 33,
+                    "density": 0.033742,
+                    "cumulative_pct": 31.2883,
                     "is_negative": true
                   },
                   {
@@ -43339,8 +43339,8 @@
                     "lower": -6.8597,
                     "upper": -4.5731,
                     "center": -5.7164,
-                    "count": 44,
-                    "density": 0.04499,
+                    "count": 45,
+                    "density": 0.046012,
                     "cumulative_pct": 35.8896,
                     "is_negative": true
                   },
@@ -43773,12 +43773,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 962,
               "moments": {
-                "mean": 7.5815,
+                "mean": 7.5853,
                 "median": -0.4701,
-                "std": 42.6839,
-                "ann_volatility": 147.86,
+                "std": 42.682,
+                "ann_volatility": 147.85,
                 "skewness": 1.1714,
-                "excess_kurtosis": 2.0214
+                "excess_kurtosis": 2.0219
               },
               "risk_metrics": {
                 "var_95": -49.86,
@@ -44160,9 +44160,9 @@
                     "lower": -19.7915,
                     "upper": -14.8436,
                     "center": -17.3175,
-                    "count": 58,
-                    "density": 0.060291,
-                    "cumulative_pct": 30.3534,
+                    "count": 57,
+                    "density": 0.059252,
+                    "cumulative_pct": 30.2495,
                     "is_negative": true
                   },
                   {
@@ -44170,8 +44170,8 @@
                     "lower": -14.8436,
                     "upper": -9.8957,
                     "center": -12.3697,
-                    "count": 73,
-                    "density": 0.075884,
+                    "count": 74,
+                    "density": 0.076923,
                     "cumulative_pct": 37.9418,
                     "is_negative": true
                   },
@@ -44714,7 +44714,7 @@
                 "edge": "Neutral / Mean Reverting"
               },
               "fwd_10d": {
-                "mean": 2.54,
+                "mean": 2.55,
                 "median": 1.03,
                 "win_rate": 51.4,
                 "edge": "Neutral / Mean Reverting"
@@ -44735,12 +44735,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 3515,
               "moments": {
-                "mean": 0.1366,
+                "mean": 0.1378,
                 "median": 0.0,
-                "std": 8.652,
-                "ann_volatility": 137.35,
-                "skewness": 0.0417,
-                "excess_kurtosis": 2.5791
+                "std": 8.6513,
+                "ann_volatility": 137.34,
+                "skewness": 0.0415,
+                "excess_kurtosis": 2.5806
               },
               "risk_metrics": {
                 "var_95": -13.44,
@@ -45102,9 +45102,9 @@
                     "lower": -6.9864,
                     "upper": -5.822,
                     "center": -6.4042,
-                    "count": 136,
-                    "density": 0.038691,
-                    "cumulative_pct": 20.2276,
+                    "count": 135,
+                    "density": 0.038407,
+                    "cumulative_pct": 20.1991,
                     "is_negative": true
                   },
                   {
@@ -45114,7 +45114,7 @@
                     "center": -5.2398,
                     "count": 150,
                     "density": 0.042674,
-                    "cumulative_pct": 24.495,
+                    "cumulative_pct": 24.4666,
                     "is_negative": true
                   },
                   {
@@ -45124,7 +45124,7 @@
                     "center": -4.0754,
                     "count": 188,
                     "density": 0.053485,
-                    "cumulative_pct": 29.8435,
+                    "cumulative_pct": 29.8151,
                     "is_negative": true
                   },
                   {
@@ -45132,8 +45132,8 @@
                     "lower": -3.4932,
                     "upper": -2.3288,
                     "center": -2.911,
-                    "count": 205,
-                    "density": 0.058321,
+                    "count": 206,
+                    "density": 0.058606,
                     "cumulative_pct": 35.6757,
                     "is_negative": true
                   },
@@ -45566,12 +45566,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 3511,
               "moments": {
-                "mean": 0.7022,
+                "mean": 0.7033,
                 "median": -0.1702,
-                "std": 19.4677,
-                "ann_volatility": 138.21,
-                "skewness": 0.486,
-                "excess_kurtosis": 1.8373
+                "std": 19.4673,
+                "ann_volatility": 138.2,
+                "skewness": 0.4859,
+                "excess_kurtosis": 1.8376
               },
               "risk_metrics": {
                 "var_95": -29.56,
@@ -45963,9 +45963,9 @@
                     "lower": -8.6969,
                     "upper": -5.7979,
                     "center": -7.2474,
-                    "count": 225,
-                    "density": 0.064084,
-                    "cumulative_pct": 36.1435,
+                    "count": 224,
+                    "density": 0.063799,
+                    "cumulative_pct": 36.1151,
                     "is_negative": true
                   },
                   {
@@ -45973,8 +45973,8 @@
                     "lower": -5.7979,
                     "upper": -2.899,
                     "center": -4.3484,
-                    "count": 253,
-                    "density": 0.072059,
+                    "count": 254,
+                    "density": 0.072344,
                     "cumulative_pct": 43.3495,
                     "is_negative": true
                   },
@@ -46397,12 +46397,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 3495,
               "moments": {
-                "mean": 3.1395,
+                "mean": 3.1405,
                 "median": -2.322,
-                "std": 42.5376,
+                "std": 42.5371,
                 "ann_volatility": 147.35,
                 "skewness": 1.5823,
-                "excess_kurtosis": 6.2532
+                "excess_kurtosis": 6.2534
               },
               "risk_metrics": {
                 "var_95": -55.77,
@@ -47359,10 +47359,10 @@
       "latest_date": "2026-11-19",
       "latest_bar": {
         "date": "2026-11-19",
-        "close": 3.371,
+        "close": 3.242,
         "prev_close": 3.372,
-        "return_pct": -0.0297,
-        "volume": 63132
+        "return_pct": -3.8553,
+        "volume": 173869
       },
       "regimes": {
         "trailing_252d": {
@@ -47378,12 +47378,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 251,
               "moments": {
-                "mean": 0.0587,
+                "mean": 0.0434,
                 "median": 0.3246,
-                "std": 5.6472,
-                "ann_volatility": 89.65,
-                "skewness": -1.5655,
-                "excess_kurtosis": 26.0595
+                "std": 5.6526,
+                "ann_volatility": 89.73,
+                "skewness": -1.5542,
+                "excess_kurtosis": 25.9324
               },
               "risk_metrics": {
                 "var_95": -6.38,
@@ -47765,9 +47765,9 @@
                     "lower": -4.748,
                     "upper": -3.561,
                     "center": -4.1545,
-                    "count": 7,
-                    "density": 0.027888,
-                    "cumulative_pct": 10.757,
+                    "count": 8,
+                    "density": 0.031873,
+                    "cumulative_pct": 11.1554,
                     "is_negative": true
                   },
                   {
@@ -47777,7 +47777,7 @@
                     "center": -2.9675,
                     "count": 33,
                     "density": 0.131474,
-                    "cumulative_pct": 23.9044,
+                    "cumulative_pct": 24.3028,
                     "is_negative": true
                   },
                   {
@@ -47787,7 +47787,7 @@
                     "center": -1.7805,
                     "count": 28,
                     "density": 0.111554,
-                    "cumulative_pct": 35.0598,
+                    "cumulative_pct": 35.4582,
                     "is_negative": true
                   },
                   {
@@ -47795,8 +47795,8 @@
                     "lower": -1.187,
                     "upper": 0.0,
                     "center": -0.5935,
-                    "count": 27,
-                    "density": 0.10757,
+                    "count": 26,
+                    "density": 0.103586,
                     "cumulative_pct": 45.8167,
                     "is_negative": true
                   },
@@ -48209,12 +48209,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 247,
               "moments": {
-                "mean": 0.3268,
-                "median": -0.2161,
-                "std": 14.9142,
-                "ann_volatility": 105.88,
-                "skewness": 2.9362,
-                "excess_kurtosis": 23.0142
+                "mean": 0.3112,
+                "median": -0.5557,
+                "std": 14.9156,
+                "ann_volatility": 105.89,
+                "skewness": 2.9385,
+                "excess_kurtosis": 23.017
               },
               "risk_metrics": {
                 "var_95": -15.21,
@@ -48223,7 +48223,7 @@
                 "cvar_99": -52.78,
                 "max_gain": 119.14,
                 "max_drawdown": -53.55,
-                "win_rate": 46.15
+                "win_rate": 45.75
               },
               "histogram": {
                 "bin_count": 80,
@@ -48626,9 +48626,9 @@
                     "lower": -2.9786,
                     "upper": 0.0,
                     "center": -1.4893,
-                    "count": 44,
-                    "density": 0.178138,
-                    "cumulative_pct": 52.6316,
+                    "count": 45,
+                    "density": 0.182186,
+                    "cumulative_pct": 53.0364,
                     "is_negative": true
                   },
                   {
@@ -48636,8 +48636,8 @@
                     "lower": 0.0,
                     "upper": 2.9786,
                     "center": 1.4893,
-                    "count": 38,
-                    "density": 0.153846,
+                    "count": 37,
+                    "density": 0.149798,
                     "cumulative_pct": 68.0162,
                     "is_negative": false
                   },
@@ -49040,12 +49040,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 231,
               "moments": {
-                "mean": -2.1995,
+                "mean": -2.2195,
                 "median": -1.7801,
-                "std": 16.0778,
-                "ann_volatility": 55.7,
-                "skewness": 0.1163,
-                "excess_kurtosis": 4.3691
+                "std": 16.0519,
+                "ann_volatility": 55.61,
+                "skewness": 0.1143,
+                "excess_kurtosis": 4.4064
               },
               "risk_metrics": {
                 "var_95": -27.64,
@@ -49557,9 +49557,9 @@
                     "lower": 15.945,
                     "upper": 17.7166,
                     "center": 16.8308,
-                    "count": 0,
-                    "density": 0.0,
-                    "cumulative_pct": 94.3723,
+                    "count": 1,
+                    "density": 0.004329,
+                    "cumulative_pct": 94.8052,
                     "is_negative": false
                   },
                   {
@@ -49569,7 +49569,7 @@
                     "center": 18.6025,
                     "count": 3,
                     "density": 0.012987,
-                    "cumulative_pct": 95.671,
+                    "cumulative_pct": 96.1039,
                     "is_negative": false
                   },
                   {
@@ -49577,8 +49577,8 @@
                     "lower": 19.4883,
                     "upper": 21.2599,
                     "center": 20.3741,
-                    "count": 2,
-                    "density": 0.008658,
+                    "count": 1,
+                    "density": 0.004329,
                     "cumulative_pct": 96.5368,
                     "is_negative": false
                   },
@@ -49981,7 +49981,7 @@
                 "edge": "Neutral / Mean Reverting"
               },
               "fwd_10d": {
-                "mean": 1.11,
+                "mean": 1.09,
                 "median": 0.23,
                 "win_rate": 50.8,
                 "edge": "Neutral / Mean Reverting"
@@ -50002,12 +50002,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 977,
               "moments": {
-                "mean": 0.1048,
+                "mean": 0.1009,
                 "median": 0.1152,
-                "std": 4.8629,
-                "ann_volatility": 77.2,
-                "skewness": -0.2782,
-                "excess_kurtosis": 13.4682
+                "std": 4.8646,
+                "ann_volatility": 77.22,
+                "skewness": -0.2761,
+                "excess_kurtosis": 13.4455
               },
               "risk_metrics": {
                 "var_95": -6.62,
@@ -50389,9 +50389,9 @@
                     "lower": -4.748,
                     "upper": -3.561,
                     "center": -4.1545,
-                    "count": 60,
-                    "density": 0.061412,
-                    "cumulative_pct": 17.4002,
+                    "count": 61,
+                    "density": 0.062436,
+                    "cumulative_pct": 17.5026,
                     "is_negative": true
                   },
                   {
@@ -50401,7 +50401,7 @@
                     "center": -2.9675,
                     "count": 108,
                     "density": 0.110542,
-                    "cumulative_pct": 28.4545,
+                    "cumulative_pct": 28.5568,
                     "is_negative": true
                   },
                   {
@@ -50411,7 +50411,7 @@
                     "center": -1.7805,
                     "count": 93,
                     "density": 0.095189,
-                    "cumulative_pct": 37.9734,
+                    "cumulative_pct": 38.0757,
                     "is_negative": true
                   },
                   {
@@ -50419,8 +50419,8 @@
                     "lower": -1.187,
                     "upper": 0.0,
                     "center": -0.5935,
-                    "count": 112,
-                    "density": 0.114637,
+                    "count": 111,
+                    "density": 0.113613,
                     "cumulative_pct": 49.4371,
                     "is_negative": true
                   },
@@ -50833,12 +50833,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 973,
               "moments": {
-                "mean": 0.485,
-                "median": -0.2161,
-                "std": 11.0684,
+                "mean": 0.481,
+                "median": -0.2648,
+                "std": 11.0689,
                 "ann_volatility": 78.58,
-                "skewness": 1.9371,
-                "excess_kurtosis": 19.463
+                "skewness": 1.9379,
+                "excess_kurtosis": 19.4615
               },
               "risk_metrics": {
                 "var_95": -14.04,
@@ -50847,7 +50847,7 @@
                 "cvar_99": -32.92,
                 "max_gain": 119.14,
                 "max_drawdown": -53.55,
-                "win_rate": 48.1
+                "win_rate": 48.0
               },
               "histogram": {
                 "bin_count": 80,
@@ -51250,9 +51250,9 @@
                     "lower": -2.9786,
                     "upper": 0.0,
                     "center": -1.4893,
-                    "count": 137,
-                    "density": 0.140802,
-                    "cumulative_pct": 51.3875,
+                    "count": 138,
+                    "density": 0.141829,
+                    "cumulative_pct": 51.4902,
                     "is_negative": true
                   },
                   {
@@ -51260,8 +51260,8 @@
                     "lower": 0.0,
                     "upper": 2.9786,
                     "center": 1.4893,
-                    "count": 119,
-                    "density": 0.122302,
+                    "count": 118,
+                    "density": 0.121274,
                     "cumulative_pct": 63.6177,
                     "is_negative": false
                   },
@@ -51664,12 +51664,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 957,
               "moments": {
-                "mean": 1.3495,
+                "mean": 1.3447,
                 "median": 1.2421,
-                "std": 17.6356,
-                "ann_volatility": 61.09,
-                "skewness": 0.2373,
-                "excess_kurtosis": 1.2023
+                "std": 17.6309,
+                "ann_volatility": 61.08,
+                "skewness": 0.2375,
+                "excess_kurtosis": 1.206
               },
               "risk_metrics": {
                 "var_95": -26.3,
@@ -52181,9 +52181,9 @@
                     "lower": 15.945,
                     "upper": 17.7166,
                     "center": 16.8308,
-                    "count": 26,
-                    "density": 0.027168,
-                    "cumulative_pct": 85.7889,
+                    "count": 27,
+                    "density": 0.028213,
+                    "cumulative_pct": 85.8934,
                     "is_negative": false
                   },
                   {
@@ -52193,7 +52193,7 @@
                     "center": 18.6025,
                     "count": 18,
                     "density": 0.018809,
-                    "cumulative_pct": 87.6698,
+                    "cumulative_pct": 87.7743,
                     "is_negative": false
                   },
                   {
@@ -52201,8 +52201,8 @@
                     "lower": 19.4883,
                     "upper": 21.2599,
                     "center": 20.3741,
-                    "count": 16,
-                    "density": 0.016719,
+                    "count": 15,
+                    "density": 0.015674,
                     "cumulative_pct": 89.3417,
                     "is_negative": false
                   },
@@ -52626,12 +52626,12 @@
               "horizon_label": "1-Day Daily Return",
               "n_observations": 5004,
               "moments": {
-                "mean": 0.059,
+                "mean": 0.0583,
                 "median": 0.0,
-                "std": 3.7818,
-                "ann_volatility": 60.03,
-                "skewness": 0.4976,
-                "excess_kurtosis": 14.6789
+                "std": 3.7822,
+                "ann_volatility": 60.04,
+                "skewness": 0.4979,
+                "excess_kurtosis": 14.672
               },
               "risk_metrics": {
                 "var_95": -5.41,
@@ -53013,9 +53013,9 @@
                     "lower": -4.748,
                     "upper": -3.561,
                     "center": -4.1545,
-                    "count": 263,
-                    "density": 0.052558,
-                    "cumulative_pct": 11.9305,
+                    "count": 264,
+                    "density": 0.052758,
+                    "cumulative_pct": 11.9504,
                     "is_negative": true
                   },
                   {
@@ -53025,7 +53025,7 @@
                     "center": -2.9675,
                     "count": 453,
                     "density": 0.090528,
-                    "cumulative_pct": 20.9832,
+                    "cumulative_pct": 21.0032,
                     "is_negative": true
                   },
                   {
@@ -53035,7 +53035,7 @@
                     "center": -1.7805,
                     "count": 649,
                     "density": 0.129696,
-                    "cumulative_pct": 33.9528,
+                    "cumulative_pct": 33.9728,
                     "is_negative": true
                   },
                   {
@@ -53043,8 +53043,8 @@
                     "lower": -1.187,
                     "upper": 0.0,
                     "center": -0.5935,
-                    "count": 802,
-                    "density": 0.160272,
+                    "count": 801,
+                    "density": 0.160072,
                     "cumulative_pct": 49.98,
                     "is_negative": true
                   },
@@ -53457,12 +53457,12 @@
               "horizon_label": "5-Day Swing Cycle",
               "n_observations": 5000,
               "moments": {
-                "mean": 0.2541,
-                "median": -0.0953,
-                "std": 8.1057,
-                "ann_volatility": 57.54,
-                "skewness": 1.2492,
-                "excess_kurtosis": 15.3449
+                "mean": 0.2533,
+                "median": -0.0969,
+                "std": 8.1058,
+                "ann_volatility": 57.55,
+                "skewness": 1.2494,
+                "excess_kurtosis": 15.3443
               },
               "risk_metrics": {
                 "var_95": -11.74,
@@ -53471,7 +53471,7 @@
                 "cvar_99": -24.1,
                 "max_gain": 119.14,
                 "max_drawdown": -53.55,
-                "win_rate": 49.3
+                "win_rate": 49.28
               },
               "histogram": {
                 "bin_count": 80,
@@ -53874,9 +53874,9 @@
                     "lower": -2.9786,
                     "upper": 0.0,
                     "center": -1.4893,
-                    "count": 901,
-                    "density": 0.1802,
-                    "cumulative_pct": 50.44,
+                    "count": 902,
+                    "density": 0.1804,
+                    "cumulative_pct": 50.46,
                     "is_negative": true
                   },
                   {
@@ -53884,8 +53884,8 @@
                     "lower": 0.0,
                     "upper": 2.9786,
                     "center": 1.4893,
-                    "count": 887,
-                    "density": 0.1774,
+                    "count": 886,
+                    "density": 0.1772,
                     "cumulative_pct": 68.18,
                     "is_negative": false
                   },
@@ -54288,12 +54288,12 @@
               "horizon_label": "21-Day Monthly Cycle",
               "n_observations": 4984,
               "moments": {
-                "mean": 0.7718,
+                "mean": 0.7709,
                 "median": -0.2071,
-                "std": 15.0139,
+                "std": 15.0129,
                 "ann_volatility": 52.01,
                 "skewness": 0.5233,
-                "excess_kurtosis": 2.0332
+                "excess_kurtosis": 2.0344
               },
               "risk_metrics": {
                 "var_95": -21.58,
@@ -54775,9 +54775,9 @@
                     "lower": 14.8267,
                     "upper": 17.2978,
                     "center": 16.0623,
-                    "count": 164,
-                    "density": 0.032905,
-                    "cumulative_pct": 88.2624,
+                    "count": 165,
+                    "density": 0.033106,
+                    "cumulative_pct": 88.2825,
                     "is_negative": false
                   },
                   {
@@ -54787,7 +54787,7 @@
                     "center": 18.5334,
                     "count": 134,
                     "density": 0.026886,
-                    "cumulative_pct": 90.951,
+                    "cumulative_pct": 90.9711,
                     "is_negative": false
                   },
                   {
@@ -54795,8 +54795,8 @@
                     "lower": 19.7689,
                     "upper": 22.2401,
                     "center": 21.0045,
-                    "count": 98,
-                    "density": 0.019663,
+                    "count": 97,
+                    "density": 0.019462,
                     "cumulative_pct": 92.9173,
                     "is_negative": false
                   },
