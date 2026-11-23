@@ -78,10 +78,9 @@
 
     const CONFIG_SALT = 'BM_SALT_2026_NATGAS';
     const VALID_CREDENTIALS = [
-        { user: '8ac39fdb6c621d5627e6783639cec0add66653560ec5ab5df495dae9c86aa236', pass: '854e961763a5f6b4805ba50174816092bd8df67307109dec8b0400adabca661d' },
-        { user: '80f7f46a6688673f0716e949d96722f0658475a4f412fe619d9da37b4a40f788', pass: '4f7e4c93a71e5c85593d2aafd037ae60a98af98d99dcc8c2729d25612ae2e905' },
+        { user: '72771910b672cbb59e18801fc35b913306f211f97097b046bb5b3915bbc02342', pass: '4df1278b2e4885e3bed078e82b65357e76e93637865ebc5a8f56f5ecbfd202ca' },
     ];
-    const VALID_SESSION_TOKEN = 'afb7e506684308d8a03f01396765b6222b3b417438ad7e5f923302f92bde7b8b';
+    const VALID_SESSION_TOKEN = 'af21d79acf118ac80504ff29df8efbafa1f69dd299196e0e79d549ee22e0355b';
     const SESSION_KEY = 'bm_session_token';
 
     const Auth = {
