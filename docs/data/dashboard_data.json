@@ -1,19 +1,19 @@
 {
-  "last_updated": "2026-11-24T00:45:47.693839+00:00",
-  "market_status": "after_hours",
+  "last_updated": "2026-11-24T04:51:20.287787+00:00",
+  "market_status": "closed",
   "ng_price_context": {
-    "price": 3.539,
+    "price": 3.54,
     "seasonal_zscore": -0.02,
     "percentile_2yr": 72.4,
     "tier": "seasonal_mid",
     "gate_short": false,
     "gate_long": false,
     "history_days": 504,
-    "seasonal_note": "vs 220 winter-month obs (gMean=$3.56, std_log=0.287)",
+    "seasonal_note": "vs 221 winter-month obs (gMean=$3.56, std_log=0.286)",
     "season": "winter",
     "month": 11,
-    "ng_hv_21d": 50.64552,
-    "ng_hv_pct": 37.7,
+    "ng_hv_21d": 65.781481,
+    "ng_hv_pct": 55.4,
     "regime": "normal"
   },
   "etfs": {
@@ -28,25 +28,25 @@
         "dollar_volume": 190231124.58
       },
       "rvol": {
-        "5d": 1.441535,
-        "10d": 1.62671,
-        "21d": 1.669724,
-        "63d": 1.669219,
-        "126d": 2.043949,
-        "252d": 1.903591
+        "5d": 1.442938,
+        "10d": 1.629213,
+        "21d": 1.672919,
+        "63d": 1.672812,
+        "126d": 2.048443,
+        "252d": 1.907851
       },
       "z_score": {
-        "5d": 1.42639,
-        "10d": 2.133096,
-        "21d": 2.287027,
-        "63d": 1.664513,
-        "126d": 2.299904,
-        "252d": 1.927612
+        "5d": 1.426479,
+        "10d": 2.134673,
+        "21d": 2.294122,
+        "63d": 1.67307,
+        "126d": 2.309322,
+        "252d": 1.936564
       },
       "vroc": {
-        "5d": 182.636437,
-        "10d": 5.928314,
-        "21d": 43.845716
+        "5d": 183.278519,
+        "10d": 6.168957,
+        "21d": 44.172499
       },
       "vol_percentile": {
         "5d": 100.0,
@@ -89,7 +89,7 @@
         },
         "vol_regime_pct": 67.729084,
         "hv_term_structure": 1.502394,
-        "atr14_pct": 8.502379,
+        "atr14_pct": 8.503404,
         "vov21": 22.767044
       },
       "historical_echoes": {
@@ -1114,9 +1114,9 @@
       },
       "sharp_spike": false,
       "fast_signal": null,
-      "vps": 61.495771,
+      "vps": 61.557599,
       "mwca": true,
-      "rolling_correlation": 0.127862,
+      "rolling_correlation": 0.127774,
       "moving_averages": {
         "price": {
           "10d": 18.857,
@@ -1125,10 +1125,10 @@
           "200d": 25.2531
         },
         "volume": {
-          "10d": 6709250.6,
-          "21d": 6536414.571429,
-          "50d": 6911160.12,
-          "200d": 5459155.28
+          "10d": 6714160.0,
+          "21d": 6538752.380952,
+          "50d": 6912142.0,
+          "200d": 5459400.75
         }
       },
       "history": [
@@ -31562,15 +31562,15 @@
           "high": 20.17,
           "low": 18.370001,
           "close": 20.01,
-          "volume": 8148100
+          "volume": 8172400
         },
         {
           "date": "2026-11-23",
           "open": 17.49,
-          "high": 17.645,
-          "low": 16.5825,
+          "high": 17.65,
+          "low": 16.58,
           "close": 17.43,
-          "volume": 10914006
+          "volume": 10938800
         }
       ],
       "alerts": [
@@ -31578,118 +31578,118 @@
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (5d) = 82.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:43.361136+00:00"
+          "timestamp": "2026-11-24T04:51:16.141055+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (10d) = 82.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:43.361136+00:00"
+          "timestamp": "2026-11-24T04:51:16.141055+00:00"
         },
         {
           "type": "vcvi_warning",
           "side": "long",
           "message": "VCVI (63d) = 70.5 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:43.361136+00:00"
+          "timestamp": "2026-11-24T04:51:16.141055+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (126d) = 76.4 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:43.361136+00:00"
+          "timestamp": "2026-11-24T04:51:16.141055+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (252d) = 75.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:43.361136+00:00"
+          "timestamp": "2026-11-24T04:51:16.141055+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (5d) = 100.0 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:43.361136+00:00"
+          "timestamp": "2026-11-24T04:51:16.141055+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (10d) = 100.0 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:43.361136+00:00"
+          "timestamp": "2026-11-24T04:51:16.141055+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
           "message": "CVI (21d) = 60.0 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:43.361136+00:00"
+          "timestamp": "2026-11-24T04:51:16.141055+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (63d) = 85.7 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:43.361136+00:00"
+          "timestamp": "2026-11-24T04:51:16.141055+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (126d) = 92.9 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:43.361136+00:00"
+          "timestamp": "2026-11-24T04:51:16.141055+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (252d) = 92.2 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:43.361136+00:00"
+          "timestamp": "2026-11-24T04:51:16.141055+00:00"
         },
         {
           "type": "vps_elevated",
-          "message": "VPS = 61.5 \u2014 elevated volume pressure",
-          "timestamp": "2026-11-24T00:45:43.361136+00:00"
+          "message": "VPS = 61.6 \u2014 elevated volume pressure",
+          "timestamp": "2026-11-24T04:51:16.141055+00:00"
         },
         {
           "type": "mwca_alarm",
           "message": "Volume percentile > 90th across ALL windows simultaneously",
-          "timestamp": "2026-11-24T00:45:43.361136+00:00"
+          "timestamp": "2026-11-24T04:51:16.141055+00:00"
         }
       ],
       "dv_rvol": {
-        "5d": 1.328713,
-        "10d": 1.500396,
-        "21d": 1.624769,
-        "63d": 1.473048,
-        "126d": 1.678594,
-        "252d": 1.037353
+        "5d": 1.330026,
+        "10d": 1.502716,
+        "21d": 1.627852,
+        "63d": 1.476228,
+        "126d": 1.682299,
+        "252d": 1.039689
       },
       "dv_zscore": {
-        "5d": 1.120782,
-        "10d": 1.707948,
-        "21d": 1.963868,
-        "63d": 0.979259,
-        "126d": 1.474255,
-        "252d": 0.047919
+        "5d": 1.121917,
+        "10d": 1.710892,
+        "21d": 1.970454,
+        "63d": 0.985776,
+        "126d": 1.482149,
+        "252d": 0.050916
       },
       "dv_percentile": {
         "5d": 100.0,
         "10d": 100.0,
-        "21d": 95.0,
-        "63d": 93.548387,
-        "126d": 95.2,
-        "252d": 68.924303
+        "21d": 100.0,
+        "63d": 95.16129,
+        "126d": 96.0,
+        "252d": 69.322709
       },
       "dv_vroc": {
-        "5d": 182.474371,
-        "10d": -0.198349,
-        "21d": 43.270336
+        "5d": 183.116085,
+        "10d": 0.028376,
+        "21d": 43.595811
       },
       "dvcvi": {
         "5d": 82.270916,
         "10d": 82.270916,
-        "21d": 46.894422,
-        "63d": 67.03239,
-        "126d": 73.30931,
-        "252d": 54.897335
+        "21d": 49.36255,
+        "63d": 68.188121,
+        "126d": 73.925354,
+        "252d": 55.214661
       },
-      "dv_vps": 58.533515,
-      "vdds": 0.801257
+      "dv_vps": 59.842112,
+      "vdds": 0.800034
     },
     "HNU.TO": {
       "side": "long",
@@ -70898,71 +70898,71 @@
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (5d) = 77.1 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:44.255907+00:00"
+          "timestamp": "2026-11-24T04:51:16.996405+00:00"
         },
         {
           "type": "vcvi_warning",
           "side": "long",
           "message": "VCVI (10d) = 68.5 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:44.255907+00:00"
+          "timestamp": "2026-11-24T04:51:16.996405+00:00"
         },
         {
           "type": "vcvi_warning",
           "side": "long",
           "message": "VCVI (63d) = 61.2 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:44.255907+00:00"
+          "timestamp": "2026-11-24T04:51:16.996405+00:00"
         },
         {
           "type": "vcvi_warning",
           "side": "long",
           "message": "VCVI (126d) = 69.1 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:44.255907+00:00"
+          "timestamp": "2026-11-24T04:51:16.996405+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (252d) = 72.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:44.255907+00:00"
+          "timestamp": "2026-11-24T04:51:16.996405+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (5d) = 100.0 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:44.255907+00:00"
+          "timestamp": "2026-11-24T04:51:16.996405+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (10d) = 88.9 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:44.255907+00:00"
+          "timestamp": "2026-11-24T04:51:16.996405+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
           "message": "CVI (63d) = 79.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:44.255907+00:00"
+          "timestamp": "2026-11-24T04:51:16.996405+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (126d) = 89.7 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:44.255907+00:00"
+          "timestamp": "2026-11-24T04:51:16.996405+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (252d) = 94.5 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:44.255907+00:00"
+          "timestamp": "2026-11-24T04:51:16.996405+00:00"
         },
         {
           "type": "vps_elevated",
           "message": "VPS = 66.7 \u2014 elevated volume pressure",
-          "timestamp": "2026-11-24T00:45:44.255907+00:00"
+          "timestamp": "2026-11-24T04:51:16.996405+00:00"
         },
         {
           "type": "mwca_alarm",
           "message": "Volume percentile > 90th across ALL windows simultaneously",
-          "timestamp": "2026-11-24T00:45:44.255907+00:00"
+          "timestamp": "2026-11-24T04:51:16.996405+00:00"
         }
       ],
       "dv_rvol": {
@@ -71011,9 +71011,9 @@
       "name": "WisdomTree Natural Gas 3x Daily Long",
       "current": {
         "price": 0.4373,
-        "volume": 896899,
+        "volume": 915491,
         "change_pct": -14.6232,
-        "dollar_volume": 392213.9327
+        "dollar_volume": 400344.2143
       },
       "rvol": {
         "5d": 1.474702,
@@ -100216,42 +100216,42 @@
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (63d) = 72.6 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:45.002877+00:00"
+          "timestamp": "2026-11-24T04:51:17.716565+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (126d) = 91.6 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:45.002877+00:00"
+          "timestamp": "2026-11-24T04:51:17.716565+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "long",
           "message": "VCVI (252d) = 101.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:45.002877+00:00"
+          "timestamp": "2026-11-24T04:51:17.716565+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
           "message": "CVI (63d) = 63.6 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:45.002877+00:00"
+          "timestamp": "2026-11-24T04:51:17.716565+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (126d) = 80.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:45.002877+00:00"
+          "timestamp": "2026-11-24T04:51:17.716565+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (252d) = 89.2 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:45.002877+00:00"
+          "timestamp": "2026-11-24T04:51:17.716565+00:00"
         },
         {
           "type": "vps_elevated",
           "message": "VPS = 68.4 \u2014 elevated volume pressure",
-          "timestamp": "2026-11-24T00:45:45.002877+00:00"
+          "timestamp": "2026-11-24T04:51:17.716565+00:00"
         }
       ],
       "dv_rvol": {
@@ -100305,25 +100305,25 @@
         "dollar_volume": 105112121.19
       },
       "rvol": {
-        "5d": 1.091382,
-        "10d": 1.227098,
-        "21d": 1.474331,
-        "63d": 1.16182,
-        "126d": 1.186776,
-        "252d": 0.6649
+        "5d": 1.091519,
+        "10d": 1.22727,
+        "21d": 1.47455,
+        "63d": 1.162002,
+        "126d": 1.186964,
+        "252d": 0.665006
       },
       "z_score": {
-        "5d": 0.350038,
-        "10d": 0.726599,
-        "21d": 1.349981,
-        "63d": 0.323802,
-        "126d": 0.372454,
-        "252d": -0.285863
+        "5d": 0.350552,
+        "10d": 0.727126,
+        "21d": 1.350558,
+        "63d": 0.324166,
+        "126d": 0.372829,
+        "252d": -0.285772
       },
       "vroc": {
-        "5d": 177.293527,
-        "10d": 62.71769,
-        "21d": 21.832479
+        "5d": 177.337794,
+        "10d": 62.743666,
+        "21d": 21.851928
       },
       "vol_percentile": {
         "5d": 75.0,
@@ -101276,9 +101276,9 @@
       },
       "sharp_spike": false,
       "fast_signal": null,
-      "vps": 57.341282,
+      "vps": 57.346161,
       "mwca": false,
-      "rolling_correlation": -0.765711,
+      "rolling_correlation": -0.765701,
       "moving_averages": {
         "price": {
           "10d": 28.004,
@@ -101287,10 +101287,10 @@
           "200d": 25.8187
         },
         "volume": {
-          "10d": 2904683.1,
-          "21d": 2417591.952381,
-          "50d": 3224124.62,
-          "200d": 3831299.655
+          "10d": 2904740.0,
+          "21d": 2417619.047619,
+          "50d": 3224136.0,
+          "200d": 3831302.5
         }
       },
       "history": [
@@ -131732,25 +131732,25 @@
           "high": 30.629999,
           "low": 29.209999,
           "close": 29.49,
-          "volume": 3564331
+          "volume": 3564900
         }
       ],
       "alerts": [],
       "dv_rvol": {
-        "5d": 1.175746,
-        "10d": 1.306298,
-        "21d": 1.473598,
-        "63d": 1.239847,
-        "126d": 1.323381,
-        "252d": 0.820266
+        "5d": 1.175889,
+        "10d": 1.306479,
+        "21d": 1.473817,
+        "63d": 1.240041,
+        "126d": 1.32359,
+        "252d": 0.820396
       },
       "dv_zscore": {
-        "5d": 0.741237,
-        "10d": 1.07476,
-        "21d": 1.649708,
-        "63d": 0.592085,
-        "126d": 0.791193,
-        "252d": -0.200619
+        "5d": 0.741761,
+        "10d": 1.075325,
+        "21d": 1.650377,
+        "63d": 0.592563,
+        "126d": 0.791703,
+        "252d": -0.200473
       },
       "dv_percentile": {
         "5d": 75.0,
@@ -131761,9 +131761,9 @@
         "252d": 59.760956
       },
       "dv_vroc": {
-        "5d": 169.170055,
-        "10d": 66.097084,
-        "21d": 16.122809
+        "5d": 169.213025,
+        "10d": 66.123599,
+        "21d": 16.141347
       },
       "dvcvi": {
         "5d": 0.0,
@@ -131773,8 +131773,8 @@
         "126d": 19.513345,
         "252d": 11.556921
       },
-      "dv_vps": 58.454278,
-      "vdds": 1.13792
+      "dv_vps": 58.459482,
+      "vdds": 1.137944
     },
     "HND.TO": {
       "side": "short",
@@ -170637,7 +170637,7 @@
         {
           "type": "vps_elevated",
           "message": "VPS = 64.5 \u2014 elevated volume pressure",
-          "timestamp": "2026-11-24T00:45:46.653294+00:00"
+          "timestamp": "2026-11-24T04:51:19.278702+00:00"
         }
       ],
       "dv_rvol": {
@@ -199730,24 +199730,24 @@
           "type": "vcvi_warning",
           "side": "short",
           "message": "VCVI (10d) = 56.4 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:47.403765+00:00"
+          "timestamp": "2026-11-24T04:51:20.000989+00:00"
         },
         {
           "type": "vcvi_critical",
           "side": "short",
           "message": "VCVI (21d) = 77.6 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:47.403765+00:00"
+          "timestamp": "2026-11-24T04:51:20.000989+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "short",
           "message": "CVI (21d) = 68.0 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T00:45:47.403765+00:00"
+          "timestamp": "2026-11-24T04:51:20.000989+00:00"
         },
         {
           "type": "vps_elevated",
           "message": "VPS = 63.7 \u2014 elevated volume pressure",
-          "timestamp": "2026-11-24T00:45:47.403765+00:00"
+          "timestamp": "2026-11-24T04:51:20.000989+00:00"
         }
       ],
       "dv_rvol": {
@@ -199793,9 +199793,9 @@
   },
   "pairs": {
     "BOIL_KOLD": {
-      "ipsi": 0.909946,
-      "long_rvol": 1.669724,
-      "short_rvol": 1.474331,
+      "ipsi": 0.908709,
+      "long_rvol": 1.672919,
+      "short_rvol": 1.47455,
       "status": "quiet"
     },
     "HNU.TO_HND.TO": {
@@ -199876,252 +199876,252 @@
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (5d) = 82.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:43.361136+00:00",
+      "timestamp": "2026-11-24T04:51:16.141055+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (10d) = 82.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:43.361136+00:00",
+      "timestamp": "2026-11-24T04:51:16.141055+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vcvi_warning",
       "side": "long",
       "message": "VCVI (63d) = 70.5 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:43.361136+00:00",
+      "timestamp": "2026-11-24T04:51:16.141055+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (126d) = 76.4 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:43.361136+00:00",
+      "timestamp": "2026-11-24T04:51:16.141055+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (252d) = 75.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:43.361136+00:00",
+      "timestamp": "2026-11-24T04:51:16.141055+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (5d) = 100.0 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:43.361136+00:00",
+      "timestamp": "2026-11-24T04:51:16.141055+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (10d) = 100.0 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:43.361136+00:00",
+      "timestamp": "2026-11-24T04:51:16.141055+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_warning",
       "side": "long",
       "message": "CVI (21d) = 60.0 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:43.361136+00:00",
+      "timestamp": "2026-11-24T04:51:16.141055+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (63d) = 85.7 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:43.361136+00:00",
+      "timestamp": "2026-11-24T04:51:16.141055+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (126d) = 92.9 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:43.361136+00:00",
+      "timestamp": "2026-11-24T04:51:16.141055+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (252d) = 92.2 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:43.361136+00:00",
+      "timestamp": "2026-11-24T04:51:16.141055+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vps_elevated",
-      "message": "VPS = 61.5 \u2014 elevated volume pressure",
-      "timestamp": "2026-11-24T00:45:43.361136+00:00",
+      "message": "VPS = 61.6 \u2014 elevated volume pressure",
+      "timestamp": "2026-11-24T04:51:16.141055+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "mwca_alarm",
       "message": "Volume percentile > 90th across ALL windows simultaneously",
-      "timestamp": "2026-11-24T00:45:43.361136+00:00",
+      "timestamp": "2026-11-24T04:51:16.141055+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (5d) = 77.1 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:44.255907+00:00",
+      "timestamp": "2026-11-24T04:51:16.996405+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_warning",
       "side": "long",
       "message": "VCVI (10d) = 68.5 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:44.255907+00:00",
+      "timestamp": "2026-11-24T04:51:16.996405+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_warning",
       "side": "long",
       "message": "VCVI (63d) = 61.2 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:44.255907+00:00",
+      "timestamp": "2026-11-24T04:51:16.996405+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_warning",
       "side": "long",
       "message": "VCVI (126d) = 69.1 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:44.255907+00:00",
+      "timestamp": "2026-11-24T04:51:16.996405+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (252d) = 72.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:44.255907+00:00",
+      "timestamp": "2026-11-24T04:51:16.996405+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (5d) = 100.0 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:44.255907+00:00",
+      "timestamp": "2026-11-24T04:51:16.996405+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (10d) = 88.9 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:44.255907+00:00",
+      "timestamp": "2026-11-24T04:51:16.996405+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_warning",
       "side": "long",
       "message": "CVI (63d) = 79.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:44.255907+00:00",
+      "timestamp": "2026-11-24T04:51:16.996405+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (126d) = 89.7 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:44.255907+00:00",
+      "timestamp": "2026-11-24T04:51:16.996405+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (252d) = 94.5 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:44.255907+00:00",
+      "timestamp": "2026-11-24T04:51:16.996405+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vps_elevated",
       "message": "VPS = 66.7 \u2014 elevated volume pressure",
-      "timestamp": "2026-11-24T00:45:44.255907+00:00",
+      "timestamp": "2026-11-24T04:51:16.996405+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "mwca_alarm",
       "message": "Volume percentile > 90th across ALL windows simultaneously",
-      "timestamp": "2026-11-24T00:45:44.255907+00:00",
+      "timestamp": "2026-11-24T04:51:16.996405+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (63d) = 72.6 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:45.002877+00:00",
+      "timestamp": "2026-11-24T04:51:17.716565+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (126d) = 91.6 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:45.002877+00:00",
+      "timestamp": "2026-11-24T04:51:17.716565+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_critical",
       "side": "long",
       "message": "VCVI (252d) = 101.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:45.002877+00:00",
+      "timestamp": "2026-11-24T04:51:17.716565+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "cvi_warning",
       "side": "long",
       "message": "CVI (63d) = 63.6 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:45.002877+00:00",
+      "timestamp": "2026-11-24T04:51:17.716565+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (126d) = 80.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:45.002877+00:00",
+      "timestamp": "2026-11-24T04:51:17.716565+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (252d) = 89.2 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:45.002877+00:00",
+      "timestamp": "2026-11-24T04:51:17.716565+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vps_elevated",
       "message": "VPS = 68.4 \u2014 elevated volume pressure",
-      "timestamp": "2026-11-24T00:45:45.002877+00:00",
+      "timestamp": "2026-11-24T04:51:17.716565+00:00",
       "ticker": "3NGL.L"
     },
     {
       "type": "vps_elevated",
       "message": "VPS = 64.5 \u2014 elevated volume pressure",
-      "timestamp": "2026-11-24T00:45:46.653294+00:00",
+      "timestamp": "2026-11-24T04:51:19.278702+00:00",
       "ticker": "HND.TO"
     },
     {
       "type": "vcvi_warning",
       "side": "short",
       "message": "VCVI (10d) = 56.4 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:47.403765+00:00",
+      "timestamp": "2026-11-24T04:51:20.000989+00:00",
       "ticker": "3NGS.L"
     },
     {
       "type": "vcvi_critical",
       "side": "short",
       "message": "VCVI (21d) = 77.6 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:47.403765+00:00",
+      "timestamp": "2026-11-24T04:51:20.000989+00:00",
       "ticker": "3NGS.L"
     },
     {
       "type": "cvi_warning",
       "side": "short",
       "message": "CVI (21d) = 68.0 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T00:45:47.403765+00:00",
+      "timestamp": "2026-11-24T04:51:20.000989+00:00",
       "ticker": "3NGS.L"
     },
     {
       "type": "vps_elevated",
       "message": "VPS = 63.7 \u2014 elevated volume pressure",
-      "timestamp": "2026-11-24T00:45:47.403765+00:00",
+      "timestamp": "2026-11-24T04:51:20.000989+00:00",
       "ticker": "3NGS.L"
     }
   ]
