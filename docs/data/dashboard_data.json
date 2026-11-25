@@ -1,20 +1,20 @@
 {
-  "last_updated": "2026-11-24T22:58:50.566227+00:00",
-  "market_status": "after_hours",
+  "last_updated": "2026-11-25T03:35:26.779301+00:00",
+  "market_status": "closed",
   "ng_price_context": {
     "price": 3.67,
-    "seasonal_zscore": 0.1,
+    "seasonal_zscore": 0.11,
     "percentile_2yr": 76.6,
     "tier": "seasonal_mid",
     "gate_short": false,
     "gate_long": false,
     "history_days": 504,
-    "seasonal_note": "vs 221 winter-month obs (gMean=$3.56, std_log=0.286)",
+    "seasonal_note": "vs 222 winter-month obs (gMean=$3.56, std_log=0.286)",
     "season": "winter",
     "month": 11,
-    "ng_hv_21d": 72.892509,
-    "ng_hv_pct": 70.6,
-    "regime": "elevated"
+    "ng_hv_21d": 64.97739,
+    "ng_hv_pct": 55.4,
+    "regime": "normal"
   },
   "etfs": {
     "BOIL": {
@@ -28,25 +28,25 @@
         "dollar_volume": 139343559.3
       },
       "rvol": {
-        "5d": 0.914511,
-        "10d": 1.076098,
-        "21d": 1.107502,
-        "63d": 1.114747,
-        "126d": 1.365957,
-        "252d": 1.274222
+        "5d": 0.915112,
+        "10d": 1.07687,
+        "21d": 1.108346,
+        "63d": 1.115628,
+        "126d": 1.367044,
+        "252d": 1.275241
       },
       "z_score": {
-        "5d": -0.337445,
-        "10d": 0.258513,
-        "21d": 0.368837,
-        "63d": 0.286553,
-        "126d": 0.80674,
-        "252d": 0.586156
+        "5d": -0.335204,
+        "10d": 0.261137,
+        "21d": 0.371727,
+        "63d": 0.288754,
+        "126d": 0.809131,
+        "252d": 0.588335
       },
       "vroc": {
-        "5d": 39.056726,
-        "10d": 12.794954,
-        "21d": 24.819904
+        "5d": 39.168582,
+        "10d": 12.885685,
+        "21d": 24.920308
       },
       "vol_percentile": {
         "5d": 25.0,
@@ -54,7 +54,7 @@
         "21d": 70.0,
         "63d": 69.354839,
         "126d": 83.2,
-        "252d": 80.876494
+        "252d": 81.2749
       },
       "price_percentile": {
         "5d": 50.0,
@@ -70,7 +70,7 @@
         "21d": 14.0,
         "63d": 44.745057,
         "126d": 66.56,
-        "252d": 72.821067
+        "252d": 73.179791
       },
       "vcvi": {
         "5d": 9.785857,
@@ -78,7 +78,7 @@
         "21d": 10.960159,
         "63d": 35.029497,
         "126d": 52.107729,
-        "252d": 57.009322
+        "252d": 57.290155
       },
       "volatility": {
         "hv": {
@@ -1114,9 +1114,9 @@
       },
       "sharp_spike": false,
       "fast_signal": null,
-      "vps": 41.84447,
+      "vps": 41.865158,
       "mwca": false,
-      "rolling_correlation": 0.174095,
+      "rolling_correlation": 0.174131,
       "moving_averages": {
         "price": {
           "10d": 18.863,
@@ -1125,10 +1125,10 @@
           "200d": 25.16235
         },
         "volume": {
-          "10d": 6804501.0,
-          "21d": 6611552.857143,
-          "50d": 6976116.2,
-          "200d": 5469367.8
+          "10d": 6805090.0,
+          "21d": 6611833.333333,
+          "50d": 6976234.0,
+          "200d": 5469397.25
         }
       },
       "history": [
@@ -31578,44 +31578,44 @@
           "high": 19.67,
           "low": 18.549999,
           "close": 19.030001,
-          "volume": 7322310
+          "volume": 7328200
         }
       ],
       "alerts": [
         {
           "type": "vcvi_warning",
           "side": "long",
-          "message": "VCVI (252d) = 57.0 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:47.704373+00:00"
+          "message": "VCVI (252d) = 57.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
+          "timestamp": "2026-11-25T03:35:23.847449+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
           "message": "CVI (126d) = 66.6 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:47.704373+00:00"
+          "timestamp": "2026-11-25T03:35:23.847449+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
-          "message": "CVI (252d) = 72.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:47.704373+00:00"
+          "message": "CVI (252d) = 73.2 \u2014 long-side capitulation stress (long ETF exhaustion)",
+          "timestamp": "2026-11-25T03:35:23.847449+00:00"
         }
       ],
       "dv_rvol": {
-        "5d": 0.914498,
-        "10d": 1.083327,
-        "21d": 1.172578,
-        "63d": 1.075173,
-        "126d": 1.228362,
-        "252d": 0.762344
+        "5d": 0.915099,
+        "10d": 1.084104,
+        "21d": 1.173469,
+        "63d": 1.076023,
+        "126d": 1.22934,
+        "252d": 0.762956
       },
       "dv_zscore": {
-        "5d": -0.386029,
-        "10d": 0.284387,
-        "21d": 0.544982,
-        "63d": 0.156151,
-        "126d": 0.496032,
-        "252d": -0.304181
+        "5d": -0.383494,
+        "10d": 0.287036,
+        "21d": 0.547774,
+        "63d": 0.157918,
+        "126d": 0.498157,
+        "252d": -0.303399
       },
       "dv_percentile": {
         "5d": 25.0,
@@ -31626,9 +31626,9 @@
         "252d": 50.996016
       },
       "dv_vroc": {
-        "5d": 45.879254,
-        "10d": 13.15172,
-        "21d": 33.071305
+        "5d": 45.996598,
+        "10d": 13.242738,
+        "21d": 33.178347
       },
       "dvcvi": {
         "5d": 9.785857,
@@ -31638,8 +31638,8 @@
         "126d": 49.101514,
         "252d": 35.946764
       },
-      "dv_vps": 43.046917,
-      "vdds": 1.114956
+      "dv_vps": 43.067724,
+      "vdds": 1.115101
     },
     "HNU.TO": {
       "side": "long",
@@ -70856,31 +70856,31 @@
           "type": "vcvi_warning",
           "side": "long",
           "message": "VCVI (126d) = 55.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:48.297933+00:00"
+          "timestamp": "2026-11-25T03:35:24.457381+00:00"
         },
         {
           "type": "vcvi_warning",
           "side": "long",
           "message": "VCVI (252d) = 61.5 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:48.297933+00:00"
+          "timestamp": "2026-11-25T03:35:24.457381+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
           "message": "CVI (63d) = 60.1 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:48.297933+00:00"
+          "timestamp": "2026-11-25T03:35:24.457381+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "long",
           "message": "CVI (126d) = 74.9 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:48.297933+00:00"
+          "timestamp": "2026-11-25T03:35:24.457381+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "long",
           "message": "CVI (252d) = 83.2 \u2014 long-side capitulation stress (long ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:48.297933+00:00"
+          "timestamp": "2026-11-25T03:35:24.457381+00:00"
         }
       ],
       "dv_rvol": {
@@ -70934,69 +70934,69 @@
         "dollar_volume": 176258.079
       },
       "rvol": {
-        "5d": 0.35342,
-        "10d": 0.515317,
-        "21d": 0.547389,
-        "63d": 0.572359,
-        "126d": 0.716116,
-        "252d": 0.864491
+        "5d": 0.983022,
+        "10d": 1.318659,
+        "21d": 1.376231,
+        "63d": 1.527356,
+        "126d": 1.912008,
+        "252d": 2.308324
       },
       "z_score": {
-        "5d": -1.681955,
-        "10d": -0.739578,
-        "21d": -0.73509,
-        "63d": -0.509266,
-        "126d": -0.324098,
-        "252d": -0.154576
+        "5d": -0.034321,
+        "10d": 0.523289,
+        "21d": 0.632523,
+        "63d": 0.626435,
+        "126d": 1.037947,
+        "252d": 1.487655
       },
       "vroc": {
-        "5d": 146.715208,
-        "10d": -44.47287,
-        "21d": -69.646
+        "5d": 475.407755,
+        "10d": -27.070699,
+        "21d": 30.170766
       },
       "vol_percentile": {
-        "5d": 0.0,
-        "10d": 33.333333,
-        "21d": 30.0,
-        "63d": 41.935484,
-        "126d": 52.0,
-        "252d": 58.167331
+        "5d": 25.0,
+        "10d": 66.666667,
+        "21d": 70.0,
+        "63d": 79.032258,
+        "126d": 85.6,
+        "252d": 91.633466
       },
       "price_percentile": {
-        "5d": 50.0,
-        "10d": 55.555556,
-        "21d": 75.0,
-        "63d": 29.032258,
-        "126d": 14.4,
-        "252d": 7.171315
+        "5d": 0.0,
+        "10d": 0.0,
+        "21d": 25.0,
+        "63d": 8.064516,
+        "126d": 4.0,
+        "252d": 1.992032
       },
       "cvi": {
-        "5d": 0.0,
-        "10d": 14.814815,
-        "21d": 7.5,
-        "63d": 29.760666,
-        "126d": 44.512,
-        "252d": 53.995968
+        "5d": 25.0,
+        "10d": 66.666667,
+        "21d": 52.5,
+        "63d": 72.658689,
+        "126d": 82.176,
+        "252d": 89.808098
       },
       "vcvi": {
-        "5d": 0.0,
-        "10d": 12.837539,
-        "21d": 6.499004,
-        "63d": 25.788625,
-        "126d": 38.571155,
-        "252d": 46.789335
+        "5d": 25.747012,
+        "10d": 68.658699,
+        "21d": 54.068725,
+        "63d": 74.829766,
+        "126d": 84.631458,
+        "252d": 92.491607
       },
       "volatility": {
         "hv": {
-          "10d": 160.280721,
-          "21d": 126.569213,
-          "63d": 104.139395,
-          "252d": 155.601316
+          "10d": 136.505908,
+          "21d": 114.649348,
+          "63d": 100.421886,
+          "252d": 155.342629
         },
-        "vol_regime_pct": 63.346614,
-        "hv_term_structure": 1.539098,
-        "atr14_pct": 9.662351,
-        "vov21": 21.419059
+        "vol_regime_pct": 47.011952,
+        "hv_term_structure": 1.359324,
+        "atr14_pct": 10.3912,
+        "vov21": 15.728957
       },
       "historical_echoes": {
         "count": 140,
@@ -71020,12 +71020,12 @@
             "count": 140
           },
           "21d": {
-            "median": -10.144926,
-            "mean": -8.211068,
-            "win_rate": 37.410072,
+            "median": -10.218015,
+            "mean": -8.299354,
+            "win_rate": 36.956522,
             "best": 113.990016,
             "worst": -75.755263,
-            "count": 139
+            "count": 138
           },
           "42d": {
             "median": -22.44821,
@@ -71081,12 +71081,12 @@
                 "count": 103
               },
               "21d": {
-                "median": -8.159503,
-                "mean": -7.920015,
-                "win_rate": 37.254902,
+                "median": -8.60534,
+                "mean": -8.037762,
+                "win_rate": 36.633663,
                 "best": 65.538464,
                 "worst": -67.714286,
-                "count": 102
+                "count": 101
               },
               "42d": {
                 "median": -11.95951,
@@ -71280,7 +71280,7 @@
             "fwd": {
               "5d": -12.069318,
               "10d": 1.175513,
-              "21d": 3.972437,
+              "21d": null,
               "42d": null,
               "63d": null,
               "126d": null,
@@ -71595,7 +71595,7 @@
             "vdds": 0.5
           }
         ],
-        "annual_rate": 0.597913,
+        "annual_rate": 0.598035,
         "gates": {
           "vcvi_min": 72,
           "breadth_min": 3,
@@ -71910,7 +71910,7 @@
             }
           }
         ],
-        "annual_rate": 3.064303,
+        "annual_rate": 3.06493,
         "gates": {
           "vcvi_min": 60,
           "breadth_min": 2,
@@ -71962,33 +71962,33 @@
       },
       "decay": {
         "annual_rate": 0.55,
-        "adj_price_pct": 80.952381,
-        "adj_vcvi_21d": 4.951622,
+        "adj_price_pct": 33.333333,
+        "adj_vcvi_21d": 48.061089,
         "correction_active": true
       },
       "seasonality": {
         "month": 11,
         "season": "winter",
         "weight": 1.3,
-        "adj_vcvi_21d": 8.448705
+        "adj_vcvi_21d": 70.289343
       },
       "sharp_spike": false,
       "fast_signal": null,
-      "vps": 22.606509,
+      "vps": 48.72812,
       "mwca": false,
-      "rolling_correlation": -0.030853,
+      "rolling_correlation": -0.122392,
       "moving_averages": {
         "price": {
-          "10d": 0.510015,
-          "21d": 0.479583,
-          "50d": 0.560533,
-          "200d": 0.982211
+          "10d": 0.510925,
+          "21d": 0.47865,
+          "50d": 0.563553,
+          "200d": 0.989261
         },
         "volume": {
-          "10d": 666741.0,
-          "21d": 627676.380952,
-          "50d": 560898.7,
-          "200d": 420981.56
+          "10d": 694259.3,
+          "21d": 665216.238095,
+          "50d": 557973.24,
+          "200d": 420907.125
         }
       },
       "history": [
@@ -100135,56 +100135,97 @@
           "low": 0.4291,
           "close": 0.4373,
           "volume": 915491
-        },
-        {
-          "date": "2026-11-24",
-          "open": 0.4716,
-          "high": 0.5156,
-          "low": 0.4562,
-          "close": 0.513,
-          "volume": 343583
         }
       ],
-      "alerts": [],
+      "alerts": [
+        {
+          "type": "vcvi_warning",
+          "side": "long",
+          "message": "VCVI (10d) = 68.7 \u2014 long-side capitulation stress (long ETF exhaustion)",
+          "timestamp": "2026-11-25T03:35:24.961206+00:00"
+        },
+        {
+          "type": "vcvi_critical",
+          "side": "long",
+          "message": "VCVI (63d) = 74.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
+          "timestamp": "2026-11-25T03:35:24.961206+00:00"
+        },
+        {
+          "type": "vcvi_critical",
+          "side": "long",
+          "message": "VCVI (126d) = 84.6 \u2014 long-side capitulation stress (long ETF exhaustion)",
+          "timestamp": "2026-11-25T03:35:24.961206+00:00"
+        },
+        {
+          "type": "vcvi_critical",
+          "side": "long",
+          "message": "VCVI (252d) = 92.5 \u2014 long-side capitulation stress (long ETF exhaustion)",
+          "timestamp": "2026-11-25T03:35:24.961206+00:00"
+        },
+        {
+          "type": "cvi_warning",
+          "side": "long",
+          "message": "CVI (10d) = 66.7 \u2014 long-side capitulation stress (long ETF exhaustion)",
+          "timestamp": "2026-11-25T03:35:24.961206+00:00"
+        },
+        {
+          "type": "cvi_warning",
+          "side": "long",
+          "message": "CVI (63d) = 72.7 \u2014 long-side capitulation stress (long ETF exhaustion)",
+          "timestamp": "2026-11-25T03:35:24.961206+00:00"
+        },
+        {
+          "type": "cvi_critical",
+          "side": "long",
+          "message": "CVI (126d) = 82.2 \u2014 long-side capitulation stress (long ETF exhaustion)",
+          "timestamp": "2026-11-25T03:35:24.961206+00:00"
+        },
+        {
+          "type": "cvi_critical",
+          "side": "long",
+          "message": "CVI (252d) = 89.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
+          "timestamp": "2026-11-25T03:35:24.961206+00:00"
+        }
+      ],
       "dv_rvol": {
-        "5d": 0.349797,
-        "10d": 0.508264,
-        "21d": 0.573792,
-        "63d": 0.505357,
-        "126d": 0.5311,
-        "252d": 0.345542
+        "5d": 0.830547,
+        "10d": 1.107561,
+        "21d": 1.23038,
+        "63d": 1.146361,
+        "126d": 1.203158,
+        "252d": 0.781299
       },
       "dv_zscore": {
-        "5d": -1.520764,
-        "10d": -0.719145,
-        "21d": -0.645682,
-        "63d": -0.54882,
-        "126d": -0.572885,
-        "252d": -0.659066
+        "5d": -0.316242,
+        "10d": 0.16917,
+        "21d": 0.361215,
+        "63d": 0.162721,
+        "126d": 0.249163,
+        "252d": -0.221327
       },
       "dv_percentile": {
-        "5d": 0.0,
-        "10d": 33.333333,
-        "21d": 40.0,
-        "63d": 40.322581,
-        "126d": 36.0,
-        "252d": 23.904382
+        "5d": 25.0,
+        "10d": 66.666667,
+        "21d": 70.0,
+        "63d": 70.967742,
+        "126d": 72.0,
+        "252d": 53.386454
       },
       "dv_vroc": {
-        "5d": 163.292923,
-        "10d": -45.440682,
-        "21d": -68.440206
+        "5d": 442.530837,
+        "10d": -36.113814,
+        "21d": 21.657779
       },
       "dvcvi": {
-        "5d": 0.0,
-        "10d": 12.837539,
-        "21d": 8.665339,
-        "63d": 24.796755,
-        "126d": 26.703107,
-        "252d": 19.228493
+        "5d": 25.747012,
+        "10d": 68.658699,
+        "21d": 54.068725,
+        "63d": 67.194075,
+        "126d": 71.185339,
+        "252d": 53.886415
       },
-      "dv_vps": 25.614443,
-      "vdds": 1.034618
+      "dv_vps": 46.15032,
+      "vdds": 0.740589
     },
     "KOLD": {
       "side": "short",
@@ -100197,25 +100238,25 @@
         "dollar_volume": 104269183.9
       },
       "rvol": {
-        "5d": 1.065001,
-        "10d": 1.257645,
-        "21d": 1.562453,
-        "63d": 1.26271,
-        "126d": 1.29528,
-        "252d": 0.72785
+        "5d": 1.066705,
+        "10d": 1.25988,
+        "21d": 1.565394,
+        "63d": 1.265227,
+        "126d": 1.297887,
+        "252d": 0.729326
       },
       "z_score": {
-        "5d": 0.515903,
-        "10d": 0.888404,
-        "21d": 1.541869,
-        "63d": 0.526568,
-        "126d": 0.588863,
-        "252d": -0.231486
+        "5d": 0.52847,
+        "10d": 0.895559,
+        "21d": 1.549123,
+        "63d": 0.531611,
+        "126d": 0.59406,
+        "252d": -0.230232
       },
       "vroc": {
-        "5d": 98.417938,
-        "10d": 93.280489,
-        "21d": 62.938958
+        "5d": 98.821489,
+        "10d": 93.673591,
+        "21d": 63.270351
       },
       "vol_percentile": {
         "5d": 75.0,
@@ -100223,7 +100264,7 @@
         "21d": 95.0,
         "63d": 82.258065,
         "126d": 83.2,
-        "252d": 58.565737
+        "252d": 58.964143
       },
       "price_percentile": {
         "5d": 50.0,
@@ -100239,7 +100280,7 @@
         "21d": 85.5,
         "63d": 62.356921,
         "126d": 52.5824,
-        "252d": 26.366248
+        "252d": 26.54561
       },
       "vcvi": {
         "5d": 28.909362,
@@ -100247,7 +100288,7 @@
         "21d": 65.913346,
         "63d": 48.071969,
         "126d": 40.536631,
-        "252d": 20.326171
+        "252d": 20.464444
       },
       "volatility": {
         "hv": {
@@ -101168,9 +101209,9 @@
       },
       "sharp_spike": false,
       "fast_signal": null,
-      "vps": 58.852525,
+      "vps": 58.917976,
       "mwca": false,
-      "rolling_correlation": -0.755235,
+      "rolling_correlation": -0.755279,
       "moving_averages": {
         "price": {
           "10d": 27.867,
@@ -101179,10 +101220,10 @@
           "200d": 25.84735
         },
         "volume": {
-          "10d": 3092439.0,
-          "21d": 2489156.666667,
-          "50d": 3260253.8,
-          "200d": 3782335.95
+          "10d": 3093230.0,
+          "21d": 2489533.333333,
+          "50d": 3260412.0,
+          "200d": 3782375.5
         }
       },
       "history": [
@@ -131632,7 +131673,7 @@
           "high": 27.58,
           "low": 25.719999,
           "close": 26.809999,
-          "volume": 3889190
+          "volume": 3897100
         }
       ],
       "alerts": [
@@ -131640,42 +131681,42 @@
           "type": "vcvi_warning",
           "side": "short",
           "message": "VCVI (21d) = 65.9 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:49.278513+00:00"
+          "timestamp": "2026-11-25T03:35:25.463583+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "short",
           "message": "CVI (10d) = 69.1 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:49.278513+00:00"
+          "timestamp": "2026-11-25T03:35:25.463583+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "short",
           "message": "CVI (21d) = 85.5 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:49.278513+00:00"
+          "timestamp": "2026-11-25T03:35:25.463583+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "short",
           "message": "CVI (63d) = 62.4 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:49.278513+00:00"
+          "timestamp": "2026-11-25T03:35:25.463583+00:00"
         }
       ],
       "dv_rvol": {
-        "5d": 1.054657,
-        "10d": 1.223474,
-        "21d": 1.43142,
-        "63d": 1.226641,
-        "126d": 1.312023,
-        "252d": 0.816623
+        "5d": 1.056349,
+        "10d": 1.225657,
+        "21d": 1.434132,
+        "63d": 1.229087,
+        "126d": 1.314664,
+        "252d": 0.818279
       },
       "dv_zscore": {
-        "5d": 0.474615,
-        "10d": 0.850852,
-        "21d": 1.447788,
-        "63d": 0.559637,
-        "126d": 0.763115,
-        "252d": -0.204195
+        "5d": 0.488421,
+        "10d": 0.858606,
+        "21d": 1.45606,
+        "63d": 0.565668,
+        "126d": 0.769558,
+        "252d": -0.202353
       },
       "dv_percentile": {
         "5d": 50.0,
@@ -131686,9 +131727,9 @@
         "252d": 58.964143
       },
       "dv_vroc": {
-        "5d": 83.055227,
-        "10d": 83.883951,
-        "21d": 43.791755
+        "5d": 83.427533,
+        "10d": 84.257942,
+        "21d": 44.084205
       },
       "dvcvi": {
         "5d": 19.272908,
@@ -131698,8 +131739,8 @@
         "126d": 42.095732,
         "252d": 20.464444
       },
-      "dv_vps": 55.740063,
-      "vdds": 0.819971
+      "dv_vps": 55.806104,
+      "vdds": 0.819542
     },
     "HND.TO": {
       "side": "short",
@@ -170571,36 +170612,36 @@
           "type": "vcvi_warning",
           "side": "short",
           "message": "VCVI (10d) = 57.5 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:49.872640+00:00"
+          "timestamp": "2026-11-25T03:35:26.067001+00:00"
         },
         {
           "type": "vcvi_warning",
           "side": "short",
           "message": "VCVI (21d) = 66.5 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:49.872640+00:00"
+          "timestamp": "2026-11-25T03:35:26.067001+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "short",
           "message": "CVI (10d) = 77.8 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:49.872640+00:00"
+          "timestamp": "2026-11-25T03:35:26.067001+00:00"
         },
         {
           "type": "cvi_critical",
           "side": "short",
           "message": "CVI (21d) = 90.0 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:49.872640+00:00"
+          "timestamp": "2026-11-25T03:35:26.067001+00:00"
         },
         {
           "type": "cvi_warning",
           "side": "short",
           "message": "CVI (63d) = 68.5 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:49.872640+00:00"
+          "timestamp": "2026-11-25T03:35:26.067001+00:00"
         },
         {
           "type": "vps_elevated",
           "message": "VPS = 67.3 \u2014 elevated volume pressure",
-          "timestamp": "2026-11-24T22:58:49.872640+00:00"
+          "timestamp": "2026-11-25T03:35:26.067001+00:00"
         }
       ],
       "dv_rvol": {
@@ -170654,69 +170695,69 @@
         "dollar_volume": 332628.24
       },
       "rvol": {
-        "5d": 1.130202,
-        "10d": 1.497251,
-        "21d": 1.706156,
-        "63d": 0.786855,
-        "126d": 0.826181,
-        "252d": 0.473152
+        "5d": 0.774322,
+        "10d": 0.996452,
+        "21d": 1.117422,
+        "63d": 0.515881,
+        "126d": 0.534162,
+        "252d": 0.306276
       },
       "z_score": {
-        "5d": 0.295812,
-        "10d": 0.852031,
-        "21d": 1.171282,
-        "63d": -0.119842,
-        "126d": -0.117478,
-        "252d": -0.347146
+        "5d": -0.489202,
+        "10d": -0.006123,
+        "21d": 0.196277,
+        "63d": -0.268694,
+        "126d": -0.315762,
+        "252d": -0.458008
       },
       "vroc": {
-        "5d": 31.035932,
-        "10d": 20.688988,
-        "21d": 13.906478
+        "5d": 311.778683,
+        "10d": 3.648325,
+        "21d": -66.939198
       },
       "vol_percentile": {
-        "5d": 50.0,
-        "10d": 77.777778,
-        "21d": 85.0,
-        "63d": 70.967742,
-        "126d": 65.6,
-        "252d": 48.207171
+        "5d": 25.0,
+        "10d": 44.444444,
+        "21d": 60.0,
+        "63d": 54.83871,
+        "126d": 48.8,
+        "252d": 33.864542
       },
       "price_percentile": {
-        "5d": 25.0,
-        "10d": 11.111111,
-        "21d": 5.0,
-        "63d": 32.258065,
-        "126d": 51.2,
-        "252d": 63.74502
+        "5d": 100.0,
+        "10d": 88.888889,
+        "21d": 45.0,
+        "63d": 80.645161,
+        "126d": 90.4,
+        "252d": 87.250996
       },
       "cvi": {
-        "5d": 37.5,
-        "10d": 69.135803,
-        "21d": 80.75,
-        "63d": 48.074922,
-        "126d": 32.0128,
-        "252d": 17.4775
+        "5d": 0.0,
+        "10d": 4.938272,
+        "21d": 33.0,
+        "63d": 10.613944,
+        "126d": 4.6848,
+        "252d": 4.317392
       },
       "vcvi": {
-        "5d": 34.437251,
-        "10d": 63.489253,
-        "21d": 74.15488,
-        "63d": 44.148484,
-        "126d": 29.398209,
-        "252d": 16.050055
+        "5d": 0.0,
+        "10d": 5.223551,
+        "21d": 34.906374,
+        "63d": 11.2271,
+        "126d": 4.955436,
+        "252d": 4.566803
       },
       "volatility": {
         "hv": {
-          "10d": 150.078115,
-          "21d": 123.549708,
-          "63d": 103.940635,
-          "252d": 147.957922
+          "10d": 122.491191,
+          "21d": 108.577922,
+          "63d": 99.507301,
+          "252d": 147.414492
         },
-        "vol_regime_pct": 58.167331,
-        "hv_term_structure": 1.443883,
-        "atr14_pct": 11.286757,
-        "vov21": 18.718622
+        "vol_regime_pct": 44.223108,
+        "hv_term_structure": 1.230977,
+        "atr14_pct": 8.571092,
+        "vov21": 14.334149
       },
       "historical_echoes": {
         "count": 104,
@@ -170732,12 +170773,12 @@
             "count": 104
           },
           "10d": {
-            "median": -2.926279,
-            "mean": 0.695026,
-            "win_rate": 44.230769,
+            "median": -2.820157,
+            "mean": 0.781699,
+            "win_rate": 44.660194,
             "best": 67.368421,
             "worst": -46.409432,
-            "count": 104
+            "count": 103
           },
           "21d": {
             "median": 2.220893,
@@ -170793,12 +170834,12 @@
                 "count": 79
               },
               "10d": {
-                "median": -0.148408,
-                "mean": 4.353464,
-                "win_rate": 49.367089,
+                "median": 0.387084,
+                "mean": 4.51482,
+                "win_rate": 50.0,
                 "best": 67.368421,
                 "worst": -32.044421,
-                "count": 79
+                "count": 78
               },
               "21d": {
                 "median": 4.172591,
@@ -170980,7 +171021,7 @@
             "price": 19.375,
             "fwd": {
               "5d": 5.90968,
-              "10d": -8.232255,
+              "10d": null,
               "21d": null,
               "42d": null,
               "63d": null,
@@ -171154,7 +171195,7 @@
             "vdds": 0.553247
           }
         ],
-        "annual_rate": 0.074739,
+        "annual_rate": 0.074754,
         "gates": {
           "vcvi_min": 72,
           "breadth_min": 3,
@@ -171211,25 +171252,8 @@
         }
       },
       "elevated_watch": {
-        "count": 31,
+        "count": 30,
         "events": [
-          {
-            "date": "2026-11-24",
-            "vcvi": 74.15488,
-            "daily_move_pct": -16.250584,
-            "atr_ratio": 1.439792,
-            "breadth_count": 2,
-            "price": 17.780001,
-            "season": "winter",
-            "seasonality_weight": 1.3,
-            "fwd": {
-              "5d": null,
-              "10d": null,
-              "21d": null,
-              "42d": null,
-              "63d": null
-            }
-          },
           {
             "date": "2026-10-07",
             "vcvi": 111.284363,
@@ -171467,9 +171491,26 @@
               "42d": -38.991445,
               "63d": -20.722951
             }
+          },
+          {
+            "date": "2023-05-22",
+            "vcvi": 82.519422,
+            "daily_move_pct": 30.877043,
+            "atr_ratio": 1.629892,
+            "breadth_count": 3,
+            "price": 38.387652,
+            "season": "spring",
+            "seasonality_weight": 1.0,
+            "fwd": {
+              "5d": 26.011491,
+              "10d": 23.921665,
+              "21d": -12.262043,
+              "42d": -30.413707,
+              "63d": -34.587659
+            }
           }
         ],
-        "annual_rate": 2.316912,
+        "annual_rate": 2.242632,
         "gates": {
           "vcvi_min": 60,
           "breadth_min": 2,
@@ -171521,33 +171562,33 @@
       },
       "decay": {
         "annual_rate": 0.55,
-        "adj_price_pct": 4.761905,
-        "adj_vcvi_21d": 74.340732,
+        "adj_price_pct": 52.380952,
+        "adj_vcvi_21d": 30.221969,
         "correction_active": true
       },
       "seasonality": {
         "month": 11,
         "season": "winter",
         "weight": 1.3,
-        "adj_vcvi_21d": 96.401344
+        "adj_vcvi_21d": 45.378286
       },
       "sharp_spike": false,
       "fast_signal": null,
-      "vps": 56.803472,
+      "vps": 44.032464,
       "mwca": false,
-      "rolling_correlation": -0.407367,
+      "rolling_correlation": -0.515346,
       "moving_averages": {
         "price": {
-          "10d": 19.2315,
-          "21d": 21.262381,
-          "50d": 19.366,
-          "200d": 16.1131
+          "10d": 19.391,
+          "21d": 21.43,
+          "50d": 19.3662,
+          "200d": 16.084525
         },
         "volume": {
-          "10d": 12494.9,
-          "21d": 10965.0,
-          "50d": 27780.96,
-          "200d": 26045.395
+          "10d": 12174.2,
+          "21d": 10856.238095,
+          "50d": 27481.44,
+          "200d": 26514.33
         }
       },
       "history": [
@@ -199694,88 +199735,55 @@
           "low": 20.32,
           "close": 21.23,
           "volume": 12131
-        },
-        {
-          "date": "2026-11-24",
-          "open": 19.74,
-          "high": 20.379999,
-          "low": 17.49,
-          "close": 17.780001,
-          "volume": 18708
         }
       ],
-      "alerts": [
-        {
-          "type": "vcvi_warning",
-          "side": "short",
-          "message": "VCVI (10d) = 63.5 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:50.371389+00:00"
-        },
-        {
-          "type": "vcvi_critical",
-          "side": "short",
-          "message": "VCVI (21d) = 74.2 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:50.371389+00:00"
-        },
-        {
-          "type": "cvi_warning",
-          "side": "short",
-          "message": "CVI (10d) = 69.1 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:50.371389+00:00"
-        },
-        {
-          "type": "cvi_critical",
-          "side": "short",
-          "message": "CVI (21d) = 80.8 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-          "timestamp": "2026-11-24T22:58:50.371389+00:00"
-        }
-      ],
+      "alerts": [],
       "dv_rvol": {
-        "5d": 1.085806,
-        "10d": 1.404296,
-        "21d": 1.456876,
-        "63d": 0.787375,
-        "126d": 0.911971,
-        "252d": 0.553
+        "5d": 0.863046,
+        "10d": 1.102322,
+        "21d": 1.123969,
+        "63d": 0.61644,
+        "126d": 0.706296,
+        "252d": 0.427129
       },
       "dv_zscore": {
-        "5d": 0.209434,
-        "10d": 0.73118,
-        "21d": 0.779808,
-        "63d": -0.121891,
-        "126d": -0.056827,
-        "252d": -0.313467
+        "5d": -0.327774,
+        "10d": 0.185712,
+        "21d": 0.211214,
+        "63d": -0.217012,
+        "126d": -0.189549,
+        "252d": -0.402781
       },
       "dv_percentile": {
-        "5d": 50.0,
-        "10d": 77.777778,
-        "21d": 80.0,
-        "63d": 67.741935,
-        "126d": 68.0,
-        "252d": 52.589641
+        "5d": 25.0,
+        "10d": 44.444444,
+        "21d": 60.0,
+        "63d": 61.290323,
+        "126d": 59.2,
+        "252d": 43.824701
       },
       "dv_vroc": {
-        "5d": 13.538933,
-        "10d": 10.753563,
-        "21d": -4.917496
+        "5d": 310.040402,
+        "10d": 6.662821,
+        "21d": -68.638032
       },
       "dvcvi": {
-        "5d": 34.437251,
-        "10d": 63.489253,
-        "21d": 69.792828,
-        "63d": 42.141734,
-        "126d": 30.473753,
-        "252d": 17.509151
+        "5d": 0.0,
+        "10d": 5.223551,
+        "21d": 34.906374,
+        "63d": 12.547935,
+        "126d": 6.011512,
+        "252d": 5.90998
       },
-      "dv_vps": 51.585574,
-      "vdds": 0.752424
+      "dv_vps": 44.250535,
+      "vdds": 1.148719
     }
   },
   "pairs": {
     "BOIL_KOLD": {
-      "ipsi": 1.283017,
-      "long_rvol": 1.107502,
-      "short_rvol": 1.562453,
+      "ipsi": 1.284173,
+      "long_rvol": 1.108346,
+      "short_rvol": 1.565394,
       "status": "quiet"
     },
     "HNU.TO_HND.TO": {
@@ -199785,10 +199793,10 @@
       "status": "elevated"
     },
     "3NGL.L_3NGS.L": {
-      "ipsi": 2.106339,
-      "long_rvol": 0.547389,
-      "short_rvol": 1.706156,
-      "status": "elevated"
+      "ipsi": 0.862059,
+      "long_rvol": 1.376231,
+      "short_rvol": 1.117422,
+      "status": "quiet"
     }
   },
   "side_convergence": {
@@ -199816,7 +199824,7 @@
         "3NGL.L": {
           "spiked": true,
           "date": "2026-11-09",
-          "days_ago": 11,
+          "days_ago": 10,
           "peak_rvol": 2.2179
         }
       }
@@ -199855,155 +199863,183 @@
     {
       "type": "vcvi_warning",
       "side": "long",
-      "message": "VCVI (252d) = 57.0 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:47.704373+00:00",
+      "message": "VCVI (252d) = 57.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-25T03:35:23.847449+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_warning",
       "side": "long",
       "message": "CVI (126d) = 66.6 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:47.704373+00:00",
+      "timestamp": "2026-11-25T03:35:23.847449+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "cvi_warning",
       "side": "long",
-      "message": "CVI (252d) = 72.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:47.704373+00:00",
+      "message": "CVI (252d) = 73.2 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-25T03:35:23.847449+00:00",
       "ticker": "BOIL"
     },
     {
       "type": "vcvi_warning",
       "side": "long",
       "message": "VCVI (126d) = 55.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:48.297933+00:00",
+      "timestamp": "2026-11-25T03:35:24.457381+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "vcvi_warning",
       "side": "long",
       "message": "VCVI (252d) = 61.5 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:48.297933+00:00",
+      "timestamp": "2026-11-25T03:35:24.457381+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_warning",
       "side": "long",
       "message": "CVI (63d) = 60.1 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:48.297933+00:00",
+      "timestamp": "2026-11-25T03:35:24.457381+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_warning",
       "side": "long",
       "message": "CVI (126d) = 74.9 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:48.297933+00:00",
+      "timestamp": "2026-11-25T03:35:24.457381+00:00",
       "ticker": "HNU.TO"
     },
     {
       "type": "cvi_critical",
       "side": "long",
       "message": "CVI (252d) = 83.2 \u2014 long-side capitulation stress (long ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:48.297933+00:00",
+      "timestamp": "2026-11-25T03:35:24.457381+00:00",
       "ticker": "HNU.TO"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "long",
+      "message": "VCVI (10d) = 68.7 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-25T03:35:24.961206+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "vcvi_critical",
+      "side": "long",
+      "message": "VCVI (63d) = 74.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-25T03:35:24.961206+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "vcvi_critical",
+      "side": "long",
+      "message": "VCVI (126d) = 84.6 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-25T03:35:24.961206+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "vcvi_critical",
+      "side": "long",
+      "message": "VCVI (252d) = 92.5 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-25T03:35:24.961206+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "long",
+      "message": "CVI (10d) = 66.7 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-25T03:35:24.961206+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "long",
+      "message": "CVI (63d) = 72.7 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-25T03:35:24.961206+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "cvi_critical",
+      "side": "long",
+      "message": "CVI (126d) = 82.2 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-25T03:35:24.961206+00:00",
+      "ticker": "3NGL.L"
+    },
+    {
+      "type": "cvi_critical",
+      "side": "long",
+      "message": "CVI (252d) = 89.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-25T03:35:24.961206+00:00",
+      "ticker": "3NGL.L"
     },
     {
       "type": "vcvi_warning",
       "side": "short",
       "message": "VCVI (21d) = 65.9 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:49.278513+00:00",
+      "timestamp": "2026-11-25T03:35:25.463583+00:00",
       "ticker": "KOLD"
     },
     {
       "type": "cvi_warning",
       "side": "short",
       "message": "CVI (10d) = 69.1 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:49.278513+00:00",
+      "timestamp": "2026-11-25T03:35:25.463583+00:00",
       "ticker": "KOLD"
     },
     {
       "type": "cvi_critical",
       "side": "short",
       "message": "CVI (21d) = 85.5 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:49.278513+00:00",
+      "timestamp": "2026-11-25T03:35:25.463583+00:00",
       "ticker": "KOLD"
     },
     {
       "type": "cvi_warning",
       "side": "short",
       "message": "CVI (63d) = 62.4 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:49.278513+00:00",
+      "timestamp": "2026-11-25T03:35:25.463583+00:00",
       "ticker": "KOLD"
     },
     {
       "type": "vcvi_warning",
       "side": "short",
       "message": "VCVI (10d) = 57.5 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:49.872640+00:00",
+      "timestamp": "2026-11-25T03:35:26.067001+00:00",
       "ticker": "HND.TO"
     },
     {
       "type": "vcvi_warning",
       "side": "short",
       "message": "VCVI (21d) = 66.5 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:49.872640+00:00",
+      "timestamp": "2026-11-25T03:35:26.067001+00:00",
       "ticker": "HND.TO"
     },
     {
       "type": "cvi_warning",
       "side": "short",
       "message": "CVI (10d) = 77.8 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:49.872640+00:00",
+      "timestamp": "2026-11-25T03:35:26.067001+00:00",
       "ticker": "HND.TO"
     },
     {
       "type": "cvi_critical",
       "side": "short",
       "message": "CVI (21d) = 90.0 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:49.872640+00:00",
+      "timestamp": "2026-11-25T03:35:26.067001+00:00",
       "ticker": "HND.TO"
     },
     {
       "type": "cvi_warning",
       "side": "short",
       "message": "CVI (63d) = 68.5 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:49.872640+00:00",
+      "timestamp": "2026-11-25T03:35:26.067001+00:00",
       "ticker": "HND.TO"
     },
     {
       "type": "vps_elevated",
       "message": "VPS = 67.3 \u2014 elevated volume pressure",
-      "timestamp": "2026-11-24T22:58:49.872640+00:00",
+      "timestamp": "2026-11-25T03:35:26.067001+00:00",
       "ticker": "HND.TO"
-    },
-    {
-      "type": "vcvi_warning",
-      "side": "short",
-      "message": "VCVI (10d) = 63.5 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:50.371389+00:00",
-      "ticker": "3NGS.L"
-    },
-    {
-      "type": "vcvi_critical",
-      "side": "short",
-      "message": "VCVI (21d) = 74.2 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:50.371389+00:00",
-      "ticker": "3NGS.L"
-    },
-    {
-      "type": "cvi_warning",
-      "side": "short",
-      "message": "CVI (10d) = 69.1 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:50.371389+00:00",
-      "ticker": "3NGS.L"
-    },
-    {
-      "type": "cvi_critical",
-      "side": "short",
-      "message": "CVI (21d) = 80.8 \u2014 short-side capitulation stress (inverse ETF exhaustion)",
-      "timestamp": "2026-11-24T22:58:50.371389+00:00",
-      "ticker": "3NGS.L"
     }
   ]
 }
