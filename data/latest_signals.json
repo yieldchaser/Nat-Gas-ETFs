@@ -1,7 +1,57 @@
 {
-  "last_updated": "2026-11-27T15:39:16.757738+00:00",
-  "market_status": "open",
-  "signals": [],
+  "last_updated": "2026-11-27T21:54:38.330635+00:00",
+  "market_status": "after_hours",
+  "signals": [
+    {
+      "type": "vcvi_warning",
+      "side": "long",
+      "message": "VCVI (10d) = 58.4 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-27T21:54:34.992552+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "long",
+      "message": "VCVI (126d) = 59.6 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-27T21:54:34.992552+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
+      "type": "vcvi_warning",
+      "side": "long",
+      "message": "VCVI (252d) = 62.3 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-27T21:54:34.992552+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "long",
+      "message": "CVI (10d) = 77.8 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-27T21:54:34.992552+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "long",
+      "message": "CVI (63d) = 63.2 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-27T21:54:34.992552+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
+      "type": "cvi_warning",
+      "side": "long",
+      "message": "CVI (126d) = 79.4 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-27T21:54:34.992552+00:00",
+      "ticker": "HNU.TO"
+    },
+    {
+      "type": "cvi_critical",
+      "side": "long",
+      "message": "CVI (252d) = 82.9 \u2014 long-side capitulation stress (long ETF exhaustion)",
+      "timestamp": "2026-11-27T21:54:34.992552+00:00",
+      "ticker": "HNU.TO"
+    }
+  ],
   "pair_status": {
     "BOIL_KOLD": "quiet",
     "HNU.TO_HND.TO": "quiet",
@@ -9,52 +59,52 @@
   },
   "etf_summary": {
     "BOIL": {
-      "price": 17.31,
-      "change_pct": -8.462,
-      "vps": 10.861061,
+      "price": 17.24,
+      "change_pct": -8.831,
+      "vps": 28.931429,
       "mwca": false,
-      "vol_regime_pct": 75.298805,
-      "hv_term_structure": 1.606262
+      "vol_regime_pct": 75.697211,
+      "hv_term_structure": 1.610887
     },
     "HNU.TO": {
-      "price": 6.79,
-      "change_pct": -5.168,
-      "vps": 7.497633,
+      "price": 6.74,
+      "change_pct": -5.866,
+      "vps": 42.346007,
       "mwca": false,
-      "vol_regime_pct": 74.103586,
-      "hv_term_structure": 1.445521
+      "vol_regime_pct": 74.900398,
+      "hv_term_structure": 1.451984
     },
     "3NGL.L": {
-      "price": 0.447,
-      "change_pct": -5.8055,
-      "vps": 17.958017,
+      "price": 0.4476,
+      "change_pct": -5.6896,
+      "vps": 23.94722,
       "mwca": false,
       "vol_regime_pct": 54.98008,
-      "hv_term_structure": 1.491352
+      "hv_term_structure": 1.490688
     },
     "KOLD": {
-      "price": 29.325,
-      "change_pct": 8.893,
-      "vps": 10.013252,
+      "price": 29.45,
+      "change_pct": 9.358,
+      "vps": 21.735986,
       "mwca": false,
       "vol_regime_pct": 76.095618,
-      "hv_term_structure": 1.588309
+      "hv_term_structure": 1.593416
     },
     "HND.TO": {
-      "price": 24.65,
-      "change_pct": 5.344,
-      "vps": 8.610702,
+      "price": 24.5,
+      "change_pct": 4.701,
+      "vps": 27.850931,
       "mwca": false,
-      "vol_regime_pct": 74.501992,
-      "hv_term_structure": 1.419063
+      "vol_regime_pct": 73.306773,
+      "hv_term_structure": 1.413894
     },
     "3NGS.L": {
-      "price": 20.56,
-      "change_pct": 6.007,
-      "vps": 32.579612,
+      "price": 20.44,
+      "change_pct": 5.388,
+      "vps": 33.27976,
       "mwca": false,
       "vol_regime_pct": 56.573705,
-      "hv_term_structure": 1.432793
+      "hv_term_structure": 1.428936
     }
   }
 }
